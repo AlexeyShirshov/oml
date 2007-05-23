@@ -1,0 +1,157 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Orm", "obm\Orm.vbproj", "{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "TestProject1", "TestProject1\TestProject1.vbproj", "{9D39DD33-0A52-460D-A5E2-8576E46B334F}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6E64006B-2B21-4A31-85D8-C669B9C4E7B3}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		TestRunConfig1.testrunconfig = TestRunConfig1.testrunconfig
+		Worm1.vsmdi = Worm1.vsmdi
+	EndProjectSection
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Tests", "Tests\Tests.vbproj", "{8E02FB04-15DE-416A-9468-0C99CC1DBE65}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ASPNETHosting", "ASPNETHosting\ASPNETHosting.vbproj", "{7D8F3864-281D-495E-B0E4-5731FC31D007}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrmCodeGen", "OrmCodeGen\OrmCodeGen.csproj", "{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrmCodeGenLib", "OrmCodeGenLib\OrmCodeGenLib.csproj", "{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmlSchemaGen", "XmlSchemaGen\XmlSchemaGen.csproj", "{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 8
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = https://tfs03.codeplex.com/
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = ASPNETHosting\\ASPNETHosting.vbproj
+		SccProjectName1 = ASPNETHosting
+		SccLocalPath1 = ASPNETHosting
+		SccProjectUniqueName2 = obm\\Orm.vbproj
+		SccProjectName2 = obm
+		SccLocalPath2 = obm
+		SccProjectUniqueName3 = OrmCodeGen\\OrmCodeGen.csproj
+		SccProjectName3 = OrmCodeGen
+		SccLocalPath3 = OrmCodeGen
+		SccProjectUniqueName4 = OrmCodeGenLib\\OrmCodeGenLib.csproj
+		SccProjectName4 = OrmCodeGenLib
+		SccLocalPath4 = OrmCodeGenLib
+		SccProjectUniqueName5 = TestProject1\\TestProject1.vbproj
+		SccProjectName5 = TestProject1
+		SccLocalPath5 = TestProject1
+		SccProjectUniqueName6 = Tests\\Tests.vbproj
+		SccProjectName6 = Tests
+		SccLocalPath6 = Tests
+		SccProjectUniqueName7 = XmlSchemaGen\\XmlSchemaGen.csproj
+		SccProjectName7 = XmlSchemaGen
+		SccLocalPath7 = XmlSchemaGen
+	EndGlobalSection
+	GlobalSection(TestCaseManagementSettings) = postSolution
+		CategoryFile = Worm1.vsmdi
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+		Signed Debug|Any CPU = Signed Debug|Any CPU
+		Unsigned Release|Any CPU = Unsigned Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Signed Debug|Any CPU.ActiveCfg = Signed Debug|Any CPU
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Signed Debug|Any CPU.Build.0 = Signed Debug|Any CPU
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Unsigned Release|Any CPU.ActiveCfg = Unsigned Release|Any CPU
+		{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}.Unsigned Release|Any CPU.Build.0 = Unsigned Release|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D39DD33-0A52-460D-A5E2-8576E46B334F}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E02FB04-15DE-416A-9468-0C99CC1DBE65}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D8F3864-281D-495E-B0E4-5731FC31D007}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

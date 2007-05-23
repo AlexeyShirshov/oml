@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Worm</RootNamespace>
+    <AssemblyName>Worm.Orm</AssemblyName>
+    <OptionStrict>On</OptionStrict>
+    <StartupObject>
+    </StartupObject>
+    <MyType>Windows</MyType>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DocumentationFile>XMedia.Framework.Media.Obm.xml</DocumentationFile>
+    <RunFxCop>true</RunFxCop>
+    <FxCopRules>-Microsoft.Design#CA2210;-Microsoft.Design#CA1011;-Microsoft.Design#CA1026;-Microsoft.Design#CA1051;-Microsoft.Design#CA1002;-Microsoft.Design#CA1006;-Microsoft.Design#CA1045;-Microsoft.Design#CA1014;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1704;-Microsoft.Naming#CA1707;-Microsoft.Naming#CA1705;-Microsoft.Naming#CA1706;-Microsoft.Performance#CA1805;-Microsoft.Performance#CA1814;-Microsoft.Security#CA2104</FxCopRules>
+    <FxCopUseTypeNameInSuppression>false</FxCopUseTypeNameInSuppression>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <CodeAnalysisRules>-Microsoft.Design#CA2210;-Microsoft.Design#CA1020;-Microsoft.Design#CA1011;-Microsoft.Design#CA1026;-Microsoft.Design#CA1051;-Microsoft.Design#CA1002;-Microsoft.Design#CA1006;-Microsoft.Design#CA1045;-Microsoft.Design#CA1004;-Microsoft.Design#CA1014;-Microsoft.Globalization#CA1303;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1707;-Microsoft.Naming#CA1706;-Microsoft.Performance#CA1814;-Microsoft.Performance#CA1819;-Microsoft.Reliability#CA2002</CodeAnalysisRules>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DocumentationFile>XMedia.Framework.Media.Obm.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Signed Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Signed Debug\</OutputPath>
+    <DocumentationFile>XMedia.Framework.Media.Obm.xml</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisRuleAssemblies>C:\Program Files\Microsoft Visual Studio 8\Team Tools\Static Analysis Tools\FxCop\\rules</CodeAnalysisRuleAssemblies>
+    <CodeAnalysisRules>-Microsoft.Design#CA2210;-Microsoft.Design#CA1020;-Microsoft.Design#CA1011;-Microsoft.Design#CA1026;-Microsoft.Design#CA1051;-Microsoft.Design#CA1002;-Microsoft.Design#CA1006;-Microsoft.Design#CA1045;-Microsoft.Design#CA1004;-Microsoft.Design#CA1014;-Microsoft.Globalization#CA1303;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1707;-Microsoft.Naming#CA1706;-Microsoft.Performance#CA1814;-Microsoft.Performance#CA1819;-Microsoft.Reliability#CA2002</CodeAnalysisRules>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Unsigned Release|AnyCPU' ">
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Unsigned Release\</OutputPath>
+    <DocumentationFile>XMedia.Framework.Media.Obm.xml</DocumentationFile>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisRuleAssemblies>C:\Program Files\Microsoft Visual Studio 8\Team Tools\Static Analysis Tools\FxCop\\rules</CodeAnalysisRuleAssemblies>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Import Include="Microsoft.VisualBasic" />
+    <Import Include="System" />
+    <Import Include="System.Collections" />
+    <Import Include="System.Diagnostics" />
+    <Import Include="System.Text" />
+    <Import Include="System.Web" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="My Project\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.vb</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.configuration" />
+    <Reference Include="System.Configuration.Install" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web" />
+    <Reference Include="System.XML" />
+    <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\CoreFramework.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="advcache.vb" />
+    <Compile Include="Managers\DataProviders.vb" />
+    <Compile Include="OrmDictionary.vb" />
+    <Compile Include="MetaAttributes.vb" />
+    <Compile Include="Managers\OrmDBManager.vb" />
+    <Compile Include="Managers\OrmRODBManager.vb" />
+    <Compile Include="Managers\OrmManagerBase.vb">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Schema\DbSchema.vb" />
+    <Compile Include="Schema\InterfacesAndClasses.vb" />
+    <Compile Include="Schema\OrmFilter.vb" />
+    <Compile Include="Schema\OrmSchema.vb" />
+    <Compile Include="HttpCacheDic.vb" />
+    <Compile Include="OrmCache.vb" />
+    <Compile Include="My Project\Application.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Application.myapp</DependentUpon>
+    </Compile>
+    <Compile Include="My Project\AssemblyInfo.vb" />
+    <Compile Include="My Project\Resources.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Include="My Project\Settings.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="OrmBase.vb" />
+    <Compile Include="other.vb" />
+    <Compile Include="search.vb" />
+    <Compile Include="SQL2005Schema.vb" />
+    <Compile Include="storedprocs.vb" />
+    <Compile Include="Web\Membership.vb" />
+    <Compile Include="Web\Profile.vb" />
+    <Compile Include="Web\Role.vb" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="My Project\Resources.resx">
+      <CustomToolNamespace>My.Resources</CustomToolNamespace>
+      <Generator>VbMyResourcesResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.vb</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="My Project\Application.myapp">
+      <Generator>MyApplicationCodeGenerator</Generator>
+      <LastGenOutput>Application.Designer.vb</LastGenOutput>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
+</Project>
