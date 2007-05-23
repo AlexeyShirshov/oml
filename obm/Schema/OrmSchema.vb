@@ -719,22 +719,27 @@ Namespace Orm
 
                             For Each ea As EntityAttribute In entities
                                 If ea.Version = _version Then
+                                    Dim schema As IOrmObjectSchemaBase = Nothing
                                     Try
-                                        Dim schema As IOrmObjectSchemaBase = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
-                                        Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
-                                        If n IsNot Nothing Then
-                                            n.GetSchema(Me, tp)
-                                        End If
-                                        If Not String.IsNullOrEmpty(ea.EntityName) Then
-                                            If names.Contains(ea.EntityName) Then
-                                                Dim tt As Type = CType(names(ea.EntityName), Type)
-                                                If tt.IsAssignableFrom(tp) Then
-                                                    names(ea.EntityName) = tp
-                                                End If
-                                            Else
-                                                names.Add(ea.EntityName, tp)
+                                        schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
+                                    Catch ex As Exception
+                                        Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                    End Try
+                                    Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
+                                    If n IsNot Nothing Then
+                                        n.GetSchema(Me, tp)
+                                    End If
+                                    If Not String.IsNullOrEmpty(ea.EntityName) Then
+                                        If names.Contains(ea.EntityName) Then
+                                            Dim tt As Type = CType(names(ea.EntityName), Type)
+                                            If tt.IsAssignableFrom(tp) Then
+                                                names(ea.EntityName) = tp
                                             End If
+                                        Else
+                                            names.Add(ea.EntityName, tp)
                                         End If
+                                    End If
+                                    Try
                                         idic.Add(tp, schema)
                                     Catch ex As ArgumentException
                                         Throw New DBSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
@@ -747,22 +752,28 @@ Namespace Orm
 
                                 For Each ea As EntityAttribute In entities2
                                     If ea.Version = _version Then
+
+                                        Dim schema As IOrmObjectSchemaBase = Nothing
                                         Try
-                                            Dim schema As IOrmObjectSchemaBase = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
-                                            Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
-                                            If n IsNot Nothing Then
-                                                n.GetSchema(Me, tp)
-                                            End If
-                                            If Not String.IsNullOrEmpty(ea.EntityName) AndAlso entities.Length = 0 Then
-                                                If names.Contains(ea.EntityName) Then
-                                                    Dim tt As Type = CType(names(ea.EntityName), Type)
-                                                    If tt.IsAssignableFrom(tp) Then
-                                                        names(ea.EntityName) = tp
-                                                    End If
-                                                Else
-                                                    names.Add(ea.EntityName, tp)
+                                            schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
+                                        Catch ex As Exception
+                                            Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                        End Try
+                                        Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
+                                        If n IsNot Nothing Then
+                                            n.GetSchema(Me, tp)
+                                        End If
+                                        If Not String.IsNullOrEmpty(ea.EntityName) AndAlso entities.Length = 0 Then
+                                            If names.Contains(ea.EntityName) Then
+                                                Dim tt As Type = CType(names(ea.EntityName), Type)
+                                                If tt.IsAssignableFrom(tp) Then
+                                                    names(ea.EntityName) = tp
                                                 End If
+                                            Else
+                                                names.Add(ea.EntityName, tp)
                                             End If
+                                        End If
+                                        Try
                                             idic.Add(tp, schema)
                                             Exit For
                                         Catch ex As ArgumentException
@@ -774,22 +785,28 @@ Namespace Orm
                                 If Not idic.Contains(tp) Then
                                     For Each ea As EntityAttribute In entities
                                         If _mapv IsNot Nothing AndAlso _mapv(_version, ea, tp) Then
+
+                                            Dim schema As IOrmObjectSchemaBase = Nothing
                                             Try
-                                                Dim schema As IOrmObjectSchemaBase = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
-                                                Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
-                                                If n IsNot Nothing Then
-                                                    n.GetSchema(Me, tp)
-                                                End If
-                                                If Not String.IsNullOrEmpty(ea.EntityName) Then
-                                                    If names.Contains(ea.EntityName) Then
-                                                        Dim tt As Type = CType(names(ea.EntityName), Type)
-                                                        If tt.IsAssignableFrom(tp) Then
-                                                            names(ea.EntityName) = tp
-                                                        End If
-                                                    Else
-                                                        names.Add(ea.EntityName, tp)
+                                                schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
+                                            Catch ex As Exception
+                                                Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                            End Try
+                                            Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
+                                            If n IsNot Nothing Then
+                                                n.GetSchema(Me, tp)
+                                            End If
+                                            If Not String.IsNullOrEmpty(ea.EntityName) Then
+                                                If names.Contains(ea.EntityName) Then
+                                                    Dim tt As Type = CType(names(ea.EntityName), Type)
+                                                    If tt.IsAssignableFrom(tp) Then
+                                                        names(ea.EntityName) = tp
                                                     End If
+                                                Else
+                                                    names.Add(ea.EntityName, tp)
                                                 End If
+                                            End If
+                                            Try
                                                 idic.Add(tp, schema)
                                             Catch ex As ArgumentException
                                                 Throw New DBSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
@@ -800,22 +817,28 @@ Namespace Orm
                                     If Not idic.Contains(tp) Then
                                         For Each ea As EntityAttribute In entities2
                                             If _mapv IsNot Nothing AndAlso _mapv(_version, ea, tp) Then
+
+                                                Dim schema As IOrmObjectSchemaBase = Nothing
                                                 Try
-                                                    Dim schema As IOrmObjectSchemaBase = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
-                                                    Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
-                                                    If n IsNot Nothing Then
-                                                        n.GetSchema(Me, tp)
-                                                    End If
-                                                    If Not String.IsNullOrEmpty(ea.EntityName) AndAlso entities.Length = 0 Then
-                                                        If names.Contains(ea.EntityName) Then
-                                                            Dim tt As Type = CType(names(ea.EntityName), Type)
-                                                            If tt.IsAssignableFrom(tp) Then
-                                                                names(ea.EntityName) = tp
-                                                            End If
-                                                        Else
-                                                            names.Add(ea.EntityName, tp)
+                                                    schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
+                                                Catch ex As Exception
+                                                    Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                                End Try
+                                                Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
+                                                If n IsNot Nothing Then
+                                                    n.GetSchema(Me, tp)
+                                                End If
+                                                If Not String.IsNullOrEmpty(ea.EntityName) AndAlso entities.Length = 0 Then
+                                                    If names.Contains(ea.EntityName) Then
+                                                        Dim tt As Type = CType(names(ea.EntityName), Type)
+                                                        If tt.IsAssignableFrom(tp) Then
+                                                            names(ea.EntityName) = tp
                                                         End If
+                                                    Else
+                                                        names.Add(ea.EntityName, tp)
                                                     End If
+                                                End If
+                                                Try
                                                     idic.Add(tp, schema)
                                                     Exit For
                                                 Catch ex As ArgumentException
