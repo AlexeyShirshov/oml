@@ -168,11 +168,11 @@ namespace OrmCodeGenLib
             entitySchemaDefClass.Attributes = MemberAttributes.Public;
             entitySchemaDefClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.NestedPublic;
 
-            if (settings.Behaviour == OrmObjectGeneratorBehaviour.BaseObjects)
-            {
-                entitySchemaDefClass.Attributes |= MemberAttributes.Abstract;
-                entitySchemaDefClass.TypeAttributes |= TypeAttributes.Abstract;
-            }
+			//if (settings.Behaviour == OrmObjectGeneratorBehaviour.BaseObjects)
+			//{
+			//    entitySchemaDefClass.Attributes |= MemberAttributes.Abstract;
+			//    entitySchemaDefClass.TypeAttributes |= TypeAttributes.Abstract;
+			//}
             #endregion определение схемы
 
             #region custom attribute EntityAttribute

@@ -105,11 +105,8 @@ namespace XmlSchemaGen
 				drop = "false";
 			bool dr = bool.Parse(drop);
 
-			string namesp = null;
-			if (!param.TryGetParam("N", out namesp))
-			{
-				namesp = server;
-			}
+			string namesp = string.Empty;
+			param.TryGetParam("N", out namesp);
 
 			string u = null;
 			if (!param.TryGetParam("Y", out u))
@@ -138,7 +135,7 @@ namespace XmlSchemaGen
 			Console.WriteLine("  -name=value\t-  Database table name filter. Example: -name=aspnet_%; -name=!aspnet_%");
 			Console.WriteLine("  -F=[error|merge]\t-  Existing file behavior. Example: -F=error. Default is merge.");
 			Console.WriteLine("  -R\t\t-  Drop deleted columns. Meaningfull only with merge behavior. Example: -R.");
-			Console.WriteLine("  -N=value\t-  Objects namespace. Example: -N=test. Default is <server>");
+			Console.WriteLine("  -N=value\t-  Objects namespace. Example: -N=test.");
 			Console.WriteLine("  -Y\t\t-  Unify entyties with the same PK. Example: -Y.");
 		}
 	}
