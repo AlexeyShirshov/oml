@@ -374,7 +374,7 @@ Namespace Orm
         '    Return i
         'End Function
         Private _list_converter As IListObjectConverter
-        Private _dont_cache_lists As Boolean
+        Protected Friend _dont_cache_lists As Boolean
         Private _newMgr As INewObjects
 
         Public Event BeginUpdate(ByVal o As OrmBase)

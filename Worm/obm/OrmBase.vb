@@ -57,7 +57,7 @@ Namespace Orm
 
         'End Class
 
-        Class AcceptState2
+        Public Class AcceptState2
             Public ReadOnly el As EditableList
             'Public added As Generic.List(Of Integer)
 
