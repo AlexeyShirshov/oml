@@ -50,10 +50,14 @@ Namespace Orm
                         ElseIf o.ObjectState = ObjectState.Modified Then
                             copies.Add(New Pair(Of OrmBase)(o, o.CreateModified))
                         End If
-                        If o.Save(False) Then
-                            need2save.Add(o)
-                        End If
-                        saved.Add(o)
+                        Try
+                            If o.Save(False) Then
+                                need2save.Add(o)
+                            End If
+                            saved.Add(o)
+                        Catch ex As Exception
+                            Throw New OrmManagerException("Error during save " & o.ObjName, ex)
+                        End Try
                     Next
 
                     For Each o As OrmBase In need2save

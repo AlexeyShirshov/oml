@@ -51,20 +51,22 @@ Namespace Orm
             End Function
 
             Public Overrides Sub CreateDepends()
-                _mgr.Cache.AddDependType(GetType(T), _key, _id)
+                If Not _mgr._dont_cache_lists Then
+                    _mgr.Cache.AddDependType(GetType(T), _key, _id)
 
-                If _f IsNot Nothing Then
-                    For Each f As OrmFilter In _f.GetAllFilters
-                        If f.IsParamOrm Then
-                            'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
-                            'If GetType(OrmBase).IsAssignableFrom(tp) Then
-                            _mgr.Cache.AddDepend(f.ValueOrm(_mgr), _key, _id)
-                            'End If
-                        Else
-                            Dim p As New Pair(Of String, Type)(f.FieldName, f.Type)
-                            _mgr.Cache.AddFieldDepend(p, _key, _id)
-                        End If
-                    Next
+                    If _f IsNot Nothing Then
+                        For Each f As OrmFilter In _f.GetAllFilters
+                            If f.IsParamOrm Then
+                                'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
+                                'If GetType(OrmBase).IsAssignableFrom(tp) Then
+                                _mgr.Cache.AddDepend(f.ValueOrm(_mgr), _key, _id)
+                                'End If
+                            Else
+                                Dim p As New Pair(Of String, Type)(f.FieldName, f.Type)
+                                _mgr.Cache.AddFieldDepend(p, _key, _id)
+                            End If
+                        Next
+                    End If
                 End If
             End Sub
 
@@ -584,7 +586,9 @@ Namespace Orm
                         l = l2
                     End If
 
-                    _mgr.Cache.AddConnectedDepend(ct, _key, _id)
+                    If Not _mgr._dont_cache_lists Then
+                        _mgr.Cache.AddConnectedDepend(ct, _key, _id)
+                    End If
 
                     Return New M2MCache(_sort, _st, _f, _obj.Identifier, l, _mgr, mt, t, _direct)
                 Else
@@ -603,11 +607,13 @@ Namespace Orm
             Public Overrides Sub CreateDepends()
                 MyBase.CreateDepends()
 
-                Dim mt As Type = _obj.GetType
-                Dim t As Type = GetType(T)
-                Dim ct As Type = _mgr.DbSchema.GetConnectedType(mt, t)
-                If ct Is Nothing Then
-                    _mgr.Cache.AddM2MObjDependent(_obj, _key, _id)
+                If Not _mgr._dont_cache_lists Then
+                    Dim mt As Type = _obj.GetType
+                    Dim t As Type = GetType(T)
+                    Dim ct As Type = _mgr.DbSchema.GetConnectedType(mt, t)
+                    If ct Is Nothing Then
+                        _mgr.Cache.AddM2MObjDependent(_obj, _key, _id)
+                    End If
                 End If
             End Sub
 

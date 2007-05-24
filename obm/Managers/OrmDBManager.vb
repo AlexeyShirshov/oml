@@ -567,45 +567,53 @@ Namespace Orm
                 o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
             End Sub
 
-            Public Sub Add(ByVal e As M2MCache)
+            Public Function Add(ByVal e As M2MCache) As Boolean
                 Dim el As EditableList = e.Entry
                 If el.MainId = o1.Identifier Then
                     el.Add(o2.Identifier)
                 ElseIf el.MainId = o2.Identifier Then
                     el.Add(o1.Identifier)
                 Else
-                    Throw New OrmManagerException("Invalid cache entry")
+                    Return False
+                    '    Throw New OrmManagerException("Invalid cache entry")
                 End If
-            End Sub
+                Return True
+            End Function
 
-            Public Sub Remove(ByVal e As M2MCache)
+            Public Function Remove(ByVal e As M2MCache) As Boolean
                 Dim el As EditableList = e.Entry
                 If el.MainId = o1.Identifier Then
                     el.Delete(o2.Identifier)
                 ElseIf el.MainId = o2.Identifier Then
                     el.Delete(o1.Identifier)
                 Else
-                    Throw New OrmManagerException("Invalid cache entry")
+                    Return False
+                    '    Throw New OrmManagerException("Invalid cache entry")
                 End If
-            End Sub
+                Return True
+            End Function
 
-            Public Sub Accept(ByVal e As M2MCache)
+            Public Function Accept(ByVal e As M2MCache) As Boolean
                 Dim el As EditableList = e.Entry
                 If el.MainId = o1.Identifier OrElse el.MainId = o2.Identifier Then
                     el.Accept()
+                    Return True
                 Else
-                    Throw New OrmManagerException("Invalid cache entry")
+                    'Throw New OrmManagerException("Invalid cache entry")
+                    Return False
                 End If
-            End Sub
+            End Function
 
-            Public Sub Reject(ByVal e As M2MCache)
+            Public Function Reject(ByVal e As M2MCache) As Boolean
                 Dim el As EditableList = e.Entry
                 If el.MainId = o1.Identifier OrElse el.MainId = o2.Identifier Then
                     el.Reject(False)
+                    Return True
                 Else
-                    Throw New OrmManagerException("Invalid cache entry")
+                    Return False
+                    'Throw New OrmManagerException("Invalid cache entry")
                 End If
-            End Sub
+            End Function
         End Class
 
         'Public Overloads Sub DeleteRelation2(ByVal obj As OrmBase, ByVal t As Type)
