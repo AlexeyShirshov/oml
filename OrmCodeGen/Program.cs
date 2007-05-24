@@ -117,17 +117,22 @@ namespace OrmCodeGen
                 return;
             }
 
-            if (!System.IO.Directory.Exists(outputFolder))
-            {
-                Console.WriteLine("Error: output folder not found.");
-                return;
-            }
-            if(string.IsNullOrEmpty(System.IO.Path.GetDirectoryName(outputFolder)))
-                outputFolder = System.IO.Path.GetPathRoot(outputFolder + System.IO.Path.DirectorySeparatorChar.ToString());
-            else
-                outputFolder = System.IO.Path.GetDirectoryName(outputFolder + System.IO.Path.DirectorySeparatorChar.ToString());
+			if (!System.IO.Directory.Exists(outputFolder))
+			{
+				System.IO.Directory.CreateDirectory(outputFolder);
+			}
 
-            try
+			if (!System.IO.Path.IsPathRooted(outputFolder))
+			{
+				outputFolder = System.IO.Path.Combine(Directory.GetCurrentDirectory(), outputFolder);
+			}
+
+			//if (string.IsNullOrEmpty(System.IO.Path.GetDirectoryName(outputFolder)))
+			//    outputFolder = System.IO.Path.GetPathRoot(outputFolder + System.IO.Path.DirectorySeparatorChar.ToString());
+			//else
+			//    outputFolder = System.IO.Path.GetDirectoryName(outputFolder + System.IO.Path.DirectorySeparatorChar.ToString());
+
+			try
             {
                 Console.Write("Parsing file '{0}'...   ", inputFilename);
                 using (XmlReader rdr = XmlReader.Create(inputFilename))
