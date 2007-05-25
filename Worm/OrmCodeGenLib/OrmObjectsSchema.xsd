@@ -16,7 +16,14 @@
 				<xs:annotation>
 					<xs:documentation>Список используемых таблиц</xs:documentation>
 				</xs:annotation>
-			</xs:element>
+        <xs:keyref name="entTableRef" refer="TableId">
+          <xs:annotation>
+            <xs:documentation>Ссылка на таблицы</xs:documentation>
+          </xs:annotation>
+          <xs:selector xpath="NS:Table" />
+          <xs:field xpath="@ref" />
+        </xs:keyref>
+      </xs:element>
 			<xs:element name="Properties" type="PropertiesCollection_t" minOccurs="1" maxOccurs="1">
 				<xs:annotation>
 					<xs:documentation>Свойства сущности</xs:documentation>
@@ -49,10 +56,10 @@
 					<xs:selector xpath="NS:Property" />
 					<xs:field xpath="@table" />
 				</xs:keyref>-->
-				<!--<xs:keyref name="propType" refer="TypeId">
+				<xs:keyref name="propType" refer="TypeId">
 					<xs:selector xpath="NS:Property" />
 					<xs:field xpath="@typeRef" />
-				</xs:keyref>-->
+				</xs:keyref>
 			</xs:element>
 		</xs:sequence>
 		<xs:attribute name="id" type="xs:Name" use="required">
@@ -259,10 +266,10 @@
 		</xs:annotation>
 		<xs:choice minOccurs="1" maxOccurs="1">
 			<xs:element name="Entity" type="EntityRef_t">
-				<!--<xs:keyref name="typeEntityRef" refer="EntityId">
+				<xs:keyref name="typeEntityRef" refer="EntityId">
 					<xs:selector xpath="."/>
 					<xs:field xpath="@ref" />
-				</xs:keyref>-->
+				</xs:keyref>
 			</xs:element>
 			<xs:element name="ClrType" type="ClrType_t" />
 			<xs:element name="UserType" type="UserType_t" />
