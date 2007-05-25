@@ -9,7 +9,7 @@ Imports System.Collections.Generic
         Dim schema As Orm.DbSchema = New Orm.DbSchema("1")
 
         Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(schema)
-            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Orm.OrmFilter(GetType(Table1), "EnumStr", New TypeWrap(Of Object)(Enum1.sec), Orm.FilterOperation.Equal), Table1Sort.Enum.ToString, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
 
             Assert.AreEqual(2, c.Count)
 
@@ -26,7 +26,7 @@ Imports System.Collections.Generic
 
                 n.Save(True)
 
-                c = mgr.Find(Of Table1)(New Orm.OrmFilter(GetType(Table1), "EnumStr", New TypeWrap(Of Object)(Enum1.sec.ToString), Orm.FilterOperation.Equal), Table1Sort.Enum.ToString, Orm.SortType.Asc, True)
+                c = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(2, c.Count)
                 l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
 
@@ -40,7 +40,7 @@ Imports System.Collections.Generic
 
                 n.Save(True)
 
-                c = mgr.Find(Of Table1)(New Orm.OrmFilter(GetType(Table1), "EnumStr", New TypeWrap(Of Object)(Enum1.sec.ToString), Orm.FilterOperation.Equal), Table1Sort.Enum.ToString, Orm.SortType.Asc, True)
+                c = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(3, c.Count)
                 l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
 
@@ -58,7 +58,7 @@ Imports System.Collections.Generic
         Dim schema As Orm.DbSchema = New Orm.DbSchema("1")
 
         Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(schema)
-            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Orm.OrmFilter(GetType(Table1), "EnumStr", New TypeWrap(Of Object)(Enum1.sec), Orm.FilterOperation.Equal), Table1Sort.Enum.ToString, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
 
             Assert.AreEqual(2, c.Count)
 
@@ -76,14 +76,14 @@ Imports System.Collections.Generic
 
                 n.Save(True)
 
-                c = mgr.Find(Of Table1)(New Orm.OrmFilter(GetType(Table1), "EnumStr", New TypeWrap(Of Object)(Enum1.sec.ToString), Orm.FilterOperation.Equal), Table1Sort.Enum.ToString, Orm.SortType.Asc, True)
+                c = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(3, c.Count)
                 l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
 
                 l(1).Delete()
                 l(1).Save(True)
 
-                c = mgr.Find(Of Table1)(New Orm.OrmFilter(GetType(Table1), "EnumStr", New TypeWrap(Of Object)(Enum1.sec.ToString), Orm.FilterOperation.Equal), Table1Sort.Enum.ToString, Orm.SortType.Asc, True)
+                c = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(2, c.Count)
 
             Finally

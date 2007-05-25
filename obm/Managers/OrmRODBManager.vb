@@ -356,22 +356,22 @@ Namespace Orm
         End Sub
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, filter, sort, sortType, key, id)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
+            Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, filter, sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal join() As OrmJoin, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New DistinctFilterCustDelegate(Of T)(Me, join, filter, sort, sortType, key, id)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
+            Return New DistinctFilterCustDelegate(Of T)(Me, join, filter, sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New FilterCustDelegate(Of T)(Me, filter, sort, sortType, key, id)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
+            Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManagerBase.ICustDelegate(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManagerBase.ICustDelegate(Of T)
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
             End If
@@ -390,18 +390,18 @@ Namespace Orm
             If Not has_id Then
                 l.Add(DbSchema.GetColumnByFieldName(GetType(T), "ID"))
             End If
-            Return New FilterCustDelegate(Of T)(Me, filter, l, sort, sortType, key, id)
+            Return New FilterCustDelegate(Of T)(Me, filter, l, sort, key, id)
         End Function
 
         Protected Overrides Function GetCustDelegate4Top(Of T As {New, OrmBase})(ByVal top As Integer, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New FilterCustDelegate4Top(Of T)(Me, top, filter, sort, sortType, key, id)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
+            Return New FilterCustDelegate4Top(Of T)(Me, top, filter, sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
-            ByVal obj As OrmBase, ByVal filter As IOrmFilter, ByVal sort As String, ByVal sortType As SortType, _
+            ByVal obj As OrmBase, ByVal filter As IOrmFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal sync As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
-            Return New M2MDataProvider(Of T2)(Me, obj, filter, sort, sortType, id, sync, key, direct)
+            Return New M2MDataProvider(Of T2)(Me, obj, filter, sort, id, sync, key, direct)
         End Function
 
         'Protected Overrides Function GetCustDelegateTag(Of T As {New, OrmBase})( _
@@ -414,7 +414,7 @@ Namespace Orm
         Protected Function FindConnected(ByVal ct As Type, ByVal selectedType As Type, _
             ByVal filterType As Type, ByVal field As String, _
             ByVal connectedFilter As IOrmFilter, ByVal filter As IOrmFilter, ByVal withLoad As Boolean, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal dosort As Boolean) As IList
+            ByVal sort As Sort) As IList
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim arr As Generic.List(Of ColumnAttribute) = Nothing
 
@@ -450,7 +450,7 @@ Namespace Orm
                     '    arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
                     '    sb.Append(Schema.SelectID(ct, almgr, params))
                     'End If
-                    Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse dosort
+                    Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal)
                     'Dim table As String = schema2.GetTables(0)
                     DbSchema.AppendJoins(selectedType, almgr, schema2.GetTables, sb, params, DbSchema.GetObjectSchema(ct).GetTables(0), id_clm, appendMainTable)
                     If withLoad Then
@@ -467,8 +467,8 @@ Namespace Orm
                     con.AddFilter(schema2.GetFilter(GetFilterInfo))
                     DbSchema.AppendWhere(ct, con.Condition, almgr, sb, GetFilterInfo, params)
 
-                    If dosort Then
-                        DbSchema.AppendOrder(selectedType, sort, sortType, almgr, sb)
+                    If sort IsNot Nothing AndAlso Not sort.IsExternal Then
+                        DbSchema.AppendOrder(selectedType, sort, almgr, sb)
                     End If
 
                     params.AppendParams(.Parameters)

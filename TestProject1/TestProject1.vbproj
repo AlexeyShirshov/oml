@@ -56,12 +56,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Code\MyMembership.vb" />
+    <Compile Include="App_Code\MyRoles.vb" />
     <Compile Include="App_Code\OrmSupp.vb" />
     <Compile Include="App_Code\Profile.vb" />
     <Compile Include="ASPHosting\TestMembership.vb" />
     <Compile Include="ASPHosting\TestProfile.vb" />
     <Compile Include="ASPHosting\TestCache.vb" />
     <Compile Include="ASPHosting\TestProcess.vb" />
+    <Compile Include="TestCriteria.vb" />
     <Compile Include="TestRealSchema\TestListManager.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="OrmBaseTest.vb" />

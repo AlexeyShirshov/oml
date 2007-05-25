@@ -96,6 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="advcache.vb" />
+    <Compile Include="Criteria.vb" />
     <Compile Include="Managers\DataProviders.vb" />
     <Compile Include="OrmDictionary.vb" />
     <Compile Include="MetaAttributes.vb" />

@@ -19,13 +19,13 @@ Public Class Entity
         Return New Entity(Identifier, OrmCache, OrmSchema)
     End Function
 
-    Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-        Throw New NotImplementedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
+    '    Throw New NotImplementedException
+    'End Function
 
-    Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-        Throw New NotImplementedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
+    '    Throw New NotImplementedException
+    'End Function
 
     'Public Overrides ReadOnly Property HasChanges() As Boolean
     '    Get
@@ -61,23 +61,23 @@ Public MustInherit Class ObjectSchemaBaseImplementation
         Return New Orm.ColumnAttribute() {}
     End Function
 
-    Public Overridable Function MapSort2FieldName(ByVal sort As String) As String Implements Worm.Orm.IOrmObjectSchema.MapSort2FieldName
-        Return Nothing
-    End Function
+    'Public Overridable Function MapSort2FieldName(ByVal sort As String) As String Implements Worm.Orm.IOrmObjectSchema.MapSort2FieldName
+    '    Return Nothing
+    'End Function
 
     Public MustOverride Function GetTables() As Orm.OrmTable() Implements Worm.Orm.IOrmObjectSchema.GetTables
 
     Public MustOverride Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column) Implements Worm.Orm.IOrmObjectSchema.GetFieldColumnMap
 
-    Public Function ExternalSort(ByVal sort As String, ByVal sortType As Orm.SortType, ByVal objs As Collections.IList) As Collections.IList Implements Worm.Orm.IOrmObjectSchema.ExternalSort
-        Return objs
-    End Function
+    'Public Function ExternalSort(ByVal sort As String, ByVal sortType As Orm.SortType, ByVal objs As Collections.IList) As Collections.IList Implements Worm.Orm.IOrmObjectSchema.ExternalSort
+    '    Return objs
+    'End Function
 
-    Public ReadOnly Property IsExternalSort(ByVal sort As String) As Boolean Implements Worm.Orm.IOrmObjectSchema.IsExternalSort
-        Get
-            Return False
-        End Get
-    End Property
+    'Public ReadOnly Property IsExternalSort(ByVal sort As String) As Boolean Implements Worm.Orm.IOrmObjectSchema.IsExternalSort
+    '    Get
+    '        Return False
+    '    End Get
+    'End Property
 
     Public Overridable Function GetM2MRelations() As Worm.Orm.M2MRelation() Implements Worm.Orm.IOrmObjectSchema.GetM2MRelations
         Return New Orm.M2MRelation() {}
@@ -280,6 +280,120 @@ End Class
 Public Class Entity4
     Inherits Orm.OrmBase
 
+    Private _name As String
+
+    Public Sub New()
+        MyBase.New()
+    End Sub
+
+    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
+        MyBase.New(id, cache, schema)
+    End Sub
+
+    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+        Return New Entity4(Identifier, OrmCache, OrmSchema)
+    End Function
+
+    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+        CopyEntity4(CType(from, Entity4), CType([to], Entity4))
+    End Sub
+
+    Protected Shared Sub CopyEntity4(ByVal from As Entity4, ByVal [to] As Entity4)
+        With [from]
+            [to]._name = ._name
+        End With
+    End Sub
+
+    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
+    '    Return New Comparer(CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort), sortType)
+    'End Function
+
+    'Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
+    '    Return CType(New Comparer(CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort), sortType), Global.System.Collections.Generic.IComparer(Of T))
+    'End Function
+
+    'Public Overrides ReadOnly Property HasChanges() As Boolean
+    '    Get
+    '        Return False
+    '    End Get
+    'End Property
+
+    <Orm.Column("Title")> _
+    Public Property Title() As String
+        Get
+            Using SyncHelper(True, "Title")
+                Return _name
+            End Using
+        End Get
+        Set(ByVal value As String)
+            Using SyncHelper(False, "Title")
+                _name = value
+            End Using
+        End Set
+    End Property
+
+End Class
+
+Public Class EntitySchema4v1Implementation
+    Inherits ObjectSchemaBaseImplementation
+    Implements Orm.IOrmSorting
+
+    Private _idx As Orm.OrmObjectIndex
+    Protected _tables() As Orm.OrmTable = {New Orm.OrmTable("dbo.ent2")}
+    Protected _rels() As Orm.M2MRelation
+
+    Public Enum Tables
+        Main
+    End Enum
+
+    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+        If _idx Is Nothing Then
+            Dim idx As New Orm.OrmObjectIndex
+            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main)))
+            idx.Add(New Orm.MapField2Column("Title", "name", GetTables()(Tables.Main)))
+            _idx = idx
+        End If
+        Return _idx
+    End Function
+
+    Public Overrides Function GetTables() As Orm.OrmTable()
+        Return _tables
+    End Function
+
+    'Public Overrides Function MapSort2FieldName(ByVal sort As String) As String
+    '    Select Case CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort)
+    '        Case Entity4.Entity4Sort.Name
+    '            Return "Title"
+    '        Case Else
+    '            Throw New NotSupportedException("Sorting " & sort & " is not supported")
+    '    End Select
+    'End Function
+
+    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+        If _rels Is Nothing Then
+            _rels = New Orm.M2MRelation() {New Orm.M2MRelation(GetType(Entity), New Orm.OrmTable("dbo.[1to2]"), "ent1_id", False, New System.Data.Common.DataTableMapping)}
+        End If
+        Return _rels
+    End Function
+
+    Public Function CreateSortComparer(ByVal s As Worm.Orm.Sort) As System.Collections.IComparer Implements Worm.Orm.IOrmSorting.CreateSortComparer
+        If s.FieldName = "Title" Then
+            Return New Comparer(Entity4Sort.Name, s.Order)
+        End If
+        Return Nothing
+    End Function
+
+    Public Function CreateSortComparer1(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Worm.Orm.Sort) As System.Collections.Generic.IComparer(Of T) Implements Worm.Orm.IOrmSorting.CreateSortComparer
+        If s.FieldName = "Title" Then
+            Return CType(New Comparer(Entity4Sort.Name, s.Order), Global.System.Collections.Generic.IComparer(Of T))
+        End If
+        Return Nothing
+    End Function
+
+    Public Function ExternalSort(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Worm.Orm.Sort, ByVal objs As System.Collections.Generic.ICollection(Of T)) As System.Collections.Generic.ICollection(Of T) Implements Worm.Orm.IOrmSorting.ExternalSort
+        Throw New NotSupportedException
+    End Function
+
     Public Enum Entity4Sort
         Name
     End Enum
@@ -321,100 +435,6 @@ Public Class Entity4
         End Function
     End Class
 
-    Private _name As String
-
-    Public Sub New()
-        MyBase.New()
-    End Sub
-
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
-        MyBase.New(id, cache, schema)
-    End Sub
-
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New Entity4(Identifier, OrmCache, OrmSchema)
-    End Function
-
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-        CopyEntity4(CType(from, Entity4), CType([to], Entity4))
-    End Sub
-
-    Protected Shared Sub CopyEntity4(ByVal from As Entity4, ByVal [to] As Entity4)
-        With [from]
-            [to]._name = ._name
-        End With
-    End Sub
-
-    Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-        Return New Comparer(CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort), sortType)
-    End Function
-
-    Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-        Return CType(New Comparer(CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort), sortType), Global.System.Collections.Generic.IComparer(Of T))
-    End Function
-
-    'Public Overrides ReadOnly Property HasChanges() As Boolean
-    '    Get
-    '        Return False
-    '    End Get
-    'End Property
-
-    <Orm.Column("Title")> _
-    Public Property Title() As String
-        Get
-            Using SyncHelper(True, "Title")
-                Return _name
-            End Using
-        End Get
-        Set(ByVal value As String)
-            Using SyncHelper(False, "Title")
-                _name = value
-            End Using
-        End Set
-    End Property
-
-End Class
-
-Public Class EntitySchema4v1Implementation
-    Inherits ObjectSchemaBaseImplementation
-
-    Private _idx As Orm.OrmObjectIndex
-    Protected _tables() As Orm.OrmTable = {New Orm.OrmTable("dbo.ent2")}
-    Protected _rels() As Orm.M2MRelation
-
-    Public Enum Tables
-        Main
-    End Enum
-
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
-        If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Title", "name", GetTables()(Tables.Main)))
-            _idx = idx
-        End If
-        Return _idx
-    End Function
-
-    Public Overrides Function GetTables() As Orm.OrmTable()
-        Return _tables
-    End Function
-
-    Public Overrides Function MapSort2FieldName(ByVal sort As String) As String
-        Select Case CType(System.Enum.Parse(GetType(Entity4.Entity4Sort), sort), Entity4.Entity4Sort)
-            Case Entity4.Entity4Sort.Name
-                Return "Title"
-            Case Else
-                Throw New NotSupportedException("Sorting " & sort & " is not supported")
-        End Select
-    End Function
-
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
-        If _rels Is Nothing Then
-            _rels = New Orm.M2MRelation() {New Orm.M2MRelation(GetType(Entity), New Orm.OrmTable("dbo.[1to2]"), "ent1_id", False, New System.Data.Common.DataTableMapping)}
-        End If
-        Return _rels
-    End Function
 End Class
 
 Public Class EntitySchema4v2Implementation
@@ -485,13 +505,13 @@ Public Class Entity5
         CopyEntity5(CType([from], Entity5), CType([to], Entity5))
     End Sub
 
-    Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-        Throw New NotImplementedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
+    '    Throw New NotImplementedException
+    'End Function
 
-    Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-        Throw New NotImplementedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(Of T As {Orm.OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
+    '    Throw New NotImplementedException
+    'End Function
 
     'Public Overrides ReadOnly Property HasChanges() As Boolean
     '    Get

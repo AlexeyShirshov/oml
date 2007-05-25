@@ -12,18 +12,18 @@ Namespace Orm
             Implements ICacheValidator
 
             Protected _f As IOrmFilter
-            Protected _sort As String
-            Protected _st As SortType
+            Protected _sort As Sort
+            'Protected _st As SortType
             Protected _mgr As OrmReadOnlyDBManager
             Protected _key As String
             Protected _id As String
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IOrmFilter, _
-                ByVal sort As String, ByVal st As SortType, ByVal key As String, ByVal id As String)
+                ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 _mgr = mgr
                 _f = f
                 _sort = sort
-                _st = st
+                '_st = st
                 _key = key
                 _id = id
             End Sub
@@ -76,24 +76,24 @@ Namespace Orm
                 End Get
             End Property
 
-            Public Overrides ReadOnly Property Sort() As String
+            Public Overrides ReadOnly Property Sort() As Sort
                 Get
                     Return _sort
                 End Get
             End Property
 
-            Public Overrides ReadOnly Property SortType() As SortType
-                Get
-                    Return _st
-                End Get
-            End Property
+            'Public Overrides ReadOnly Property SortType() As SortType
+            '    Get
+            '        Return _st
+            '    End Get
+            'End Property
 
             Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
-                Return New CachedItem(_sort, _st, _f, GetValues(withLoad), _mgr)
+                Return New CachedItem(_sort, _f, GetValues(withLoad), _mgr)
             End Function
 
             Public Overrides Function GetCacheItem(ByVal col As System.Collections.Generic.ICollection(Of T)) As OrmManagerBase.CachedItem
-                Return New CachedItem(_sort, _st, _f, col, _mgr)
+                Return New CachedItem(_sort, _f, col, _mgr)
             End Function
         End Class
 
@@ -103,19 +103,19 @@ Namespace Orm
             Private _cols As List(Of ColumnAttribute)
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IOrmFilter, _
-                ByVal sort As String, ByVal st As SortType, ByVal key As String, ByVal id As String)
-                MyBase.New(mgr, f, sort, st, key, id)
+                ByVal sort As Sort, ByVal key As String, ByVal id As String)
+                MyBase.New(mgr, f, sort, key, id)
             End Sub
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IOrmFilter, ByVal cols As List(Of ColumnAttribute), _
-                ByVal sort As String, ByVal st As SortType, ByVal key As String, ByVal id As String)
-                MyBase.New(mgr, f, sort, st, key, id)
+                ByVal sort As Sort, ByVal key As String, ByVal id As String)
+                MyBase.New(mgr, f, sort, key, id)
                 _cols = cols
             End Sub
 
             Public Overrides Function GetValues(ByVal withLoad As Boolean) As Generic.ICollection(Of T)
                 Dim original_type As Type = GetType(T)
-                Dim sort As Boolean = False
+
                 Using cmd As System.Data.Common.DbCommand = _mgr.DbSchema.CreateDBCommand
                     Dim arr As Generic.List(Of ColumnAttribute) = _cols
 
@@ -140,19 +140,17 @@ Namespace Orm
                         c.AddFilter(_f)
                         c.AddFilter(AppendWhere)
                         _mgr.DbSchema.AppendWhere(original_type, c.Condition, almgr, sb, _mgr.GetFilterInfo, params)
-                        If Not String.IsNullOrEmpty(_sort) AndAlso _mgr.DbSchema.GetObjectSchema(original_type).IsExternalSort(_sort) Then
-                            sort = True
-                        Else
-                            _mgr.DbSchema.AppendOrder(original_type, _sort, _st, almgr, sb)
+                        If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
+                            _mgr.DbSchema.AppendOrder(original_type, _sort, almgr, sb)
                         End If
 
                         params.AppendParams(.Parameters)
                         .CommandText = sb.ToString
                     End With
 
-                    Dim r As List(Of T) = CType(_mgr.LoadMultipleObjects(Of T)(original_type, cmd, withLoad, Nothing, arr), List(Of T))
-                    If sort Then
-                        r = _mgr.DbSchema.ExternalSort(Of T)(_sort, _st, r)
+                    Dim r As ICollection(Of T) = _mgr.LoadMultipleObjects(Of T)(original_type, cmd, withLoad, Nothing, arr)
+                    If _sort IsNot Nothing AndAlso _sort.IsExternal Then
+                        r = _mgr.DbSchema.ExternalSort(Of T)(_sort, r)
                     End If
                     Return r
                 End Using
@@ -189,8 +187,8 @@ Namespace Orm
             Private _top As Integer
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal top As Integer, ByVal f As IOrmFilter, _
-                ByVal sort As String, ByVal st As SortType, ByVal key As String, ByVal id As String)
-                MyBase.New(mgr, f, sort, st, key, id)
+                ByVal sort As Sort, ByVal key As String, ByVal id As String)
+                MyBase.New(mgr, f, sort, key, id)
                 _top = top
             End Sub
 
@@ -410,8 +408,8 @@ Namespace Orm
             Private _join() As OrmJoin
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IOrmFilter, _
-                ByVal sort As String, ByVal st As SortType, ByVal key As String, ByVal id As String)
-                MyBase.New(mgr, f, sort, st, key, id)
+                ByVal sort As Sort, ByVal key As String, ByVal id As String)
+                MyBase.New(mgr, f, sort, key, id)
                 _join = join
             End Sub
 
@@ -431,8 +429,8 @@ Namespace Orm
             Private _appendSecong As Boolean
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal relation As M2MRelation, ByVal f As IOrmFilter, _
-                ByVal sort As String, ByVal st As SortType, ByVal key As String, ByVal id As String)
-                MyBase.New(mgr, f, sort, st, key, id)
+                ByVal sort As Sort, ByVal key As String, ByVal id As String)
+                MyBase.New(mgr, f, sort, key, id)
                 _rel = relation
 
                 If mgr.ObjectSchema.GetObjectSchema(relation.Type).GetFilter(mgr.GetFilterInfo) IsNot Nothing Then
@@ -472,9 +470,10 @@ Namespace Orm
             'Private _rev As Boolean
             'Private _soft_renew As Boolean
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As OrmBase, ByVal filter As IOrmFilter, ByVal sort As String, ByVal st As SortType, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As OrmBase, ByVal filter As IOrmFilter, _
+                ByVal sort As Sort, _
                 ByVal id As String, ByVal sync As String, ByVal key As String, ByVal direct As Boolean)
-                MyBase.New(mgr, filter, sort, st, key, id)
+                MyBase.New(mgr, filter, sort, key, id)
                 _obj = obj
                 _direct = direct
                 '_sync = sync & OrmManagerBase.GetTablePostfix
@@ -487,19 +486,17 @@ Namespace Orm
 
             Protected Function GetValuesInternal(ByVal withLoad As Boolean) As System.Collections.Generic.IList(Of Integer)
                 Dim t As Type = GetType(T)
-                Dim external_sort As Boolean = False
+
                 Using cmd As System.Data.Common.DbCommand = _mgr.DbSchema.CreateDBCommand
                     With cmd
                         Dim params As IList(Of System.Data.Common.DbParameter) = Nothing
                         Dim almgr As AliasMgr = AliasMgr.Create
 
                         Dim sb As New StringBuilder
-                        sb.Append(_mgr.DbSchema.SelectM2M(almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, Not String.IsNullOrEmpty(_sort), params, _direct))
+                        sb.Append(_mgr.DbSchema.SelectM2M(almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, _sort IsNot Nothing, params, _direct))
 
-                        If Not String.IsNullOrEmpty(_sort) AndAlso _mgr.DbSchema.GetObjectSchema(t).IsExternalSort(_sort) Then
-                            external_sort = True
-                        Else
-                            _mgr.DbSchema.AppendOrder(t, _sort, _st, almgr, sb)
+                        If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
+                            _mgr.DbSchema.AppendOrder(t, _sort, almgr, sb)
                         End If
 
                         .CommandText = sb.ToString
@@ -534,9 +531,9 @@ Namespace Orm
                                 End If
                             Loop
 
-                            If external_sort Then
+                            If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                                 Dim l2 As New List(Of Integer)
-                                For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_sort, _st, CType(_mgr.ConvertIds2Objects(Of T)(l, False), List(Of T)))
+                                For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_sort, _mgr.ConvertIds2Objects(Of T)(l, False))
                                     l2.Add(o.Identifier)
                                 Next
                                 l = l2
@@ -561,13 +558,13 @@ Namespace Orm
                     Dim f2 As String = _mgr.DbSchema.GetConnectedTypeField(ct, t)
                     Dim fl As New OrmFilter(ct, f1, _obj, FilterOperation.Equal)
                     Dim l As New List(Of Integer)
-                    Dim external_sort As Boolean = False
+                    'Dim external_sort As Boolean = False
 
-                    If Not String.IsNullOrEmpty(_sort) AndAlso _mgr.DbSchema.GetObjectSchema(t).IsExternalSort(_sort) Then
-                        external_sort = True
-                    End If
+                    'If Not String.IsNullOrEmpty(_sort) AndAlso _mgr.DbSchema.GetObjectSchema(t).IsExternalSort(_sort) Then
+                    '    external_sort = True
+                    'End If
 
-                    For Each o As OrmBase In _mgr.FindConnected(ct, t, mt, f2, fl, Filter, withLoad, _sort, _st, Not (external_sort OrElse String.IsNullOrEmpty(_sort)))
+                    For Each o As OrmBase In _mgr.FindConnected(ct, t, mt, f2, fl, Filter, withLoad, _sort)
                         Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
 
@@ -578,9 +575,9 @@ Namespace Orm
                         l.Add(id2)
                     Next
 
-                    If external_sort Then
+                    If _sort IsNot Nothing AndAlso Sort.IsExternal Then
                         Dim l2 As New List(Of Integer)
-                        For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_sort, _st, CType(_mgr.ConvertIds2Objects(Of T)(l, False), List(Of T)))
+                        For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_sort, _mgr.ConvertIds2Objects(Of T)(l, False))
                             l2.Add(o.Identifier)
                         Next
                         l = l2
@@ -590,9 +587,9 @@ Namespace Orm
                         _mgr.Cache.AddConnectedDepend(ct, _key, _id)
                     End If
 
-                    Return New M2MCache(_sort, _st, _f, _obj.Identifier, l, _mgr, mt, t, _direct)
+                    Return New M2MCache(_sort, _f, _obj.Identifier, l, _mgr, mt, t, _direct)
                 Else
-                    Return New M2MCache(_sort, _st, _f, _obj.Identifier, GetValuesInternal(withLoad), _mgr, mt, t, _direct)
+                    Return New M2MCache(_sort, _f, _obj.Identifier, GetValuesInternal(withLoad), _mgr, mt, t, _direct)
                 End If
             End Function
 
@@ -601,7 +598,7 @@ Namespace Orm
                 For Each o As T In col
                     ids.Add(o.Identifier)
                 Next
-                Return New M2MCache(_sort, _st, _f, _obj.Identifier, ids, _mgr, _obj.GetType, GetType(T), _direct)
+                Return New M2MCache(_sort, _f, _obj.Identifier, ids, _mgr, _obj.GetType, GetType(T), _direct)
             End Function
 
             Public Overrides Sub CreateDepends()

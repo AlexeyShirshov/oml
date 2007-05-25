@@ -353,10 +353,10 @@ Namespace Web
 #Region " Query functions "
         Public Overrides Function FindUsersByEmail(ByVal emailToMatch As String, ByVal pageIndex As Integer, ByVal pageSize As Integer, ByRef totalRecords As Integer) As System.Web.Security.MembershipUserCollection
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
-                Dim c As New OrmCondition.OrmConditionConstructor
-                c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, MapField("Email"), New TypeWrap(Of Object)(emailToMatch), FilterOperation.Like))
+                'Dim c As New OrmCondition.OrmConditionConstructor
+                'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, MapField("Email"), New TypeWrap(Of Object)(emailToMatch), FilterOperation.Like))
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
-                Dim users As IList = ProfileProvider.FindUsers(mgr, c.Condition)
+                Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field(MapField("Email")).Like(emailToMatch))
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
             End Using
@@ -365,10 +365,10 @@ Namespace Web
         Public Overrides Function FindUsersByName(ByVal usernameToMatch As String, ByVal pageIndex As Integer, ByVal pageSize As Integer, ByRef totalRecords As Integer) As System.Web.Security.MembershipUserCollection
             'Return FindUsersByEmail(usernameToMatch, pageIndex, pageSize, totalRecords)
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
-                Dim c As New OrmCondition.OrmConditionConstructor
-                c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(usernameToMatch), FilterOperation.Like))
+                'Dim c As New OrmCondition.OrmConditionConstructor
+                'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(usernameToMatch), FilterOperation.Like))
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
-                Dim users As IList = ProfileProvider.FindUsers(mgr, c.Condition)
+                Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Like(usernameToMatch))
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
             End Using
@@ -377,8 +377,8 @@ Namespace Web
         Public Overrides Function GetAllUsers(ByVal pageIndex As Integer, ByVal pageSize As Integer, ByRef totalRecords As Integer) As System.Web.Security.MembershipUserCollection
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
-                Dim f As New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(-1), FilterOperation.NotEqual)
-                Dim users As IList = ProfileProvider.FindUsers(mgr, f)
+                'Dim f As New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(-1), FilterOperation.NotEqual)
+                Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field("ID").NotEq(-1))
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
             End Using
@@ -392,9 +392,9 @@ Namespace Web
             Dim onlineSpan As TimeSpan = New TimeSpan(0, System.Web.Security.Membership.UserIsOnlineTimeWindow, 0)
             Dim compareTime As DateTime = ProfileProvider.GetNow.Subtract(onlineSpan)
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
-                Dim c As New OrmCondition.OrmConditionConstructor
-                c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._lastActivityField, New TypeWrap(Of Object)(compareTime), FilterOperation.GreaterThan))
-                Return ProfileProvider.FindUsers(mgr, c.Condition).Count
+                'Dim c As New OrmCondition.OrmConditionConstructor
+                'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._lastActivityField, New TypeWrap(Of Object)(compareTime), FilterOperation.GreaterThan))
+                Return ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field(ProfileProvider._lastActivityField).GreaterThan(compareTime)).Count
             End Using
         End Function
 
@@ -404,10 +404,10 @@ Namespace Web
 
         Public Overloads Overrides Function GetUser(ByVal providerUserKey As Object, ByVal userIsOnline As Boolean) As System.Web.Security.MembershipUser
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
-                Dim c As New OrmCondition.OrmConditionConstructor
-                c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(providerUserKey), FilterOperation.Equal))
+                'Dim c As New OrmCondition.OrmConditionConstructor
+                'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(providerUserKey), FilterOperation.Equal))
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
-                Dim users As IList = ProfileProvider.FindUsers(mgr, c.Condition)
+                Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field("ID").Eq(providerUserKey))
                 If users.Count <> 1 Then
                     Return Nothing
                 End If
@@ -568,10 +568,10 @@ Namespace Web
         'End Function
 
         Protected Function FindUserByEmail(ByVal mgr As OrmDBManager, ByVal email As String, ByVal userIsOnline As Nullable(Of Boolean)) As OrmBase
-            Dim c As New OrmCondition.OrmConditionConstructor
-            c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, GetField("Email"), New TypeWrap(Of Object)(email), FilterOperation.Equal))
+            'Dim c As New OrmCondition.OrmConditionConstructor
+            'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, GetField("Email"), New TypeWrap(Of Object)(email), FilterOperation.Equal))
             Dim schema As OrmSchemaBase = mgr.ObjectSchema
-            Dim users As IList = ProfileProvider.FindUsers(mgr, c.Condition)
+            Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field(GetField("Email")).Eq(email))
             If users.Count <> 1 Then
                 Return Nothing
             End If
@@ -583,10 +583,10 @@ Namespace Web
         End Function
 
         Protected Friend Function FindUserByName(ByVal mgr As OrmDBManager, ByVal username As String, ByVal userIsOnline As Nullable(Of Boolean)) As OrmBase
-            Dim c As New OrmCondition.OrmConditionConstructor
-            c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(username), FilterOperation.Equal))
+            'Dim c As New OrmCondition.OrmConditionConstructor
+            'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(username), FilterOperation.Equal))
             Dim schema As OrmSchemaBase = mgr.ObjectSchema
-            Dim users As IList = ProfileProvider.FindUsers(mgr, c.Condition)
+            Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Eq(username))
             If users.Count <> 1 Then
                 Return Nothing
             End If

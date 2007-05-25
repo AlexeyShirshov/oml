@@ -1199,19 +1199,26 @@ Namespace Orm
             Return False
         End Function
 
-        Public Sub AppendOrder(ByVal t As Type, ByVal sort As String, ByVal sortType As SortType, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
-            If Not String.IsNullOrEmpty(sort) Then
+        Public Sub AppendOrder(ByVal t As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
+            If sort IsNot Nothing AndAlso Not sort.IsExternal Then
                 Dim schema As IOrmObjectSchema = GetObjectSchema(t)
+                'Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
+                'If s Is Nothing Then
 
-                Dim sort_field As String = schema.MapSort2FieldName(sort)
-                If String.IsNullOrEmpty(sort_field) Then
-                    Throw New ArgumentException("Sort " & sort & " is not supported", "sort")
-                End If
+                'End If
+                'Dim sort_field As String = schema.MapSort2FieldName(sort)
+                'If String.IsNullOrEmpty(sort_field) Then
+                '    Throw New ArgumentException("Sort " & sort & " is not supported", "sort")
+                'End If
 
-                Dim map As MapField2Column = schema.GetFieldColumnMap()(sort_field)
-                sb.Append(" order by ").Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
-                If sortType = Orm.SortType.Desc Then
-                    sb.Append(" desc")
+                Dim map As MapField2Column = Nothing
+                If schema.GetFieldColumnMap().TryGetValue(sort.FieldName, map) Then
+                    sb.Append(" order by ").Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
+                    If sort.Order = Orm.SortType.Desc Then
+                        sb.Append(" desc")
+                    End If
+                Else
+                    Throw New ArgumentException(String.Format("Field {0} is not defuned", sort.FieldName))
                 End If
             End If
         End Sub

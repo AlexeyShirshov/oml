@@ -19,13 +19,13 @@ Public Class Table10
         CopyTable2(CType([from], Table10), CType([to], Table10))
     End Sub
 
-    Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-        Throw New NotImplementedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
+    '    Throw New NotImplementedException
+    'End Function
 
-    Public Overloads Overrides Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-        Throw New NotImplementedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
+    '    Throw New NotImplementedException
+    'End Function
 
     Protected Overrides Function GetNew() As Worm.Orm.OrmBase
         Return New Table2(Identifier, OrmCache, OrmSchema)

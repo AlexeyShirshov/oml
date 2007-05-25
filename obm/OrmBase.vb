@@ -802,8 +802,8 @@ Namespace Orm
                 _state <> Orm.ObjectState.None AndAlso _state <> Orm.ObjectState.Modified AndAlso _state <> Orm.ObjectState.NotLoaded Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified: current state is " & _state.ToString)
         End Sub
 
-        Public MustOverride Function CreateSortComparer(ByVal sort As String, ByVal sortType As SortType) As IComparer
-        Public MustOverride Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sortType As SortType) As Generic.IComparer(Of T)
+        'Public MustOverride Function CreateSortComparer(ByVal sort As String, ByVal sortType As SortType) As IComparer
+        'Public MustOverride Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sortType As SortType) As Generic.IComparer(Of T)
 
         Public ReadOnly Property Changes(ByVal obj As OrmBase) As ColumnAttribute()
             Get
@@ -1053,20 +1053,20 @@ l1:
             Return True
         End Function
 
-        Public Function Find(ByVal t As Type, ByVal filter As IOrmFilter, ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As IList
+        Public Function Find(ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
             Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
-                New Type() {GetType(IOrmFilter), GetType(String), GetType(SortType), GetType(Boolean)}, Nothing)
+                New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
             Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
-            Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {filter, sort, sortType, withLoad}, Nothing), IList)
+            Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
         End Function
 
-        Public Function Find(Of T As {New, OrmBase})(ByVal filter As IOrmFilter, ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
-            Return OrmManagerBase.CurrentManager.FindMany2Many2(Of T)(Me, filter, sort, sortType, True, withLoad)
+        Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
+            Return OrmManagerBase.CurrentManager.FindMany2Many2(Of T)(Me, criteria, sort, True, withLoad)
         End Function
 
-        Public Function Find(Of T As {New, OrmBase})(ByVal filter As IOrmFilter, ByVal sort As String, ByVal sortType As SortType, ByVal direct As Boolean, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
-            Return OrmManagerBase.CurrentManager.FindMany2Many2(Of T)(Me, filter, sort, sortType, direct, withLoad)
+        Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
+            Return OrmManagerBase.CurrentManager.FindMany2Many2(Of T)(Me, criteria, sort, direct, withLoad)
         End Function
 
         Public Sub Add(ByVal obj As OrmBase)

@@ -321,22 +321,25 @@ Namespace Orm
             End Try
         End Function
 
-        Public ReadOnly Property IsExternalSort(ByVal sort As String, ByVal type As Type) As Boolean
-            Get
-                If type Is Nothing Then
-                    Throw New ArgumentNullException("type parameter cannot be nothing")
-                End If
+        'Public ReadOnly Property IsExternalSort(ByVal sort As String, ByVal type As Type) As Boolean
+        '    Get
+        '        If type Is Nothing Then
+        '            Throw New ArgumentNullException("type parameter cannot be nothing")
+        '        End If
 
-                Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
+        '        Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
 
-                Return schema.IsExternalSort(sort)
-            End Get
-        End Property
+        '        Return schema.IsExternalSort(sort)
+        '    End Get
+        'End Property
 
-        Public Function ExternalSort(Of T As {OrmBase, New})(ByVal sort As String, ByVal sortType As SortType, ByVal objs As List(Of T)) As List(Of T)
+        Public Function ExternalSort(Of T As {OrmBase, New})(ByVal sort As Sort, ByVal objs As ICollection(Of T)) As ICollection(Of T)
             Dim schema As IOrmObjectSchemaBase = GetObjectSchema(GetType(T))
-
-            Return CType(schema.ExternalSort(sort, sortType, objs), List(Of T))
+            Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
+            If s Is Nothing Then
+                Throw New DBSchemaException(String.Format("Type {0} is not support sorting", GetType(T)))
+            End If
+            Return s.ExternalSort(Of T)(sort, objs)
         End Function
 
         Public Function GetJoinSelectMapping(ByVal t As Type, ByVal subType As Type) As System.Data.Common.DataTableMapping

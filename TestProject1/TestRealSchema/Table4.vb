@@ -27,13 +27,13 @@ Public Class Table4
         End With
     End Sub
 
-    Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-        Throw New NotSupportedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
+    '    Throw New NotSupportedException
+    'End Function
 
-    Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-        Throw New NotSupportedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
+    '    Throw New NotSupportedException
+    'End Function
 
     Protected Overrides Function GetNew() As Worm.Orm.OrmBase
         Return New Table4(Identifier, OrmCache, OrmSchema)

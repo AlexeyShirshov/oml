@@ -75,15 +75,18 @@ Namespace Web
             End If
 
             Using mgr As OrmDBManager = _getMgr()
-                Dim c As New OrmCondition.OrmConditionConstructor
-                c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
+                'Dim c As New OrmCondition.OrmConditionConstructor
+                'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
+                Dim cl As CriteriaLink = New Criteria(GetUserType).Field(_lastActivityField).LessThanEq(userInactiveSinceDate)
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        cl.And(New Criteria(GetUserType).Field(_isAnonymousField).Eq(True))
                     Case ProfileAuthenticationOption.Authenticated
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        cl.And(New Criteria(GetUserType).Field(_isAnonymousField).Eq(False))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
                 End Select
-                Dim col As ICollection = FindUsers(mgr, c.Condition)
+                Dim col As ICollection = FindUsers(mgr, cl)
                 For Each u As OrmBase In col
                     DeleteProfile(mgr, u)
                 Next
@@ -156,16 +159,20 @@ Namespace Web
             End If
 
             Using mgr As OrmDBManager = _getMgr()
-                Dim c As New OrmCondition.OrmConditionConstructor
-                c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
+                'Dim c As New OrmCondition.OrmConditionConstructor
+                'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
+                Dim cl As CriteriaLink = New Criteria(GetUserType).Field(_lastActivityField).LessThanEq(userInactiveSinceDate)
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        cl.And(New Criteria(GetUserType).Field(_isAnonymousField).Eq(True))
                     Case ProfileAuthenticationOption.Authenticated
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        cl.And(New Criteria(GetUserType).Field(_isAnonymousField).Eq(False))
                 End Select
-                c.AddFilter(New OrmFilter(GetUserType, _userNameField, usernameToMatch & "%", FilterOperation.Like))
-                Dim col As IList = FindUsers(mgr, c.Condition)
+                'c.AddFilter(New OrmFilter(GetUserType, _userNameField, usernameToMatch & "%", FilterOperation.Like))
+                cl.And(New Criteria(GetUserType).Field(_userNameField).Like(usernameToMatch & "%"))
+                Dim col As IList = FindUsers(mgr, cl)
                 totalRecords = col.Count
                 Return CreateProfileCollection(pageIndex, pageSize, mgr, col)
             End Using
@@ -177,15 +184,17 @@ Namespace Web
             End If
 
             Using mgr As OrmDBManager = _getMgr()
-                Dim c As New OrmCondition.OrmConditionConstructor
+                'Dim c As New OrmCondition.OrmConditionConstructor
+                Dim cl As CriteriaLink = New Criteria(GetUserType).Field(_userNameField).Like(usernameToMatch & "%")
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        cl.And(New Criteria(GetUserType).Field(_isAnonymousField).Eq(True))
                     Case ProfileAuthenticationOption.Authenticated
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        cl.And(New Criteria(GetUserType).Field(_isAnonymousField).Eq(False))
                 End Select
-                c.AddFilter(New OrmFilter(GetUserType, _userNameField, usernameToMatch & "%", FilterOperation.Like))
-                Dim col As IList = FindUsers(mgr, c.Condition)
+                Dim col As IList = FindUsers(mgr, cl)
                 totalRecords = col.Count
                 Return CreateProfileCollection(pageIndex, pageSize, mgr, col)
             End Using
@@ -197,15 +206,18 @@ Namespace Web
             End If
 
             Using mgr As OrmDBManager = _getMgr()
-                Dim c As New OrmCondition.OrmConditionConstructor
-                c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
+                'Dim c As New OrmCondition.OrmConditionConstructor
+                'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
+                Dim cl As CriteriaLink = New Criteria(GetUserType).Field(_lastActivityField).LessThanEq(userInactiveSinceDate)
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        cl.And(New Criteria(GetUserType).Field(_isAnonymousField).Eq(True))
                     Case ProfileAuthenticationOption.Authenticated
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        cl.And(New Criteria(GetUserType).Field(_isAnonymousField).Eq(False))
                 End Select
-                Dim col As IList = FindUsers(mgr, c.Condition)
+                Dim col As IList = FindUsers(mgr, cl)
                 totalRecords = col.Count
                 Return CreateProfileCollection(pageIndex, pageSize, mgr, col)
             End Using
@@ -217,14 +229,16 @@ Namespace Web
             End If
 
             Using mgr As OrmDBManager = _getMgr()
-                Dim c As New OrmCondition.OrmConditionConstructor
+                Dim cl As CriteriaLink = Nothing
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        cl = New Criteria(GetUserType).Field(_isAnonymousField).Eq(True)
                     Case ProfileAuthenticationOption.Authenticated
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        cl = New Criteria(GetUserType).Field(_isAnonymousField).Eq(False)
                 End Select
-                Dim col As IList = FindUsers(mgr, c.Condition)
+                Dim col As IList = FindUsers(mgr, cl)
                 totalRecords = col.Count
                 Return CreateProfileCollection(pageIndex, pageSize, mgr, col)
             End Using
@@ -236,15 +250,18 @@ Namespace Web
             End If
 
             Using mgr As OrmDBManager = _getMgr()
-                Dim c As New OrmCondition.OrmConditionConstructor
-                c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
+                'Dim c As New OrmCondition.OrmConditionConstructor
+                'c.AddFilter(New OrmFilter(GetUserType, _lastActivityField, New TypeWrap(Of Object)(userInactiveSinceDate), FilterOperation.LessEqualThan))
+                Dim cl As CriteriaLink = New Criteria(GetUserType).Field(_lastActivityField).LessThanEq(userInactiveSinceDate)
                 Select Case authenticationOption
                     Case ProfileAuthenticationOption.Anonymous
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(True), FilterOperation.Equal))
+                        cl.And(New Criteria(GetUserType).Field(_isAnonymousField).Eq(True))
                     Case ProfileAuthenticationOption.Authenticated
-                        c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        'c.AddFilter(New OrmFilter(GetUserType, _isAnonymousField, New TypeWrap(Of Object)(False), FilterOperation.Equal))
+                        cl.And(New Criteria(GetUserType).Field(_isAnonymousField).Eq(False))
                 End Select
-                Dim col As IList = FindUsers(mgr, c.Condition)
+                Dim col As IList = FindUsers(mgr, cl)
                 Return col.Count
             End Using
         End Function
@@ -416,7 +433,7 @@ Namespace Web
 
         Protected Friend MustOverride Function GetUserByName(ByVal mgr As OrmDBManager, ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As OrmBase
         Protected Friend MustOverride Function GetUserType() As Type
-        Protected Friend MustOverride Function FindUsers(ByVal mgr As OrmDBManager, ByVal f As IOrmFilter) As IList
+        Protected Friend MustOverride Function FindUsers(ByVal mgr As OrmDBManager, ByVal criteria As CriteriaLink) As IList
         'Protected Friend MustOverride Function FindTopUsers(ByVal mgr As OrmDBManager, ByVal top As Integer) As IList
         Protected Friend MustOverride Sub DeleteUser(ByVal mgr As OrmDBManager, ByVal u As OrmBase, ByVal cascase As Boolean)
         Protected Friend MustOverride Sub DeleteProfile(ByVal mgr As OrmDBManager, ByVal u As OrmBase)

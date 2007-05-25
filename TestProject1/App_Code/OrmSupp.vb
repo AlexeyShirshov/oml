@@ -22,23 +22,23 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
         Return New Orm.ColumnAttribute() {}
     End Function
 
-    Public Overridable Function MapSort2FieldName(ByVal sort As String) As String Implements Worm.Orm.IOrmObjectSchema.MapSort2FieldName
-        Return Nothing
-    End Function
+    'Public Overridable Function MapSort2FieldName(ByVal sort As String) As String Implements Worm.Orm.IOrmObjectSchema.MapSort2FieldName
+    '    Return Nothing
+    'End Function
 
     Public MustOverride Function GetTables() As Orm.OrmTable() Implements Worm.Orm.IOrmObjectSchema.GetTables
 
     Public MustOverride Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column) Implements Worm.Orm.IOrmObjectSchema.GetFieldColumnMap
 
-    Public Function ExternalSort(ByVal sort As String, ByVal sortType As Orm.SortType, ByVal objs As Collections.IList) As Collections.IList Implements Worm.Orm.IOrmObjectSchema.ExternalSort
-        Return objs
-    End Function
+    'Public Function ExternalSort(ByVal sort As String, ByVal sortType As Orm.SortType, ByVal objs As Collections.IList) As Collections.IList Implements Worm.Orm.IOrmObjectSchema.ExternalSort
+    '    Return objs
+    'End Function
 
-    Public ReadOnly Property IsExternalSort(ByVal sort As String) As Boolean Implements Worm.Orm.IOrmObjectSchema.IsExternalSort
-        Get
-            Return False
-        End Get
-    End Property
+    'Public ReadOnly Property IsExternalSort(ByVal sort As String) As Boolean Implements Worm.Orm.IOrmObjectSchema.IsExternalSort
+    '    Get
+    '        Return False
+    '    End Get
+    'End Property
 
     Public Overridable Function GetM2MRelations() As Worm.Orm.M2MRelation() Implements Worm.Orm.IOrmObjectSchema.GetM2MRelations
         Return New Orm.M2MRelation() {}

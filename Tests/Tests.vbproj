@@ -76,15 +76,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="Test\Aspnet_Applications.vb" />
-    <Compile Include="Test\Aspnet_Membership.vb" />
-    <Compile Include="Test\Aspnet_Profile.vb" />
-    <Compile Include="Test\Aspnet_Users.vb" />
-    <Compile Include="Test\Ent1.vb" />
-    <Compile Include="Test\Ent2.vb" />
-    <Compile Include="Test\Ent3.vb" />
-    <Compile Include="Test\T1.vb" />
-    <Compile Include="Test\Test_tree.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">
@@ -120,6 +111,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Test2\" />
+    <Folder Include="Test\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
