@@ -522,7 +522,7 @@ Namespace Orm
                                 If withLoad Then
                                     Dim obj As T = _mgr.CreateDBObject(Of T)(id2)
                                     If obj.ObjectState <> ObjectState.Modified Then
-                                        Using obj.SyncHelper(False)
+                                        Using obj.GetSyncRoot()
                                             If obj.IsLoaded Then obj.IsLoaded = False
                                             _mgr.LoadFromDataReader(obj, dr, arr, False, 2)
                                             If obj.ObjectState = ObjectState.NotLoaded Then obj.ObjectState = ObjectState.None

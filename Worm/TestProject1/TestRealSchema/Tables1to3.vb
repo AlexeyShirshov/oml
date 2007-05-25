@@ -4,7 +4,8 @@ Imports CoreFramework.Structures
 
 <Entity(GetType(TablesImplementation), "1")> _
 Public Class Tables1to3
-    Inherits OrmBase
+    Inherits OrmBaseT(Of Tables1to3)
+    Implements IOrmEditable(Of Tables1to3)
 
     Private _name As String
     Private _table1 As Table1
@@ -18,11 +19,11 @@ Public Class Tables1to3
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-        CopyRelation(CType(from, Tables1to3), CType([to], Tables1to3))
-    End Sub
+    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+    '    CopyRelation(CType(from, Tables1to3), CType([to], Tables1to3))
+    'End Sub
 
-    Protected Shared Sub CopyRelation(ByVal [from] As Tables1to3, ByVal [to] As Tables1to3)
+    Protected Sub CopyRelation(ByVal [from] As Tables1to3, ByVal [to] As Tables1to3) Implements IOrmEditable(Of Tables1to3).CopyBody
         With [from]
             [to]._name = ._name
             [to]._table1 = ._table1
@@ -38,9 +39,9 @@ Public Class Tables1to3
     '    Throw New NotSupportedException
     'End Function
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New Tables1to3(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    '    Return New Tables1to3(Identifier, OrmCache, OrmSchema)
+    'End Function
 
     Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
         Select Case c.FieldName

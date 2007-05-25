@@ -128,6 +128,10 @@ Namespace Orm
     Public MustInherit Class NonQueryStoredProcBase
         Inherits StoredProcBase
 
+        Protected Sub New()
+
+        End Sub
+
         Protected Overloads Overrides Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
             Dim r As Integer = cmd.ExecuteNonQuery()
             Dim out As New Dictionary(Of String, Object)

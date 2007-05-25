@@ -31,8 +31,8 @@
     <RunFxCop>true</RunFxCop>
     <FxCopRules>-Microsoft.Design#CA2210;-Microsoft.Design#CA1011;-Microsoft.Design#CA1026;-Microsoft.Design#CA1051;-Microsoft.Design#CA1002;-Microsoft.Design#CA1006;-Microsoft.Design#CA1045;-Microsoft.Design#CA1014;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1704;-Microsoft.Naming#CA1707;-Microsoft.Naming#CA1705;-Microsoft.Naming#CA1706;-Microsoft.Performance#CA1805;-Microsoft.Performance#CA1814;-Microsoft.Security#CA2104</FxCopRules>
     <FxCopUseTypeNameInSuppression>false</FxCopUseTypeNameInSuppression>
-    <RunCodeAnalysis>false</RunCodeAnalysis>
-    <CodeAnalysisRules>-Microsoft.Design#CA2210;-Microsoft.Design#CA1020;-Microsoft.Design#CA1011;-Microsoft.Design#CA1026;-Microsoft.Design#CA1051;-Microsoft.Design#CA1002;-Microsoft.Design#CA1006;-Microsoft.Design#CA1045;-Microsoft.Design#CA1004;-Microsoft.Design#CA1014;-Microsoft.Globalization#CA1303;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1707;-Microsoft.Naming#CA1706;-Microsoft.Performance#CA1814;-Microsoft.Performance#CA1819;-Microsoft.Reliability#CA2002</CodeAnalysisRules>
+    <RunCodeAnalysis>true</RunCodeAnalysis>
+    <CodeAnalysisRules>-Microsoft.Design#CA1012;-Microsoft.Design#CA2210;-Microsoft.Design#CA1020;-Microsoft.Design#CA1010;-Microsoft.Design#CA1011;-Microsoft.Design#CA1009;-Microsoft.Design#CA1026;-Microsoft.Design#CA1051;-Microsoft.Design#CA1002;-Microsoft.Design#CA1006;-Microsoft.Design#CA1045;-Microsoft.Design#CA1004;-Microsoft.Design#CA1014;-Microsoft.Design#CA1034;-Microsoft.Design#CA1024;-Microsoft.Globalization#CA1303;-Microsoft.Globalization#CA1304;-Microsoft.Globalization#CA1305;-Microsoft.Naming#CA1709;-Microsoft.Naming#CA1707;-Microsoft.Naming#CA1706;-Microsoft.Performance#CA1814;-Microsoft.Performance#CA1819;-Microsoft.Reliability#CA2002</CodeAnalysisRules>
     <UseVSHostingProcess>true</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">

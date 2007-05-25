@@ -113,13 +113,13 @@ Namespace Orm
             Public l As Generic.List(Of ListObjectEntry)
             Public t As Type
 
-            Public Function CanSort(ByVal mc As OrmManagerBase, ByRef l As ArrayList) As Boolean
-                l = New ArrayList
+            Public Function CanSort(ByVal mc As OrmManagerBase, ByRef arr As ArrayList) As Boolean
+                arr = New ArrayList
                 For Each le As ListObjectEntry In l
                     If Not le.IsLoaded Then
                         Return False
                     Else
-                        l.Add(le.GetObject(mc))
+                        arr.Add(le.GetObject(mc))
                     End If
                 Next
                 Return True

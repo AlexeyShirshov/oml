@@ -8,7 +8,8 @@ End Enum
 
 <Entity(GetType(Table1Implementation), "1"), Entity(GetType(Table12Implementation), "2"), Entity(GetType(Table13Implementation), "3")> _
 Public Class Table1
-    Inherits OrmBase
+    Inherits OrmBaseT(Of Table1)
+    Implements IOrmEditable(Of Table1)
 
     Private _name As String
     Private _code As Nullable(Of Integer)
@@ -38,7 +39,7 @@ Public Class Table1
     '    End Get
     'End Property
 
-    Protected Sub CopyTable1(ByVal [from] As Table1, ByVal [to] As Table1)
+    Protected Sub CopyTable1(ByVal [from] As Table1, ByVal [to] As Table1) Implements Worm.Orm.IOrmEditable(Of Table1).CopyBody
         With [from]
             [to]._code = ._code
             [to]._dt = ._dt
@@ -48,13 +49,13 @@ Public Class Table1
         End With
     End Sub
 
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-        CopyTable1(CType(from, Table1), CType([to], Table1))
-    End Sub
+    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+    '    CopyTable1(CType(from, Table1), CType([to], Table1))
+    'End Sub
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New Table1(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    '    Return New Table1(Identifier, OrmCache, OrmSchema)
+    'End Function
 
     Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
         Select Case c.FieldName

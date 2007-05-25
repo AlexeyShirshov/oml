@@ -3,7 +3,8 @@ Imports Worm.Orm
 
 <Entity(GetType(Table3Implementation), "1", EntityName:="Table3")> _
 Public Class Table3
-    Inherits OrmBase
+    Inherits OrmBaseT(Of Table3)
+    Implements IOrmEditable(Of Table3)
 
     Private _obj As OrmBase
     Private _code As Byte
@@ -20,9 +21,9 @@ Public Class Table3
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-        CopyTable3(CType([from], Table3), CType([to], Table3))
-    End Sub
+    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+    '    CopyTable3(CType([from], Table3), CType([to], Table3))
+    'End Sub
 
     'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
     '    Throw New NotImplementedException
@@ -32,9 +33,9 @@ Public Class Table3
     '    Throw New NotImplementedException
     'End Function
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New Table3(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    '    Return New Table3(Identifier, OrmCache, OrmSchema)
+    'End Function
 
     'Public Overrides ReadOnly Property HasChanges() As Boolean
     '    Get
@@ -42,7 +43,7 @@ Public Class Table3
     '    End Get
     'End Property
 
-    Protected Shared Sub CopyTable3(ByVal [from] As Table3, ByVal [to] As Table3)
+    Protected Sub CopyTable3(ByVal [from] As Table3, ByVal [to] As Table3) Implements IOrmEditable(Of Table3).CopyBody
         With [from]
             [to]._obj = ._obj
             [to]._code = ._code
@@ -204,7 +205,7 @@ Public Class Table33
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    Protected Overrides Function GetNew() As Table3
         Return New Table33(Identifier, OrmCache, OrmSchema)
     End Function
 End Class

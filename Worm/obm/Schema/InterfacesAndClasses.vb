@@ -62,6 +62,9 @@ Namespace Orm
         Function GetParameter(ByVal name As String) As System.Data.Common.DbParameter
     End Interface
 
+    Public Interface IOrmEditable(Of T As {OrmBase})
+        Sub CopyBody(ByVal from As T, ByVal [to] As T)
+    End Interface
 #End Region
 
 #Region " Classes "
@@ -69,6 +72,10 @@ Namespace Orm
     Public Class OrmTable
 
         Private _table As String
+
+        Public Sub New()
+
+        End Sub
 
         Public Sub New(ByVal tableName As String)
             _table = tableName
@@ -202,7 +209,7 @@ Namespace Orm
 
         Protected Sub RejectRelated(ByVal id As Integer, ByVal add As Boolean)
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
-            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetDirect)
+            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect)
             Dim l As IList(Of Integer) = m.Entry.Added
             If Not add Then
                 l = m.Entry.Deleted
@@ -314,7 +321,7 @@ Namespace Orm
         '    Return newl
         'End Function
 
-        Protected Function GetDirect() As Boolean
+        Protected Function GetRealDirect() As Boolean
             If SubType Is MainType Then
                 Return Not Direct
             Else
@@ -323,7 +330,7 @@ Namespace Orm
         End Function
 
         Protected Function CheckDual(ByVal mgr As OrmManagerBase, ByVal id As Integer) As Boolean
-            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetDirect)
+            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect)
             Dim c As Boolean = True
             For Each i As Integer In m.Entry.original
                 If i = _mainId Then
@@ -608,4 +615,94 @@ Namespace Orm
         CrossJoin
     End Enum
 
+    Public NotInheritable Class SimpleObjectSchema
+        Implements IOrmObjectSchema
+
+        Private _tables(-1) As OrmTable
+        Private _cols As New Orm.OrmObjectIndex
+
+        Friend Sub New(ByVal t As Type, ByVal tables() As String, ByVal cols As ICollection(Of ColumnAttribute), ByVal pk As String)
+            If String.IsNullOrEmpty(pk) Then
+                Throw New DBSchemaException(String.Format("Primary key required for {0}", t))
+            End If
+
+            If tables IsNot Nothing Then
+                _tables = New OrmTable(tables.Length - 1) {}
+                For i As Integer = 0 To tables.Length - 1
+                    _tables(i) = New OrmTable(tables(i))
+                Next
+            End If
+
+            For Each c As ColumnAttribute In cols
+                If String.IsNullOrEmpty(c.FieldName) Then
+                    Throw New DBSchemaException(String.Format("Cann't create schema for entity {0}", t))
+                End If
+
+                If String.IsNullOrEmpty(c.Column) Then
+                    If c.FieldName = "ID" Then
+                        c.Column = pk
+                    Else
+                        Throw New DBSchemaException(String.Format("Column for property {0} entity {1} is undefined", c.FieldName, t))
+                    End If
+                End If
+
+                Dim tbl As OrmTable = Nothing
+                If Not String.IsNullOrEmpty(c.TableName) Then
+                    tbl = FindTbl(c.TableName)
+                Else
+                    If _tables.Length = 0 Then
+                        Throw New DBSchemaException(String.Format("Neigther entity {1} nor column {0} has table name", c.FieldName, t))
+                    End If
+
+                    tbl = _tables(0)
+                End If
+
+                _cols.Add(New MapField2Column(c.FieldName, c.Column, tbl))
+            Next
+
+            '_cols.Add(New MapField2Column("ID", pk, _tables(0)))
+        End Sub
+
+        Private Function FindTbl(ByVal table As String) As OrmTable
+            For Each t As OrmTable In _tables
+                If t.TableName = table Then
+                    Return t
+                End If
+            Next
+            Dim l As Integer = _tables.Length
+            ReDim Preserve _tables(l)
+            _tables(l) = New OrmTable(table)
+            Return _tables(l)
+        End Function
+
+        Public Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin Implements IOrmObjectSchema.GetJoins
+            Throw New NotSupportedException("Joins is not supported in simple mode")
+        End Function
+
+        Public Function GetTables() As OrmTable() Implements IOrmObjectSchema.GetTables
+            Return _tables
+        End Function
+
+        Public Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchemaBase.ChangeValueType
+            newvalue = value
+            Return False
+        End Function
+
+        Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IOrmObjectSchemaBase.GetFieldColumnMap
+            Return _cols
+        End Function
+
+        Public Function GetFilter(ByVal filter_info As Object) As IOrmFilter Implements IOrmObjectSchemaBase.GetFilter
+            Return Nothing
+        End Function
+
+        Public Function GetM2MRelations() As M2MRelation() Implements IOrmObjectSchemaBase.GetM2MRelations
+            'Throw New NotSupportedException("Many2many relations is not supported in simple mode")
+            Return New M2MRelation() {}
+        End Function
+
+        Public Function GetSuppressedColumns() As ColumnAttribute() Implements IOrmObjectSchemaBase.GetSuppressedColumns
+            Throw New NotSupportedException("GetSuppressedColumns relations is not supported in simple mode")
+        End Function
+    End Class
 End Namespace

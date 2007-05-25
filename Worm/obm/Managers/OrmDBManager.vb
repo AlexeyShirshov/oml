@@ -28,7 +28,7 @@ Namespace Orm
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
             Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
             Dim upd As IList(Of OrmFilter) = Nothing
-            Using obj.SyncHelper(False)
+            Using obj.GetSyncRoot()
                 Dim cmdtext As String = DbSchema.Update(obj, params, cols, upd)
                 If cmdtext.Length > 0 Then
                     If DbSchema.SupportMultiline Then
@@ -131,7 +131,7 @@ Namespace Orm
 
                 Dim params As ICollection(Of System.Data.Common.DbParameter) = Nothing
                 Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
-                Using obj.SyncHelper(False)
+                Using obj.GetSyncRoot()
                     Dim cmdtext As String = DbSchema.Insert(obj, params, cols)
                     If cmdtext.Length > 0 Then
                         Dim tran As System.Data.IDbTransaction = Transaction
@@ -314,7 +314,7 @@ Namespace Orm
             Dim t As Type = obj.GetType
 
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
-            Using obj.SyncHelper(False)
+            Using obj.GetSyncRoot()
                 Dim cmdtext As String = DbSchema.Delete(obj, params)
                 If cmdtext.Length > 0 Then
                     Dim [error] As Boolean = True
@@ -394,7 +394,7 @@ Namespace Orm
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
             End If
 
-            Using obj.SyncHelper(False)
+            Using obj.GetSyncRoot()
                 If obj.ObjectState = ObjectState.Created OrElse obj.ObjectState = ObjectState.NotFoundInDB Then
                     InsertObject(obj)
                 ElseIf obj.ObjectState = ObjectState.Clone Then
@@ -421,7 +421,7 @@ Namespace Orm
             Dim old_state As ObjectState = state
             Dim hasNew As Boolean = False
             Try
-                Using obj.SyncHelper(False)
+                Using obj.GetSyncRoot()
                     Dim processedType As New List(Of Type)
                     If sa = SaveAction.Delete Then
                         For Each r As M2MRelation In DbSchema.GetM2MRelations(t)

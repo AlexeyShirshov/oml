@@ -64,6 +64,7 @@
     <Compile Include="ASPHosting\TestCache.vb" />
     <Compile Include="ASPHosting\TestProcess.vb" />
     <Compile Include="TestCriteria.vb" />
+    <Compile Include="TestRealSchema\SimpleObj.vb" />
     <Compile Include="TestRealSchema\TestListManager.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="OrmBaseTest.vb" />

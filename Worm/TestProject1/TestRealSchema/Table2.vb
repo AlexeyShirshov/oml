@@ -3,7 +3,8 @@ Imports Worm.Orm
 
 <Entity(GetType(Table2Implementation), "1")> _
 Public Class Table2
-    Inherits OrmBase
+    Inherits OrmBaseT(Of Table2)
+    Implements IOrmEditable(Of Table2)
 
     Private _tbl1 As Table1
     Private _blob As Byte()
@@ -18,9 +19,9 @@ Public Class Table2
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-        CopyTable2(CType([from], Table2), CType([to], Table2))
-    End Sub
+    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+    '    CopyTable2(CType([from], Table2), CType([to], Table2))
+    'End Sub
 
     'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
     '    Throw New NotImplementedException
@@ -30,9 +31,9 @@ Public Class Table2
     '    Throw New NotImplementedException
     'End Function
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New Table2(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    '    Return New Table2(Identifier, OrmCache, OrmSchema)
+    'End Function
 
     'Public Overrides ReadOnly Property HasChanges() As Boolean
     '    Get
@@ -40,7 +41,7 @@ Public Class Table2
     '    End Get
     'End Property
 
-    Protected Shared Sub CopyTable2(ByVal [from] As Table2, ByVal [to] As Table2)
+    Protected Sub CopyTable2(ByVal [from] As Table2, ByVal [to] As Table2) Implements IOrmEditable(Of Table2).CopyBody
         With [from]
             [to]._tbl1 = ._tbl1
             [to]._blob = ._blob

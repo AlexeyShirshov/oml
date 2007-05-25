@@ -5,7 +5,7 @@ Imports Worm
 Orm.Entity(GetType(EntitySchema1v2Implementation), "2"), _
 Orm.Entity(GetType(EntitySchema1v3Implementation), "3")> _
 Public Class Entity
-    Inherits Orm.OrmBase
+    Inherits Orm.OrmBaseT(Of Entity)
 
     Public Sub New()
         MyBase.New()
@@ -15,9 +15,9 @@ Public Class Entity
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New Entity(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    '    Return New Entity(Identifier, OrmCache, OrmSchema)
+    'End Function
 
     'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
     '    Throw New NotImplementedException
@@ -33,9 +33,9 @@ Public Class Entity
     '    End Get
     'End Property
 
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
 
-    End Sub
+    'End Sub
 End Class
 
 Public MustInherit Class ObjectSchemaBaseImplementation
@@ -278,7 +278,8 @@ End Class
 
 <Orm.Entity(GetType(EntitySchema4v1Implementation), "1"), Orm.Entity(GetType(EntitySchema4v2Implementation), "2")> _
 Public Class Entity4
-    Inherits Orm.OrmBase
+    Inherits Orm.OrmBaseT(Of Entity4)
+    Implements Orm.IOrmEditable(Of Entity4)
 
     Private _name As String
 
@@ -290,15 +291,15 @@ Public Class Entity4
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New Entity4(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    '    Return New Entity4(Identifier, OrmCache, OrmSchema)
+    'End Function
 
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-        CopyEntity4(CType(from, Entity4), CType([to], Entity4))
-    End Sub
+    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+    '    CopyEntity4(CType(from, Entity4), CType([to], Entity4))
+    'End Sub
 
-    Protected Shared Sub CopyEntity4(ByVal from As Entity4, ByVal [to] As Entity4)
+    Protected Sub CopyEntity4(ByVal from As Entity4, ByVal [to] As Entity4) Implements Orm.IOrmEditable(Of Entity4).CopyBody
         With [from]
             [to]._name = ._name
         End With
@@ -484,7 +485,8 @@ End Class
 
 <Orm.Entity(GetType(EntitySchema5v1Implementation), "1")> _
 Public Class Entity5
-    Inherits Orm.OrmBase
+    Inherits Orm.OrmBaseT(Of Entity5)
+    Implements Orm.IOrmEditable(Of Entity5)
 
     Private _name As String
     Private _upd() As Byte
@@ -497,13 +499,13 @@ Public Class Entity5
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New Entity5(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    '    Return New Entity5(Identifier, OrmCache, OrmSchema)
+    'End Function
 
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-        CopyEntity5(CType([from], Entity5), CType([to], Entity5))
-    End Sub
+    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+    '    CopyEntity5(CType([from], Entity5), CType([to], Entity5))
+    'End Sub
 
     'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
     '    Throw New NotImplementedException
@@ -519,7 +521,7 @@ Public Class Entity5
     '    End Get
     'End Property
 
-    Protected Shared Sub CopyEntity5(ByVal [from] As Entity5, ByVal [to] As Entity5)
+    Protected Sub CopyEntity5(ByVal [from] As Entity5, ByVal [to] As Entity5) Implements Orm.IOrmEditable(Of Entity5).CopyBody
         With [from]
             [to]._name = ._name
             [to]._upd = ._upd

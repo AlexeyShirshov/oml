@@ -83,6 +83,7 @@ Public Class TestReject
             mgr.BeginTransaction()
             Try
                 Assert.IsTrue(mgr.IsInCache(t1))
+                Assert.AreEqual(Orm.ObjectState.None, t1.ObjectState)
                 t1.Delete()
                 Assert.IsTrue(mgr.IsInCache(t1))
                 Assert.AreEqual(Orm.ObjectState.Deleted, t1.ObjectState)
