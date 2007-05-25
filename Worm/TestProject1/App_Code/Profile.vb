@@ -44,8 +44,8 @@ Public Class MyProfile
         Throw New NotImplementedException
     End Sub
 
-    Protected Overrides Function FindUsers(ByVal mgr As OrmDBManager, ByVal f As Worm.Orm.IOrmFilter) As System.Collections.IList
-        Return CType(mgr.Find(Of MyUser)(f, Nothing, SortType.Asc, False), System.Collections.IList)
+    Protected Overrides Function FindUsers(ByVal mgr As OrmDBManager, ByVal f As Worm.Orm.CriteriaLink) As System.Collections.IList
+        Return CType(mgr.Find(Of MyUser)(f, Nothing, False), System.Collections.IList)
     End Function
 
     'Protected Overrides Function FindTopUsers(ByVal mgr As OrmDBManager, ByVal top As Integer) As System.Collections.IList
@@ -58,10 +58,10 @@ Public Class MyProfile
 
     Protected Overrides Function GetUserByName(ByVal mgr As OrmDBManager, ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Orm.OrmBase
         Dim t As Type = GetUserType()
-        Dim c As New OrmCondition.OrmConditionConstructor
-        c.AddFilter(New OrmFilter(t, _userNameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
-        c.AddFilter(New OrmFilter(t, "IsAnonymous", New Worm.TypeWrap(Of Object)(Not isAuthenticated), FilterOperation.Equal))
-        Dim col As IList = FindUsers(mgr, c.Condition)
+        'Dim c As New OrmCondition.OrmConditionConstructor
+        'c.AddFilter(New OrmFilter(t, _userNameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
+        'c.AddFilter(New OrmFilter(t, "IsAnonymous", New Worm.TypeWrap(Of Object)(Not isAuthenticated), FilterOperation.Equal))
+        Dim col As IList = FindUsers(mgr, New Criteria(t).Field(_userNameField).Eq(name).And("IsAnonymous").Eq(Not isAuthenticated))
         If col.Count > 1 Then
             Throw New ArgumentException("Duplicate user name " & name)
         ElseIf col.Count = 0 Then
@@ -145,13 +145,13 @@ Public Class MyUser
         End With
     End Sub
 
-    Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-        Throw New NotImplementedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
+    '    Throw New NotImplementedException
+    'End Function
 
-    Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-        Throw New NotImplementedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
+    '    Throw New NotImplementedException
+    'End Function
 
     Protected Overrides Function GetNew() As Worm.Orm.OrmBase
         Return New MyUser(Identifier, OrmCache, OrmSchema)
@@ -359,13 +359,13 @@ Public Class MyRole
         End With
     End Sub
 
-    Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
-        Throw New NotImplementedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.IComparer
+    '    Throw New NotImplementedException
+    'End Function
 
-    Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-        Throw New NotImplementedException
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(Of T As {New, Worm.Orm.OrmBase})(ByVal sort As String, ByVal sortType As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
+    '    Throw New NotImplementedException
+    'End Function
 
     Protected Overrides Function GetNew() As Worm.Orm.OrmBase
         Return New MyRole(Identifier, OrmCache, OrmSchema)

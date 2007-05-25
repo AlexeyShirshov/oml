@@ -44,7 +44,7 @@ Public Class TestTracker
         _new_objects.Remove(obj.Identifier)
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
+    <TestMethod(), ExpectedException(GetType(Orm.OrmManagerException))> _
     Public Sub TestCreateObjects()
         Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
             mgr.NewObjectManager = Me
@@ -71,7 +71,7 @@ Public Class TestTracker
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
+    <TestMethod(), ExpectedException(GetType(Orm.OrmManagerException))> _
     Public Sub TestUpdate()
         Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
             mgr.NewObjectManager = Me

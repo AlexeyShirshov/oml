@@ -54,18 +54,18 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(1)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, False)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(4, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsFalse(e4.IsLoaded)
             Next
 
-            c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+            c = e.Find(Of Entity4)(Nothing, Nothing, True)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.IsLoaded)
             Next
 
-            c = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, False)
+            c = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, False)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.IsLoaded)
             Next
@@ -82,7 +82,7 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(1)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, False)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, False)
             Assert.AreEqual(4, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsFalse(e4.IsLoaded)
@@ -93,7 +93,7 @@ Imports System.Collections.Generic
             Assert.AreEqual(1, l(3).Identifier)
             Assert.AreEqual("first", l(3).Title)
 
-            c = mgr.Find(Of Entity)(2).Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            c = mgr.Find(Of Entity)(2).Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(11, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.IsLoaded)
@@ -111,7 +111,7 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, False)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, False)
             For Each e4 As Entity4 In c
                 Assert.IsFalse(e4.IsLoaded)
             Next
@@ -124,13 +124,13 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity4 = mgr.Find(Of Entity4)(1)
 
-            Dim c As ICollection(Of Entity) = e.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, False)
+            Dim c As ICollection(Of Entity) = e.Find(Of Entity)(Nothing, Nothing, False)
             Assert.AreEqual(4, c.Count)
             For Each e4 As Entity In c
                 Assert.IsFalse(e4.IsLoaded)
             Next
 
-            c = e.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, False)
+            c = e.Find(Of Entity)(Nothing, Nothing, False)
             Assert.AreEqual(4, c.Count)
         End Using
     End Sub
@@ -140,13 +140,13 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.Equal), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").Eq("bt"), Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(1, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.IsLoaded)
             Next
 
-            c = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, False)
+            c = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, False)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsFalse(e4.IsLoaded)
@@ -162,7 +162,7 @@ Imports System.Collections.Generic
 
             mgr.Find(Of Entity4)(12).Reload()
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, False)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, False)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 If e4.Identifier = 12 Then
@@ -183,7 +183,7 @@ Imports System.Collections.Generic
 
             mgr.Find(Of Entity4)(12).Reload()
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Nothing, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Nothing, True)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.IsLoaded)
@@ -201,7 +201,7 @@ Imports System.Collections.Generic
 
             Dim obj() As Entity4 = CType(mgr.ConvertIds2Objects(Of Entity4)(New Integer() {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12}, False), Entity4())
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.IsLoaded)
@@ -215,15 +215,15 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             e.Delete(mgr.Find(Of Entity4)(12))
 
-            c = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            c = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c.Count)
         End Using
     End Sub
@@ -233,15 +233,15 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             'mgr.Obj2ObjRelationDelete(e, GetType(Entity4))
 
-            'c = mgr.Find(Of Entity, Entity4)(e, Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            'c = mgr.Find(Of Entity, Entity4)(e, Nothing, Entity4.Entity4Sort.Name.ToString,  True)
             'Assert.AreEqual(0, c.Count)
         End Using
     End Sub
@@ -251,12 +251,12 @@ Imports System.Collections.Generic
     '    Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
     '        Dim e As Entity = mgr.Find(Of Entity)(2)
 
-    '        Dim c As ICollection(Of Entity4) = mgr.Find(Of Entity, Entity4)(e, Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+    '        Dim c As ICollection(Of Entity4) = mgr.Find(Of Entity, Entity4)(e, Nothing, Entity4.Entity4Sort.Name.ToString,  True)
     '        Assert.AreEqual(11, c.Count)
 
     '        Dim e4 As Entity4 = mgr.Find(Of Entity4)(2)
 
-    '        Dim c2 As ICollection(Of Entity) = mgr.Find(Of Entity4, Entity)(e4, Nothing, Nothing, Orm.SortType.Asc, True)
+    '        Dim c2 As ICollection(Of Entity) = mgr.Find(Of Entity4, Entity)(e4, Nothing, Nothing,  True)
     '        Assert.AreEqual(3, c2.Count)
 
     '        mgr.Obj2ObjRelationReset(e, GetType(Entity4))
@@ -269,12 +269,12 @@ Imports System.Collections.Generic
     '        Dim e As Entity = mgr.Find(Of Entity)(2)
     '        Dim e2 As Entity = mgr.Find(Of Entity)(1)
 
-    '        Dim c As ICollection(Of Entity4) = mgr.Find(Of Entity, Entity4)(e, Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+    '        Dim c As ICollection(Of Entity4) = mgr.Find(Of Entity, Entity4)(e, Nothing, Entity4.Entity4Sort.Name.ToString,  True)
     '        Assert.AreEqual(11, c.Count)
 
     '        Dim e4 As Entity4 = mgr.Find(Of Entity4)(2)
 
-    '        Dim c2 As ICollection(Of Entity) = mgr.Find(Of Entity4, Entity)(e4, Nothing, Nothing, Orm.SortType.Asc, True)
+    '        Dim c2 As ICollection(Of Entity) = mgr.Find(Of Entity4, Entity)(e4, Nothing, Nothing,  True)
     '        Assert.AreEqual(3, c2.Count)
 
     '        mgr.ObjRelationUpdate(e2, 2, GetType(Entity4))
@@ -286,22 +286,23 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), _
+                Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             e.Add(mgr.Find(Of Entity4)(5))
 
-            c = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            c = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(12, c.Count)
         End Using
     End Sub
 
     Public Sub TestFilter()
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim c As ICollection(Of Entity4) = mgr.Find(Of Entity4, String)("245g0nj", "Title", Nothing, Orm.SortType.Asc, False)
+            Dim c As ICollection(Of Entity4) = mgr.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").Eq("245g0nj"), Nothing, False)
             Assert.AreEqual(1, c.Count)
         End Using
     End Sub
@@ -312,21 +313,23 @@ Imports System.Collections.Generic
             Dim e As Entity = mgr.Find(Of Entity)(2)
             Dim e2 As Entity4 = mgr.Find(Of Entity4)(5)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), _
+                Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
-            Dim c3 As ICollection(Of Entity) = e2.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, True)
+            Dim c3 As ICollection(Of Entity) = e2.Find(Of Entity)(Nothing, Nothing, True)
             Assert.AreEqual(3, c3.Count)
 
             e.Add(e2)
 
-            c = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            c = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(12, c.Count)
 
-            c2 = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            c2 = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), _
+                Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             mgr.BeginTransaction()
@@ -334,10 +337,11 @@ Imports System.Collections.Generic
                 'mgr.Obj2ObjRelationSave(e, GetType(Entity4))
                 e.Save(True)
 
-                c2 = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+                c2 = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), _
+                    Orm.Sorting.Field("Title").Asc, True)
                 Assert.AreEqual(11, c2.Count)
 
-                c3 = e2.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, True)
+                c3 = e2.Find(Of Entity)(Nothing, Nothing, True)
                 Assert.AreEqual(4, c3.Count)
 
             Finally
@@ -351,26 +355,26 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
-            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             e.Add(mgr.Find(Of Entity4)(5))
 
-            c = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            c = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(12, c.Count)
 
-            c2 = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            c2 = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
             e.Cancel(GetType(Entity4))
 
-            c = e.Find(Of Entity4)(Nothing, Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            c = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(11, c.Count)
 
-            c2 = e.Find(Of Entity4)(New Orm.OrmFilter(GetType(Entity4), "Title", New TypeWrap(Of Object)("bt"), Orm.FilterOperation.NotEqual), Entity4.Entity4Sort.Name.ToString, Orm.SortType.Asc, True)
+            c2 = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
         End Using
     End Sub
@@ -415,12 +419,12 @@ Imports System.Collections.Generic
     Public Sub TestAdd3()
         Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity = New Entity(-100, mgr.Cache, mgr.ObjectSchema)
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, False)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(0, c.Count)
 
             e.Add(mgr.Find(Of Entity4)(10))
 
-            c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, False)
+            c = e.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(1, c.Count)
 
             mgr.BeginTransaction()
@@ -443,20 +447,20 @@ Imports System.Collections.Generic
             AddNew(e)
             Dim e2 As TestProject1.Entity4 = mgr.Find(Of Entity4)(10)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, False)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(0, c.Count)
 
             e.Add(e2)
 
-            c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, False)
+            c = e.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(1, c.Count)
 
-            Dim c2 As ICollection(Of Entity) = e2.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, False)
+            Dim c2 As ICollection(Of Entity) = e2.Find(Of Entity)(Nothing, Nothing, False)
             Assert.AreEqual(6, c2.Count)
 
             'mgr.Obj2ObjRelationAdd(e2, e)
 
-            'c2 = mgr.FindMany2Many(Of Entity4, Entity)(e2, Nothing, Nothing, Orm.SortType.Asc, False)
+            'c2 = mgr.FindMany2Many(Of Entity4, Entity)(e2, Nothing, Nothing,  False)
             'Assert.AreEqual(6, c2.Count)
 
             mgr.BeginTransaction()
@@ -497,23 +501,23 @@ Imports System.Collections.Generic
             Dim e As Entity = New Entity(GetIdentity, mgr.Cache, mgr.ObjectSchema)
             AddNew(e)
             Dim e2 As TestProject1.Entity4 = mgr.Find(Of Entity4)(10)
-            Dim c2 As ICollection(Of Entity) = e2.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, False)
+            Dim c2 As ICollection(Of Entity) = e2.Find(Of Entity)(Nothing, Nothing, False)
             Assert.AreEqual(5, c2.Count)
 
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, False)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(0, c.Count)
 
             e.Add(e2)
 
-            c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, False)
+            c = e.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(1, c.Count)
 
-            c2 = e2.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, False)
+            c2 = e2.Find(Of Entity)(Nothing, Nothing, False)
             Assert.AreEqual(6, c2.Count)
 
             'mgr.Obj2ObjRelationAdd(e2, e)
 
-            'c2 = mgr.FindMany2Many(Of Entity4, Entity)(e2, Nothing, Nothing, Orm.SortType.Asc, False)
+            'c2 = mgr.FindMany2Many(Of Entity4, Entity)(e2, Nothing, Nothing,  False)
             'Assert.AreEqual(6, c2.Count)
 
             mgr.BeginTransaction()
@@ -600,7 +604,7 @@ Imports System.Collections.Generic
             Try
                 Assert.IsTrue(mgr.IsInCache(e2))
 
-                Dim c2 As ICollection(Of Entity) = e2.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, False)
+                Dim c2 As ICollection(Of Entity) = e2.Find(Of Entity)(Nothing, Nothing, False)
 
                 Assert.AreEqual(2, c2.Count)
 
@@ -623,11 +627,11 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity5 = mgr.Find(Of Entity5)(1)
 
-            Dim c As ICollection(Of Entity5) = e.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, True, False)
+            Dim c As ICollection(Of Entity5) = e.Find(Of Entity5)(Nothing, Nothing, True, False)
 
             Assert.AreEqual(1, c.Count)
 
-            c = e.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, False, False)
+            c = e.Find(Of Entity5)(Nothing, Nothing, False, False)
 
             Assert.AreEqual(2, c.Count)
         End Using
@@ -638,7 +642,7 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity5 = mgr.Find(Of Entity5)(2)
 
-            Dim c As ICollection(Of Entity5) = e.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, True, False)
+            Dim c As ICollection(Of Entity5) = e.Find(Of Entity5)(Nothing, Nothing, True, False)
 
             Assert.AreEqual(2, c.Count)
 
@@ -654,7 +658,7 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity5 = mgr.Find(Of Entity5)(3)
 
-            Dim c As ICollection(Of Entity5) = e.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, False)
+            Dim c As ICollection(Of Entity5) = e.Find(Of Entity5)(Nothing, Nothing, False)
 
             Assert.AreEqual(1, c.Count)
 
@@ -664,7 +668,7 @@ Imports System.Collections.Generic
             'Dim e2 As TestProject1.Entity5 = mgr.Find(Of Entity5)(2)
             'Assert.IsTrue(l.Contains(e2))
 
-            c = e.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, False, False)
+            c = e.Find(Of Entity5)(Nothing, Nothing, False, False)
             Assert.AreEqual(2, c.Count)
 
             l = CType(c, IList(Of Entity5))
@@ -673,28 +677,28 @@ Imports System.Collections.Generic
             Dim e2 As TestProject1.Entity5 = mgr.Find(Of Entity5)(2)
             Assert.IsTrue(l.Contains(e2))
 
-            c = e2.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, False, False)
+            c = e2.Find(Of Entity5)(Nothing, Nothing, False, False)
             Assert.AreEqual(0, c.Count)
 
-            c = e2.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, True, False)
+            c = e2.Find(Of Entity5)(Nothing, Nothing, True, False)
             Assert.AreEqual(2, c.Count)
 
             mgr.BeginTransaction()
             Try
                 e2.Add(e, False)
 
-                c = e2.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, False, False)
+                c = e2.Find(Of Entity5)(Nothing, Nothing, False, False)
                 Assert.AreEqual(1, c.Count)
 
-                c = e2.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, False)
+                c = e2.Find(Of Entity5)(Nothing, Nothing, False)
                 Assert.AreEqual(2, c.Count)
 
-                c = e.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, True, False)
+                c = e.Find(Of Entity5)(Nothing, Nothing, True, False)
                 Assert.AreEqual(2, c.Count)
 
                 e2.Save(True)
 
-                c = e.Find(Of Entity5)(Nothing, Nothing, Orm.SortType.Asc, True, False)
+                c = e.Find(Of Entity5)(Nothing, Nothing, True, False)
                 Assert.AreEqual(2, c.Count)
             Finally
                 mgr.Rollback()
@@ -708,36 +712,36 @@ Imports System.Collections.Generic
 
             Dim e As Entity = mgr.Find(Of Entity)(1)
             Dim e4 As Entity4 = mgr.Find(Of Entity4)(2)
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(4, c.Count)
 
-            Dim c2 As ICollection(Of Entity) = e4.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, True)
+            Dim c2 As ICollection(Of Entity) = e4.Find(Of Entity)(Nothing, Nothing, True)
             Assert.AreEqual(3, c2.Count)
 
             e.Add(e4)
 
-            c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+            c = e.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(5, c.Count)
 
-            c2 = e4.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, True)
+            c2 = e4.Find(Of Entity)(Nothing, Nothing, True)
             Assert.AreEqual(4, c2.Count)
 
             mgr.BeginTransaction()
             Try
                 e.Save(False)
 
-                c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+                c = e.Find(Of Entity4)(Nothing, Nothing, True)
                 Assert.AreEqual(5, c.Count)
 
-                c2 = e4.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, True)
+                c2 = e4.Find(Of Entity)(Nothing, Nothing, True)
                 Assert.AreEqual(4, c2.Count)
 
                 e.RejectChanges()
 
-                c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+                c = e.Find(Of Entity4)(Nothing, Nothing, True)
                 Assert.AreEqual(4, c.Count)
 
-                c2 = e4.Find(Of Entity)(Nothing, Nothing, Orm.SortType.Asc, True)
+                c2 = e4.Find(Of Entity)(Nothing, Nothing, True)
                 Assert.AreEqual(3, c2.Count)
 
             Finally
@@ -746,7 +750,7 @@ Imports System.Collections.Generic
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
+    <TestMethod(), ExpectedException(GetType(Orm.OrmManagerException))> _
     Public Sub TestM2MReject2()
         Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             mgr.NewObjectManager = Me
@@ -756,12 +760,12 @@ Imports System.Collections.Generic
             AddNew(e4)
             Dim id As Integer = e4.Identifier
             e4.Title = "90bu13n4gf0bh185g8b18bg81bg8b5gfvlojkqndrg90h5"
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(4, c.Count)
 
-            e.add(e4)
+            e.Add(e4)
 
-            c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+            c = e.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(5, c.Count)
 
             mgr.BeginTransaction()
@@ -771,7 +775,7 @@ Imports System.Collections.Generic
                     saver.Add(e4)
                 End Using
             Finally
-                c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+                c = e.Find(Of Entity4)(Nothing, Nothing, True)
                 Assert.AreEqual(4, c.Count)
 
                 Assert.AreEqual(id, e4.Identifier)
@@ -792,12 +796,12 @@ Imports System.Collections.Generic
             AddNew(e4)
             Dim id As Integer = e4.Identifier
             e4.Title = "kqndrg90h5"
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(4, c.Count)
 
             e.Add(e4)
 
-            c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+            c = e.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(5, c.Count)
 
             mgr.BeginTransaction()
@@ -807,7 +811,7 @@ Imports System.Collections.Generic
                     saver.Add(e4)
                 End Using
 
-                c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+                c = e.Find(Of Entity4)(Nothing, Nothing, True)
                 Assert.AreEqual(5, c.Count)
 
                 Assert.AreNotEqual(id, e4.Identifier)
@@ -832,12 +836,12 @@ Imports System.Collections.Generic
             AddNew(e4)
             Dim id4 As Integer = e4.Identifier
             e4.Title = "kqndrg90h5"
-            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+            Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(0, c.Count)
 
             e.Add(e4)
 
-            c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+            c = e.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(1, c.Count)
 
             mgr.BeginTransaction()
@@ -847,7 +851,7 @@ Imports System.Collections.Generic
                     saver.Add(e4)
                 End Using
 
-                c = e.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+                c = e.Find(Of Entity4)(Nothing, Nothing, True)
                 Assert.AreEqual(1, c.Count)
 
                 Assert.AreNotEqual(id, e.Identifier)
@@ -867,7 +871,7 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim c As ICollection(Of Entity2) = Nothing
             Using New Orm.OrmManagerBase.CacheListSwitcher(mgr, False)
-                c = mgr.FindTop(Of Entity2)(100, Nothing, Nothing, Orm.SortType.Asc, True)
+                c = mgr.FindTop(Of Entity2)(100, Nothing, Nothing, True)
             End Using
 
             Dim l As IList(Of Entity2) = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity2))
@@ -880,7 +884,7 @@ Imports System.Collections.Generic
             Assert.AreEqual(Orm.ObjectState.Modified, e.ObjectState)
 
             'Using New Orm.OrmManagerBase.CacheListSwitcher(mgr, False)
-            c = mgr.FindTop(Of Entity2)(100, Nothing, Nothing, Orm.SortType.Asc, True)
+            c = mgr.FindTop(Of Entity2)(100, Nothing, Nothing, True)
             'End Using
 
             Assert.AreEqual(Orm.ObjectState.Modified, e.ObjectState)
@@ -904,10 +908,10 @@ Imports System.Collections.Generic
 
             Dim e1 As Entity = mgr.Find(Of Entity)(1)
             Dim e2 As Entity = mgr.Find(Of Entity)(2)
-            'mgr.FindMany2Many(Of Entity4)(e1, Nothing, Nothing, Orm.SortType.Asc, True)
-            'mgr.FindMany2Many(Of Entity4)(e2, Nothing, Nothing, Orm.SortType.Asc, False)
-            e1.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
-            e2.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, False)
+            'mgr.FindMany2Many(Of Entity4)(e1, Nothing, Nothing,  True)
+            'mgr.FindMany2Many(Of Entity4)(e2, Nothing, Nothing,  False)
+            e1.Find(Of Entity4)(Nothing, Nothing, True)
+            e2.Find(Of Entity4)(Nothing, Nothing, False)
 
             mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, Collections.ICollection), Nothing)
 
@@ -924,14 +928,14 @@ Imports System.Collections.Generic
 
             Dim e1 As Entity = mgr.Find(Of Entity)(1)
             Dim e2 As Entity = mgr.Find(Of Entity)(2)
-            'mgr.FindMany2Many(Of Entity4)(e1, Nothing, Nothing, Orm.SortType.Asc, True)
-            'mgr.FindMany2Many(Of Entity4)(e2, Nothing, Nothing, Orm.SortType.Asc, False)
-            Dim c1 As ICollection(Of Entity4) = e1.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, True)
+            'mgr.FindMany2Many(Of Entity4)(e1, Nothing, Nothing,  True)
+            'mgr.FindMany2Many(Of Entity4)(e2, Nothing, Nothing,  False)
+            Dim c1 As ICollection(Of Entity4) = e1.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(4, c1.Count)
             For Each o As Entity4 In c1
                 Assert.IsTrue(o.IsLoaded)
             Next
-            Dim c2 As ICollection(Of Entity4) = e2.Find(Of Entity4)(Nothing, Nothing, Orm.SortType.Asc, False)
+            Dim c2 As ICollection(Of Entity4) = e2.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(11, c2.Count)
             Dim l As IList(Of Entity4) = CType(c1, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
             For Each o As Entity4 In c2

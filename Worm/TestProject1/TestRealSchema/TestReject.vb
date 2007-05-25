@@ -99,7 +99,7 @@ Public Class TestReject
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
+    <TestMethod(), ExpectedException(GetType(Orm.OrmManagerException))> _
     Public Sub TestSaver()
         Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
             Dim t2 As Table1 = mgr.Find(Of Table1)(1)
@@ -124,7 +124,7 @@ Public Class TestReject
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
+    <TestMethod(), ExpectedException(GetType(Orm.OrmManagerException))> _
     Public Sub TestUpdate()
         Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
             Dim t1 As New Table2(-100, mgr.Cache, mgr.ObjectSchema)
@@ -147,7 +147,7 @@ Public Class TestReject
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
+    <TestMethod(), ExpectedException(GetType(Orm.OrmManagerException))> _
     Public Sub TestUpdate2()
         Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
             Dim t1 As Table3 = mgr.Find(Of Table3)(1)

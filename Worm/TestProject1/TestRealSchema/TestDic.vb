@@ -24,8 +24,8 @@ Public Class TestDic
 
         Dim s As New Orm.DbSchema("1")
         Using mgr As Orm.OrmManagerBase = TestManagerRS.CreateManagerShared(s)
-            Dim f As New Orm.OrmFilter(GetType(Table1), "Title", New TypeWrap(Of Object)("f%"), Orm.FilterOperation.Like)
-            Dim col As ICollection(Of Table1) = mgr.Find(Of Table1)(f, Nothing, Orm.SortType.Asc, False)
+            Dim f As Orm.CriteriaLink = New Orm.Criteria(GetType(Table1)).Field("Title").Like("f%")
+            Dim col As ICollection(Of Table1) = mgr.Find(Of Table1)(f, Nothing, False)
 
             Assert.AreEqual(2, col.Count)
         End Using

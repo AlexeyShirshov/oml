@@ -6,11 +6,6 @@ Public Enum Enum1 As Byte
     sec = 2
 End Enum
 
-Public Enum Table1Sort
-    DateTime
-    [Enum]
-End Enum
-
 <Entity(GetType(Table1Implementation), "1"), Entity(GetType(Table12Implementation), "2"), Entity(GetType(Table13Implementation), "3")> _
 Public Class Table1
     Inherits OrmBase
@@ -21,57 +16,6 @@ Public Class Table1
     Private _e2 As Nullable(Of Enum1)
     Private _dt As DateTime
 
-    Public Class Comparer
-        Implements System.Collections.IComparer, System.Collections.Generic.IComparer(Of Table1)
-
-        Private _s As Table1Sort
-        Private _st As Integer = -1
-
-        Public Sub New(ByVal s As Table1Sort, ByVal st As SortType)
-            _s = s
-            If st = SortType.Asc Then
-                _st = 1
-            End If
-        End Sub
-
-        Protected Function Compare(ByVal x As Object, ByVal y As Object) As Integer Implements System.Collections.IComparer.Compare
-            Return Compare(TryCast(x, Table1), TryCast(y, Table1))
-        End Function
-
-        Public Function Compare(ByVal x As Table1, ByVal y As Table1) As Integer Implements System.Collections.Generic.IComparer(Of Table1).Compare
-            If x Is Nothing Then
-                If y Is Nothing Then
-                    Return 0 * _st
-                Else
-                    Return -1 * _st
-                End If
-            Else
-                If y Is Nothing Then
-                    Return 1 * _st
-                Else
-                    Select Case _s
-                        Case Table1Sort.DateTime
-                            Return x.CreatedAt.CompareTo(y.CreatedAt) * _st
-                        Case Table1Sort.Enum
-                            If Not x.[Enum].HasValue Then
-                                If y.[Enum].HasValue Then
-                                    Return -1 * _st
-                                Else
-                                    Return 0 * _st
-                                End If
-                            Else
-                                If y.[Enum].HasValue Then
-                                    Return x.[Enum].Value.CompareTo(y.Enum.Value) * _st
-                                Else
-                                    Return 1 * _st
-                                End If
-                            End If
-                    End Select
-                End If
-            End If
-        End Function
-    End Class
-
     Public Sub New()
         MyBase.New()
     End Sub
@@ -80,13 +24,13 @@ Public Class Table1
         MyBase.New(id, cache, schema)
     End Sub
 
-    Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
-        Return New Comparer(CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort), sort_type)
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.IComparer
+    '    Return New Comparer(CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort), sort_type)
+    'End Function
 
-    Public Overloads Overrides Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
-        Return CType(New Comparer(CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort), sort_type), Global.System.Collections.Generic.IComparer(Of T))
-    End Function
+    'Public Overloads Overrides Function CreateSortComparer(Of T As {OrmBase, New})(ByVal sort As String, ByVal sort_type As Worm.Orm.SortType) As System.Collections.Generic.IComparer(Of T)
+    '    Return CType(New Comparer(CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort), sort_type), Global.System.Collections.Generic.IComparer(Of T))
+    'End Function
 
     'Public Overrides ReadOnly Property HasChanges() As Boolean
     '    Get
@@ -202,12 +146,12 @@ End Class
 
 Public Class Table1Implementation
     Inherits ObjectSchemaBaseImplementation
-    Implements IOrmDictionary, IOrmSchemaInit
+    Implements IOrmDictionary, IOrmSchemaInit, IOrmSorting
 
     Private _idx As Orm.OrmObjectIndex
     'Private _schema As OrmSchemaBase
     Private _tables() As OrmTable = {New OrmTable("dbo.Table1")}
-    Private _rels() As M2MRelation 
+    Private _rels() As M2MRelation
 
     Public Enum Tables
         Main
@@ -242,16 +186,16 @@ Public Class Table1Implementation
         Return _tables
     End Function
 
-    Public Overrides Function MapSort2FieldName(ByVal sort As String) As String
-        Select Case CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort)
-            Case Table1Sort.DateTime
-                Return "DT"
-            Case Table1Sort.Enum
-                Return "Enum"
-            Case Else
-                Throw New NotSupportedException("Sorting " & sort & " is not supported")
-        End Select
-    End Function
+    'Public Overrides Function MapSort2FieldName(ByVal sort As String) As String
+    '    Select Case CType(System.Enum.Parse(GetType(Table1Sort), sort), Table1Sort)
+    '        Case Table1Sort.DateTime
+    '            Return "DT"
+    '        Case Table1Sort.Enum
+    '            Return "Enum"
+    '        Case Else
+    '            Throw New NotSupportedException("Sorting " & sort & " is not supported")
+    '    End Select
+    'End Function
 
     Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
         Dim t As Type = _schema.GetTypeByEntityName("Table3")
@@ -280,6 +224,85 @@ Public Class Table1Implementation
     '    _schema = schema
     '    _objectType = type
     'End Sub
+
+    Public Function CreateSortComparer(ByVal s As Worm.Orm.Sort) As System.Collections.IComparer Implements Worm.Orm.IOrmSorting.CreateSortComparer
+        If s.FieldName = "DT" Then
+            Return New Comparer(Table1Sort.DateTime, s.Order)
+        ElseIf s.FieldName = "Enum" Then
+            Return New Comparer(Table1Sort.Enum, s.Order)
+        End If
+        Return Nothing
+    End Function
+
+    Public Function CreateSortComparer1(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Worm.Orm.Sort) As System.Collections.Generic.IComparer(Of T) Implements Worm.Orm.IOrmSorting.CreateSortComparer
+        If s.FieldName = "DT" Then
+            Return CType(New Comparer(Table1Sort.DateTime, s.Order), Global.System.Collections.Generic.IComparer(Of T))
+        ElseIf s.FieldName = "Enum" Then
+            Return CType(New Comparer(Table1Sort.Enum, s.Order), Global.System.Collections.Generic.IComparer(Of T))
+        End If
+        Return Nothing
+    End Function
+
+    Public Function ExternalSort(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Worm.Orm.Sort, ByVal objs As System.Collections.Generic.ICollection(Of T)) As System.Collections.Generic.ICollection(Of T) Implements Worm.Orm.IOrmSorting.ExternalSort
+        Throw New NotSupportedException
+    End Function
+
+    Public Enum Table1Sort
+        DateTime
+        [Enum]
+    End Enum
+
+    Public Class Comparer
+        Implements System.Collections.IComparer, System.Collections.Generic.IComparer(Of Table1)
+
+        Private _s As Table1Sort
+        Private _st As Integer = -1
+
+        Public Sub New(ByVal s As Table1Sort, ByVal st As SortType)
+            _s = s
+            If st = SortType.Asc Then
+                _st = 1
+            End If
+        End Sub
+
+        Protected Function Compare(ByVal x As Object, ByVal y As Object) As Integer Implements System.Collections.IComparer.Compare
+            Return Compare(TryCast(x, Table1), TryCast(y, Table1))
+        End Function
+
+        Public Function Compare(ByVal x As Table1, ByVal y As Table1) As Integer Implements System.Collections.Generic.IComparer(Of Table1).Compare
+            If x Is Nothing Then
+                If y Is Nothing Then
+                    Return 0 * _st
+                Else
+                    Return -1 * _st
+                End If
+            Else
+                If y Is Nothing Then
+                    Return 1 * _st
+                Else
+                    Select Case _s
+                        Case Table1Sort.DateTime
+                            Return x.CreatedAt.CompareTo(y.CreatedAt) * _st
+                        Case Table1Sort.Enum
+                            If Not x.[Enum].HasValue Then
+                                If y.[Enum].HasValue Then
+                                    Return -1 * _st
+                                Else
+                                    Return 0 * _st
+                                End If
+                            Else
+                                If y.[Enum].HasValue Then
+                                    Return x.[Enum].Value.CompareTo(y.Enum.Value) * _st
+                                Else
+                                    Return 1 * _st
+                                End If
+                            End If
+                    End Select
+                End If
+            End If
+        End Function
+    End Class
+
 End Class
 
 Public Class Table12Implementation

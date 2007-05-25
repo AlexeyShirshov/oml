@@ -239,15 +239,15 @@ Namespace Orm
             Dim col As Generic.ICollection(Of T)
             If strong Then
                 If loadName Then
-                    col = mgr.Find(Of T)(New OrmFilter(tt, field, New TypeWrap(Of Object)(Name), FilterOperation.Equal), Nothing, SortType.Asc, New String() {field})
+                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Eq(Name), Nothing, New String() {field})
                 Else
-                    col = mgr.Find(Of T)(New OrmFilter(tt, field, New TypeWrap(Of Object)(Name), FilterOperation.Equal), Nothing, SortType.Asc, False)
+                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Eq(Name), Nothing, False)
                 End If
             Else
                 If loadName Then
-                    col = mgr.Find(Of T)(New OrmFilter(tt, field, New TypeWrap(Of Object)(Name & "%"), FilterOperation.Like), Nothing, SortType.Asc, New String() {field})
+                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Like(Name & "%"), Nothing, New String() {field})
                 Else
-                    col = mgr.Find(Of T)(New OrmFilter(tt, field, New TypeWrap(Of Object)(Name & "%"), FilterOperation.Like), Nothing, SortType.Asc, False)
+                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Like(Name & "%"), Nothing, False)
                 End If
             End If
             Return col

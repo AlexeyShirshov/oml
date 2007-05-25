@@ -82,7 +82,7 @@ Namespace Web
         Public Overrides Function GetAllRoles() As String()
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim roles As New Generic.List(Of String)
-                For Each r As OrmBase In FindRoles(mgr, New OrmFilter(GetRoleType, "ID", New TypeWrap(Of Object)(-1), FilterOperation.NotEqual))
+                For Each r As OrmBase In FindRoles(mgr, New Criteria(GetRoleType).Field("ID").NotEq(-1))
                     roles.Add(CStr(mgr.DbSchema.GetFieldValue(r, _rolenameField)))
                 Next
                 Return roles.ToArray
@@ -191,11 +191,11 @@ Namespace Web
             Dim r As OrmBase = GetRoleByName(mgr, roleName, False)
             Dim users As New Generic.List(Of String)
             If r IsNot Nothing Then
-                Dim f As OrmFilter = Nothing
+                Dim f As CriteriaLink = Nothing
                 If usernameToMatch IsNot Nothing Then
-                    f = New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(usernameToMatch), FilterOperation.Like)
+                    f = New Criteria(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Like(usernameToMatch)
                 End If
-                Return CType(r.Find(ProfileProvider.GetUserType, f, Nothing, SortType.Asc, WithLoad), IList)
+                Return CType(r.Find(ProfileProvider.GetUserType, f, Nothing, WithLoad), IList)
             End If
             Return New OrmBase() {}
         End Function
@@ -203,14 +203,14 @@ Namespace Web
         Protected Friend Function GetRolesForUserInternal(ByVal mgr As OrmDBManager, ByVal username As String) As IList
             Dim u As OrmBase = MembershipProvider.FindUserByName(mgr, username, Nothing)
             If u IsNot Nothing Then
-                Return CType(u.Find(GetRoleType, Nothing, Nothing, SortType.Asc, WithLoad), IList)
+                Return CType(u.Find(GetRoleType, Nothing, Nothing, WithLoad), IList)
             End If
             Return New OrmBase() {}
         End Function
 
         Protected MustOverride Function GetRoleType() As Type
         Protected MustOverride Function GetRoleByName(ByVal mgr As OrmDBManager, ByVal name As String, ByVal createIfNotExist As Boolean) As OrmBase
-        Protected Friend MustOverride Function FindRoles(ByVal mgr As OrmDBManager, ByVal f As IOrmFilter) As IList
+        Protected Friend MustOverride Function FindRoles(ByVal mgr As OrmDBManager, ByVal f As CriteriaLink) As IList
         Protected MustOverride Overloads Sub DeleteRole(ByVal mgr As OrmDBManager, ByVal role As OrmBase, ByVal cascase As Boolean)
         Protected MustOverride ReadOnly Property WithLoad() As Boolean
     End Class

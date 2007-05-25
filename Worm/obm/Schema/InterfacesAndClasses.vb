@@ -9,13 +9,20 @@ Namespace Orm
 #Region " Interfaces "
     Public Interface IOrmObjectSchemaBase
         Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
-        Function MapSort2FieldName(ByVal sort As String) As String
+        'Function MapSort2FieldName(ByVal sort As String) As String
         Function GetM2MRelations() As M2MRelation()
         Function GetFilter(ByVal filter_info As Object) As IOrmFilter
         Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
         Function GetSuppressedColumns() As ColumnAttribute()
-        ReadOnly Property IsExternalSort(ByVal sort As String) As Boolean
-        Function ExternalSort(ByVal sort As String, ByVal sortType As SortType, ByVal objs As IList) As IList
+        'ReadOnly Property IsExternalSort(ByVal sort As String) As Boolean
+        'Function ExternalSort(ByVal sort As String, ByVal sortType As SortType, ByVal objs As IList) As IList
+    End Interface
+
+    Public Interface IOrmSorting
+        'ReadOnly Property IsExternalSort(ByVal s As Sort) As Boolean
+        Function ExternalSort(Of T As {OrmBase, New})(ByVal s As Sort, ByVal objs As ICollection(Of T)) As ICollection(Of T)
+        Function CreateSortComparer(ByVal s As Sort) As IComparer
+        Function CreateSortComparer(Of T As {OrmBase, New})(ByVal s As Sort) As Generic.IComparer(Of T)
     End Interface
 
     Public Interface IOrmObjectSchema

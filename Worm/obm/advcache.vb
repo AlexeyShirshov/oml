@@ -8,7 +8,7 @@ Namespace Orm
     Public Interface IListObjectConverter
         Function ToWeakList(ByVal objects As IEnumerable) As Object
         Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T)
-        Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, ByVal sort As String, ByVal sortType As SortType) As Boolean
+        Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, ByVal sort As Sort) As Boolean
         Sub Delete(ByVal weak_list As Object, ByVal obj As OrmBase)
     End Interface
 
@@ -27,21 +27,25 @@ Namespace Orm
             Return objects
         End Function
 
-        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, ByVal sort As String, ByVal sortType As SortType) As Boolean Implements IListObjectConverter.Add
+        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, _
+            ByVal sort As Sort) As Boolean Implements IListObjectConverter.Add
             Dim l As IList = CType(weak_list, IList)
-            If String.IsNullOrEmpty(sort) Then
+            Dim st As IOrmSorting = Nothing
+            If sort Is Nothing Then
                 l.Add(obj)
                 Return True
-            ElseIf mc.CanSortOnClient(l) Then
-                Dim c As IComparer = obj.CreateSortComparer(sort, sortType)
-                Dim pos As Integer = ArrayList.Adapter(l).BinarySearch(obj, c)
-                If pos < 0 Then
-                    l.Insert(Not pos, obj)
+            ElseIf mc.CanSortOnClient(obj.GetType, l, st) Then
+                Dim c As IComparer = st.CreateSortComparer(sort)
+                If c IsNot Nothing Then
+                    Dim pos As Integer = ArrayList.Adapter(l).BinarySearch(obj, c)
+                    If pos < 0 Then
+                        l.Insert(Not pos, obj)
+                    End If
+                    Return True
                 End If
-                Return True
-            Else
-                Return False
             End If
+
+            Return False
         End Function
 
         Public Sub Delete(ByVal weak_list As Object, ByVal obj As OrmBase) Implements IListObjectConverter.Delete
@@ -132,7 +136,8 @@ Namespace Orm
             End Sub
         End Class
 
-        Public Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
+            ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
             If weak_list Is Nothing Then Return Nothing
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
@@ -165,25 +170,30 @@ Namespace Orm
             Return lo
         End Function
 
-        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, ByVal sort As String, ByVal sortType As SortType) As Boolean Implements IListObjectConverter.Add
+        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, _
+            ByVal sort As Sort) As Boolean Implements IListObjectConverter.Add
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
 
-            If String.IsNullOrEmpty(sort) Then
+            If sort Is Nothing Then
                 l.Add(New ListObjectEntry(obj))
             Else
                 Dim arr As ArrayList = Nothing
                 If lo.CanSort(mc, arr) Then
-                    Dim c As IComparer = obj.CreateSortComparer(sort, sortType)
-                    Dim pos As Integer = ArrayList.Adapter(arr).BinarySearch(obj, c)
-                    If pos < 0 Then
-                        l.Insert(Not pos, New ListObjectEntry(obj))
+                    Dim schema As IOrmObjectSchemaBase = mc.ObjectSchema.GetObjectSchema(obj.GetType)
+                    Dim st As IOrmSorting = TryCast(schema, IOrmSorting)
+                    If st IsNot Nothing Then
+                        Dim c As IComparer = st.CreateSortComparer(sort)
+                        Dim pos As Integer = ArrayList.Adapter(arr).BinarySearch(obj, c)
+                        If pos < 0 Then
+                            l.Insert(Not pos, New ListObjectEntry(obj))
+                        End If
+                        Return True
                     End If
-                    Return True
-                Else
-                    Return False
                 End If
             End If
+
+            Return False
         End Function
 
         Public Sub Delete(ByVal weak_list As Object, ByVal obj As OrmBase) Implements IListObjectConverter.Delete

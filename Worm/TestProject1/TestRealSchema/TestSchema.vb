@@ -53,15 +53,15 @@ Public Class TestSchema
             Assert.AreEqual(t1, t2.Tbl)
 
             Dim t3 As ICollection(Of Table2) = Nothing
-            Try
-                t3 = mgr.Find(Of Table2, Table1)(t1, "Table1", Nothing, Orm.SortType.Asc, False)
-                Assert.Fail()
-            Catch ex As ArgumentException
-            Catch
-                Assert.Fail()
-            End Try
+            'Try
+            t3 = mgr.Find(Of Table2)(New Orm.Criteria(GetType(Table2)).Field("Table1").Eq(t1), Nothing, False)
+            '    Assert.Fail()
+            'Catch ex As ArgumentException
+            'Catch
+            '    Assert.Fail()
+            'End Try
 
-            t3 = mgr.FindOrm(Of Table2)(t1, "Table1", Nothing, Orm.SortType.Asc, False)
+            't3 = mgr.FindOrm(Of Table2)(t1, "Table1", Nothing, False)
 
             Assert.AreEqual(2, t3.Count)
 
@@ -76,7 +76,7 @@ Public Class TestSchema
 
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t3 As ICollection(Of Table2) = mgr.FindOrm(Of Table2)(New Table1(1, mgr.Cache, mgr.ObjectSchema), "Table1", Nothing, Orm.SortType.Asc, True)
+            Dim t3 As ICollection(Of Table2) = mgr.Find(Of Table2)(New Orm.Criteria(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Nothing, True)
 
             Assert.AreEqual(2, t3.Count)
 
@@ -93,7 +93,7 @@ Public Class TestSchema
 
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t3 As ICollection(Of Table2) = mgr.FindOrm(Of Table2)(New Table1(1, mgr.Cache, mgr.ObjectSchema), "Table1", Nothing, Orm.SortType.Asc, False)
+            Dim t3 As ICollection(Of Table2) = mgr.Find(Of Table2)(New Orm.Criteria(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Nothing, False)
 
             Assert.AreEqual(2, t3.Count)
 
@@ -101,7 +101,7 @@ Public Class TestSchema
                 Assert.IsFalse(t2.IsLoaded)
             Next
 
-            For Each t2 As Table2 In mgr.FindOrm(Of Table2)(New Table1(1, mgr.Cache, mgr.ObjectSchema), "Table1", Nothing, Orm.SortType.Asc, True)
+            For Each t2 As Table2 In mgr.Find(Of Table2)(New Orm.Criteria(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Nothing, True)
                 Assert.IsTrue(t2.IsLoaded)
             Next
         End Using
@@ -144,14 +144,14 @@ Public Class TestSchema
         Dim schema As New Orm.DbSchema("1")
 
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table2) = CType(mgr.FindOrm(Of Table2)(New Table1(1, mgr.Cache, mgr.ObjectSchema), "Table1", Table1Sort.DateTime.ToString, Orm.SortType.Asc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            Dim t2 As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Orm.Criteria(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Orm.Sorting.Field("DT").Asc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
 
             Assert.AreEqual(1, t2(0).Identifier)
-            Assert.AreEqual(2, t2(1).Identifier)
+            Assert.AreEqual(4, t2(1).Identifier)
 
-            t2 = CType(mgr.FindOrm(Of Table2)(New Table1(1, mgr.Cache, mgr.ObjectSchema), "Table1", Table1Sort.DateTime.ToString, Orm.SortType.Desc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            t2 = CType(mgr.Find(Of Table2)(New Orm.Criteria(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Orm.Sorting.Field("DTs").Desc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
 
-            Assert.AreEqual(2, t2(0).Identifier)
+            Assert.AreEqual(4, t2(0).Identifier)
             Assert.AreEqual(1, t2(1).Identifier)
         End Using
     End Sub
@@ -161,14 +161,14 @@ Public Class TestSchema
         Dim schema As New Orm.DbSchema("1")
 
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Table1Sort.DateTime.ToString, Orm.SortType.Asc, False), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Orm.Sorting.Field("DT").Asc, False), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsFalse(t2(0).IsLoaded)
             Assert.AreEqual(2, t2(1).Identifier)
             Assert.IsFalse(t2(1).IsLoaded)
 
-            t2 = CType(mgr.FindTop(Of Table1)(10, Nothing, Table1Sort.DateTime.ToString, Orm.SortType.Desc, False), IList(Of Table1))
+            t2 = CType(mgr.FindTop(Of Table1)(10, Nothing, Orm.Sorting.Field("DT").Desc, False), IList(Of Table1))
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.IsTrue(t2(0).IsLoaded)
@@ -182,7 +182,7 @@ Public Class TestSchema
         Dim schema As New Orm.DbSchema("1")
 
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Table1Sort.DateTime.ToString, Orm.SortType.Asc, True), IList(Of Table1))
+            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Orm.Sorting.Field("DT").Asc, True), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.IsTrue(t2(0).IsLoaded)

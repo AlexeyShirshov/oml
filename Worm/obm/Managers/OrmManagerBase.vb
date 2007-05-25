@@ -65,8 +65,8 @@ Namespace Orm
         End Class
 
         Public Class CachedItem
-            Protected _sort As String
-            Protected _st As SortType
+            Protected _sort As Sort
+            'Protected _st As SortType
             Protected _obj As Object
             'Protected _mark As Object
             Protected _cache As OrmCacheBase
@@ -90,9 +90,9 @@ Namespace Orm
             Protected Sub New()
             End Sub
 
-            Public Sub New(ByVal sort As String, ByVal sortType As SortType, ByVal filter As IOrmFilter, ByVal obj As IEnumerable, ByVal mc As OrmManagerBase)
+            Public Sub New(ByVal sort As Sort, ByVal filter As IOrmFilter, ByVal obj As IEnumerable, ByVal mc As OrmManagerBase)
                 _sort = sort
-                _st = sortType
+                '_st = sortType
                 _obj = mc.ListConverter.ToWeakList(obj)
                 _cache = mc.Cache
                 If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
@@ -108,8 +108,8 @@ Namespace Orm
             End Function
 
             Protected Function GetSortExp() As String
-                If Not String.IsNullOrEmpty(_sort) Then
-                    Return _sort & _st.ToString
+                If _sort IsNot Nothing Then
+                    Return _sort.ToString
                 End If
                 Return Nothing
             End Function
@@ -130,7 +130,7 @@ Namespace Orm
                 Return False
             End Function
 
-            Public Function SortEquals(ByVal sort As String, ByVal sortType As SortType) As Boolean
+            Public Function SortEquals(ByVal sort As Sort) As Boolean
                 If _sort Is Nothing Then
                     If sort Is Nothing Then
                         Return True
@@ -138,7 +138,7 @@ Namespace Orm
                         Return False
                     End If
                 Else
-                    Return _sort.Equals(sort) AndAlso _st = sortType
+                    Return _sort.Equals(sort)
                 End If
             End Function
 
@@ -175,7 +175,7 @@ Namespace Orm
             End Sub
 
             Public Overridable Function Add(ByVal mgr As OrmManagerBase, ByVal obj As OrmBase) As Boolean
-                Return mgr.ListConverter.Add(_obj, mgr, obj, _sort, _st)
+                Return mgr.ListConverter.Add(_obj, mgr, obj, _sort)
             End Function
 
             Public Overridable Sub Delete(ByVal mgr As OrmManagerBase, ByVal obj As OrmBase)
@@ -192,11 +192,11 @@ Namespace Orm
         Public Class M2MCache
             Inherits CachedItem
 
-            Public Sub New(ByVal sort As String, ByVal sortType As SortType, ByVal filter As IOrmFilter, _
+            Public Sub New(ByVal sort As Sort, ByVal filter As IOrmFilter, _
                 ByVal mainId As Integer, ByVal obj As IList(Of Integer), ByVal mc As OrmManagerBase, _
                 ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean)
                 _sort = sort
-                _st = sortType
+                '_st = sortType
                 _cache = mc.Cache
                 If obj IsNot Nothing Then
                     _cache.RegisterCreationCacheItem(Me.GetType)
@@ -205,10 +205,10 @@ Namespace Orm
                 _f = filter
             End Sub
 
-            Public Sub New(ByVal sort As String, ByVal sortType As SortType, ByVal filter As IOrmFilter, _
+            Public Sub New(ByVal sort As Sort, ByVal filter As IOrmFilter, _
                 ByVal mainId As Integer, ByVal el As EditableList, ByVal mc As OrmManagerBase)
                 _sort = sort
-                _st = sortType
+                '_st = SortType
                 _cache = mc.Cache
                 If el IsNot Nothing Then
                     _cache.RegisterCreationCacheItem(Me.GetType)
@@ -266,8 +266,8 @@ Namespace Orm
             Property Created() As Boolean
             Property Renew() As Boolean
             ReadOnly Property SmartSort() As Boolean
-            ReadOnly Property Sort() As String
-            ReadOnly Property SortType() As SortType
+            ReadOnly Property Sort() As Sort
+            'ReadOnly Property SortType() As SortType
             ReadOnly Property Filter() As IOrmFilter
             Sub CreateDepends()
             Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
@@ -320,8 +320,8 @@ Namespace Orm
             Public MustOverride Function GetValues(ByVal withLoad As Boolean) As Generic.ICollection(Of T) Implements ICustDelegate(Of T).GetValues
             Public MustOverride Sub CreateDepends() Implements ICustDelegate(Of T).CreateDepends
             Public MustOverride ReadOnly Property Filter() As IOrmFilter Implements ICustDelegate(Of T).Filter
-            Public MustOverride ReadOnly Property Sort() As String Implements ICustDelegate(Of T).Sort
-            Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
+            Public MustOverride ReadOnly Property Sort() As Sort Implements ICustDelegate(Of T).Sort
+            'Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
             Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem Implements ICustDelegate(Of T).GetCacheItem
             Public MustOverride Function GetCacheItem(ByVal col As System.Collections.Generic.ICollection(Of T)) As CachedItem Implements ICustDelegate(Of T).GetCacheItem
         End Class
@@ -580,12 +580,12 @@ Namespace Orm
 
 #Region " Lookup object "
 
-        Public Function LoadObjects(Of T As {OrmBase, New})(ByVal fieldName As String, ByVal filter As IOrmFilter, _
+        Public Function LoadObjects(Of T As {OrmBase, New})(ByVal fieldName As String, ByVal criteria As CriteriaLink, _
             ByVal col As ICollection) As ICollection(Of T)
-            Return LoadObjects(Of T)(fieldName, filter, col, 0, col.Count)
+            Return LoadObjects(Of T)(fieldName, criteria, col, 0, col.Count)
         End Function
 
-        Public Function LoadObjects(Of T As {OrmBase, New})(ByVal fieldName As String, ByVal filter As IOrmFilter, _
+        Public Function LoadObjects(Of T As {OrmBase, New})(ByVal fieldName As String, ByVal criteria As CriteriaLink, _
             ByVal col As ICollection, ByVal start As Integer, ByVal length As Integer) As ICollection(Of T)
             Dim tt As Type = GetType(T)
 
@@ -618,19 +618,20 @@ Namespace Orm
                 If Not _dont_cache_lists Then
                     Dim i As Integer = start
                     For Each o As OrmBase In col
-                        Dim con As New OrmCondition.OrmConditionConstructor
-                        con.AddFilter(New OrmFilter(tt, fieldName, o, FilterOperation.Equal))
-                        con.AddFilter(filter)
-                        Dim f As IOrmFilter = con.Condition
+                        'Dim con As New OrmCondition.OrmConditionConstructor
+                        'con.AddFilter(New OrmFilter(tt, fieldName, o, FilterOperation.Equal))
+                        'con.AddFilter(criteria.Filter)
+                        Dim cl As CriteriaLink = Orm.Criteria.Field(tt, fieldName).Eq(o).And(criteria)
+                        Dim f As IOrmFilter = cl.Filter
                         Dim key As String = _schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                         Dim dic As IDictionary = GetDic(_cache, key)
                         Dim id As String = CObj(f).ToString
                         If dic.Contains(id) Then
                             'Dim fs As List(Of String) = Nothing
-                            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(f, Nothing, SortType.Asc, key, id)
+                            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(f, Nothing, key, id)
                             Dim v As ICacheValidator = TryCast(del, ICacheValidator)
                             If v Is Nothing OrElse v.Validate() Then
-                                l.AddRange(Find(Of T)(f, Nothing, SortType.Asc, True))
+                                l.AddRange(Find(Of T)(cl, Nothing, True))
                             Else
                                 newc.Add(o)
                             End If
@@ -649,7 +650,7 @@ Namespace Orm
                     ids.Append(o.Identifier)
                 Next
                 Dim c As New List(Of T)
-                GetObjects(Of T)(ids.Ints, filter, c, True, fieldName, False)
+                GetObjects(Of T)(ids.Ints, GetFilter(criteria), c, True, fieldName, False)
                 'l.AddRange(c)
 
                 Dim lookups As New Dictionary(Of OrmBase, List(Of T))
@@ -669,14 +670,16 @@ Namespace Orm
                     If lookups.TryGetValue(k, v) Then
                         l.AddRange(v)
                         If Not _dont_cache_lists Then
-                            Dim con As New OrmCondition.OrmConditionConstructor
-                            con.AddFilter(New OrmFilter(tt, fieldName, k, FilterOperation.Equal))
-                            con.AddFilter(filter)
-                            Dim f As IOrmFilter = con.Condition
+                            'Dim con As New OrmCondition.OrmConditionConstructor
+                            'con.AddFilter(New OrmFilter(tt, fieldName, k, FilterOperation.Equal))
+                            'con.AddFilter(filter)
+                            'Dim f As IOrmFilter = con.Condition
+                            Dim cl As CriteriaLink = Orm.Criteria.Field(tt, fieldName).Eq(k).And(criteria)
+                            Dim f As IOrmFilter = cl.Filter
                             Dim key As String = _schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                             Dim dic As IDictionary = GetDic(_cache, key)
                             Dim id As String = CObj(f).ToString
-                            dic(id) = New CachedItem(Nothing, SortType.Asc, con.Condition, v, Me)
+                            dic(id) = New CachedItem(Nothing, f, v, Me)
                         End If
                     End If
                 Next
@@ -685,12 +688,12 @@ Namespace Orm
             End Using
         End Function
 
-        Public Sub LoadObjects(Of T As {OrmBase, New})(ByVal relation As M2MRelation, ByVal filter As IOrmFilter, _
+        Public Sub LoadObjects(Of T As {OrmBase, New})(ByVal relation As M2MRelation, ByVal criteria As CriteriaLink, _
             ByVal col As ICollection, ByVal target As ICollection(Of T))
-            LoadObjects(Of T)(relation, filter, col, target, 0, col.Count)
+            LoadObjects(Of T)(relation, criteria, col, target, 0, col.Count)
         End Sub
 
-        Public Sub LoadObjects(Of T As {OrmBase, New})(ByVal relation As M2MRelation, ByVal filter As IOrmFilter, _
+        Public Sub LoadObjects(Of T As {OrmBase, New})(ByVal relation As M2MRelation, ByVal criteria As CriteriaLink, _
             ByVal col As ICollection, ByVal target As ICollection(Of T), ByVal start As Integer, ByVal length As Integer)
             Dim type2load As Type = GetType(T)
 
@@ -729,20 +732,20 @@ Namespace Orm
                     For Each o As OrmBase In col
                         Dim tt1 As Type = o.GetType
                         Dim key As String = GetM2MKey(tt1, type2load, direct)
-                        If filter IsNot Nothing Then
-                            key &= filter.GetStaticString
+                        If criteria IsNot Nothing Then
+                            key &= criteria.Filter.GetStaticString
                         End If
 
                         Dim dic As IDictionary = GetDic(_cache, key)
 
                         Dim id As String = o.Identifier.ToString
-                        If filter IsNot Nothing Then
-                            id &= CObj(filter).ToString
+                        If criteria IsNot Nothing Then
+                            id &= CObj(criteria.Filter).ToString
                         End If
 
                         If dic.Contains(id) Then
                             Dim sync As String = GetSync(key, id)
-                            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(o, filter, Nothing, SortType.Asc, id, sync, key, direct)
+                            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(o, GetFilter(criteria), Nothing, id, sync, key, direct)
                             Dim v As ICacheValidator = TryCast(del, ICacheValidator)
                             If v Is Nothing OrElse v.Validate() Then
                                 Dim e As M2MCache = CType(dic(id), M2MCache)
@@ -771,7 +774,7 @@ Namespace Orm
                         type = o.GetType
                     End If
                 Next
-                Dim edic As IDictionary(Of Integer, EditableList) = GetObjects(Of T)(type, ids.Ints, filter, relation, False)
+                Dim edic As IDictionary(Of Integer, EditableList) = GetObjects(Of T)(type, ids.Ints, GetFilter(criteria), relation, False)
                 'l.AddRange(c)
 
                 If (target IsNot Nothing OrElse Not _dont_cache_lists) AndAlso edic IsNot Nothing Then
@@ -787,20 +790,20 @@ Namespace Orm
                             If Not _dont_cache_lists Then
                                 Dim tt1 As Type = o.GetType
                                 Dim key As String = GetM2MKey(tt1, type2load, direct)
-                                If filter IsNot Nothing Then
-                                    key &= filter.GetStaticString
+                                If criteria IsNot Nothing Then
+                                    key &= criteria.Filter.GetStaticString
                                 End If
 
                                 Dim dic As IDictionary = GetDic(_cache, key)
 
                                 Dim id As String = o.Identifier.ToString
-                                If filter IsNot Nothing Then
-                                    id &= CObj(filter).ToString
+                                If criteria IsNot Nothing Then
+                                    id &= CObj(criteria.Filter).ToString
                                 End If
 
                                 'Dim sync As String = GetSync(key, id)
                                 el.Accept()
-                                dic(id) = New M2MCache(Nothing, SortType.Asc, filter, o.Identifier, el, Me)
+                                dic(id) = New M2MCache(Nothing, GetFilter(criteria), o.Identifier, el, Me)
                             End If
 
                             'Cache.AddRelationValue(o.GetType, type2load)
@@ -859,39 +862,39 @@ Namespace Orm
             Return o
         End Function
 
-        Public Function Find(Of T As {OrmBase, New}, T1)(ByVal value As T1, ByVal fieldName As String, ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As ICollection(Of T)
-#If DEBUG Then
-            Dim pi As Reflection.PropertyInfo = _schema.GetProperty(GetType(T), fieldName)
-            If pi Is Nothing Then
-                Throw New ArgumentException("Invalid field", fieldName)
-            End If
+        '        Public Function Find(Of T As {OrmBase, New}, T1)(ByVal value As T1, ByVal fieldName As String, ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As ICollection(Of T)
+        '#If DEBUG Then
+        '            Dim pi As Reflection.PropertyInfo = _schema.GetProperty(GetType(T), fieldName)
+        '            If pi Is Nothing Then
+        '                Throw New ArgumentException("Invalid field", fieldName)
+        '            End If
 
-            If GetType(OrmBase).IsAssignableFrom(GetType(T1)) Then
-                Throw New ArgumentException("Use FindOrm", fieldName)
-            End If
-#End If
+        '            If GetType(OrmBase).IsAssignableFrom(GetType(T1)) Then
+        '                Throw New ArgumentException("Use FindOrm", fieldName)
+        '            End If
+        '#End If
 
-            Dim f As New OrmFilter(GetType(T), fieldName, New TypeWrap(Of Object)(value), FilterOperation.Equal)
+        '            Dim f As New OrmFilter(GetType(T), fieldName, New TypeWrap(Of Object)(value), FilterOperation.Equal)
 
-            Return Find(Of T)(f, sort, sortType, withLoad)
-        End Function
+        '            Return Find(Of T)(f, sort, withLoad)
+        '        End Function
 
-        Public Function FindOrm(Of T As {OrmBase, New})(ByVal value As OrmBase, ByVal fieldName As String, ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As ICollection(Of T)
-#If DEBUG Then
-            Dim pi As Reflection.PropertyInfo = _schema.GetProperty(GetType(T), fieldName)
-            If pi Is Nothing Then
-                Throw New ArgumentException("Invalid field", fieldName)
-            End If
-#End If
+        '        Public Function FindOrm(Of T As {OrmBase, New})(ByVal value As OrmBase, ByVal fieldName As String, ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
+        '#If DEBUG Then
+        '            Dim pi As Reflection.PropertyInfo = _schema.GetProperty(GetType(T), fieldName)
+        '            If pi Is Nothing Then
+        '                Throw New ArgumentException("Invalid field", fieldName)
+        '            End If
+        '#End If
 
-            If value Is Nothing Then
-                Throw New ArgumentNullException("value")
-            End If
+        '            If value Is Nothing Then
+        '                Throw New ArgumentNullException("value")
+        '            End If
 
-            Dim f As New OrmFilter(GetType(T), fieldName, value, FilterOperation.Equal)
+        '            'Dim f As New OrmFilter(GetType(T), fieldName, value, FilterOperation.Equal)
 
-            Return Find(Of T)(f, sort, sortType, withLoad)
-        End Function
+        '            Return Find(Of T)(New Criteria(GetType(T)).Field(fieldName).Eq(value), sort, withLoad)
+        '        End Function
 
         'Protected Function Find(ByVal t As Type, ByVal filter As IOrmFilter, _
         '    ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As IList
@@ -904,13 +907,13 @@ Namespace Orm
 
         'End Function
 
-        Public Function FindDistinct(Of T As {OrmBase, New})(ByVal joins() As OrmJoin, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As ICollection(Of T)
+        Public Function FindDistinct(Of T As {OrmBase, New})(ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
+            ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
 
             Dim key As String = "distinct" & _schema.GetEntityKey(GetType(T))
 
-            If filter IsNot Nothing Then
-                key &= filter.GetStaticString
+            If criteria IsNot Nothing Then
+                key &= criteria.Filter.GetStaticString
             End If
 
             If joins IsNot Nothing Then
@@ -926,8 +929,8 @@ Namespace Orm
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim id As String = GetType(T).ToString
-            If filter IsNot Nothing Then
-                id &= CObj(filter).ToString
+            If criteria IsNot Nothing Then
+                id &= CObj(criteria.Filter).ToString
             End If
 
             If joins IsNot Nothing Then
@@ -941,18 +944,19 @@ Namespace Orm
 
             'CreateDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(joins, filter, sort, sortType, key, id)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(joins, GetFilter(criteria), sort, key, id)
             Dim ce As CachedItem = FindAdvanced(Of T)(dic, sync, id, withLoad, del)
             Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
         End Function
 
-        Public Function FindDistinct(Of T As {OrmBase, New})(ByVal relation As M2MRelation, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As ICollection(Of T)
+        Public Function FindDistinct(Of T As {OrmBase, New})(ByVal relation As M2MRelation, _
+            ByVal criteria As CriteriaLink, _
+            ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
 
             Dim key As String = "distinct" & _schema.GetEntityKey(GetType(T))
 
-            If filter IsNot Nothing Then
-                key &= filter.GetStaticString
+            If criteria IsNot Nothing Then
+                key &= criteria.Filter.GetStaticString
             End If
 
             If relation IsNot Nothing Then
@@ -964,8 +968,8 @@ Namespace Orm
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim id As String = GetType(T).ToString
-            If filter IsNot Nothing Then
-                id &= CObj(filter).ToString
+            If criteria IsNot Nothing Then
+                id &= CObj(criteria.Filter).ToString
             End If
 
             If relation IsNot Nothing Then
@@ -976,17 +980,19 @@ Namespace Orm
 
             'CreateDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(relation, filter, sort, sortType, key, id)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(relation, GetFilter(criteria), sort, key, id)
             Dim ce As CachedItem = FindAdvanced(Of T)(dic, sync, id, withLoad, del)
             Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
         End Function
 
-        Public Function Find(Of T As {OrmBase, New})(ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As ICollection(Of T)
+        Public Function Find(Of T As {OrmBase, New})(ByVal criteria As CriteriaLink, _
+            ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
 
-            If filter Is Nothing Then
+            If criteria Is Nothing Then
                 Throw New ArgumentNullException("filter")
             End If
+
+            Dim filter As IOrmFilter = criteria.Filter
 
             Dim key As String = _schema.GetEntityKey(GetType(T)) & filter.GetStaticString & GetStaticKey()
 
@@ -997,38 +1003,38 @@ Namespace Orm
 
             'CreateDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, sortType, key, id)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, key, id)
             Dim ce As CachedItem = FindAdvanced(Of T)(dic, sync, id, withLoad, del)
             Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
         End Function
 
-        Public Function Find(Of T As {OrmBase, New})(ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal cols() As String) As ICollection(Of T)
+        Public Function Find(Of T As {OrmBase, New})(ByVal criteria As CriteriaLink, _
+            ByVal sort As Sort, ByVal cols() As String) As ICollection(Of T)
 
-            If filter Is Nothing Then
-                Throw New ArgumentNullException("filter")
+            If criteria Is Nothing Then
+                Throw New ArgumentNullException("criteria")
             End If
 
-            Dim key As String = _schema.GetEntityKey(GetType(T)) & filter.GetStaticString & GetStaticKey()
+            Dim key As String = _schema.GetEntityKey(GetType(T)) & criteria.Filter.GetStaticString & GetStaticKey()
 
             Dim dic As IDictionary = GetDic(_cache, key)
 
-            Dim id As String = CObj(filter).ToString
+            Dim id As String = CObj(criteria.Filter).ToString
             Dim sync As String = id & GetStaticKey()
 
             'CreateDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, sortType, key, id, cols)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(criteria.Filter, sort, key, id, cols)
             Return FindAdvanced(Of T)(dic, sync, id, True, del).GetObjectList(Of T)(Me, True, del.Created)
         End Function
 
-        Public Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As ICollection(Of T)
+        Public Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal criteria As CriteriaLink, _
+            ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
 
             Dim key As String = String.Empty
 
-            If filter IsNot Nothing Then
-                key = _schema.GetEntityKey(GetType(T)) & filter.GetStaticString & GetStaticKey() & "Top"
+            If criteria IsNot Nothing Then
+                key = _schema.GetEntityKey(GetType(T)) & criteria.Filter.GetStaticString & GetStaticKey() & "Top"
             Else
                 key = _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Top"
             End If
@@ -1036,8 +1042,8 @@ Namespace Orm
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim f As String = String.Empty
-            If filter IsNot Nothing Then
-                f = CObj(filter).ToString
+            If criteria IsNot Nothing Then
+                f = CObj(criteria.Filter).ToString
             End If
 
             Dim id As String = f & " - top - " & top
@@ -1045,7 +1051,7 @@ Namespace Orm
 
             'CreateDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate4Top(Of T)(top, filter, sort, sortType, key, id)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate4Top(Of T)(top, GetFilter(criteria), sort, key, id)
             Return FindAdvanced(Of T)(dic, sync, id, withLoad, del).GetObjectList(Of T)(Me, withLoad, del.Created)
         End Function
 
@@ -1114,34 +1120,34 @@ Namespace Orm
             Return id & Const_KeyStaticString & key
         End Function
 
-        Protected Friend Function FindMany2Many2(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal direct As Boolean, ByVal withLoad As Boolean) As ICollection(Of T)
-            Dim p As Pair(Of M2MCache, Boolean) = FindM2M(Of T)(obj, direct, filter, sort, sortType, withLoad)
+        Protected Friend Function FindMany2Many2(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal criteria As CriteriaLink, _
+            ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ICollection(Of T)
+            Dim p As Pair(Of M2MCache, Boolean) = FindM2M(Of T)(obj, direct, criteria, sort, withLoad)
             Return p.First.GetObjectList(Of T)(Me, withLoad, p.Second)
         End Function
 
-        Protected Function FindM2M(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As Pair(Of M2MCache, Boolean)
+        Protected Function FindM2M(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean, ByVal criteria As CriteriaLink, _
+            ByVal sort As Sort, ByVal withLoad As Boolean) As Pair(Of M2MCache, Boolean)
             Dim tt1 As Type = obj.GetType
             Dim tt2 As Type = GetType(T)
 
             Dim key As String = GetM2MKey(tt1, tt2, direct)
-            If filter IsNot Nothing Then
-                key &= filter.GetStaticString
+            If criteria IsNot Nothing Then
+                key &= criteria.Filter.GetStaticString
             End If
 
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim id As String = obj.Identifier.ToString
-            If filter IsNot Nothing Then
-                id &= CObj(filter).ToString
+            If criteria IsNot Nothing Then
+                id &= CObj(criteria.Filter).ToString
             End If
 
             Dim sync As String = GetSync(key, id)
 
             'CreateM2MDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, filter, sort, sortType, id, sync, key, direct)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria), sort, id, sync, key, direct)
             Dim m As M2MCache = CType(FindAdvanced(Of T)(dic, sync, id, withLoad, del), M2MCache)
             Dim p As New Pair(Of M2MCache, Boolean)(m, del.Created)
             Return p
@@ -1159,8 +1165,8 @@ Namespace Orm
 
             Dim renew As Boolean = v IsNot Nothing AndAlso Not v.Validate()
 
-            Dim sort As String = del.Sort
-            Dim sort_type As SortType = del.SortType
+            'Dim sort As String = del.Sort
+            'Dim sort_type As SortType = del.SortType
             Dim f As IOrmFilter = del.Filter
 
             Dim ce As CachedItem = Nothing
@@ -1195,7 +1201,7 @@ l1:
             If del.Created Then
                 del.CreateDepends()
             Else
-                If ce.SortEquals(sort, sort_type) OrElse String.IsNullOrEmpty(sort) Then
+                If ce.SortEquals(del.Sort) OrElse del.Sort Is Nothing Then
                     If v IsNot Nothing AndAlso Not v.Validate(ce) Then
                         del.Renew = True
                         GoTo l1
@@ -1208,15 +1214,22 @@ l1:
                         Dim loaded As Integer = 0
                         Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, False)
                         If objs IsNot Nothing AndAlso objs.Count > 0 Then
-                            If _schema.IsExternalSort(sort, GetType(T)) Then
-                                ce = del.GetCacheItem(_schema.ExternalSort(Of T)(sort, sort_type, CType(objs, Generic.List(Of T))))
+                            Dim srt As IOrmSorting = Nothing
+                            If del.Sort.IsExternal Then
+                                ce = del.GetCacheItem(_schema.ExternalSort(Of T)(del.Sort, objs))
                                 dic(id) = ce
-                            ElseIf CanSortOnClient(CType(objs, System.Collections.ICollection)) Then
+                            ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), srt) Then
                                 Using SyncHelper.AcquireDynamicLock(sync)
-                                    Dim os As New Generic.List(Of T)(objs)
-                                    os.Sort(os(0).CreateSortComparer(Of T)(sort, sort_type))
-                                    ce = del.GetCacheItem(os)
-                                    dic(id) = ce
+                                    Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(del.Sort)
+                                    If sc IsNot Nothing Then
+                                        Dim os As New Generic.List(Of T)(objs)
+                                        os.Sort(sc)
+                                        ce = del.GetCacheItem(os)
+                                        dic(id) = ce
+                                    Else
+                                        del.Renew = True
+                                        GoTo l1
+                                    End If
                                 End Using
                             Else
                                 del.Renew = True
@@ -1234,7 +1247,12 @@ l1:
             Return ce
         End Function
 
-        Public Function CanSortOnClient(ByVal col As ICollection) As Boolean
+        Public Function CanSortOnClient(ByVal t As Type, ByVal col As ICollection, ByRef sorting As IOrmSorting) As Boolean
+            Dim schema As IOrmObjectSchemaBase = _schema.GetObjectSchema(t)
+            sorting = TryCast(schema, IOrmSorting)
+            If sorting Is Nothing Then
+                Return False
+            End If
             Dim loaded As Integer = 0
             For Each o As OrmBase In col
                 If o.IsLoaded Then loaded += 1
@@ -2182,8 +2200,8 @@ l1:
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
             'Dim pm As New Reflection.ParameterModifier(6)
             'pm(5) = True
-            Dim types As Type() = New Type() {GetType(OrmBase), GetType(Boolean), GetType(IOrmFilter), GetType(String), GetType(SortType), GetType(Boolean)}
-            Dim o() As Object = New Object() {mainobj, direct, Nothing, Nothing, SortType.Asc, False}
+            Dim types As Type() = New Type() {GetType(OrmBase), GetType(Boolean), GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}
+            Dim o() As Object = New Object() {mainobj, direct, Nothing, Nothing, False}
             'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
             '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
             Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("FindM2M", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
@@ -2468,6 +2486,13 @@ l1:
             Return dics
         End Function
 
+        Private Shared Function GetFilter(ByVal criteria As CriteriaLink) As IOrmFilter
+            If criteria IsNot Nothing Then
+                Return criteria.Filter
+            End If
+            Return Nothing
+        End Function
+
 #Region " Abstract members "
 
         Protected MustOverride Function GetSearchSection() As String
@@ -2477,22 +2502,23 @@ l1:
         Protected Friend MustOverride Function GetStaticKey() As String
 
         Protected MustOverride Function GetCustDelegate(Of T As {OrmBase, New})(ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
 
         Protected MustOverride Function GetCustDelegate(Of T As {OrmBase, New})(ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal key As String, ByVal id As String, ByVal cols() As String) As ICustDelegate(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As ICustDelegate(Of T)
 
         Protected MustOverride Function GetCustDelegate(Of T As {OrmBase, New})(ByVal join() As OrmJoin, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
 
         Protected MustOverride Function GetCustDelegate(Of T As {OrmBase, New})(ByVal relation As M2MRelation, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
 
         Protected MustOverride Function GetCustDelegate4Top(Of T As {OrmBase, New})(ByVal top As Integer, ByVal filter As IOrmFilter, _
-            ByVal sort As String, ByVal sortType As SortType, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
 
         Protected MustOverride Function GetCustDelegate(Of T2 As {OrmBase, New})( _
-            ByVal obj As OrmBase, ByVal filter As IOrmFilter, ByVal sort As String, ByVal sortType As SortType, ByVal id As String, ByVal sync As String, ByVal key As String, ByVal direct As Boolean) As ICustDelegate(Of T2)
+            ByVal obj As OrmBase, ByVal filter As IOrmFilter, _
+            ByVal sort As Sort, ByVal id As String, ByVal sync As String, ByVal key As String, ByVal direct As Boolean) As ICustDelegate(Of T2)
 
         'Protected MustOverride Function GetCustDelegateTag(Of T As {OrmBase, New})( _
         '    ByVal obj As T, ByVal filter As IOrmFilter, ByVal sort As String, ByVal sortType As SortType, ByVal id As String, ByVal sync As String, ByVal key As String) As ICustDelegate(Of T)
@@ -2546,12 +2572,12 @@ l1:
             End If
         End Sub
 
-        Public Function BuildObjDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IOrmFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+        Public Function BuildObjDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal criteria As CriteriaLink, ByVal join As OrmJoin) As DicIndex(Of T)
 
             Dim key As String = String.Empty
 
-            If filter IsNot Nothing Then
-                key = filter.GetStaticString & _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Dics"
+            If criteria IsNot Nothing Then
+                key = criteria.Filter.GetStaticString & _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Dics"
             Else
                 key = _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Dics"
             End If
@@ -2559,8 +2585,8 @@ l1:
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim f As String = String.Empty
-            If filter IsNot Nothing Then
-                f = CObj(filter).ToString
+            If criteria IsNot Nothing Then
+                f = CObj(criteria.Filter).ToString
             End If
 
             Dim id As String = f & " - dics - "
@@ -2573,7 +2599,7 @@ l1:
                 Using SyncHelper.AcquireDynamicLock(sync)
                     roots = CType(dic(id), DicIndex(Of T))
                     If roots Is Nothing Then
-                        roots = BuildDictionary(Of T)(level, filter, join)
+                        roots = BuildDictionary(Of T)(level, GetFilter(criteria), join)
                         dic.Add(id, roots)
                     End If
                 End Using

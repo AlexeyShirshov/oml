@@ -120,7 +120,7 @@ Module Module1
     Sub withoutload()
         Using mc As Worm.Orm.OrmManagerBase = TestProject1.TestManager.CreateManager(New Worm.Orm.DbSchema("1"))
             For i As Integer = 0 To 100
-                Dim c As Generic.ICollection(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, Worm.Orm.SortType.Asc, False)
+                Dim c As Generic.ICollection(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, False)
                 mc.LoadObjects(c)
             Next
         End Using
@@ -129,7 +129,7 @@ Module Module1
     Sub withload()
         Using mc As Worm.Orm.OrmManagerBase = TestProject1.TestManager.CreateManager(New Worm.Orm.DbSchema("1"))
             For i As Integer = 0 To 100
-                Dim c As Generic.ICollection(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, Worm.Orm.SortType.Asc, True)
+                Dim c As Generic.ICollection(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, True)
             Next
         End Using
     End Sub

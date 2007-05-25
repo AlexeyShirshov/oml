@@ -9,7 +9,11 @@ Namespace Orm
 
         Public ReadOnly FieldName As String
         Public ReadOnly _behavior As Field2DbRelations
+        Private _table As String
         Private _idx As Integer = -1
+
+        Public Sub New()
+        End Sub
 
         Public Sub New(ByVal fieldName As String)
             Me.FieldName = fieldName
@@ -41,6 +45,15 @@ Namespace Orm
         '    '    behavior = value
         '    'End Set
         'End Property
+
+        Public Property TableName() As String
+            Get
+                Return _table
+            End Get
+            Set(ByVal value As String)
+                _table = value
+            End Set
+        End Property
 
         Public Property Index() As Integer
             Get
@@ -101,6 +114,12 @@ Namespace Orm
         Private _t As Type
         Private _v As String
         Private _entityName As String
+        Private _table As String
+
+        Public Sub New(ByVal tableName As String, ByVal version As String)
+            _table = tableName
+            _v = version
+        End Sub
 
         Public Sub New(ByVal type As Type, ByVal version As String)
             _t = type
@@ -125,6 +144,15 @@ Namespace Orm
             End Get
             Set(ByVal value As String)
                 _entityName = value
+            End Set
+        End Property
+
+        Public Property TableName() As String
+            Get
+                Return _table
+            End Get
+            Set(ByVal value As String)
+                _table = value
             End Set
         End Property
     End Class
