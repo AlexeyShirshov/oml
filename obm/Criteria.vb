@@ -182,16 +182,16 @@ Namespace Orm
         End Property
     End Class
 
-    Public Class Sorting
+    Public Module Sorting
 
-        Public Shared Function Field(ByVal fieldName As String) As SortOrder
+        Public Function Field(ByVal fieldName As String) As SortOrder
             Return New SortOrder(fieldName)
         End Function
 
-        Public Shared Function External(ByVal fieldName As String) As SortOrder
+        Public Function External(ByVal fieldName As String) As SortOrder
             Return New SortOrder(fieldName, True)
         End Function
-    End Class
+    End Module
 
     Public Class SortOrder
         Private _f As String

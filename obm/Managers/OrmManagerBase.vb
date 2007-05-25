@@ -25,7 +25,7 @@ Namespace Orm
             ' Add other code for custom properties here.
         End Sub
 
-        Protected Sub New( _
+        Private Sub New( _
             ByVal info As System.Runtime.Serialization.SerializationInfo, _
             ByVal context As System.Runtime.Serialization.StreamingContext)
             MyBase.New(info, context)
@@ -157,7 +157,15 @@ Namespace Orm
             'End Property
 
             Shared Operator =(ByVal o1 As CachedItem, ByVal o2 As CachedItem) As Boolean
-                Return o1.Equals(o2)
+                If o1 Is Nothing Then
+                    If o2 Is Nothing Then
+                        Return True
+                    Else
+                        Return False
+                    End If
+                Else
+                    Return o1.Equals(o2)
+                End If
             End Operator
 
             Shared Operator <>(ByVal o1 As CachedItem, ByVal o2 As CachedItem) As Boolean
@@ -292,6 +300,10 @@ Namespace Orm
 
             Private _created As Boolean
             Private _renew As Boolean
+
+            Protected Sub New()
+
+            End Sub
 
             Public Overridable Property Renew() As Boolean Implements ICustDelegate(Of T).Renew
                 Get
@@ -853,7 +865,7 @@ Namespace Orm
         Public Function CreateDBObject(Of T As {OrmBase, New})(ByVal id As Integer) As T
             Dim o As T = CreateObject(Of T)(id)
             Assert(o IsNot Nothing, "Object must be created: " & id & ". Type - " & GetType(T).ToString)
-            Using o.SyncHelper(True)
+            Using o.GetSyncRoot()
                 If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(GetType(T), id) Then
                     o.ObjectState = ObjectState.NotLoaded
                     AddObject(o)

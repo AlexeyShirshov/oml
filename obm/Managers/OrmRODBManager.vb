@@ -48,7 +48,7 @@ Namespace Orm
                         If o.ObjectState = ObjectState.Created Then
                             rejectList.Add(o)
                         ElseIf o.ObjectState = ObjectState.Modified Then
-                            copies.Add(New Pair(Of OrmBase)(o, o.CreateModified))
+                            copies.Add(New Pair(Of OrmBase)(o, o.GetFullClone))
                         End If
                         Try
                             If o.Save(False) Then
@@ -565,7 +565,7 @@ Namespace Orm
                         Dim obj1 As OrmBase = CreateDBObject(id1, firstType)
                         Dim obj2 As OrmBase = CreateDBObject(id2, secondType)
                         If obj1.ObjectState <> ObjectState.Modified Then
-                            Using obj1.SyncHelper(False)
+                            Using obj1.GetSyncRoot()
                                 If obj1.IsLoaded Then obj1.IsLoaded = False
                                 LoadFromDataReader(obj1, dr, first_cols, False)
                                 If obj1.ObjectState = ObjectState.NotLoaded Then obj1.ObjectState = ObjectState.None
@@ -576,7 +576,7 @@ Namespace Orm
                         End If
 
                         If obj2.ObjectState <> ObjectState.Modified Then
-                            Using obj2.SyncHelper(False)
+                            Using obj2.GetSyncRoot()
                                 If obj2.IsLoaded Then obj2.IsLoaded = False
                                 LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count)
                                 If obj2.ObjectState = ObjectState.NotLoaded Then obj2.ObjectState = ObjectState.None
@@ -976,7 +976,7 @@ Namespace Orm
             Try
                 'Debug.WriteLine(cmd.CommandText)
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
-                    Using obj.SyncHelper(False)
+                    Using obj.GetSyncRoot()
                         Dim old As Boolean = obj.IsLoaded
                         If Not modifiedloaded Then obj.IsLoaded = False
                         'obj.IsLoaded = False
@@ -1050,7 +1050,7 @@ Namespace Orm
                         Dim obj As T = CreateDBObject(Of T)(id)
                         If obj IsNot Nothing Then
                             If withLoad AndAlso obj.ObjectState <> ObjectState.Modified Then
-                                Using obj.SyncHelper(False)
+                                Using obj.GetSyncRoot()
                                     If obj.IsLoaded Then obj.IsLoaded = False
                                     LoadFromDataReader(obj, dr, arr, False)
                                     'If Not obj.IsLoaded Then
@@ -1084,7 +1084,7 @@ Namespace Orm
             Dim original_type As Type = obj.GetType
             Dim oschema As IOrmObjectSchema = DbSchema.GetObjectSchema(original_type)
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
-            Using obj.SyncHelper(False)
+            Using obj.GetSyncRoot()
                 obj._loading = True
                 Dim has_pk As Boolean = False
                 Dim pi_cache(arr.Count - 1) As Reflection.PropertyInfo

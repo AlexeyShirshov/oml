@@ -184,7 +184,7 @@ Namespace Orm
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
             End If
 
-            Using obj.SyncHelper(False)
+            Using obj.GetSyncRoot()
                 Dim ins_cmd As New StringBuilder
                 dbparams = Nothing
                 If obj.ObjectState = ObjectState.Created Then
@@ -577,7 +577,7 @@ Namespace Orm
             select_columns = Nothing
             updated_fields = Nothing
 
-            Using obj.SyncHelper(False)
+            Using obj.GetSyncRoot()
                 Dim upd_cmd As New StringBuilder
                 dbparams = Nothing
                 If obj.ObjectState = ObjectState.Modified Then
@@ -750,7 +750,7 @@ Namespace Orm
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
             End If
 
-            Using obj.SyncHelper(False)
+            Using obj.GetSyncRoot()
                 Dim del_cmd As New StringBuilder
                 dbparams = Nothing
 

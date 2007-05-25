@@ -21,7 +21,7 @@ Namespace Orm
             MyBase.New(message, inner)
         End Sub
 
-        Protected Sub New( _
+        Private Sub New( _
             ByVal info As System.Runtime.Serialization.SerializationInfo, _
             ByVal context As System.Runtime.Serialization.StreamingContext)
             MyBase.New(info, context)

@@ -24,7 +24,7 @@ Namespace Orm
             ' Add other code for custom properties here.
         End Sub
 
-        Protected Sub New( _
+        Private Sub New( _
             ByVal info As System.Runtime.Serialization.SerializationInfo, _
             ByVal context As System.Runtime.Serialization.StreamingContext)
             MyBase.New(info, context)
@@ -52,31 +52,45 @@ Namespace Orm
 
 #Region " reflection "
 
-        Protected Friend Function GetProperties(ByVal original_type As Type) As IDictionary
-            If original_type Is Nothing Then Throw New ArgumentNullException("original_type")
+        Protected Friend Function GetProperties(ByVal t As Type) As IDictionary
+            Return GetProperties(t, GetObjectSchema(t))
+        End Function
 
-            Dim key As String = "properties" & original_type.ToString
+        Protected Friend Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As IDictionary
+            If t Is Nothing Then Throw New ArgumentNullException("original_type")
+
+            Dim key As String = "properties" & t.ToString
             Dim h As IDictionary = CType(map(key), IDictionary)
             If h Is Nothing Then
                 SyncLock String.Intern(key)
                     h = CType(map(key), IDictionary)
                     If h Is Nothing Then
-                        Dim schema As IOrmObjectSchemaBase = GetObjectSchema(original_type)
-
                         h = New Hashtable
 
-                        For Each pi As Reflection.PropertyInfo In original_type.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
+                        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
                             Dim cl As ColumnAttribute = Nothing
                             Dim cls() As Attribute = CType(pi.GetCustomAttributes(GetType(ColumnAttribute), True), Attribute())
                             If cls.Length > 0 Then cl = CType(cls(0), ColumnAttribute)
-                            If cl IsNot Nothing Then h.Add(cl, pi)
+                            If cl IsNot Nothing Then
+                                If String.IsNullOrEmpty(cl.FieldName) Then
+                                    cl.FieldName = pi.Name
+                                End If
+                                h.Add(cl, pi)
+                            End If
                         Next
 
-                        For Each pi As Reflection.PropertyInfo In original_type.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
+                        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
                             Dim cl As ColumnAttribute = Nothing
                             Dim cls() As Attribute = CType(pi.GetCustomAttributes(GetType(ColumnAttribute), True), Attribute())
                             If cls.Length > 0 Then cl = CType(cls(0), ColumnAttribute)
-                            If cl IsNot Nothing AndAlso Not h.Contains(cl) AndAlso Array.IndexOf(schema.GetSuppressedColumns(), cl) < 0 Then h.Add(cl, pi)
+                            If cl IsNot Nothing Then
+                                If String.IsNullOrEmpty(cl.FieldName) Then
+                                    cl.FieldName = pi.Name
+                                End If
+                                If Not h.Contains(cl) AndAlso (schema Is Nothing OrElse Array.IndexOf(schema.GetSuppressedColumns(), cl) < 0) Then
+                                    h.Add(cl, pi)
+                                End If
+                            End If
                         Next
 
                         map(key) = h
@@ -723,15 +737,31 @@ Namespace Orm
                             For Each ea As EntityAttribute In entities
                                 If ea.Version = _version Then
                                     Dim schema As IOrmObjectSchemaBase = Nothing
-                                    Try
-                                        schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
-                                    Catch ex As Exception
-                                        Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
-                                    End Try
+
+                                    If ea.Type Is Nothing Then
+                                        Dim l As New List(Of ColumnAttribute)
+                                        For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
+                                            l.Add(c)
+                                        Next
+
+                                        schema = New SimpleObjectSchema(tp, ea.TableNames, l, ea.PrimaryKey)
+
+                                        If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
+                                            Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                        End If
+                                    Else
+                                        Try
+                                            schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
+                                        Catch ex As Exception
+                                            Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                        End Try
+                                    End If
+
                                     Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
                                     If n IsNot Nothing Then
                                         n.GetSchema(Me, tp)
                                     End If
+
                                     If Not String.IsNullOrEmpty(ea.EntityName) Then
                                         If names.Contains(ea.EntityName) Then
                                             Dim tt As Type = CType(names(ea.EntityName), Type)
@@ -742,6 +772,7 @@ Namespace Orm
                                             names.Add(ea.EntityName, tp)
                                         End If
                                     End If
+
                                     Try
                                         idic.Add(tp, schema)
                                     Catch ex As ArgumentException
@@ -755,17 +786,31 @@ Namespace Orm
 
                                 For Each ea As EntityAttribute In entities2
                                     If ea.Version = _version Then
-
                                         Dim schema As IOrmObjectSchemaBase = Nothing
-                                        Try
-                                            schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
-                                        Catch ex As Exception
-                                            Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
-                                        End Try
+                                        If ea.Type Is Nothing Then
+                                            Dim l As New List(Of ColumnAttribute)
+                                            For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
+                                                l.Add(c)
+                                            Next
+
+                                            schema = New SimpleObjectSchema(tp, ea.TableNames, l, ea.PrimaryKey)
+
+                                            If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
+                                                Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                            End If
+                                        Else
+                                            Try
+                                                schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
+                                            Catch ex As Exception
+                                                Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                            End Try
+                                        End If
+
                                         Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
                                         If n IsNot Nothing Then
                                             n.GetSchema(Me, tp)
                                         End If
+
                                         If Not String.IsNullOrEmpty(ea.EntityName) AndAlso entities.Length = 0 Then
                                             If names.Contains(ea.EntityName) Then
                                                 Dim tt As Type = CType(names(ea.EntityName), Type)
@@ -776,6 +821,7 @@ Namespace Orm
                                                 names.Add(ea.EntityName, tp)
                                             End If
                                         End If
+
                                         Try
                                             idic.Add(tp, schema)
                                             Exit For
@@ -788,17 +834,31 @@ Namespace Orm
                                 If Not idic.Contains(tp) Then
                                     For Each ea As EntityAttribute In entities
                                         If _mapv IsNot Nothing AndAlso _mapv(_version, ea, tp) Then
-
                                             Dim schema As IOrmObjectSchemaBase = Nothing
-                                            Try
-                                                schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
-                                            Catch ex As Exception
-                                                Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
-                                            End Try
+                                            If ea.Type Is Nothing Then
+                                                Dim l As New List(Of ColumnAttribute)
+                                                For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
+                                                    l.Add(c)
+                                                Next
+
+                                                schema = New SimpleObjectSchema(tp, ea.TableNames, l, ea.PrimaryKey)
+
+                                                If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
+                                                    Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                                End If
+                                            Else
+                                                Try
+                                                    schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
+                                                Catch ex As Exception
+                                                    Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                                End Try
+                                            End If
+
                                             Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
                                             If n IsNot Nothing Then
                                                 n.GetSchema(Me, tp)
                                             End If
+
                                             If Not String.IsNullOrEmpty(ea.EntityName) Then
                                                 If names.Contains(ea.EntityName) Then
                                                     Dim tt As Type = CType(names(ea.EntityName), Type)
@@ -809,6 +869,7 @@ Namespace Orm
                                                     names.Add(ea.EntityName, tp)
                                                 End If
                                             End If
+
                                             Try
                                                 idic.Add(tp, schema)
                                             Catch ex As ArgumentException
@@ -820,17 +881,32 @@ Namespace Orm
                                     If Not idic.Contains(tp) Then
                                         For Each ea As EntityAttribute In entities2
                                             If _mapv IsNot Nothing AndAlso _mapv(_version, ea, tp) Then
-
                                                 Dim schema As IOrmObjectSchemaBase = Nothing
-                                                Try
-                                                    schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
-                                                Catch ex As Exception
-                                                    Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
-                                                End Try
+
+                                                If ea.Type Is Nothing Then
+                                                    Dim l As New List(Of ColumnAttribute)
+                                                    For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
+                                                        l.Add(c)
+                                                    Next
+
+                                                    schema = New SimpleObjectSchema(tp, ea.TableNames, l, ea.PrimaryKey)
+
+                                                    If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
+                                                        Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                                    End If
+                                                Else
+                                                    Try
+                                                        schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
+                                                    Catch ex As Exception
+                                                        Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                                    End Try
+                                                End If
+
                                                 Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
                                                 If n IsNot Nothing Then
                                                     n.GetSchema(Me, tp)
                                                 End If
+
                                                 If Not String.IsNullOrEmpty(ea.EntityName) AndAlso entities.Length = 0 Then
                                                     If names.Contains(ea.EntityName) Then
                                                         Dim tt As Type = CType(names(ea.EntityName), Type)
@@ -841,6 +917,7 @@ Namespace Orm
                                                         names.Add(ea.EntityName, tp)
                                                     End If
                                                 End If
+
                                                 Try
                                                     idic.Add(tp, schema)
                                                     Exit For

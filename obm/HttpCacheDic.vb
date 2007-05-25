@@ -431,6 +431,10 @@ Namespace Orm
         Public Priority As Caching.CacheItemPriority
         Public Dependency As Caching.CacheDependency
 
+        Protected Sub New()
+
+        End Sub
+
         Public Shared Function CreateDefault() As DictionatyCachePolicy
             Dim dp As New DictionatyCachePolicy
             With dp

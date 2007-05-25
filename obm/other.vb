@@ -208,7 +208,7 @@ Namespace Orm.Collections
             ' Add other code for custom properties here.
         End Sub
 
-        Protected Sub New( _
+        Private Sub New( _
             ByVal info As System.Runtime.Serialization.SerializationInfo, _
             ByVal context As System.Runtime.Serialization.StreamingContext)
             MyBase.New(info, context)

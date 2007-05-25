@@ -99,12 +99,12 @@ Namespace Orm
             _fieldname = column
             If entity IsNot Nothing Then
                 _value = entity.Identifier
+                _ormt = entity.GetType
             Else
                 _ormt = GetType(OrmBase)
             End If
             _oper = operation
             _param_value = False
-            _ormt = entity.GetType
         End Sub
 
         Public Sub New(ByVal table As OrmTable, ByVal column As String, ByVal t2 As Type, ByVal FieldName2 As String, ByVal operation As FilterOperation)
@@ -200,7 +200,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public Function GetTable(ByVal schema As OrmSchemaBase) As OrmTable
+        Public Function GetRealTable(ByVal schema As OrmSchemaBase) As OrmTable
             Dim s As OrmTable = _tbl
             If _t IsNot Nothing Then
                 s = schema.GetObjectSchema(_t).GetFieldColumnMap()(_fieldname)._tableName

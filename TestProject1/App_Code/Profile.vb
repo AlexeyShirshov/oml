@@ -105,7 +105,8 @@ End Class
 
 <Entity(GetType(MyUserDef), "1")> _
 Public Class MyUser
-    Inherits OrmBase
+    Inherits OrmBaseT(Of MyUser)
+    Implements IOrmEditable(Of MyUser)
 
     Private _lastActivity As Date
     Private _isAnonymous As Boolean
@@ -119,18 +120,18 @@ Public Class MyUser
     Private _lastlocked As Nullable(Of Date)
 
     Public Sub New()
-
+        'MyBase.New()
     End Sub
 
     Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-        CopyUser(CType(from, MyUser), CType([to], MyUser))
-    End Sub
+    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+    '    CopyUser(CType(from, MyUser), CType([to], MyUser))
+    'End Sub
 
-    Protected Shared Sub CopyUser(ByVal from As MyUser, ByVal [to] As MyUser)
+    Protected Sub CopyUser(ByVal from As MyUser, ByVal [to] As MyUser) Implements IOrmEditable(Of MyUser).CopyBody
         With from
             [to]._lastActivity = ._lastActivity
             [to]._field = ._field
@@ -153,9 +154,9 @@ Public Class MyUser
     '    Throw New NotImplementedException
     'End Function
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New MyUser(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    '    Return New MyUser(Identifier, OrmCache, OrmSchema)
+    'End Function
 
     <Column("LastActivity")> _
     Public Property LastActivity() As Date
@@ -337,7 +338,8 @@ End Class
 
 <Entity(GetType(MyRoleDef), "1")> _
 Public Class MyRole
-    Inherits OrmBase
+    Inherits OrmBaseT(Of MyRole)
+    Implements IOrmEditable(Of MyRole)
 
     Private _role As String
 
@@ -349,11 +351,11 @@ Public Class MyRole
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-        CopyRole(CType(from, MyRole), CType([to], MyRole))
-    End Sub
+    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+    '    CopyRole(CType(from, MyRole), CType([to], MyRole))
+    'End Sub
 
-    Protected Shared Sub CopyRole(ByVal from As MyRole, ByVal [to] As MyRole)
+    Protected Sub CopyRole(ByVal from As MyRole, ByVal [to] As MyRole) Implements IOrmEditable(Of MyRole).CopyBody
         With from
             [to]._role = ._role
         End With
@@ -367,9 +369,9 @@ Public Class MyRole
     '    Throw New NotImplementedException
     'End Function
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New MyRole(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    '    Return New MyRole(Identifier, OrmCache, OrmSchema)
+    'End Function
 
     <Column("Name")> _
     Public Property RoleName() As String

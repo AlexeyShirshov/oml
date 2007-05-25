@@ -3,7 +3,8 @@ Imports Worm.Orm
 
 <Entity(GetType(Table4Implementation), "1"), Entity(GetType(Table4Implementation2), "2")> _
 Public Class Table4
-    Inherits OrmBase
+    Inherits OrmBaseT(Of Table4)
+    Implements IOrmEditable(Of Table4)
 
     Private _col As Nullable(Of Boolean)
     Private _g As Guid
@@ -16,11 +17,11 @@ Public Class Table4
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
-        CopyTable4(CType(from, Table4), CType([to], Table4))
-    End Sub
+    'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
+    '    CopyTable4(CType(from, Table4), CType([to], Table4))
+    'End Sub
 
-    Protected Shared Sub CopyTable4(ByVal [from] As Table4, ByVal [to] As Table4)
+    Protected Sub CopyTable4(ByVal [from] As Table4, ByVal [to] As Table4) Implements IOrmEditable(Of Table4).CopyBody
         With [from]
             [to]._col = ._col
             [to]._g = ._g
@@ -35,9 +36,9 @@ Public Class Table4
     '    Throw New NotSupportedException
     'End Function
 
-    Protected Overrides Function GetNew() As Worm.Orm.OrmBase
-        Return New Table4(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Worm.Orm.OrmBase
+    '    Return New Table4(Identifier, OrmCache, OrmSchema)
+    'End Function
 
     Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
         Select Case c.FieldName

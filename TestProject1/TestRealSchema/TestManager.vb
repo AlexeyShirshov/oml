@@ -616,4 +616,41 @@ Public Class TestManagerRS
             Assert.AreEqual(Orm.ObjectState.Deleted, t.ObjectState)
         End Using
     End Sub
+
+    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
+    Public Sub TestSimpleObjects()
+        Using mgr As Orm.OrmDBManager = CType(CreateManager(GetSchema("1")), Orm.OrmDBManager)
+            Dim s1 As SimpleObj = mgr.Find(Of SimpleObj)(1)
+
+            Assert.AreEqual("first", s1.Title)
+
+            mgr.BeginTransaction()
+            Try
+                s1.Delete()
+                s1.Save(True)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSimpleObjects2()
+        Using mgr As Orm.OrmDBManager = CType(CreateManager(GetSchema("1")), Orm.OrmDBManager)
+            Dim s1 As SimpleObj2 = mgr.Find(Of SimpleObj2)(2)
+
+            Assert.AreEqual("second", s1.Title)
+
+            mgr.BeginTransaction()
+            Try
+                s1 = New SimpleObj2
+                s1.Title = "555"
+                s1.Save(True)
+            Finally
+                Assert.IsTrue(s1.Identifier > 0)
+                Assert.AreEqual("555", s1.Title)
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
 End Class
