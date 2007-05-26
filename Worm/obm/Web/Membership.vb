@@ -47,7 +47,10 @@ Namespace Web
                 _treatUsernameAsEmail = CBool(config("treatUsernameAsEmail"))
             End If
 
-            AddHandler HttpContext.Current.ApplicationInstance.PostAuthorizeRequest, AddressOf UpdateLastActivity
+            If HttpContext.Current IsNot Nothing Then
+                AddHandler HttpContext.Current.ApplicationInstance.PostAuthorizeRequest, AddressOf UpdateLastActivity
+            End If
+
             MyBase.Initialize(name, config)
         End Sub
 
@@ -169,27 +172,34 @@ Namespace Web
                 Return Nothing
             End If
 
-            If RequiresUniqueEmail Then
-                If GetUserNameByEmail(email) IsNot Nothing Then
-                    status = MembershipCreateStatus.DuplicateEmail
-                    Return Nothing
-                End If
-
-                If String.IsNullOrEmpty(email) Then
-                    status = MembershipCreateStatus.InvalidEmail
-                End If
-            End If
-
-            If String.IsNullOrEmpty(username) Then
-                If _treatUsernameAsEmail Then
-                    username = email
-                Else
-                    status = MembershipCreateStatus.InvalidUserName
-                    Return Nothing
-                End If
-            End If
-
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
+                If RequiresUniqueEmail Then
+                    If String.IsNullOrEmpty(email) Then
+                        status = MembershipCreateStatus.InvalidEmail
+                        Return Nothing
+                    End If
+
+                    If GetUserNameByEmail(email) IsNot Nothing Then
+                        status = MembershipCreateStatus.DuplicateEmail
+                        Return Nothing
+                    End If
+                Else
+                    If FindUserByName(mgr, username, Nothing) IsNot Nothing Then
+                        status = MembershipCreateStatus.DuplicateUserName
+                        Return Nothing
+                    End If
+                End If
+
+                If String.IsNullOrEmpty(username) Then
+                    If _treatUsernameAsEmail Then
+                        username = email
+                    Else
+                        status = MembershipCreateStatus.InvalidUserName
+                        Return Nothing
+                    End If
+                End If
+
+
                 Dim u As OrmBase = ProfileProvider.CreateUser(mgr, username, Nothing)
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
                 schema.SetFieldValue(u, GetField("Email"), email)
