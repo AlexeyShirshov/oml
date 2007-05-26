@@ -1,6 +1,3 @@
-Option Explicit On
-Option Strict On
-
 Imports System.Web
 Imports System.Web.Security
 Imports Worm
@@ -211,7 +208,7 @@ Namespace Web
         Protected MustOverride Function GetRoleType() As Type
         Protected MustOverride Function GetRoleByName(ByVal mgr As OrmDBManager, ByVal name As String, ByVal createIfNotExist As Boolean) As OrmBase
         Protected Friend MustOverride Function FindRoles(ByVal mgr As OrmDBManager, ByVal f As CriteriaLink) As IList
-        Protected MustOverride Overloads Sub DeleteRole(ByVal mgr As OrmDBManager, ByVal role As OrmBase, ByVal cascase As Boolean)
+        Protected MustOverride Overloads Sub DeleteRole(ByVal mgr As OrmDBManager, ByVal role As OrmBase, ByVal cascade As Boolean)
         Protected MustOverride ReadOnly Property WithLoad() As Boolean
     End Class
 End Namespace

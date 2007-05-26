@@ -435,7 +435,7 @@ Namespace Web
         Protected Friend MustOverride Function GetUserType() As Type
         Protected Friend MustOverride Function FindUsers(ByVal mgr As OrmDBManager, ByVal criteria As CriteriaLink) As IList
         'Protected Friend MustOverride Function FindTopUsers(ByVal mgr As OrmDBManager, ByVal top As Integer) As IList
-        Protected Friend MustOverride Sub DeleteUser(ByVal mgr As OrmDBManager, ByVal u As OrmBase, ByVal cascase As Boolean)
+        Protected Friend MustOverride Sub DeleteUser(ByVal mgr As OrmDBManager, ByVal u As OrmBase, ByVal cascade As Boolean)
         Protected Friend MustOverride Sub DeleteProfile(ByVal mgr As OrmDBManager, ByVal u As OrmBase)
         Protected Friend MustOverride Function GetNow() As Date
         Protected Friend MustOverride Function CreateDBMgr(ByVal type As String) As IGetDBMgr
