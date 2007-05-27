@@ -174,7 +174,7 @@ Namespace Web
 
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 If RequiresUniqueEmail Then
-                    If String.IsNullOrEmpty(email) Then
+                    If Not EmptyEmail AndAlso String.IsNullOrEmpty(email) Then
                         status = MembershipCreateStatus.InvalidEmail
                         Return Nothing
                     End If
@@ -707,6 +707,12 @@ l1:
         Protected Overridable Sub UserCreated(ByVal user As OrmBase)
 
         End Sub
+
+        Public Overridable ReadOnly Property EmptyEmail() As Boolean
+            Get
+                Return False
+            End Get
+        End Property
 #End Region
 
     End Class
