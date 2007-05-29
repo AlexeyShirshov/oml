@@ -98,8 +98,8 @@ Namespace Orm
         '<NonSerialized()> _
         'Private _mo As ModifiedObject
         Private _loaded_members As BitArray
-        <NonSerialized()> _
-        Private _rw As System.Threading.ReaderWriterLock
+        '<NonSerialized()> _
+        'Private _rw As System.Threading.ReaderWriterLock
         Public Const ObmNamespace As String = "http://www.worm.ru/orm/"
         <NonSerialized()> _
         Friend _loading As Boolean
@@ -139,7 +139,7 @@ Namespace Orm
         End Sub
 
         <Runtime.Serialization.OnDeserialized()> _
-        Protected Sub Init(ByVal context As Runtime.Serialization.StreamingContext)
+        Private Sub Init(ByVal context As Runtime.Serialization.StreamingContext)
             Init()
             If OrmManagerBase.CurrentManager IsNot Nothing Then
                 OrmManagerBase.CurrentManager.RegisterInCashe(Me)

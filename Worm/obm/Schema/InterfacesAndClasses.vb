@@ -456,14 +456,14 @@ Namespace Orm
             _named_params = schema.ParamName("p", 1) <> schema.ParamName("p", 2)
         End Sub
 
-        Public Function AddParam(ByVal name As String, ByVal value As Object) As String Implements ICreateParam.AddParam
+        Public Function AddParam(ByVal pname As String, ByVal value As Object) As String Implements ICreateParam.AddParam
             If NamedParams Then
-                Dim p As System.Data.Common.DbParameter = GetParameter(name)
+                Dim p As System.Data.Common.DbParameter = GetParameter(pname)
                 If p Is Nothing Then
                     Return CreateParam(value)
                 Else
                     If p.Value Is Nothing OrElse p.Value.Equals(value) Then
-                        Return name
+                        Return pname
                     Else
                         Return CreateParam(value)
                     End If

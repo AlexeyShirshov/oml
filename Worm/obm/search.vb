@@ -72,17 +72,17 @@ Namespace Orm
                 Return CType(System.Configuration.ConfigurationManager.GetSection(name), SearchSection)
             End Function
 
-            Public Shared Function GetValueForContains(ByVal t As Type, ByVal tokens() As String, ByVal sectionName As String, ByVal f As IOrmFullTextSupport) As String
+            Public Shared Function GetValueForContains(ByVal tokens() As String, ByVal sectionName As String, ByVal f As IOrmFullTextSupport) As String
                 Dim value As New StringBuilder
 
-                Dim l As Integer = value.Length
-                Dim ss() As String = Nothing
+                'Dim l As Integer = value.Length
+                'Dim ss() As String = Nothing
 
                 Dim sc As Configuration.SearchSection = Configuration.SearchSection.GetSection(sectionName)
 
-                If sc IsNot Nothing Then
-                    ss = sc.GetStops(t)
-                End If
+                'If sc IsNot Nothing Then
+                '    ss = sc.GetStops(t)
+                'End If
 
                 If tokens.Length = 1 AndAlso tokens(0).IndexOf(" "c) < 0 Then
                     Dim tok As String = tokens(0)
@@ -106,17 +106,17 @@ l2:
                     value.Append("""")
                 End If
 
-                    If value.Length < 2 Then
-                        Return Nothing
-                    End If
+                If value.Length < 2 Then
+                    Return Nothing
+                End If
 
-                    Return value.ToString
+                Return value.ToString
             End Function
 
             Public Shared Function GetValueForFreeText(ByVal t As Type, ByVal tokens() As String, ByVal sectionName As String) As String
                 Dim value As New StringBuilder
 
-                Dim l As Integer = value.Length
+                'Dim l As Integer = value.Length
                 Dim ss() As String = Nothing
 
                 Dim sc As Configuration.SearchSection = Configuration.SearchSection.GetSection(sectionName)

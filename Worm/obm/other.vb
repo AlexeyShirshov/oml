@@ -8,7 +8,7 @@ Imports CoreFramework.Structures
 Class CSScopeMgr
     Implements IDisposable
 
-    Private disposedValue As Boolean = False        ' To detect redundant calls
+    Private disposedValue As Boolean
     Protected _obj As Object
 
     Public Sub New(ByVal obj As Object)

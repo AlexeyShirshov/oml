@@ -678,7 +678,7 @@ l1:
             End If
         End Sub
 
-        Protected Function ComparePasswords(ByVal psw1 As Byte(), ByVal psw2() As Byte) As Boolean
+        Private Shared Function ComparePasswords(ByVal psw1 As Byte(), ByVal psw2() As Byte) As Boolean
             Return IsEqualByteArray(psw1, psw2)
         End Function
 
@@ -687,12 +687,13 @@ l1:
         End Function
 
         Protected Overridable Function HashPassword(ByVal password As String) As Byte()
-            Dim md5 As New System.Security.Cryptography.MD5CryptoServiceProvider()
-            Using ms As New IO.MemoryStream
-                Using sw As New IO.StreamWriter(ms)
-                    sw.Write(password)
+            Using md5 As New System.Security.Cryptography.MD5CryptoServiceProvider()
+                Using ms As New IO.MemoryStream
+                    Using sw As New IO.StreamWriter(ms)
+                        sw.Write(password)
+                    End Using
+                    Return md5.ComputeHash(ms.ToArray)
                 End Using
-                Return md5.ComputeHash(ms.ToArray)
             End Using
         End Function
 

@@ -202,7 +202,7 @@ Namespace Orm
 
         Public Function GetM2MRelations(ByVal maintype As Type) As M2MRelation()
             If maintype Is Nothing Then
-                Throw New ArgumentNullException("maintype parameter cannot be nothing")
+                Throw New ArgumentNullException("maintype")
             End If
 
             Dim schema As IOrmObjectSchemaBase = GetObjectSchema(maintype)
@@ -262,7 +262,7 @@ Namespace Orm
 
         Public Function GetConnectedTypeRelation(ByVal ct As Type) As IRelation
             If ct Is Nothing Then
-                Throw New ArgumentNullException("maintype parameter cannot be nothing")
+                Throw New ArgumentNullException("maintype")
             End If
 
             Dim schema As IOrmObjectSchemaBase = GetObjectSchema(ct)
@@ -288,7 +288,7 @@ Namespace Orm
         <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1822")> _
         Public Function ChangeValueType(ByVal type As Type, ByVal c As ColumnAttribute, ByVal o As Object) As Object
             If type Is Nothing Then
-                Throw New ArgumentNullException("type parameter cannot be nothing")
+                Throw New ArgumentNullException("type")
             End If
 
             Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
@@ -321,7 +321,7 @@ Namespace Orm
         <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
         Protected Function GetFieldTable(ByVal type As Type, ByVal field As String) As OrmTable
             If type Is Nothing Then
-                Throw New ArgumentNullException("type parameter cannot be nothing")
+                Throw New ArgumentNullException("type")
             End If
 
             Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
@@ -368,7 +368,7 @@ Namespace Orm
 
         Public Function GetAttributes(ByVal type As Type, ByVal c As ColumnAttribute) As Field2DbRelations
             If type Is Nothing Then
-                Throw New ArgumentNullException("type parameter cannot be nothing")
+                Throw New ArgumentNullException("type")
             End If
 
             Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
@@ -380,7 +380,7 @@ Namespace Orm
 #Region " Helpers "
         Protected Sub GetPKList(ByVal type As Type, ByVal ids As StringBuilder)
             If ids Is Nothing Then
-                Throw New ArgumentNullException("ids parameter cannot be nothing")
+                Throw New ArgumentNullException("ids")
             End If
 
             For Each pk As String In GetPrimaryKeysName(type)
@@ -499,7 +499,7 @@ Namespace Orm
 
         Public Function GetFieldValue(ByVal obj As OrmBase, ByVal fieldName As String) As Object
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj parameter cannot be nothing")
+                Throw New ArgumentNullException("obj")
             End If
 
             Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, fieldName)
@@ -513,7 +513,7 @@ Namespace Orm
 
         Public Sub SetFieldValue(ByVal obj As OrmBase, ByVal fieldName As String, ByVal value As Object)
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj parameter cannot be nothing")
+                Throw New ArgumentNullException("obj")
             End If
 
             Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, fieldName)
@@ -632,7 +632,7 @@ Namespace Orm
         Public Function GetColumnByFieldName(ByVal main As Type, ByVal fieldName As String) As ColumnAttribute
             If main Is Nothing Then Throw New ArgumentNullException("main")
 
-            Dim l As New List(Of ColumnAttribute)
+            'Dim l As New List(Of ColumnAttribute)
 
             For Each de As DictionaryEntry In GetProperties(main)
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
@@ -646,9 +646,9 @@ Namespace Orm
 
 #Region " Unions "
 
-        Public Function GetUnions(ByVal type As Type) As String()
+        Public Shared Function GetUnions(ByVal type As Type) As String()
             If type Is Nothing Then
-                Throw New ArgumentNullException("type parameter cannot be nothing")
+                Throw New ArgumentNullException("type")
             End If
 
             Dim s() As String = Nothing

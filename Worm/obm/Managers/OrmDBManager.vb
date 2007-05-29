@@ -23,7 +23,7 @@ Namespace Orm
             End If
 
             Assert(obj.ObjectState = ObjectState.Modified, "Object " & obj.Identifier & " should be in Modified state")
-            Dim t As Type = obj.GetType
+            'Dim t As Type = obj.GetType
 
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
             Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
@@ -127,7 +127,7 @@ Namespace Orm
             Try
                 obj.IsLoaded = True
 
-                Dim t As Type = obj.GetType
+                'Dim t As Type = obj.GetType
 
                 Dim params As ICollection(Of System.Data.Common.DbParameter) = Nothing
                 Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
@@ -311,7 +311,7 @@ Namespace Orm
 
             Assert(obj.ObjectState = ObjectState.Deleted, "Object " & obj.Identifier & " should be in Deleted state")
 
-            Dim t As Type = obj.GetType
+            'Dim t As Type = obj.GetType
 
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
             Using obj.GetSyncRoot()
@@ -391,7 +391,7 @@ Namespace Orm
             Invariant()
 
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj parameter cannot be nothing")
+                Throw New ArgumentNullException("obj")
             End If
 
             Using obj.GetSyncRoot()
@@ -513,9 +513,9 @@ Namespace Orm
                             Dim m2me As M2MCache = o.First
                             If m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso Not m2me.Entry.Saved AndAlso Not processedType.Contains(m2me.Entry.SubType) Then
                                 Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
-                                    Dim tt1 As Type = obj.GetType
+                                    'Dim tt1 As Type = obj.GetType
                                     Dim tt2 As Type = m2me.Entry.SubType
-                                    Dim added As New List(Of Integer)
+                                    'Dim added As New List(Of Integer)
                                     Dim sv As EditableList = m2me.Entry.PrepareSave(Me)
                                     If sv IsNot Nothing Then
                                         M2MSave(obj, tt2, m2me.Entry.Direct, sv)
@@ -552,7 +552,7 @@ Namespace Orm
 
         Friend Class M2MEnum
             Public ReadOnly o As IRelation
-            Public ReadOnly obj As OrmBase
+            'Public ReadOnly obj As OrmBase
             Dim p1 As Pair(Of String, Type)
             Dim p2 As Pair(Of String, Type)
             Dim o1 As OrmBase
@@ -560,7 +560,7 @@ Namespace Orm
 
             Public Sub New(ByVal r As IRelation, ByVal obj As OrmBase, ByVal schema As OrmSchemaBase)
                 Me.o = r
-                Me.obj = obj
+                'Me.obj = obj
                 p1 = o.GetFirstType
                 p2 = o.GetSecondType
                 o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)

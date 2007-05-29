@@ -56,7 +56,7 @@ Namespace Orm
                     cmd.Parameters.Add(pr)
                 Next
                 Dim b As OrmReadOnlyDBManager.ConnAction = mgr.TestConn(cmd)
-                Dim err As Boolean = True
+                'Dim err As Boolean = True
                 Try
                     Return Execute(cmd)
                 Finally
