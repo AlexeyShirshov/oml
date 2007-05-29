@@ -46,7 +46,7 @@ Namespace Orm
 
         Public Function GetTables(ByVal type As Type) As OrmTable() Implements IDbSchema.GetTables
             If type Is Nothing Then
-                Throw New ArgumentNullException("type parameter cannot be nothing")
+                Throw New ArgumentNullException("type")
             End If
 
             Dim schema As IOrmObjectSchema = GetObjectSchema(type)
@@ -56,7 +56,7 @@ Namespace Orm
 
         Protected Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin Implements IDbSchema.GetJoins
             If type Is Nothing Then
-                Throw New ArgumentNullException("type parameter cannot be nothing")
+                Throw New ArgumentNullException("type")
             End If
 
             Dim schema As IOrmObjectSchema = GetObjectSchema(type)
@@ -181,7 +181,7 @@ Namespace Orm
             ByRef select_columns As Generic.IList(Of ColumnAttribute)) As String
 
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj parameter cannot be nothing")
+                Throw New ArgumentNullException("obj")
             End If
 
             Using obj.GetSyncRoot()
@@ -196,7 +196,7 @@ Namespace Orm
                     'Dim _params As New ArrayList
                     Dim sel_columns As New Generic.List(Of ColumnAttribute)
                     Dim prim_key As ColumnAttribute = Nothing
-                    Dim prim_key_value As Object = Nothing
+                    'Dim prim_key_value As Object = Nothing
 
                     Dim real_t As Type = obj.GetType
                     Dim unions() As String = GetUnions(real_t)
@@ -240,7 +240,7 @@ Namespace Orm
 
                             If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                 prim_key = c
-                                prim_key_value = current
+                                'prim_key_value = current
                             End If
                         End If
                     Next
@@ -259,7 +259,7 @@ Namespace Orm
                         Dim join_table As OrmTable = tbls(j)
                         Dim jn As OrmJoin = GetJoins(real_t, pkt, join_table)
                         If Not jn.IsEmpty Then
-                            Dim f As IOrmFilter = OrmFilter.ChangeValueToLiteral(jn.Condition, Me, real_t, prim_key.FieldName, "@id")
+                            Dim f As IOrmFilter = OrmFilter.ChangeValueToLiteral(jn.Condition, real_t, prim_key.FieldName, "@id")
 
                             If f Is Nothing Then
                                 Throw New DBSchemaException("Cannot change join")
@@ -551,7 +551,7 @@ Namespace Orm
                             Else
                                 Dim join As OrmJoin = GetJoins(rt, tb, de_table.Key)
                                 If Not join.IsEmpty Then
-                                    Dim f As IOrmFilter = OrmFilter.ChangeValueToParam(join.Condition, Me, rt, c.FieldName, original)
+                                    Dim f As IOrmFilter = OrmFilter.ChangeValueToParam(join.Condition, rt, c.FieldName, original)
 
                                     If f Is Nothing Then
                                         Throw New DBSchemaException("Cannot replace join")
@@ -592,7 +592,7 @@ Namespace Orm
                         'uniontype = GetUnionType(obj)
                     End If
 
-                    Dim sb_updates As New StringBuilder
+                    'Dim sb_updates As New StringBuilder
 
                     GetChangedFields(obj, updated_tables, sel_columns, unions)
 
@@ -731,7 +731,7 @@ Namespace Orm
                 Else
                     Dim join As OrmJoin = GetJoins(type, tables(0), table)
                     If Not join.IsEmpty Then
-                        Dim f As IOrmFilter = OrmFilter.ChangeValueToLiteral(join.Condition, Me, type, "ID", "@id")
+                        Dim f As IOrmFilter = OrmFilter.ChangeValueToLiteral(join.Condition, type, "ID", "@id")
 
                         If f Is Nothing Then
                             Throw New DBSchemaException("Cannot replace join")
@@ -967,7 +967,7 @@ Namespace Orm
             'If cmd Is Nothing Then
             Dim selectcmd As New StringBuilder
             Dim tables() As OrmTable = GetTables(original_type)
-            Dim maintable As OrmTable = tables(0)
+            'Dim maintable As OrmTable = tables(0)
             selectcmd.Append("select ")
             GetPKList(original_type, selectcmd)
 
@@ -1041,7 +1041,7 @@ Namespace Orm
 
             Dim selectcmd As New StringBuilder
             Dim tables() As OrmTable = GetTables(original_type)
-            Dim maintable As OrmTable = tables(0)
+            'Dim maintable As OrmTable = tables(0)
             selectcmd.Append("select ").Append(TopStatement(top))
             GetPKList(original_type, selectcmd)
 
@@ -1076,7 +1076,7 @@ Namespace Orm
                     If Not join.IsEmpty Then
                         almgr.AddTable(tables(j), Nothing, Nothing)
 
-                        OrmFilter.ChangeValueToLiteral(join, Me, selectedType, "ID", table, id)
+                        OrmFilter.ChangeValueToLiteral(join, selectedType, "ID", table, id)
                         'For Each fl As OrmFilter In join.Condition.GetAllFilters
                         '    If Not fl.IsLiteralValue Then
                         '        Dim f2 As IOrmFilter = Nothing
@@ -1249,7 +1249,7 @@ Namespace Orm
             ByVal pmgr As ParamMgr, ByVal almgr As AliasMgr, ByVal withLoad As Boolean, ByVal direct As Boolean) As String
 
             Dim schema As IOrmObjectSchema = GetObjectSchema(selectedType)
-            Dim schema2 As IOrmObjectSchema = GetObjectSchema(filteredType)
+            'Dim schema2 As IOrmObjectSchema = GetObjectSchema(filteredType)
 
             'column - select
             Dim selected_r As M2MRelation = Nothing
@@ -1323,7 +1323,7 @@ Namespace Orm
 
             Dim t As System.Type = obj.GetType
 
-            Dim schema As IOrmObjectSchema = GetObjectSchema(t)
+            'Dim schema As IOrmObjectSchema = GetObjectSchema(t)
             Dim schema2 As IOrmObjectSchema = GetObjectSchema(type)
 
             Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(filter_info) IsNot Nothing OrElse appendMain
@@ -1365,7 +1365,7 @@ Namespace Orm
             Dim obj_schema As IOrmObjectSchema = GetObjectSchema(t)
             Dim fs As IOrmFullTextSupport = TryCast(obj_schema, IOrmFullTextSupport)
 
-            Dim value As String = Configuration.SearchSection.GetValueForContains(t, tokens, sectionName, fs)
+            Dim value As String = Configuration.SearchSection.GetValueForContains(tokens, sectionName, fs)
             If String.IsNullOrEmpty(value) Then
                 Return Nothing
             End If
@@ -1485,7 +1485,7 @@ Namespace Orm
         End Function
 
         Public Function GetDictionarySelect(ByVal type As Type, ByVal level As Integer, _
-            ByVal params As ParamMgr, ByVal filter As IOrmFilter, ByVal filter_info As Object, ByVal join As OrmJoin) As String
+            ByVal params As ParamMgr, ByVal filter As IOrmFilter, ByVal filter_info As Object) As String
 
             Dim odic As IOrmDictionary = TryCast(GetObjectSchema(type), IOrmDictionary)
             If odic Is Nothing OrElse String.IsNullOrEmpty(odic.GetFirstDicField) Then
@@ -1496,12 +1496,12 @@ Namespace Orm
             Dim almgr As AliasMgr = AliasMgr.Create
 
             If String.IsNullOrEmpty(odic.GetSecondDicField) Then
-                sb.Append(GetDicStmt(type, odic.GetFirstDicField, level, almgr, params, filter, filter_info, join, True))
+                sb.Append(GetDicStmt(type, odic.GetFirstDicField, level, almgr, params, filter, filter_info, True))
             Else
                 sb.Append("select name,sum(cnt) from (")
-                sb.Append(GetDicStmt(type, odic.GetFirstDicField, level, almgr, params, filter, filter_info, join, False))
+                sb.Append(GetDicStmt(type, odic.GetFirstDicField, level, almgr, params, filter, filter_info, False))
                 sb.Append(" union ")
-                sb.Append(GetDicStmt(type, odic.GetSecondDicField, level, almgr, params, filter, filter_info, join, False))
+                sb.Append(GetDicStmt(type, odic.GetSecondDicField, level, almgr, params, filter, filter_info, False))
                 sb.Append(") sd group by name order by name")
             End If
 
@@ -1510,7 +1510,7 @@ Namespace Orm
 
         Protected Function GetDicStmt(ByVal t As Type, ByVal field As String, ByVal level As Integer, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filter As IOrmFilter, _
-            ByVal filter_info As Object, ByVal join As OrmJoin, ByVal appendOrder As Boolean) As String
+            ByVal filter_info As Object, ByVal appendOrder As Boolean) As String
             Dim sb As New StringBuilder
             Dim tbl As OrmTable = GetTables(t)(0)
             Dim al As String = Nothing
@@ -1604,7 +1604,7 @@ Namespace Orm
 
         Public Function PrepareConcurrencyException(ByVal obj As OrmBase) As OrmManagerException
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj parameter cannot be nothing")
+                Throw New ArgumentNullException("obj")
             End If
 
             Dim sb As New StringBuilder

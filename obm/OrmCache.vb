@@ -99,7 +99,7 @@ Namespace Orm
         Protected Friend Function Modified(ByVal obj As OrmBase) As ModifiedObject
             SyncLock SyncRoot
                 If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj parameter cannot be nothing")
+                    Throw New ArgumentNullException("obj")
                 End If
 
                 Dim name As String = obj.GetType().Name & ":" & obj.Identifier
@@ -116,7 +116,7 @@ Namespace Orm
         Protected Friend Function RegisterModification(ByVal obj As OrmBase) As ModifiedObject
             SyncLock SyncRoot
                 If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj parameter cannot be nothing")
+                    Throw New ArgumentNullException("obj")
                 End If
 
                 Dim name As String = obj.GetType().Name & ":" & obj.Identifier
@@ -139,7 +139,7 @@ Namespace Orm
         Protected Friend Function RegisterModification(ByVal obj As OrmBase, ByVal id As Integer) As ModifiedObject
             SyncLock SyncRoot
                 If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj parameter cannot be nothing")
+                    Throw New ArgumentNullException("obj")
                 End If
 
                 Dim name As String = obj.GetType().Name & ":" & id
@@ -156,7 +156,7 @@ Namespace Orm
         Protected Friend Sub RegisterExistingModification(ByVal obj As OrmBase, ByVal id As Integer)
             SyncLock SyncRoot
                 If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj parameter cannot be nothing")
+                    Throw New ArgumentNullException("obj")
                 End If
 
                 Dim name As String = obj.GetType().Name & ":" & id
@@ -170,7 +170,7 @@ Namespace Orm
         Protected Friend Sub UnregisterModification(ByVal obj As OrmBase)
             SyncLock SyncRoot
                 If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj parameter cannot be nothing")
+                    Throw New ArgumentNullException("obj")
                 End If
 
                 If _modifiedobjects.Count > 0 Then
@@ -573,7 +573,7 @@ Namespace Orm
         '    End Using
         'End Sub
 
-        Protected Function Normalize(ByVal t As Type, ByVal f As IOrmFilter) As IOrmFilter
+        Private Shared Function Normalize(ByVal t As Type, ByVal f As IOrmFilter) As IOrmFilter
             If f IsNot Nothing Then
                 For Each fl As OrmFilter In f.GetAllFilters
                     If fl.Type Is t Then

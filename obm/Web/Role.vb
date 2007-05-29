@@ -186,7 +186,7 @@ Namespace Web
 
         Protected Friend Function FindUsersInRoleInternal(ByVal mgr As OrmDBManager, ByVal roleName As String, ByVal usernameToMatch As String) As IList
             Dim r As OrmBase = GetRoleByName(mgr, roleName, False)
-            Dim users As New Generic.List(Of String)
+            'Dim users As New Generic.List(Of String)
             If r IsNot Nothing Then
                 Dim f As CriteriaLink = Nothing
                 If usernameToMatch IsNot Nothing Then

@@ -13,7 +13,7 @@ Public Class TestDic
 
         Dim s As New Orm.DbSchema("1")
         Dim p As New Orm.ParamMgr(s, "p")
-        Dim stmt As String = s.GetDictionarySelect(GetType(Table1), 1, p, Nothing, Nothing, Nothing)
+        Dim stmt As String = s.GetDictionarySelect(GetType(Table1), 1, p, Nothing, Nothing)
 
         Assert.AreEqual("select left(t1.name,1) name,count(*) cnt from dbo.Table1 t1 group by left(t1.name,1) order by left(t1.name,1)", stmt)
 
@@ -42,7 +42,7 @@ Public Class TestDic
 
             Assert.AreEqual(3, idx.TotalCount)
 
-            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr, Nothing, Orm.SortType.Asc)
+            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr)
 
             Assert.AreEqual(2, col.Count)
         End Using
@@ -59,7 +59,7 @@ Public Class TestDic
 
             Assert.AreEqual(6, idx.TotalCount)
 
-            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr, Nothing, Orm.SortType.Asc)
+            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr)
 
             Assert.AreEqual(3, col.Count)
         End Using
@@ -76,7 +76,7 @@ Public Class TestDic
 
             Assert.AreEqual(6, idx.TotalCount)
 
-            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElementsLoadOnlyNames(mgr, Nothing, Orm.SortType.Asc)
+            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElementsLoadOnlyNames(mgr)
 
             Assert.AreEqual(3, col.Count)
         End Using

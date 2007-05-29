@@ -16,7 +16,7 @@ Namespace Orm
         Public Class Saver
             Implements IDisposable
 
-            Private disposedValue As Boolean = False        ' To detect redundant calls
+            Private disposedValue As Boolean
             Private _l As New List(Of OrmBase)
             Private _mgr As OrmReadOnlyDBManager
 
@@ -84,7 +84,7 @@ Namespace Orm
                 End Try
             End Sub
 
-            Private Sub Rollback(ByVal saved As List(Of OrmBase), ByVal rejectList As List(Of OrmBase), ByVal copies As List(Of Pair(Of OrmBase)))
+            Private Shared Sub Rollback(ByVal saved As List(Of OrmBase), ByVal rejectList As List(Of OrmBase), ByVal copies As List(Of Pair(Of OrmBase)))
                 For Each o As OrmBase In rejectList
                     o.RejectChanges()
                 Next
@@ -400,8 +400,8 @@ Namespace Orm
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
             ByVal obj As OrmBase, ByVal filter As IOrmFilter, ByVal sort As Sort, _
-            ByVal id As String, ByVal sync As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
-            Return New M2MDataProvider(Of T2)(Me, obj, filter, sort, id, sync, key, direct)
+            ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
+            Return New M2MDataProvider(Of T2)(Me, obj, filter, sort, id, key, direct)
         End Function
 
         'Protected Overrides Function GetCustDelegateTag(Of T As {New, OrmBase})( _
@@ -412,8 +412,8 @@ Namespace Orm
         'End Function
 
         Protected Function FindConnected(ByVal ct As Type, ByVal selectedType As Type, _
-            ByVal filterType As Type, ByVal field As String, _
-            ByVal connectedFilter As IOrmFilter, ByVal filter As IOrmFilter, ByVal withLoad As Boolean, _
+            ByVal filterType As Type, ByVal connectedFilter As IOrmFilter, _
+            ByVal filter As IOrmFilter, ByVal withLoad As Boolean, _
             ByVal sort As Sort) As IList
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim arr As Generic.List(Of ColumnAttribute) = Nothing
@@ -544,7 +544,7 @@ Namespace Orm
                             Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
                             Trace.WriteLine(Environment.StackTrace)
                         End If
-                        Throw ex
+                        Throw New OrmManagerException("Cannot get first primary key ordinal", ex)
                     End Try
 
                     Dim secidx As Integer = 0
@@ -556,7 +556,7 @@ Namespace Orm
                             Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
                             Trace.WriteLine(Environment.StackTrace)
                         End If
-                        Throw ex
+                        Throw New OrmManagerException("Cannot get second primary key ordinal", ex)
                     End Try
 
                     Do While dr.Read
@@ -595,7 +595,7 @@ Namespace Orm
         Protected Function LoadMultipleObjects(ByVal t As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, _
-            ByVal arr As Generic.List(Of ColumnAttribute), Optional ByVal idx As Integer = -1) As IList
+            ByVal arr As Generic.List(Of ColumnAttribute)) As IList
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
@@ -690,7 +690,7 @@ Namespace Orm
 
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim params As New ParamMgr(DbSchema, "p")
-            Dim arr As Generic.List(Of ColumnAttribute) = Nothing
+            'Dim arr As Generic.List(Of ColumnAttribute) = Nothing
             Dim sb As New StringBuilder
             Dim type2load As Type = GetType(T)
             Dim ct As Type = DbSchema.GetConnectedType(type, type2load)
@@ -707,8 +707,8 @@ Namespace Orm
                     Throw New NotSupportedException("Tag is not supported with connected type")
                 End If
 
-                Dim oschema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(type2load)
-                Dim r2 As M2MRelation = DbSchema.GetM2MRelation(type2load, type, direct)
+                'Dim oschema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(type2load)
+                'Dim r2 As M2MRelation = DbSchema.GetM2MRelation(type2load, type, direct)
                 Dim f1 As String = DbSchema.GetConnectedTypeField(ct, type)
                 Dim f2 As String = DbSchema.GetConnectedTypeField(ct, type2load)
                 'Dim col1 As String = type.Name & "ID"
@@ -721,21 +721,21 @@ Namespace Orm
                     Dim o2 As OrmBase = CType(DbSchema.GetFieldValue(o, f2), OrmBase)
                     Dim id1 As Integer = o1.Identifier
                     Dim id2 As Integer = o2.Identifier
-                    Dim k As Integer = o1.Identifier
-                    Dim v As Integer = o2.Identifier
+                    'Dim k As Integer = o1.Identifier
+                    'Dim v As Integer = o2.Identifier
                     If o2.GetType Is type Then
-                        k = o2.Identifier
-                        v = o1.Identifier
+                        id1 = o2.Identifier
+                        id2 = o1.Identifier
                     End If
 
                     Dim el As EditableList = Nothing
-                    If edic.TryGetValue(k, el) Then
-                        el.Add(v)
+                    If edic.TryGetValue(id1, el) Then
+                        el.Add(id2)
                     Else
                         Dim l As New List(Of Integer)
-                        l.Add(v)
-                        el = New EditableList(k, l, type, type2load)
-                        edic.Add(k, el)
+                        l.Add(id2)
+                        el = New EditableList(id1, l, type, type2load)
+                        edic.Add(id1, el)
                     End If
                 Next
             Else
@@ -772,8 +772,8 @@ Namespace Orm
                         Try
                             Using dr As System.Data.IDataReader = cmd.ExecuteReader
                                 Do While dr.Read
-                                    Dim id1 As Integer = dr.GetInt32(0)
-                                    Dim id2 As Integer = dr.GetInt32(1)
+                                    Dim id1 As Integer = CInt(dr.GetValue(0))
+                                    Dim id2 As Integer = CInt(dr.GetValue(1))
                                     Dim el As EditableList = Nothing
                                     If edic.TryGetValue(id1, el) Then
                                         el.Add(id2)
@@ -1039,7 +1039,7 @@ Namespace Orm
                                 Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
                                 Trace.WriteLine(Environment.StackTrace)
                             End If
-                            Throw ex
+                            Throw New OrmManagerException("Cannot get primary key ordinal", ex)
                         End Try
                     End If
 
@@ -1342,7 +1342,7 @@ Namespace Orm
             End If
 
             If start > objs.Count Then
-                Throw New IndexOutOfRangeException("The range is greater than array length")
+                Throw New ArgumentException(String.Format("The range {0},{1} is greater than array length: " & objs.Count, start, length))
             End If
 
             length = Math.Min(length, objs.Count - start)
@@ -1659,7 +1659,7 @@ l1:
             Invariant()
             Dim params As New Orm.ParamMgr(DbSchema, "p")
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
-                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, filter, GetFilterInfo, join)
+                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, filter, GetFilterInfo)
                 cmd.CommandType = System.Data.CommandType.Text
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)

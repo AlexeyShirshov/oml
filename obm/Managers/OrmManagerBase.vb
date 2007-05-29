@@ -41,7 +41,7 @@ Namespace Orm
         Public Class CacheListSwitcher
             Implements IDisposable
 
-            Private disposedValue As Boolean = False        ' To detect redundant calls
+            Private disposedValue As Boolean
             Private _mgr As OrmManagerBase
             Private _oldvalue As Boolean
 
@@ -103,32 +103,36 @@ Namespace Orm
             '    Return New CachedItem(sort, Nothing, Nothing, OrmManagerBase.CurrentManager)
             'End Function
 
-            Public Overrides Function Equals(ByVal obj As Object) As Boolean
-                Return Equals(TryCast(obj, CachedItem))
-            End Function
+            'Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            '    Return Equals(TryCast(obj, CachedItem))
+            'End Function
 
-            Protected Function GetSortExp() As String
-                If _sort IsNot Nothing Then
-                    Return _sort.ToString
-                End If
-                Return Nothing
-            End Function
+            'Public Overrides Function GetHashCode() As Integer
+            '    Return MyBase.GetHashCode()
+            'End Function
 
-            Public Overloads Function Equals(ByVal obj As CachedItem) As Boolean
-                If obj Is Nothing Then Return False
+            'Protected Function GetSortExp() As String
+            '    If _sort IsNot Nothing Then
+            '        Return _sort.ToString
+            '    End If
+            '    Return Nothing
+            'End Function
 
-                Dim sortExpression As String = GetSortExp()
-                If Not String.IsNullOrEmpty(sortExpression) Then
-                    'If _mark Is Nothing Then
-                    Return sortExpression.Equals(obj.GetSortExp)
-                    'ElseIf obj._mark IsNot Nothing Then
-                    '    Return sortExpression.Equals(obj.GetSortExp) AndAlso _mark.Equals(obj._mark)
-                    'End If
-                ElseIf String.IsNullOrEmpty(obj.GetSortExp) Then
-                    Return True
-                End If
-                Return False
-            End Function
+            'Public Overloads Function Equals(ByVal obj As CachedItem) As Boolean
+            '    If obj Is Nothing Then Return False
+
+            '    Dim sortExpression As String = GetSortExp()
+            '    If Not String.IsNullOrEmpty(sortExpression) Then
+            '        'If _mark Is Nothing Then
+            '        Return sortExpression.Equals(obj.GetSortExp)
+            '        'ElseIf obj._mark IsNot Nothing Then
+            '        '    Return sortExpression.Equals(obj.GetSortExp) AndAlso _mark.Equals(obj._mark)
+            '        'End If
+            '    ElseIf String.IsNullOrEmpty(obj.GetSortExp) Then
+            '        Return True
+            '    End If
+            '    Return False
+            'End Function
 
             Public Function SortEquals(ByVal sort As Sort) As Boolean
                 If _sort Is Nothing Then
@@ -214,7 +218,7 @@ Namespace Orm
             End Sub
 
             Public Sub New(ByVal sort As Sort, ByVal filter As IOrmFilter, _
-                ByVal mainId As Integer, ByVal el As EditableList, ByVal mc As OrmManagerBase)
+                ByVal el As EditableList, ByVal mc As OrmManagerBase)
                 _sort = sort
                 '_st = SortType
                 _cache = mc.Cache
@@ -309,7 +313,7 @@ Namespace Orm
                 Get
                     Return _renew
                 End Get
-                Set(ByVal value As Boolean)
+                Set(ByVal Value As Boolean)
                     _renew = value
                 End Set
             End Property
@@ -318,7 +322,7 @@ Namespace Orm
                 Get
                     Return _created
                 End Get
-                Set(ByVal value As Boolean)
+                Set(ByVal Value As Boolean)
                     _created = value
                 End Set
             End Property
@@ -355,7 +359,7 @@ Namespace Orm
         'Public Const CustomSort As String = "q890h5f130nmv90h1nv9b1v-9134fb"
 
         Protected _cache As OrmCacheBase
-        Private _dispose_cash As Boolean
+        'Private _dispose_cash As Boolean
         Private _prev As OrmManagerBase = Nothing
         'Protected hide_deleted As Boolean = True
         'Protected _check_status As Boolean = True
@@ -376,7 +380,7 @@ Namespace Orm
         'Protected _prevs As String
 
         <ThreadStatic()> _
-        Protected Shared _cur As OrmManagerBase
+        Private Shared _cur As OrmManagerBase
         'Public Delegate Function GetLocalStorageDelegate(ByVal str As String) As Object
         'Protected _get_cur As GetLocalStorageDelegate
 
@@ -396,11 +400,11 @@ Namespace Orm
         Protected Sub New(ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
 
             If cache Is Nothing Then
-                Throw New ArgumentNullException("cache parameter cannot be nothing")
+                Throw New ArgumentNullException("cache")
             End If
 
             If schema Is Nothing Then
-                Throw New ArgumentNullException("schema parameter cannot be nothing")
+                Throw New ArgumentNullException("schema")
             End If
 
             _cache = cache
@@ -413,7 +417,7 @@ Namespace Orm
 
         <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")> _
         Protected Sub New(ByVal schema As OrmSchemaBase)
-            _dispose_cash = True
+            '_dispose_cash = True
             _cache = New OrmCache
             _schema = schema
             _list_converter = New FakeListConverter
@@ -756,8 +760,8 @@ Namespace Orm
                         End If
 
                         If dic.Contains(id) Then
-                            Dim sync As String = GetSync(key, id)
-                            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(o, GetFilter(criteria), Nothing, id, sync, key, direct)
+                            'Dim sync As String = GetSync(key, id)
+                            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(o, GetFilter(criteria), Nothing, id, key, direct)
                             Dim v As ICacheValidator = TryCast(del, ICacheValidator)
                             If v Is Nothing OrElse v.Validate() Then
                                 Dim e As M2MCache = CType(dic(id), M2MCache)
@@ -815,7 +819,7 @@ Namespace Orm
 
                                 'Dim sync As String = GetSync(key, id)
                                 el.Accept()
-                                dic(id) = New M2MCache(Nothing, GetFilter(criteria), o.Identifier, el, Me)
+                                dic(id) = New M2MCache(Nothing, GetFilter(criteria), el, Me)
                             End If
 
                             'Cache.AddRelationValue(o.GetType, type2load)
@@ -852,7 +856,7 @@ Namespace Orm
         Public Function CreateDBObject(ByVal id As Integer, ByVal type As Type) As OrmBase
 #If DEBUG Then
             If Not GetType(OrmBase).IsAssignableFrom(type) Then
-                Throw New ArgumentException("type")
+                Throw New ArgumentException(String.Format("The type {0} must be derived from Ormbase", type))
             End If
 #End If
 
@@ -1128,7 +1132,7 @@ Namespace Orm
             Return tt1.Name & Const_JoinStaticString & direct & " - new version - " & tt2.Name & GetStaticKey()
         End Function
 
-        Protected Friend Function GetSync(ByVal key As String, ByVal id As String) As String
+        Friend Shared Function GetSync(ByVal key As String, ByVal id As String) As String
             Return id & Const_KeyStaticString & key
         End Function
 
@@ -1159,7 +1163,7 @@ Namespace Orm
 
             'CreateM2MDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria), sort, id, sync, key, direct)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria), sort, id, key, direct)
             Dim m As M2MCache = CType(FindAdvanced(Of T)(dic, sync, id, withLoad, del), M2MCache)
             Dim p As New Pair(Of M2MCache, Boolean)(m, del.Created)
             Return p
@@ -1179,7 +1183,7 @@ Namespace Orm
 
             'Dim sort As String = del.Sort
             'Dim sort_type As SortType = del.SortType
-            Dim f As IOrmFilter = del.Filter
+            'Dim f As IOrmFilter = del.Filter
 
             Dim ce As CachedItem = Nothing
 
@@ -1213,7 +1217,9 @@ l1:
             If del.Created Then
                 del.CreateDepends()
             Else
-                If ce.SortEquals(del.Sort) OrElse del.Sort Is Nothing Then
+                Dim psort As Sort = del.Sort
+
+                If ce.SortEquals(psort) OrElse psort Is Nothing Then
                     If v IsNot Nothing AndAlso Not v.Validate(ce) Then
                         del.Renew = True
                         GoTo l1
@@ -1223,16 +1229,16 @@ l1:
                         del.Renew = True
                         GoTo l1
                     Else
-                        Dim loaded As Integer = 0
+                        'Dim loaded As Integer = 0
                         Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, False)
                         If objs IsNot Nothing AndAlso objs.Count > 0 Then
                             Dim srt As IOrmSorting = Nothing
-                            If del.Sort.IsExternal Then
-                                ce = del.GetCacheItem(_schema.ExternalSort(Of T)(del.Sort, objs))
+                            If psort.IsExternal Then
+                                ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
                                 dic(id) = ce
                             ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), srt) Then
                                 Using SyncHelper.AcquireDynamicLock(sync)
-                                    Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(del.Sort)
+                                    Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(psort)
                                     If sc IsNot Nothing Then
                                         Dim os As New Generic.List(Of T)(objs)
                                         os.Sort(sc)
@@ -1365,7 +1371,7 @@ l1:
 
         Public Function IsInCache(ByVal obj As OrmBase) As Boolean
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj parameter cannot be nothing")
+                Throw New ArgumentNullException("obj")
             End If
 
             Return IsInCache(obj.Identifier, obj.GetType)
@@ -1406,7 +1412,7 @@ l1:
                 Throw New OrmManagerException("Collection for " & name & " not exists")
             End If
 #End If
-            Dim created As Boolean = False, checked As Boolean = False
+            Dim created As Boolean = False ', checked As Boolean = False
             Dim a As T = Nothing
             If Not dic.TryGetValue(id, a) AndAlso _newMgr IsNot Nothing Then
                 a = CType(_newMgr.GetNew(type, id), T)
@@ -1416,7 +1422,7 @@ l1:
             If a Is Nothing Then
                 Using SyncHelper.AcquireDynamicLock(sync_key)
                     If Not dic.TryGetValue(id, a) Then
-                        If _schema.GetUnions(type) IsNot Nothing Then
+                        If OrmSchemaBase.GetUnions(type) IsNot Nothing Then
                             Throw New NotSupportedException
                         Else
                             a = New T
@@ -1430,7 +1436,7 @@ l1:
                             End If
                         End If
                         If a IsNot Nothing AndAlso checkOnCreate Then
-                            checked = True
+                            'checked = True
                             If Not a.IsLoaded Then
                                 a.Load()
                                 If a.ObjectState = ObjectState.NotFoundInDB Then
@@ -1457,7 +1463,7 @@ l1:
 
         Protected Sub AddObject(ByVal obj As OrmBase)
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj parameter cannot be nothing")
+                Throw New ArgumentNullException("obj")
             End If
 
             If obj.Identifier < 0 Then
@@ -1868,8 +1874,8 @@ l1:
                 Throw New ArgumentNullException("t parameter cannot be nothing")
             End If
 
-            Dim tt1 As Type = mainobj.GetType
-            Dim tt2 As Type = t
+            'Dim tt1 As Type = mainobj.GetType
+            'Dim tt2 As Type = t
 
             For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEtries(mainobj, Nothing)
                 Dim m2me As M2MCache = o.First
@@ -2122,7 +2128,7 @@ l1:
                 Dim key As String = GetM2MKey(tt1, r.Type, Not r.non_direct)
                 Dim dic As IDictionary = GetDic(_cache, key)
                 Dim id As String = obj.Identifier.ToString
-                Dim sync As String = GetSync(key, id)
+                'Dim sync As String = GetSync(key, id)
 
                 If dic.Contains(id) Then
                     Dim m As M2MCache = CType(dic(id), M2MCache)
@@ -2187,11 +2193,11 @@ l1:
 
         Protected Friend Sub M2MAdd(ByVal mainobj As OrmBase, ByVal subobj As OrmBase, ByVal direct As Boolean)
             If mainobj Is Nothing Then
-                Throw New ArgumentNullException("mainobj parameter cannot be nothing")
+                Throw New ArgumentNullException("mainobj")
             End If
 
             If subobj Is Nothing Then
-                Throw New ArgumentNullException("subobj parameter cannot be nothing")
+                Throw New ArgumentNullException("subobj")
             End If
 
             M2MAddInternal(mainobj, subobj, direct)
@@ -2224,11 +2230,11 @@ l1:
 
         Protected Sub M2MAddInternal(ByVal mainobj As OrmBase, ByVal subobj As OrmBase, ByVal direct As Boolean)
             If mainobj Is Nothing Then
-                Throw New ArgumentNullException("mainobj parameter cannot be nothing")
+                Throw New ArgumentNullException("mainobj")
             End If
 
             If subobj Is Nothing Then
-                Throw New ArgumentNullException("subobj parameter cannot be nothing")
+                Throw New ArgumentNullException("subobj")
             End If
 
             Dim tt1 As Type = mainobj.GetType
@@ -2530,7 +2536,7 @@ l1:
 
         Protected MustOverride Function GetCustDelegate(Of T2 As {OrmBase, New})( _
             ByVal obj As OrmBase, ByVal filter As IOrmFilter, _
-            ByVal sort As Sort, ByVal id As String, ByVal sync As String, ByVal key As String, ByVal direct As Boolean) As ICustDelegate(Of T2)
+            ByVal sort As Sort, ByVal id As String, ByVal key As String, ByVal direct As Boolean) As ICustDelegate(Of T2)
 
         'Protected MustOverride Function GetCustDelegateTag(Of T As {OrmBase, New})( _
         '    ByVal obj As T, ByVal filter As IOrmFilter, ByVal sort As String, ByVal sortType As SortType, ByVal id As String, ByVal sync As String, ByVal key As String) As ICustDelegate(Of T)

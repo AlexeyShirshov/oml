@@ -472,7 +472,7 @@ Namespace Orm
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As OrmBase, ByVal filter As IOrmFilter, _
                 ByVal sort As Sort, _
-                ByVal id As String, ByVal sync As String, ByVal key As String, ByVal direct As Boolean)
+                ByVal id As String, ByVal key As String, ByVal direct As Boolean)
                 MyBase.New(mgr, filter, sort, key, id)
                 _obj = obj
                 _direct = direct
@@ -513,11 +513,11 @@ Namespace Orm
                         Using dr As System.Data.IDataReader = cmd.ExecuteReader
                             Dim l As New List(Of Integer)
                             Do While dr.Read
-                                Dim id1 As Integer = dr.GetInt32(0)
+                                Dim id1 As Integer = CInt(dr.GetValue(0))
                                 If id1 <> _obj.Identifier Then
                                     Throw New OrmManagerException("Wrong relation statement")
                                 End If
-                                Dim id2 As Integer = dr.GetInt32(1)
+                                Dim id2 As Integer = CInt(dr.GetValue(1))
                                 l.Add(id2)
                                 If withLoad Then
                                     Dim obj As T = _mgr.CreateDBObject(Of T)(id2)
@@ -564,7 +564,7 @@ Namespace Orm
                     '    external_sort = True
                     'End If
 
-                    For Each o As OrmBase In _mgr.FindConnected(ct, t, mt, f2, fl, Filter, withLoad, _sort)
+                    For Each o As OrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort)
                         Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
 

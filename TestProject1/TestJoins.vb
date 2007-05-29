@@ -326,10 +326,10 @@ End Class
         Dim ct As New Orm.OrmCondition.OrmConditionConstructor
         ct.AddFilter(f, Orm.ConditionOperator.Or)
         Dim j As New Orm.OrmJoin(schema.GetTables(GetType(Entity))(0), Orm.JoinType.Join, f)
-        Orm.OrmFilter.ChangeValueToLiteral(j, schema, GetType(Entity), "ID", tbl, "onadg")
+        Orm.OrmFilter.ChangeValueToLiteral(j, GetType(Entity), "ID", tbl, "onadg")
 
         Dim j2 As New Orm.OrmJoin(schema.GetTables(GetType(Entity))(0), Orm.JoinType.Join, f)
-        Orm.OrmFilter.ChangeValueToLiteral(j2, schema, GetType(Entity2), "oqwef", tbl, "onadg")
+        Orm.OrmFilter.ChangeValueToLiteral(j2, GetType(Entity2), "oqwef", tbl, "onadg")
     End Sub
 End Class
 
@@ -415,14 +415,14 @@ End Class
         Dim t As Type = GetType(Entity)
         Dim f As New Orm.OrmFilter(schema.GetTables(t)(0), "ID", GetType(Entity2), "ID", Orm.FilterOperation.GreaterEqualThan)
 
-        Orm.OrmFilter.ChangeValueToParam(f, schema, GetType(Entity2), "ID", 345)
+        Orm.OrmFilter.ChangeValueToParam(f, GetType(Entity2), "ID", 345)
 
         Dim f2 As New Orm.OrmFilter(t, "ID", GetType(Entity2), "ID", Orm.FilterOperation.GreaterEqualThan)
-        Orm.OrmFilter.ChangeValueToParam(f2, schema, GetType(Entity2), "ID", 345)
-        Orm.OrmFilter.ChangeValueToParam(f2, schema, t, "ID", 345)
+        Orm.OrmFilter.ChangeValueToParam(f2, GetType(Entity2), "ID", 345)
+        Orm.OrmFilter.ChangeValueToParam(f2, t, "ID", 345)
 
         Dim f3 As New Orm.OrmFilter(schema.GetTables(GetType(Entity2))(0), "ID", t, "ID", Orm.FilterOperation.GreaterEqualThan)
-        Orm.OrmFilter.ChangeValueToParam(f3, schema, GetType(Entity), "ID", 345)
+        Orm.OrmFilter.ChangeValueToParam(f3, GetType(Entity), "ID", 345)
     End Sub
 
     <TestMethod()> _
@@ -431,14 +431,14 @@ End Class
         Dim t As Type = GetType(Entity)
         Dim f As New Orm.OrmFilter(schema.GetTables(t)(0), "ID", GetType(Entity2), "ID", Orm.FilterOperation.GreaterEqualThan)
 
-        Orm.OrmFilter.ChangeValueToLiteral(f, schema, GetType(Entity2), "ID", "pmqer")
+        Orm.OrmFilter.ChangeValueToLiteral(f, GetType(Entity2), "ID", "pmqer")
 
         Dim f2 As New Orm.OrmFilter(t, "ID", GetType(Entity2), "ID", Orm.FilterOperation.GreaterEqualThan)
-        Orm.OrmFilter.ChangeValueToLiteral(f2, schema, GetType(Entity2), "ID", "pmqer")
-        Orm.OrmFilter.ChangeValueToLiteral(f2, schema, t, "ID", "pmqer")
+        Orm.OrmFilter.ChangeValueToLiteral(f2, GetType(Entity2), "ID", "pmqer")
+        Orm.OrmFilter.ChangeValueToLiteral(f2, t, "ID", "pmqer")
 
         Dim f3 As New Orm.OrmFilter(schema.GetTables(GetType(Entity2))(0), "ID", t, "ID", Orm.FilterOperation.GreaterEqualThan)
-        Orm.OrmFilter.ChangeValueToLiteral(f3, schema, GetType(Entity), "ID", "pmqer")
+        Orm.OrmFilter.ChangeValueToLiteral(f3, GetType(Entity), "ID", "pmqer")
     End Sub
 
     <TestMethod()> _
@@ -447,13 +447,13 @@ End Class
         Dim t As Type = GetType(Entity)
         Dim f As New Orm.OrmFilter(schema.GetTables(t)(0), "ID", GetType(Entity2), "ID", Orm.FilterOperation.GreaterEqualThan)
 
-        Orm.OrmFilter.ChangeValueToLiteral(f, schema, GetType(Entity2), "ID", "pmqer")
+        Orm.OrmFilter.ChangeValueToLiteral(f, GetType(Entity2), "ID", "pmqer")
 
         Dim f2 As New Orm.OrmFilter(t, "ID", GetType(Entity2), "ID", Orm.FilterOperation.GreaterEqualThan)
-        Orm.OrmFilter.ChangeValueToLiteral(f2, schema, GetType(Entity2), "ID", "pmqer")
-        Orm.OrmFilter.ChangeValueToLiteral(f2, schema, t, "ID", "pmqer")
+        Orm.OrmFilter.ChangeValueToLiteral(f2, GetType(Entity2), "ID", "pmqer")
+        Orm.OrmFilter.ChangeValueToLiteral(f2, t, "ID", "pmqer")
 
         Dim f3 As New Orm.OrmFilter(schema.GetTables(GetType(Entity2))(0), "ID", t, "ID", Orm.FilterOperation.GreaterEqualThan)
-        Orm.OrmFilter.ChangeValueToLiteral(f3, schema, GetType(Entity), "ID", "pmqer")
+        Orm.OrmFilter.ChangeValueToLiteral(f3, GetType(Entity), "ID", "pmqer")
     End Sub
 End Class

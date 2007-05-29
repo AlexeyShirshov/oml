@@ -153,7 +153,7 @@ Namespace Orm
         Public Sub Add2Dictionary(ByVal item As DicIndexBase)
 
             If item Is Nothing Then
-                Throw New ArgumentNullException("item parameter cannot be nothing")
+                Throw New ArgumentNullException("item")
             End If
 
             dic.Add(item.Name, item)
@@ -223,16 +223,12 @@ Namespace Orm
             MyBase.new(name, parent, count)
         End Sub
 
-        Public Overloads Function FindElements(ByVal mgr As OrmReadOnlyDBManager, _
-            Optional ByVal sort As String = "Alphabet", Optional ByVal sort_type As SortType = SortType.Asc) As Generic.ICollection(Of T)
-
-            Return FindElementsInternal(mgr, False, sort, sort_type)
+        Public Overloads Function FindElements(ByVal mgr As OrmReadOnlyDBManager) As Generic.ICollection(Of T)
+            Return FindElementsInternal(mgr, False)
         End Function
 
-        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmReadOnlyDBManager, _
-            Optional ByVal sort As String = "Alphabet", Optional ByVal sort_type As SortType = SortType.Asc) As Generic.ICollection(Of T)
-
-            Return FindElementsInternal(mgr, True, sort, sort_type)
+        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmReadOnlyDBManager) As Generic.ICollection(Of T)
+            Return FindElementsInternal(mgr, True)
         End Function
 
         Private Function FindObjects(ByVal mgr As OrmReadOnlyDBManager, ByVal loadName As Boolean, ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As Generic.ICollection(Of T)
@@ -253,8 +249,7 @@ Namespace Orm
             Return col
         End Function
 
-        Protected Function FindElementsInternal(ByVal mgr As OrmReadOnlyDBManager, ByVal loadName As Boolean, _
-         ByVal sort As String, ByVal sort_type As SortType) As Generic.ICollection(Of T)
+        Protected Function FindElementsInternal(ByVal mgr As OrmReadOnlyDBManager, ByVal loadName As Boolean) As Generic.ICollection(Of T)
 
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False

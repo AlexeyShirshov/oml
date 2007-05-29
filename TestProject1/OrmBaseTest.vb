@@ -428,7 +428,7 @@ End Class
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetUnions()
         Dim schema As New Orm.DbSchema("1")
-        schema.GetUnions(Nothing)
+        Orm.OrmSchemaBase.GetUnions(Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _

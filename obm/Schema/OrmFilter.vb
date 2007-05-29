@@ -447,21 +447,21 @@ Namespace Orm
             Return tbl & _fieldname & Oper2String()
         End Function
 
-        Public Function Eval(ByVal schema As OrmSchemaBase, ByVal o As OrmBase) As IOrmFilter.EvalResult Implements IOrmFilter.Eval
+        Public Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As IOrmFilter.EvalResult Implements IOrmFilter.Eval
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
 
-            If o Is Nothing Then
+            If obj Is Nothing Then
                 Throw New ArgumentNullException("o")
             End If
 
             Dim r As IOrmFilter.EvalResult = IOrmFilter.EvalResult.NotFound
 
             If _t IsNot Nothing AndAlso Not (IsValueLiteral Or IsValueComplex) Then
-                Dim t As Type = o.GetType
+                Dim t As Type = obj.GetType
                 If _t Is t Then
-                    Dim v As Object = schema.GetFieldValue(o, _fieldname)
+                    Dim v As Object = schema.GetFieldValue(obj, _fieldname)
                     If v IsNot Nothing Then
                         Dim tt As Type = v.GetType
                         Dim orm As OrmBase = TryCast(v, OrmBase)
@@ -517,7 +517,7 @@ Namespace Orm
             Return r
         End Function
 
-        Public Shared Sub ChangeValueToLiteral(ByRef join As OrmJoin, ByVal schema As OrmSchemaBase, ByVal t As Type, ByVal field As String, ByVal table As OrmTable, ByVal literal As String)
+        Public Shared Sub ChangeValueToLiteral(ByRef join As OrmJoin, ByVal t As Type, ByVal field As String, ByVal table As OrmTable, ByVal literal As String)
             Dim f As IOrmFilter = Nothing
             For Each fl As OrmFilter In join.Condition.GetAllFilters()
                 If fl.IsValueComplex AndAlso fl.Type Is t AndAlso fl.FieldName = field Then
@@ -543,7 +543,7 @@ Namespace Orm
             Next
         End Sub
 
-        Public Shared Function ChangeValueToLiteral(ByVal source As IOrmFilter, ByVal schema As OrmSchemaBase, ByVal t As Type, ByVal field As String, ByVal literal As String) As IOrmFilter
+        Public Shared Function ChangeValueToLiteral(ByVal source As IOrmFilter, ByVal t As Type, ByVal field As String, ByVal literal As String) As IOrmFilter
             Dim f As IOrmFilter = Nothing
             For Each fl As OrmFilter In source.GetAllFilters()
                 If fl.IsValueComplex AndAlso fl.Type Is t AndAlso fl.FieldName = field Then
@@ -570,7 +570,7 @@ Namespace Orm
             Return Nothing
         End Function
 
-        Public Shared Function ChangeValueToParam(ByVal source As IOrmFilter, ByVal schema As OrmSchemaBase, ByVal t As Type, ByVal field As String, ByVal value As Object) As IOrmFilter
+        Public Shared Function ChangeValueToParam(ByVal source As IOrmFilter, ByVal t As Type, ByVal field As String, ByVal value As Object) As IOrmFilter
             Dim f As IOrmFilter = Nothing
             For Each fl As OrmFilter In source.GetAllFilters()
                 If fl.IsValueComplex AndAlso fl.Type Is t AndAlso fl.FieldName = field Then
