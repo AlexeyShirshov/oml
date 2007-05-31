@@ -24,7 +24,7 @@ namespace exam1sharp
 				//create in-memory object
 				//it is a simple object that have no relation to database at all
 				int someTempIdentifier = -100;
-				test.Albums firstAlbum = new test.Albums(someTempIdentifier, mgr.Cache, mgr.DbSchema);
+				test.Album firstAlbum = new test.Album(someTempIdentifier, mgr.Cache, mgr.DbSchema);
 
 				//set properties
 				firstAlbum.Name = "firstAlbum";
