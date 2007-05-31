@@ -16,7 +16,7 @@ Module Module1
             'create in-memory object
             'it is a simple object that have no relation to database at all
             Dim someTempIdentifier As Integer = -100
-            Dim firstAlbum As New test.Albums(someTempIdentifier, mgr.Cache, mgr.ObjectSchema)
+            Dim firstAlbum As New test.Album(someTempIdentifier, mgr.Cache, mgr.ObjectSchema)
 
             'set properties
             firstAlbum.Name = "firstAlbum"
@@ -35,5 +35,37 @@ Module Module1
         End Using
     End Sub
 
+    Sub Main2()
+        Using mgr As OrmDBManager = GetDBManager()
 
+            Dim sort As Sort = Nothing
+            Dim album_type As Type = GetType(test.Album)
+
+            Dim albums As ICollection(Of test.Album) = mgr.Find(Of test.Album)( _
+                New Criteria(album_type).Field("ID").Eq(20), sort, True)
+        End Using
+    End Sub
+
+    Sub Main3()
+        Using mgr As OrmDBManager = GetDBManager()
+
+            Dim sort As Sort = Nothing
+            Dim album_type As Type = GetType(test.Album)
+
+            Dim albums As ICollection(Of test.Album) = mgr.Find(Of test.Album)( _
+                New Criteria(album_type).Field("Name").Like("love%"), sort, True)
+        End Using
+    End Sub
+
+    Sub Main4()
+        Using mgr As OrmDBManager = GetDBManager()
+
+            Dim sort As Sort = Nothing
+            Dim album_type As Type = GetType(test.Album)
+
+            Dim albums As ICollection(Of test.Album) = mgr.Find(Of test.Album)( _
+                New Criteria(album_type).Field("Release").GreaterThan(New Date(Now.Year, 1, 1)), _
+                Sorting.Field("Release").Desc, True)
+        End Using
+    End Sub
 End Module
