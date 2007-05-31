@@ -22,13 +22,13 @@ Public Class SimpleObj
     End Property
 End Class
 
-<Entity("id", "1")> _
+<Entity("dbo.table1", "id", "1")> _
 Public Class SimpleObj2
     Inherits OrmBaseT(Of SimpleObj)
 
     Private _title As String
 
-    <Column(column:="name", tablename:="dbo.table1")> _
+    <Column(column:="name")> _
     Public Property Title() As String
         Get
             Using Read("Title")

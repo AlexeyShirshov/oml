@@ -135,4 +135,5 @@ Public Class TablesImplementation
     Public Function GetSecondType() As Pair(Of String, System.Type) Implements Worm.Orm.IRelation.GetSecondType
         Return New Pair(Of String, Type)("Table3", GetType(Table1))
     End Function
+
 End Class

@@ -325,7 +325,7 @@ Public Class P4Proc
         Return New List(Of Pair(Of Type, Orm.Dependency))
     End Function
 
-    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
+    Protected Overrides Function GetInParams() As IEnumerable(Of Pair(Of String, Object))
         Return _params
     End Function
 

@@ -744,7 +744,7 @@ Namespace Orm
                                             l.Add(c)
                                         Next
 
-                                        schema = New SimpleObjectSchema(tp, ea.TableNames, l, ea.PrimaryKey)
+                                        schema = New SimpleObjectSchema(tp, ea.TableName, l, ea.PrimaryKey)
 
                                         If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
                                             Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
@@ -793,7 +793,7 @@ Namespace Orm
                                                 l.Add(c)
                                             Next
 
-                                            schema = New SimpleObjectSchema(tp, ea.TableNames, l, ea.PrimaryKey)
+                                            schema = New SimpleObjectSchema(tp, ea.TableName, l, ea.PrimaryKey)
 
                                             If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
                                                 Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
@@ -841,7 +841,7 @@ Namespace Orm
                                                     l.Add(c)
                                                 Next
 
-                                                schema = New SimpleObjectSchema(tp, ea.TableNames, l, ea.PrimaryKey)
+                                                schema = New SimpleObjectSchema(tp, ea.TableName, l, ea.PrimaryKey)
 
                                                 If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
                                                     Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
@@ -889,7 +889,7 @@ Namespace Orm
                                                         l.Add(c)
                                                     Next
 
-                                                    schema = New SimpleObjectSchema(tp, ea.TableNames, l, ea.PrimaryKey)
+                                                    schema = New SimpleObjectSchema(tp, ea.TableName, l, ea.PrimaryKey)
 
                                                     If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
                                                         Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))

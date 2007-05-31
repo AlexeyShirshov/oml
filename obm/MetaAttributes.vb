@@ -9,7 +9,7 @@ Namespace Orm
 
         Private _fieldName As String
         Public ReadOnly _behavior As Field2DbRelations
-        Private _table As String
+        'Private _table As String
         Private _column As String
         Private _idx As Integer = -1
 
@@ -56,14 +56,14 @@ Namespace Orm
             End Set
         End Property
 
-        Public Property TableName() As String
-            Get
-                Return _table
-            End Get
-            Set(ByVal value As String)
-                _table = value
-            End Set
-        End Property
+        'Public Property TableName() As String
+        '    Get
+        '        Return _table
+        '    End Get
+        '    Set(ByVal value As String)
+        '        _table = value
+        '    End Set
+        'End Property
 
         Public Property Index() As Integer
             Get
@@ -124,7 +124,7 @@ Namespace Orm
         Private _t As Type
         Private _v As String
         Private _entityName As String
-        Private _table() As String
+        Private _table As String
         Private _pk As String
 
         Public Sub New(ByVal primaryKeyColumn As String, ByVal version As String)
@@ -133,14 +133,9 @@ Namespace Orm
         End Sub
 
         Public Sub New(ByVal tableName As String, ByVal primaryKeyColumn As String, ByVal version As String)
-            _table = New String() {tableName}
+            _table = tableName
             _v = version
             _pk = primaryKeyColumn
-        End Sub
-
-        Public Sub New(ByVal tableNames() As String, ByVal version As String)
-            _table = tableNames
-            _v = version
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal version As String)
@@ -178,11 +173,11 @@ Namespace Orm
             End Set
         End Property
 
-        Public Property TableNames() As String()
+        Public Property TableName() As String
             Get
                 Return _table
             End Get
-            Set(ByVal value() As String)
+            Set(ByVal value As String)
                 _table = value
             End Set
         End Property

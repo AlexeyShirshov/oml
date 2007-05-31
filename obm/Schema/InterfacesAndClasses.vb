@@ -618,19 +618,26 @@ Namespace Orm
     Public NotInheritable Class SimpleObjectSchema
         Implements IOrmObjectSchema
 
-        Private _tables(-1) As OrmTable
+        'Private _tables(-1) As OrmTable
+        Private _table As OrmTable
         Private _cols As New Orm.OrmObjectIndex
 
-        Friend Sub New(ByVal t As Type, ByVal tables() As String, ByVal cols As ICollection(Of ColumnAttribute), ByVal pk As String)
+        Friend Sub New(ByVal t As Type, ByVal table As String, ByVal cols As ICollection(Of ColumnAttribute), ByVal pk As String)
             If String.IsNullOrEmpty(pk) Then
                 Throw New DBSchemaException(String.Format("Primary key required for {0}", t))
             End If
 
-            If tables IsNot Nothing Then
-                _tables = New OrmTable(tables.Length - 1) {}
-                For i As Integer = 0 To tables.Length - 1
-                    _tables(i) = New OrmTable(tables(i))
-                Next
+            'If tables IsNot Nothing Then
+            '    _tables = New OrmTable(tables.Length - 1) {}
+            '    For i As Integer = 0 To tables.Length - 1
+            '        _tables(i) = New OrmTable(tables(i))
+            '    Next
+            'End If
+
+            If String.IsNullOrEmpty(table) Then
+                Throw New ArgumentNullException("table")
+            Else
+                _table = New OrmTable(table)
             End If
 
             For Each c As ColumnAttribute In cols
@@ -646,41 +653,41 @@ Namespace Orm
                     End If
                 End If
 
-                Dim tbl As OrmTable = Nothing
-                If Not String.IsNullOrEmpty(c.TableName) Then
-                    tbl = FindTbl(c.TableName)
-                Else
-                    If _tables.Length = 0 Then
-                        Throw New DBSchemaException(String.Format("Neigther entity {1} nor column {0} has table name", c.FieldName, t))
-                    End If
+                'Dim tbl As OrmTable = Nothing
+                'If Not String.IsNullOrEmpty(c.TableName) Then
+                '    tbl = FindTbl(c.TableName)
+                'Else
+                '    If _tables.Length = 0 Then
+                '        Throw New DBSchemaException(String.Format("Neigther entity {1} nor column {0} has table name", c.FieldName, t))
+                '    End If
 
-                    tbl = _tables(0)
-                End If
+                '    tbl = _tables(0)
+                'End If
 
-                _cols.Add(New MapField2Column(c.FieldName, c.Column, tbl))
+                _cols.Add(New MapField2Column(c.FieldName, c.Column, _table))
             Next
 
             '_cols.Add(New MapField2Column("ID", pk, _tables(0)))
         End Sub
 
-        Private Function FindTbl(ByVal table As String) As OrmTable
-            For Each t As OrmTable In _tables
-                If t.TableName = table Then
-                    Return t
-                End If
-            Next
-            Dim l As Integer = _tables.Length
-            ReDim Preserve _tables(l)
-            _tables(l) = New OrmTable(table)
-            Return _tables(l)
-        End Function
+        'Private Function FindTbl(ByVal table As String) As OrmTable
+        '    For Each t As OrmTable In _tables
+        '        If t.TableName = table Then
+        '            Return t
+        '        End If
+        '    Next
+        '    Dim l As Integer = _tables.Length
+        '    ReDim Preserve _tables(l)
+        '    _tables(l) = New OrmTable(table)
+        '    Return _tables(l)
+        'End Function
 
         Public Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin Implements IOrmObjectSchema.GetJoins
             Throw New NotSupportedException("Joins is not supported in simple mode")
         End Function
 
         Public Function GetTables() As OrmTable() Implements IOrmObjectSchema.GetTables
-            Return _tables
+            Return New OrmTable() {_table}
         End Function
 
         Public Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchemaBase.ChangeValueType
