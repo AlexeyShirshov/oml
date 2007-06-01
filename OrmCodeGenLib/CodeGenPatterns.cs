@@ -5,7 +5,7 @@ using System.CodeDom;
 
 namespace OrmCodeGenLib
 {
-    public class CodeGenPatterns
+    public static class CodeGenPatterns
     {
         public static CodeStatement[] CodePatternLock(CodeExpression lockExpression, params CodeStatement[] statements)
         {
@@ -67,6 +67,42 @@ namespace OrmCodeGenLib
                         )
                     )
                 );
+        }
+
+        public static CodeStatement[] CodePatternUsingStatement(CodeExpression usingExpression, params CodeStatement[] statements)
+        {
+            List<CodeStatement> result = new List<CodeStatement>();
+            string usingVariableName = GetUniqueId("usingVariable");
+            result.Add(new CodeVariableDeclarationStatement(new CodeTypeReference(typeof(IDisposable)), usingVariableName));
+            result.Add(new CodeAssignStatement(new CodeVariableReferenceExpression(usingVariableName),new CodePrimitiveExpression(null)));
+            CodeStatement[] tryStatements = new CodeStatement[statements.Length + 1];
+            Array.Copy(statements, 0, tryStatements, 1, statements.Length);
+            tryStatements[0] =
+                new CodeAssignStatement(new CodeArgumentReferenceExpression(usingVariableName), usingExpression);
+            result.Add(
+                new CodeTryCatchFinallyStatement(
+                    tryStatements,
+               new CodeCatchClause[] {
+                                     },
+               new CodeStatement[] {
+                                       new CodeConditionStatement(
+                                           new CodeBinaryOperatorExpression(
+                                               new CodeVariableReferenceExpression(usingVariableName),
+                                               CodeBinaryOperatorType.IdentityInequality,
+                                               new CodePrimitiveExpression(null)
+                                               ),
+                                           new CodeExpressionStatement(
+                                               new CodeMethodInvokeExpression(
+                                                   new CodeCastExpression(typeof(IDisposable), new CodeArgumentReferenceExpression(usingVariableName)),
+                                                   "Dispose",
+                                                   new CodeExpression[]{}
+                                                   )
+                                               )
+                                           )
+                                   }
+                )
+            );
+            return result.ToArray();
         }
 
         private static string GetUniqueId()

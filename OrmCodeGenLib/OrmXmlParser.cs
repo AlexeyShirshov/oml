@@ -183,9 +183,10 @@ namespace OrmCodeGenLib
 
             foreach (XmlNode propertyNode in propertiesList)
             {
-                string id, name, description, typeId, fieldname, sAttributes, tableId;
+                string id, name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias;
                 string[] attributes;
                 TableDescription table;
+                AccessLevel fieldAccessLevel, propertyAccessLevel;
 
                 id = (propertyNode as XmlElement).GetAttribute("id");
                 description = (propertyNode as XmlElement).GetAttribute("description");
@@ -194,8 +195,20 @@ namespace OrmCodeGenLib
                 typeId = (propertyNode as XmlElement).GetAttribute("typeRef");
                 sAttributes = (propertyNode as XmlElement).GetAttribute("attributes");
                 tableId = (propertyNode as XmlElement).GetAttribute("table");
+                fieldAccessLevelName = (propertyNode as XmlElement).GetAttribute("classfieldAccessLevel");
+                propertyAccessLevelName = (propertyNode as XmlElement).GetAttribute("propertyAccessLevel");
+                propertyAlias = (propertyNode as XmlElement).GetAttribute("propertyAlias");
 
                 attributes = sAttributes.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                if (!string.IsNullOrEmpty(propertyAccessLevelName))
+                    propertyAccessLevel = (AccessLevel)Enum.Parse(typeof(AccessLevel), propertyAccessLevelName);
+                else
+                    propertyAccessLevel = AccessLevel.Public;
+
+                if (!string.IsNullOrEmpty(fieldAccessLevelName))
+                    fieldAccessLevel = (AccessLevel)Enum.Parse(typeof(AccessLevel), fieldAccessLevelName);
+                else
+                    fieldAccessLevel = AccessLevel.Private;
 
                 table = entity.GetTable(tableId);
 
@@ -206,7 +219,7 @@ namespace OrmCodeGenLib
 
                 TypeDescription typeDesc = _ormObjectsDef.GetType(typeId, true);
                 
-                property = new PropertyDescription(id, name, attributes, description, typeDesc, fieldname, table);
+                property = new PropertyDescription(id, name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
 
                 entity.Properties.Add(property);
             }

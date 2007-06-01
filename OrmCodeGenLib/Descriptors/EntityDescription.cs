@@ -105,6 +105,13 @@ namespace OrmCodeGenLib.Descriptors
             return table;
         }
 
+        public List<RelationDescription> GetRelations()
+        {
+            return _ormObjectsDef.Relations.FindAll(
+                delegate(RelationDescription match) { return match.Left.Entity == this || match.Right.Entity == this; }
+                );
+        }
+
         public string QualifiedName
         {
             get
@@ -187,11 +194,11 @@ namespace OrmCodeGenLib.Descriptors
                         }
                         if(newType != oldProperty.PropertyType)
                             resultOne.Properties.Insert(resultOne.Properties.Count - newOne.Properties.Count,
-                                                    new PropertyDescription(oldProperty.Identifier, oldProperty.Name,
+                                                    new PropertyDescription(oldProperty.Identifier, oldProperty.Name, oldProperty.PropertyAlias,
                                                                             oldProperty.Attributes,
                                                                             oldProperty.Description,
                                                                             newType,
-                                                                            oldProperty.FieldName, newTable, true));
+                                                                            oldProperty.FieldName, newTable, true, oldProperty.FieldAccessLevel, oldProperty.PropertyAccessLevel));
                     }
                 }
             }
