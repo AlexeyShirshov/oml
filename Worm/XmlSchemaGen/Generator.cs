@@ -363,8 +363,8 @@ namespace XmlSchemaGen
 					name = "ID";
 
 				pe = new PropertyDescription(c.ColumnName, name,
-					 attrs, null, GetType(c, columns, odef), c.ColumnName,
-					 e.Tables[0]);
+					 null, attrs, null, GetType(c, columns, odef), c.ColumnName,
+					 e.Tables[0],AccessLevel.Private, AccessLevel.Public);
 				e.Properties.Add(pe);
 			}
 			else

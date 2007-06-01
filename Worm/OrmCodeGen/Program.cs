@@ -29,26 +29,36 @@ namespace OrmCodeGen
             CodeDomProvider codeDomProvider;
             bool split, separateFolder;
             string[] skipEntities;
+            string[] processEntities;
             OrmObjectGeneratorBehaviour behaviour;
+            OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
 
             if (cmdLine["?"] != null || cmdLine["h"] != null || cmdLine["help"] != null || args == null || args.Length == 0)
             {
                 Console.WriteLine("Command line parameters:");
-                Console.WriteLine("  -file\t- source xml file");
-                Console.WriteLine("  -language\t- code language [cs, vb] (\"cs\" by default)");
-                Console.WriteLine("  -split\t- split entity class and entity's schema definition\n\t\t  class code by diffrent files (\"false\" by default)");
-                Console.WriteLine("  -behaviour\t- behaviour of codegenerator\n\t\t  [Objects, PartialObjects, BaseObjects] (\"Objects\" by default)");
-                Console.WriteLine("  -separateFolder\t- create folder for each entity.");
-				Console.WriteLine("  -output\t- output files folder.");
+                Console.WriteLine("  -f\t- source xml file");
+                Console.WriteLine("  -l\t- code language [cs, vb] (\"cs\" by default)");
+                Console.WriteLine("  -p\t- generate partial classes (\"false\" by default)");
+                Console.WriteLine("  -sp\t- split entity class and entity's schema definition\n\t\t  class code by diffrent files (\"false\" by default)");
+                Console.WriteLine("  -sk\t- skip entities");
+                Console.WriteLine("  -e\t- entities to process");
+                Console.WriteLine("  -cB\t- behaviour of class codegenerator\n\t\t  [Objects, PartialObjects] (\"Objects\" by default)");
+                Console.WriteLine("  -sF\t- create folder for each entity.");
+				Console.WriteLine("  -o\t- output files folder.");
+                Console.WriteLine("  -pmp\t- private members prefix (\"m_\" by default)");
+                Console.WriteLine("  -cnP\t- class name prefix (null by default)");
+                Console.WriteLine("  -cnS\t- class name suffix (null by default)");
+                Console.WriteLine("  -fnP\t- file name prefix (null by default)");
+                Console.WriteLine("  -fnS\t- file name suffix (null by default)");
                 return;
             }
 
-            if (cmdLine["language"] != null)
-                outputLanguage = cmdLine["language"];
+            if (cmdLine["l"] != null)
+                outputLanguage = cmdLine["l"];
             else
                 outputLanguage = "CS";
 
-            if (cmdLine["separateFolder"] != null || cmdLine["sf"] != null)
+            if (cmdLine["sF"] != null)
                 separateFolder = true;
             else
                 separateFolder = false;
@@ -65,38 +75,43 @@ namespace OrmCodeGen
             }
             else
             {
-                Console.WriteLine("Error: incorrect value in \"language\" parameter.");
+                Console.WriteLine("Error: incorrect value in \"l\" parameter.");
                 return;
             }
 
-            if (cmdLine["file"] != null)
-                inputFilename = cmdLine["file"];
+            if (cmdLine["f"] != null)
+                inputFilename = cmdLine["f"];
             else
             {
-                Console.WriteLine("Please give 'file' parameter");
+                Console.WriteLine("Please give 'f' parameter");
                 return;
             }
 
-            if(cmdLine["split"] != null)
+            if(cmdLine["sp"] != null)
                 split = true;
             else
                 split = false;
 
-            if (cmdLine["behaviour"] != null)
+            if (cmdLine["p"] != null)
+                settings.Partial = true;
+            else
+                settings.Partial = false;
+
+            if (cmdLine["cB"] != null)
                 try
                 {
-                    behaviour = (OrmObjectGeneratorBehaviour)Enum.Parse(typeof(OrmObjectGeneratorBehaviour), cmdLine["behaviour"]);
+                    behaviour = (OrmObjectGeneratorBehaviour)Enum.Parse(typeof(OrmObjectGeneratorBehaviour), cmdLine["cB"]);
                 }
                 catch
                 {
-                    Console.WriteLine("Error: incorrect value in \"behaviour\" parameter.");
+                    Console.WriteLine("Error: incorrect value in \"cB\" parameter.");
                     return;
                 }
             else
                 behaviour = OrmObjectGeneratorBehaviour.Objects;
 
-            if (cmdLine["output"] != null)
-                outputFolder = cmdLine["output"];
+            if (cmdLine["o"] != null)
+                outputFolder = cmdLine["o"];
             else
             {
                 outputFolder = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
@@ -106,10 +121,38 @@ namespace OrmCodeGen
                 }
             }
 
-            if (cmdLine["skip"] != null)
-                skipEntities = cmdLine["skip"].Split(',');
+            if (cmdLine["sk"] != null)
+                skipEntities = cmdLine["sk"].Split(',');
             else
                 skipEntities = new string[] { };
+
+            if (cmdLine["e"] != null)
+                processEntities = cmdLine["e"].Split(',');
+            else
+                processEntities = new string[] { };
+
+            if(cmdLine["pmp"] != null)
+            {
+                settings.PrivateMembersPrefix = cmdLine["pmp"];
+            }
+
+            if(cmdLine["fnP"] != null)
+            {
+                settings.FileNamePrefix = cmdLine["fnP"];
+            }
+            if (cmdLine["fnS"] != null)
+            {
+                settings.FileNameSuffix = cmdLine["fnS"];
+            }
+
+            if (cmdLine["cnP"] != null)
+            {
+                settings.ClassNamePrefix = cmdLine["cnP"];
+            }
+            if (cmdLine["cnS"] != null)
+            {
+                settings.ClassNameSuffix = cmdLine["cnS"];
+            }
 
             if(!System.IO.File.Exists(inputFilename))
             {
@@ -117,21 +160,27 @@ namespace OrmCodeGen
                 return;
             }
 
-			if (!System.IO.Directory.Exists(outputFolder))
-			{
-				System.IO.Directory.CreateDirectory(outputFolder);
-			}
+			//if (!System.IO.Directory.Exists(outputFolder))
+			//{
+			//    Console.WriteLine("Error: output folder not found.");
+			//    return;
+			//}
+
+			//if(string.IsNullOrEmpty(System.IO.Path.GetDirectoryName(outputFolder)))
+			//    outputFolder = System.IO.Path.GetPathRoot(outputFolder + System.IO.Path.DirectorySeparatorChar.ToString());
+			//else
+			//    outputFolder = System.IO.Path.GetDirectoryName(outputFolder + System.IO.Path.DirectorySeparatorChar.ToString());
 
 			if (!System.IO.Path.IsPathRooted(outputFolder))
 			{
 				outputFolder = System.IO.Path.Combine(Directory.GetCurrentDirectory(), outputFolder);
 			}
 
-			//if (string.IsNullOrEmpty(System.IO.Path.GetDirectoryName(outputFolder)))
-			//    outputFolder = System.IO.Path.GetPathRoot(outputFolder + System.IO.Path.DirectorySeparatorChar.ToString());
-			//else
-			//    outputFolder = System.IO.Path.GetDirectoryName(outputFolder + System.IO.Path.DirectorySeparatorChar.ToString());
-
+			if (!System.IO.Directory.Exists(outputFolder))
+			{
+				System.IO.Directory.CreateDirectory(outputFolder);
+			}
+			
 			try
             {
                 Console.Write("Parsing file '{0}'...   ", inputFilename);
@@ -147,20 +196,20 @@ namespace OrmCodeGen
                 return;
             }
 
-            if(!Directory.Exists(outputFolder))
-            {
-                try
-                {
-                    Directory.CreateDirectory(outputFolder);
-                }
-                catch (Exception)
-                {
-                }
-            }
+			//if(!Directory.Exists(outputFolder))
+			//{
+			//    try
+			//    {
+			//        Directory.CreateDirectory(outputFolder);
+			//    }
+			//    catch (Exception)
+			//    {
+			//    }
+			//}
 
             OrmCodeDomGenerator gen = new OrmCodeDomGenerator(ormObjectsDef);
 
-            OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
+            
             settings.Behaviour = behaviour;
             settings.Split = split;
             settings.LanguageSpecificHacks = languageHacks;
@@ -171,11 +220,24 @@ namespace OrmCodeGen
             Console.WriteLine("  Behaviour: {0}", settings.Behaviour);
             Console.WriteLine("  Split files: {0}", split);
             Console.WriteLine("  Skip entities: {0}", string.Join(" ", skipEntities));
+            Console.WriteLine("  Process entities: {0}", string.Join(" ", processEntities));
             Console.WriteLine("  IsPartial: {0}", settings.IsPartial);            
 
             foreach (EntityDescription entity in ormObjectsDef.Entities)
             {
                 bool skip = false;
+                if (processEntities.Length != 0)
+                {
+                    skip = true;
+                    foreach (string processEntityId in processEntities)
+                    {
+                        if (processEntityId == entity.Identifier)
+                        {
+                            skip = false;
+                            break;
+                        }
+                    }
+                }
                 foreach (string skipEntityId in skipEntities)
                 {
                     if (skipEntityId == entity.Identifier)
@@ -184,6 +246,7 @@ namespace OrmCodeGen
                         break;
                     }
                 }
+
                 if (skip)
                     continue;
 
@@ -237,7 +300,7 @@ namespace OrmCodeGen
             {
                 sourceFile = filename + "." + provider.FileExtension;
             }
-            
+
             using (IndentedTextWriter tw = new IndentedTextWriter(new StreamWriter(sourceFile, false), "\t"))
             {
                 CodeGeneratorOptions opts = new CodeGeneratorOptions();
@@ -250,7 +313,6 @@ namespace OrmCodeGen
                 provider.GenerateCodeFromCompileUnit(compileUnit, tw, opts);
                 tw.Close();
             }
-
 
         }
 

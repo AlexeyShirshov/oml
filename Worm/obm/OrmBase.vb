@@ -1009,7 +1009,7 @@ l1:
 
         End Sub
 
-        Protected Friend Sub CopyBody(ByVal from As OrmBase, ByVal [to] As OrmBase)
+        Protected Friend Sub CopyBodyInternal(ByVal from As OrmBase, ByVal [to] As OrmBase)
             Dim t As Type = GetType(IOrmEditable(Of ))
             Dim rt As Type = t.MakeGenericType(New Type() {Me.GetType})
             If Not rt.IsAssignableFrom(Me.GetType) Then
