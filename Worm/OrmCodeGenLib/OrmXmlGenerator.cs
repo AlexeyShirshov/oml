@@ -147,6 +147,12 @@ namespace OrmCodeGenLib
                     propertyElement.SetAttribute("typeRef", property.PropertyType.Identifier);
                     if (!string.IsNullOrEmpty(property.Description))
                         propertyElement.SetAttribute("description", property.Description);
+                    if (property.FieldAccessLevel != AccessLevel.Private)
+                        propertyElement.SetAttribute("classfieldAccessLevel", property.FieldAccessLevel.ToString());
+                    if (property.PropertyAccessLevel != AccessLevel.Public)
+                        propertyElement.SetAttribute("propertyAccessLevel", property.PropertyAccessLevel.ToString());
+                    if (!string.IsNullOrEmpty(property.PropertyAlias))
+                        propertyElement.SetAttribute("propertyAlias", property.PropertyAlias);
 
                     propertiesNode.AppendChild(propertyElement);
                 }
@@ -207,9 +213,7 @@ namespace OrmCodeGenLib
 
         private void FillFileDescriptions()
         {
-			if (!string.IsNullOrEmpty(_ormObjectsDef.Namespace))
-				_ormXmlDocument.DocumentElement.SetAttribute("namespace", _ormObjectsDef.Namespace);
-
+            _ormXmlDocument.DocumentElement.SetAttribute("namespace", _ormObjectsDef.Namespace);
             _ormXmlDocument.DocumentElement.SetAttribute("schemaVersion", _ormObjectsDef.SchemaVersion);
 
             StringBuilder commentBuilder = new StringBuilder();

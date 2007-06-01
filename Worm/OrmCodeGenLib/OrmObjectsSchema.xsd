@@ -16,14 +16,7 @@
 				<xs:annotation>
 					<xs:documentation>Список используемых таблиц</xs:documentation>
 				</xs:annotation>
-        <xs:keyref name="entTableRef" refer="TableId">
-          <xs:annotation>
-            <xs:documentation>Ссылка на таблицы</xs:documentation>
-          </xs:annotation>
-          <xs:selector xpath="NS:Table" />
-          <xs:field xpath="@ref" />
-        </xs:keyref>
-      </xs:element>
+			</xs:element>
 			<xs:element name="Properties" type="PropertiesCollection_t" minOccurs="1" maxOccurs="1">
 				<xs:annotation>
 					<xs:documentation>Свойства сущности</xs:documentation>
@@ -56,10 +49,10 @@
 					<xs:selector xpath="NS:Property" />
 					<xs:field xpath="@table" />
 				</xs:keyref>-->
-				<xs:keyref name="propType" refer="TypeId">
+				<!--<xs:keyref name="propType" refer="TypeId">
 					<xs:selector xpath="NS:Property" />
 					<xs:field xpath="@typeRef" />
-				</xs:keyref>
+				</xs:keyref>-->
 			</xs:element>
 		</xs:sequence>
 		<xs:attribute name="id" type="xs:Name" use="required">
@@ -133,6 +126,11 @@
 				<xs:documentation>Имя свойства</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+		<xs:attribute name="propertyAlias" type="Name_t" use="optional">
+			<xs:annotation>
+				<xs:documentation></xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 		<xs:attribute name="attributes" type="PropertyAttributeEnum_t" use="optional">
 			<xs:annotation>
 				<xs:documentation>Атрибуты свойства</xs:documentation>
@@ -158,13 +156,23 @@
 				<xs:documentation>Ссылка на таблицу БД</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+		<xs:attribute name="classfieldAccessLevel" type="AccessLevel_t" use="optional" default="Private">
+			<xs:annotation>
+				<xs:documentation>Уровень доступа к полю класса</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
+		<xs:attribute name="propertyAccessLevel" type="AccessLevel_t" use="optional" default="Public">
+			<xs:annotation>
+				<xs:documentation>Уровень доступа к полю класса</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="PropertiesCollection_t">
 		<xs:annotation>
 			<xs:documentation>Коллекция свойств сущности</xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
-			<xs:element name="Property" type="Property_t" minOccurs="1" maxOccurs="unbounded">
+			<xs:element name="Property" type="Property_t" minOccurs="0" maxOccurs="unbounded">
 			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
@@ -266,10 +274,10 @@
 		</xs:annotation>
 		<xs:choice minOccurs="1" maxOccurs="1">
 			<xs:element name="Entity" type="EntityRef_t">
-				<xs:keyref name="typeEntityRef" refer="EntityId">
+				<!--<xs:keyref name="typeEntityRef" refer="EntityId">
 					<xs:selector xpath="."/>
 					<xs:field xpath="@ref" />
-				</xs:keyref>
+				</xs:keyref>-->
 			</xs:element>
 			<xs:element name="ClrType" type="ClrType_t" />
 			<xs:element name="UserType" type="UserType_t" />
@@ -329,14 +337,25 @@
 					<xs:enumeration value="None" />
 					<xs:enumeration value="SyncInsert" />
 					<xs:enumeration value="SyncUpdate" />
+					<xs:enumeration value="InsertDefault" />
+					<xs:enumeration value="RV" />
+					<xs:enumeration value="RowVersion" />
 					<xs:enumeration value="ReadOnly" />
 					<xs:enumeration value="PK" />
+					<xs:enumeration value="PrimaryKey" />
 					<xs:enumeration value="Private" />
 					<xs:enumeration value="Factory" />
-          <xs:enumeration value="InsertDefault"/>
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:list>
+	</xs:simpleType>
+	<xs:simpleType name="AccessLevel_t">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Family" />
+			<xs:enumeration value="Assembly" />
+			<xs:enumeration value="Private" />
+			<xs:enumeration value="Public" />
+		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="Name_t">
 		<xs:restriction base="xs:string">
