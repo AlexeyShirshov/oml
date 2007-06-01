@@ -89,7 +89,7 @@ Namespace Orm
                     o.RejectChanges()
                 Next
                 For Each o As Pair(Of OrmBase) In copies
-                    o.First.CopyBody(o.Second, o.First)
+                    o.First.CopyBodyInternal(o.Second, o.First)
                     o.First.ObjectState = o.Second._old_state
                 Next
                 For Each o As OrmBase In saved
