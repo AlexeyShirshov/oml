@@ -4,11 +4,6 @@ Imports CoreFramework.Structures
 
 Namespace Orm
 
-    Public Interface IRelation
-        Function GetFirstType() As Pair(Of String, Type)
-        Function GetSecondType() As Pair(Of String, Type)
-    End Interface
-
     <Serializable()> _
     Public Class OrmObjectException
         Inherits Exception
@@ -1106,11 +1101,6 @@ l1:
         ''' Специальное состояние, между Created и None, когда объект ожидается что есть в базе, но еще не загружен
         ''' </summary>
         NotLoaded
-    End Enum
-
-    Public Enum SortType
-        Desc
-        Asc
     End Enum
 
     <Serializable()> _

@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Font Name="Tahoma" Size="8.25" />
+  <Class Name="Worm.Orm.OrmTable" Collapsed="true">
+    <Position X="4.5" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>AAAAAAAAAAAAAgAEAAAAAAAAAAAAAAAAAAAAAQAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Orm.MapField2Column" Collapsed="true">
+    <Position X="6.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>AAAAAAAAAAAAIAAAAAAAAAAQABAAAAAEAAAAAAAAAIA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Orm.M2MRelation" Collapsed="true">
+    <Position X="6.75" Y="1.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>AAAAAAAAgAABAAAAIABAQAAQAAAAAAAAAQAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Orm.EditableList" Collapsed="true">
+    <Position X="6.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>CJYCAAIAIAEAAGSAAASoEUAAABGAwAAAgAAgIAAECIc=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Orm.ParamMgr" Collapsed="true" BaseTypeListCollapsed="true">
+    <Position X="4.5" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>AgAQAAJAAAIAAEAAAAAAAAACAAAYAAAAQAAAAAJAAAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.381" />
+  </Class>
+  <Struct Name="Worm.Orm.AliasMgr" Collapsed="true">
+    <Position X="4.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>AABAAAAAAAAAAAAQAAEAAAAAAAAAAGAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Struct>
+  <Interface Name="Worm.Orm.ICreateParam" Collapsed="true">
+    <Position X="4.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>AgAQAAIAAAIAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="Worm.Orm.SortType">
+    <Position X="0.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAAAAAAQAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="Worm.Orm.FilterOperation">
+    <Position X="0.5" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>ACAAAAAAAAAAAAAAgABAAAAAgAAAAAAAAAAAAASBACA=</HashCode>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="Worm.Orm.ConditionOperator">
+    <Position X="2.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>IAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="Worm.Orm.JoinType">
+    <Position X="2.25" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>Schema\InterfacesAndClasses.vb</FileName>
+      <HashCode>AAAABCAAAAAAAAgAAAQAAAAAAAAAAAAAAAAAAAAAAAI=</HashCode>
+    </TypeIdentifier>
+  </Enum>
+</ClassDiagram>
