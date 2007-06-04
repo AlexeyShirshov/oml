@@ -7,6 +7,11 @@ Imports System.Collections.Generic
 Namespace Orm
 
 #Region " Interfaces "
+    Public Interface IRelation
+        Function GetFirstType() As Pair(Of String, Type)
+        Function GetSecondType() As Pair(Of String, Type)
+    End Interface
+
     Public Interface IOrmObjectSchemaBase
         Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
         'Function MapSort2FieldName(ByVal sort As String) As String
@@ -589,6 +594,11 @@ Namespace Orm
     End Structure
 
 #End Region
+
+    Public Enum SortType
+        Desc
+        Asc
+    End Enum
 
     Public Enum FilterOperation
         Equal

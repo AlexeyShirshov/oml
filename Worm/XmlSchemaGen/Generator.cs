@@ -684,6 +684,7 @@ namespace XmlSchemaGen
 					break;
 				case "money":
 				case "numeric":
+				case "decimal":
 					id = "tDecimal";
 					type = "System.Decimal";
 					break;

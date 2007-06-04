@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Font Name="Tahoma" Size="8.25" />
+  <Class Name="Worm.Orm.OrmCacheException" Collapsed="true">
+    <Position X="3.25" Y="1.75" Width="2" />
+    <TypeIdentifier>
+      <FileName>OrmCache.vb</FileName>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Orm.OrmObjectIndex" Collapsed="true">
+    <Position X="5.75" Y="2.5" Width="3" />
+    <TypeIdentifier>
+      <FileName>OrmCache.vb</FileName>
+      <HashCode>AAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Orm.OrmCacheBase" Collapsed="true">
+    <Position X="0.75" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>OrmCache.vb</FileName>
+      <HashCode>CSQAwQBIACEgBAEBkJEEFEAAYgAAIFKICEYCEQAqLAQ=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Orm.OrmCache" Collapsed="true">
+    <Position X="0.75" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>OrmCache.vb</FileName>
+      <HashCode>AAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAQACCAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Orm.ModifiedObject" Collapsed="true">
+    <Position X="3.25" Y="0.5" Width="1.5" />
+    <TypeIdentifier>
+      <FileName>OrmCache.vb</FileName>
+      <HashCode>AAABAAAAAAAAAAAAACAAAAAAAAAAAAQAAAAAAAAAAAA=</HashCode>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Orm.Collections.IndexedCollection(Of TItemKey, TItem)" Collapsed="true">
+    <Position X="5.75" Y="1" Width="3" />
+    <TypeIdentifier>
+      <FileName>other.vb</FileName>
+      <HashCode>aEJAAEAEIICEhBCRCAAgXCQlIALSIgAACCgggNBUJAA=</HashCode>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+</ClassDiagram>

@@ -76,7 +76,11 @@
     <Import Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
+    <None Include="Diagrams\cache.cd" />
+    <None Include="Diagrams\OrmBase.cd" />
+    <None Include="Diagrams\OrmManager.cd" />
+    <None Include="Diagrams\schema.cd" />
+    <None Include="Diagrams\support.cd" />
     <None Include="My Project\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
