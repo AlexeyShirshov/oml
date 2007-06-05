@@ -16,6 +16,10 @@ Namespace Orm
         Public Sub New()
         End Sub
 
+        Public Sub New(ByVal behavior As Field2DbRelations)
+            Me._behavior = behavior
+        End Sub
+
         Public Sub New(ByVal fieldName As String)
             _fieldName = fieldName
             Me._behavior = Field2DbRelations.None

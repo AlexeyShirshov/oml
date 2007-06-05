@@ -176,8 +176,10 @@ Namespace Orm
                     Throw New InvalidOperationException("Cannot add object during save")
                 End If
 
-                _objs.Add(obj)
-                _saver.Add(obj)
+                If Not _objs.Contains(obj) Then
+                    _objs.Add(obj)
+                    _saver.Add(obj)
+                End If
             End Sub
 
             Public Function CreateNewObject(Of T As {OrmBase, New})() As T
