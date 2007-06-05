@@ -42,17 +42,17 @@
 					<xs:selector xpath="NS:Property" />
 					<xs:field xpath="@fieldName" />
 				</xs:key>
-				<!--<xs:keyref name="propTableRef" refer="TableId">
+				<xs:keyref name="propTableRef" refer="TableId">
 					<xs:annotation>
 						<xs:documentation>Ссылка на таблицы</xs:documentation>
 					</xs:annotation>
 					<xs:selector xpath="NS:Property" />
 					<xs:field xpath="@table" />
-				</xs:keyref>-->
-				<!--<xs:keyref name="propType" refer="TypeId">
+				</xs:keyref>
+				<xs:keyref name="propType" refer="TypeId">
 					<xs:selector xpath="NS:Property" />
 					<xs:field xpath="@typeRef" />
-				</xs:keyref>-->
+				</xs:keyref>
 			</xs:element>
 		</xs:sequence>
 		<xs:attribute name="id" type="xs:Name" use="required">
@@ -80,6 +80,11 @@
 				<xs:documentation>ИД базовой сущности</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+		<xs:attribute name="behaviour" type="EntityBehaviour_t" use="optional" default="Default">
+			<xs:annotation>
+				<xs:documentation>Entity generator behaviour</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="TablesRefCollection_t">
 		<xs:annotation>
@@ -90,10 +95,10 @@
 				<xs:annotation>
 					<xs:documentation>Ссылка на таблицу</xs:documentation>
 				</xs:annotation>
-				<!--<xs:keyref name="TableRefRef" refer="TableId">
+				<xs:keyref name="TableRefRef" refer="TableId">
 					<xs:selector xpath="." />
 					<xs:field xpath="@ref" />
-				</xs:keyref>-->
+				</xs:keyref>
 			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
@@ -204,7 +209,7 @@
 		</xs:annotation>
 		<xs:sequence>
 			<xs:element name="Relation" type="EntityRelation_t" minOccurs="0" maxOccurs="unbounded">
-				<!--<xs:keyref name="RelationTableRef" refer="TableId">
+				<xs:keyref name="RelationTableRef" refer="TableId">
 					<xs:selector xpath="." />
 					<xs:field xpath="@table" />
 				</xs:keyref>
@@ -215,7 +220,7 @@
 				<xs:keyref name="EntityRelationTargetEntity" refer="EntityId">
 					<xs:selector xpath=".//." />
 					<xs:field xpath="@entity" />
-				</xs:keyref>-->
+				</xs:keyref>
 			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
@@ -274,10 +279,10 @@
 		</xs:annotation>
 		<xs:choice minOccurs="1" maxOccurs="1">
 			<xs:element name="Entity" type="EntityRef_t">
-				<!--<xs:keyref name="typeEntityRef" refer="EntityId">
+				<xs:keyref name="typeEntityRef" refer="EntityId">
 					<xs:selector xpath="."/>
 					<xs:field xpath="@ref" />
-				</xs:keyref>-->
+				</xs:keyref>
 			</xs:element>
 			<xs:element name="ClrType" type="ClrType_t" />
 			<xs:element name="UserType" type="UserType_t" />
@@ -311,20 +316,13 @@
 			<xs:documentation>Ссылка на тип</xs:documentation>
 		</xs:annotation>
 	</xs:complexType>
-	<xs:complexType name="Import_t">
-		<xs:annotation>
-			<xs:documentation>Документ для импорта</xs:documentation>
-		</xs:annotation>
-		<xs:attribute name="name" type="xs:string" use="required" />
-		<xs:attribute name="prefix" type="xs:Name" use="required" />
-		<xs:attribute name="uri" type="xs:anyURI" use="required"/>
-	</xs:complexType>
-	<xs:complexType name="ImportsCollection_t">
+	<xs:complexType name="IncludesCollection_t">
 		<xs:annotation>
 			<xs:documentation>Набор ссылок на документы для импорта</xs:documentation>
 		</xs:annotation>
 		<xs:sequence>
-			<xs:element name="Import" minOccurs="0" maxOccurs="unbounded" type="Import_t" />
+			<xs:element name="OrmObjects" minOccurs="0" maxOccurs="unbounded" type="OrmObjects_t">
+			</xs:element>
 		</xs:sequence>
 	</xs:complexType>
 	<xs:simpleType name="PropertyAttributeEnum_t">
@@ -357,41 +355,68 @@
 			<xs:enumeration value="Public" />
 		</xs:restriction>
 	</xs:simpleType>
+	<xs:simpleType name="EntityBehaviour_t">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Default">
+				<xs:annotation>
+					<xs:documentation>Default behaviour when generator creates default classes(entity and schema) with full method set.</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="PartialObjects">
+				<xs:annotation>
+					<xs:documentation>'Partial object' behaviour when generator creates classes(entity and schema) without user depended behaviour for future extension.</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<xs:enumeration value="ForcePartial">
+				<xs:annotation>
+					<xs:documentation>Force 'partial' modifier with default behaviour.</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>
+			<!--<xs:enumeration value="Abstract">
+				<xs:annotation>
+					<xs:documentation>Set abstract modifier.</xs:documentation>
+				</xs:annotation>
+			</xs:enumeration>-->
+		</xs:restriction>
+	</xs:simpleType>
 	<xs:simpleType name="Name_t">
 		<xs:restriction base="xs:string">
 			<xs:pattern value="[A-Za-z0-9_]{1,}" />
 		</xs:restriction>
 	</xs:simpleType>
-	<xs:element name="OrmObjects">
+	<xs:element name="OrmObjects" type="OrmObjects_t">
 		<xs:annotation>
 			<xs:documentation>Схема объектов</xs:documentation>
 		</xs:annotation>
-		<xs:complexType>
-			<xs:all>
-				<xs:element name="Entities" type="EntitiesCollection_t" minOccurs="0" maxOccurs="1" />
-				<xs:element name="Tables" type="TableCollection_t" minOccurs="0" maxOccurs="1" />
-				<xs:element name="EntityRelations" type="EntityRelationsCollection_t" minOccurs="0" maxOccurs="1" />
-				<xs:element name="Types" type="TypesCollection_t" maxOccurs="1" minOccurs="0" />
-				<xs:element name="Imports" type="ImportsCollection_t" maxOccurs="1" minOccurs="0" />
-			</xs:all>
-			<xs:attribute name="namespace" type="xs:Name" use="optional" />
-			<xs:attribute name="schemaVersion" type="xs:string" use="optional" />
-		</xs:complexType>
 		<xs:key name="EntityId">
-			<xs:selector xpath="NS:Entities/NS:Entity" />
+			<xs:selector xpath="NS:Entities/NS:Entity | NS:Includes/*/NS:Entities/NS:Entity" />
 			<xs:field xpath="@id" />
 		</xs:key>
 		<xs:key name="TableId">
-			<xs:selector xpath="NS:Tables/NS:Table" />
+			<xs:selector xpath="NS:Tables/NS:Table | NS:Includes/*/NS:Tables/NS:Table" />
 			<xs:field xpath="@id" />
 		</xs:key>
 		<xs:key name="TableName">
-			<xs:selector xpath="NS:Tables/NS:Table" />
+			<xs:selector xpath="NS:Tables/NS:Table | NS:Includes/*/NS:Tables/NS:Table" />
 			<xs:field xpath="." />
 		</xs:key>
 		<xs:key name="TypeId">
-			<xs:selector xpath="NS:Types/NS:Type" />
+			<xs:selector xpath="NS:Types/NS:Type | NS:Includes/*/NS:Types/NS:Type" />
 			<xs:field xpath="@id" />
 		</xs:key>
 	</xs:element>
+	<xs:complexType name="OrmObjects_t">
+		<xs:annotation>
+			<xs:documentation>Схема объектов</xs:documentation>
+		</xs:annotation>
+		<xs:all>
+			<xs:element name="Entities" type="EntitiesCollection_t" minOccurs="0" maxOccurs="1" />
+			<xs:element name="Tables" type="TableCollection_t" minOccurs="0" maxOccurs="1" />
+			<xs:element name="EntityRelations" type="EntityRelationsCollection_t" minOccurs="0" maxOccurs="1" />
+			<xs:element name="Types" type="TypesCollection_t" maxOccurs="1" minOccurs="0" />
+			<xs:element name="Includes" type="IncludesCollection_t" maxOccurs="1" minOccurs="0" />
+		</xs:all>
+		<xs:attribute name="namespace" type="xs:Name" use="optional" />
+		<xs:attribute name="schemaVersion" type="xs:string" use="optional" />
+	</xs:complexType>
 </xs:schema>

@@ -87,7 +87,7 @@ namespace OrmCodeGenLib.Descriptors
                     return _clrType.FullName;
                 if (IsUserType)
                     return _userType;
-                return _entity.QualifiedName;
+                throw new InvalidOperationException("Usable only for none entity types. Try 'IsEntityType' at first.");
             }
         }
 

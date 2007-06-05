@@ -60,11 +60,6 @@ namespace OrmCodeGenLib.Descriptors
             get { return _description; }
             set { _description = value; }
         }
-                
-        public string PropertyTypeString
-        {
-            get { return _type.TypeName; }
-        }
 
         public TypeDescription PropertyType
         {

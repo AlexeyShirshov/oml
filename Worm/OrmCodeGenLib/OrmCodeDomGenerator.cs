@@ -65,13 +65,13 @@ namespace OrmCodeGenLib
             result.Add(OrmCodeGenNameHelper.GetEntityFileName(entity, settings), entityUnit);
 
             // неймспейс
-            nameSpace = new CodeNamespace(_ormObjectsDefinition.Namespace);
+            nameSpace = new CodeNamespace(entity.Namespace);
             entityUnit.Namespaces.Add(nameSpace);
 
             // импорты
-            nameSpace.Imports.Add(new CodeNamespaceImport("System"));
-            nameSpace.Imports.Add(new CodeNamespaceImport("System.Collections.Generic"));
-            nameSpace.Imports.Add(new CodeNamespaceImport("Worm.Orm"));
+            //nameSpace.Imports.Add(new CodeNamespaceImport("System"));
+            //nameSpace.Imports.Add(new CodeNamespaceImport("System.Collections.Generic"));
+            //nameSpace.Imports.Add(new CodeNamespaceImport("Worm.Orm"));
 
             // класс сущности
             entityClass = new CodeTypeDeclaration(OrmCodeGenNameHelper.GetEntityClassName(entity, settings));
@@ -79,11 +79,11 @@ namespace OrmCodeGenLib
 
             // параметры класса
             entityClass.IsClass = true;
-            entityClass.IsPartial = settings.IsPartial;
+            entityClass.IsPartial = entity.Behaviour == EntityBehaviuor.PartialObjects || entity.Behaviour == EntityBehaviuor.ForcePartial || settings.Split;
             entityClass.Attributes = MemberAttributes.Public;
             entityClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.Public;
 
-            //if(settings.Behaviour == OrmObjectGeneratorBehaviour.BaseObjects)
+            //if (entity.Behaviour == EntityBehaviuor.Abstract)
             //{
             //    entityClass.Attributes |= MemberAttributes.Abstract;
             //    entityClass.TypeAttributes |= TypeAttributes.Abstract;
@@ -103,7 +103,7 @@ namespace OrmCodeGenLib
             }
             
             else
-                entityClass.BaseTypes.Add(new CodeTypeReference(entity.BaseEntity.QualifiedName));
+                entityClass.BaseTypes.Add(new CodeTypeReference(OrmCodeGenNameHelper.GetQualifiedEntityName(entity.BaseEntity, settings, false)));
 
             CodeTypeReference iOrmEditableType = new CodeTypeReference(typeof(IOrmEditable<>));
             iOrmEditableType.TypeArguments.Add(
@@ -117,15 +117,10 @@ namespace OrmCodeGenLib
             entitySchemaDefClass = new CodeTypeDeclaration(OrmCodeGenNameHelper.GetEntitySchemaDefClassName(entity, settings, false));
 
             entitySchemaDefClass.IsClass = true;
-            entitySchemaDefClass.IsPartial = settings.IsPartial;
-            entitySchemaDefClass.Attributes = MemberAttributes.Public;
+            entitySchemaDefClass.IsPartial = entityClass.IsPartial;
+            entitySchemaDefClass.Attributes = entityClass.Attributes;
             entitySchemaDefClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.NestedPublic;
 
-            //if (settings.Behaviour == OrmObjectGeneratorBehaviour.BaseObjects)
-            //{
-            //    entitySchemaDefClass.Attributes |= MemberAttributes.Abstract;
-            //    entitySchemaDefClass.TypeAttributes |= TypeAttributes.Abstract;
-            //}
             #endregion определение схемы
 
             #region custom attribute EntityAttribute
@@ -155,25 +150,25 @@ namespace OrmCodeGenLib
 
             #endregion custom attribute EntityAttribute
 
-            #region // конструкторы
-            //// конструктор по умолчанию
-            //ctr = new CodeConstructor();
-            //ctr.Attributes = MemberAttributes.Public;
-            //entityClass.Members.Add(ctr);
+            #region конструкторы
+                // конструктор по умолчанию
+                ctr = new CodeConstructor();
+                ctr.Attributes = MemberAttributes.Public;
+                entityClass.Members.Add(ctr);
 
-            //// параметризированный конструктор
-            //ctr = new CodeConstructor();
-            //ctr.Attributes = MemberAttributes.Public;
-            //// параметры конструктора
-            //ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(int), "id"));
-            //ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmCacheBase), "cache"));
-            //ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmSchemaBase), "schema"));
-            //// передача параметров базовому конструктору
-            //ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("id"));
-            //ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("cache"));
-            //ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("schema"));
-            //entityClass.Members.Add(ctr);
-            #endregion // конструкторы
+                // параметризированный конструктор
+                ctr = new CodeConstructor();
+                ctr.Attributes = MemberAttributes.Public;
+                // параметры конструктора
+                ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(int), "id"));
+                ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmCacheBase), "cache"));
+                ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmSchemaBase), "schema"));
+                // передача параметров базовому конструктору
+                ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("id"));
+                ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("cache"));
+                ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("schema"));
+                entityClass.Members.Add(ctr);
+            #endregion конструкторы
 
             #region метод OrmBase.CopyBody(CopyBody(...)
             CodeMemberMethod copyMethod;
@@ -274,7 +269,7 @@ namespace OrmCodeGenLib
 
             #region void CreateObject(string fieldName, object value)
             
-            CodeMemberMethod createobjectMethod = CreateCreateObjectMethod(entityClass, settings);
+            CodeMemberMethod createobjectMethod = CreateCreateObjectMethod(entity, entityClass, settings);
 
             #endregion void CreateObject(string fieldName, object value)
 
@@ -523,7 +518,7 @@ namespace OrmCodeGenLib
             #endregion // IList ExternalSort(string sort, SortType sortType, IList objs)         
 
             #region OrmJoin GetJoins(OrmTable left, OrmTable right)
-            if ((settings.Behaviour != OrmObjectGeneratorBehaviour.PartialObjects || entity.Tables.Count == 0) && entity.BaseEntity == null)
+            if ((entity.Behaviour != EntityBehaviuor.PartialObjects || entity.Tables.Count == 1) && entity.BaseEntity == null)
             {
                 method = new CodeMemberMethod();
                 entitySchemaDefClass.Members.Add(method);
@@ -549,7 +544,7 @@ namespace OrmCodeGenLib
                 );
                 if (entity.Tables.Count > 1)
                 {
-                    if (settings.Behaviour == OrmObjectGeneratorBehaviour.Objects)
+                    if (entity.Behaviour != EntityBehaviuor.PartialObjects)
                     {
                         method.Statements.Add(
                             new CodeThrowExceptionStatement(
@@ -575,7 +570,7 @@ namespace OrmCodeGenLib
             #endregion OrmJoin GetJoins(string left, string right)
 
             #region ColumnAttribute[] GetSuppressedColumns()
-            if (settings.Behaviour != OrmObjectGeneratorBehaviour.PartialObjects && entity.BaseEntity == null)
+            if (entity.Behaviour != EntityBehaviuor.PartialObjects && entity.BaseEntity == null)
             {
                 method = new CodeMemberMethod();
                 entitySchemaDefClass.Members.Add(method);
@@ -597,7 +592,7 @@ namespace OrmCodeGenLib
             #endregion ColumnAttribute[] GetSuppressedColumns()
 
             #region IOrmFilter GetFilter(object filter_info)
-            if (settings.Behaviour != OrmObjectGeneratorBehaviour.PartialObjects && entity.BaseEntity == null)
+            if (entity.Behaviour != EntityBehaviuor.PartialObjects && entity.BaseEntity == null)
             {
                 method = new CodeMemberMethod();
                 entitySchemaDefClass.Members.Add(method);
@@ -1192,7 +1187,7 @@ namespace OrmCodeGenLib
                 if((settings.LanguageSpecificHacks & LanguageSpecificHacks.AddOptionsExplicit) == LanguageSpecificHacks.AddOptionsExplicit)
                     compileUnit.UserData.Add("RequireVariableDeclaration", (settings.LanguageSpecificHacks & LanguageSpecificHacks.OptionsExplicitOn) == LanguageSpecificHacks.OptionsExplicitOn);
                 if ((settings.LanguageSpecificHacks & LanguageSpecificHacks.AddOptionsStrict) == LanguageSpecificHacks.AddOptionsStrict)
-                    compileUnit.UserData.Add("AllowLateBound", (settings.LanguageSpecificHacks & LanguageSpecificHacks.OptionsExplicitOn) != LanguageSpecificHacks.OptionsStrictOn);
+                    compileUnit.UserData.Add("AllowLateBound", (settings.LanguageSpecificHacks & LanguageSpecificHacks.OptionsStrictOn) != LanguageSpecificHacks.OptionsStrictOn);
 
                 if (compileUnit.Namespaces.Count > 0)
                 {
@@ -1344,7 +1339,7 @@ namespace OrmCodeGenLib
         private void CreateChangeValueTypeMethod(EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass, OrmCodeDomGeneratorSettings settings)
         {
             CodeMemberMethod method;
-            if (settings.Behaviour != OrmObjectGeneratorBehaviour.PartialObjects && entity.BaseEntity == null)
+            if (entity.Behaviour != EntityBehaviuor.PartialObjects && entity.BaseEntity == null)
             {
                 method = new CodeMemberMethod();
                 entitySchemaDefClass.Members.Add(method);
@@ -1391,13 +1386,13 @@ namespace OrmCodeGenLib
                                         ),
                                     CodeBinaryOperatorType.BitwiseAnd,
                                     new CodeFieldReferenceExpression(
-                                        new CodeTypeReferenceExpression("Field2DbRelations"),
+                                        new CodeTypeReferenceExpression(typeof(Field2DbRelations)),
                                         "InsertDefault"
                                         )
                                     ),
                                 CodeBinaryOperatorType.ValueEquality,
                                 new CodeFieldReferenceExpression(
-                                    new CodeTypeReferenceExpression("Field2DbRelations"),
+                                    new CodeTypeReferenceExpression(typeof(Field2DbRelations)),
                                     "InsertDefault"
                                     )
                                 ),
@@ -1471,7 +1466,7 @@ namespace OrmCodeGenLib
         private void CreateUpdatedProperty(CodeTypeDeclaration entityClass, PropertyDescription propertyDesc, OrmCodeDomGeneratorSettings settings)
         {
             CodeTypeReference propertyType;
-            propertyType = new CodeTypeReference(propertyDesc.PropertyTypeString);
+            propertyType = new CodeTypeReference(propertyDesc.PropertyType.IsEntityType ? OrmCodeGenNameHelper.GetQualifiedEntityName(propertyDesc.PropertyType.Entity, settings, false) : propertyDesc.PropertyType.TypeName);
 
             CodeMemberProperty property;
             property = new CodeMemberProperty();
@@ -1491,7 +1486,7 @@ namespace OrmCodeGenLib
         {
             CodeMemberField field;
             CodeTypeReference fieldType;
-            fieldType = new CodeTypeReference(propertyDesc.PropertyTypeString);
+            fieldType = new CodeTypeReference(propertyDesc.PropertyType.IsEntityType ? OrmCodeGenNameHelper.GetQualifiedEntityName(propertyDesc.PropertyType.Entity, settings, false) : propertyDesc.PropertyType.TypeName);
             string fieldName;
             fieldName = OrmCodeGenNameHelper.GetPrivateMemberName(propertyDesc.Name, settings);
 
@@ -1672,11 +1667,11 @@ namespace OrmCodeGenLib
             }
         }
 
-        private CodeMemberMethod CreateCreateObjectMethod(CodeTypeDeclaration entityClass, OrmCodeDomGeneratorSettings settings)
+        private CodeMemberMethod CreateCreateObjectMethod(EntityDescription entity, CodeTypeDeclaration entityClass, OrmCodeDomGeneratorSettings settings)
         {
             CodeMemberMethod createobjectMethod;
             createobjectMethod = new CodeMemberMethod();
-            if (settings.Behaviour != OrmObjectGeneratorBehaviour.PartialObjects)
+            if (entity.Behaviour != EntityBehaviuor.PartialObjects)
                 entityClass.Members.Add(createobjectMethod);
             createobjectMethod.Name = "CreateObject";
             // тип возвращаемого значения
@@ -1894,7 +1889,7 @@ namespace OrmCodeGenLib
                 CodeCompileUnit entitySchemaDefUnit;
                 entitySchemaDefUnit = new CodeCompileUnit();
 
-                nameSpace = new CodeNamespace(_ormObjectsDefinition.Namespace);
+                nameSpace = new CodeNamespace(entity.Namespace);
                 entitySchemaDefUnit.Namespaces.Add(nameSpace);
 
                 nameSpace.Imports.Add(new CodeNamespaceImport("System"));

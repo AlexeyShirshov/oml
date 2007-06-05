@@ -10,11 +10,12 @@ namespace OrmCodeGenLib.Descriptors
         private readonly string _id;
         private readonly string _name;
         private readonly string _description;
-        private readonly string _namespace;
+        private string _namespace;
         private readonly List<TableDescription> _tables;
         private readonly List<PropertyDescription> _properties;
         private readonly OrmObjectsDef _ormObjectsDef;
         private EntityDescription _baseEntity;
+        private EntityBehaviuor _behaviour;
         #endregion Private Fields
 
         public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef)
@@ -23,6 +24,12 @@ namespace OrmCodeGenLib.Descriptors
         }
 
         public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef, EntityDescription baseEntity)
+            : this(id, name ,nameSpace, description, ormObjectsDef, baseEntity, EntityBehaviuor.Default)
+        {
+            
+        }
+
+        public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef, EntityDescription baseEntity, EntityBehaviuor behaviour)
         {
             _id = id;
             _name = name;
@@ -32,6 +39,7 @@ namespace OrmCodeGenLib.Descriptors
             _ormObjectsDef = ormObjectsDef;
             _namespace = nameSpace;
             _baseEntity = baseEntity;
+            _behaviour = behaviour;
         }
 
         public string Identifier
@@ -89,16 +97,17 @@ namespace OrmCodeGenLib.Descriptors
         public TableDescription GetTable(string tableId, bool throwNotFoundException)
         {
             TableDescription table;
-            System.Text.RegularExpressions.Match nameMatch = OrmCodeGenLib.OrmObjectsDef.GetNsNameMatch(tableId);
-            string localTableId = tableId;
-            if(nameMatch.Success && nameMatch.Groups["name"].Success)
-            {
-                localTableId = nameMatch.Groups["name"].Value;
-            }
+            //System.Text.RegularExpressions.Match nameMatch = OrmCodeGenLib.OrmObjectsDef.GetNsNameMatch(tableId);
+            //string localTableId = tableId;
+            //if(nameMatch.Success && nameMatch.Groups["name"].Success)
+            //{
+            //    localTableId = nameMatch.Groups["name"].Value;
+            //}
             table = this.Tables.Find(delegate(TableDescription match)
             {
-                return match.Identifier == localTableId;
+                return match.Identifier == tableId;
             });
+            
             if (table == null && throwNotFoundException)
                 throw new KeyNotFoundException(
                     string.Format("Table with id '{0}' in entity '{1}' not found.", tableId, this.Identifier));
@@ -112,23 +121,10 @@ namespace OrmCodeGenLib.Descriptors
                 );
         }
 
-        public string QualifiedName
-        {
-            get
-            {
-                string result = string.Empty;
-                if (!string.IsNullOrEmpty(OrmObjectsDef.Namespace))
-                    result += OrmObjectsDef.Namespace;
-                if (!string.IsNullOrEmpty(this.Namespace))
-                    result += (string.IsNullOrEmpty(result) ? string.Empty : ".") + this.Namespace;
-                result += (string.IsNullOrEmpty(result) ? string.Empty : ".") + Name;
-                return result;
-            }
-        }
-
         public string Namespace
         {
-            get { return _namespace; }
+            get { return string.IsNullOrEmpty(_namespace) ? _ormObjectsDef.Namespace : _namespace; }
+            set { _namespace = value; }
         }
 
         public EntityDescription BaseEntity
@@ -137,16 +133,16 @@ namespace OrmCodeGenLib.Descriptors
             set { _baseEntity = value; }
         }
 
-        public string QualifiedIdentifier
-        {
-            get
-            {
-                return
-                    (OrmObjectsDef != null && !string.IsNullOrEmpty(OrmObjectsDef.NS))
-                        ? OrmObjectsDef.NS + ":" + Identifier
-                        : Identifier;
-            }
-        }
+        //public string QualifiedIdentifier
+        //{
+        //    get
+        //    {
+        //        return
+        //            (OrmObjectsDef != null && !string.IsNullOrEmpty(OrmObjectsDef.NS))
+        //                ? OrmObjectsDef.NS + ":" + Identifier
+        //                : Identifier;
+        //    }
+        //}
 
         private static EntityDescription MergeEntities(EntityDescription oldOne, EntityDescription newOne)
         {
@@ -217,6 +213,12 @@ namespace OrmCodeGenLib.Descriptors
                     baseEntity = _baseEntity.CompleteEntity;
                 return MergeEntities(baseEntity, this);
             }
+        }
+
+        public EntityBehaviuor Behaviour
+        {
+            get { return _behaviour; }
+            set { _behaviour = value; }
         }
     }
 }

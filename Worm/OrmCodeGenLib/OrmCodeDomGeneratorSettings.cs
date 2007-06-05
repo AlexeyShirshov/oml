@@ -8,19 +8,19 @@ namespace OrmCodeGenLib
     {
         private bool _split = false;
         private string _entitySchemaDefClassNameSuffix = "SchemaDef";
-        private string _privateMembersPrefix = "m_";
+        private string _privateMembersPrefix = "_";
         private string _fileNamePrefix = string.Empty;
         private string _fileNameSuffix = string.Empty;
         private string _classNamePrefix = string.Empty;
         private string _classNameSuffix = string.Empty;
-        private bool _partial = false;
-        private OrmObjectGeneratorBehaviour _behaviour = OrmObjectGeneratorBehaviour.Objects;
+        //private bool _partial = false;
+        //private OrmObjectGeneratorBehaviour _behaviour = OrmObjectGeneratorBehaviour.Objects;
         private LanguageSpecificHacks _languageSpecificHacks; 
 
-        public bool IsPartial
-        {
-            get { return _behaviour == OrmObjectGeneratorBehaviour.PartialObjects || _split || Partial; }
-        }
+        //public bool IsPartial
+        //{
+        //    get { return _behaviour == OrmObjectGeneratorBehaviour.PartialObjects || _split || Partial; }
+        //}
 
         public bool Split
         {
@@ -34,11 +34,11 @@ namespace OrmCodeGenLib
             set { _entitySchemaDefClassNameSuffix = value; }
         }
 
-        public OrmObjectGeneratorBehaviour Behaviour
-        {
-            get { return _behaviour; }
-            set { _behaviour = value; }
-        }
+        //public OrmObjectGeneratorBehaviour Behaviour
+        //{
+        //    get { return _behaviour; }
+        //    set { _behaviour = value; }
+        //}
 
         public LanguageSpecificHacks LanguageSpecificHacks
         {
@@ -76,18 +76,18 @@ namespace OrmCodeGenLib
             set { _classNameSuffix = value; }
         }
 
-        public bool Partial
-        {
-            get { return _partial; }
-            set { _partial = value; }
-        }
+        //public bool Partial
+        //{
+        //    get { return _partial; }
+        //    set { _partial = value; }
+        //}
     }
 
-    public enum OrmObjectGeneratorBehaviour
-    {
-        Objects,
-        PartialObjects
-    }
+    //public enum OrmObjectGeneratorBehaviour
+    //{
+    //    Objects,
+    //    PartialObjects
+    //}
     [Flags]
     public enum LanguageSpecificHacks
     {
