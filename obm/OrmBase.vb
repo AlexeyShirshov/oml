@@ -998,22 +998,23 @@ l1:
 
         End Sub
 
-        'Protected Friend MustOverride Sub CopyBody(ByVal [from] As OrmBase, ByVal [to] As OrmBase)
+        Protected Friend MustOverride Sub CopyBodyInternal(ByVal [from] As OrmBase, ByVal [to] As OrmBase)
 
         Protected Friend Overridable Sub RemoveFromCache(ByVal cache As OrmCacheBase)
 
         End Sub
 
-        Protected Friend Sub CopyBodyInternal(ByVal from As OrmBase, ByVal [to] As OrmBase)
-            Dim t As Type = GetType(IOrmEditable(Of ))
-            Dim rt As Type = t.MakeGenericType(New Type() {Me.GetType})
-            If Not rt.IsAssignableFrom(Me.GetType) Then
-                Throw New OrmObjectException(String.Format("Object {0} must implement IOrmEditable to perform this operation", ObjName))
-            End If
-            rt.InvokeMember("CopyBody", _
-                Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance Or Reflection.BindingFlags.InvokeMethod, Nothing, _
-                Me, New Object() {from, [to]})
-        End Sub
+        'Protected Friend Sub CopyBodyInternal(ByVal from As OrmBase, ByVal [to] As OrmBase)
+        '    Dim t As Type = GetType(IOrmEditable(Of ))
+        '    Dim rt As Type = t.MakeGenericType(New Type() {Me.GetType})
+        '    If Not rt.IsAssignableFrom(Me.GetType) Then
+        '        rt = t.MakeGenericType(New TypeCode() {GetType(T)})
+        '        Throw New OrmObjectException(String.Format("Object {0} must implement IOrmEditable to perform this operation", ObjName))
+        '    End If
+        '    rt.InvokeMember("CopyBody", _
+        '        Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance Or Reflection.BindingFlags.InvokeMethod, Nothing, _
+        '        Me, New Object() {from, [to]})
+        'End Sub
 
         Protected Friend Function AddAccept(ByVal acs As AcceptState2) As Boolean
             Using SyncHelper(False)
@@ -1194,5 +1195,13 @@ l1:
             clone.ObjectState = ObjectState.Clone
             Return clone
         End Function
+
+        Protected Friend Overrides Sub CopyBodyInternal(ByVal from As OrmBase, ByVal [to] As OrmBase)
+            Dim editable As IOrmEditable(Of T) = TryCast(Me, IOrmEditable(Of T))
+            If editable Is Nothing Then
+                Throw New OrmObjectException(String.Format("Object {0} must implement IOrmEditable to perform this operation", ObjName))
+            End If
+            editable.CopyBody(CType(from, T), CType([to], T))
+        End Sub
     End Class
 End Namespace
