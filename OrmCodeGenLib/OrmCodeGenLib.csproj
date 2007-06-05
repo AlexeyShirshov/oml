@@ -37,6 +37,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\CoreFramework.dll</HintPath>
     </Reference>
+    <Reference Include="Mvp.Xml, Version=2.2.0.0, Culture=neutral, PublicKeyToken=6ead800d778c9b9f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Mvp.Xml.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
@@ -61,6 +65,7 @@
     <Compile Include="Descriptors\TableDescription.cs" />
     <Compile Include="OrmObjectsDef.cs" />
     <Compile Include="OrmXmlGenerator.cs" />
+    <Compile Include="OrmXmlGeneratorSettings.cs" />
     <Compile Include="OrmXmlParser.cs" />
     <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

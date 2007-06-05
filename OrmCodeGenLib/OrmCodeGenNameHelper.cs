@@ -30,11 +30,9 @@ namespace OrmCodeGenLib
         public static string GetQualifiedEntityName(EntityDescription entity, OrmCodeDomGeneratorSettings settings, bool final)
         {
             string result = string.Empty;
-            if (!string.IsNullOrEmpty(entity.OrmObjectsDef.Namespace))
-                result += entity.OrmObjectsDef.Namespace;
             if (!string.IsNullOrEmpty(entity.Namespace))
-                result += (string.IsNullOrEmpty(result) ? string.Empty : ".") + entity.Name;
-            result += (string.IsNullOrEmpty(result) ? string.Empty : ".") + GetEntityClassName(entity, settings);
+                result += entity.Namespace;
+            result += ((string.IsNullOrEmpty(result) ? string.Empty : ".") + GetEntityClassName(entity, settings));
             return result;
         }
 

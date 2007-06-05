@@ -4,6 +4,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Schema;
 using OrmCodeGenLib.Descriptors;
+using System.IO;
 
 namespace OrmCodeGenLib
 {
@@ -19,7 +20,14 @@ namespace OrmCodeGenLib
         private XmlNamespaceManager _nsMgr;
         private XmlNameTable _nametable;
 
-        internal protected OrmXmlParser(XmlReader reader)
+        private XmlResolver _xmlResolver;
+
+        internal protected OrmXmlParser(XmlReader reader) : this(reader, null)
+        {
+            
+        }
+
+        internal protected OrmXmlParser(XmlReader reader, XmlResolver xmlResolver)
         {
             _validationResult = new List<string>();
             _reader = reader;
@@ -27,30 +35,70 @@ namespace OrmCodeGenLib
             _nametable = new NameTable();
             _nsMgr = new XmlNamespaceManager(_nametable);
             _nsMgr.AddNamespace(OrmObjectsDef.NS_PREFIX, OrmObjectsDef.NS_URI);
+            _xmlResolver = xmlResolver;
         }
 
-        internal protected static OrmObjectsDef Parse(XmlReader reader)
+        internal protected OrmXmlParser(XmlDocument document)
+        {
+            _ormObjectsDef = new OrmObjectsDef();
+            _ormXmlDocument = document;
+            _nametable = document.NameTable;
+            _nsMgr = new XmlNamespaceManager(_nametable);
+            _nsMgr.AddNamespace(OrmObjectsDef.NS_PREFIX, OrmObjectsDef.NS_URI);            
+        }
+
+        internal protected static OrmObjectsDef Parse(XmlReader reader, XmlResolver xmlResolver)
         {
             OrmXmlParser parser;
-            parser = new OrmXmlParser(reader);
+            parser = new OrmXmlParser(reader, xmlResolver);
 
             parser.Read();
 
-            parser.FillFileDescriptions();
-
-            parser.FillImports();
-
-            parser.FillTables();
-
-            parser.FindEntities();
-
-            parser.FillTypes();
-
-            parser.FillEntities();
-
-            parser.FillRelations();
+            parser.FillObjectsDef();
 
             return parser._ormObjectsDef;
+        }
+
+        internal protected static OrmObjectsDef LoadXmlDocument(XmlDocument document, bool skipValidation)
+        {
+            OrmXmlParser parser;
+            if (skipValidation)
+                parser = new OrmXmlParser(document);
+            else
+            {
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    using (XmlWriter xwr = XmlWriter.Create(ms))
+                    {
+                        document.WriteTo(xwr);
+                    }
+                    ms.Position = 0;
+                    using (XmlReader xrd = XmlReader.Create(ms))
+                    {
+                        parser = new OrmXmlParser(xrd, null);
+                        parser.Read();
+                    }
+                }
+            }
+            parser.FillObjectsDef();
+            return parser._ormObjectsDef;                
+        }
+
+        private void FillObjectsDef()
+        {
+            FillFileDescriptions();
+
+            FillImports();
+
+            FillTables();
+
+            FindEntities();
+
+            FillTypes();
+
+            FillEntities();
+
+            FillRelations();
         }
 
         private void FillImports()
@@ -58,25 +106,18 @@ namespace OrmCodeGenLib
             XmlNodeList importNodes;
             importNodes =
                 _ormXmlDocument.DocumentElement.SelectNodes(
-                    string.Format("{0}:Imports/{0}:Import", OrmObjectsDef.NS_PREFIX), _nsMgr);
+                    string.Format("{0}:Includes/{0}:OrmObjects", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
             foreach (XmlNode importNode in importNodes)
             {
-                ImportDescription import;
-                string name, prefix, uri;
-                name = (importNode as XmlElement).GetAttribute("name");
-                prefix = (importNode as XmlElement).GetAttribute("prefix");
-                uri = (importNode as XmlElement).GetAttribute("uri");
-                OrmObjectsDef content = null;
-                using (XmlReader rdr = XmlReader.Create(uri))
-                {
-                    content = OrmXmlParser.Parse(rdr);
-                }
-                content.NS = prefix;
-                if (content == null)
-                    throw new OrmXmlParserException(string.Format("Import file '{0}' not found.", uri));
-                import = new ImportDescription(name, content, uri);
-                OrmObjectsDef.Imports.Add(prefix, import);
+                OrmObjectsDef import;
+
+                XmlDocument tempDoc = new XmlDocument();
+                XmlNode importedNode = tempDoc.ImportNode(importNode, true);
+                tempDoc.AppendChild(importedNode);
+                import = LoadXmlDocument(tempDoc, true);
+
+                OrmObjectsDef.Includes.Add(import);
             }
         }
 
@@ -140,6 +181,7 @@ namespace OrmCodeGenLib
         {
             _ormObjectsDef.Namespace = _ormXmlDocument.DocumentElement.GetAttribute("namespace");
             _ormObjectsDef.SchemaVersion = _ormXmlDocument.DocumentElement.GetAttribute("schemaVersion");
+            _ormObjectsDef.FileName = System.IO.Path.GetFileName(_ormXmlDocument.BaseURI);
         }
 
         internal protected void FindEntities()
@@ -153,14 +195,21 @@ namespace OrmCodeGenLib
 
             foreach (XmlNode entityNode in entitiesList)
             {
-                string id, name, description, nameSpace, baseEntityId;
+                string id, name, description, nameSpace, behaviourName;
+                EntityBehaviuor behaviour = EntityBehaviuor.Default;
 
                 id = (entityNode as XmlElement).GetAttribute("id");
                 name = (entityNode as XmlElement).GetAttribute("name");
                 description = (entityNode as XmlElement).GetAttribute("description");
                 nameSpace = (entityNode as XmlElement).GetAttribute("namespace");
+                behaviourName = (entityNode as XmlElement).GetAttribute("behaviour");
+
+                if (!string.IsNullOrEmpty(behaviourName))
+                    behaviour = (EntityBehaviuor) Enum.Parse(typeof (EntityBehaviuor), behaviourName);
+
 
                 entity = new EntityDescription(id, name, nameSpace, description, _ormObjectsDef);
+                entity.Behaviour = behaviour;
 
                 _ormObjectsDef.Entities.Add(entity);
 
@@ -342,18 +391,33 @@ namespace OrmCodeGenLib
             xmlReaderSettings.IgnoreComments = true;
             xmlReaderSettings.IgnoreWhitespace = true;
             xmlReaderSettings.Schemas = schemaSet;
-            xmlReaderSettings.ValidationFlags = XmlSchemaValidationFlags.ReportValidationWarnings;
+            xmlReaderSettings.ValidationFlags = XmlSchemaValidationFlags.ReportValidationWarnings | XmlSchemaValidationFlags.AllowXmlAttributes | XmlSchemaValidationFlags.ProcessIdentityConstraints;
             xmlReaderSettings.ValidationType = ValidationType.Schema;
-            xmlReaderSettings.ValidationEventHandler += new ValidationEventHandler(xmlReaderSettings_ValidationEventHandler);
+            xmlReaderSettings.ValidationEventHandler +=
+                new ValidationEventHandler(xmlReaderSettings_ValidationEventHandler);
 
             XmlDocument xml;
             xml = new XmlDocument(_nametable);
 
             _validationResult.Clear();
 
-            using (XmlReader rdr = XmlReader.Create(_reader, xmlReaderSettings))
+            XmlDocument tDoc = new XmlDocument();
+            using (Mvp.Xml.XInclude.XIncludingReader rdr = new Mvp.Xml.XInclude.XIncludingReader(_reader))
             {
-                xml.Load(rdr);
+                rdr.XmlResolver = _xmlResolver;
+                tDoc.Load(rdr);
+            }
+            using (MemoryStream ms = new MemoryStream())
+            {
+                using (XmlWriter wr = XmlWriter.Create(ms))
+                {
+                    tDoc.WriteTo(wr);
+                }
+                ms.Position = 0;
+                using (XmlReader rdr = XmlReader.Create(ms, xmlReaderSettings))
+                {
+                    xml.Load(rdr);
+                }
             }
 
             if (_validationResult.Count == 0)
@@ -383,5 +447,6 @@ namespace OrmCodeGenLib
         {
             get { return _ormObjectsDef; }
         }
+
     }
 }

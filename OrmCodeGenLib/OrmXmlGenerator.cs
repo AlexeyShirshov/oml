@@ -9,69 +9,120 @@ namespace OrmCodeGenLib
 {
     internal class OrmXmlGenerator
     {
-        private XmlDocument _ormXmlDocument;
+        private OrmXmlDocumentSet _ormXmlDocumentSet;
+        private XmlDocument _ormXmlDocumentMain;
         private OrmObjectsDef _ormObjectsDef;
 
         private XmlNamespaceManager _nsMgr;
         private XmlNameTable _nametable;
 
-        internal OrmXmlGenerator(OrmObjectsDef ormObjectsDef)
+        private OrmXmlGeneratorSettings _settings;
+
+        internal OrmXmlGenerator(OrmObjectsDef ormObjectsDef, OrmXmlGeneratorSettings settings)
         {
             _ormObjectsDef = ormObjectsDef;
             _nametable = new NameTable();
             _nsMgr = new XmlNamespaceManager(_nametable);
             _nsMgr.AddNamespace(OrmObjectsDef.NS_PREFIX, OrmObjectsDef.NS_URI);
-
-            
+            _ormXmlDocumentSet = new OrmXmlDocumentSet();
+            _settings = settings;
         }
 
-        internal static System.Xml.XmlDocument Generate(OrmObjectsDef schema)
+        internal static OrmXmlDocumentSet Generate(OrmObjectsDef schema, OrmXmlGeneratorSettings settings)
         {
             OrmXmlGenerator generator;
-            generator = new OrmXmlGenerator(schema);
+            generator = new OrmXmlGenerator(schema, settings);
 
-            generator.CreateXmlDocument();
+            generator.GenerateXmlDocumentInternal();
 
-            generator.FillImports();
+            return generator._ormXmlDocumentSet;
+        }
 
-            generator.FillFileDescriptions();
+        private void GenerateXmlDocumentInternal()
+        {
+            CreateXmlDocument();
 
-            generator.FillTables();
+            FillFileDescriptions();
 
-            generator.FillTypes();
+            FillImports();           
 
-            generator.FillEntities();
+            FillTables();
 
-            generator.FillRelations();
+            FillTypes();
 
-            return generator._ormXmlDocument;
+            FillEntities();
+
+            FillRelations();
         }
 
         private void FillImports()
         {
-            if(_ormObjectsDef.Imports.Count == 0)
+            if(_ormObjectsDef.Includes.Count == 0)
                 return;
-            XmlNode importsNode = CreateElement("Imports");
-            _ormXmlDocument.DocumentElement.AppendChild(importsNode);
-            foreach (KeyValuePair<string, ImportDescription> pair in _ormObjectsDef.Imports)
+            XmlNode importsNode = CreateElement("Includes");
+            _ormXmlDocumentMain.DocumentElement.AppendChild(importsNode);
+            foreach (OrmObjectsDef objectsDef in _ormObjectsDef.Includes)
             {
-                XmlElement importElement = CreateElement("Import");
-                importElement.SetAttribute("name", pair.Value.Name);
-                importElement.SetAttribute("prefix", pair.Key);
-                importElement.SetAttribute("uri", pair.Value.FileUri == null ? string.Empty : pair.Value.FileUri );
-                importsNode.AppendChild(importElement);
+                OrmXmlGeneratorSettings settings = (OrmXmlGeneratorSettings)_settings.Clone();
+                    //settings.DefaultMainFileName = _settings.DefaultIncludeFileName + _ormObjectsDef.Includes.IndexOf(objectsDef);
+                    OrmXmlDocumentSet set;
+                    set = Generate(objectsDef, _settings);
+                    _ormXmlDocumentSet.AddRange(set);
+                    foreach (OrmXmlDocument ormXmlDocument in set)
+                    {
+                        if ((_settings.IncludeBehaviour & IncludeGenerationBehaviour.Inline) ==
+                            IncludeGenerationBehaviour.Inline)
+                        {
+                            XmlNode importedSchemaNode =
+                                _ormXmlDocumentMain.ImportNode(ormXmlDocument.Document.DocumentElement, true);
+                            importsNode.AppendChild(importedSchemaNode);
+                        }
+                        else
+                        {
+                            XmlElement includeElement =
+                                _ormXmlDocumentMain.CreateElement("xi", "include", "http://www.w3.org/2001/XInclude");
+                            includeElement.SetAttribute("parse", "xml");
+
+                            string fileName = GetIncludeFileName(_ormObjectsDef, objectsDef, settings);
+
+                            includeElement.SetAttribute("href", fileName);
+                            importsNode.AppendChild(includeElement);
+                        }
+
+                    }
             }
         }
 
         private void CreateXmlDocument()
         {
-            _ormXmlDocument = new XmlDocument(_nametable);
-            XmlDeclaration declaration = _ormXmlDocument.CreateXmlDeclaration("1.0", Encoding.UTF8.WebName, null);
-            _ormXmlDocument.AppendChild(declaration);
+            _ormXmlDocumentMain = new XmlDocument(_nametable);
+            XmlDeclaration declaration = _ormXmlDocumentMain.CreateXmlDeclaration("1.0", Encoding.UTF8.WebName, null);
+            _ormXmlDocumentMain.AppendChild(declaration);
             XmlElement root = CreateElement("OrmObjects");
-            _ormXmlDocument.AppendChild(root);
-            
+            _ormXmlDocumentMain.AppendChild(root);
+            string filename = GetFilename(_ormObjectsDef, _settings);
+            OrmXmlDocument doc = new OrmXmlDocument(filename, _ormXmlDocumentMain);
+            _ormXmlDocumentSet.Add(doc);
           
+        }
+
+        private string GetFilename(OrmObjectsDef objectsDef, OrmXmlGeneratorSettings settings)
+        {
+            return string.IsNullOrEmpty(objectsDef.FileName)
+                       ? settings.DefaultMainFileName
+                       : objectsDef.FileName;
+        }
+
+        private string GetIncludeFileName(OrmObjectsDef objectsDef, OrmObjectsDef incldeObjectsDef, OrmXmlGeneratorSettings settings)
+        {
+            string filename =
+                settings.IncludeFileNamePattern.Replace("%MAIN_FILENAME%", GetFilename(objectsDef, settings)).Replace(
+                    "%INCLUDE_NAME%", GetFilename(incldeObjectsDef, settings)) + objectsDef.Includes.IndexOf(incldeObjectsDef);
+            return
+                (((settings.IncludeBehaviour & IncludeGenerationBehaviour.PlaceInFolder) ==
+                  IncludeGenerationBehaviour.PlaceInFolder)
+                     ? settings.IncludeFolderName + System.IO.Path.DirectorySeparatorChar
+                     : string.Empty) + filename;
         }
 
         private void FillRelations()
@@ -79,7 +130,7 @@ namespace OrmCodeGenLib
             if (_ormObjectsDef.Relations.Count == 0)
                 return;
             XmlNode relationsNode = CreateElement("EntityRelations");
-            _ormXmlDocument.DocumentElement.AppendChild(relationsNode);
+            _ormXmlDocumentMain.DocumentElement.AppendChild(relationsNode);
             foreach (RelationDescription relation in _ormObjectsDef.Relations)
             {
                 XmlElement relationElement = CreateElement("Relation");
@@ -109,7 +160,7 @@ namespace OrmCodeGenLib
         private void FillEntities()
         {
             XmlNode entitiesNode = CreateElement("Entities");
-            _ormXmlDocument.DocumentElement.AppendChild(entitiesNode);
+            _ormXmlDocumentMain.DocumentElement.AppendChild(entitiesNode);
 
             foreach (EntityDescription entity in _ormObjectsDef.Entities)
             {
@@ -119,8 +170,9 @@ namespace OrmCodeGenLib
                 entityElement.SetAttribute("name", entity.Name);
                 if (!string.IsNullOrEmpty(entity.Description))
                     entityElement.SetAttribute("description", entity.Description);
-                if (!string.IsNullOrEmpty(entity.Namespace))
+                if (entity.Namespace != entity.OrmObjectsDef.Namespace)
                     entityElement.SetAttribute("namespace", entity.Namespace);
+                entityElement.SetAttribute("behaviour", entity.Behaviour.ToString());
 
                 XmlNode tablesNode = CreateElement("Tables");
                 foreach (TableDescription table in entity.Tables)
@@ -165,7 +217,7 @@ namespace OrmCodeGenLib
         private void FillTypes()
         {
             XmlNode typesNode = CreateElement("Types");
-            _ormXmlDocument.DocumentElement.AppendChild(typesNode);
+            _ormXmlDocumentMain.DocumentElement.AppendChild(typesNode);
             foreach (TypeDescription type in _ormObjectsDef.Types)
             {
                 XmlElement typeElement = CreateElement("Type");
@@ -196,7 +248,7 @@ namespace OrmCodeGenLib
         private void FillTables()
         {
             XmlNode tablesNode = CreateElement("Tables");
-            _ormXmlDocument.DocumentElement.AppendChild(tablesNode);
+            _ormXmlDocumentMain.DocumentElement.AppendChild(tablesNode);
             foreach (TableDescription table in _ormObjectsDef.Tables)
             {
                 XmlElement tableElement = CreateElement("Table");
@@ -208,13 +260,13 @@ namespace OrmCodeGenLib
 
         private XmlElement CreateElement(string name)
         {
-            return _ormXmlDocument.CreateElement(OrmObjectsDef.NS_PREFIX, name, OrmObjectsDef.NS_URI);
+            return _ormXmlDocumentMain.CreateElement(OrmObjectsDef.NS_PREFIX, name, OrmObjectsDef.NS_URI);
         }
 
         private void FillFileDescriptions()
         {
-            _ormXmlDocument.DocumentElement.SetAttribute("namespace", _ormObjectsDef.Namespace);
-            _ormXmlDocument.DocumentElement.SetAttribute("schemaVersion", _ormObjectsDef.SchemaVersion);
+            _ormXmlDocumentMain.DocumentElement.SetAttribute("namespace", _ormObjectsDef.Namespace);
+            _ormXmlDocumentMain.DocumentElement.SetAttribute("schemaVersion", _ormObjectsDef.SchemaVersion);
 
             StringBuilder commentBuilder = new StringBuilder();
             foreach (string comment in _ormObjectsDef.SystemComments)
@@ -232,8 +284,40 @@ namespace OrmCodeGenLib
             }
 
             XmlComment commentsElement =
-                _ormXmlDocument.CreateComment(commentBuilder.ToString());
-            _ormXmlDocument.InsertBefore(commentsElement, _ormXmlDocument.DocumentElement);
+                _ormXmlDocumentMain.CreateComment(commentBuilder.ToString());
+            _ormXmlDocumentMain.InsertBefore(commentsElement, _ormXmlDocumentMain.DocumentElement);
         }
+    }
+
+    public class OrmXmlDocument
+    {
+        private XmlDocument m_document;
+        private string m_fileName;
+
+        public OrmXmlDocument(string filename, XmlDocument document)
+        {
+            if (string.IsNullOrEmpty(filename))
+                throw new ArgumentNullException("filename");
+            if (document == null)
+                throw new ArgumentNullException("document");
+            m_document = document;
+            m_fileName = filename;
+        }
+
+        public XmlDocument Document
+        {
+            get { return m_document; }
+            set { m_document = value; }
+        }
+
+        public string FileName
+        {
+            get { return m_fileName; }
+            set { m_fileName = value; }
+        }
+    }
+
+    public class OrmXmlDocumentSet : List<OrmXmlDocument>
+    {
     }
 }
