@@ -181,7 +181,12 @@ namespace OrmCodeGenLib
         {
             _ormObjectsDef.Namespace = _ormXmlDocument.DocumentElement.GetAttribute("namespace");
             _ormObjectsDef.SchemaVersion = _ormXmlDocument.DocumentElement.GetAttribute("schemaVersion");
-            _ormObjectsDef.FileName = System.IO.Path.GetFileName(_ormXmlDocument.BaseURI);
+            string baseUriString = _ormXmlDocument.DocumentElement.GetAttribute("xml:base");
+            if (!string.IsNullOrEmpty(baseUriString))
+            {
+                Uri baseUri = new Uri(baseUriString);
+                _ormObjectsDef.FileName = System.IO.Path.GetFileName(baseUri.AbsoluteUri);
+            }
         }
 
         internal protected void FindEntities()
