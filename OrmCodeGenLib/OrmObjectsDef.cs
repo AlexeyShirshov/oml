@@ -267,6 +267,13 @@ namespace OrmCodeGenLib
             SystemComments.Add(string.Format("By user '{0}' at {1:G}.{2}", Environment.UserName, DateTime.Now, Environment.NewLine));
         }
 
+        public XmlDocument GetXmlDocument()
+        {
+            OrmXmlGeneratorSettings settings = new OrmXmlGeneratorSettings();
+            OrmXmlDocumentSet set = GetOrmXmlDocumentSet(settings);
+            return set[0].Document;
+        }
+
         #endregion Methods
 
         public class IncludesCollection : IEnumerable<OrmObjectsDef>

@@ -115,14 +115,21 @@ namespace OrmCodeGenLib
 
         private string GetIncludeFileName(OrmObjectsDef objectsDef, OrmObjectsDef incldeObjectsDef, OrmXmlGeneratorSettings settings)
         {
-            string filename =
-                settings.IncludeFileNamePattern.Replace("%MAIN_FILENAME%", GetFilename(objectsDef, settings)).Replace(
-                    "%INCLUDE_NAME%", GetFilename(incldeObjectsDef, settings)) + objectsDef.Includes.IndexOf(incldeObjectsDef);
-            return
-                (((settings.IncludeBehaviour & IncludeGenerationBehaviour.PlaceInFolder) ==
-                  IncludeGenerationBehaviour.PlaceInFolder)
-                     ? settings.IncludeFolderName + System.IO.Path.DirectorySeparatorChar
-                     : string.Empty) + filename;
+            if (string.IsNullOrEmpty(incldeObjectsDef.FileName))
+            {
+                string filename =
+                    settings.IncludeFileNamePattern.Replace("%MAIN_FILENAME%", GetFilename(objectsDef, settings)).
+                        Replace(
+                        "%INCLUDE_NAME%", GetFilename(incldeObjectsDef, settings)) +
+                    objectsDef.Includes.IndexOf(incldeObjectsDef);
+                return
+                    (((settings.IncludeBehaviour & IncludeGenerationBehaviour.PlaceInFolder) ==
+                      IncludeGenerationBehaviour.PlaceInFolder)
+                         ? settings.IncludeFolderName + System.IO.Path.DirectorySeparatorChar
+                         : string.Empty) + filename;
+            }
+            else
+                return incldeObjectsDef.FileName;
         }
 
         private void FillRelations()

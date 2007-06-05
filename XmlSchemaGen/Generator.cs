@@ -244,7 +244,7 @@ namespace XmlSchemaGen
 			using (System.Xml.XmlTextWriter writer = new System.Xml.XmlTextWriter(file, System.Text.Encoding.UTF8))
 			{
 				writer.Formatting = System.Xml.Formatting.Indented;
-				odef.WriteToXml(writer);
+				odef.GetXmlDocument().Save(writer);
 			}
 		}
 
