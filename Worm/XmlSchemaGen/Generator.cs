@@ -362,7 +362,7 @@ namespace XmlSchemaGen
 				if (pk)
 					name = "ID";
 
-				pe = new PropertyDescription(c.ColumnName, name,
+				pe = new PropertyDescription(name,
 					 null, attrs, null, GetType(c, columns, odef), c.ColumnName,
 					 e.Tables[0],AccessLevel.Private, AccessLevel.Public);
 				e.Properties.Add(pe);

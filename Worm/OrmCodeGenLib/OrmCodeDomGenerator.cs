@@ -906,45 +906,7 @@ namespace OrmCodeGenLib
                                                                     new CodeMethodInvokeExpression(
                                                                         new CodeVariableReferenceExpression("idx"),
                                                                         "Add",
-                                                                        new CodeObjectCreateExpression(
-                                                                            new CodeTypeReference(
-                                                                                typeof (MapField2Column)),
-                                                                            new CodePrimitiveExpression(action.Name),
-                                                                            new CodePrimitiveExpression(action.FieldName),
-                                                                            //(OrmTable)this.GetTables().GetValue((int)(XMedia.Framework.Media.Objects.ArtistBase.ArtistBaseSchemaDef.TablesLink.tblArtists)))
-                                                                            new CodeMethodInvokeExpression(
-                                                                                new CodeThisReferenceExpression(),
-                                                                                "GetTable",
-                                                                                new CodeFieldReferenceExpression(
-                                                                                        new CodeTypeReferenceExpression(OrmCodeGenNameHelper.GetEntitySchemaDefClassQualifiedName
-                                                                                                                            (entity
-                                                                                                                             ,
-                                                                                                                             settings, false) +
-                                                                                                                        ".TablesLink"),
-                                                                                        OrmCodeGenNameHelper.GetSafeName(action.Table.Identifier)
-                                                                                        )
-                                                                            )
-                                                                            //new CodeCastExpression(
-                                                                            //    new CodeTypeReference(typeof(Worm.Orm.OrmTable)),
-                                                                            //    new CodeMethodInvokeExpression(
-                                                                            //    new CodeMethodInvokeExpression(
-                                                                            //        new CodeThisReferenceExpression(),
-                                                                            //        "GetTables"
-                                                                            //    ) ,"GetValue",
-                                                                            //    new CodeCastExpression(
-                                                                            //        new CodeTypeReference(typeof (int)),
-                                                                            //        new CodeFieldReferenceExpression(
-                                                                            //            new CodeTypeReferenceExpression(GetEntitySchemaDefClassQualifiedName
-                                                                            //                                                (entity
-                                                                            //                                                 ,
-                                                                            //                                                 settings) +
-                                                                            //                                            ".TablesLink"),
-                                                                            //            action.Table.Identifier
-                                                                            //            )
-                                                                            //        )
-                                                                            //    )
-                                                                            //)
-                                                                        )
+                                                                        GetMapField2ColumObjectCreationExpression(entity, action, settings)
                                                                             //new CodeArrayIndexerExpression(
                                                                             //    new CodeFieldReferenceExpression(
                                                                             //        new CodeTypeReferenceExpression(
@@ -1220,6 +1182,31 @@ namespace OrmCodeGenLib
             return result;
         }
 
+        private CodeObjectCreateExpression GetMapField2ColumObjectCreationExpression(EntityDescription entity, PropertyDescription action, OrmCodeDomGeneratorSettings settings)
+        {
+            CodeObjectCreateExpression expression = new CodeObjectCreateExpression(
+                new CodeTypeReference(
+                    typeof (MapField2Column)));
+            expression.Parameters.Add(new CodePrimitiveExpression(action.Name));
+            expression.Parameters.Add(new CodePrimitiveExpression(action.FieldName));
+                //(OrmTable)this.GetTables().GetValue((int)(XMedia.Framework.Media.Objects.ArtistBase.ArtistBaseSchemaDef.TablesLink.tblArtists)))
+            expression.Parameters.Add(new CodeMethodInvokeExpression(
+                    new CodeThisReferenceExpression(),
+                    "GetTable",
+                    new CodeFieldReferenceExpression(
+                        new CodeTypeReferenceExpression(OrmCodeGenNameHelper.GetEntitySchemaDefClassQualifiedName
+                                                            (entity
+                                                             ,
+                                                             settings, false) +
+                                                        ".TablesLink"),
+                        OrmCodeGenNameHelper.GetSafeName(action.Table.Identifier)
+                        )
+                    ));
+            if (action.PropertyAlias == "ID" || action.Name == "ID")
+                expression.Parameters.Add(GetPropAttributesEnumValues(action.Attributes));
+            return expression;
+        }
+
         private CodeExpression[] GetM2MRelationCreationExpressions(RelationDescription relationDescription, EntityDescription entity)
         {
             if (relationDescription.Left.Entity != relationDescription.Right.Entity)
@@ -1404,9 +1391,7 @@ namespace OrmCodeGenLib
                                 new CodePrimitiveExpression(null)
                                 ),
                                 CodeBinaryOperatorType.BooleanOr,
-                                new CodeBinaryOperatorExpression(
-                                    new CodeArgumentReferenceExpression("value"),
-                                    CodeBinaryOperatorType.IdentityEquality,
+                                new CodeMethodInvokeExpression(
                                     new CodeMethodInvokeExpression(
                                         new CodeTypeReferenceExpression(typeof(Activator)),
                                         "CreateInstance",
@@ -1414,8 +1399,11 @@ namespace OrmCodeGenLib
                                             new CodeArgumentReferenceExpression("value"),
                                             "GetType"
                                         )
-                                    )
+                                    ),
+                                    "Equals",
+                                    new CodeArgumentReferenceExpression("value")
                                 )
+                                
                             )
                             ),
                         new CodeAssignStatement(
@@ -1602,10 +1590,14 @@ namespace OrmCodeGenLib
         {
             
             CodeAttributeDeclaration declaration = new CodeAttributeDeclaration(new CodeTypeReference(typeof(ColumnAttribute)));
+            
             if (!string.IsNullOrEmpty(propertyDesc.PropertyAlias))
-                new CodeAttributeArgument("Column", new CodePrimitiveExpression(propertyDesc.PropertyAlias));
+                declaration.Arguments.Add(new CodeAttributeArgument(new CodePrimitiveExpression(propertyDesc.PropertyAlias)));
             if (propertyDesc.Attributes != null && propertyDesc.Attributes.Length != 0)
-                new CodeAttributeArgument("_behavior", GetPropAttributesEnumValues(propertyDesc.Attributes));
+            {
+                declaration.Arguments.Add(new CodeAttributeArgument(GetPropAttributesEnumValues(propertyDesc.Attributes)));
+            }
+            
             //new CodeAttributeArgument(
             //        new CodePrimitiveExpression(string.IsNullOrEmpty(propertyDesc.PropertyAlias) ? propertyDesc.Name : propertyDesc.PropertyAlias)
             //        ),
@@ -1617,7 +1609,7 @@ namespace OrmCodeGenLib
 
         private void UpdateCreateObjectMethod(CodeMemberMethod createobjectMethod, CodeMemberProperty property)
         {
-            createobjectMethod.Statements.Add(
+            createobjectMethod.Statements.Insert(createobjectMethod.Statements.Count - 1,
                 new CodeConditionStatement(
                     new CodeBinaryOperatorExpression(
                         new CodeArgumentReferenceExpression("fieldName"),
@@ -1681,6 +1673,16 @@ namespace OrmCodeGenLib
             
             createobjectMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "fieldName"));
             createobjectMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "value"));
+
+            createobjectMethod.Statements.Add(
+                new CodeThrowExceptionStatement(
+                    new CodeObjectCreateExpression(
+                        new CodeTypeReference(typeof(InvalidOperationException)),
+                        new CodePrimitiveExpression("Invalid method usage.")
+                    )
+                )
+                );
+
             return createobjectMethod;
         }
 

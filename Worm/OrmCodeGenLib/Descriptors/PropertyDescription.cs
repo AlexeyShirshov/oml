@@ -6,7 +6,6 @@ namespace OrmCodeGenLib.Descriptors
 {
     public class PropertyDescription
     {
-        private string _id;
         private string _name;
         private string _propertyAlias;
         private string[] _attributes;
@@ -18,13 +17,12 @@ namespace OrmCodeGenLib.Descriptors
         private AccessLevel _fieldAccessLevel;
         private AccessLevel _propertyAccessLevel;
 
-        public PropertyDescription(string id, string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel) : this(id, name, alias, attributes, description, type, fieldname, table, false, fieldAccessLevel, propertyAccessLevel)
+        public PropertyDescription(string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel) : this(name, alias, attributes, description, type, fieldname, table, false, fieldAccessLevel, propertyAccessLevel)
         {
         }
 
-        internal PropertyDescription(string id, string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, bool fromBase, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel)
+        internal PropertyDescription(string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, bool fromBase, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel)
         {
-            _id = id;
             _name = name;
             _propertyAlias = alias;
             _attributes = attributes;
@@ -35,12 +33,6 @@ namespace OrmCodeGenLib.Descriptors
             _fromBase = fromBase;
             _fieldAccessLevel = fieldAccessLevel;
             _propertyAccessLevel = propertyAccessLevel;
-        }
-
-        public string Identifier
-        {
-            get { return _id; }
-            set { _id = value; }
         }
         
         public string Name

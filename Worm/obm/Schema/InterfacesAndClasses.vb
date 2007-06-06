@@ -36,9 +36,9 @@ Namespace Orm
         Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
     End Interface
 
-    Public Interface IOrmTableFunction
-        Function GetFunction(ByVal table As OrmTable, ByVal pmgr As ParamMgr) As OrmTable
-    End Interface
+    'Public Interface IOrmTableFunction
+    '    Function GetFunction(ByVal table As OrmTable, ByVal pmgr As ParamMgr) As OrmTable
+    'End Interface
 
     Public Interface IOrmFullTextSupport
         Function GetIndexedFields() As String()
@@ -97,6 +97,10 @@ Namespace Orm
 
         Public Overrides Function ToString() As String
             Return _table
+        End Function
+
+        Public Overridable Function OnTableAdd(ByVal pmgr As ParamMgr) As OrmTable
+            Return Nothing
         End Function
     End Class
 
@@ -562,17 +566,18 @@ Namespace Orm
         End Function
 
         Public Function AddTable(ByRef table As OrmTable, ByVal schema As IOrmObjectSchema, ByVal pmgr As ParamMgr) As String
-            Dim tf As IOrmTableFunction = TryCast(schema, IOrmTableFunction)
-            Dim tt As OrmTable = table
-            If tf IsNot Nothing Then
-                Dim f As OrmTable = tf.GetFunction(table, pmgr)
-                If f IsNot Nothing Then
-                    table = f
-                End If
+            'Dim tf As IOrmTableFunction = TryCast(schema, IOrmTableFunction)
+            Dim t As OrmTable = table
+            Dim tt As OrmTable = table.OnTableAdd(pmgr)
+            If tt IsNot Nothing Then
+                '    Dim f As OrmTable = tf.GetFunction(table, pmgr)
+                '    If f IsNot Nothing Then
+                table = tt
+                '    End If
             End If
             Dim i As Integer = _aliases.Count + 1
             Dim [alias] As String = "t" & i
-            _aliases.Add(tt, [alias])
+            _aliases.Add(t, [alias])
             Return [alias]
         End Function
 

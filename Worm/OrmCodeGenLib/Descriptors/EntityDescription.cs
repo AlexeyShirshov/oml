@@ -77,15 +77,15 @@ namespace OrmCodeGenLib.Descriptors
             return GetProperty(propertyId, false);
         }
 
-        public PropertyDescription GetProperty(string propertyId, bool throwNotFoundException)
+        public PropertyDescription GetProperty(string propertyName, bool throwNotFoundException)
         {
             PropertyDescription result = this.Properties.Find(delegate(PropertyDescription match)
             {
-                return match.Identifier == propertyId;
+                return match.Name == propertyName;
             });
             if (result == null && throwNotFoundException)
                 throw new KeyNotFoundException(
-                    string.Format("Property with id '{0}' in entity '{1}' not found.", propertyId, this.Identifier));
+                    string.Format("Property with name '{0}' in entity '{1}' not found.", propertyName, this.Identifier));
             return result;
         }
 
@@ -173,7 +173,7 @@ namespace OrmCodeGenLib.Descriptors
                 // добавляем старые проперти, если нужно
                 foreach (PropertyDescription oldProperty in oldOne.Properties)
                 {
-                    PropertyDescription newProperty = resultOne.GetProperty(oldProperty.Identifier);
+                    PropertyDescription newProperty = resultOne.GetProperty(oldProperty.Name);
                     if (newProperty == null)
                     {
                         TableDescription newTable = resultOne.GetTable(oldProperty.Table.Identifier);
@@ -190,7 +190,7 @@ namespace OrmCodeGenLib.Descriptors
                         }
                         if(newType != oldProperty.PropertyType)
                             resultOne.Properties.Insert(resultOne.Properties.Count - newOne.Properties.Count,
-                                                    new PropertyDescription(oldProperty.Identifier, oldProperty.Name, oldProperty.PropertyAlias,
+                                                    new PropertyDescription(oldProperty.Name, oldProperty.PropertyAlias,
                                                                             oldProperty.Attributes,
                                                                             oldProperty.Description,
                                                                             newType,

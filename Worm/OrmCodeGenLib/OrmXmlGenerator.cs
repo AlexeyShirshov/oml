@@ -195,7 +195,6 @@ namespace OrmCodeGenLib
                 {
                     XmlElement propertyElement =
                         CreateElement("Property");
-                    propertyElement.SetAttribute("id", property.Identifier);
                     propertyElement.SetAttribute("propertyName", property.Name);
                     if(property.Attributes != null && property.Attributes.Length > 0)
                     {

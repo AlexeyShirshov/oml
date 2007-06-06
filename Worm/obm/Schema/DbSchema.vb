@@ -1162,6 +1162,11 @@ Namespace Orm
                 Dim [alias] As String = Nothing
                 If Not almgr.Aliases.TryGetValue(tbl, [alias]) Then
                     [alias] = almgr.AddTable(tbl_real, sch, pname)
+                Else
+                    tbl_real = tbl.OnTableAdd(pname)
+                    If tbl_real Is Nothing Then
+                        tbl_real = tbl
+                    End If
                 End If
 
                 selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
@@ -1513,12 +1518,12 @@ Namespace Orm
             ByVal filter_info As Object, ByVal appendOrder As Boolean) As String
             Dim sb As New StringBuilder
             Dim tbl As OrmTable = GetTables(t)(0)
-            Dim al As String = Nothing
-            If Not almgr.Aliases.ContainsKey(tbl) Then
-                al = almgr.AddTable(tbl)
-            Else
-                al = almgr.Aliases(tbl)
-            End If
+            Dim al As String = "ZZZZZXXXXXXXX"
+            'If Not almgr.Aliases.ContainsKey(tbl) Then
+            '    al = almgr.AddTable(tbl)
+            'Else
+            '    al = almgr.Aliases(tbl)
+            'End If
 
             Dim n As String = GetColumnNameByFieldNameInternal(t, field, False)
             sb.Append("select left(")
@@ -1537,6 +1542,8 @@ Namespace Orm
                 sb.Append(al).Append(".").Append(n)
                 sb.Append(",").Append(level).Append(")")
             End If
+
+            sb.Replace(al, almgr.Aliases(tbl))
 
             Return sb.ToString
         End Function

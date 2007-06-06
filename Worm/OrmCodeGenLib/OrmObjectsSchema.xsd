@@ -21,13 +21,13 @@
 				<xs:annotation>
 					<xs:documentation>Свойства сущности</xs:documentation>
 				</xs:annotation>
-				<xs:key name="propPropertyId">
+				<!--<xs:key name="propPropertyId">
 					<xs:annotation>
 						<xs:documentation>Идентификатор</xs:documentation>
 					</xs:annotation>
 					<xs:selector xpath="NS:Property" />
 					<xs:field xpath="@id" />
-				</xs:key>
+				</xs:key>-->
 				<xs:key name="propPropertyName">
 					<xs:annotation>
 						<xs:documentation>Свойства объекта сущности должны быть уникальны</xs:documentation>
@@ -35,13 +35,13 @@
 					<xs:selector xpath="NS:Property" />
 					<xs:field xpath="@propertyName" />
 				</xs:key>
-				<xs:key name="propName">
+				<xs:unique name="propName">
 					<xs:annotation>
 						<xs:documentation>Колонки сущности должны быть уникальны</xs:documentation>
 					</xs:annotation>
 					<xs:selector xpath="NS:Property" />
 					<xs:field xpath="@fieldName" />
-				</xs:key>
+				</xs:unique>
 				<xs:keyref name="propTableRef" refer="TableId">
 					<xs:annotation>
 						<xs:documentation>Ссылка на таблицы</xs:documentation>
@@ -121,11 +121,11 @@
 		<xs:annotation>
 			<xs:documentation>Свойство сущности</xs:documentation>
 		</xs:annotation>
-		<xs:attribute name="id" type="xs:Name" use="required">
+		<!--<xs:attribute name="id" type="xs:Name" use="required">
 			<xs:annotation>
 				<xs:documentation>Идентификатор свойства</xs:documentation>
 			</xs:annotation>
-		</xs:attribute>
+		</xs:attribute>-->
 		<xs:attribute name="propertyName" type="Name_t" use="required">
 			<xs:annotation>
 				<xs:documentation>Имя свойства</xs:documentation>
@@ -151,7 +151,7 @@
 				<xs:documentation>Тип свойства (возможна ссылка на сущность)</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
-		<xs:attribute name="fieldName" type="xs:Name" use="required">
+		<xs:attribute name="fieldName" type="xs:string" use="required">
 			<xs:annotation>
 				<xs:documentation>Наименование колонки из БД</xs:documentation>
 			</xs:annotation>
