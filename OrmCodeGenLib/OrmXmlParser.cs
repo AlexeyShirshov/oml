@@ -242,7 +242,6 @@ namespace OrmCodeGenLib
                 TableDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
 
-                id = (propertyNode as XmlElement).GetAttribute("id");
                 description = (propertyNode as XmlElement).GetAttribute("description");
                 name = (propertyNode as XmlElement).GetAttribute("propertyName");
                 fieldname = (propertyNode as XmlElement).GetAttribute("fieldName");
@@ -268,12 +267,12 @@ namespace OrmCodeGenLib
 
                 if (table == null)
                     throw new OrmXmlParserException(
-                        string.Format("Table '{0}' for property '{1}' of entity '{2}' not found.", tableId, id,
+                        string.Format("Table '{0}' for property '{1}' of entity '{2}' not found.", tableId, name,
                                       entity.Identifier));
 
                 TypeDescription typeDesc = _ormObjectsDef.GetType(typeId, true);
                 
-                property = new PropertyDescription(id, name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
+                property = new PropertyDescription(name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
 
                 entity.Properties.Add(property);
             }

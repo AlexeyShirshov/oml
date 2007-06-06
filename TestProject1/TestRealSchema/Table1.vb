@@ -308,13 +308,20 @@ End Class
 
 Public Class Table12Implementation
     Inherits Table1Implementation
-    Implements IOrmTableFunction
 
-    Public Function GetFunction(ByVal table As OrmTable, ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable Implements Worm.Orm.IOrmTableFunction.GetFunction
-        If table.Equals(GetTables()(Tables.Main)) Then
-            Return New OrmTable("dbo.table1func()")
-        End If
-        Return Nothing
+    Private _tables() As OrmTable = {New table1func("table1func")}
+
+    'Implements IOrmTableFunction
+
+    'Public Function GetFunction(ByVal table As OrmTable, ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable Implements Worm.Orm.IOrmTableFunction.GetFunction
+    '    If table.Equals(GetTables()(Tables.Main)) Then
+    '        Return New OrmTable("dbo.table1func()")
+    '    End If
+    '    Return Nothing
+    'End Function
+
+    Public Overrides Function GetTables() As Worm.Orm.OrmTable()
+        Return _tables
     End Function
 
     Public Overrides Function GetSecondDicField() As String
@@ -324,12 +331,44 @@ End Class
 
 Public Class Table13Implementation
     Inherits Table1Implementation
-    Implements IOrmTableFunction
 
-    Public Function GetFunction(ByVal table As OrmTable, ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable Implements Worm.Orm.IOrmTableFunction.GetFunction
-        If table.Equals(GetTables()(Tables.Main)) Then
-            Return New OrmTable("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
-        End If
-        Return Nothing
+    Private _tables() As OrmTable = {New table2func("table2func")}
+
+    Public Overrides Function GetTables() As Worm.Orm.OrmTable()
+        Return _tables
+    End Function
+
+    'Implements IOrmTableFunction
+
+    'Public Function GetFunction(ByVal table As OrmTable, ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable Implements Worm.Orm.IOrmTableFunction.GetFunction
+    '    If table.Equals(GetTables()(Tables.Main)) Then
+    '        Return New OrmTable("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
+    '    End If
+    '    Return Nothing
+    'End Function
+End Class
+
+Public Class table1func
+    Inherits OrmTable
+
+    Public Sub New(ByVal tableName As String)
+        MyBase.New(tableName)
+    End Sub
+
+    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable
+        Return New OrmTable("dbo.table1func()")
+    End Function
+
+End Class
+
+Public Class table2func
+    Inherits OrmTable
+
+    Public Sub New(ByVal tableName As String)
+        MyBase.New(tableName)
+    End Sub
+
+    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable
+        Return New OrmTable("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
     End Function
 End Class

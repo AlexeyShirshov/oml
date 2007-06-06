@@ -75,16 +75,6 @@
       <HashCode>AAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAA=</HashCode>
     </TypeIdentifier>
   </Interface>
-  <Interface Name="Worm.Orm.IOrmTableFunction">
-    <Position X="2.5" Y="6" Width="1.75" />
-    <TypeIdentifier>
-      <FileName>Schema\InterfacesAndClasses.vb</FileName>
-      <HashCode>AAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
-    </TypeIdentifier>
-    <Compartments>
-      <Compartment Name="Methods" Collapsed="true" />
-    </Compartments>
-  </Interface>
   <Interface Name="Worm.Orm.IOrmFullTextSupport">
     <Position X="5.25" Y="4" Width="1.75" />
     <TypeIdentifier>
