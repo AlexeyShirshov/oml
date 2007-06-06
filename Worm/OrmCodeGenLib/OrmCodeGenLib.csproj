@@ -35,7 +35,7 @@
   <ItemGroup>
     <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\CoreFramework.dll</HintPath>
+      <HintPath>..\CoreFramework.dll</HintPath>
     </Reference>
     <Reference Include="Mvp.Xml, Version=2.2.0.0, Culture=neutral, PublicKeyToken=6ead800d778c9b9f, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
