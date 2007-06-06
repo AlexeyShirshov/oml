@@ -10,7 +10,7 @@ Public Class TestSearch
 
     <TestMethod()> _
     Public Sub TestSearch()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Orm.DbSchema("1"))
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("second")
 
             Assert.AreEqual(1, c.Count)

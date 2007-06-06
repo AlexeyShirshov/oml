@@ -9,7 +9,7 @@ Imports System.Diagnostics
 Public Class TestSchema
 
     Public Shared Function CreateManager(ByVal schema As Orm.DbSchema) As Orm.OrmReadOnlyDBManager
-        Return New Orm.OrmReadOnlyDBManager(New Orm.OrmCache, schema, "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=WormTest;")
+        Return New Orm.OrmReadOnlyDBManager(New Orm.OrmCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & My.Settings.WormRoot & "\TestProject1\Databases\wormtest.mdf';User Instance=true;Integrated security=true;")
     End Function
 
     <TestMethod()> _

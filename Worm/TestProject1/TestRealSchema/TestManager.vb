@@ -30,12 +30,16 @@ Public Class TestManagerRS
         End If
     End Function
 
+    Public Shared Function CreateManagerSharedFullText(ByVal schema As Orm.DbSchema) As Orm.OrmReadOnlyDBManager
+        Return New Orm.OrmDBManager(New Orm.OrmCache, schema, My.Settings.FullTextEnabledConn)
+    End Function
+
     Public Shared Function CreateManagerShared(ByVal schema As Orm.DbSchema) As Orm.OrmReadOnlyDBManager
-        Return New Orm.OrmDBManager(New Orm.OrmCache, schema, "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=WormTest;")
+        Return New Orm.OrmDBManager(New Orm.OrmCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & My.Settings.WormRoot & "\TestProject1\Databases\wormtest.mdf';User Instance=true;Integrated security=true;")
     End Function
 
     Public Function CreateManager(ByVal schema As Orm.DbSchema) As Orm.OrmReadOnlyDBManager
-        Return New Orm.OrmDBManager(GetCache, schema, "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=WormTest;")
+        Return New Orm.OrmDBManager(GetCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & My.Settings.WormRoot & "\TestProject1\Databases\wormtest.mdf';User Instance=true;Integrated security=true;")
     End Function
 
     Private _l As Boolean

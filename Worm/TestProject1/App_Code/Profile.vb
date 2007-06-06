@@ -8,7 +8,8 @@ Public Class GetMgr
     Implements IGetDBMgr
 
     Public Function GetMgr() As Worm.Orm.OrmDBManager Implements Worm.Web.IGetDBMgr.GetMgr
-        Return New OrmDBManager(OrmCache, New Worm.Orm.DbSchema("1"), "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=test;")
+        'Return New OrmDBManager(OrmCache, New Worm.Orm.DbSchema("1"), "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=test;")
+        Return New OrmDBManager(OrmCache, New Worm.Orm.DbSchema("1"), "Server=.\sqlexpress;AttachDBFileName='" & TestProject1.Settings.WormRoot & "\TestProject1\Databases\test.mdf';User Instance=true;Integrated security=true;")
     End Function
 
     Protected ReadOnly Property OrmCache() As OrmCache

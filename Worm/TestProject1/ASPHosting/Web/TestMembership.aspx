@@ -13,7 +13,7 @@
         End Function
         
         Public Function CreateDBManager() As OrmReadOnlyDBManager
-            Return New OrmReadOnlyDBManager(New Worm.Orm.OrmCache, New Worm.Orm.DbSchema("1"), "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=test;")
+            Return New OrmReadOnlyDBManager(New Worm.Orm.OrmCache, New Worm.Orm.DbSchema("1"), "Server=.\sqlexpress;AttachDBFileName='" & TestProject1.Settings.WormRoot & "\TestProject1\Databases\test.mdf';User Instance=true;Integrated security=true;")
         End Function
     
         Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)

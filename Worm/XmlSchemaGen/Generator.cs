@@ -228,7 +228,7 @@ namespace XmlSchemaGen
 					{
 						string[] ss = ed.Tables[0].Name.Split('.');
 						Column c = new Column(ss[0].Trim(new char[] { '[', ']' }), ss[1].Trim(new char[] { '[', ']' }), 
-							pd.Identifier, false, null, null, null);
+							pd.FieldName, false, null, null, null);
 						if (!columns.ContainsKey(c))
 						{
 							col2remove.Add(pd);
@@ -348,7 +348,7 @@ namespace XmlSchemaGen
 
 			PropertyDescription pe = e.Properties.Find(delegate(PropertyDescription pd)
 			{
-				if (pd.Identifier == c.ColumnName)
+				if (pd.FieldName == c.ColumnName)
 					return true;
 				else
 					return false;
