@@ -289,7 +289,7 @@ Namespace Orm
             Return SyncHelper(False, fieldName)
         End Function
 
-        Protected Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable
+        Protected Friend Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable
             Dim err As Boolean = True
             Dim d As IDisposable = SyncHelper(reader)
             Try

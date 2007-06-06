@@ -611,9 +611,9 @@ Namespace Web
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim u As OrmBase = Nothing
                 If _treatUsernameAsEmail Then
-                    u = FindUserByEmail(mgr, HttpContext.Current.User.Identity.Name, True)
+                    u = FindUserByEmail(mgr, HttpContext.Current.User.Identity.Name, Nothing)
                 Else
-                    u = FindUserByName(mgr, HttpContext.Current.User.Identity.Name, True)
+                    u = FindUserByName(mgr, HttpContext.Current.User.Identity.Name, Nothing)
                 End If
 
                 If u IsNot Nothing Then

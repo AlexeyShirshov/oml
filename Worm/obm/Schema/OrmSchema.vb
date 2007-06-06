@@ -508,7 +508,9 @@ Namespace Orm
                 Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", obj.ObjName, fieldName))
             End If
 
-            Return pi.GetValue(obj, Nothing)
+            Using obj.SyncHelper(True, fieldName)
+                Return pi.GetValue(obj, Nothing)
+            End Using
         End Function
 
         Public Sub SetFieldValue(ByVal obj As OrmBase, ByVal fieldName As String, ByVal value As Object)
@@ -522,7 +524,9 @@ Namespace Orm
                 Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", obj.ObjName, fieldName))
             End If
 
-            obj.SetValue(pi, GetColumnByFieldName(obj.GetType, fieldName), value)
+            Using obj.SyncHelper(False, fieldName)
+                obj.SetValue(pi, GetColumnByFieldName(obj.GetType, fieldName), value)
+            End Using
         End Sub
 
         'Protected Function GetPrimaryKeysValue(ByVal obj As OrmBase) As Object()
