@@ -7,9 +7,10 @@ using System.Reflection;
 using OrmCodeGenLib.Descriptors;
 using Worm.Orm;
 using Worm.Orm.Collections;
-using XMedia.Framework;
+//using XMedia.Framework;
 using System.Text.RegularExpressions;
 using System.Text;
+using CoreFramework.Structures;
 
 namespace OrmCodeGenLib
 {
