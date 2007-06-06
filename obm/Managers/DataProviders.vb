@@ -13,7 +13,6 @@ Namespace Orm
 
             Protected _f As IOrmFilter
             Protected _sort As Sort
-            'Protected _st As SortType
             Protected _mgr As OrmReadOnlyDBManager
             Protected _key As String
             Protected _id As String
