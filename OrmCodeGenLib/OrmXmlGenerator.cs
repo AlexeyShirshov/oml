@@ -209,7 +209,7 @@ namespace OrmCodeGenLib
                         propertyElement.SetAttribute("classfieldAccessLevel", property.FieldAccessLevel.ToString());
                     if (property.PropertyAccessLevel != AccessLevel.Public)
                         propertyElement.SetAttribute("propertyAccessLevel", property.PropertyAccessLevel.ToString());
-                    if (!string.IsNullOrEmpty(property.PropertyAlias))
+                    if (property.PropertyAlias != property.Name)
                         propertyElement.SetAttribute("propertyAlias", property.PropertyAlias);
 
                     propertiesNode.AppendChild(propertyElement);
