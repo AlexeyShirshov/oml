@@ -184,8 +184,8 @@ namespace OrmCodeGenLib
             string baseUriString = _ormXmlDocument.DocumentElement.GetAttribute("xml:base");
             if (!string.IsNullOrEmpty(baseUriString))
             {
-                Uri baseUri = new Uri(baseUriString);
-                _ormObjectsDef.FileName = System.IO.Path.GetFileName(baseUri.AbsoluteUri);
+                Uri baseUri = new Uri(baseUriString, UriKind.RelativeOrAbsolute);
+                _ormObjectsDef.FileName = System.IO.Path.GetFileName(baseUri.ToString());
             }
         }
 

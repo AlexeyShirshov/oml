@@ -79,7 +79,7 @@ namespace OrmCodeGenLib.Descriptors
 
         public string PropertyAlias
         {
-            get { return _propertyAlias; }
+            get { return string.IsNullOrEmpty(_propertyAlias) ? _name : _propertyAlias; }
             set { _propertyAlias = value; }
         }
 

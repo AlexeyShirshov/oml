@@ -7,8 +7,7 @@ using System.Reflection;
 using OrmCodeGenLib.Descriptors;
 using Worm.Orm;
 using Worm.Orm.Collections;
-//using XMedia.Framework;
-using CoreFramework.Structures;
+using XMedia.Framework;
 using System.Text.RegularExpressions;
 using System.Text;
 
@@ -1015,7 +1014,7 @@ namespace OrmCodeGenLib
                     new CodeMethodReturnStatement(
                         new CodeObjectCreateExpression(
                             new CodeTypeReference(typeof(Pair<string, Type>)),
-                            new CodePrimitiveExpression(entity.Properties.Find(delegate(PropertyDescription match) {return match.FieldName == relation.Left.FieldName;}).Name),
+                            new CodePrimitiveExpression(entity.Properties.Find(delegate(PropertyDescription match) {return match.FieldName == relation.Left.FieldName;}).PropertyAlias),
                             new CodeMethodInvokeExpression(
                                         new CodeMethodReferenceExpression(
                                             new CodeFieldReferenceExpression(
@@ -1048,7 +1047,7 @@ namespace OrmCodeGenLib
                     new CodeMethodReturnStatement(
                         new CodeObjectCreateExpression(
                             new CodeTypeReference(typeof(Pair<string, Type>)),
-                            new CodePrimitiveExpression(entity.CompleteEntity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Right.FieldName; }).Name),
+                            new CodePrimitiveExpression(entity.CompleteEntity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Right.FieldName; }).PropertyAlias),
                             new CodeMethodInvokeExpression(
                                         new CodeMethodReferenceExpression(
                                             new CodeFieldReferenceExpression(
@@ -1187,7 +1186,7 @@ namespace OrmCodeGenLib
             CodeObjectCreateExpression expression = new CodeObjectCreateExpression(
                 new CodeTypeReference(
                     typeof (MapField2Column)));
-            expression.Parameters.Add(new CodePrimitiveExpression(action.Name));
+            expression.Parameters.Add(new CodePrimitiveExpression(action.PropertyAlias));
             expression.Parameters.Add(new CodePrimitiveExpression(action.FieldName));
                 //(OrmTable)this.GetTables().GetValue((int)(XMedia.Framework.Media.Objects.ArtistBase.ArtistBaseSchemaDef.TablesLink.tblArtists)))
             expression.Parameters.Add(new CodeMethodInvokeExpression(
@@ -1202,7 +1201,7 @@ namespace OrmCodeGenLib
                         OrmCodeGenNameHelper.GetSafeName(action.Table.Identifier)
                         )
                     ));
-            if (action.PropertyAlias == "ID" || action.Name == "ID")
+            if (action.PropertyAlias == "ID")
                 expression.Parameters.Add(GetPropAttributesEnumValues(action.Attributes));
             return expression;
         }
@@ -1441,7 +1440,7 @@ namespace OrmCodeGenLib
                 PropertyDescription propertyDesc;
                 propertyDesc = completeEntity.Properties[idx];
 
-                if (propertyDesc.Name == "ID")
+                if (propertyDesc.PropertyAlias == "ID")
                     continue;
                 if (!propertyDesc.FromBase)
                     CreateProperty(copyMethod, createobjectMethod, entityClass, propertyDesc, settings, setvalueMethod);
@@ -1497,7 +1496,7 @@ namespace OrmCodeGenLib
             CodeExpression getUsingExpression = new CodeMethodInvokeExpression(
                 new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), "SyncHelper"),
                 new CodePrimitiveExpression(true),
-                new CodePrimitiveExpression(property.Name)
+                new CodePrimitiveExpression(propertyDesc.PropertyAlias)
                 );
 
             CodeStatement[] getInUsingStatements = new CodeStatement[]
@@ -1518,7 +1517,7 @@ namespace OrmCodeGenLib
             CodeExpression setUsingExpression = new CodeMethodInvokeExpression(
                 new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), "SyncHelper"),
                 new CodePrimitiveExpression(false),
-                new CodePrimitiveExpression(property.Name)
+                new CodePrimitiveExpression(propertyDesc.PropertyAlias)
                 );
 
             CodeStatement[] setInUsingStatements = new CodeStatement[]
@@ -1574,7 +1573,7 @@ namespace OrmCodeGenLib
 
             #region void SetValue(System.Reflection.PropertyInfo pi, ColumnAttribute c, object value)
 
-            UpdateSetValueMethod(fieldName, fieldType, property, setvalueMethod);
+            UpdateSetValueMethod(property, field, propertyDesc, setvalueMethod);
 
             #endregion void SetValue(System.Reflection.PropertyInfo pi, ColumnAttribute c, object value)
 
@@ -1626,10 +1625,10 @@ namespace OrmCodeGenLib
                 );
         }
 
-        private void UpdateSetValueMethod(string fieldName, CodeTypeReference fieldType, CodeMemberProperty property, CodeMemberMethod setvalueMethod)
+        private void UpdateSetValueMethod(CodeMemberProperty property, CodeMemberField field, PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod)
         {
             Type fieldRealType;
-            fieldRealType = Type.GetType(fieldType.BaseType, false);
+            fieldRealType = Type.GetType(field.Type.BaseType, false);
 
             if (fieldRealType != null)
             {
@@ -1641,15 +1640,15 @@ namespace OrmCodeGenLib
                                 "FieldName"
                                 ),
                             CodeBinaryOperatorType.ValueEquality,
-                            new CodePrimitiveExpression(property.Name)
+                            new CodePrimitiveExpression(propertyDesc.PropertyAlias)
                             ),
                         new CodeAssignStatement(
                             new CodeFieldReferenceExpression(
                                 new CodeThisReferenceExpression(),
-                                fieldName
+                                field.Name
                                 ),
                             new CodeCastExpression(
-                                fieldType,
+                                field.Type,
                                 new CodeArgumentReferenceExpression("value")
                                 )
                             ),
