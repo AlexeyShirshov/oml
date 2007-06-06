@@ -9,11 +9,11 @@
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)
         Dim sb As New StringBuilder
         Dim c As New OrmCache
-        Dim conn As String = "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=WormTest;"
+        Dim conn As String = "Server=.\sqlexpress;AttachDBFileName='" & TestProject1.Settings.WormRoot & "\TestProject1\Databases\wormtest.mdf';User Instance=true;Integrated security=true;"
         Using mgr As New OrmReadOnlyDBManager(c, New DbSchema("1"), conn)
             Dim o As New OrmDictionary(Of TestProject1.Table1)(mgr.Cache)
             
-            For Each t As TestProject1.Table1 In mgr.FindTop(Of TestProject1.Table1)(100, Nothing, Nothing, SortType.Asc, True)
+            For Each t As TestProject1.Table1 In mgr.FindTop(Of TestProject1.Table1)(100, Nothing, Nothing, True)
                 o.Add(t.Identifier, t)
             Next
             

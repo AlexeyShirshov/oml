@@ -16,11 +16,11 @@ Imports System.Collections.Generic
     End Function
 
     Public Shared Function CreateManager(ByVal schema As Orm.DbSchema) As Orm.OrmReadOnlyDBManager
-        Return New Orm.OrmReadOnlyDBManager(New Orm.OrmCache, schema, "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=test;")
+        Return New Orm.OrmReadOnlyDBManager(New Orm.OrmCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & My.Settings.WormRoot & "\TestProject1\Databases\test.mdf';User Instance=true;Integrated security=true;")
     End Function
 
     Public Shared Function CreateWriteManager(ByVal schema As Orm.DbSchema) As Orm.OrmDBManager
-        Return New Orm.OrmDBManager(New Orm.OrmCache, schema, "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=test;")
+        Return New Orm.OrmDBManager(New Orm.OrmCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & My.Settings.WormRoot & "\TestProject1\Databases\test.mdf';User Instance=true;Integrated security=true;")
     End Function
 
     <TestMethod()> _

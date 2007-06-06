@@ -63,6 +63,12 @@
     <Compile Include="ASPHosting\TestProfile.vb" />
     <Compile Include="ASPHosting\TestCache.vb" />
     <Compile Include="ASPHosting\TestProcess.vb" />
+    <Compile Include="My Project\Settings.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="Settings.vb" />
     <Compile Include="TestCriteria.vb" />
     <Compile Include="TestRealSchema\SimpleObj.vb" />
     <Compile Include="TestRealSchema\TestListManager.vb" />
@@ -123,6 +129,11 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
+    <None Include="My Project\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.vb</LastGenOutput>
+    </None>
     <None Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
