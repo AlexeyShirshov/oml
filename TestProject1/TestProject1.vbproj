@@ -127,6 +127,20 @@
     <Content Include="ASPHosting\Web\testobjects.aspx">
       <SubType>ASPXCodeBehind</SubType>
     </Content>
+    <Content Include="Databases\test.mdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Databases\test_log.ldf">
+      <DependentUpon>test.mdf</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Databases\WormTest.mdf">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Databases\WormTest_log.ldf">
+      <DependentUpon>WormTest.mdf</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
