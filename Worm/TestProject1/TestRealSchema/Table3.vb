@@ -205,7 +205,7 @@ Public Class Table33
         MyBase.New(id, cache, schema)
     End Sub
 
-    Protected Overrides Function GetNew() As Table3
-        Return New Table33(Identifier, OrmCache, OrmSchema)
-    End Function
+    'Protected Overrides Function GetNew() As Table3
+    '    Return New Table33(Identifier, OrmCache, OrmSchema)
+    'End Function
 End Class
