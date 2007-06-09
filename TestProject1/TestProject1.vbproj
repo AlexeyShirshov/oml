@@ -37,10 +37,9 @@
     <DocumentationFile>TestProject1.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="CoreFramework.dll">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\CoreFramework.dll</HintPath>
-      <Private>False</Private>
+      <HintPath>../CoreFramework.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
