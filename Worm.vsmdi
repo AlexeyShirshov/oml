@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Tests>
-  <edtdocversion branch="retail" build="50727" revision="42" />
+  <edtdocversion branch="retail" build="50727" revision="1318" />
   <TestCategory type="Microsoft.VisualStudio.TestTools.Common.TestCategory">
     <id type="Microsoft.VisualStudio.TestTools.Common.TestCategoryId">
       <id type="System.Guid">09e0d120-acf0-4592-8f92-4dda7243acf4</id>
@@ -187,14 +187,6 @@
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">8ce573fb-5e7e-391f-1d97-fc7748aae512</key>
-      <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">8ce573fb-5e7e-391f-1d97-fc7748aae512</id>
-        <name type="System.String">TestDelete3</name>
-        <storage type="System.String">testproject1\bin\testproject1.dll</storage>
-        <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
-        <enabled type="System.Boolean">True</enabled>
-      </value>
       <key type="System.Guid">af6c693b-5509-5caa-8df5-39a172c234c7</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
         <id type="System.Guid">af6c693b-5509-5caa-8df5-39a172c234c7</id>
@@ -239,6 +231,14 @@
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
         <id type="System.Guid">66945c31-8ce3-e2c7-d689-4d18290b6e21</id>
         <name type="System.String">TestSelectm2m3</name>
+        <storage type="System.String">testproject1\bin\testproject1.dll</storage>
+        <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+        <enabled type="System.Boolean">True</enabled>
+      </value>
+      <key type="System.Guid">182b9cbf-f4eb-4c36-a2d1-d8a59e9268e8</key>
+      <value type="Microsoft.VisualStudio.TestTools.Common.Link">
+        <id type="System.Guid">182b9cbf-f4eb-4c36-a2d1-d8a59e9268e8</id>
+        <name type="System.String">TestDelete</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -291,10 +291,10 @@
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">182b9cbf-f4eb-4c36-a2d1-d8a59e9268e8</key>
+      <key type="System.Guid">8ce573fb-5e7e-391f-1d97-fc7748aae512</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">182b9cbf-f4eb-4c36-a2d1-d8a59e9268e8</id>
-        <name type="System.String">TestDelete</name>
+        <id type="System.Guid">8ce573fb-5e7e-391f-1d97-fc7748aae512</id>
+        <name type="System.String">TestDelete3</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -340,14 +340,6 @@
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
         <id type="System.Guid">41065af8-2ab1-676b-7266-ba11d9e4a9f0</id>
         <name type="System.String">TestM2MReject</name>
-        <storage type="System.String">testproject1\bin\testproject1.dll</storage>
-        <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
-        <enabled type="System.Boolean">True</enabled>
-      </value>
-      <key type="System.Guid">e61b568c-b54f-a273-5500-28de6456414d</key>
-      <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">e61b568c-b54f-a273-5500-28de6456414d</id>
-        <name type="System.String">TestAdd4</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -400,14 +392,6 @@
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">d0be84dd-d549-22a8-ab93-669507de2bb7</key>
-      <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">d0be84dd-d549-22a8-ab93-669507de2bb7</id>
-        <name type="System.String">TestM2M7</name>
-        <storage type="System.String">testproject1\bin\testproject1.dll</storage>
-        <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
-        <enabled type="System.Boolean">True</enabled>
-      </value>
       <key type="System.Guid">44fcd8f4-36a5-7da8-7a06-6fe3d0761df5</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
         <id type="System.Guid">44fcd8f4-36a5-7da8-7a06-6fe3d0761df5</id>
@@ -444,6 +428,14 @@
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
         <id type="System.Guid">237f758e-01ee-191e-96b2-4602c024a442</id>
         <name type="System.String">TestDelete2</name>
+        <storage type="System.String">testproject1\bin\testproject1.dll</storage>
+        <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+        <enabled type="System.Boolean">True</enabled>
+      </value>
+      <key type="System.Guid">c17bf4e3-07ff-cb38-a832-f1688c3e6c35</key>
+      <value type="Microsoft.VisualStudio.TestTools.Common.Link">
+        <id type="System.Guid">c17bf4e3-07ff-cb38-a832-f1688c3e6c35</id>
+        <name type="System.String">TestM2M8</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -488,10 +480,18 @@
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">f7e78f61-9b31-9582-223d-4ab4461da60f</key>
+      <key type="System.Guid">313733b4-5539-2b78-9cf4-11448a96af42</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">f7e78f61-9b31-9582-223d-4ab4461da60f</id>
-        <name type="System.String">TestM2MAdd</name>
+        <id type="System.Guid">313733b4-5539-2b78-9cf4-11448a96af42</id>
+        <name type="System.String">TestM2MDelete</name>
+        <storage type="System.String">testproject1\bin\testproject1.dll</storage>
+        <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+        <enabled type="System.Boolean">True</enabled>
+      </value>
+      <key type="System.Guid">e61b568c-b54f-a273-5500-28de6456414d</key>
+      <value type="Microsoft.VisualStudio.TestTools.Common.Link">
+        <id type="System.Guid">e61b568c-b54f-a273-5500-28de6456414d</id>
+        <name type="System.String">TestAdd4</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -504,10 +504,10 @@
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">5a9fbe5e-a948-7c08-248e-e41b1c7f4e61</key>
+      <key type="System.Guid">e21be587-1b90-2a90-eab5-08aca6102d5a</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">5a9fbe5e-a948-7c08-248e-e41b1c7f4e61</id>
-        <name type="System.String">TestM2MAdd3</name>
+        <id type="System.Guid">e21be587-1b90-2a90-eab5-08aca6102d5a</id>
+        <name type="System.String">TestM2M6</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -528,26 +528,26 @@
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">c17bf4e3-07ff-cb38-a832-f1688c3e6c35</key>
+      <key type="System.Guid">d0be84dd-d549-22a8-ab93-669507de2bb7</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">c17bf4e3-07ff-cb38-a832-f1688c3e6c35</id>
-        <name type="System.String">TestM2M8</name>
+        <id type="System.Guid">d0be84dd-d549-22a8-ab93-669507de2bb7</id>
+        <name type="System.String">TestM2M7</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">313733b4-5539-2b78-9cf4-11448a96af42</key>
+      <key type="System.Guid">5a9fbe5e-a948-7c08-248e-e41b1c7f4e61</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">313733b4-5539-2b78-9cf4-11448a96af42</id>
-        <name type="System.String">TestM2MDelete</name>
+        <id type="System.Guid">5a9fbe5e-a948-7c08-248e-e41b1c7f4e61</id>
+        <name type="System.String">TestM2MAdd3</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">e21be587-1b90-2a90-eab5-08aca6102d5a</key>
+      <key type="System.Guid">f7e78f61-9b31-9582-223d-4ab4461da60f</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">e21be587-1b90-2a90-eab5-08aca6102d5a</id>
-        <name type="System.String">TestM2M6</name>
+        <id type="System.Guid">f7e78f61-9b31-9582-223d-4ab4461da60f</id>
+        <name type="System.String">TestM2MAdd</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -671,14 +671,6 @@
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">92fe9f33-b595-bb6b-179d-9fbf6072df7e</key>
-      <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">92fe9f33-b595-bb6b-179d-9fbf6072df7e</id>
-        <name type="System.String">TestProcess</name>
-        <storage type="System.String">testproject1\bin\testproject1.dll</storage>
-        <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
-        <enabled type="System.Boolean">True</enabled>
-      </value>
       <key type="System.Guid">f4a90b3c-39ec-db5b-ac65-30563e1b8238</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
         <id type="System.Guid">f4a90b3c-39ec-db5b-ac65-30563e1b8238</id>
@@ -691,6 +683,14 @@
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
         <id type="System.Guid">a3f83ffc-2cd5-83d0-7a09-0c8e45101b6c</id>
         <name type="System.String">StressTest</name>
+        <storage type="System.String">testproject1\bin\testproject1.dll</storage>
+        <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+        <enabled type="System.Boolean">True</enabled>
+      </value>
+      <key type="System.Guid">92fe9f33-b595-bb6b-179d-9fbf6072df7e</key>
+      <value type="Microsoft.VisualStudio.TestTools.Common.Link">
+        <id type="System.Guid">92fe9f33-b595-bb6b-179d-9fbf6072df7e</id>
+        <name type="System.String">TestProcess</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -1576,10 +1576,10 @@
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">e979b6c6-9e4d-2d14-26d0-17c17faf31f7</key>
+      <key type="System.Guid">a03bdc92-7a1e-5522-a942-2053d441cb5d</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">e979b6c6-9e4d-2d14-26d0-17c17faf31f7</id>
-        <name type="System.String">TestSelect2</name>
+        <id type="System.Guid">a03bdc92-7a1e-5522-a942-2053d441cb5d</id>
+        <name type="System.String">TestGetUnions</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -1592,18 +1592,10 @@
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">a03bdc92-7a1e-5522-a942-2053d441cb5d</key>
+      <key type="System.Guid">e979b6c6-9e4d-2d14-26d0-17c17faf31f7</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">a03bdc92-7a1e-5522-a942-2053d441cb5d</id>
-        <name type="System.String">TestGetUnions</name>
-        <storage type="System.String">testproject1\bin\testproject1.dll</storage>
-        <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
-        <enabled type="System.Boolean">True</enabled>
-      </value>
-      <key type="System.Guid">f218be73-912e-9f78-33cc-4ac7c7c65b53</key>
-      <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">f218be73-912e-9f78-33cc-4ac7c7c65b53</id>
-        <name type="System.String">TestGetColumnValue3</name>
+        <id type="System.Guid">e979b6c6-9e4d-2d14-26d0-17c17faf31f7</id>
+        <name type="System.String">TestSelect2</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -1636,6 +1628,14 @@
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
         <id type="System.Guid">d04441e8-5131-7498-15fe-b2c05296ac1f</id>
         <name type="System.String">TestSelect</name>
+        <storage type="System.String">testproject1\bin\testproject1.dll</storage>
+        <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
+        <enabled type="System.Boolean">True</enabled>
+      </value>
+      <key type="System.Guid">f218be73-912e-9f78-33cc-4ac7c7c65b53</key>
+      <value type="Microsoft.VisualStudio.TestTools.Common.Link">
+        <id type="System.Guid">f218be73-912e-9f78-33cc-4ac7c7c65b53</id>
+        <name type="System.String">TestGetColumnValue3</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -1693,10 +1693,10 @@
       <id type="System.Guid">8c43106b-9dc1-4907-a29f-aa66a61bf5b6</id>
     </parentCategoryId>
     <testLinks type="System.Collections.Hashtable">
-      <key type="System.Guid">37fb2587-8639-2ba7-d535-b66da6b5db60</key>
+      <key type="System.Guid">16f98b11-b486-f90d-e352-18feeb5380f5</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">37fb2587-8639-2ba7-d535-b66da6b5db60</id>
-        <name type="System.String">RealMergeTest</name>
+        <id type="System.Guid">16f98b11-b486-f90d-e352-18feeb5380f5</id>
+        <name type="System.String">TestMerge</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
@@ -1709,10 +1709,10 @@
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>
       </value>
-      <key type="System.Guid">16f98b11-b486-f90d-e352-18feeb5380f5</key>
+      <key type="System.Guid">37fb2587-8639-2ba7-d535-b66da6b5db60</key>
       <value type="Microsoft.VisualStudio.TestTools.Common.Link">
-        <id type="System.Guid">16f98b11-b486-f90d-e352-18feeb5380f5</id>
-        <name type="System.String">TestMerge</name>
+        <id type="System.Guid">37fb2587-8639-2ba7-d535-b66da6b5db60</id>
+        <name type="System.String">RealMergeTest</name>
         <storage type="System.String">testproject1\bin\testproject1.dll</storage>
         <type type="System.Type, mscorlib">Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</type>
         <enabled type="System.Boolean">True</enabled>

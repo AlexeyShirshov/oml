@@ -1117,9 +1117,9 @@ l1:
             MyBase.New(id, cache, schema)
         End Sub
 
-        Protected Overridable Function GetNew() As T
-            Return New T()
-        End Function
+        'Protected Overridable Function GetNew() As T
+        '    Return New T()
+        'End Function
 
         Public Shadows Function CompareTo(ByVal other As T) As Integer Implements System.IComparable(Of T).CompareTo
             If other Is Nothing Then
@@ -1138,10 +1138,11 @@ l1:
                         sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
                     Next
                 Else
-                    'Dim t As Type = Me.GetType
+                    Dim t As Type = Me.GetType
                     'Dim o As OrmBase = CType(t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
                     '    New Object() {Identifier, OrmCache, _schema}), OrmBase)
-                    Dim o As OrmBase = GetNew()
+                    'Dim o As OrmBase = GetNew()
+                    Dim o As OrmBase = CType(Activator.CreateInstance(t, Reflection.BindingFlags.CreateInstance, Nothing), OrmBase)
                     o.Init(Identifier, OrmCache, OrmSchema)
                     For Each c As ColumnAttribute In Changes(o)
                         sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
@@ -1152,7 +1153,7 @@ l1:
         End Property
 
         Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-            Dim o As OrmBase = GetNew()
+            Dim o As OrmBase = CType(Activator.CreateInstance(GetType(T), Reflection.BindingFlags.CreateInstance, Nothing), OrmBase)
             o.Init(Identifier, OrmCache, OrmSchema)
             Using SyncHelper(True)
                 o.ObjectState = ObjectState
@@ -1183,7 +1184,7 @@ l1:
         End Sub
 
         Protected Friend Overrides Function GetSoftClone() As OrmBase
-            Dim clone As OrmBase = GetNew()
+            Dim clone As OrmBase = CType(Activator.CreateInstance(GetType(T), Reflection.BindingFlags.CreateInstance, Nothing), OrmBase)
             clone.Init(Identifier, OrmCache, OrmSchema)
             Dim editable As IOrmEditable(Of T) = TryCast(Me, IOrmEditable(Of T))
             If editable IsNot Nothing Then
