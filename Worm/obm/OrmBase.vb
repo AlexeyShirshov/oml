@@ -1142,7 +1142,7 @@ l1:
                     'Dim o As OrmBase = CType(t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
                     '    New Object() {Identifier, OrmCache, _schema}), OrmBase)
                     'Dim o As OrmBase = GetNew()
-                    Dim o As OrmBase = CType(Activator.CreateInstance(t, Reflection.BindingFlags.CreateInstance, Nothing), OrmBase)
+                    Dim o As OrmBase = CType(Activator.CreateInstance(t), OrmBase)
                     o.Init(Identifier, OrmCache, OrmSchema)
                     For Each c As ColumnAttribute In Changes(o)
                         sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
@@ -1153,7 +1153,7 @@ l1:
         End Property
 
         Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-            Dim o As OrmBase = CType(Activator.CreateInstance(GetType(T), Reflection.BindingFlags.CreateInstance, Nothing), OrmBase)
+            Dim o As OrmBase = CType(Activator.CreateInstance(Me.GetType), OrmBase)
             o.Init(Identifier, OrmCache, OrmSchema)
             Using SyncHelper(True)
                 o.ObjectState = ObjectState
@@ -1184,7 +1184,7 @@ l1:
         End Sub
 
         Protected Friend Overrides Function GetSoftClone() As OrmBase
-            Dim clone As OrmBase = CType(Activator.CreateInstance(GetType(T), Reflection.BindingFlags.CreateInstance, Nothing), OrmBase)
+            Dim clone As OrmBase = CType(Activator.CreateInstance(Me.GetType), OrmBase)
             clone.Init(Identifier, OrmCache, OrmSchema)
             Dim editable As IOrmEditable(Of T) = TryCast(Me, IOrmEditable(Of T))
             If editable IsNot Nothing Then
