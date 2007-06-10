@@ -15,13 +15,14 @@ namespace XmlSchemaGen
 		private string _type;
 		private string _constraintType;
 		private string _constraintName;
+        private bool _identity;
 
 		protected Column()
 		{
 		}
 
 		public Column(string schema, string table, string column,
-			bool isNullable, string type, string constraintType, string constraintName)
+			bool isNullable, string type, string constraintType, string constraintName, bool identity)
 		{
 			_schema = schema;
 			_table = table;
@@ -31,6 +32,7 @@ namespace XmlSchemaGen
 			_type = type;
 			_constraintType = constraintType;
 			_constraintName = constraintName;
+            _identity = identity;
 		}
 
 		public override bool Equals(object obj)
@@ -72,6 +74,11 @@ namespace XmlSchemaGen
 		{
 			get { return _column; }
 		}
+
+        public bool IsAutoIncrement
+        {
+            get { return _identity; }
+        }
 
 		public bool IsNullable
 		{
@@ -125,6 +132,8 @@ namespace XmlSchemaGen
 			{
 				c._constraintName = reader.GetString(cn);
 			}
+            
+            c._identity = Convert.ToBoolean(reader.GetInt32(reader.GetOrdinal("identity")));
 
 			return c;
 		}

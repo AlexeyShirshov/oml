@@ -112,8 +112,13 @@ namespace XmlSchemaGen
 			if (!param.TryGetParam("Y", out u))
 				u = "false";
 			bool unify = bool.Parse(u);
-			
-			Generator g = new Generator(server, m, db, i, user, psw);
+
+            string tr = null;
+            if (!param.TryGetParam("T", out tr))
+                tr = "false";
+            bool transform = bool.Parse(tr);
+
+            Generator g = new Generator(server, m, db, i, user, psw, transform);
 
 			g.MakeWork(schemas, namelike, file, merge, dr, namesp, unify);
 
@@ -137,6 +142,7 @@ namespace XmlSchemaGen
 			Console.WriteLine("  -R\t\t-  Drop deleted columns. Meaningfull only with merge behavior. Example: -R.");
 			Console.WriteLine("  -N=value\t-  Objects namespace. Example: -N=test.");
 			Console.WriteLine("  -Y\t\t-  Unify entyties with the same PK. Example: -Y.");
+            Console.WriteLine("  -T\t\t-  Transform property names. Example: -T.");
 		}
 	}
 }

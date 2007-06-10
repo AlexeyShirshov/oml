@@ -6,6 +6,7 @@ using System.Data.Common;
 using OrmCodeGenLib;
 using OrmCodeGenLib.Descriptors;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace XmlSchemaGen
 {
@@ -45,8 +46,9 @@ namespace XmlSchemaGen
 		private bool _i;
 		private string _user;
 		private string _psw;
+        private bool _transform;
 
-		public Generator(string server, string m, string db, bool i, string user, string psw)
+		public Generator(string server, string m, string db, bool i, string user, string psw, bool transformPropertyName)
 		{
 			_server = server;
 			_m = m;
@@ -54,6 +56,7 @@ namespace XmlSchemaGen
 			_i = i;
 			_user = user;
 			_psw = psw;
+            _transform = transformPropertyName;
 		}
 
 		public void MakeWork(string schemas, string namelike, string file, string merge, bool dr, string name_space, bool unify)
@@ -66,10 +69,12 @@ namespace XmlSchemaGen
 				using (DbCommand cmd = conn.CreateCommand())
 				{
 					cmd.CommandType = CommandType.Text;
-					cmd.CommandText = @"select t.table_schema,t.table_name,c.column_name,c.is_nullable,c.data_type,tc.constraint_type,cc.constraint_name from INFORMATION_SCHEMA.tables t
+					cmd.CommandText = @"select t.table_schema,t.table_name,c.column_name,c.is_nullable,c.data_type,cc.constraint_type,cc.constraint_name, " + AppendIdentity() + @" from INFORMATION_SCHEMA.tables t
 						join INFORMATION_SCHEMA.columns c on t.table_name = c.table_name and t.table_schema = c.table_schema
-						left join INFORMATION_SCHEMA.constraint_column_usage cc on t.table_name = cc.table_name and t.table_schema = cc.table_schema and c.column_name = cc.column_name
-						left join INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc on tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name
+                        left join (
+	                        select cc.table_name,cc.table_schema,cc.column_name,tc.constraint_type,cc.constraint_name from INFORMATION_SCHEMA.constraint_column_usage cc 
+	                        join INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc on tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name --and tc.constraint_type is not null
+                        ) cc on t.table_name = cc.table_name and t.table_schema = cc.table_schema and c.column_name = cc.column_name
 						where table_type = 'base table'
 						and (
 						((select count(*) from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc 
@@ -86,7 +91,7 @@ namespace XmlSchemaGen
 						) = 1))
 						and (select count(*) from INFORMATION_SCHEMA.constraint_column_usage ccu 
 							where ccu.table_name = t.table_name and ccu.table_schema = t.table_schema and ccu.constraint_name = cc.constraint_name) < 2
-						and (tc.constraint_type <> 'CHECK' or tc.constraint_type is null)
+						--and (tc.constraint_type <> 'CHECK' or tc.constraint_type is null)
 						YYYYY
 						and (t.table_name XXXXX like @tn or @tn is null)
 						order by t.table_schema,t.table_name,c.ordinal_position";
@@ -189,7 +194,18 @@ namespace XmlSchemaGen
 		}
 
 		#region Helpers
-		
+		protected string AppendIdentity()
+        {
+            if (_m == "msft")
+            {
+                return "columnproperty(object_id(c.table_schema + '.' + c.table_name),c.column_name,'isIdentity') [identity]";
+            }
+            else
+            {
+                throw new NotSupportedException(_m + " is not supported");
+            }
+        }
+
 		protected void ProcessColumns(Dictionary<Column, Column> columns, string file, string merge,
 			bool dropColumns, string name_space, List<Pair<string>> prohibited)
 		{
@@ -209,10 +225,26 @@ namespace XmlSchemaGen
 				odef.SchemaVersion="1";
 			}
 
+            Dictionary<string, object> ents = new Dictionary<string, object>();
 			foreach (Column c in columns.Keys)
 			{
-				EntityDescription e = GetEntity(odef, c.Schema,c.Table);
-				AppendColumn(columns, c, e);		
+                bool ent, col;
+                EntityDescription e = GetEntity(odef, c.Schema, c.Table, out ent);
+				PropertyDescription pd = AppendColumn(columns, c, e, out col);
+                if (ent)
+                {
+                    Console.WriteLine("Create class [{0}]", e.Name);
+                    ents.Add(e.Name, null);
+                }
+                else if(col)
+                {
+                    if (!ents.ContainsKey(e.Name))
+                    {
+                        Console.WriteLine(e.Name);
+                        ents.Add(e.Name, null);
+                    }
+                    Console.WriteLine("\tAdd property: " + pd.Name);
+                }
 			}
 
 			ProcessProhibited(columns, prohibited, odef);
@@ -227,8 +259,8 @@ namespace XmlSchemaGen
 					foreach (PropertyDescription pd in ed.Properties)
 					{
 						string[] ss = ed.Tables[0].Name.Split('.');
-						Column c = new Column(ss[0].Trim(new char[] { '[', ']' }), ss[1].Trim(new char[] { '[', ']' }), 
-							pd.FieldName, false, null, null, null);
+						Column c = new Column(ss[0].Trim(new char[] { '[', ']' }), ss[1].Trim(new char[] { '[', ']' }),
+                            pd.FieldName.Trim(new char[] { '[', ']' }), false, null, null, null, false);
 						if (!columns.ContainsKey(c))
 						{
 							col2remove.Add(pd);
@@ -237,6 +269,7 @@ namespace XmlSchemaGen
 					foreach (PropertyDescription pd in col2remove)
 					{
 						ed.Properties.Remove(pd);
+                        Console.WriteLine("Remove: {0}.{1}", ed.Name, pd.Name);
 					}
 				}
 			}
@@ -321,10 +354,11 @@ namespace XmlSchemaGen
 									default:
 										throw new NotSupportedException("Cascade " + reader.GetString(reader.GetOrdinal("delete_rule")) + " is not supported");
 								}
+                                bool c;
 								LinkTarget lt = new LinkTarget(
 									GetEntity(odef,
 										reader.GetString(reader.GetOrdinal("table_schema")),
-										reader.GetString(reader.GetOrdinal("table_name"))),
+										reader.GetString(reader.GetOrdinal("table_name")),out c),
 										reader.GetString(reader.GetOrdinal("column_name")),deleteCascade);
 								targets.Add(lt);
 							}
@@ -342,13 +376,13 @@ namespace XmlSchemaGen
 			}
 		}
 
-		protected PropertyDescription AppendColumn(Dictionary<Column, Column> columns, Column c, EntityDescription e)
+		protected PropertyDescription AppendColumn(Dictionary<Column, Column> columns, Column c, EntityDescription e, out bool created)
 		{
 			OrmObjectsDef odef = e.OrmObjectsDef;
-
+            created = false;
 			PropertyDescription pe = e.Properties.Find(delegate(PropertyDescription pd)
 			{
-				if (pd.FieldName == c.ColumnName)
+                if (pd.FieldName == c.ColumnName || pd.FieldName.TrimEnd(']').TrimStart('[') == c.ColumnName)
 					return true;
 				else
 					return false;
@@ -366,26 +400,62 @@ namespace XmlSchemaGen
 					 null, attrs, null, GetType(c, columns, odef), c.ColumnName,
 					 e.Tables[0],AccessLevel.Private, AccessLevel.Public);
 				e.Properties.Add(pe);
+                created = true;
 			}
 			else
 			{
 				string[] attrs = null;
 				if (GetAttributes(c, out attrs))
 					pe.Name = "ID";
-				pe.Attributes = attrs;
-				pe.PropertyType = GetType(c, columns, odef);
+				pe.Attributes = Merge(pe.Attributes,attrs);
+                if (!pe.PropertyType.IsUserType)
+				    pe.PropertyType = GetType(c, columns, odef);
 			}
 			return pe;
 		}
 
-		private static string Trim(string columnName)
+        private static string[] Merge(string[] oldstrings, string[] newstrings)
+        {
+            List<string> l = new List<string>(oldstrings);
+            foreach (string s in newstrings)
+            {
+                if (s == "PK")
+                    l.Remove("PrimaryKey");
+                if (s == "PrimaryKey")
+                    l.Remove("PK");
+
+                if (!l.Contains(s))
+                {
+                    l.Add(s);
+                }
+
+            }
+            return l.ToArray();
+        }
+
+		private string Trim(string columnName)
 		{
-			if (columnName.EndsWith("_id"))
-				return columnName.Substring(0, columnName.Length - 3);
-			else if (columnName.EndsWith("_dt"))
-				return columnName.Substring(0, columnName.Length - 3);
-			else
-				return columnName;
+            if (_transform)
+            {
+                if (columnName.EndsWith("_id"))
+                    columnName = columnName.Substring(0, columnName.Length - 3);
+                else if (columnName.EndsWith("_dt"))
+                    columnName = columnName.Substring(0, columnName.Length - 3);
+
+                Regex re = new Regex(@"_(\w)");
+                columnName = re.Replace(columnName,new MatchEvaluator(delegate(Match m){
+                    return m.Groups[1].Value.ToUpper();
+                }));
+
+                re = new Regex(@"(\w)-(\w)");
+                columnName = re.Replace(columnName,new MatchEvaluator(delegate(Match m){
+                    return m.Groups[1] + m.Groups[2].Value.ToUpper();
+                }));
+
+                return columnName;
+            }
+            else
+                return columnName;
 		}
 
 		protected void ProcessProhibited(Dictionary<Column, Column> columns, List<Pair<string>> prohibited, OrmObjectsDef odef)
@@ -460,7 +530,8 @@ namespace XmlSchemaGen
 							if (!columns.ContainsKey(c))
 							{
 								columns.Add(c, c);
-								PropertyDescription pd = AppendColumn(columns, c, ed);
+                                bool cr;
+								PropertyDescription pd = AppendColumn(columns, c, ed, out cr);
 								if (String.IsNullOrEmpty(pd.Description))
 								{
 									pd.Description = "Autogenerated from table " + schema + "." + table;
@@ -511,14 +582,15 @@ namespace XmlSchemaGen
 						{
 							Column c = new Column(reader.GetString(reader.GetOrdinal("table_schema")),
 								reader.GetString(reader.GetOrdinal("table_name")),
-								reader.GetString(reader.GetOrdinal("column_name")), false, null, null, null);
+								reader.GetString(reader.GetOrdinal("column_name")), false, null, null, null, false);
 							if (columns.ContainsKey(c))
 							{
 								string id = "t" + Capitalize(c.Table);
 								TypeDescription t = odef.GetType(id,false);
 								if (t == null)
 								{
-									t = new TypeDescription(id, GetEntity(odef, c.Schema, c.Table));
+                                    bool cr;
+									t = new TypeDescription(id, GetEntity(odef, c.Schema, c.Table, out cr));
 									odef.Types.Add(t);
 								}
 								return t;
@@ -558,14 +630,15 @@ namespace XmlSchemaGen
 						{
 							Column c = new Column(reader.GetString(reader.GetOrdinal("table_schema")),
 								reader.GetString(reader.GetOrdinal("table_name")),
-								reader.GetString(reader.GetOrdinal("column_name")), false, null, null, null);
+								reader.GetString(reader.GetOrdinal("column_name")), false, null, null, null, false);
 							if (columns.ContainsKey(c))
 							{
 								string id = "t" + Capitalize(c.Table);
 								TypeDescription t = odef.GetType(id, true);
 								if (t == null)
 								{
-									t = new TypeDescription(id, GetEntity(odef, c.Schema, c.Table));
+                                    bool cr;
+									t = new TypeDescription(id, GetEntity(odef, c.Schema, c.Table, out cr));
 									odef.Types.Add(t);
 								}
 								return t;
@@ -604,8 +677,9 @@ namespace XmlSchemaGen
 			}
 		}
 
-		private static EntityDescription GetEntity(OrmObjectsDef odef, string schema, string tableName)
+		private static EntityDescription GetEntity(OrmObjectsDef odef, string schema, string tableName, out bool created)
 		{
+            created = false;
 			string ename = GetEntityName(schema,tableName);
 			EntityDescription e = odef.GetEntity(ename);
 			if (e == null)
@@ -614,7 +688,7 @@ namespace XmlSchemaGen
 				TableDescription t = GetTable(odef, schema, tableName);
 				e.Tables.Add(t);
 				odef.Entities.Add(e);
-				Console.WriteLine(tableName);
+                created = true;
 			}
 			return e;
 		}
@@ -632,11 +706,12 @@ namespace XmlSchemaGen
 		private static bool GetAttributes(Column c, out string[] attrs)
 		{
 			attrs = new string[] { };
-			if (c.ConstraintType == "PRIMARY KEY")
-			{				
-				attrs = new string[] { "PK" };
-				return true;
-			}
+            if (c.ConstraintType == "PRIMARY KEY")
+            {
+                if (!c.IsAutoIncrement)
+                    attrs = new string[] { "PK" };
+                return true;
+            }
 			return false;
 		}
 		private static TypeDescription GetClrType(string dbType, bool nullable, OrmObjectsDef odef)
