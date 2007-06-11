@@ -47,6 +47,7 @@ namespace XmlSchemaGen
 		private string _user;
 		private string _psw;
         private bool _transform;
+        private Dictionary<string, object> _ents = new Dictionary<string, object>();
 
 		public Generator(string server, string m, string db, bool i, string user, string psw, bool transformPropertyName)
 		{
@@ -225,7 +226,6 @@ namespace XmlSchemaGen
 				odef.SchemaVersion="1";
 			}
 
-            Dictionary<string, object> ents = new Dictionary<string, object>();
 			foreach (Column c in columns.Keys)
 			{
                 bool ent, col;
@@ -233,15 +233,15 @@ namespace XmlSchemaGen
 				PropertyDescription pd = AppendColumn(columns, c, e, out col);
                 if (ent)
                 {
-                    Console.WriteLine("Create class [{0}]", e.Name);
-                    ents.Add(e.Name, null);
+                    Console.WriteLine("Create class {0} ({1})", e.Name, e.Identifier);
+                    _ents.Add(e.Identifier, null);
                 }
                 else if(col)
                 {
-                    if (!ents.ContainsKey(e.Name))
+                    if (!_ents.ContainsKey(e.Identifier))
                     {
-                        Console.WriteLine(e.Name);
-                        ents.Add(e.Name, null);
+                        Console.WriteLine("Alter class {0} ({1})", e.Name, e.Identifier);
+                        _ents.Add(e.Identifier, null);
                     }
                     Console.WriteLine("\tAdd property: " + pd.Name);
                 }
@@ -590,8 +590,14 @@ namespace XmlSchemaGen
 								if (t == null)
 								{
                                     bool cr;
-									t = new TypeDescription(id, GetEntity(odef, c.Schema, c.Table, out cr));
+                                    EntityDescription e = GetEntity(odef, c.Schema, c.Table, out cr);
+									t = new TypeDescription(id, e);
 									odef.Types.Add(t);
+                                    if (cr)
+                                    {
+                                        Console.WriteLine("\tCreate class {0} ({1})", e.Name, e.Identifier);
+                                        //_ents.Add(e.Identifier, null);
+                                    }
 								}
 								return t;
 							}
