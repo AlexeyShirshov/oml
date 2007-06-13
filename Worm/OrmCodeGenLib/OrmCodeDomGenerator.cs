@@ -7,10 +7,9 @@ using System.Reflection;
 using OrmCodeGenLib.Descriptors;
 using Worm.Orm;
 using Worm.Orm.Collections;
-//using XMedia.Framework;
+using XMedia.Framework;
 using System.Text.RegularExpressions;
 using System.Text;
-using CoreFramework.Structures;
 
 namespace OrmCodeGenLib
 {
@@ -1005,7 +1004,7 @@ namespace OrmCodeGenLib
             relation = _ormObjectsDefinition.Relations.Find(
                         delegate(RelationDescription match)
                         {
-                            return match.UnderlyingEntity == entity;
+                            return match.UnderlyingEntity == entity && !match.Disabled;
                         }
                     );
             if (relation != null)
