@@ -85,13 +85,13 @@ namespace OrmCodeGenLib
         public string Namespace
         {
             get { return _namespace; }
-            internal set { _namespace = value; }
+            set { _namespace = value; }
         }
                 
         public string SchemaVersion
         {
             get { return _schemaVersion; }
-            internal set { _schemaVersion = value; }
+            set { _schemaVersion = value; }
         }
 
         public List<string> UserComments
