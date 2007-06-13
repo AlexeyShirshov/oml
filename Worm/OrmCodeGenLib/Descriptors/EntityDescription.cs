@@ -13,6 +13,7 @@ namespace OrmCodeGenLib.Descriptors
         private string _namespace;
         private readonly List<TableDescription> _tables;
         private readonly List<PropertyDescription> _properties;
+        private readonly List<PropertyDescription> _suppressedProperties;
         private readonly OrmObjectsDef _ormObjectsDef;
         private EntityDescription _baseEntity;
         private EntityBehaviuor _behaviour;
@@ -36,6 +37,7 @@ namespace OrmCodeGenLib.Descriptors
             _description = description;
             _tables = new List<TableDescription>();
             _properties = new List<PropertyDescription>();
+            _suppressedProperties = new List<PropertyDescription>();
             _ormObjectsDef = ormObjectsDef;
             _namespace = nameSpace;
             _baseEntity = baseEntity;
@@ -114,10 +116,13 @@ namespace OrmCodeGenLib.Descriptors
             return table;
         }
 
-        public List<RelationDescription> GetRelations()
+        public List<RelationDescription> GetRelations(bool withDisabled)
         {
             return _ormObjectsDef.Relations.FindAll(
-                delegate(RelationDescription match) { return match.Left.Entity == this || match.Right.Entity == this; }
+                delegate(RelationDescription match) {
+                                                        return
+                                                            (match.Left.Entity == this || match.Right.Entity == this) &&
+                                                            (!match.Disabled || withDisabled) ; }
                 );
         }
 
@@ -158,7 +163,16 @@ namespace OrmCodeGenLib.Descriptors
             // добавляем новые проперти
             foreach (PropertyDescription newProperty in newOne.Properties)
             {
-                resultOne.Properties.Add(newProperty);
+                PropertyDescription prop = newProperty.CloneSmart();
+                if (newOne.SuppressedProperties.Exists(delegate(PropertyDescription match) { return match.Name == newProperty.Name; }))
+                    prop.IsSuppressed = true;
+                resultOne.Properties.Add(prop);
+            }
+
+            foreach (PropertyDescription newProperty in newOne.SuppressedProperties)
+            {
+                PropertyDescription prop = newProperty.CloneSmart();
+                resultOne.SuppressedProperties.Add(prop);
             }
 
             if(oldOne != null)
@@ -170,6 +184,12 @@ namespace OrmCodeGenLib.Descriptors
                         resultOne.Tables.Add(oldTable);
                 }
 
+                foreach (PropertyDescription oldProperty in oldOne.SuppressedProperties)
+                {
+                    PropertyDescription prop = oldProperty.CloneSmart();
+                    resultOne.SuppressedProperties.Add(prop);
+                }
+
                 // добавляем старые проперти, если нужно
                 foreach (PropertyDescription oldProperty in oldOne.Properties)
                 {
@@ -178,6 +198,8 @@ namespace OrmCodeGenLib.Descriptors
                     {
                         TableDescription newTable = resultOne.GetTable(oldProperty.Table.Identifier);
                         TypeDescription newType = oldProperty.PropertyType;
+                        bool isSuppressed =
+                            resultOne.SuppressedProperties.Exists(delegate(PropertyDescription match) { return match.Name == oldProperty.Name; });
                         if(newType.IsEntityType)
                         {
                             EntityDescription newEntity =
@@ -188,13 +210,12 @@ namespace OrmCodeGenLib.Descriptors
                             if(newEntity != null)
                                 newType = new TypeDescription(newType.Identifier, newEntity);
                         }
-                        if(newType != oldProperty.PropertyType)
                             resultOne.Properties.Insert(resultOne.Properties.Count - newOne.Properties.Count,
                                                     new PropertyDescription(oldProperty.Name, oldProperty.PropertyAlias,
                                                                             oldProperty.Attributes,
                                                                             oldProperty.Description,
                                                                             newType,
-                                                                            oldProperty.FieldName, newTable, true, oldProperty.FieldAccessLevel, oldProperty.PropertyAccessLevel));
+                                                                            oldProperty.FieldName, newTable, newType != oldProperty.PropertyType, oldProperty.FieldAccessLevel, oldProperty.PropertyAccessLevel, isSuppressed));
                     }
                 }
             }
@@ -219,6 +240,11 @@ namespace OrmCodeGenLib.Descriptors
         {
             get { return _behaviour; }
             set { _behaviour = value; }
+        }
+
+        public List<PropertyDescription> SuppressedProperties
+        {
+            get { return _suppressedProperties; }
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace OrmCodeGenLib.Descriptors
 {
-    public class PropertyDescription
+    public class PropertyDescription : ICloneable
     {
         private string _name;
         private string _propertyAlias;
@@ -16,12 +16,18 @@ namespace OrmCodeGenLib.Descriptors
         private bool _fromBase;
         private AccessLevel _fieldAccessLevel;
         private AccessLevel _propertyAccessLevel;
+        private bool _isSuppressed;
 
-        public PropertyDescription(string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel) : this(name, alias, attributes, description, type, fieldname, table, false, fieldAccessLevel, propertyAccessLevel)
+        public PropertyDescription(string name)
+            : this(name, null, null, null, null, null, null, false, default(AccessLevel), default(AccessLevel), true)
         {
         }
 
-        internal PropertyDescription(string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, bool fromBase, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel)
+        public PropertyDescription(string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel) : this(name, alias, attributes, description, type, fieldname, table, false, fieldAccessLevel, propertyAccessLevel, false)
+        {
+        }
+
+        internal PropertyDescription(string name, string alias, string[] attributes, string description, TypeDescription type, string fieldname, TableDescription table, bool fromBase, AccessLevel fieldAccessLevel, AccessLevel propertyAccessLevel, bool isSuppressed)
         {
             _name = name;
             _propertyAlias = alias;
@@ -33,6 +39,7 @@ namespace OrmCodeGenLib.Descriptors
             _fromBase = fromBase;
             _fieldAccessLevel = fieldAccessLevel;
             _propertyAccessLevel = propertyAccessLevel;
+            _isSuppressed = isSuppressed;
         }
         
         public string Name
@@ -94,5 +101,37 @@ namespace OrmCodeGenLib.Descriptors
             get { return _propertyAccessLevel; }
             set { _propertyAccessLevel = value; }
         }
+
+        public bool IsSuppressed
+        {
+            get { return _isSuppressed; }
+            set { _isSuppressed = value; }
+        }
+
+        #region ICloneable Members
+
+        public object Clone()
+        {
+            PropertyDescription prop = (PropertyDescription)MemberwiseClone();
+            prop._attributes = this._attributes;
+            prop._description = this._description;
+            prop._fieldAccessLevel = this._fieldAccessLevel;
+            prop._fieldName = _fieldName;
+            prop._fromBase = _fromBase;
+            prop._isSuppressed = _isSuppressed;
+            prop._name = _name;
+            prop._propertyAccessLevel = _propertyAccessLevel;
+            prop._propertyAlias = _propertyAlias;
+            prop._table = _table;
+            prop._type = _type;
+            return prop;
+        }
+
+        public PropertyDescription CloneSmart()
+        {
+            return (PropertyDescription) Clone();
+        }
+
+        #endregion
     }
 }

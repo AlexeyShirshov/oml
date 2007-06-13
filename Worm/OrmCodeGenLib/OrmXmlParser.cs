@@ -174,6 +174,31 @@ namespace OrmCodeGenLib
                     entity.BaseEntity = baseEntity;
                 }
                 FillProperties(entity);
+                FillSuppresedProperties(entity);
+            }
+        }
+
+        private void FillSuppresedProperties(EntityDescription entity)
+        {
+            if (entity == null)
+                throw new ArgumentNullException("entity");
+
+            XmlNode entityNode;
+            entityNode = _ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Entities/{0}:Entity[@id='{1}']", OrmObjectsDef.NS_PREFIX, entity.Identifier), _nsMgr);
+
+            XmlNodeList propertiesList;
+            propertiesList = entityNode.SelectNodes(string.Format("{0}:SuppressedProperties/{0}:Property", OrmObjectsDef.NS_PREFIX), _nsMgr);
+
+            PropertyDescription property;
+
+            foreach (XmlNode propertyNode in propertiesList)
+            {
+                string name;
+                name = (propertyNode as XmlElement).GetAttribute("name");
+
+                property = new PropertyDescription(name);
+
+                entity.SuppressedProperties.Add(property);
             }
         }
 
@@ -288,10 +313,10 @@ namespace OrmCodeGenLib
             TableDescription relationTable;
             string relationTableId;
             EntityDescription underlyingEntity;
-            string underlyingEntityId;
+            string underlyingEntityId, disabledValue;
             EntityDescription leftLinkTargetEntity, rightLinkTargetEntity;
             string leftLinkTargetEntityId, rightLinkTargetEntityId;
-            bool leftCascadeDelete, rightCascadeDelete;
+            bool leftCascadeDelete, rightCascadeDelete, disabled;
             string leftFieldName, rightFieldName;
             LinkTarget leftLinkTarget, rightLinkTarget;
 
@@ -304,6 +329,7 @@ namespace OrmCodeGenLib
 
                 relationTableId = (relationNode as XmlElement).GetAttribute("table");
                 underlyingEntityId = (relationNode as XmlElement).GetAttribute("underlyingEntity");
+                disabledValue = (relationNode as XmlElement).GetAttribute("disabled");
 
                 leftLinkTargetEntityId = (leftTargetNode as XmlElement).GetAttribute("entity");
                 rightLinkTargetEntityId = (rightTargetNode as XmlElement).GetAttribute("entity");
@@ -321,6 +347,11 @@ namespace OrmCodeGenLib
                 else
                     underlyingEntity = _ormObjectsDef.GetEntity(underlyingEntityId);
 
+                if (string.IsNullOrEmpty(disabledValue))
+                    disabled = false;
+                else
+                    disabled = XmlConvert.ToBoolean(disabledValue);
+
 
 
                 leftLinkTargetEntity = _ormObjectsDef.GetEntity(leftLinkTargetEntityId);
@@ -330,7 +361,7 @@ namespace OrmCodeGenLib
                 leftLinkTarget = new LinkTarget(leftLinkTargetEntity, leftFieldName, leftCascadeDelete);
                 rightLinkTarget = new LinkTarget(rightLinkTargetEntity, rightFieldName, rightCascadeDelete);
 
-                relation = new RelationDescription(leftLinkTarget, rightLinkTarget, relationTable, underlyingEntity);
+                relation = new RelationDescription(leftLinkTarget, rightLinkTarget, relationTable, underlyingEntity, disabled);
                 _ormObjectsDef.Relations.Add(relation);
             }
         }
@@ -386,8 +417,11 @@ namespace OrmCodeGenLib
 
             schemaSet = new XmlSchemaSet(_nametable);
 
+            schema = ResourceManager.GetXmlSchema("XInclude");
+            schemaSet.Add(schema);
             schema = ResourceManager.GetXmlSchema(SCHEMA_NAME);
             schemaSet.Add(schema);
+            
 
             xmlReaderSettings = new XmlReaderSettings();
             xmlReaderSettings.CloseInput = false;

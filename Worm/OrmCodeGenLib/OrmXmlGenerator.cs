@@ -143,16 +143,20 @@ namespace OrmCodeGenLib
                 XmlElement relationElement = CreateElement("Relation");
 
                 relationElement.SetAttribute("table", relation.Table.Identifier);
+                if(relation.Disabled)
+                {
+                    relationElement.SetAttribute("disabled", XmlConvert.ToString(relation.Disabled));
+                }
 
                 XmlElement leftElement = CreateElement("Left");
                 leftElement.SetAttribute("entity", relation.Left.Entity.Identifier);
                 leftElement.SetAttribute("fieldName", relation.Left.FieldName);
-                leftElement.SetAttribute("cascadeDelete", relation.Left.CascadeDelete.ToString().ToLower());              
+                leftElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Left.CascadeDelete));              
 
                 XmlElement rightElement = CreateElement("Right");
                 rightElement.SetAttribute("entity", relation.Right.Entity.Identifier);
                 rightElement.SetAttribute("fieldName", relation.Right.FieldName);
-                rightElement.SetAttribute("cascadeDelete", relation.Right.CascadeDelete.ToString().ToLower());
+                rightElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Right.CascadeDelete));
 
                 if(relation.UnderlyingEntity != null)
                 {
