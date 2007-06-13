@@ -31,7 +31,13 @@ namespace OrmCodeGenLib
             {
                 foreach (KeyValuePair<string, CodeCompileUnit> pair in GetEntityDom(entity.Identifier, settings))
                 {
-                    result.Add(pair.Key, pair.Value);
+                    string key = pair.Key;
+                    for (int i = 0; result.ContainsKey(key); i++)
+                    {
+                        key = pair.Key + i;
+                    }
+
+                    result.Add(key, pair.Value);
                 }
             }
             return result;
@@ -581,13 +587,16 @@ namespace OrmCodeGenLib
                 method.Attributes = MemberAttributes.Public;
                 // реализует метод базового класса
                 method.ImplementationTypes.Add(typeof(IOrmObjectSchema));
-                method.Statements.Add(
-                    new CodeMethodReturnStatement(
-                        new CodeArrayCreateExpression(
-                            new CodeTypeReference(typeof(ColumnAttribute[]))
-                        )
-                    )
-                );
+                CodeArrayCreateExpression arrayExpression = new CodeArrayCreateExpression(
+                    new CodeTypeReference(typeof(ColumnAttribute[]))
+                    );
+                foreach (PropertyDescription suppressedProperty in entity.SuppressedProperties)
+                {
+                    arrayExpression.Initializers.Add(
+                        new CodeObjectCreateExpression(typeof (ColumnAttribute),
+                                                       new CodePrimitiveExpression(suppressedProperty.PropertyAlias)));
+                }
+                method.Statements.Add(new CodeMethodReturnStatement(arrayExpression));
             }
             #endregion ColumnAttribute[] GetSuppressedColumns()
 
@@ -702,7 +711,7 @@ namespace OrmCodeGenLib
 
             List<RelationDescription> usedM2MRelation;
             // список релейшенов относящихся к данной сущности
-            usedM2MRelation = entity.GetRelations();
+            usedM2MRelation = entity.GetRelations(false);
 
             #region поле _m2mRelations
             field = new CodeMemberField(new CodeTypeReference(typeof(M2MRelation[])), "_m2mRelations");
@@ -720,8 +729,9 @@ namespace OrmCodeGenLib
             {
                 method.Attributes |= MemberAttributes.Override;
             }
-            // реализует метод базового класса
-            method.ImplementationTypes.Add(typeof(IOrmObjectSchema));
+            else
+                // реализует метод базового класса
+                method.ImplementationTypes.Add(typeof(IOrmObjectSchema));
             // параметры
             //...
             // для лока
@@ -870,8 +880,9 @@ namespace OrmCodeGenLib
             {
                 method.Attributes |= MemberAttributes.Override;
             }
-            // реализует метод базового класса
-            method.ImplementationTypes.Add(new CodeTypeReference(typeof (Worm.Orm.IOrmObjectSchema)));
+            else
+                // реализует метод базового класса
+                method.ImplementationTypes.Add(new CodeTypeReference(typeof (Worm.Orm.IOrmObjectSchema)));
             // параметры
             //...
             // для лока
@@ -1071,70 +1082,73 @@ namespace OrmCodeGenLib
 
             #region public void GetSchema(OrmSchemaBase schema, Type t)
 
-            CodeMemberField schemaField = new CodeMemberField(
-                new CodeTypeReference(typeof (OrmSchemaBase)),
-                "_schema"
-                );
-            CodeMemberField typeField = new CodeMemberField(
-                new CodeTypeReference(typeof(Type)),
-                "_entityType"
-                );
-            schemaField.Attributes = MemberAttributes.Family;
-            entitySchemaDefClass.Members.Add(schemaField);
-            typeField.Attributes = MemberAttributes.Family;
-            entitySchemaDefClass.Members.Add(typeField);
-            method = new CodeMemberMethod();
-            entitySchemaDefClass.Members.Add(method);
-            method.Name = "GetSchema";
-            // тип возвращаемого значения
-            method.ReturnType = null;
-            // модификаторы доступа
-            method.Attributes = MemberAttributes.Public;
-            if (entity.BaseEntity != null)
+            if (entity.BaseEntity == null)
             {
-                method.Attributes |= MemberAttributes.Override;
-            }
-            method.Parameters.Add(
-                new CodeParameterDeclarationExpression(
-                    new CodeTypeReference(typeof(OrmSchemaBase)),
-                    "schema"
-                )
-            );
-            method.Parameters.Add(
-                new CodeParameterDeclarationExpression(
-                    new CodeTypeReference(typeof(Type)),
-                    "t"
-                )
-                );
-            // реализует метод базового класса
-            method.ImplementationTypes.Add(typeof(IOrmSchemaInit));
-            method.Statements.Add(
-                new CodeAssignStatement(
-                    new CodeFieldReferenceExpression(
-                        new CodeThisReferenceExpression(), 
-                        "_schema"
-                    ),
-                    new CodeArgumentReferenceExpression("schema")
-                )
-            );
-            method.Statements.Add(
-                new CodeAssignStatement(
-                    new CodeFieldReferenceExpression(
-                        new CodeThisReferenceExpression(),
-                        "_entityType"
-                    ),
-                    new CodeArgumentReferenceExpression("t")
-                )
-            );
-            if (entity.BaseEntity != null)
+                CodeMemberField schemaField = new CodeMemberField(
+                    new CodeTypeReference(typeof (OrmSchemaBase)),
+                    "_schema"
+                    );
+                CodeMemberField typeField = new CodeMemberField(
+                    new CodeTypeReference(typeof (Type)),
+                    "_entityType"
+                    );
+                schemaField.Attributes = MemberAttributes.Family;
+                entitySchemaDefClass.Members.Add(schemaField);
+                typeField.Attributes = MemberAttributes.Family;
+                entitySchemaDefClass.Members.Add(typeField);
+                method = new CodeMemberMethod();
+                entitySchemaDefClass.Members.Add(method);
+                method.Name = "GetSchema";
+                // тип возвращаемого значения
+                method.ReturnType = null;
+                // модификаторы доступа
+                method.Attributes = MemberAttributes.Public;
+                if (entity.BaseEntity != null)
+                {
+                    method.Attributes |= MemberAttributes.Override;
+                }
+                method.Parameters.Add(
+                    new CodeParameterDeclarationExpression(
+                        new CodeTypeReference(typeof (OrmSchemaBase)),
+                        "schema"
+                        )
+                    );
+                method.Parameters.Add(
+                    new CodeParameterDeclarationExpression(
+                        new CodeTypeReference(typeof (Type)),
+                        "t"
+                        )
+                    );
+                // реализует метод базового класса
+                method.ImplementationTypes.Add(typeof (IOrmSchemaInit));
                 method.Statements.Add(
-                    new CodeMethodInvokeExpression(
-                        new CodeBaseReferenceExpression(),
-                        "GetSchema",
-                        new CodeArgumentReferenceExpression("schema"),
+                    new CodeAssignStatement(
+                        new CodeFieldReferenceExpression(
+                            new CodeThisReferenceExpression(),
+                            "_schema"
+                            ),
+                        new CodeArgumentReferenceExpression("schema")
+                        )
+                    );
+                method.Statements.Add(
+                    new CodeAssignStatement(
+                        new CodeFieldReferenceExpression(
+                            new CodeThisReferenceExpression(),
+                            "_entityType"
+                            ),
                         new CodeArgumentReferenceExpression("t")
-                    )
-                );
+                        )
+                    );
+            }
+            //if (entity.BaseEntity != null)
+            //    method.Statements.Add(
+            //        new CodeMethodInvokeExpression(
+            //            new CodeBaseReferenceExpression(),
+            //            "GetSchema",
+            //            new CodeArgumentReferenceExpression("schema"),
+            //            new CodeArgumentReferenceExpression("t")
+            //        )
+            //    );
             #endregion public void GetSchema(OrmSchemaBase schema, Type t)
 
             if (createobjectMethod.Statements.Count == 0 && entityClass.Members.Contains(createobjectMethod))
@@ -1441,7 +1455,7 @@ namespace OrmCodeGenLib
                 PropertyDescription propertyDesc;
                 propertyDesc = completeEntity.Properties[idx];
 
-                if (propertyDesc.PropertyAlias == "ID")
+                if (propertyDesc.PropertyAlias == "ID" || propertyDesc.IsSuppressed)
                     continue;
                 if (!propertyDesc.FromBase)
                     CreateProperty(copyMethod, createobjectMethod, entityClass, propertyDesc, settings, setvalueMethod);
@@ -1633,29 +1647,54 @@ namespace OrmCodeGenLib
 
             if (fieldRealType != null)
             {
-                setvalueMethod.Statements.Add(
-                    new CodeConditionStatement(
-                        new CodeBinaryOperatorExpression(
-                            new CodeFieldReferenceExpression(
-                                new CodeArgumentReferenceExpression("c"),
-                                "FieldName"
-                                ),
-                            CodeBinaryOperatorType.ValueEquality,
-                            new CodePrimitiveExpression(propertyDesc.PropertyAlias)
+                CodeConditionStatement setValueStatement = new CodeConditionStatement(
+                    new CodeBinaryOperatorExpression(
+                        new CodeFieldReferenceExpression(
+                            new CodeArgumentReferenceExpression("c"),
+                            "FieldName"
                             ),
-                        new CodeAssignStatement(
-                            new CodeFieldReferenceExpression(
-                                new CodeThisReferenceExpression(),
-                                field.Name
-                                ),
-                            new CodeCastExpression(
-                                field.Type,
-                                new CodeArgumentReferenceExpression("value")
-                                )
-                            ),
-                        new CodeMethodReturnStatement()
+                        CodeBinaryOperatorType.ValueEquality,
+                        new CodePrimitiveExpression(propertyDesc.PropertyAlias)
                         )
                     );
+
+                CodeTypeReference ft;
+                if(fieldRealType.IsGenericType && typeof(Nullable<>).Equals(fieldRealType.GetGenericTypeDefinition()))
+                {
+                    setValueStatement.TrueStatements.Add(
+                        new CodeConditionStatement(
+                            new CodeBinaryOperatorExpression(
+                                new CodeArgumentReferenceExpression("value"),
+                                CodeBinaryOperatorType.IdentityInequality,
+                                new CodePrimitiveExpression(null)
+                                ),
+                                new CodeStatement[]
+                                    {
+                                        new CodeAssignStatement(
+                                                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), field.Name),
+                                                         new CodeCastExpression(field.Type.TypeArguments[0], new CodeArgumentReferenceExpression("value"))
+                                        )
+                                    },
+                                new CodeStatement[]
+                                    {
+                                        new CodeAssignStatement(
+                                                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), field.Name),
+                                                         new CodePrimitiveExpression(null)
+                                        )
+                                    }
+                        )
+                    );
+                }
+                else
+                {
+                    setValueStatement.TrueStatements.Add(new CodeAssignStatement(
+                                                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),field.Name),
+                                                         new CodeCastExpression(field.Type,new CodeArgumentReferenceExpression("value"))));
+                }
+                
+                
+                setValueStatement.TrueStatements.Add(new CodeMethodReturnStatement());
+                setvalueMethod.Statements.Add(setValueStatement);
             }
         }
 
@@ -1759,7 +1798,8 @@ namespace OrmCodeGenLib
             {
                 method.Attributes |= MemberAttributes.Override;
             }
-            // реализует метод базового класса
+            else
+            // реализует метод интерфейса
             method.ImplementationTypes.Add(typeof(IOrmObjectSchema));
             // параметры
             //...

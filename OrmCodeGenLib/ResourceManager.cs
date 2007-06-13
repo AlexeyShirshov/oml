@@ -12,7 +12,7 @@ namespace OrmCodeGenLib
         {
             System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
             string resourceName;
-            resourceName = string.Format("{0}.{1}.xsd", assembly.GetName().Name, schemaName);
+            resourceName = string.Format("{0}.Schemas.{1}.xsd", assembly.GetName().Name, schemaName);
             XmlSchema schema = new XmlSchema();
 
             return XmlSchema.Read(assembly.GetManifestResourceStream(resourceName), new ValidationEventHandler(schemaValidationEventHandler));

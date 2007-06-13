@@ -10,13 +10,20 @@ namespace OrmCodeGenLib.Descriptors
         private readonly LinkTarget _right;
         private readonly TableDescription _table;
         private readonly EntityDescription _underlyingEntity;
+        private bool _disabled;
 
         public RelationDescription(LinkTarget left, LinkTarget right, TableDescription table, EntityDescription underlyingEntity)
+            : this(left, right, table, underlyingEntity, false)
+        {
+        }
+
+        public RelationDescription(LinkTarget left, LinkTarget right, TableDescription table, EntityDescription underlyingEntity, bool disabled)
         {
             _table = table;
             _underlyingEntity = underlyingEntity;
             _left = left;
             _right = right;
+            _disabled = disabled;
         }
 
         public TableDescription Table
@@ -37,6 +44,12 @@ namespace OrmCodeGenLib.Descriptors
         public LinkTarget Right
         {
             get { return _right; }
+        }
+
+        public bool Disabled
+        {
+            get { return _disabled; }
+            set { _disabled = value; }
         }
 
         public static bool IsSimilar(RelationDescription first, RelationDescription second)
