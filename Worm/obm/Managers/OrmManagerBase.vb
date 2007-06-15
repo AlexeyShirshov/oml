@@ -1055,6 +1055,10 @@ Namespace Orm
                 key = _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Top"
             End If
 
+            If sort IsNot Nothing Then
+                key &= sort.ToString
+            End If
+
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim f As String = String.Empty

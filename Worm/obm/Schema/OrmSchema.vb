@@ -34,22 +34,34 @@ Namespace Orm
 
     Public Class OrmSchemaBase
 
-        Public Delegate Function MapVersion(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
+        Public Delegate Function ResolveEntity(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
+        Public Delegate Function ResolveEntityName(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
 
         Protected map As IDictionary = Hashtable.Synchronized(New Hashtable)
         Protected sel As IDictionary = Hashtable.Synchronized(New Hashtable)
         Private _version As String
-        Private _mapv As MapVersion
+        Private _mapv As ResolveEntity
+        Private _mapn As ResolveEntityName
 
         Public Sub New(ByVal version As String)
             _version = version
         End Sub
 
-        Public Sub New(ByVal version As String, ByVal mapVersion As MapVersion)
+        Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity)
             _version = version
-            _mapv = mapVersion
+            _mapv = resolveEntity
         End Sub
 
+        Public Sub New(ByVal version As String, ByVal resolveName As ResolveEntityName)
+            _version = version
+            _mapn = resolveName
+        End Sub
+
+        Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity, ByVal resolveName As ResolveEntityName)
+            _version = version
+            _mapv = resolveEntity
+            _mapn = resolveName
+        End Sub
 #Region " reflection "
 
         Protected Friend Function GetProperties(ByVal t As Type) As IDictionary
@@ -768,12 +780,12 @@ Namespace Orm
 
                                     If Not String.IsNullOrEmpty(ea.EntityName) Then
                                         If names.Contains(ea.EntityName) Then
-                                            Dim tt As Type = CType(names(ea.EntityName), Type)
-                                            If tt.IsAssignableFrom(tp) Then
-                                                names(ea.EntityName) = tp
+                                            Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea.EntityName), Pair(Of Type, EntityAttribute))
+                                            If tt.First.IsAssignableFrom(tp) OrElse tt.Second.Version <> _version Then
+                                                names(ea.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea)
                                             End If
                                         Else
-                                            names.Add(ea.EntityName, tp)
+                                            names.Add(ea.EntityName, New Pair(Of Type, EntityAttribute)(tp, ea))
                                         End If
                                     End If
 
@@ -817,12 +829,12 @@ Namespace Orm
 
                                         If Not String.IsNullOrEmpty(ea.EntityName) AndAlso entities.Length = 0 Then
                                             If names.Contains(ea.EntityName) Then
-                                                Dim tt As Type = CType(names(ea.EntityName), Type)
-                                                If tt.IsAssignableFrom(tp) Then
-                                                    names(ea.EntityName) = tp
+                                                Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea.EntityName), Pair(Of Type, EntityAttribute))
+                                                If tt.First.IsAssignableFrom(tp) OrElse tt.Second.Version <> _version Then
+                                                    names(ea.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea)
                                                 End If
                                             Else
-                                                names.Add(ea.EntityName, tp)
+                                                names.Add(ea.EntityName, New Pair(Of Type, EntityAttribute)(tp, ea))
                                             End If
                                         End If
 
@@ -871,12 +883,18 @@ Namespace Orm
 
                                         If Not String.IsNullOrEmpty(ea1.EntityName) Then
                                             If names.Contains(ea1.EntityName) Then
-                                                Dim tt As Type = CType(names(ea1.EntityName), Type)
-                                                If tt.IsAssignableFrom(tp) Then
-                                                    names(ea1.EntityName) = tp
+                                                Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea1.EntityName), Pair(Of Type, EntityAttribute))
+                                                If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> _version AndAlso _mapn IsNot Nothing) Then
+                                                    Dim e As EntityAttribute = Nothing
+                                                    If _mapn IsNot Nothing Then
+                                                        _mapn(_version, New EntityAttribute() {ea1, tt.Second}, tp)
+                                                    End If
+                                                    If e IsNot tt.Second Then
+                                                        names(ea1.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea1)
+                                                    End If
                                                 End If
                                             Else
-                                                names.Add(ea1.EntityName, tp)
+                                                names.Add(ea1.EntityName, New Pair(Of Type, EntityAttribute)(tp, ea1))
                                             End If
                                         End If
 
@@ -924,12 +942,18 @@ Namespace Orm
 
                                             If Not String.IsNullOrEmpty(ea2.EntityName) AndAlso entities.Length = 0 Then
                                                 If names.Contains(ea2.EntityName) Then
-                                                    Dim tt As Type = CType(names(ea2.EntityName), Type)
-                                                    If tt.IsAssignableFrom(tp) Then
-                                                        names(ea2.EntityName) = tp
+                                                    Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea2.EntityName), Pair(Of Type, EntityAttribute))
+                                                    If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> _version AndAlso _mapn IsNot Nothing) Then
+                                                        Dim e As EntityAttribute = Nothing
+                                                        If _mapn IsNot Nothing Then
+                                                            _mapn(_version, New EntityAttribute() {ea2, tt.Second}, tp)
+                                                        End If
+                                                        If e IsNot tt.Second Then
+                                                            names(ea2.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea2)
+                                                        End If
                                                     End If
                                                 Else
-                                                    names.Add(ea2.EntityName, tp)
+                                                    names.Add(ea2.EntityName, New Pair(Of Type, EntityAttribute)(tp, ea2))
                                                 End If
                                             End If
 
@@ -967,7 +991,7 @@ Namespace Orm
                     End If
                 End Using
             End If
-            Return CType(idic(name), Type)
+            Return CType(idic(name), Pair(Of Type, EntityAttribute)).First
         End Function
 
         Public Function GetObjectSchema(ByVal t As Type) As IOrmObjectSchemaBase

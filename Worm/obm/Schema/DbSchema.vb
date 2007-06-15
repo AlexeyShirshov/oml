@@ -26,7 +26,7 @@ Namespace Orm
             MyBase.New(version)
         End Sub
 
-        Public Sub New(ByVal version As String, ByVal mapVersion As MapVersion)
+        Public Sub New(ByVal version As String, ByVal mapVersion As ResolveEntity)
             MyBase.New(version, mapVersion)
         End Sub
 
