@@ -1657,7 +1657,6 @@ namespace OrmCodeGenLib
                         )
                     );
 
-                CodeTypeReference ft;
                 if(fieldRealType.IsGenericType && typeof(Nullable<>).Equals(fieldRealType.GetGenericTypeDefinition()))
                 {
                     setValueStatement.TrueStatements.Add(
