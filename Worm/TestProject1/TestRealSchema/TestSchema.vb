@@ -171,9 +171,9 @@ Public Class TestSchema
             t2 = CType(mgr.FindTop(Of Table1)(10, Nothing, Orm.Sorting.Field("DT").Desc, False), IList(Of Table1))
 
             Assert.AreEqual(3, t2(0).Identifier)
-            Assert.IsTrue(t2(0).IsLoaded)
+            Assert.IsFalse(t2(0).IsLoaded)
             Assert.AreEqual(2, t2(1).Identifier)
-            Assert.IsTrue(t2(1).IsLoaded)
+            Assert.IsFalse(t2(1).IsLoaded)
         End Using
     End Sub
 
