@@ -256,6 +256,7 @@ namespace OrmCodeGen
                     {
                         GenerateCode(codeDomProvider, unitsDic[name], System.IO.Path.GetFullPath(privateFolder + System.IO.Path.DirectorySeparatorChar.ToString() + name), testRun);
                         Console.Write(".");
+                        totalFiles++;
                     }
                     catch (Exception exc)
                     {
@@ -264,6 +265,7 @@ namespace OrmCodeGen
                             string.Format("Entity: {0}; file: {1}; message: {2}", entity.Identifier, name, exc.Message));
                     }
                 }
+                totalEntities++;
             }
 
             Console.WriteLine();
