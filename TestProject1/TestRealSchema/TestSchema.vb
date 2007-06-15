@@ -190,4 +190,25 @@ Public Class TestSchema
             Assert.IsTrue(t2(1).IsLoaded)
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestOrder3()
+        Dim schema As New Orm.DbSchema("1")
+
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(schema)
+            Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, Orm.Sorting.Field("DT").Asc, True), IList(Of Table1))
+            Dim t1 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, Orm.Sorting.Field("Title").Asc, True), IList(Of Table1))
+
+            Assert.AreEqual(1, t2(0).Identifier)
+            Assert.IsTrue(t2(0).IsLoaded)
+            Assert.AreEqual(2, t2(1).Identifier)
+            Assert.IsTrue(t2(1).IsLoaded)
+
+
+            Assert.AreEqual(1, t1(0).Identifier)
+            Assert.IsTrue(t1(0).IsLoaded)
+            Assert.AreEqual(3, t1(1).Identifier)
+            Assert.IsTrue(t1(1).IsLoaded)
+        End Using
+    End Sub
 End Class
