@@ -26,8 +26,16 @@ Namespace Orm
             MyBase.New(version)
         End Sub
 
-        Public Sub New(ByVal version As String, ByVal mapVersion As ResolveEntity)
-            MyBase.New(version, mapVersion)
+        Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity)
+            MyBase.New(version, resolveEntity)
+        End Sub
+
+        Public Sub New(ByVal version As String, ByVal resolveName As ResolveEntityName)
+            MyBase.New(version, resolveName)
+        End Sub
+
+        Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity, ByVal resolveName As ResolveEntityName)
+            MyBase.New(version, resolveEntity, resolveName)
         End Sub
 
         Public Function GetSharedTable(ByVal tableName As String) As OrmTable Implements IDbSchema.GetSharedTable
