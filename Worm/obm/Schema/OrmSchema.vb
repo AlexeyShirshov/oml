@@ -887,7 +887,7 @@ Namespace Orm
                                                 If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> _version AndAlso _mapn IsNot Nothing) Then
                                                     Dim e As EntityAttribute = Nothing
                                                     If _mapn IsNot Nothing Then
-                                                        _mapn(_version, New EntityAttribute() {ea1, tt.Second}, tp)
+                                                        e = _mapn(_version, New EntityAttribute() {ea1, tt.Second}, tp)
                                                     End If
                                                     If e IsNot tt.Second Then
                                                         names(ea1.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea1)
@@ -946,7 +946,7 @@ Namespace Orm
                                                     If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> _version AndAlso _mapn IsNot Nothing) Then
                                                         Dim e As EntityAttribute = Nothing
                                                         If _mapn IsNot Nothing Then
-                                                            _mapn(_version, New EntityAttribute() {ea2, tt.Second}, tp)
+                                                            e = _mapn(_version, New EntityAttribute() {ea2, tt.Second}, tp)
                                                         End If
                                                         If e IsNot tt.Second Then
                                                             names(ea2.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea2)
