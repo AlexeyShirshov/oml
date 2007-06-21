@@ -679,7 +679,7 @@ Namespace Orm
         'End Function
 
         Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IOrmFilter, _
-            ByVal relation As M2MRelation, ByVal idsSorted As Boolean) As IDictionary(Of Integer, EditableList)
+            ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Integer, EditableList)
             Invariant()
 
             If ids Is Nothing Then
@@ -718,7 +718,7 @@ Namespace Orm
                 'dt.Columns.Add(col1, GetType(Integer))
                 'dt.Columns.Add(col2, GetType(Integer))
 
-                For Each o As OrmBase In GetObjects(ct, ids, f, True, f1, idsSorted)
+                For Each o As OrmBase In GetObjects(ct, ids, f, withLoad, f1, idsSorted)
                     Dim o1 As OrmBase = CType(DbSchema.GetFieldValue(o, f1), OrmBase)
                     Dim o2 As OrmBase = CType(DbSchema.GetFieldValue(o, f2), OrmBase)
                     Dim id1 As Integer = o1.Identifier
@@ -744,7 +744,7 @@ Namespace Orm
                 Dim oschema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(type2load)
                 Dim r2 As M2MRelation = DbSchema.GetM2MRelation(type2load, type, direct)
                 Dim appendMainTable As Boolean = f IsNot Nothing OrElse oschema2.GetFilter(GetFilterInfo) IsNot Nothing
-                sb.Append(DbSchema.SelectM2M(type2load, type, appendMainTable, True, params, almgr, False, direct))
+                sb.Append(DbSchema.SelectM2M(type2load, type, appendMainTable, True, params, almgr, withLoad, direct))
 
                 If Not DbSchema.AppendWhere(type2load, f, almgr, sb, GetFilterInfo, params) Then
                     sb.Append(" where 1=1 ")
@@ -770,6 +770,10 @@ Namespace Orm
                             params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
                             nidx = cmd_str.Second
                         End With
+                        Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
+                        If withLoad Then
+                            arr = DbSchema.GetSortedFieldList(type2load)
+                        End If
                         Dim b As ConnAction = TestConn(cmd)
                         Try
                             Using dr As System.Data.IDataReader = cmd.ExecuteReader
@@ -784,6 +788,16 @@ Namespace Orm
                                         l.Add(id2)
                                         el = New EditableList(id1, l, type, type2load)
                                         edic.Add(id1, el)
+                                    End If
+                                    If withLoad Then
+                                        Dim obj As T = CreateDBObject(Of T)(id2)
+                                        If obj.ObjectState <> ObjectState.Modified Then
+                                            Using obj.GetSyncRoot()
+                                                If obj.IsLoaded Then obj.IsLoaded = False
+                                                LoadFromDataReader(obj, dr, arr, False, 2)
+                                                If obj.ObjectState = ObjectState.NotLoaded Then obj.ObjectState = ObjectState.None
+                                            End Using
+                                        End If
                                     End If
                                 Loop
                             End Using
@@ -1349,7 +1363,7 @@ Namespace Orm
 
             length = Math.Min(length, objs.Count - start)
 
-            Dim ids As Generic.List(Of Integer) = FormPKValues(Of T)(Me, CType(objs, Global.System.Collections.Generic.IList(Of T)), start, length)
+            Dim ids As Generic.List(Of Integer) = FormPKValues(Of T)(Me, objs, start, length)
             If ids.Count < 1 Then
                 Return objs
             End If
