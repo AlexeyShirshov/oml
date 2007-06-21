@@ -790,7 +790,7 @@ Namespace Orm
                         type = o.GetType
                     End If
                 Next
-                Dim edic As IDictionary(Of Integer, EditableList) = GetObjects(Of T)(type, ids.Ints, GetFilter(criteria), relation, False)
+                Dim edic As IDictionary(Of Integer, EditableList) = GetObjects(Of T)(type, ids.Ints, GetFilter(criteria), relation, False, True)
                 'l.AddRange(c)
 
                 If (target IsNot Nothing OrElse Not _dont_cache_lists) AndAlso edic IsNot Nothing Then
@@ -1564,21 +1564,42 @@ l1:
 
 #Region " shared helpers "
 
-        Protected Shared Function FormPKValues(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal objs As IList(Of T), ByVal start As Integer, ByVal length As Integer, _
+        Protected Shared Function FormPKValues(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal objs As ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
             Optional ByVal check_loaded As Boolean = True) As List(Of Integer)
 
             Dim l As New Generic.List(Of Integer)
-            For i As Integer = start To start + length - 1
-                Dim o As OrmBase = objs(i)
-                If o IsNot Nothing Then
-                    If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
-                        If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
-                            Dim idx As Integer = l.BinarySearch(o.Identifier)
-                            l.Insert(Not idx, o.Identifier)
+            If GetType(IList(Of T)).IsAssignableFrom(CType(objs, Object).GetType) Then
+                Dim oo As IList(Of T) = CType(objs, Global.System.Collections.Generic.IList(Of T))
+                For i As Integer = start To start + length - 1
+                    Dim o As OrmBase = oo(i)
+                    If o IsNot Nothing Then
+                        If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
+                            If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
+                                Dim idx As Integer = l.BinarySearch(o.Identifier)
+                                l.Insert(Not idx, o.Identifier)
+                            End If
                         End If
                     End If
-                End If
-            Next
+                Next
+            Else
+                Dim i As Integer = 0
+                For Each o As OrmBase In objs
+                    If i >= start + length Then
+                        Exit For
+                    End If
+                    If i >= start Then
+                        If o IsNot Nothing Then
+                            If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
+                                If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
+                                    Dim idx As Integer = l.BinarySearch(o.Identifier)
+                                    l.Insert(Not idx, o.Identifier)
+                                End If
+                            End If
+                        End If
+                    End If
+                    i += 1
+                Next
+            End If
             Return l
         End Function
 
@@ -2551,7 +2572,7 @@ l1:
            ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As Generic.IList(Of T)
 
         Protected MustOverride Function GetObjects(Of T As {OrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IOrmFilter, _
-           ByVal relation As M2MRelation, ByVal idsSorted As Boolean) As IDictionary(Of Integer, EditableList)
+           ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Integer, EditableList)
 
         Protected Friend MustOverride Sub LoadObject(ByVal obj As OrmBase)
 
