@@ -144,7 +144,7 @@ Namespace Web
                 End If
                 If u IsNot Nothing Then
                     Dim schema As OrmSchemaBase = mgr.ObjectSchema
-                    schema.SetFieldValue(u, GetField("Password"), newPassword)
+                    schema.SetFieldValue(u, GetField("Password"), HashPassword(newPassword))
                     Dim lpcf As String = GetField("LastPasswordChangeDate")
                     If schema.HasField(u.GetType, lpcf) Then
                         schema.SetFieldValue(u, lpcf, ProfileProvider.GetNow)
