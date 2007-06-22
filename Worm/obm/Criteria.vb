@@ -169,7 +169,7 @@ Namespace Orm
 
         Public Function [Or](ByVal link As CriteriaLink) As CriteriaLink
             If link IsNot Nothing Then
-                _con.AddFilter(link._con.Condition, ConditionOperator.And)
+                _con.AddFilter(link._con.Condition, ConditionOperator.Or)
             End If
 
             Return Me
