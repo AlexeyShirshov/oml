@@ -179,7 +179,7 @@ Namespace Web
                         Return Nothing
                     End If
 
-                    If GetUserNameByEmail(email) IsNot Nothing Then
+                    If Not String.IsNullOrEmpty(email) AndAlso GetUserNameByEmail(email) IsNot Nothing Then
                         status = MembershipCreateStatus.DuplicateEmail
                         Return Nothing
                     End If
