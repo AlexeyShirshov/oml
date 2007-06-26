@@ -244,6 +244,8 @@ Namespace Orm
         Private _closeConnOnCommit As ConnAction
         Private _conn As System.Data.Common.DbConnection
 
+        Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
+
         Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As DbSchema, ByVal connectionString As String)
             MyBase.New(cache, schema)
             _connStr = connectionString
@@ -601,14 +603,22 @@ Namespace Orm
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
-            Dim mi As Reflection.MethodInfo = Nothing
-            For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
-                If mi2.Name = "LoadMultipleObjects" And mi2.IsGenericMethod Then
-                    mi = mi2
-                    Exit For
+
+            If _LoadMultipleObjectsMI Is Nothing Then
+                For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
+                    If mi2.Name = "LoadMultipleObjects" And mi2.IsGenericMethod Then
+                        _LoadMultipleObjectsMI = mi2
+                        Exit For
+                    End If
+                Next
+
+                If _LoadMultipleObjectsMI Is Nothing Then
+                    Throw New OrmManagerException("Cannot find method LoadMultipleObjects")
                 End If
-            Next
-            Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
+            End If
+
+            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
+
             Return CType(mi_real.Invoke(Me, flags, Nothing, _
                 New Object() {t, cmd, withLoad, Nothing, arr}, Nothing), IList)
 

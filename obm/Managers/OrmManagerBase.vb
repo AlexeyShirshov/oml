@@ -369,6 +369,7 @@ Namespace Orm
         Protected Friend _disposed As Boolean = False
         'Protected _sites() As Partner
         Protected Shared _mcSwitch As New TraceSwitch("mcSwitch", "Switch for OrmManagerBase", "3") 'info
+        Protected Shared _LoadObjectsMI As Reflection.MethodInfo = Nothing
         Protected _findload As Boolean = False
         '#If DEBUG Then
         '        Protected _next As OrmManagerBase
@@ -1564,22 +1565,28 @@ l1:
 
 #Region " shared helpers "
 
+        Private Shared Sub InsertObject(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Integer), ByVal o As OrmBase)
+            If o IsNot Nothing Then
+                If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
+                    If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
+                        Dim idx As Integer = l.BinarySearch(o.Identifier)
+                        If idx < 0 Then
+                            l.Insert(Not idx, o.Identifier)
+                        End If
+                    End If
+                End If
+            End If
+        End Sub
+
         Protected Shared Function FormPKValues(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal objs As ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
             Optional ByVal check_loaded As Boolean = True) As List(Of Integer)
 
             Dim l As New Generic.List(Of Integer)
-            If GetType(IList(Of T)).IsAssignableFrom(CType(objs, Object).GetType) Then
-                Dim oo As IList(Of T) = CType(objs, Global.System.Collections.Generic.IList(Of T))
+            Dim col As IList(Of T) = TryCast(objs, IList(Of T))
+            If col IsNot Nothing Then
                 For i As Integer = start To start + length - 1
-                    Dim o As OrmBase = oo(i)
-                    If o IsNot Nothing Then
-                        If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
-                            If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
-                                Dim idx As Integer = l.BinarySearch(o.Identifier)
-                                l.Insert(Not idx, o.Identifier)
-                            End If
-                        End If
-                    End If
+                    Dim o As OrmBase = col(i)
+                    InsertObject(Of T)(mgr, check_loaded, l, o)
                 Next
             Else
                 Dim i As Integer = 0
@@ -1588,14 +1595,17 @@ l1:
                         Exit For
                     End If
                     If i >= start Then
-                        If o IsNot Nothing Then
-                            If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
-                                If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
-                                    Dim idx As Integer = l.BinarySearch(o.Identifier)
-                                    l.Insert(Not idx, o.Identifier)
-                                End If
-                            End If
-                        End If
+                        InsertObject(Of T)(mgr, check_loaded, l, o)
+                        'If o IsNot Nothing Then
+                        '    If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
+                        '        If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
+                        '            Dim idx As Integer = l.BinarySearch(o.Identifier)
+                        '            If idx < 0 Then
+                        '                l.Insert(Not idx, o.Identifier)
+                        '            End If
+                        '        End If
+                        '    End If
+                        'End If
                     End If
                     i += 1
                 Next
@@ -2461,6 +2471,56 @@ l1:
                 ss = arr.ToArray
             End If
             Return ss
+        End Function
+
+        Public Function LoadObjects(Of T As {OrmBase, New})(ByVal objs As ICollection(Of T), ByVal fields() As String, _
+            ByVal start As Integer, ByVal length As Integer) As ICollection(Of T)
+
+            Dim col As ICollection(Of T) = LoadObjectsInternal(objs, start, length, True)
+
+            If fields Is Nothing OrElse fields.Length = 0 Then
+                Return col
+            End If
+
+            Dim prop_objs(fields.Length - 1) As IList
+
+            Dim lt As Type = GetType(List(Of ))
+
+            For Each o As T In col
+                For i As Integer = 0 To fields.Length - 1
+                    Dim obj As OrmBase = CType(ObjectSchema.GetFieldValue(o, fields(i)), OrmBase)
+                    If prop_objs(i) Is Nothing Then
+                        prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IList)
+                    End If
+                    prop_objs(i).Add(obj)
+                Next
+            Next
+
+            If _LoadObjectsMI Is Nothing Then
+                Dim mis() As Reflection.MemberInfo = Me.GetType.GetMember("LoadObjects")
+
+                For Each mri_ As Reflection.MemberInfo In mis
+                    Dim mi_ As Reflection.MethodInfo = TryCast(mri_, Reflection.MethodInfo)
+                    If mi_ IsNot Nothing AndAlso mi_.GetParameters.Length = 1 Then
+                        _LoadObjectsMI = mi_
+                        Exit For
+                    End If
+                Next
+
+                If _LoadObjectsMI Is Nothing Then
+                    Throw New OrmManagerException("Cannot find method LoadObjects")
+                End If
+            End If
+
+            For Each po As IList In prop_objs
+                If po.Count > 0 Then
+                    Dim tt As Type = po(0).GetType
+                    _LoadObjectsMI.MakeGenericMethod(New Type() {tt}).Invoke(Me, Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public, Nothing, _
+                        New Object() {po}, Nothing)
+                End If
+            Next
+
+            Return col
         End Function
 
         Public Function LoadObjects(Of T As {OrmBase, New})(ByVal objs As ICollection(Of T), ByVal start As Integer, ByVal length As Integer) As ICollection(Of T)

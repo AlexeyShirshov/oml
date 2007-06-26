@@ -541,6 +541,30 @@ Public Class TestManagerRS
     End Sub
 
     <TestMethod()> _
+    Public Sub TestLoadObjects4()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim tt1 As Table1 = mgr.CreateObject(Of Table1)(1)
+            Dim tt2 As Table1 = mgr.CreateObject(Of Table1)(1)
+
+            mgr.LoadObjects(New List(Of Table1)(New Table1() {tt1, tt2}))
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestLoadObjects5()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim tt1 As Table2 = mgr.CreateObject(Of Table2)(1)
+
+            Dim t As ICollection(Of Table2) = mgr.LoadObjects(Of Table2)(New Table2() {tt1}, New String() {"Table1"}, 0, 1)
+
+            Assert.AreEqual(1, t.Count)
+
+            Assert.AreEqual(1, CType(t, IList(Of Table2))(0).Tbl.Identifier)
+            Assert.IsTrue(CType(t, IList(Of Table2))(0).Tbl.IsLoaded)
+        End Using
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestLoadObjectsM2M()
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Integer() {1, 2}, False)
