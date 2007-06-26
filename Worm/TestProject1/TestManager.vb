@@ -937,16 +937,16 @@ Imports System.Collections.Generic
             Next
             Dim c2 As ICollection(Of Entity4) = e2.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(11, c2.Count)
-            Dim l As IList(Of Entity4) = CType(c1, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
-            For Each o As Entity4 In c2
-                If l.Contains(o) Then
-                    Assert.IsTrue(o.IsLoaded)
-                Else
-                    Assert.IsFalse(o.IsLoaded)
-                End If
-            Next
+            'Dim l As IList(Of Entity4) = CType(c1, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
+            'For Each o As Entity4 In c2
+            '    If l.Contains(o) Then
+            '        Assert.IsTrue(o.IsLoaded)
+            '    Else
+            '        Assert.IsFalse(o.IsLoaded)
+            '    End If
+            'Next
 
-            mgr.LoadObjects(Of Entity4)(mgr.ObjectSchema.GetM2MRelation(GetType(Entity), GetType(Entity4), True), Nothing, CType(col, Collections.ICollection), Nothing)
+            'mgr.LoadObjects(Of Entity4)(mgr.ObjectSchema.GetM2MRelation(GetType(Entity), GetType(Entity4), True), Nothing, CType(col, Collections.ICollection), Nothing)
 
         End Using
     End Sub
