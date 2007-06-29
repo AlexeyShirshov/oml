@@ -1373,7 +1373,7 @@ Namespace Orm
 
         Public Function MakeSearchContainsStatements(ByVal t As Type, ByVal tokens() As String, ByVal fields() As String, _
             ByVal sectionName As String, ByVal join As OrmJoin, ByVal sort_type As SortType, _
-            ByVal params As ParamMgr, ByVal filter_info As Object) As String
+            ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String()) As String
 
             Dim obj_schema As IOrmObjectSchema = GetObjectSchema(t)
             Dim fs As IOrmFullTextSupport = TryCast(obj_schema, IOrmFullTextSupport)
@@ -1402,7 +1402,17 @@ Namespace Orm
                 Next
             End If
             sb.Append(" from containstable(")
-            sb.Append(tbl).Append(",*,")
+            sb.Append(tbl).Append(",")
+            If queryFields Is Nothing OrElse queryFields.Length = 0 Then
+                sb.Append("*")
+            Else
+                sb.Append("(")
+                For Each f As String In queryFields
+                    sb.Append(f)
+                Next
+                sb.Append(")")
+            End If
+            sb.Append(",")
             sb.Append(pname).Append(") ").Append([alias])
             If Not appendMain Then
                 appendMain = obj_schema.GetFilter(filter_info) IsNot Nothing
@@ -1437,7 +1447,7 @@ Namespace Orm
 
         Public Function MakeSearchFreetextStatements(ByVal t As Type, ByVal tokens() As String, ByVal fields() As String, _
             ByVal sectionName As String, ByVal join As OrmJoin, ByVal sort_type As SortType, _
-            ByVal params As ParamMgr, ByVal filter_info As Object) As String
+            ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String()) As String
 
             Dim value As String = Configuration.SearchSection.GetValueForFreeText(t, tokens, sectionName)
             If String.IsNullOrEmpty(value) Then
@@ -1464,7 +1474,17 @@ Namespace Orm
                 Next
             End If
             sb.Append(" from freetexttable(")
-            sb.Append(tbl).Append(",*,")
+            sb.Append(tbl).Append(",")
+            If queryFields Is Nothing OrElse queryFields.Length = 0 Then
+                sb.Append("*")
+            Else
+                sb.Append("(")
+                For Each f As String In queryFields
+                    sb.Append(f)
+                Next
+                sb.Append(")")
+            End If
+            sb.Append(",")
             sb.Append(pname).Append(",500) ").Append([alias])
             If Not appendMain Then
                 appendMain = obj_schema.GetFilter(filter_info) IsNot Nothing

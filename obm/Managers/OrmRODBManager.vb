@@ -1549,13 +1549,17 @@ Namespace Orm
             Return l
         End Function
 
-        Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal tokens() As String, ByVal join As OrmJoin) As System.Collections.Generic.ICollection(Of T)
-
+        Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal tokens() As String, ByVal join As OrmJoin, ByVal contextKey As Object) As System.Collections.Generic.ICollection(Of T)
             Dim fields() As String = Nothing
             Dim oschema As IOrmObjectSchema = DbSchema.GetObjectSchema(GetType(T))
             Dim fs As IOrmFullTextSupport = TryCast(oschema, IOrmFullTextSupport)
+            Dim queryFields As String() = Nothing
             If fs IsNot Nothing Then
                 fields = fs.GetIndexedFields
+
+                If contextKey IsNot Nothing Then
+                    queryFields = fs.GetQueryFields(contextKey)
+                End If
             End If
             Dim col As ICollection(Of T) = Nothing
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
@@ -1573,7 +1577,7 @@ Namespace Orm
                     .CommandType = System.Data.CommandType.Text
 
                     Dim params As New ParamMgr(DbSchema, "p")
-                    .CommandText = DbSchema.MakeSearchContainsStatements(GetType(T), tokens, fields, GetSearchSection, join, SortType.Desc, params, GetFilterInfo)
+                    .CommandText = DbSchema.MakeSearchContainsStatements(GetType(T), tokens, fields, GetSearchSection, join, SortType.Desc, params, GetFilterInfo, queryFields)
                     params.AppendParams(.Parameters)
                 End With
 
@@ -1587,7 +1591,7 @@ Namespace Orm
                         .CommandType = System.Data.CommandType.Text
 
                         Dim params As New ParamMgr(DbSchema, "p")
-                        .CommandText = DbSchema.MakeSearchFreetextStatements(GetType(T), tokens, Nothing, GetSearchSection, join, SortType.Desc, params, GetFilterInfo)
+                        .CommandText = DbSchema.MakeSearchFreetextStatements(GetType(T), tokens, Nothing, GetSearchSection, join, SortType.Desc, params, GetFilterInfo, queryFields)
                         params.AppendParams(.Parameters)
                     End With
 

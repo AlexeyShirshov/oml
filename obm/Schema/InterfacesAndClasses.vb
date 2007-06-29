@@ -41,6 +41,7 @@ Namespace Orm
     'End Interface
 
     Public Interface IOrmFullTextSupport
+        Function GetQueryFields(ByVal contextKey As Object) As String()
         Function GetIndexedFields() As String()
         ReadOnly Property ApplayAsterisk() As Boolean
     End Interface
