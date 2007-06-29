@@ -2328,7 +2328,17 @@ l1:
 
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
                 Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
-                Return Search(Of T)(ss, Nothing)
+                Return Search(Of T)(ss, Nothing, Nothing)
+            End If
+            Return New List(Of T)()
+        End Function
+
+        Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal contextKey As Object) As ICollection(Of T)
+            Invariant()
+
+            If [string] IsNot Nothing AndAlso [string].Length > 0 Then
+                Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
+                Return Search(Of T)(ss, Nothing, contextKey)
             End If
             Return New List(Of T)()
         End Function
@@ -2600,7 +2610,7 @@ l1:
 
         Protected MustOverride Function GetSearchSection() As String
 
-        Protected MustOverride Function Search(Of T As {OrmBase, New})(ByVal tokens() As String, ByVal join As OrmJoin) As ICollection(Of T)
+        Protected MustOverride Function Search(Of T As {OrmBase, New})(ByVal tokens() As String, ByVal join As OrmJoin, ByVal contextKey As Object) As ICollection(Of T)
 
         Protected Friend MustOverride Function GetStaticKey() As String
 
