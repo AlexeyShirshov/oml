@@ -96,7 +96,7 @@ Namespace Orm
             dic.Remove(id)
         End Sub
 
-        Public Overridable Function ValidateOnUpdate(ByVal obj As OrmBase) As Boolean
+        Public Overridable Function ValidateOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String)) As Boolean
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If

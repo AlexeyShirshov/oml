@@ -313,12 +313,12 @@ Public Class P4Proc
         _params.Add(New Pair(Of String, Object)("i", i))
     End Sub
 
-    Public Overrides Function ValidateOnUpdate(ByVal obj As Worm.Orm.OrmBase) As Boolean
+    Public Overrides Function ValidateOnUpdate(ByVal obj As Worm.Orm.OrmBase, ByVal fields As ICollection(Of String)) As Boolean
         Dim t1 As Table1 = TryCast(obj, Table1)
         If t1 IsNot Nothing AndAlso t1.Identifier = CInt(_params(0).Second) Then
             Return True
         End If
-        Return MyBase.ValidateOnUpdate(obj)
+        Return MyBase.ValidateOnUpdate(obj, fields)
     End Function
 
     Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Worm.Orm.Dependency))
