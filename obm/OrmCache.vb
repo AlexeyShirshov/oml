@@ -295,7 +295,7 @@ Namespace Orm
             End Using
         End Function
 
-        Protected Friend Sub AddUpdatedFields(ByVal obj As OrmBase, ByVal field As String)
+        Protected Friend Sub AddUpdatedFields(ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -307,11 +307,14 @@ Namespace Orm
                     l = New List(Of String)
                     _invalidate.Add(t, l)
                 End If
-                If Not l.Contains(field) Then
-                    l.Add(field)
-                End If
+                For Each field As String In fields
+                    If Not l.Contains(field) Then
+                        l.Add(field)
+                    End If
+                Next
             End Using
-            ValidateSPOnUpdate(obj)
+
+            ValidateSPOnUpdate(obj, fields)
         End Sub
 
         Protected Friend Sub RemoveUpdatedFields(ByVal t As Type, ByVal field As String)
@@ -691,10 +694,10 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Sub ValidateSPOnUpdate(ByVal obj As OrmBase)
+        Protected Sub ValidateSPOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
             Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
                 For Each sp As StoredProcBase In _procs
-                    If sp.ValidateOnUpdate(obj) Then
+                    If sp.ValidateOnUpdate(obj, fields) Then
                         sp.ResetCache(Me)
                     End If
                 Next

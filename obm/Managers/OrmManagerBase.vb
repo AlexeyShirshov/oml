@@ -1285,11 +1285,14 @@ l1:
 
         Protected Sub InvalidateCache(ByVal obj As OrmBase, ByVal upd As IList(Of OrmFilter))
             Dim t As Type = obj.GetType
+            Dim l As New List(Of String)
             For Each f As OrmFilter In upd
-                Assert(f.Type Is t, "")
+                '    Assert(f.Type Is t, "")
 
-                Cache.AddUpdatedFields(obj, f.FieldName)
+                '    Cache.AddUpdatedFields(obj, f.FieldName)
+                l.Add(f.FieldName)
             Next
+            Cache.AddUpdatedFields(obj, l)
         End Sub
 
         'Protected Function GetDataTable(ByVal id As String, ByVal key As String, ByVal sync As String, ByVal t As Type, _
@@ -2499,10 +2502,12 @@ l1:
             For Each o As T In col
                 For i As Integer = 0 To fields.Length - 1
                     Dim obj As OrmBase = CType(ObjectSchema.GetFieldValue(o, fields(i)), OrmBase)
-                    If prop_objs(i) Is Nothing Then
-                        prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IList)
+                    If obj IsNot Nothing Then
+                        If prop_objs(i) Is Nothing Then
+                            prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IList)
+                        End If
+                        prop_objs(i).Add(obj)
                     End If
-                    prop_objs(i).Add(obj)
                 Next
             Next
 
@@ -2523,7 +2528,7 @@ l1:
             End If
 
             For Each po As IList In prop_objs
-                If po.Count > 0 Then
+                If po IsNot Nothing AndAlso po.Count > 0 Then
                     Dim tt As Type = po(0).GetType
                     _LoadObjectsMI.MakeGenericMethod(New Type() {tt}).Invoke(Me, Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public, Nothing, _
                         New Object() {po}, Nothing)
