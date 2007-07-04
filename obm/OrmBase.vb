@@ -136,7 +136,7 @@ Namespace Orm
         <Runtime.Serialization.OnDeserialized()> _
         Private Sub Init(ByVal context As Runtime.Serialization.StreamingContext)
             Init()
-            If OrmManagerBase.CurrentManager IsNot Nothing Then
+            If OrmManagerBase.CurrentManager IsNot Nothing AndAlso ObjectState <> Orm.ObjectState.Created Then
                 OrmManagerBase.CurrentManager.RegisterInCashe(Me)
             End If
         End Sub
