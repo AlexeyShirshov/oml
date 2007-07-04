@@ -95,7 +95,6 @@ Namespace Orm
             End Get
         End Property
 
-        'Люди, которые играют в игры, или вы сказали Здравствуйте. Что дальше? Психология человеческой судьбы [CD1]
         Protected Friend Function Modified(ByVal obj As OrmBase) As ModifiedObject
             SyncLock SyncRoot
                 If obj Is Nothing Then
@@ -128,6 +127,20 @@ Namespace Orm
                 End If
                 Return mo
             End SyncLock
+        End Function
+
+        Public Function GetModifiedObject(Of T As {OrmBase, New})() As ICollection(Of T)
+            Dim al As New Generic.List(Of T)
+            Dim tt As Type = GetType(T)
+            For Each s As String In New ArrayList(_modifiedobjects.Keys)
+                If s.IndexOf(tt.Name & ":") >= 0 Then
+                    Dim mo As ModifiedObject = CType(_modifiedobjects(s), ModifiedObject)
+                    If mo IsNot Nothing Then
+                        al.Add(CType(mo.Obj, T))
+                    End If
+                End If
+            Next
+            Return al
         End Function
 
         Protected Shared Sub Assert(ByVal condition As Boolean, ByVal message As String)
