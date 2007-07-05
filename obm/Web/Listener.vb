@@ -4,7 +4,7 @@ Imports System.Security.Permissions
 Imports System.Security
 
 Namespace Web
-    Public Class Listener
+    Public Class TraceListener
         Inherits Logging.FileLogTraceListener
 
         <HostProtection(SecurityAction.LinkDemand, Resources:=HostProtectionResource.ExternalProcessMgmt)> _
