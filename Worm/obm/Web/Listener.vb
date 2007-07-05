@@ -116,7 +116,7 @@ Namespace Web
             Dim userSpaceFree As Long = -1
             Dim k As New FileIOPermission(FileIOPermissionAccess.PathDiscovery, path)
             k.Demand()
-            If (Not GetDiskFreeSpaceEx(path, (userSpaceFree), (totalUserSpace), (totalFreeSpace)) OrElse (userSpaceFree <= -1)) Then
+            If (Not GetDiskFreeSpaceEx(path, userSpaceFree, totalUserSpace, totalFreeSpace) OrElse (userSpaceFree <= -1)) Then
                 'Throw ExceptionUtils.GetWin32Exception("ApplicationLog_FreeSpaceError", New String(0 - 1) {})
                 Throw New InvalidOperationException("ApplicationLog_FreeSpaceError")
             End If
