@@ -897,6 +897,11 @@ Imports System.Collections.Generic
     End Sub
 
     <TestMethod()> _
+    Public Sub TestListener()
+        Dim l As New Worm.Web.TraceListener("sdfds")
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestLoadM2M()
         Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim col As ICollection(Of Entity) = mgr.ConvertIds2Objects(Of Entity)(New Integer() {1, 2}, False)
