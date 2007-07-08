@@ -16,7 +16,9 @@ Namespace Web
         Friend _isAnonymousField As String
         Protected Friend _userNameField As String
         Private _getm As IGetDBMgr
-        Private _anonymStoreDb As Boolean
+        Private _autoCreateProfileInDB As Boolean
+        Private _updateLastActivity As Boolean
+        Private _profileCookieTimeout As Integer = 7
 
         Public Overrides Property ApplicationName() As String
             Get
@@ -45,8 +47,16 @@ Namespace Web
                 _userNameField = config("UsernameField")
             End If
 
-            If Not String.IsNullOrEmpty(config("AnonymousStore")) Then
-                _anonymStoreDb = CBool(config("AnonymousStore"))
+            If Not String.IsNullOrEmpty(config("AutoCreateProfileInDB")) Then
+                _autoCreateProfileInDB = CBool(config("AutoCreateProfileInDB"))
+            End If
+
+            If Not String.IsNullOrEmpty(config("UpdateLastActivity")) Then
+                _updateLastActivity = CBool(config("UpdateLastActivity"))
+            End If
+
+            If Not String.IsNullOrEmpty(config("ProfileCookieTimeout")) Then
+                _profileCookieTimeout = CInt(config("ProfileCookieTimeout"))
             End If
 
             If String.IsNullOrEmpty(config("GetDBMgr")) Then
@@ -98,12 +108,12 @@ Namespace Web
             Using mgr As OrmDBManager = _getMgr()
                 Dim cnt As Integer = 0
                 For Each u As String In usernames
-                    Dim user As OrmBase = GetUserByName(mgr, u, True, _anonymStoreDb)
+                    Dim user As OrmBase = GetUserByName(mgr, u, True, _autoCreateProfileInDB)
                     If user IsNot Nothing Then
                         DeleteProfile(mgr, user)
                     Else
                         System.Web.Security.AnonymousIdentificationModule.ClearAnonymousIdentifier()
-                        RemoveAnonymousStoreCookie
+                        RemoveAnonymousStoreCookie()
                     End If
                     cnt += 1
                 Next
@@ -115,12 +125,12 @@ Namespace Web
             Using mgr As OrmDBManager = _getMgr()
                 Dim cnt As Integer = 0
                 For Each p As ProfileInfo In profiles
-                    Dim user As OrmBase = GetUserByName(mgr, p.UserName, Not p.IsAnonymous, _anonymStoreDb)
+                    Dim user As OrmBase = GetUserByName(mgr, p.UserName, Not p.IsAnonymous, _autoCreateProfileInDB)
                     If user IsNot Nothing Then
                         DeleteProfile(mgr, user)
                     Else
                         System.Web.Security.AnonymousIdentificationModule.ClearAnonymousIdentifier()
-                        RemoveAnonymousStoreCookie
+                        RemoveAnonymousStoreCookie()
                     End If
                     cnt += 1
                 Next
@@ -266,119 +276,245 @@ Namespace Web
             End Using
         End Function
 
+        'Private Function GetPropertyValuesOld(ByVal context As System.Configuration.SettingsContext, ByVal collection As System.Configuration.SettingsPropertyCollection) As System.Configuration.SettingsPropertyValueCollection
+        '    Using mgr As OrmDBManager = _getMgr()
+        '        Dim col As New SettingsPropertyValueCollection
+
+        '        Dim user As OrmBase = GetUserByName(mgr, GetUserName(context), IsAuthenticated(context), _autoCreateProfileInDB)
+        '        If user Is Nothing Then
+        '            If _autoCreateProfileInDB Then
+        '                Throw New ArgumentException("Cannot find user " & GetUserName(context))
+        '            End If
+        '            Dim cok As HttpCookie = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
+        '            For Each p As SettingsProperty In collection
+        '                Dim newp As New SettingsPropertyValue(p)
+        '                If cok IsNot Nothing Then
+        '                    newp.PropertyValue = cok(p.Name)
+        '                ElseIf p.DefaultValue IsNot Nothing Then
+        '                    newp.PropertyValue = p.DefaultValue
+        '                End If
+        '                col.Add(newp)
+        '            Next
+        '            'If Not String.IsNullOrEmpty(_lastActivityField) AndAlso cok IsNot Nothing Then
+        '            '    cok(_lastActivityField) = GetNow().ToString
+        '            'End If
+        '            'cok.Expires = Date.Now.AddDays(7)
+        '            'HttpContext.Current.Response.Cookies.Add(cok)
+        '        Else
+        '            Dim schema As OrmSchemaBase = mgr.ObjectSchema
+        '            For Each p As SettingsProperty In collection
+        '                Dim newp As New SettingsPropertyValue(p)
+        '                'If p.Attributes.Contains("CustomProviderData") Then
+        '                '    If p.Attributes.Item("CustomProviderData") IsNot Nothing Then
+        '                '        Dim s As String = CStr(p.Attributes.Item("CustomProviderData"))
+        '                '        If s.Contains("storeInCookie") Then
+        '                '            'System.Web.Security.FormsAuthentication.
+        '                '        End If
+        '                '    End If
+        '                'End If
+        '                newp.PropertyValue = schema.GetFieldValue(user, p.Name)
+        '                col.Add(newp)
+        '            Next
+
+        '            If Not String.IsNullOrEmpty(_lastActivityField) Then
+        '                schema.SetFieldValue(user, _lastActivityField, GetNow)
+        '            End If
+        '        End If
+        '        Return col
+        '    End Using
+        'End Function
+
         Public Overrides Function GetPropertyValues(ByVal context As System.Configuration.SettingsContext, ByVal collection As System.Configuration.SettingsPropertyCollection) As System.Configuration.SettingsPropertyValueCollection
-            Using mgr As OrmDBManager = _getMgr()
-                Dim col As New SettingsPropertyValueCollection
-
-                Dim user As OrmBase = GetUserByName(mgr, GetUserName(context), IsAuthenticated(context), _anonymStoreDb)
-                If user Is Nothing Then
-                    If _anonymStoreDb Then
-                        Throw New ArgumentException("Cannot find user " & GetUserName(context))
-                    End If
-                    Dim cok As HttpCookie = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
-                    For Each p As SettingsProperty In collection
-                        Dim newp As New SettingsPropertyValue(p)
-                        If cok IsNot Nothing Then
-                            newp.PropertyValue = cok(p.Name)
-                        ElseIf p.DefaultValue IsNot Nothing Then
-                            newp.PropertyValue = p.DefaultValue
-                        End If
-                        col.Add(newp)
-                    Next
-                    'If Not String.IsNullOrEmpty(_lastActivityField) AndAlso cok IsNot Nothing Then
-                    '    cok(_lastActivityField) = GetNow().ToString
-                    'End If
-                    'cok.Expires = Date.Now.AddDays(7)
-                    'HttpContext.Current.Response.Cookies.Add(cok)
-                Else
-                    Dim schema As OrmSchemaBase = mgr.ObjectSchema
-                    For Each p As SettingsProperty In collection
-                        Dim newp As New SettingsPropertyValue(p)
-                        'If p.Attributes.Contains("CustomProviderData") Then
-                        '    If p.Attributes.Item("CustomProviderData") IsNot Nothing Then
-                        '        Dim s As String = CStr(p.Attributes.Item("CustomProviderData"))
-                        '        If s.Contains("storeInCookie") Then
-                        '            'System.Web.Security.FormsAuthentication.
-                        '        End If
-                        '    End If
-                        'End If
-                        newp.PropertyValue = schema.GetFieldValue(user, p.Name)
-                        col.Add(newp)
-                    Next
-
-                    If Not String.IsNullOrEmpty(_lastActivityField) Then
-                        schema.SetFieldValue(user, _lastActivityField, GetNow)
+            Dim cok As HttpCookie = Nothing, cookieChecked As Boolean = False
+            Dim user As OrmBase = Nothing, userChecked As Boolean = False
+            Dim col As New SettingsPropertyValueCollection
+            For Each p As SettingsProperty In collection
+                Dim incok As Boolean = False
+                If p.Attributes.Contains("CustomProviderData") Then
+                    Dim s As String = CStr(p.Attributes.Item("CustomProviderData"))
+                    If Not String.IsNullOrEmpty(s) AndAlso s.IndexOf("storeInCookie", StringComparison.InvariantCultureIgnoreCase) >= 0 Then
+                        incok = True
                     End If
                 End If
-                Return col
-            End Using
+                If Not incok Then
+                    If Not userChecked Then
+                        Using mgr As OrmDBManager = _getMgr()
+                            user = GetUserByName(mgr, GetUserName(context), IsAuthenticated(context), _autoCreateProfileInDB)
+                        End Using
+                        If user Is Nothing AndAlso _autoCreateProfileInDB Then
+                            Throw New ArgumentException("Cannot find user " & GetUserName(context))
+                        End If
+                        userChecked = True
+                    End If
+                    incok = user Is Nothing
+                End If
+                Dim newp As New SettingsPropertyValue(p)
+                If incok Then
+                    If Not cookieChecked Then
+                        cok = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
+                        cookieChecked = True
+                    End If
+                    If cok IsNot Nothing Then
+                        newp.PropertyValue = cok(p.Name)
+                    ElseIf p.DefaultValue IsNot Nothing Then
+                        newp.PropertyValue = p.DefaultValue
+                    End If
+                Else
+                    Using mgr As OrmDBManager = _getMgr()
+                        newp.PropertyValue = mgr.ObjectSchema.GetFieldValue(user, p.Name)
+                    End Using
+                End If
+                col.Add(newp)
+            Next
+
+            If _updateLastActivity AndAlso Not String.IsNullOrEmpty(_lastActivityField) Then
+                If user IsNot Nothing Then
+                    Using mgr As OrmDBManager = _getMgr()
+                        mgr.ObjectSchema.SetFieldValue(user, _lastActivityField, GetNow)
+                    End Using
+                End If
+                If cok IsNot Nothing Then
+                    cok.Values(_lastActivityField) = GetNow().ToString
+                    cok.Expires = Date.Now.AddDays(_profileCookieTimeout)
+                    HttpContext.Current.Response.Cookies.Add(cok)
+                End If
+            End If
+
+            Return col
         End Function
 
         Public Overrides Sub SetPropertyValues(ByVal context As System.Configuration.SettingsContext, ByVal collection As System.Configuration.SettingsPropertyValueCollection)
-            Using mgr As OrmDBManager = _getMgr()
-                Dim user As OrmBase = GetUserByName(mgr, GetUserName(context), IsAuthenticated(context), _anonymStoreDb)
-
-                If user Is Nothing Then
-                    If _anonymStoreDb Then
-                        Throw New ArgumentException("Cannot find user " & GetUserName(context))
-                    End If
-                    'Dim cok As HttpCookie = HttpContext.Current.Response.Cookies(GetAnonymousCookieName)
-                    'If cok Is Nothing OrElse cok.Expires > Date.Now Then
-                    Dim cok As HttpCookie = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
-                    If Not context.ContainsKey("remove_profile") Then
-                        If cok Is Nothing Then
-                            cok = New HttpCookie(GetAnonymousCookieName)
+            If Not context.ContainsKey("remove_profile") Then
+                Dim cok As HttpCookie = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
+                Dim user As OrmBase = Nothing, userChecked As Boolean
+                Dim saveCookie As Boolean = False
+                For Each p As SettingsPropertyValue In collection
+                    If Not p.Property.IsReadOnly Then
+                        Dim incok As Boolean = False
+                        If p.Property.Attributes.Contains("CustomProviderData") Then
+                            Dim s As String = CStr(p.Property.Attributes.Item("CustomProviderData"))
+                            If Not String.IsNullOrEmpty(s) AndAlso s.IndexOf("storeInCookie", StringComparison.InvariantCultureIgnoreCase) >= 0 Then
+                                incok = True
+                            End If
                         End If
-                        Dim created As Boolean = False
-                        For Each p As SettingsPropertyValue In collection
-                            If Not p.Property.IsReadOnly Then
-                                If p.PropertyValue IsNot Nothing AndAlso Not p.PropertyValue.Equals(p.Property.DefaultValue) Then
-                                    cok.Values(p.Name) = p.PropertyValue.ToString
-                                    created = True
+                        If Not incok Then
+                            If Not userChecked Then
+                                Using mgr As OrmDBManager = _getMgr()
+                                    user = GetUserByName(mgr, GetUserName(context), IsAuthenticated(context), _autoCreateProfileInDB)
+                                End Using
+                                If user Is Nothing AndAlso _autoCreateProfileInDB Then
+                                    Throw New ArgumentException("Cannot find user " & GetUserName(context))
                                 End If
+                                userChecked = True
                             End If
-                        Next
-                        If created Then
-                            Dim d As Date = GetNow()
-                            If Not String.IsNullOrEmpty(_lastActivityField) Then
-                                cok.Values(_lastActivityField) = d.ToString
+                            incok = user Is Nothing
+                        End If
+                        If incok Then
+                            If cok Is Nothing Then
+                                cok = New HttpCookie(GetAnonymousCookieName)
                             End If
-                            If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                                cok.Values(_lastUpdateField) = d.ToString
+                            If p.PropertyValue IsNot Nothing AndAlso Not p.PropertyValue.Equals(p.Property.DefaultValue) Then
+                                cok.Values(p.Name) = p.PropertyValue.ToString
+                                saveCookie = True
                             End If
-
-                            cok.Expires = Date.Now.AddDays(7)
-                            HttpContext.Current.Response.Cookies.Add(cok)
+                        Else
+                            Using mgr As OrmDBManager = _getMgr()
+                                mgr.ObjectSchema.SetFieldValue(user, p.Name, p.PropertyValue)
+                            End Using
                         End If
                     End If
-                Else
-                    CopyValuesToUser(collection, mgr, user)
+                Next
+                Dim d As Date = GetNow()
+                If saveCookie Then
+                    If Not String.IsNullOrEmpty(_lastActivityField) AndAlso _updateLastActivity Then
+                        cok.Values(_lastActivityField) = d.ToString
+                    End If
+                    If Not String.IsNullOrEmpty(_lastUpdateField) Then
+                        cok.Values(_lastUpdateField) = d.ToString
+                    End If
+
+                    cok.Expires = Date.Now.AddDays(_profileCookieTimeout)
+                    HttpContext.Current.Response.Cookies.Add(cok)
                 End If
-            End Using
+                If user IsNot Nothing Then
+                    Using mgr As OrmDBManager = _getMgr()
+                        If Not String.IsNullOrEmpty(_lastActivityField) Then
+                            mgr.ObjectSchema.SetFieldValue(user, _lastActivityField, d)
+                        End If
+                        If Not String.IsNullOrEmpty(_lastUpdateField) Then
+                            mgr.ObjectSchema.SetFieldValue(user, _lastUpdateField, d)
+                        End If
+                        user.Save(True)
+                    End Using
+                End If
+            End If
         End Sub
 
-        Protected Sub CopyValuesToUser(ByVal collection As System.Configuration.SettingsPropertyValueCollection, ByVal mgr As OrmDBManager, ByVal user As OrmBase)
-            Dim schema As OrmSchemaBase = mgr.ObjectSchema
-            For Each p As SettingsPropertyValue In collection
-                If Not p.Property.IsReadOnly Then
-                    schema.SetFieldValue(user, p.Name, p.PropertyValue)
-                End If
-                'Debug.Write(p.Name & ": ")
-                'If p.PropertyValue IsNot Nothing Then
-                '    Debug.WriteLine(p.PropertyValue.ToString)
-                'Else
-                '    Debug.WriteLine(String.Empty)
-                'End If
-            Next
-            Dim d As Date = GetNow()
-            If Not String.IsNullOrEmpty(_lastActivityField) Then
-                schema.SetFieldValue(user, _lastActivityField, d)
-            End If
-            If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                schema.SetFieldValue(user, _lastUpdateField, d)
-            End If
-            user.Save(True)
-        End Sub
+        'Private Sub SetPropertyValuesOld(ByVal context As System.Configuration.SettingsContext, ByVal collection As System.Configuration.SettingsPropertyValueCollection)
+        '    Using mgr As OrmDBManager = _getMgr()
+        '        Dim user As OrmBase = GetUserByName(mgr, GetUserName(context), IsAuthenticated(context), _autoCreateProfileInDB)
+
+        '        If user Is Nothing Then
+        '            If _autoCreateProfileInDB Then
+        '                Throw New ArgumentException("Cannot find user " & GetUserName(context))
+        '            End If
+        '            'Dim cok As HttpCookie = HttpContext.Current.Response.Cookies(GetAnonymousCookieName)
+        '            'If cok Is Nothing OrElse cok.Expires > Date.Now Then
+        '            Dim cok As HttpCookie = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
+        '            If Not context.ContainsKey("remove_profile") Then
+        '                If cok Is Nothing Then
+        '                    cok = New HttpCookie(GetAnonymousCookieName)
+        '                End If
+        '                Dim created As Boolean = False
+        '                For Each p As SettingsPropertyValue In collection
+        '                    If Not p.Property.IsReadOnly Then
+        '                        If p.PropertyValue IsNot Nothing AndAlso Not p.PropertyValue.Equals(p.Property.DefaultValue) Then
+        '                            cok.Values(p.Name) = p.PropertyValue.ToString
+        '                            created = True
+        '                        End If
+        '                    End If
+        '                Next
+        '                If created Then
+        '                    Dim d As Date = GetNow()
+        '                    If Not String.IsNullOrEmpty(_lastActivityField) Then
+        '                        cok.Values(_lastActivityField) = d.ToString
+        '                    End If
+        '                    If Not String.IsNullOrEmpty(_lastUpdateField) Then
+        '                        cok.Values(_lastUpdateField) = d.ToString
+        '                    End If
+
+        '                    cok.Expires = Date.Now.AddDays(7)
+        '                    HttpContext.Current.Response.Cookies.Add(cok)
+        '                End If
+        '            End If
+        '        Else
+        '            CopyValuesToUser(collection, mgr, user)
+        '        End If
+        '    End Using
+        'End Sub
+
+        'Protected Sub CopyValuesToUser(ByVal collection As System.Configuration.SettingsPropertyValueCollection, ByVal mgr As OrmDBManager, ByVal user As OrmBase)
+        '    Dim schema As OrmSchemaBase = mgr.ObjectSchema
+        '    For Each p As SettingsPropertyValue In collection
+        '        If Not p.Property.IsReadOnly Then
+        '            schema.SetFieldValue(user, p.Name, p.PropertyValue)
+        '        End If
+        '        'Debug.Write(p.Name & ": ")
+        '        'If p.PropertyValue IsNot Nothing Then
+        '        '    Debug.WriteLine(p.PropertyValue.ToString)
+        '        'Else
+        '        '    Debug.WriteLine(String.Empty)
+        '        'End If
+        '    Next
+        '    Dim d As Date = GetNow()
+        '    If Not String.IsNullOrEmpty(_lastActivityField) Then
+        '        schema.SetFieldValue(user, _lastActivityField, d)
+        '    End If
+        '    If Not String.IsNullOrEmpty(_lastUpdateField) Then
+        '        schema.SetFieldValue(user, _lastUpdateField, d)
+        '    End If
+        '    user.Save(True)
+        'End Sub
 
         Public Sub MigrateAnonymous(ByVal AnonymousId As String)
             Dim cok As HttpCookie = HttpContext.Current.Request.Cookies(GetAnonymousCookieName)
@@ -417,7 +553,7 @@ Namespace Web
             If cok IsNot Nothing Then
                 HttpContext.Current.Profile.Context.Add("remove_profile", "true")
                 cok = New HttpCookie(GetAnonymousCookieName)
-                cok.Expires = Date.Now.AddDays(-1)
+                cok.Expires = Date.Now.AddDays(-2)
                 HttpContext.Current.Response.Cookies.Remove(GetAnonymousCookieName)
                 HttpContext.Current.Response.Cookies.Add(cok)
             End If
