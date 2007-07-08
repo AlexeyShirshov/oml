@@ -31,6 +31,21 @@ Namespace Orm
         Protected MustOverride Function GetDepends() As IEnumerable(Of Pair(Of Type, Dependency))
         Protected MustOverride Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
 
+        Private _cache As Boolean
+
+        Public Sub New(ByVal cache As Boolean)
+            _cache = cache
+        End Sub
+
+        Public Property Cached() As Boolean
+            Get
+                Return _cache
+            End Get
+            Set(ByVal value As Boolean)
+                _cache = value
+            End Set
+        End Property
+
         Protected Function GetKey() As String
             Dim sb As New StringBuilder
             For Each p As Pair(Of String, Object) In GetInParams()
@@ -66,24 +81,28 @@ Namespace Orm
         End Function
 
         Public Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As Object
-            Dim key As String = "StroredProcedure:" & GetName()
+            If _cache Then
+                Dim key As String = "StroredProcedure:" & GetName()
 
-            Dim id As String = GetKey()
-            If String.IsNullOrEmpty(id) Then id = "empty"
-            Dim dic As IDictionary = OrmReadOnlyDBManager.GetDic(mgr.Cache, key)
-            Dim sync As String = key & id
-            Dim _result As Object = dic(id)
-            If _result Is Nothing Then
-                Using SyncHelper.AcquireDynamicLock(sync)
-                    _result = dic(id)
-                    If _result Is Nothing Then
-                        mgr.Cache.AddStoredProc(Me)
-                        _result = Execute(mgr)
-                        dic(id) = _result
-                    End If
-                End Using
+                Dim id As String = GetKey()
+                If String.IsNullOrEmpty(id) Then id = "empty"
+                Dim dic As IDictionary = OrmReadOnlyDBManager.GetDic(mgr.Cache, key)
+                Dim sync As String = key & id
+                Dim _result As Object = dic(id)
+                If _result Is Nothing Then
+                    Using SyncHelper.AcquireDynamicLock(sync)
+                        _result = dic(id)
+                        If _result Is Nothing Then
+                            mgr.Cache.AddStoredProc(Me)
+                            _result = Execute(mgr)
+                            dic(id) = _result
+                        End If
+                    End Using
+                End If
+                Return _result
+            Else
+                Return Execute(mgr)
             End If
-            Return _result
         End Function
 
         Public Sub ResetCache(ByVal c As OrmCacheBase)
@@ -92,8 +111,9 @@ Namespace Orm
             Dim id As String = GetKey()
             If String.IsNullOrEmpty(id) Then id = "empty"
             Dim dic As IDictionary = OrmReadOnlyDBManager.GetDic(c, key)
-
-            dic.Remove(id)
+            If dic IsNot Nothing Then
+                dic.Remove(id)
+            End If
         End Sub
 
         Public Overridable Function ValidateOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String)) As Boolean
@@ -128,8 +148,12 @@ Namespace Orm
     Public MustInherit Class NonQueryStoredProcBase
         Inherits StoredProcBase
 
-        Protected Sub New()
+        Public Sub New(ByVal cache As Boolean)
+            MyBase.new(cache)
+        End Sub
 
+        Protected Sub New()
+            MyBase.new(True)
         End Sub
 
         Protected Overloads Overrides Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
@@ -151,6 +175,14 @@ Namespace Orm
     Public MustInherit Class QueryStoredProcBase
         Inherits StoredProcBase
 
+        Public Sub New(ByVal cache As Boolean)
+            MyBase.new(cache)
+        End Sub
+
+        Public Sub New()
+            MyBase.new(True)
+        End Sub
+
         Protected MustOverride Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Protected MustOverride Function InitResult() As Object
 
@@ -170,6 +202,14 @@ Namespace Orm
 
     Public MustInherit Class QueryOrmStoredProcBase(Of T As {OrmBase, New})
         Inherits StoredProcBase
+
+        Public Sub New(ByVal cache As Boolean)
+            MyBase.new(cache)
+        End Sub
+
+        Public Sub New()
+            MyBase.new(True)
+        End Sub
 
         Protected MustOverride Function GetColumns() As List(Of ColumnAttribute)
         Protected MustOverride Function GetWithLoad() As Boolean
