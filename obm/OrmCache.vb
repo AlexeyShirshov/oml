@@ -700,7 +700,7 @@ Namespace Orm
         Protected Sub ValidateSPOnInsertDelete(ByVal obj As OrmBase)
             Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
                 For Each sp As StoredProcBase In _procs
-                    If sp.cached AndAlso sp.ValidateOnInsertDelete(obj) Then
+                    If Not sp.IsReseted AndAlso sp.ValidateOnInsertDelete(obj) Then
                         sp.ResetCache(Me)
                     End If
                 Next
@@ -710,7 +710,7 @@ Namespace Orm
         Protected Sub ValidateSPOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
             Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
                 For Each sp As StoredProcBase In _procs
-                    If sp.cached AndAlso sp.ValidateOnUpdate(obj, fields) Then
+                    If Not sp.IsReseted AndAlso sp.ValidateOnUpdate(obj, fields) Then
                         sp.ResetCache(Me)
                     End If
                 Next
