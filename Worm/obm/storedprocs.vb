@@ -32,8 +32,9 @@ Namespace Orm
         Protected MustOverride Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
 
         Private _cache As Boolean
+        Private _reseted As Boolean
 
-        Public Sub New(ByVal cache As Boolean)
+        Protected Sub New(ByVal cache As Boolean)
             _cache = cache
         End Sub
 
@@ -46,6 +47,12 @@ Namespace Orm
             End Set
         End Property
 
+        Public ReadOnly Property IsReseted() As Boolean
+            Get
+                Return _reseted
+            End Get
+        End Property
+
         Protected Function GetKey() As String
             Dim sb As New StringBuilder
             For Each p As Pair(Of String, Object) In GetInParams()
@@ -55,6 +62,7 @@ Namespace Orm
         End Function
 
         Protected Function Execute(ByVal mgr As OrmReadOnlyDBManager) As Object
+            _reseted = False
             Dim schema As DbSchema = CType(mgr.ObjectSchema, DbSchema)
             Using cmd As System.Data.Common.DbCommand = schema.CreateDBCommand
                 cmd.CommandType = System.Data.CommandType.StoredProcedure
@@ -112,6 +120,7 @@ Namespace Orm
             If String.IsNullOrEmpty(id) Then id = "empty"
             Dim dic As IDictionary = OrmReadOnlyDBManager.GetDic(c, key)
             If dic IsNot Nothing Then
+                _reseted = True
                 dic.Remove(id)
             End If
         End Sub
@@ -148,12 +157,12 @@ Namespace Orm
     Public MustInherit Class NonQueryStoredProcBase
         Inherits StoredProcBase
 
-        Public Sub New(ByVal cache As Boolean)
+        Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
         End Sub
 
         Protected Sub New()
-            MyBase.new(True)
+            MyBase.new(False)
         End Sub
 
         Protected Overloads Overrides Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
@@ -175,7 +184,7 @@ Namespace Orm
     Public MustInherit Class QueryStoredProcBase
         Inherits StoredProcBase
 
-        Public Sub New(ByVal cache As Boolean)
+        Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
         End Sub
 
@@ -203,11 +212,11 @@ Namespace Orm
     Public MustInherit Class QueryOrmStoredProcBase(Of T As {OrmBase, New})
         Inherits StoredProcBase
 
-        Public Sub New(ByVal cache As Boolean)
+        Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
         End Sub
 
-        Public Sub New()
+        Protected Sub New()
             MyBase.new(True)
         End Sub
 
