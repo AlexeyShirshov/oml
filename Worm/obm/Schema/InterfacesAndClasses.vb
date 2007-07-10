@@ -585,6 +585,10 @@ Namespace Orm
             Return [alias]
         End Function
 
+        Friend Sub AddTable(ByVal tbl As OrmTable, ByVal [alias] As String)
+            _aliases.Add(tbl, [alias])
+        End Sub
+
         'Public Function GetAlias(ByVal table As String) As String
         '    Return _aliases(table)
         'End Function
