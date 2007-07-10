@@ -1072,7 +1072,7 @@ Namespace Orm
         ''' <remarks></remarks>
         Protected Friend Sub AppendJoins(ByVal selectedType As Type, ByVal almgr As AliasMgr, _
             ByVal tables As OrmTable(), ByVal selectcmd As StringBuilder, ByVal pname As ParamMgr, _
-            ByVal table As OrmTable, ByVal id As String, ByVal appendMainTable As Boolean)
+            ByVal table As OrmTable, ByVal id As String, ByVal appendMainTable As Boolean) ', Optional ByVal dic As IDictionary(Of OrmTable, OrmTable) = Nothing)
 
             Dim pk_table As OrmTable = tables(0)
 
@@ -1109,12 +1109,19 @@ Namespace Orm
             Else
                 Dim tbl As OrmTable = pk_table
                 tbl = tbl.OnTableAdd(pname)
+                Dim adal As Boolean
                 If tbl Is Nothing Then
                     tbl = pk_table
+                Else 'If dic IsNot Nothing Then
+                    'dic.Add(pk_table, tbl)
+                    adal = True
                 End If
                 Dim sch As IOrmObjectSchema = GetObjectSchema(selectedType)
                 Dim j As New OrmJoin(tbl, JoinType.Join, New OrmFilter(table, id, selectedType, "ID", FilterOperation.Equal))
-                almgr.AddTable(tbl, sch, pname)
+                Dim al As String = almgr.AddTable(tbl, sch, pname)
+                If adal Then
+                    almgr.AddTable(pk_table, al)
+                End If
                 selectcmd.Append(j.MakeSQLStmt(Me, almgr.Aliases, pname))
                 For i As Integer = 1 To tables.Length - 1
                     Dim join As OrmJoin = sch.GetJoins(pk_table, tables(i))
@@ -1152,7 +1159,23 @@ Namespace Orm
             selectcmd.Append(table).Append(" ").Append(almgr.Aliases(table))
 
             'Dim f As IOrmFilter = schema.GetFilter(filter_info)
+            'Dim dic As New Generic.Dictionary(Of OrmTable, OrmTable)
             AppendJoins(selectedType, almgr, tables, selectcmd, pname, table, id, appendMainTable)
+
+            For Each tbl As OrmTable In tables
+                'Dim newt As OrmTable = Nothing
+                'If dic.TryGetValue(tbl, newt) Then
+                '    If almgr.Aliases.ContainsKey(newt) Then
+                '        Dim [alias] As String = almgr.Aliases(newt)
+                '        selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
+                '    End If
+                'Else
+                If almgr.Aliases.ContainsKey(tbl) Then
+                    Dim [alias] As String = almgr.Aliases(tbl)
+                    selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
+                End If
+                'End If
+            Next
         End Sub
 
         ''' <summary>
@@ -1309,18 +1332,18 @@ Namespace Orm
 
             If appJoins Then
                 AppendFromM2M(selectedType, almgr, schema.GetTables, sb, pmgr, table, id_clm, appendMainTable)
-                For Each tbl As OrmTable In schema.GetTables
-                    If almgr.Aliases.ContainsKey(tbl) Then
-                        [alias] = almgr.Aliases(tbl)
-                        sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
-                    End If
-                Next
+                'For Each tbl As OrmTable In schema.GetTables
+                '    If almgr.Aliases.ContainsKey(tbl) Then
+                '        [alias] = almgr.Aliases(tbl)
+                '        sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
+                '    End If
+                'Next
             Else
                 Dim tbl As OrmTable = schema.GetTables(0)
                 AppendFromM2M(selectedType, almgr, New OrmTable() {tbl}, sb, pmgr, table, id_clm, appendMainTable)
-                If almgr.Aliases.ContainsKey(tbl) Then
-                    sb = sb.Replace(tbl.TableName & ".", almgr.Aliases(tbl) & ".")
-                End If
+                'If almgr.Aliases.ContainsKey(tbl) Then
+                '    sb = sb.Replace(tbl.TableName & ".", almgr.Aliases(tbl) & ".")
+                'End If
             End If
 
             Return sb.ToString
