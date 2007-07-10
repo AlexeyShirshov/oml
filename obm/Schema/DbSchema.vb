@@ -1108,6 +1108,10 @@ Namespace Orm
                 Next
             Else
                 Dim tbl As OrmTable = pk_table
+                tbl = tbl.OnTableAdd(pname)
+                If tbl Is Nothing Then
+                    tbl = pk_table
+                End If
                 Dim sch As IOrmObjectSchema = GetObjectSchema(selectedType)
                 Dim j As New OrmJoin(tbl, JoinType.Join, New OrmFilter(table, id, selectedType, "ID", FilterOperation.Equal))
                 almgr.AddTable(tbl, sch, pname)
@@ -1339,7 +1343,7 @@ Namespace Orm
             'Dim schema As IOrmObjectSchema = GetObjectSchema(t)
             Dim schema2 As IOrmObjectSchema = GetObjectSchema(type)
 
-            Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(filter_info) IsNot Nothing OrElse appendMain
+            Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(filter_info) IsNot Nothing OrElse appendMain OrElse TryCast(schema2, IAlwaysJoinMainTable) IsNot Nothing
             sb.Append(SelectM2M(type, t, appendMainTable, appJoins, pmgr, almgr, withLoad, direct))
 
             Dim selected_r As M2MRelation = Nothing
