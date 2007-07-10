@@ -71,6 +71,9 @@ Namespace Orm
     Public Interface IOrmEditable(Of T As {OrmBase})
         Sub CopyBody(ByVal from As T, ByVal [to] As T)
     End Interface
+
+    Public Interface IAlwaysJoinMainTable
+    End Interface
 #End Region
 
 #Region " Classes "
