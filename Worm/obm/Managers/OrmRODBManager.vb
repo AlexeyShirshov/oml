@@ -20,6 +20,16 @@ Namespace Orm
             Private _l As New List(Of OrmBase)
             Private _mgr As OrmReadOnlyDBManager
 
+            Public Event BeginSave(ByVal count As Integer)
+            Public Event ObjectSaved(ByVal o As OrmBase)
+            Public Event ObjectAccepted(ByVal o As OrmBase)
+            Public Event ObjectRejected(ByVal o As OrmBase)
+            Public Event ObjectRestored(ByVal o As OrmBase)
+            Public Event SaveSuccessed()
+            Public Event SaveFailed()
+            Public Event BeginRejecting()
+            Public Event BeginAccepting()
+
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager)
                 _mgr = mgr
             End Sub
@@ -44,6 +54,7 @@ Namespace Orm
 
                 _mgr.BeginTransaction()
                 Try
+                    RaiseEvent BeginSave(_l.Count)
                     For Each o As OrmBase In _l
                         If o.ObjectState = ObjectState.Created Then
                             rejectList.Add(o)
@@ -53,6 +64,8 @@ Namespace Orm
                         Try
                             If o.Save(False) Then
                                 need2save.Add(o)
+                            Else
+                                RaiseEvent ObjectSaved(o)
                             End If
                             saved.Add(o)
                         Catch ex As Exception
@@ -64,6 +77,7 @@ Namespace Orm
                         If o.Save(False) Then
                             Throw New OrmManagerException(String.Format("It seems {0} has relation(s) to new objects after second save", o.ObjName))
                         End If
+                        RaiseEvent ObjectSaved(o)
                     Next
 
                     [error] = False
@@ -72,29 +86,39 @@ Namespace Orm
                         If Not hasTransaction Then
                             _mgr.Rollback()
                         End If
+
+                        RaiseEvent BeginRejecting()
                         Rollback(saved, rejectList, copies)
+                        RaiseEvent SaveFailed()
                     Else
                         If Not hasTransaction Then
                             _mgr.Commit()
                         End If
+
+                        RaiseEvent BeginAccepting()
                         For Each o As OrmBase In saved
                             o.AcceptChanges()
+                            RaiseEvent ObjectAccepted(o)
                         Next
+                        RaiseEvent SaveSuccessed()
                     End If
                 End Try
             End Sub
 
-            Private Shared Sub Rollback(ByVal saved As List(Of OrmBase), ByVal rejectList As List(Of OrmBase), ByVal copies As List(Of Pair(Of OrmBase)))
+            Private Sub Rollback(ByVal saved As List(Of OrmBase), ByVal rejectList As List(Of OrmBase), ByVal copies As List(Of Pair(Of OrmBase)))
                 For Each o As OrmBase In rejectList
                     o.RejectChanges()
+                    RaiseEvent ObjectRejected(o)
                 Next
                 For Each o As Pair(Of OrmBase) In copies
                     o.First.CopyBodyInternal(o.Second, o.First)
                     o.First.ObjectState = o.Second._old_state
+                    RaiseEvent ObjectRestored(o.First)
                 Next
                 For Each o As OrmBase In saved
                     If Not rejectList.Contains(o) Then
                         o.RejectRelationChanges()
+                        RaiseEvent ObjectRejected(o)
                     End If
                 Next
             End Sub
@@ -140,6 +164,12 @@ Namespace Orm
                 _saver = New Saver(mgr)
                 _mgr = mgr
             End Sub
+
+            Public ReadOnly Property Saver() As Saver
+                Get
+                    Return _saver
+                End Get
+            End Property
 
             Public Sub AddRange(ByVal objs As ICollection(Of OrmBase))
                 If objs Is Nothing Then
