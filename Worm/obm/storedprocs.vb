@@ -28,7 +28,6 @@ Namespace Orm
         Protected MustOverride Function GetInParams() As IEnumerable(Of Pair(Of String, Object))
         Protected MustOverride Function GetOutParams() As IEnumerable(Of OutParam)
         Protected MustOverride Function GetName() As String
-        Protected MustOverride Function GetDepends() As IEnumerable(Of Pair(Of Type, Dependency))
         Protected MustOverride Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
 
         Private _cache As Boolean
@@ -125,6 +124,11 @@ Namespace Orm
             End If
         End Sub
 
+        Protected Overridable Function GetDepends() As IEnumerable(Of Pair(Of Type, Dependency))
+            Dim l As New List(Of Pair(Of Type, Dependency))
+            Return l
+        End Function
+
         Public Overridable Function ValidateOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String)) As Boolean
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -206,6 +210,10 @@ Namespace Orm
                 Throw New InvalidOperationException("result must be filled")
             End If
             Return result
+        End Function
+
+        Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of OutParam)
+            Return New List(Of Orm.OutParam)
         End Function
     End Class
 
