@@ -291,11 +291,12 @@ Namespace Orm
 
         Protected Friend Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable
             Dim err As Boolean = True
-            Dim d As IDisposable = SyncHelper(reader)
+            Dim d As IDisposable = New CoreFramework.Threading.BlankSyncHelper(Nothing)
             Try
                 If reader Then
-                    PrepareRead(fieldName)
+                    d = PrepareRead(fieldName, d)
                 Else
+                    d = SyncHelper(True)
                     PrepareUpdate()
                 End If
                 err = False
@@ -693,16 +694,20 @@ Namespace Orm
             End Get
         End Property
 
-        Protected Sub PrepareRead(ByVal FieldName As String)
+        Protected Function PrepareRead(ByVal FieldName As String, ByVal d As IDisposable) As IDisposable
             If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) Then
-                Dim c As New ColumnAttribute(FieldName)
-                Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
-                Dim idx As Integer = arr.BinarySearch(c)
-                If idx < 0 Then Throw New OrmObjectException("There is no such field " & c.FieldName)
+                d = SyncHelper(True)
+                If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) Then
+                    Dim c As New ColumnAttribute(FieldName)
+                    Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
+                    Dim idx As Integer = arr.BinarySearch(c)
+                    If idx < 0 Then Throw New OrmObjectException("There is no such field " & c.FieldName)
 
-                If Not _members_load_state(idx) Then Load()
+                    If Not _members_load_state(idx) Then Load()
+                End If
             End If
-        End Sub
+            Return d
+        End Function
 
         'Protected Sub PrepareRead()
         '    If Not IsLoaded AndAlso state = Obm.ObjectState.None Then
