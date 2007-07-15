@@ -70,7 +70,7 @@ Namespace Web
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim users As New Generic.List(Of String)
                 For Each u As OrmBase In FindUsersInRoleInternal(mgr, roleName, usernameToMatch)
-                    users.Add(CStr(mgr.DbSchema.GetFieldValue(u, ProfileProvider._userNameField)))
+                    users.Add(CStr(u.GetValue(ProfileProvider._userNameField)))
                 Next
                 Return users.ToArray
             End Using
@@ -80,7 +80,7 @@ Namespace Web
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim roles As New Generic.List(Of String)
                 For Each r As OrmBase In FindRoles(mgr, New Criteria(GetRoleType).Field("ID").NotEq(-1))
-                    roles.Add(CStr(mgr.DbSchema.GetFieldValue(r, _rolenameField)))
+                    roles.Add(CStr(r.GetValue(_rolenameField)))
                 Next
                 Return roles.ToArray
             End Using
@@ -94,7 +94,7 @@ Namespace Web
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim roles As New Generic.List(Of String)
                 For Each r As OrmBase In GetRolesForUserInternal(mgr, username)
-                    roles.Add(CStr(mgr.DbSchema.GetFieldValue(r, _rolenameField)))
+                    roles.Add(CStr(r.GetValue(_rolenameField)))
                 Next
                 Return roles.ToArray
             End Using
@@ -108,7 +108,7 @@ Namespace Web
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim users As New Generic.List(Of String)
                 For Each u As OrmBase In FindUsersInRoleInternal(mgr, roleName, Nothing)
-                    users.Add(CStr(mgr.DbSchema.GetFieldValue(u, ProfileProvider._userNameField)))
+                    users.Add(CStr(u.GetValue(ProfileProvider._userNameField)))
                 Next
                 Return users.ToArray
             End Using
@@ -117,7 +117,7 @@ Namespace Web
         Public Overrides Function IsUserInRole(ByVal username As String, ByVal roleName As String) As Boolean
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 For Each r As OrmBase In GetRolesForUserInternal(mgr, username)
-                    If CStr(mgr.DbSchema.GetFieldValue(r, _rolenameField)) = roleName Then
+                    If CStr(r.GetValue(_rolenameField)) = roleName Then
                         Return True
                     End If
                 Next

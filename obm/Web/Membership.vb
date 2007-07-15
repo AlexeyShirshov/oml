@@ -338,11 +338,11 @@ Namespace Web
 
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
                 Dim lf As String = GetField("IsLockedOut")
-                If schema.HasField(u.GetType, lf) AndAlso CBool(schema.GetFieldValue(u, lf)) Then
+                If schema.HasField(u.GetType, lf) AndAlso CBool(u.GetValue(lf)) Then
                     Return False
                 End If
 
-                If Not ComparePasswords(CType(schema.GetFieldValue(u, GetField("Password")), Byte()), HashPassword(password)) Then
+                If Not ComparePasswords(CType(u.GetValue(GetField("Password")), Byte()), HashPassword(password)) Then
                     UpdateFailureCount(mgr, u)
                     Return False
                 End If
@@ -455,7 +455,7 @@ Namespace Web
                 If u Is Nothing Then
                     Return Nothing
                 End If
-                Return CStr(schema.GetFieldValue(u, GetField("Email")))
+                Return CStr(u.GetValue(GetField("Email")))
             End Using
         End Function
 #End Region
@@ -478,46 +478,46 @@ Namespace Web
             Dim ut As System.Type = u.GetType
 
             If schema.HasField(ut, lf) Then
-                islockedout = CBool(schema.GetFieldValue(u, lf))
+                islockedout = CBool(u.GetValue(lf))
             End If
 
             Dim crf As String = GetField("CreationDate")
             Dim created As Date = Date.MinValue
             If schema.HasField(ut, crf) Then
-                created = CDate(schema.GetFieldValue(u, crf))
+                created = CDate(u.GetValue(crf))
             End If
 
             Dim llf As String = GetField("LastLoginDate")
             Dim lastlogin As Date = Date.MinValue
             If schema.HasField(ut, llf) Then
-                lastlogin = CDate(schema.GetFieldValue(u, llf))
+                lastlogin = CDate(u.GetValue(llf))
             End If
 
             Dim lpcf As String = GetField("LastPasswordChangedDate")
             Dim lastpsw As Date = Date.MinValue
             If schema.HasField(ut, lpcf) Then
-                lastpsw = CDate(schema.GetFieldValue(u, lpcf))
+                lastpsw = CDate(u.GetValue(lpcf))
             End If
 
             Dim lld As String = GetField("LastLockoutDate")
             Dim lastlockout As Date = Date.MinValue
             If schema.HasField(ut, lld) Then
-                lastlockout = CDate(schema.GetFieldValue(u, lld))
+                lastlockout = CDate(u.GetValue(lld))
             End If
 
             Dim lastact As Date = Date.MinValue
             If Not String.IsNullOrEmpty(ProfileProvider._lastActivityField) Then
-                lastact = CDate(schema.GetFieldValue(u, ProfileProvider._lastActivityField))
+                lastact = CDate(u.GetValue(ProfileProvider._lastActivityField))
             End If
 
             Dim uname As String = Nothing
             If Not String.IsNullOrEmpty(ProfileProvider._userNameField) Then
-                uname = CStr(schema.GetFieldValue(u, ProfileProvider._userNameField))
+                uname = CStr(u.GetValue(ProfileProvider._userNameField))
             End If
 
             Dim username As String = Nothing
             If _treatUsernameAsEmail Then
-                username = CStr(schema.GetFieldValue(u, GetField("Email")))
+                username = CStr(u.GetValue(GetField("Email")))
             Else
                 username = uname
                 uname = Nothing
@@ -525,8 +525,8 @@ Namespace Web
 
             Dim mu As New MembershipUser(Me.Name, _
                 username, _
-                schema.GetFieldValue(u, "ID"), _
-                CStr(schema.GetFieldValue(u, GetField("Email"))), _
+                u.Identifier, _
+                CStr(u.GetValue(GetField("Email"))), _
                 Nothing, uname, _
                 True, islockedout, created, lastlogin, _
                 lastact, _
@@ -620,7 +620,7 @@ Namespace Web
                     Dim schema As OrmSchemaBase = mgr.ObjectSchema
                     Dim laf As String = ProfileProvider._lastActivityField
                     If Not String.IsNullOrEmpty(laf) Then
-                        Dim dt As Date = CDate(schema.GetFieldValue(u, laf))
+                        Dim dt As Date = CDate(u.GetValue(laf))
                         Dim n As Date = ProfileProvider.GetNow
                         If n.Subtract(dt).TotalSeconds > 1 Then
                             schema.SetFieldValue(u, laf, n)
@@ -638,7 +638,7 @@ Namespace Web
 
             Dim onlineSpan As TimeSpan = New TimeSpan(0, System.Web.Security.Membership.UserIsOnlineTimeWindow, 0)
             Dim compareTime As DateTime = ProfileProvider.GetNow.Subtract(onlineSpan)
-            Dim last As Date = CDate(schema.GetFieldValue(u, ProfileProvider._lastActivityField))
+            Dim last As Date = CDate(u.GetValue(ProfileProvider._lastActivityField))
             Return last > compareTime
         End Function
 
@@ -648,8 +648,8 @@ Namespace Web
 
             If schema.HasField(ut, GetField("IsLockedOut")) Then
 
-                Dim failCnt As Integer = CInt(schema.GetFieldValue(u, GetField("FailedPasswordAttemtCount")))
-                Dim startFail As Date = CDate(schema.GetFieldValue(u, GetField("FailedPasswordAttemtStart")))
+                Dim failCnt As Integer = CInt(u.GetValue(GetField("FailedPasswordAttemtCount")))
+                Dim startFail As Date = CDate(u.GetValue(GetField("FailedPasswordAttemtStart")))
                 Dim endFail As Date = startFail.AddMinutes(PasswordAttemptWindow)
                 Dim nowd As Date = ProfileProvider.GetNow
                 failCnt += 1

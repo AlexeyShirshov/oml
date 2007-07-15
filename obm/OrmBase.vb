@@ -99,9 +99,9 @@ Namespace Orm
         <NonSerialized()> _
         Friend _loading As Boolean
         <NonSerialized()> _
-        Private _needAdd As Boolean
+        Protected Friend _needAdd As Boolean
         <NonSerialized()> _
-        Private _needDelete As Boolean
+        Protected Friend _needDelete As Boolean
         <NonSerialized()> _
         Protected Friend _needAccept As New Generic.List(Of AcceptState2)
 
@@ -361,7 +361,7 @@ Namespace Orm
             Dim olds As ObjectState = _state
             OrmManagerBase.CurrentManager.LoadObject(Me)
             If olds = Orm.ObjectState.Created AndAlso _state = Orm.ObjectState.Modified Then
-                AcceptChanges()
+                AcceptChanges(True)
             End If
         End Sub
 
@@ -474,7 +474,7 @@ Namespace Orm
                     If olds <> Orm.ObjectState.Created Then RejectChangesInternal()
                     _state = Orm.ObjectState.Modified
                     Dim newid As Integer = GetModifiedObject.Identifier
-                    AcceptChanges()
+                    AcceptChanges(True)
                     Identifier = newid
                     _state = olds
                     If _state = Orm.ObjectState.Created Then
@@ -504,7 +504,12 @@ Namespace Orm
         End Sub
 
         Public Sub AcceptChanges()
+            AcceptChanges(True)
+        End Sub
+
+        Protected Friend Function AcceptChanges(ByVal updateCache As Boolean) As OrmBase
             CheckCash()
+            Dim mo As OrmBase = Nothing
             Using SyncHelper(False)
                 Dim t As Type = Me.GetType
                 Dim mc As OrmManagerBase = OrmManagerBase.CurrentManager
@@ -547,7 +552,6 @@ Namespace Orm
 
                     Dim unreg As Boolean = _state <> Orm.ObjectState.Created
                     _state = Orm.ObjectState.None
-                    Dim mo As OrmBase = Nothing
                     If unreg Then
                         mo = GetModifiedObject
                         OrmCache.UnregisterModification(Me)
@@ -555,26 +559,28 @@ Namespace Orm
                     End If
 
                     If _needDelete Then
-                        mc.Cache.UpdateCacheOnDelete(mc.ObjectSchema, Me, mc)
-                        mc.RemoveObjectFromCache(Me)
-                        _needDelete = False
+                        If updateCache Then
+                            mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
+                            'mc.Cache.UpdateCacheOnDelete(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing)
+                            Accept_AfterUpdateCacheDelete(Me, mc)
+                        End If
                     ElseIf _needAdd Then
                         Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
                         Dim o As OrmBase = CType(dic(Identifier), OrmBase)
                         If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
                             dic(Identifier) = Me
                         End If
-                        mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, Me, mc)
-                        _needAdd = False
-                        Dim nm As OrmManagerBase.INewObjects = mc.NewObjectManager
-                        If nm IsNot Nothing AndAlso mo IsNot Nothing Then
-                            nm.RemoveNew(mo)
+                        If updateCache Then
+                            'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
+                            mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
+                            Accept_AfterUpdateCacheAdd(Me, mc, mo)
                         End If
                     End If
                 End If
             End Using
 
-        End Sub
+            Return mo
+        End Function
 
         'Protected Sub AcceptChanges(ByVal cashe As MediaCacheBase)
         '    Debug.Assert(_state = Obm.ObjectState.Created)
@@ -583,6 +589,39 @@ Namespace Orm
         '        _state = ObjectState.None
         '    End Using
         'End Sub
+
+        Friend Shared Sub Accept_AfterUpdateCache(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
+            ByVal contextKey As Object)
+
+            If obj._needDelete Then
+                Accept_AfterUpdateCacheDelete(obj, mc)
+            ElseIf obj._needAdd Then
+                Accept_AfterUpdateCacheAdd(obj, mc, contextKey)
+            End If
+        End Sub
+
+        Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As OrmBase, ByVal mc As OrmManagerBase)
+            mc.RemoveObjectFromCache(obj)
+            obj._needDelete = False
+        End Sub
+
+        Friend Shared Sub Accept_AfterUpdateCacheAdd(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
+            ByVal contextKey As Object)
+            obj._needAdd = False
+            Dim nm As OrmManagerBase.INewObjects = mc.NewObjectManager
+            If nm IsNot Nothing Then
+                Dim mo As OrmBase = TryCast(contextKey, OrmBase)
+                If mo Is Nothing Then
+                    Dim dic As Generic.Dictionary(Of OrmBase, OrmBase) = TryCast(contextKey, Generic.Dictionary(Of OrmBase, OrmBase))
+                    If dic IsNot Nothing Then
+                        dic.TryGetValue(obj, mo)
+                    End If
+                End If
+                If mo IsNot Nothing Then
+                    nm.RemoveNew(mo)
+                End If
+            End If
+        End Sub
 
         Protected Friend Sub PrepareUpdate()
             If _state = Orm.ObjectState.Clone Then
@@ -993,6 +1032,15 @@ l1:
         Public Overridable Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
             pi.SetValue(Me, value, Nothing)
         End Sub
+
+        Public Overridable Function GetValue(ByVal propAlias As String, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Object
+            If propAlias = "ID" Then
+                'Throw New OrmObjectException("Use Identifier property to get ID")
+                Return Identifier
+            Else
+                Return OrmSchema.GetFieldValue(Me, propAlias, schema)
+            End If
+        End Function
 
         Public Overridable Sub CreateObject(ByVal fieldName As String, ByVal value As Object)
 

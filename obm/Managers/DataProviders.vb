@@ -564,8 +564,10 @@ Namespace Orm
                     'End If
 
                     For Each o As OrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort)
-                        Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
-                        Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
+                        'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
+                        'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
+                        Dim id1 As Integer = CType(o.GetValue(f1), OrmBase).Identifier
+                        Dim id2 As Integer = CType(o.GetValue(f2), OrmBase).Identifier
 
                         If id1 <> _obj.Identifier Then
                             Throw New OrmManagerException("Wrong relation statement")
