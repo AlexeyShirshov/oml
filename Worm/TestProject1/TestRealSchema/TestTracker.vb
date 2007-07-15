@@ -129,4 +129,36 @@ Public Class TestTracker
             End Try
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestBatch()
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+            mgr.NewObjectManager = Me
+
+            Dim tt As Table1 = mgr.Find(Of Table1)(1)
+            Dim tt2 As Table1 = mgr.Find(Of Table1)(2)
+
+            mgr.Find(Of Table1)(10)
+            mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("Code").Eq(100), Nothing, True)
+            mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("DT").Eq(Now), Nothing, True)
+
+            mgr.BeginTransaction()
+            Try
+                Using tracker As New Orm.OrmReadOnlyDBManager.ObjectStateTracker
+                    tracker.Saver.AcceptInBatch = True
+
+                    tt.Code = 10
+                    tt2.Code = 100
+                End Using
+            Finally
+                Assert.AreEqual(10, tt.Code.Value)
+                Assert.AreEqual(Orm.ObjectState.None, tt.ObjectState)
+
+                Assert.AreEqual(100, tt2.Code.Value)
+                Assert.AreEqual(Orm.ObjectState.None, tt2.ObjectState)
+
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
 End Class

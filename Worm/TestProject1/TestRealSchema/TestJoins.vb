@@ -19,15 +19,15 @@ Public Class TestJoinsRS
             Dim t1 As New Table1(1, mgr.Cache, mgr.ObjectSchema)
             t1.CreatedAt = CDate("2006-01-01")
             t1.Code = 2
-            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1, Nothing))
 
             t1.CreatedAt = CDate("2008-01-01")
             t1.Code = 2
-            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1, Nothing))
 
             t1.CreatedAt = CDate("2008-01-01")
             t1.Code = 3
-            Assert.AreEqual(IOrmFilter.EvalResult.Found, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.Found, c.Eval(mgr.ObjectSchema, t1, Nothing))
         End Using
     End Sub
 
@@ -43,15 +43,15 @@ Public Class TestJoinsRS
             Dim t1 As New Table1(1, mgr.Cache, mgr.ObjectSchema)
             t1.CreatedAt = CDate("2006-01-01")
             t1.Code = 2
-            Assert.AreEqual(IOrmFilter.EvalResult.Found, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.Found, c.Eval(mgr.ObjectSchema, t1, Nothing))
 
             t1.CreatedAt = CDate("2008-01-01")
             t1.Code = 20
-            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1, Nothing))
 
             t1.CreatedAt = CDate("2007-01-01")
             t1.Code = 30
-            Assert.AreEqual(IOrmFilter.EvalResult.Found, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.Found, c.Eval(mgr.ObjectSchema, t1, Nothing))
         End Using
     End Sub
 
@@ -67,17 +67,17 @@ Public Class TestJoinsRS
 
             Dim t1 As New Table2(1, mgr.Cache, mgr.ObjectSchema)
             t1.Money = 4
-            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1, Nothing))
 
             t1.Money = 40
-            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1, Nothing))
 
             t1.Tbl = tbl
             t1.Money = 4
-            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1, Nothing))
 
             t1.Money = 40
-            Assert.AreEqual(IOrmFilter.EvalResult.Found, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.Found, c.Eval(mgr.ObjectSchema, t1, Nothing))
         End Using
     End Sub
 
@@ -93,17 +93,17 @@ Public Class TestJoinsRS
 
             Dim t1 As New Table2(1, mgr.Cache, mgr.ObjectSchema)
             t1.Money = 4
-            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1, Nothing))
 
             t1.Money = 40
-            Assert.AreEqual(IOrmFilter.EvalResult.Found, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.Found, c.Eval(mgr.ObjectSchema, t1, Nothing))
 
             t1.Tbl = tbl
             t1.Money = 4
-            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1, Nothing))
 
             t1.Money = 40
-            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1))
+            Assert.AreEqual(IOrmFilter.EvalResult.NotFound, c.Eval(mgr.ObjectSchema, t1, Nothing))
         End Using
     End Sub
 End Class

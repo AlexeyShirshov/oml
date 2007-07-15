@@ -671,8 +671,10 @@ Namespace Orm
                 'l.AddRange(c)
 
                 Dim lookups As New Dictionary(Of OrmBase, List(Of T))
+                Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(tt)
                 For Each o As T In c
-                    Dim v As OrmBase = CType(_schema.GetFieldValue(o, fieldName), OrmBase)
+                    'Dim v As OrmBase = CType(_schema.GetFieldValue(o, fieldName), OrmBase)
+                    Dim v As OrmBase = CType(o.GetValue(fieldName, oschema), OrmBase)
                     Dim ll As List(Of T) = Nothing
                     If Not lookups.TryGetValue(v, ll) Then
                         ll = New List(Of T)
@@ -2498,10 +2500,12 @@ l1:
             Dim prop_objs(fields.Length - 1) As IList
 
             Dim lt As Type = GetType(List(Of ))
+            Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(GetType(T))
 
             For Each o As T In col
                 For i As Integer = 0 To fields.Length - 1
-                    Dim obj As OrmBase = CType(ObjectSchema.GetFieldValue(o, fields(i)), OrmBase)
+                    'Dim obj As OrmBase = CType(ObjectSchema.GetFieldValue(o, fields(i)), OrmBase)
+                    Dim obj As OrmBase = CType(o.GetValue(fields(i), oschema), OrmBase)
                     If obj IsNot Nothing Then
                         If prop_objs(i) Is Nothing Then
                             prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IList)

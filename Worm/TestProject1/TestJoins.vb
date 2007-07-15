@@ -367,8 +367,8 @@ End Class
 
         Dim e As New Entity(1, Nothing, schema)
 
-        Assert.AreEqual(Orm.IOrmFilter.EvalResult.Found, f.Eval(schema, e))
-        Assert.AreEqual(Orm.IOrmFilter.EvalResult.NotFound, f.Eval(schema, New Entity(2, Nothing, schema)))
+        Assert.AreEqual(Orm.IOrmFilter.EvalResult.Found, f.Eval(schema, e, Nothing))
+        Assert.AreEqual(Orm.IOrmFilter.EvalResult.NotFound, f.Eval(schema, New Entity(2, Nothing, schema), Nothing))
 
         f.MakeSQLStmt(schema, Nothing, Nothing)
     End Sub

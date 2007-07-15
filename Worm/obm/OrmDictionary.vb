@@ -254,7 +254,8 @@ Namespace Orm
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False
             Dim tt As Type = GetType(T)
-            Dim odic As IOrmDictionary = TryCast(mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmDictionary)
+            Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(tt)
+            Dim odic As IOrmDictionary = TryCast(oschema, IOrmDictionary)
             Dim b As Boolean = False
             If odic IsNot Nothing AndAlso Not String.IsNullOrEmpty(odic.GetSecondDicField) Then
                 b = True
@@ -272,7 +273,8 @@ Namespace Orm
                     Dim sname As String = odic.GetSecondDicField
                     Dim add As New Hashtable
                     For Each ar As T In col2
-                        Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, sname))
+                        'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, sname))
+                        Dim fv As String = CStr(ar.GetValue(sname, oschema))
                         Dim ar2 As T = CType(c(fv), T)
                         If ar2 IsNot Nothing Then
                             If ar2 = ar Then
@@ -291,7 +293,8 @@ Namespace Orm
                         c.Add(fv, ar)
                     Next
                     For Each ar As T In col
-                        Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
+                        'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
+                        Dim fv As String = CStr(ar.GetValue(fname, oschema))
                         Dim ar2 As T = CType(c(fv), T)
                         If ar2 IsNot Nothing Then
                             If ar2 = ar Then
@@ -312,7 +315,8 @@ Namespace Orm
                     Dim result As New Generic.List(Of T)
                     For Each ar As T In c.Values
                         result.Add(ar)
-                        Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
+                        'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
+                        Dim fv As String = CStr(ar.GetValue(fname, oschema))
                         Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
                         If addt IsNot Nothing Then
                             result.AddRange(addt)

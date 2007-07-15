@@ -149,13 +149,13 @@ Namespace Web
 
                     Dim upd As Date
                     If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                        upd = CDate(schema.GetFieldValue(u, _lastUpdateField))
+                        upd = CDate(u.GetValue(_lastUpdateField))
                     End If
 
                     Dim p As New ProfileInfo( _
-                        CStr(schema.GetFieldValue(u, _userNameField)), _
-                        CBool(schema.GetFieldValue(u, _isAnonymousField)), _
-                        CDate(schema.GetFieldValue(u, _lastActivityField)), upd, 0)
+                        CStr(u.GetValue(_userNameField)), _
+                        CBool(u.GetValue(_isAnonymousField)), _
+                        CDate(u.GetValue(_lastActivityField)), upd, 0)
 
                     profiles.Add(p)
                 Next
@@ -361,7 +361,7 @@ Namespace Web
                     End If
                 Else
                     Using mgr As OrmDBManager = _getMgr()
-                        newp.PropertyValue = mgr.ObjectSchema.GetFieldValue(user, p.Name)
+                        newp.PropertyValue = user.GetValue(p.Name)
                     End Using
                 End If
                 col.Add(newp)

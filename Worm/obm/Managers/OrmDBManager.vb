@@ -535,7 +535,7 @@ Namespace Orm
                         If hasNew Then
                             Throw New OrmObjectException("Cannot accept changes. Some of relation has new objects")
                         End If
-                        obj.AcceptChanges()
+                        obj.AcceptChanges(True)
                     End If
 
                 End Using
@@ -563,8 +563,10 @@ Namespace Orm
                 'Me.obj = obj
                 p1 = o.GetFirstType
                 p2 = o.GetSecondType
-                o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
-                o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
+                'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
+                'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
+                o1 = CType(obj.GetValue(p1.First), OrmBase)
+                o2 = CType(obj.GetValue(p2.First), OrmBase)
             End Sub
 
             Public Function Add(ByVal e As M2MCache) As Boolean

@@ -19,6 +19,8 @@ Namespace Orm
             Private disposedValue As Boolean
             Private _l As New List(Of OrmBase)
             Private _mgr As OrmReadOnlyDBManager
+            Private _acceptInBatch As Boolean
+            Private _callbacks As OrmCache.IUpdateCacheCallbacks
 
             Public Event BeginSave(ByVal count As Integer)
             Public Event ObjectSaved(ByVal o As OrmBase)
@@ -37,6 +39,24 @@ Namespace Orm
             Public Sub New()
                 _mgr = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
             End Sub
+
+            Public Property AcceptInBatch() As Boolean
+                Get
+                    Return _acceptInBatch
+                End Get
+                Set(ByVal value As Boolean)
+                    _acceptInBatch = value
+                End Set
+            End Property
+
+            Public Property CacheCallbacks() As OrmCache.IUpdateCacheCallbacks
+                Get
+                    Return _callbacks
+                End Get
+                Set(ByVal value As OrmCache.IUpdateCacheCallbacks)
+                    _callbacks = value
+                End Set
+            End Property
 
             Public Sub Add(ByVal o As OrmBase)
                 _l.Add(o)
@@ -96,10 +116,31 @@ Namespace Orm
                         End If
 
                         RaiseEvent BeginAccepting()
-                        For Each o As OrmBase In saved
-                            o.AcceptChanges()
-                            RaiseEvent ObjectAccepted(o)
-                        Next
+                        If _acceptInBatch Then
+                            Dim l As New Dictionary(Of OrmBase, OrmBase)
+                            Dim l2 As New Dictionary(Of Type, List(Of OrmBase))
+                            For Each o As OrmBase In saved
+                                Dim mo As OrmBase = o.AcceptChanges(False)
+                                l.Add(o, mo)
+                                Dim ls As List(Of OrmBase) = Nothing
+                                If Not l2.TryGetValue(o.GetType, ls) Then
+                                    ls = New List(Of OrmBase)
+                                End If
+                                ls.Add(o)
+                                RaiseEvent ObjectAccepted(o)
+                            Next
+                            For Each t As Type In l2.Keys
+                                Dim ls As List(Of OrmBase) = l2(t)
+                                _mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
+                                    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
+                            Next
+                        Else
+                            For Each o As OrmBase In saved
+                                o.AcceptChanges(True)
+                                RaiseEvent ObjectAccepted(o)
+                            Next
+                        End If
+
                         RaiseEvent SaveSuccessed()
                     End If
                 End Try
@@ -759,8 +800,11 @@ Namespace Orm
                 'dt.Columns.Add(col2, GetType(Integer))
 
                 For Each o As OrmBase In GetObjects(ct, ids, f, withLoad, f1, idsSorted)
-                    Dim o1 As OrmBase = CType(DbSchema.GetFieldValue(o, f1), OrmBase)
-                    Dim o2 As OrmBase = CType(DbSchema.GetFieldValue(o, f2), OrmBase)
+                    'Dim o1 As OrmBase = CType(DbSchema.GetFieldValue(o, f1), OrmBase)
+                    'Dim o2 As OrmBase = CType(DbSchema.GetFieldValue(o, f2), OrmBase)
+                    Dim o1 As OrmBase = CType(o.GetValue(f1), OrmBase)
+                    Dim o2 As OrmBase = CType(o.GetValue(f2), OrmBase)
+
                     Dim id1 As Integer = o1.Identifier
                     Dim id2 As Integer = o2.Identifier
                     'Dim k As Integer = o1.Identifier
@@ -1645,7 +1689,7 @@ Namespace Orm
                 For Each o As T In col
                     Dim str As Boolean = False
                     For Each f As String In fields
-                        Dim s As String = CStr(DbSchema.GetFieldValue(o, f))
+                        Dim s As String = CStr(o.GetValue(f, oschema))
                         If s IsNot Nothing Then
                             If s.Equals(query, StringComparison.InvariantCultureIgnoreCase) Then
                                 full.Add(o)

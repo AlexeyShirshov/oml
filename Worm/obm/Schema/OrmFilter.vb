@@ -17,7 +17,7 @@ Namespace Orm
         Function ReplaceFilter(ByVal replacement As IOrmFilter, ByVal replacer As IOrmFilter) As IOrmFilter
         'ReadOnly Property IsEmpty() As Boolean
         Function GetStaticString() As String
-        Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As EvalResult
+        Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As EvalResult
     End Interface
 
     Public Class OrmFilter
@@ -447,7 +447,7 @@ Namespace Orm
             Return tbl & _fieldname & Oper2String()
         End Function
 
-        Public Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As IOrmFilter.EvalResult Implements IOrmFilter.Eval
+        Public Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IOrmFilter.EvalResult Implements IOrmFilter.Eval
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -461,7 +461,7 @@ Namespace Orm
             If _t IsNot Nothing AndAlso Not (IsValueLiteral Or IsValueComplex) Then
                 Dim t As Type = obj.GetType
                 If _t Is t Then
-                    Dim v As Object = schema.GetFieldValue(obj, _fieldname)
+                    Dim v As Object = obj.GetValue(_fieldname, oschema) 'schema.GetFieldValue(obj, _fieldname)
                     If v IsNot Nothing Then
                         Dim tt As Type = v.GetType
                         Dim orm As OrmBase = TryCast(v, OrmBase)
@@ -768,7 +768,7 @@ Namespace Orm
             Return _left.GetStaticString & Condition2String() & r
         End Function
 
-        Public Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As IOrmFilter.EvalResult Implements IOrmFilter.Eval
+        Public Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IOrmFilter.EvalResult Implements IOrmFilter.Eval
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -777,15 +777,15 @@ Namespace Orm
                 Throw New ArgumentNullException("obj")
             End If
 
-            Dim b As IOrmFilter.EvalResult = _left.Eval(schema, obj)
+            Dim b As IOrmFilter.EvalResult = _left.Eval(schema, obj, oschema)
             If _right IsNot Nothing Then
                 If _oper = ConditionOperator.And Then
                     If b = IOrmFilter.EvalResult.Found Then
-                        b = _right.Eval(schema, obj)
+                        b = _right.Eval(schema, obj, oschema)
                     End If
                 ElseIf _oper = ConditionOperator.Or Then
                     If b <> IOrmFilter.EvalResult.Unknown Then
-                        Dim r As IOrmFilter.EvalResult = _right.Eval(schema, obj)
+                        Dim r As IOrmFilter.EvalResult = _right.Eval(schema, obj, oschema)
                         If r <> IOrmFilter.EvalResult.Unknown Then
                             If b <> IOrmFilter.EvalResult.Found Then
                                 b = r

@@ -68,6 +68,10 @@ Namespace Orm
             Return GetProperties(t, GetObjectSchema(t))
         End Function
 
+        'Protected Friend Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchema) As IDictionary
+        '    Return GetProperties(t, schema)
+        'End Function
+
         Protected Friend Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As IDictionary
             If t Is Nothing Then Throw New ArgumentNullException("original_type")
 
@@ -429,12 +433,24 @@ Namespace Orm
             Return CType(GetProperties(original_type)(c), Reflection.PropertyInfo)
         End Function
 
+        Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase, ByVal c As ColumnAttribute) As Reflection.PropertyInfo
+            Return CType(GetProperties(t, schema)(c), Reflection.PropertyInfo)
+        End Function
+
         Protected Friend Function GetProperty(ByVal original_type As Type, ByVal field As String) As Reflection.PropertyInfo
             If String.IsNullOrEmpty(field) Then
                 Throw New ArgumentNullException("field")
             End If
 
             Return GetProperty(original_type, New ColumnAttribute(field))
+        End Function
+
+        Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase, ByVal field As String) As Reflection.PropertyInfo
+            If String.IsNullOrEmpty(field) Then
+                Throw New ArgumentNullException("field")
+            End If
+
+            Return GetProperty(t, schema, New ColumnAttribute(field))
         End Function
 
         Protected Friend Function GetSortedFieldList(ByVal original_type As Type) As Generic.List(Of ColumnAttribute)
@@ -509,12 +525,18 @@ Namespace Orm
         '    Return arr.ToArray
         'End Function
 
-        Public Function GetFieldValue(ByVal obj As OrmBase, ByVal fieldName As String) As Object
+        Public Function GetFieldValue(ByVal obj As OrmBase, ByVal fieldName As String, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Object
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
 
-            Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, fieldName)
+            Dim pi As Reflection.PropertyInfo = Nothing
+
+            If schema IsNot Nothing Then
+                pi = GetProperty(obj.GetType, schema, fieldName)
+            Else
+                pi = GetProperty(obj.GetType, fieldName)
+            End If
 
             If pi Is Nothing Then
                 Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", obj.ObjName, fieldName))
