@@ -478,9 +478,9 @@ Namespace Orm
                             Dim ce As OrmManagerBase.M2MCache = TryCast(dic(id), OrmManagerBase.M2MCache)
                             b = b OrElse f(ce)
                         Next
-                        If Not b Then
-                            Throw New OrmManagerException(String.Format("Invalid cache entry {0} for type {1}", p.Key, ct))
-                        End If
+                        'If Not b Then
+                        '    Throw New OrmManagerException(String.Format("Invalid cache entry {0} for type {1}", p.Key, ct))
+                        'End If
                     Next
                 End If
             End Using
