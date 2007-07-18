@@ -7,7 +7,7 @@ using System.Reflection;
 using OrmCodeGenLib.Descriptors;
 using Worm.Orm;
 using Worm.Orm.Collections;
-using CoreFramework.Structures;
+using XMedia.Framework;
 using System.Text.RegularExpressions;
 using System.Text;
 
@@ -134,8 +134,7 @@ namespace OrmCodeGenLib
             {
                 propertiesClass = new CodeTypeDeclaration("Properties");
                 propertiesClass.Attributes = MemberAttributes.Public ;
-                propertiesClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.NestedPublic |
-                                                 TypeAttributes.Sealed;
+                propertiesClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.NestedPublic;
                 CodeConstructor propctr = new CodeConstructor();
                 propctr.Attributes = MemberAttributes.Private;
                 propertiesClass.Members.Add(propctr);
@@ -145,6 +144,24 @@ namespace OrmCodeGenLib
             }
 
             #endregion определение класса Properties
+
+            {
+                CodeTypeDeclaration descriptorClass = new CodeTypeDeclaration("Descriptor");
+                descriptorClass.Attributes = MemberAttributes.Public;
+                descriptorClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.NestedPublic;
+                CodeConstructor descConstr = new CodeConstructor();
+                descriptorClass.Attributes = MemberAttributes.Private;
+                descriptorClass.Members.Add(descConstr);
+
+                descriptorClass.Comments.Add(new CodeCommentStatement("Entity's  descriptor", true));
+
+                CodeMemberField constField = new CodeMemberField(typeof (string), "EntityName");
+                constField.Attributes = MemberAttributes.Const | MemberAttributes.Public;
+                constField.InitExpression = new CodePrimitiveExpression(entity.Name);
+                descriptorClass.Members.Add(constField);
+
+                entityClass.Members.Add(descriptorClass);            
+            }
 
             #region custom attribute EntityAttribute
             //if (settings.Behaviour != OrmObjectGeneratorBehaviour.BaseObjects)
@@ -164,7 +181,8 @@ namespace OrmCodeGenLib
                                     ),
                                 new CodeAttributeArgument(
                                     "EntityName",
-                                    new CodePrimitiveExpression(entity.Name)
+                                    //new CodePrimitiveExpression(entity.Name)
+                                    OrmCodeGenHelper.GetEntityNameReferenceExpression(entity, settings)
                                     )
                                 ),
                             new CodeAttributeDeclaration(
@@ -1533,8 +1551,8 @@ namespace OrmCodeGenLib
                 if (!propertyDesc.FromBase)
                     CreateProperty(copyMethod, createobjectMethod, entityClass, propertyDesc, settings, setvalueMethod, getvalueMethod);
                 else if(propertyDesc.IsRefreshed)
-                    CreateProperty(copyMethod, createobjectMethod, entityClass, propertyDesc, settings, setvalueMethod, getvalueMethod);
-                    //CreateUpdatedProperty(entityClass, propertyDesc, settings);
+                    //CreateProperty(copyMethod, createobjectMethod, entityClass, propertyDesc, settings, setvalueMethod, getvalueMethod);
+                    CreateUpdatedProperty(entityClass, propertyDesc, settings);
             }
         }
 
@@ -1553,8 +1571,30 @@ namespace OrmCodeGenLib
             property.Type = propertyType;
             property.Attributes = MemberAttributes.Public | MemberAttributes.Final | MemberAttributes.New;
 
+            property.GetStatements.Add(
+                new CodeMethodReturnStatement(
+                    new CodeCastExpression(
+                        propertyType,
+                        new CodePropertyReferenceExpression(new CodeBaseReferenceExpression(), property.Name)
+                    )
+                )
+                );
+            property.SetStatements.Add(
+                new CodeAssignStatement(
+                    new CodePropertyReferenceExpression(new CodeBaseReferenceExpression(), property.Name),
+                    new CodePropertySetValueReferenceExpression()
+                )
+                );
 
-            CreatePropertyColumnAttribute(property, propertyDesc);
+            CreatePropertyColumnAttribute(property, propertyDesc, settings);
+
+            #region описание проперти
+            SetMemberDescription(property, propertyDesc.Description);
+            #endregion описание проперти
+
+            #region добавление членов в класс
+            entityClass.Members.Add(property);
+            #endregion добавление членов в класс
         }
 
         private void CreateProperty(CodeMemberMethod copyMethod, CodeMemberMethod createobjectMethod, CodeTypeDeclaration entityClass, PropertyDescription propertyDesc, OrmCodeDomGeneratorSettings settings, CodeMemberMethod setvalueMethod, CodeMemberMethod getvalueMethod)
@@ -1630,7 +1670,7 @@ namespace OrmCodeGenLib
 
             #region property custom attribute Worm.Orm.ColumnAttribute
 
-            CreatePropertyColumnAttribute(property, propertyDesc);
+            CreatePropertyColumnAttribute(property, propertyDesc, settings);
 
             #endregion property custom attribute Worm.Orm.ColumnAttribute
 
@@ -1697,13 +1737,17 @@ namespace OrmCodeGenLib
                 )
             );
         }
-        private void CreatePropertyColumnAttribute(CodeMemberProperty property, PropertyDescription propertyDesc)
+        private void CreatePropertyColumnAttribute(CodeMemberProperty property, PropertyDescription propertyDesc, OrmCodeDomGeneratorSettings settings)
         {
             
             CodeAttributeDeclaration declaration = new CodeAttributeDeclaration(new CodeTypeReference(typeof(ColumnAttribute)));
-            
+
             if (!string.IsNullOrEmpty(propertyDesc.PropertyAlias))
-                declaration.Arguments.Add(new CodeAttributeArgument(new CodePrimitiveExpression(propertyDesc.PropertyAlias)));
+            {
+                //declaration.Arguments.Add(new CodeAttributeArgument(new CodePrimitiveExpression(propertyDesc.PropertyAlias)));
+                declaration.Arguments.Add(
+                    new CodeAttributeArgument(OrmCodeGenHelper.GetFieldNameReferenceExpression(propertyDesc, settings)));
+            }
             if (propertyDesc.Attributes != null && propertyDesc.Attributes.Length != 0)
             {
                 declaration.Arguments.Add(new CodeAttributeArgument(GetPropAttributesEnumValues(propertyDesc.Attributes)));

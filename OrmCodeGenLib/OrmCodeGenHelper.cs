@@ -15,6 +15,12 @@ namespace OrmCodeGenLib
                                              propertyDesc.Name);
         }
 
+        public static CodeExpression GetEntityNameReferenceExpression(EntityDescription entityDescription, OrmCodeDomGeneratorSettings settings)
+        {
+            string className = OrmCodeGenNameHelper.GetEntityClassName(entityDescription, settings) + ".Descriptor";
+            return new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(className), "EntityName");
+        }
+
         public static CodeExpression GetEntityClassReferenceExpression(EntityDescription entityDesc, OrmCodeDomGeneratorSettings settings)
         {
             string className = OrmCodeGenNameHelper.GetEntityClassName(entityDesc, settings);
