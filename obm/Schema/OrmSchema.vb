@@ -91,7 +91,9 @@ Namespace Orm
                                 If String.IsNullOrEmpty(cl.FieldName) Then
                                     cl.FieldName = pi.Name
                                 End If
-                                h.Add(cl, pi)
+                                If schema Is Nothing OrElse Array.IndexOf(schema.GetSuppressedColumns(), cl) < 0 Then
+                                    h.Add(cl, pi)
+                                End If
                             End If
                         Next
 

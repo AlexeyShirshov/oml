@@ -125,6 +125,7 @@ Namespace Orm
                                 Dim ls As List(Of OrmBase) = Nothing
                                 If Not l2.TryGetValue(o.GetType, ls) Then
                                     ls = New List(Of OrmBase)
+                                    l2.Add(o.GetType, ls)
                                 End If
                                 ls.Add(o)
                                 RaiseEvent ObjectAccepted(o)
