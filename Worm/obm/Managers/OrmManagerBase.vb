@@ -751,14 +751,14 @@ Namespace Orm
                     For Each o As OrmBase In col
                         Dim tt1 As Type = o.GetType
                         Dim key As String = GetM2MKey(tt1, type2load, direct)
-                        If criteria IsNot Nothing Then
+                        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                             key &= criteria.Filter.GetStaticString
                         End If
 
                         Dim dic As IDictionary = GetDic(_cache, key)
 
                         Dim id As String = o.Identifier.ToString
-                        If criteria IsNot Nothing Then
+                        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                             id &= CObj(criteria.Filter).ToString
                         End If
 
@@ -809,14 +809,14 @@ Namespace Orm
                             If Not _dont_cache_lists Then
                                 Dim tt1 As Type = o.GetType
                                 Dim key As String = GetM2MKey(tt1, type2load, direct)
-                                If criteria IsNot Nothing Then
+                                If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                                     key &= criteria.Filter.GetStaticString
                                 End If
 
                                 Dim dic As IDictionary = GetDic(_cache, key)
 
                                 Dim id As String = o.Identifier.ToString
-                                If criteria IsNot Nothing Then
+                                If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                                     id &= CObj(criteria.Filter).ToString
                                 End If
 
@@ -931,7 +931,7 @@ Namespace Orm
 
             Dim key As String = "distinct" & _schema.GetEntityKey(GetType(T))
 
-            If criteria IsNot Nothing Then
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 key &= criteria.Filter.GetStaticString
             End If
 
@@ -948,7 +948,7 @@ Namespace Orm
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim id As String = GetType(T).ToString
-            If criteria IsNot Nothing Then
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 id &= CObj(criteria.Filter).ToString
             End If
 
@@ -974,7 +974,7 @@ Namespace Orm
 
             Dim key As String = "distinct" & _schema.GetEntityKey(GetType(T))
 
-            If criteria IsNot Nothing Then
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 key &= criteria.Filter.GetStaticString
             End If
 
@@ -987,7 +987,7 @@ Namespace Orm
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim id As String = GetType(T).ToString
-            If criteria IsNot Nothing Then
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 id &= CObj(criteria.Filter).ToString
             End If
 
@@ -1052,7 +1052,7 @@ Namespace Orm
 
             Dim key As String = String.Empty
 
-            If criteria IsNot Nothing Then
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 key = _schema.GetEntityKey(GetType(T)) & criteria.Filter.GetStaticString & GetStaticKey() & "Top"
             Else
                 key = _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Top"
@@ -1065,7 +1065,7 @@ Namespace Orm
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim f As String = String.Empty
-            If criteria IsNot Nothing Then
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 f = CObj(criteria.Filter).ToString
             End If
 
@@ -1155,14 +1155,14 @@ Namespace Orm
             Dim tt2 As Type = GetType(T)
 
             Dim key As String = GetM2MKey(tt1, tt2, direct)
-            If criteria IsNot Nothing Then
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 key &= criteria.Filter.GetStaticString
             End If
 
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim id As String = obj.Identifier.ToString
-            If criteria IsNot Nothing Then
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 id &= CObj(criteria.Filter).ToString
             End If
 
@@ -2572,11 +2572,11 @@ l1:
                     If obj IsNot Nothing Then arr.Add(obj)
                 End If
             Next
-            Try
-                Return arr.ToArray
-            Catch ex As InvalidCastException
-                Throw New OrmManagerException("Error converting type " & type.ToString, ex)
-            End Try
+            'Try
+            Return arr
+            'Catch ex As InvalidCastException
+            'Throw New OrmManagerException("Error converting type " & type.ToString, ex)
+            'End Try
         End Function
 
         Public Function LoadObjectsIds(Of T As {OrmBase, New})(ByVal ids As ICollection(Of Integer)) As ICollection(Of T)
@@ -2698,7 +2698,7 @@ l1:
 
             Dim key As String = String.Empty
 
-            If criteria IsNot Nothing Then
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 key = criteria.Filter.GetStaticString & _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Dics"
             Else
                 key = _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Dics"
@@ -2707,7 +2707,7 @@ l1:
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim f As String = String.Empty
-            If criteria IsNot Nothing Then
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 f = CObj(criteria.Filter).ToString
             End If
 

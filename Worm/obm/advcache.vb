@@ -184,11 +184,13 @@ Namespace Orm
                     Dim st As IOrmSorting = TryCast(schema, IOrmSorting)
                     If st IsNot Nothing Then
                         Dim c As IComparer = st.CreateSortComparer(sort)
-                        Dim pos As Integer = ArrayList.Adapter(arr).BinarySearch(obj, c)
-                        If pos < 0 Then
-                            l.Insert(Not pos, New ListObjectEntry(obj))
+                        If c IsNot Nothing Then
+                            Dim pos As Integer = ArrayList.Adapter(arr).BinarySearch(obj, c)
+                            If pos < 0 Then
+                                l.Insert(Not pos, New ListObjectEntry(obj))
+                            End If
+                            Return True
                         End If
-                        Return True
                     End If
                 End If
             End If
