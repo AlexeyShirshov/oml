@@ -199,7 +199,7 @@ Imports System.Collections.Generic
 
             'mgr.Find(Of Entity4)(12).Reload()
 
-            Dim obj() As Entity4 = CType(mgr.ConvertIds2Objects(Of Entity4)(New Integer() {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12}, False), Entity4())
+            mgr.ConvertIds2Objects(Of Entity4)(New Integer() {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12}, False)
 
             Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c.Count)

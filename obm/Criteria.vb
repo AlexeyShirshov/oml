@@ -104,6 +104,9 @@ Namespace Orm
             Return GetLink(New OrmFilter(_t, _f, New TypeWrap(Of Object)(value), FilterOperation.Like))
         End Function
 
+        Public Function Op(ByVal oper As FilterOperation, ByVal value As Object) As CriteriaLink
+            Return GetLink(New OrmFilter(_t, _f, New TypeWrap(Of Object)(value), oper))
+        End Function
     End Class
 
     Public Class CriteriaLink
@@ -113,6 +116,14 @@ Namespace Orm
         'Protected Friend Sub New(ByVal con As OrmCondition.OrmConditionConstructor)
         '    _con = con
         'End Sub
+
+        Public Sub New()
+
+        End Sub
+
+        Public Sub New(ByVal t As Type)
+            _t = t
+        End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal con As OrmCondition.OrmConditionConstructor)
             _con = con
@@ -177,7 +188,11 @@ Namespace Orm
 
         Public ReadOnly Property Filter() As IOrmFilter
             Get
-                Return _con.Condition
+                If _con IsNot Nothing Then
+                    Return _con.Condition
+                Else
+                    Return Nothing
+                End If
             End Get
         End Property
     End Class
