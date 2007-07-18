@@ -1038,7 +1038,16 @@ l1:
             pi.SetValue(Me, value, Nothing)
         End Sub
 
-        Public Overridable Function GetValue(ByVal propAlias As String, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Object
+        Public Overridable Function GetValue(ByVal propAlias As String) As Object
+            If propAlias = "ID" Then
+                'Throw New OrmObjectException("Use Identifier property to get ID")
+                Return Identifier
+            Else
+                Return OrmSchema.GetFieldValue(Me, propAlias, Nothing)
+            End If
+        End Function
+
+        Public Overridable Function GetValue(ByVal propAlias As String, ByVal schema As IOrmObjectSchemaBase) As Object
             If propAlias = "ID" Then
                 'Throw New OrmObjectException("Use Identifier property to get ID")
                 Return Identifier
