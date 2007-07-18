@@ -297,7 +297,7 @@ namespace OrmCodeGenLib
 
                 TypeDescription typeDesc = _ormObjectsDef.GetType(typeId, true);
                 
-                property = new PropertyDescription(name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
+                property = new PropertyDescription(entity ,name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
 
                 entity.Properties.Add(property);
             }

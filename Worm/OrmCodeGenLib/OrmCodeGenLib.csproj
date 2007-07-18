@@ -48,6 +48,7 @@
     <Compile Include="CodeDomPatterns\LanguageDependent\CodeVBUsingStatement.cs" />
     <Compile Include="CodeGenHelper.cs" />
     <Compile Include="Enums.cs" />
+    <Compile Include="OrmCodeGenHelper.cs" />
     <Compile Include="OrmCodeGenNameHelper.cs" />
     <Compile Include="CodeGenPatterns.cs" />
     <Compile Include="Descriptors\TypeDescription.cs" />
