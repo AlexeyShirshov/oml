@@ -55,7 +55,11 @@ Namespace Orm
         Protected Function GetKey() As String
             Dim sb As New StringBuilder
             For Each p As Pair(Of String, Object) In GetInParams()
-                sb.Append(p.Second.ToString).Append("$")
+                If p.Second IsNot Nothing Then
+                    sb.Append(p.Second.ToString).Append("$")
+                Else
+                    sb.Append("null").Append("$")
+                End If
             Next
             Return sb.ToString
         End Function
@@ -282,10 +286,9 @@ Namespace Orm
         Public MustInherit Class OrmDescriptor(Of T As {OrmBase, New})
             Implements IResultSetDescriptor
 
-            Private _l As List(Of T)
+            Private _l As New List(Of T)
 
             Public Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
-                _l = New List(Of T)
                 Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
                 mgr.LoadFromResultSet(GetType(T), GetWithLoad, _l, GetColumns, dr, GetPrimaryKeyIndex)
             End Sub
@@ -304,12 +307,20 @@ Namespace Orm
         Protected MustOverride Function CreateDescriptor(ByVal resultsetIdx As Integer) As IResultSetDescriptor
 
         Protected Overrides Sub ProcessReader(ByVal resultSet As Integer, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
-            Dim rd As IResultSetDescriptor = CreateDescriptor(resultSet)
+            Dim desc As List(Of IResultSetDescriptor) = CType(result, List(Of IResultSetDescriptor))
+            Dim rd As IResultSetDescriptor = Nothing
+            If desc.Count - 1 < resultSet Then
+                rd = CreateDescriptor(resultSet)
+                desc.Add(rd)
+            Else
+                rd = desc(resultSet)
+            End If
+
             If rd Is Nothing Then
                 Throw New InvalidOperationException(String.Format("Resultset descriptor for resultset #{0} is nothing", resultSet))
             End If
+
             rd.ProcessReader(dr, GetName)
-            CType(result, List(Of IResultSetDescriptor)).Add(rd)
         End Sub
 
         Protected Overrides Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
