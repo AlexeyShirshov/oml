@@ -692,7 +692,7 @@ Namespace Orm
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
 
             Return CType(mi_real.Invoke(Me, flags, Nothing, _
-                New Object() {t, cmd, withLoad, Nothing, arr}, Nothing), IList)
+                New Object() {cmd, withLoad, Nothing, arr}, Nothing), IList)
 
         End Function
 
@@ -1004,7 +1004,7 @@ Namespace Orm
                         params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
                         nidx = cmd_str.Second
                     End With
-                    LoadMultipleObjects(Of T)(original_type, cmd, withLoad, objs, arr)
+                    LoadMultipleObjects(Of T)(cmd, withLoad, objs, arr)
                     'If msort Then
                     '    objs = Schema.GetObjectSchema(original_type).ExternalSort(sort, sortType, objs)
                     'End If
@@ -1118,58 +1118,39 @@ Namespace Orm
 
         End Sub
 
-        Protected Friend Function LoadMultipleObjects(Of T As {OrmBase, New})(ByVal original_type As Type, _
+        Protected Friend Function LoadMultipleObjects(Of T As {OrmBase, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, ByVal values As Generic.IList(Of T), _
             ByVal arr As Generic.List(Of ColumnAttribute)) As Generic.IList(Of T)
             Invariant()
 
-            Dim idx As Integer = -1
+            'Dim idx As Integer = -1
             Dim b As ConnAction = TestConn(cmd)
+            Dim original_type As Type = GetType(T)
             Try
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     If values Is Nothing Then
                         values = New Generic.List(Of T)
                     End If
-                    If idx = -1 Then
-                        Dim pk_name As String = _schema.GetPrimaryKeysName(original_type, False)(0)
-                        Try
-                            idx = dr.GetOrdinal(pk_name)
-                        Catch ex As IndexOutOfRangeException
-                            If _mcSwitch.TraceError Then
-                                Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
-                                Trace.WriteLine(Environment.StackTrace)
-                            End If
-                            Throw New OrmManagerException("Cannot get primary key ordinal", ex)
-                        End Try
-                    End If
+                    'If idx = -1 Then
+                    '    Dim pk_name As String = _schema.GetPrimaryKeysName(original_type, False)(0)
+                    '    Try
+                    '        idx = dr.GetOrdinal(pk_name)
+                    '    Catch ex As IndexOutOfRangeException
+                    '        If _mcSwitch.TraceError Then
+                    '            Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
+                    '            Trace.WriteLine(Environment.StackTrace)
+                    '        End If
+                    '        Throw New OrmManagerException("Cannot get primary key ordinal", ex)
+                    '    End Try
+                    'End If
 
                     'If arr Is Nothing Then arr = Schema.GetSortedFieldList(original_type)
 
+                    Dim idx As Integer = GetPrimaryKeyIdx(cmd.CommandText, original_type, dr)
+
                     Do While dr.Read
-                        Dim id As Integer = CInt(dr.GetValue(idx))
-                        Dim obj As T = CreateDBObject(Of T)(id)
-                        If obj IsNot Nothing Then
-                            If withLoad AndAlso obj.ObjectState <> ObjectState.Modified Then
-                                Using obj.GetSyncRoot()
-                                    If obj.IsLoaded Then obj.IsLoaded = False
-                                    LoadFromDataReader(obj, dr, arr, False)
-                                    'If Not obj.IsLoaded Then
-                                    '    obj.ObjectState = ObjectState.NotFoundInDB
-                                    '    RemoveObjectFromCache(obj)
-                                    'Else
-                                    If obj.ObjectState = ObjectState.NotLoaded Then obj.ObjectState = ObjectState.None
-                                    values.Add(obj)
-                                    'End If
-                                End Using
-                            Else
-                                values.Add(obj)
-                            End If
-                        Else
-                            If _mcSwitch.TraceVerbose Then
-                                WriteLine("Attempt to load unallowed object " & original_type.Name & " (" & id & ")")
-                            End If
-                        End If
+                        LoadFromResultSet(original_type, withLoad, CType(values, System.Collections.IList), arr, dr, idx)
                     Loop
 
                     Return values
@@ -1178,6 +1159,51 @@ Namespace Orm
                 CloseConn(b)
             End Try
         End Function
+
+        Protected Function GetPrimaryKeyIdx(ByVal cmdtext As String, ByVal original_type As Type, ByVal dr As System.Data.IDataReader) As Integer
+            Dim idx As Integer = -1
+            Dim pk_name As String = _schema.GetPrimaryKeysName(original_type, False)(0)
+            Try
+                idx = dr.GetOrdinal(pk_name)
+            Catch ex As IndexOutOfRangeException
+                If _mcSwitch.TraceError Then
+                    Trace.WriteLine("Invalid column name " & pk_name & " in " & cmdtext)
+                    Trace.WriteLine(Environment.StackTrace)
+                End If
+                Throw New OrmManagerException("Cannot get primary key ordinal", ex)
+            End Try
+            Return idx
+        End Function
+
+        Protected Friend Sub LoadFromResultSet(ByVal original_type As Type, _
+            ByVal withLoad As Boolean, _
+            ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
+            ByVal dr As System.Data.IDataReader, ByVal idx As Integer)
+
+            Dim id As Integer = CInt(dr.GetValue(idx))
+            Dim obj As OrmBase = CreateDBObject(id, original_type)
+            If obj IsNot Nothing Then
+                If withLoad AndAlso obj.ObjectState <> ObjectState.Modified Then
+                    Using obj.GetSyncRoot()
+                        If obj.IsLoaded Then obj.IsLoaded = False
+                        LoadFromDataReader(obj, dr, arr, False)
+                        'If Not obj.IsLoaded Then
+                        '    obj.ObjectState = ObjectState.NotFoundInDB
+                        '    RemoveObjectFromCache(obj)
+                        'Else
+                        If obj.ObjectState = ObjectState.NotLoaded Then obj.ObjectState = ObjectState.None
+                        values.Add(obj)
+                        'End If
+                    End Using
+                Else
+                    values.Add(obj)
+                End If
+            Else
+                If _mcSwitch.TraceVerbose Then
+                    WriteLine("Attempt to load unallowed object " & original_type.Name & " (" & id & ")")
+                End If
+            End If
+        End Sub
 
         Protected Sub LoadFromDataReader(ByVal obj As OrmBase, ByVal dr As System.Data.IDataReader, _
             ByVal arr As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, Optional ByVal displacement As Integer = 0)
@@ -1194,30 +1220,49 @@ Namespace Orm
                     Dim c As ColumnAttribute = arr(idx)
                     Dim pi As Reflection.PropertyInfo = CType(idic(c), Reflection.PropertyInfo)
                     pi_cache(idx) = pi
-                    If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                        Assert(idx + displacement < dr.FieldCount, c.FieldName)
-                        If dr.FieldCount <= idx + displacement Then
-                            If _mcSwitch.TraceError Then
-                                Dim dt As System.Data.DataTable = dr.GetSchemaTable
-                                Dim sb As New StringBuilder
-                                For Each drow As System.Data.DataRow In dt.Rows
-                                    If sb.Length > 0 Then
-                                        sb.Append(", ")
-                                    End If
-                                    sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
-                                Next
-                                WriteLine(sb.ToString)
+                    If pi IsNot Nothing Then
+                        If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                            Assert(idx + displacement < dr.FieldCount, c.FieldName)
+                            If dr.FieldCount <= idx + displacement Then
+                                If _mcSwitch.TraceError Then
+                                    Dim dt As System.Data.DataTable = dr.GetSchemaTable
+                                    Dim sb As New StringBuilder
+                                    For Each drow As System.Data.DataRow In dt.Rows
+                                        If sb.Length > 0 Then
+                                            sb.Append(", ")
+                                        End If
+                                        sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
+                                    Next
+                                    WriteLine(sb.ToString)
+                                End If
                             End If
-                        End If
-                        has_pk = True
-                        Dim value As Object = dr.GetValue(idx + displacement)
-                        If Not dr.IsDBNull(idx + displacement) Then
-                            Try
-                                If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
-                                    Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                    obj.SetValue(pi, c, v)
-                                    obj.SetLoaded(c, True)
-                                ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                            has_pk = True
+                            Dim value As Object = dr.GetValue(idx + displacement)
+                            If Not dr.IsDBNull(idx + displacement) Then
+                                Try
+                                    If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
+                                        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                        obj.SetValue(pi, c, v)
+                                        obj.SetLoaded(c, True)
+                                    ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                                        Dim dt As DateTime = CDate(value)
+                                        Dim l As Long = dt.ToBinary
+                                        Using ms As New IO.MemoryStream
+                                            Dim sw As New IO.StreamWriter(ms)
+                                            sw.Write(l)
+                                            sw.Flush()
+                                            obj.SetValue(pi, c, ms.ToArray)
+                                            obj.SetLoaded(c, True)
+                                        End Using
+                                    Else
+                                        If c.FieldName = "ID" Then
+                                            obj.Identifier = CInt(value)
+                                        Else
+                                            obj.SetValue(pi, c, value)
+                                        End If
+                                        obj.SetLoaded(c, True)
+                                    End If
+                                Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
                                     Dim dt As DateTime = CDate(value)
                                     Dim l As Long = dt.ToBinary
                                     Using ms As New IO.MemoryStream
@@ -1227,29 +1272,12 @@ Namespace Orm
                                         obj.SetValue(pi, c, ms.ToArray)
                                         obj.SetLoaded(c, True)
                                     End Using
-                                Else
-                                    If c.FieldName = "ID" Then
-                                        obj.Identifier = CInt(value)
-                                    Else
-                                        obj.SetValue(pi, c, value)
-                                    End If
+                                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
+                                    Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                    obj.SetValue(pi, c, v)
                                     obj.SetLoaded(c, True)
-                                End If
-                            Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-                                Dim dt As DateTime = CDate(value)
-                                Dim l As Long = dt.ToBinary
-                                Using ms As New IO.MemoryStream
-                                    Dim sw As New IO.StreamWriter(ms)
-                                    sw.Write(l)
-                                    sw.Flush()
-                                    obj.SetValue(pi, c, ms.ToArray)
-                                    obj.SetLoaded(c, True)
-                                End Using
-                            Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-                                Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                obj.SetValue(pi, c, v)
-                                obj.SetLoaded(c, True)
-                            End Try
+                                End Try
+                            End If
                         End If
                     End If
                 Next
@@ -1266,8 +1294,12 @@ Namespace Orm
                     Dim c As ColumnAttribute = arr(idx)
                     Dim pi As Reflection.PropertyInfo = pi_cache(idx) '_schema.GetProperty(original_type, c)
 
-                    If idx >= 0 Then
-                        Dim value As Object = dr.GetValue(idx + displacement)
+                    Dim value As Object = dr.GetValue(idx + displacement)
+
+                    If pi Is Nothing Then
+                        obj.SetValue(pi, c, value)
+                        obj.SetLoaded(c, True, False)
+                    Else
                         Dim att As Field2DbRelations = fields_idx(c.FieldName).GetAttributes(c)
                         If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                             Dim v As Object = pi.GetValue(obj, Nothing)
@@ -1435,7 +1467,67 @@ Namespace Orm
             End Select
         End Sub
 
-        Protected Friend Overrides Function LoadObjectsInternal(Of T As {OrmBase, New})(ByVal objs As Generic.ICollection(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean) As Generic.ICollection(Of T)
+        Protected Friend Overrides Function LoadObjectsInternal(Of T As {OrmBase, New})( _
+            ByVal objs As Generic.ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
+            ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute)) As Generic.ICollection(Of T)
+
+            Invariant()
+
+            If objs.Count < 1 Then
+                Return objs
+            End If
+
+            If start > objs.Count Then
+                Throw New ArgumentException(String.Format("The range {0},{1} is greater than array length: " & objs.Count, start, length))
+            End If
+
+            length = Math.Min(length, objs.Count - start)
+
+            Dim ids As Generic.List(Of Integer) = FormPKValues(Of T)(Me, objs, start, length, True, columns)
+            If ids.Count < 1 Then
+                Return objs
+            End If
+
+            Dim original_type As Type = GetType(T)
+            Dim almgr As AliasMgr = AliasMgr.Create
+            Dim params As New ParamMgr(DbSchema, "p")
+            Dim sb As New StringBuilder
+            sb.Append(DbSchema.Select(original_type, almgr, params, columns))
+            If Not DbSchema.AppendWhere(original_type, Nothing, almgr, sb, GetFilterInfo, params) Then
+                sb.Append(" where 1=1 ")
+            End If
+            Dim values As New Generic.List(Of T)
+            Dim pcnt As Integer = params.Params.Count
+            Dim nextp As Integer = pcnt
+            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, "ID", almgr, params, original_type, True)
+                Dim sb_cmd As New StringBuilder
+                sb_cmd.Append(sb.ToString).Append(cmd_str.First)
+
+                Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                    With cmd
+                        .CommandType = System.Data.CommandType.Text
+                        .CommandText = sb_cmd.ToString
+                        params.AppendParams(.Parameters, 0, pcnt)
+                        params.AppendParams(.Parameters, nextp, cmd_str.Second - nextp)
+                        nextp = cmd_str.Second
+                    End With
+                    LoadMultipleObjects(Of T)(cmd, True, values, columns)
+                End Using
+            Next
+
+            values.Clear()
+            For Each o As T In objs
+                If o.IsLoaded Then
+                    values.Add(o)
+                End If
+            Next
+            Return values
+
+        End Function
+
+        Protected Friend Overrides Function LoadObjectsInternal(Of T As {OrmBase, New})( _
+            ByVal objs As Generic.ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
+            ByVal remove_not_found As Boolean) As Generic.ICollection(Of T)
             Invariant()
 
             If objs.Count < 1 Then
@@ -1456,9 +1548,9 @@ Namespace Orm
             Dim original_type As Type = GetType(T)
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim params As New ParamMgr(DbSchema, "p")
-            Dim arr As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
+            Dim columns As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
             Dim sb As New StringBuilder
-            sb.Append(DbSchema.Select(original_type, almgr, params, arr))
+            sb.Append(DbSchema.Select(original_type, almgr, params, columns))
             If Not DbSchema.AppendWhere(original_type, Nothing, almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
@@ -1477,7 +1569,7 @@ Namespace Orm
                         params.AppendParams(.Parameters, nextp, cmd_str.Second - nextp)
                         nextp = cmd_str.Second
                     End With
-                    LoadMultipleObjects(original_type, cmd, True, values, arr)
+                    LoadMultipleObjects(Of T)(cmd, True, values, columns)
                 End Using
             Next
 
@@ -1656,7 +1748,7 @@ Namespace Orm
                     params.AppendParams(.Parameters)
                 End With
 
-                col = CType(LoadMultipleObjects(Of T)(GetType(T), cmd, fields IsNot Nothing, Nothing, cols), List(Of T))
+                col = CType(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, cols), List(Of T))
             End Using
 
             Dim col2 As ICollection(Of T) = Nothing
@@ -1670,7 +1762,7 @@ Namespace Orm
                         params.AppendParams(.Parameters)
                     End With
 
-                    col2 = CType(LoadMultipleObjects(Of T)(GetType(T), cmd, False, Nothing, Nothing), List(Of T))
+                    col2 = CType(LoadMultipleObjects(Of T)(cmd, False, Nothing, Nothing), List(Of T))
                 End Using
             End If
 

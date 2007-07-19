@@ -143,6 +143,31 @@ Public Class TestProcs
             Assert.AreEqual("second", t1.Name)
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestMulti()
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+            Dim p As New MultiR
+
+            Dim l As List(Of Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor) = p.GetResult(mgr)
+
+            Assert.IsNotNull(l)
+            Assert.AreEqual(2, l.Count)
+
+            Dim r0 As MultiR.r = CType(l(0), MultiR.r)
+            Dim r1 As MultiR.r2 = CType(l(1), MultiR.r2)
+
+            Assert.IsNotNull(r0.GetObjects)
+            Assert.AreEqual(1, r0.GetObjects.Count)
+
+            Dim t As Table1 = CType(r0.GetObjects, List(Of Table1))(0)
+            Assert.IsNotNull(t)
+            Assert.AreEqual(1, t.Identifier)
+            Assert.AreEqual(2, t.Custom)
+
+            Assert.AreEqual(2, r1.Sum)
+        End Using
+    End Sub
 End Class
 
 Public Class P1Proc
@@ -342,5 +367,68 @@ Public Class P4Proc
     Public Shadows Function GetResult(ByVal mgr As Orm.OrmReadOnlyDBManager) As String
         Dim dic As Dictionary(Of String, Object) = CType(MyBase.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
         Return CStr(dic("n"))
+    End Function
+End Class
+
+Public Class MultiR
+    Inherits Orm.MultiResultsetQueryOrmStoredProcBase
+
+    Class r
+        Inherits Orm.MultiResultsetQueryOrmStoredProcBase.OrmDescriptor(Of Table1)
+
+        Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Worm.Orm.ColumnAttribute)
+            Dim l As New List(Of Orm.ColumnAttribute)
+            Dim mgr As Orm.OrmManagerBase = Orm.OrmManagerBase.CurrentManager
+            l.Add(New Orm.ColumnAttribute("ID"))
+            l.Add(New Orm.ColumnAttribute("Custom"))
+            Return l
+        End Function
+
+        Protected Overrides Function GetWithLoad() As Boolean
+            Return True
+        End Function
+
+        Protected Overrides Function GetPrimaryKeyIndex() As Integer
+            Return 0
+        End Function
+    End Class
+
+    Public Class r2
+        Implements Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor
+
+        Private _sum As Integer
+
+        Public Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements Worm.Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.ProcessReader
+            _sum = dr.GetInt32(0)
+        End Sub
+
+        Public ReadOnly Property Sum() As Integer
+            Get
+                Return _sum
+            End Get
+        End Property
+    End Class
+
+    Public Sub New()
+
+    End Sub
+
+    Protected Overrides Function createDescriptor(ByVal resultsetIdx As Integer) As Worm.Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor
+        Select Case resultsetIdx
+            Case 0
+                Return New r
+            Case 1
+                Return New r2
+            Case Else
+                Throw New NotImplementedException
+        End Select
+    End Function
+
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Object))
+        Return New List(Of Pair(Of String, Object))
+    End Function
+
+    Protected Overrides Function GetName() As String
+        Return "dbo.MultiR"
     End Function
 End Class
