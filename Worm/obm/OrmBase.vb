@@ -187,7 +187,7 @@ Namespace Orm
             End Set
         End Property
 
-        Public Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean) As Boolean
+        Public Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, Optional ByVal check As Boolean = True) As Boolean
 
             Dim idx As Integer = c.Index
             If idx = -1 Then
@@ -196,13 +196,15 @@ Namespace Orm
                 c.Index = idx
             End If
 
-            If idx < 0 Then Throw New OrmObjectException("There is no such field " & c.FieldName)
+            If idx < 0 AndAlso check Then Throw New OrmObjectException("There is no such field " & c.FieldName)
 
-            Using SyncHelper(False)
-                Dim old As Boolean = _members_load_state(idx)
-                _members_load_state(idx) = loaded
-                Return old
-            End Using
+            If idx >= 0 Then
+                Using SyncHelper(False)
+                    Dim old As Boolean = _members_load_state(idx)
+                    _members_load_state(idx) = loaded
+                    Return old
+                End Using
+            End If
         End Function
 
         Public Function CheckIsAllLoaded() As Boolean
@@ -1035,6 +1037,10 @@ l1:
         End Function
 
         Public Overridable Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
+            If pi Is Nothing Then
+                Throw New ArgumentNullException("pi")
+            End If
+
             pi.SetValue(Me, value, Nothing)
         End Sub
 

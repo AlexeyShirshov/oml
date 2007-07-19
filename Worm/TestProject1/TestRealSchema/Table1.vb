@@ -16,6 +16,7 @@ Public Class Table1
     Private _e As Nullable(Of Enum1)
     Private _e2 As Nullable(Of Enum1)
     Private _dt As DateTime
+    Private _cust As Integer
 
     Public Sub New()
         MyBase.New()
@@ -69,6 +70,8 @@ Public Class Table1
                 Code = CType(value, Global.System.Nullable(Of Integer))
             Case "DT"
                 CreatedAt = CDate(value)
+            Case "Custom"
+                _cust = CInt(value)
             Case Else
                 MyBase.SetValue(pi, c, value)
         End Select
@@ -142,6 +145,12 @@ Public Class Table1
                 _dt = value
             End Using
         End Set
+    End Property
+
+    Public ReadOnly Property Custom() As Integer
+        Get
+            Return _cust
+        End Get
     End Property
 End Class
 

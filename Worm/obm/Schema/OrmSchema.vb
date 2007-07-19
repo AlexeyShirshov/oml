@@ -768,6 +768,7 @@ Namespace Orm
                 If assembly.ManifestModule.Name = "mscorlib.dll" OrElse assembly.ManifestModule.Name = "System.Data.dll" _
                     OrElse assembly.ManifestModule.Name = "System.Xml.dll" OrElse assembly.ManifestModule.Name = "System.dll" _
                     OrElse assembly.ManifestModule.Name = "System.Configuration.dll" OrElse assembly.ManifestModule.Name = "System.Web.dll" _
+                    OrElse assembly.ManifestModule.Name = "System.Drawing.dll" OrElse assembly.ManifestModule.Name = "System.Web.Services.dll" _
                     OrElse assembly.FullName.Contains("Microsoft") Then
                 Else
                     For Each tp As Type In assembly.GetTypes

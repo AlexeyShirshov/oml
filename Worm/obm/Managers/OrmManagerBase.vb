@@ -1583,6 +1583,13 @@ l1:
             End If
         End Sub
 
+        Private Shared Sub InsertObject(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, _
+            ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Integer), ByVal o As OrmBase, _
+            ByVal columns As List(Of ColumnAttribute))
+
+            Throw New NotImplementedException
+        End Sub
+
         Protected Shared Function FormPKValues(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal objs As ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
             Optional ByVal check_loaded As Boolean = True) As List(Of Integer)
 
@@ -1601,6 +1608,42 @@ l1:
                     End If
                     If i >= start Then
                         InsertObject(Of T)(mgr, check_loaded, l, o)
+                        'If o IsNot Nothing Then
+                        '    If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
+                        '        If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
+                        '            Dim idx As Integer = l.BinarySearch(o.Identifier)
+                        '            If idx < 0 Then
+                        '                l.Insert(Not idx, o.Identifier)
+                        '            End If
+                        '        End If
+                        '    End If
+                        'End If
+                    End If
+                    i += 1
+                Next
+            End If
+            Return l
+        End Function
+
+        Protected Shared Function FormPKValues(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, _
+            ByVal objs As ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
+            ByVal check_loaded As Boolean, ByVal columns As Generic.List(Of ColumnAttribute)) As List(Of Integer)
+
+            Dim l As New Generic.List(Of Integer)
+            Dim col As IList(Of T) = TryCast(objs, IList(Of T))
+            If col IsNot Nothing Then
+                For i As Integer = start To start + length - 1
+                    Dim o As OrmBase = col(i)
+                    InsertObject(Of T)(mgr, check_loaded, l, o, columns)
+                Next
+            Else
+                Dim i As Integer = 0
+                For Each o As OrmBase In objs
+                    If i >= start + length Then
+                        Exit For
+                    End If
+                    If i >= start Then
+                        InsertObject(Of T)(mgr, check_loaded, l, o, columns)
                         'If o IsNot Nothing Then
                         '    If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
                         '        If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
@@ -2655,6 +2698,7 @@ l1:
 
         Protected Friend MustOverride Sub LoadObject(ByVal obj As OrmBase)
 
+        Protected Friend MustOverride Function LoadObjectsInternal(Of T As {OrmBase, New})(ByVal objs As ICollection(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute)) As ICollection(Of T)
         Protected Friend MustOverride Function LoadObjectsInternal(Of T As {OrmBase, New})(ByVal objs As ICollection(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean) As ICollection(Of T)
 
         'Protected MustOverride Overloads Sub FindObjects(ByVal t As Type, ByVal WithLoad As Boolean, ByVal arr As System.Collections.ArrayList, ByVal sort As String, ByVal sort_type As SortType)

@@ -147,7 +147,7 @@ Namespace Orm
                         .CommandText = sb.ToString
                     End With
 
-                    Dim r As ICollection(Of T) = _mgr.LoadMultipleObjects(Of T)(original_type, cmd, withLoad, Nothing, arr)
+                    Dim r As ICollection(Of T) = _mgr.LoadMultipleObjects(Of T)(cmd, withLoad, Nothing, arr)
                     If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                         r = _mgr.DbSchema.ExternalSort(Of T)(_sort, r)
                     End If
