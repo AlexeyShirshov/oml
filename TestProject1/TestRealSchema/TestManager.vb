@@ -614,14 +614,16 @@ Public Class TestManagerRS
             Dim s As Orm.Sort = Orm.Sorting.Field("Code").Desc
             Dim c As ICollection(Of Table33) = tt1.Find(Of Table33)(Nothing, s, WithLoad)
             Assert.AreEqual(2, c.Count)
-            Assert.AreEqual(2, CType(c, List(Of Table33))(0).Code)
-            Assert.AreEqual(1, CType(c, List(Of Table33))(0).Code)
+            Assert.AreEqual(Of Byte)(2, CType(c, List(Of Table33))(0).Code)
+            Assert.AreEqual(Of Byte)(1, CType(c, List(Of Table33))(1).Code)
 
             mgr.BeginTransaction()
             Try
                 Using st As New Orm.OrmReadOnlyDBManager.ObjectStateTracker(mgr)
                     Dim tt2 As Table33 = New Table33(-100, mgr.Cache, mgr.ObjectSchema)
                     st.Add(tt2)
+                    tt2.RefObject = tt1
+                    tt2.Code = 3
 
                     Dim t3 As New Tables1to3(-101, mgr.Cache, mgr.ObjectSchema)
                     st.Add(t3)
@@ -633,8 +635,8 @@ Public Class TestManagerRS
 
                 c = tt1.Find(Of Table33)(Nothing, s, WithLoad)
                 Assert.AreEqual(3, c.Count)
-                Assert.AreEqual(3, CType(c, List(Of Table33))(0).Code)
-                Assert.AreEqual(2, CType(c, List(Of Table33))(0).Code)
+                Assert.AreEqual(Of Byte)(3, CType(c, List(Of Table33))(0).Code)
+                Assert.AreEqual(Of Byte)(2, CType(c, List(Of Table33))(1).Code)
             Finally
                 mgr.Rollback()
             End Try

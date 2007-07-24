@@ -473,10 +473,16 @@ Namespace Orm
                 If _ct_depends.TryGetValue(ct, l) Then
                     For Each p As KeyValuePair(Of String, Dictionary(Of String, Object)) In l
                         Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
-                        Dim b As Boolean = False
+                        'Dim b As Boolean = False
+                        Dim remove As New List(Of String)
                         For Each id As String In p.Value.Keys
                             Dim ce As OrmManagerBase.M2MCache = TryCast(dic(id), OrmManagerBase.M2MCache)
-                            b = b OrElse f(ce)
+                            If Not f(ce) Then
+                                remove.Add(id)
+                            End If
+                        Next
+                        For Each id As String In remove
+                            dic.Remove(id)
                         Next
                         'If Not b Then
                         '    Throw New OrmManagerException(String.Format("Invalid cache entry {0} for type {1}", p.Key, ct))

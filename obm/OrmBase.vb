@@ -53,25 +53,54 @@ Namespace Orm
         'End Class
 
         Public Class AcceptState2
-            Public ReadOnly el As EditableList
+            'Public ReadOnly el As EditableList
+            'Public ReadOnly sort As Sort
             'Public added As Generic.List(Of Integer)
 
-            Public Sub New(ByVal el As EditableList)
-                Me.el = el
+            Private _key As String
+            Private _id As String
+            Private _e As OrmManagerBase.M2MCache
+            'Public Sub New(ByVal el As EditableList, ByVal sort As Sort, ByVal key As String, ByVal id As String)
+            '    Me.el = el
+            '    Me.sort = sort
+            '    _key = key
+            '    _id = id
+            'End Sub
+
+            Public ReadOnly Property el() As EditableList
+                Get
+                    Return _e.Entry
+                End Get
+            End Property
+
+            Public Sub New(ByVal e As OrmManagerBase.M2MCache, ByVal key As String, ByVal id As String)
+                _e = e
+                _key = key
+                _id = id
             End Sub
 
-            Public Sub Accept(ByVal obj As OrmBase, ByVal mgr As OrmManagerBase)
-                If el IsNot Nothing Then
-                    el.Accept()
-                End If
-                For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In mgr.Cache.GetM2MEtries(obj, Nothing)
-                    Dim m As OrmManagerBase.M2MCache = o.First
-                    If m.Entry.SubType Is el.SubType AndAlso m.Filter IsNot Nothing Then
-                        Dim dic As IDictionary = OrmManagerBase.GetDic(mgr.Cache, o.Second.First)
-                        dic.Remove(o.Second.Second)
+            Public Function Accept2(ByVal obj As OrmBase, ByVal mgr As OrmDBManager) As Boolean
+                If _e IsNot Nothing Then
+                    Dim leave As Boolean = _e.Entry.Accept(mgr, _e.Sort) AndAlso _e.Filter Is Nothing
+                    If Not leave Then
+                        Dim dic As IDictionary = OrmManagerBase.GetDic(mgr.Cache, _key)
+                        dic.Remove(_id)
                     End If
-                Next
-            End Sub
+                End If
+                'If el IsNot Nothing Then
+                '    If Not el.Accept(mgr, Sort) Then
+                '        Return False
+                '    End If
+                'End If
+                'For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In mgr.Cache.GetM2MEtries(obj, Nothing)
+                '    Dim m As OrmManagerBase.M2MCache = o.First
+                '    If m.Entry.SubType Is el.SubType AndAlso m.Filter IsNot Nothing Then
+                '        Dim dic As IDictionary = OrmManagerBase.GetDic(mgr.Cache, o.Second.First)
+                '        dic.Remove(o.Second.Second)
+                '    End If
+                'Next
+                Return True
+            End Function
         End Class
 
         ''' <summary>
@@ -518,7 +547,7 @@ Namespace Orm
                 Dim mc As OrmManagerBase = OrmManagerBase.CurrentManager
                 'Debug.Write("Accept " & t.Name)
                 For Each acs As AcceptState2 In _needAccept
-                    acs.Accept(Me, mc)
+                    acs.Accept2(Me, CType(mc, OrmDBManager))
                     'If Not String.IsNullOrEmpty(acs.id) Then
                     '    mc.ResetAllM2MRelations(acs.id, acs.key)
                     'End If

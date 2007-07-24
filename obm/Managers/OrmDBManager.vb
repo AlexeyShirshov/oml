@@ -521,7 +521,7 @@ Namespace Orm
                                         M2MSave(obj, tt2, m2me.Entry.Direct, sv)
                                         m2me.Entry.Saved = True
                                     End If
-                                    Dim acs As New OrmBase.AcceptState2(m2me.Entry)
+                                    Dim acs As New OrmBase.AcceptState2(m2me, o.Second.First, o.Second.Second)
                                     If acs IsNot Nothing Then
                                         hasNew = hasNew Or acs.el.HasNew
                                         obj.AddAccept(acs)
@@ -570,14 +570,31 @@ Namespace Orm
             End Sub
 
             Public Function Add(ByVal e As M2MCache) As Boolean
+                Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
                 Dim el As EditableList = e.Entry
+                Dim obj As OrmBase = Nothing
                 If el.MainId = o1.Identifier Then
-                    el.Add(o2.Identifier)
+                    obj = o1
                 ElseIf el.MainId = o2.Identifier Then
-                    el.Add(o1.Identifier)
+                    obj = o2
+                End If
+
+                If e.Sort Is Nothing Then
+                    el.Add(obj.Identifier)
                 Else
-                    Return False
-                    '    Throw New OrmManagerException("Invalid cache entry")
+                    Dim s As IOrmSorting = Nothing
+                    Dim col As New ArrayList(mgr.ConvertIds2Objects(el.SubType, el.Current, False))
+                    If Not mgr.CanSortOnClient(el.SubType, col, s) Then
+                        Return False
+                    End If
+                    Dim c As IComparer = s.CreateSortComparer(e.Sort)
+                    If c Is Nothing Then
+                        Return False
+                    End If
+                    Dim pos As Integer = col.BinarySearch(obj, c)
+                    If pos < 0 Then
+                        el.Add(obj.Identifier, Not pos)
+                    End If
                 End If
                 Return True
             End Function
@@ -588,9 +605,6 @@ Namespace Orm
                     el.Delete(o2.Identifier)
                 ElseIf el.MainId = o2.Identifier Then
                     el.Delete(o1.Identifier)
-                Else
-                    Return False
-                    '    Throw New OrmManagerException("Invalid cache entry")
                 End If
                 Return True
             End Function
@@ -598,23 +612,17 @@ Namespace Orm
             Public Function Accept(ByVal e As M2MCache) As Boolean
                 Dim el As EditableList = e.Entry
                 If el.MainId = o1.Identifier OrElse el.MainId = o2.Identifier Then
-                    el.Accept()
-                    Return True
-                Else
-                    'Throw New OrmManagerException("Invalid cache entry")
-                    Return False
+                    el.Accept(CType(OrmManagerBase.CurrentManager, OrmDBManager), e.Sort)
                 End If
+                Return True
             End Function
 
             Public Function Reject(ByVal e As M2MCache) As Boolean
                 Dim el As EditableList = e.Entry
                 If el.MainId = o1.Identifier OrElse el.MainId = o2.Identifier Then
                     el.Reject(False)
-                    Return True
-                Else
-                    Return False
-                    'Throw New OrmManagerException("Invalid cache entry")
                 End If
+                Return True
             End Function
         End Class
 

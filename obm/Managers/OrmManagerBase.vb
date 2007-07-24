@@ -176,11 +176,11 @@ Namespace Orm
                 Return Not (o1 = o2)
             End Operator
 
-            'Public ReadOnly Property Sort() As String
-            '    Get?
-            '        Return _sortExpression
-            '    End Get
-            'End Property
+            Public ReadOnly Property Sort() As Sort
+                Get
+                    Return _sort
+                End Get
+            End Property
 
             Protected Overrides Sub Finalize()
                 If _obj IsNot Nothing Then _cache.RegisterRemovalCacheItem(Me)
@@ -821,7 +821,7 @@ Namespace Orm
                                 End If
 
                                 'Dim sync As String = GetSync(key, id)
-                                el.Accept()
+                                el.Accept(Nothing, Nothing)
                                 dic(id) = New M2MCache(Nothing, GetFilter(criteria), el, Me)
                             End If
 
@@ -1969,7 +1969,7 @@ l1:
                             M2MSave(mainobj, t, direct, sv)
                             m2me.Entry.Saved = True
                         End If
-                        Return New OrmBase.AcceptState2(m2me.Entry)
+                        Return New OrmBase.AcceptState2(m2me, o.Second.First, o.Second.Second)
                     End Using
                 End If
             Next
@@ -2596,6 +2596,22 @@ l1:
         'Protected Sub SetIsLoaded(ByVal obj As OrmBase, Optional ByVal loaded As Boolean = True)
         '    obj.IsLoaded = loaded
         'End Sub
+
+        Public Overridable Function ConvertIds2Objects(ByVal t As Type, ByVal ids As ICollection(Of Integer), ByVal check As Boolean) As ICollection
+            Dim self_t As Type = Me.GetType
+            Dim mis() As Reflection.MemberInfo = self_t.GetMember("ConvertIds2Objects", Reflection.MemberTypes.Method, _
+                Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public)
+            For Each mmi As Reflection.MemberInfo In mis
+                If TypeOf (mmi) Is Reflection.MethodInfo Then
+                    Dim mi As Reflection.MethodInfo = CType(mmi, Reflection.MethodInfo)
+                    If mi.IsGenericMethod Then
+                        mi = mi.MakeGenericMethod(New Type() {t})
+                        Return CType(mi.Invoke(Me, New Object() {ids, check}), System.Collections.ICollection)
+                    End If
+                End If
+            Next
+            Throw New InvalidOperationException(String.Format("Method {0} not found", "ConvertIds2Objects"))
+        End Function
 
         Public Overridable Function ConvertIds2Objects(Of T As {OrmBase, New})(ByVal ids As ICollection(Of Integer), ByVal check As Boolean) As ICollection(Of T)
             Dim arr As New Generic.List(Of T)
