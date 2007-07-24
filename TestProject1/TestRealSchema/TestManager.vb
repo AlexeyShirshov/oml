@@ -605,6 +605,43 @@ Public Class TestManagerRS
     End Sub
 
     <TestMethod()> _
+    Public Sub TestM2MSoring()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim tt1 As Table1 = mgr.Find(Of Table1)(1)
+            Dim t As Type = mgr.ObjectSchema.GetTypeByEntityName("Table3")
+            'Dim con As New Orm.OrmCondition.OrmConditionConstructor
+            'con.AddFilter(New Orm.OrmFilter(t, "Code", New TypeWrap(Of Object)(2), Orm.FilterOperation.Equal))
+            Dim s As Orm.Sort = Orm.Sorting.Field("Code").Desc
+            Dim c As ICollection(Of Table33) = tt1.Find(Of Table33)(Nothing, s, WithLoad)
+            Assert.AreEqual(2, c.Count)
+            Assert.AreEqual(2, CType(c, List(Of Table33))(0).Code)
+            Assert.AreEqual(1, CType(c, List(Of Table33))(0).Code)
+
+            mgr.BeginTransaction()
+            Try
+                Using st As New Orm.OrmReadOnlyDBManager.ObjectStateTracker(mgr)
+                    Dim tt2 As Table33 = New Table33(-100, mgr.Cache, mgr.ObjectSchema)
+                    st.Add(tt2)
+
+                    Dim t3 As New Tables1to3(-101, mgr.Cache, mgr.ObjectSchema)
+                    st.Add(t3)
+
+                    t3.Table1 = tt1
+                    t3.Table3 = tt2
+                    t3.Title = "sdfpsdfm"
+                End Using
+
+                c = tt1.Find(Of Table33)(Nothing, s, WithLoad)
+                Assert.AreEqual(3, c.Count)
+                Assert.AreEqual(3, CType(c, List(Of Table33))(0).Code)
+                Assert.AreEqual(2, CType(c, List(Of Table33))(0).Code)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestFuncs()
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("2"))
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
