@@ -209,8 +209,34 @@ Namespace Orm
             End Get
         End Property
 
-        Public Sub Accept()
-            CType(_mainList, List(Of Integer)).AddRange(_addedList)
+        Public Function Accept(ByVal mgr As OrmDBManager, ByVal s As Sort) As Boolean
+            If s Is Nothing Then
+                CType(_mainList, List(Of Integer)).AddRange(_addedList)
+            Else
+                Dim sr As IOrmSorting = Nothing
+                Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
+                If Not mgr.CanSortOnClient(_subType, col, sr) Then
+                    Return False
+                End If
+                Dim c As IComparer = sr.CreateSortComparer(s)
+                If c Is Nothing Then
+                    Return False
+                End If
+                For Each id As Integer In _addedList
+                    Dim add As OrmBase = mgr.CreateDBObject(id, _subType)
+                    Dim pos As Integer = col.BinarySearch(add, c)
+                    If pos >= 0 Then
+                        Throw New InvalidOperationException("Object already in collection")
+                    End If
+                    col.Insert(Not pos, add)
+                Next
+                Dim ml As New List(Of Integer)
+                For Each o As OrmBase In col
+                    ml.Add(o.Identifier)
+                Next
+                _mainList = ml
+            End If
+
             _addedList.Clear()
             For Each o As Integer In _deletedList
                 CType(_mainList, List(Of Integer)).Remove(o)
@@ -218,7 +244,9 @@ Namespace Orm
             _deletedList.Clear()
             _saved = False
             RemoveNew()
-        End Sub
+
+            Return True
+        End Function
 
         Protected Sub RejectRelated(ByVal id As Integer, ByVal add As Boolean)
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
@@ -271,6 +299,14 @@ Namespace Orm
                 _deletedList.Remove(id)
             Else
                 _addedList.Add(id)
+            End If
+        End Sub
+
+        Public Sub Add(ByVal id As Integer, ByVal idx As Integer)
+            If _deletedList.Contains(id) Then
+                _deletedList.Remove(id)
+            Else
+                _addedList.Insert(idx, id)
             End If
         End Sub
 
