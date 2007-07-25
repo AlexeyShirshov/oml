@@ -821,7 +821,7 @@ Namespace Orm
                     Else
                         Dim l As New List(Of Integer)
                         l.Add(id2)
-                        el = New EditableList(id1, l, type, type2load)
+                        el = New EditableList(id1, l, type, type2load, Nothing)
                         edic.Add(id1, el)
                     End If
                 Next
@@ -871,7 +871,7 @@ Namespace Orm
                                     Else
                                         Dim l As New List(Of Integer)
                                         l.Add(id2)
-                                        el = New EditableList(id1, l, type, type2load)
+                                        el = New EditableList(id1, l, type, type2load, Nothing)
                                         edic.Add(id1, el)
                                     End If
                                     If withLoad Then

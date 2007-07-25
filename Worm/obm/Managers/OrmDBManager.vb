@@ -511,22 +511,27 @@ Namespace Orm
                             '    End If
                             'End If
                             Dim m2me As M2MCache = o.First
-                            If m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso Not m2me.Entry.Saved AndAlso Not processedType.Contains(m2me.Entry.SubType) Then
-                                Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
-                                    'Dim tt1 As Type = obj.GetType
-                                    Dim tt2 As Type = m2me.Entry.SubType
-                                    'Dim added As New List(Of Integer)
-                                    Dim sv As EditableList = m2me.Entry.PrepareSave(Me)
-                                    If sv IsNot Nothing Then
-                                        M2MSave(obj, tt2, m2me.Entry.Direct, sv)
-                                        m2me.Entry.Saved = True
-                                    End If
-                                    Dim acs As New OrmBase.AcceptState2(m2me, o.Second.First, o.Second.Second)
-                                    If acs IsNot Nothing Then
-                                        hasNew = hasNew Or acs.el.HasNew
-                                        obj.AddAccept(acs)
-                                    End If
-                                End Using
+                            If m2me.Filter IsNot Nothing Then
+                                Dim dic As IDictionary = GetDic(_cache, o.Second.First)
+                                dic.Remove(o.Second.Second)
+                            Else
+                                If m2me.Entry.HasChanges AndAlso Not m2me.Entry.Saved AndAlso Not processedType.Contains(m2me.Entry.SubType) Then
+                                    Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
+                                        'Dim tt1 As Type = obj.GetType
+                                        Dim tt2 As Type = m2me.Entry.SubType
+                                        'Dim added As New List(Of Integer)
+                                        Dim sv As EditableList = m2me.Entry.PrepareSave(Me)
+                                        If sv IsNot Nothing Then
+                                            M2MSave(obj, tt2, m2me.Entry.Direct, sv)
+                                            m2me.Entry.Saved = True
+                                        End If
+                                        Dim acs As New OrmBase.AcceptState2(m2me, o.Second.First, o.Second.Second)
+                                        If acs IsNot Nothing Then
+                                            hasNew = hasNew Or acs.el.HasNew
+                                            obj.AddAccept(acs)
+                                        End If
+                                    End Using
+                                End If
                             End If
                         Next
                     End If
@@ -570,6 +575,10 @@ Namespace Orm
             End Sub
 
             Public Function Add(ByVal e As M2MCache) As Boolean
+                If e Is Nothing Then
+                    Throw New ArgumentNullException("e")
+                End If
+
                 Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
                 Dim el As EditableList = e.Entry
                 Dim obj As OrmBase = Nothing
@@ -600,6 +609,10 @@ Namespace Orm
             End Function
 
             Public Function Remove(ByVal e As M2MCache) As Boolean
+                If e Is Nothing Then
+                    Throw New ArgumentNullException("e")
+                End If
+
                 Dim el As EditableList = e.Entry
                 If el.MainId = o1.Identifier Then
                     el.Delete(o2.Identifier)
@@ -610,14 +623,22 @@ Namespace Orm
             End Function
 
             Public Function Accept(ByVal e As M2MCache) As Boolean
+                If e Is Nothing Then
+                    Throw New ArgumentNullException("e")
+                End If
+
                 Dim el As EditableList = e.Entry
                 If el.MainId = o1.Identifier OrElse el.MainId = o2.Identifier Then
-                    el.Accept(CType(OrmManagerBase.CurrentManager, OrmDBManager), e.Sort)
+                    el.Accept(CType(OrmManagerBase.CurrentManager, OrmDBManager))
                 End If
                 Return True
             End Function
 
             Public Function Reject(ByVal e As M2MCache) As Boolean
+                If e Is Nothing Then
+                    Throw New ArgumentNullException("e")
+                End If
+
                 Dim el As EditableList = e.Entry
                 If el.MainId = o1.Identifier OrElse el.MainId = o2.Identifier Then
                     el.Reject(False)

@@ -212,7 +212,7 @@ Namespace Orm
                 _cache = mc.Cache
                 If obj IsNot Nothing Then
                     _cache.RegisterCreationCacheItem(Me.GetType)
-                    _obj = New EditableList(mainId, obj, mainType, subType, direct)
+                    _obj = New EditableList(mainId, obj, mainType, subType, direct, sort)
                 End If
                 _f = filter
             End Sub
@@ -821,7 +821,7 @@ Namespace Orm
                                 End If
 
                                 'Dim sync As String = GetSync(key, id)
-                                el.Accept(Nothing, Nothing)
+                                el.Accept(Nothing)
                                 dic(id) = New M2MCache(Nothing, GetFilter(criteria), el, Me)
                             End If
 

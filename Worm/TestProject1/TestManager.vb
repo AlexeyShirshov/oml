@@ -380,6 +380,43 @@ Imports System.Collections.Generic
     End Sub
 
     <TestMethod()> _
+    Public Sub TestM2MAdd4()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
+            Dim e As Entity = mgr.Find(Of Entity)(2)
+            Dim e2 As Entity4 = mgr.Find(Of Entity4)(5)
+
+            Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), _
+                Orm.Sorting.Field("Title").Asc, True)
+            Assert.AreEqual(10, c2.Count)
+
+            Dim c3 As ICollection(Of Entity) = e2.Find(Of Entity)(Nothing, Nothing, True)
+            Assert.AreEqual(3, c3.Count)
+
+            e.Add(e2)
+
+            c2 = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), _
+                Orm.Sorting.Field("Title").Asc, True)
+            Assert.AreEqual(10, c2.Count)
+
+            mgr.BeginTransaction()
+            Try
+                'mgr.Obj2ObjRelationSave(e, GetType(Entity4))
+                e.Save(True)
+
+                c2 = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), _
+                    Orm.Sorting.Field("Title").Asc, True)
+                Assert.AreEqual(11, c2.Count)
+
+                c3 = e2.Find(Of Entity)(Nothing, Nothing, True)
+                Assert.AreEqual(4, c3.Count)
+
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestAdd()
         Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity = New Entity(-100, mgr.Cache, mgr.ObjectSchema)

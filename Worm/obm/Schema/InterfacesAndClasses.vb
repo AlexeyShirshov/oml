@@ -179,23 +179,65 @@ Namespace Orm
         Private _mainType As Type
         Private _subType As Type
         Private _new As Generic.List(Of Integer)
+        Private _sort As Sort
 
-        Sub New(ByVal mainId As Integer, ByVal mainList As IList(Of Integer), ByVal mainType As Type, ByVal subType As Type)
+        Sub New(ByVal mainId As Integer, ByVal mainList As IList(Of Integer), ByVal mainType As Type, ByVal subType As Type, ByVal sort As Sort)
             _mainList = mainList
             _mainId = mainId
             _mainType = mainType
             _subType = subType
+            _sort = sort
         End Sub
 
-        Sub New(ByVal mainId As Integer, ByVal mainList As IList(Of Integer), ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean)
-            MyClass.New(mainId, mainList, mainType, subType)
+        Sub New(ByVal mainId As Integer, ByVal mainList As IList(Of Integer), ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean, ByVal sort As Sort)
+            MyClass.New(mainId, mainList, mainType, subType, sort)
             _non_direct = Not direct
         End Sub
 
         Public ReadOnly Property Current() As ICollection(Of Integer)
             Get
-                Dim arr As New List(Of Integer)(_mainList)
-                arr.AddRange(_addedList)
+                Dim sort As Boolean = False
+                Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+                Dim arr As New List(Of Integer)
+                Dim col As New ArrayList
+                Dim c As IComparer = Nothing
+                If _sort IsNot Nothing Then
+                    Dim sr As IOrmSorting = Nothing
+                    col.AddRange(mgr.ConvertIds2Objects(_subType, _mainList, False))
+                    If mgr.CanSortOnClient(_subType, col, sr) Then
+                        c = sr.CreateSortComparer(_sort)
+                        sort = c IsNot Nothing
+                    End If
+                End If
+                If Not sort Then
+                    arr.AddRange(_mainList)
+                    arr.AddRange(_addedList)
+                Else
+                    Dim i, j As Integer
+                    Do
+                        If i = _mainList.Count Then
+                            For k As Integer = j To _addedList.Count - 1
+                                arr.Add(_addedList(k))
+                            Next
+                            Exit Do
+                        End If
+                        If j = _addedList.Count Then
+                            For k As Integer = i To _mainList.Count - 1
+                                arr.Add(_mainList(k))
+                            Next
+                            Exit Do
+                        End If
+                        Dim ex As OrmBase = CType(col(i), OrmBase)
+                        Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
+                        If c.Compare(ex, ad) > 0 Then
+                            arr.Add(ex.Identifier)
+                            i += 1
+                        Else
+                            arr.Add(ad.Identifier)
+                            j += 1
+                        End If
+                    Loop While True
+                End If
                 For Each o As Integer In _deletedList
                     arr.Remove(o)
                 Next
@@ -209,8 +251,8 @@ Namespace Orm
             End Get
         End Property
 
-        Public Function Accept(ByVal mgr As OrmDBManager, ByVal s As Sort) As Boolean
-            If s Is Nothing Then
+        Public Function Accept(ByVal mgr As OrmDBManager) As Boolean
+            If _sort Is Nothing Then
                 CType(_mainList, List(Of Integer)).AddRange(_addedList)
             Else
                 Dim sr As IOrmSorting = Nothing
@@ -218,7 +260,7 @@ Namespace Orm
                 If Not mgr.CanSortOnClient(_subType, col, sr) Then
                     Return False
                 End If
-                Dim c As IComparer = sr.CreateSortComparer(s)
+                Dim c As IComparer = sr.CreateSortComparer(_sort)
                 If c Is Nothing Then
                     Return False
                 End If
@@ -413,7 +455,7 @@ Namespace Orm
                     End If
                 Next
                 If ad.Count > 0 OrElse _deletedList.Count > 0 Then
-                    newl = New EditableList(_mainId, _mainList, _mainType, _subType, Direct)
+                    newl = New EditableList(_mainId, _mainList, _mainType, _subType, Direct, _sort)
                     newl._deletedList = _deletedList
                     newl._addedList = ad
                 End If
@@ -433,7 +475,7 @@ Namespace Orm
                     End If
                 Next
                 If ad.Count > 0 Then
-                    newl = New EditableList(_mainId, New List(Of Integer), _mainType, _subType, Direct)
+                    newl = New EditableList(_mainId, New List(Of Integer), _mainType, _subType, Direct, _sort)
                     newl.AddRange(ad)
                 End If
             End If

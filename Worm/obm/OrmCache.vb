@@ -477,8 +477,10 @@ Namespace Orm
                         Dim remove As New List(Of String)
                         For Each id As String In p.Value.Keys
                             Dim ce As OrmManagerBase.M2MCache = TryCast(dic(id), OrmManagerBase.M2MCache)
-                            If Not f(ce) Then
-                                remove.Add(id)
+                            If ce IsNot Nothing Then
+                                If Not f(ce) Then
+                                    remove.Add(id)
+                                End If
                             End If
                         Next
                         For Each id As String In remove

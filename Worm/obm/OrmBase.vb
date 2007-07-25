@@ -81,7 +81,7 @@ Namespace Orm
 
             Public Function Accept2(ByVal obj As OrmBase, ByVal mgr As OrmDBManager) As Boolean
                 If _e IsNot Nothing Then
-                    Dim leave As Boolean = _e.Entry.Accept(mgr, _e.Sort) AndAlso _e.Filter Is Nothing
+                    Dim leave As Boolean = _e.Entry.Accept(mgr) AndAlso _e.Filter Is Nothing
                     If Not leave Then
                         Dim dic As IDictionary = OrmManagerBase.GetDic(mgr.Cache, _key)
                         dic.Remove(_id)
