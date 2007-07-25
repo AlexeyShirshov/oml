@@ -101,7 +101,7 @@ Imports System.Collections.Generic
 
         Dim e As New Entity(10, Nothing, schema)
 
-        Dim el As New Orm.EditableList(10, New Integer() {9, 10, 20}, Nothing, Nothing)
+        Dim el As New Orm.EditableList(10, New Integer() {9, 10, 20}, Nothing, Nothing, Nothing)
         el.Delete(10)
         el.Add(234)
 
@@ -124,7 +124,7 @@ Imports System.Collections.Generic
 
         Dim e As New Entity5(10, Nothing, schema)
 
-        Dim el As New Orm.EditableList(10, New Integer() {9, 10, 20}, Nothing, Nothing, True)
+        Dim el As New Orm.EditableList(10, New Integer() {9, 10, 20}, Nothing, Nothing, True, Nothing)
         el.Delete(10)
         el.Add(234)
 
