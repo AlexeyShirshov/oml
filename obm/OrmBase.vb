@@ -79,7 +79,7 @@ Namespace Orm
                 _id = id
             End Sub
 
-            Public Function Accept2(ByVal obj As OrmBase, ByVal mgr As OrmDBManager) As Boolean
+            Public Function Accept(ByVal obj As OrmBase, ByVal mgr As OrmDBManager) As Boolean
                 If _e IsNot Nothing Then
                     Dim leave As Boolean = _e.Entry.Accept(mgr) AndAlso _e.Filter Is Nothing
                     If Not leave Then
@@ -547,7 +547,7 @@ Namespace Orm
                 Dim mc As OrmManagerBase = OrmManagerBase.CurrentManager
                 'Debug.Write("Accept " & t.Name)
                 For Each acs As AcceptState2 In _needAccept
-                    acs.Accept2(Me, CType(mc, OrmDBManager))
+                    acs.Accept(Me, CType(mc, OrmDBManager))
                     'If Not String.IsNullOrEmpty(acs.id) Then
                     '    mc.ResetAllM2MRelations(acs.id, acs.key)
                     'End If

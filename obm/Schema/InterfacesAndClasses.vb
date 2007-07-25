@@ -229,7 +229,7 @@ Namespace Orm
                         End If
                         Dim ex As OrmBase = CType(col(i), OrmBase)
                         Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
-                        If c.Compare(ex, ad) > 0 Then
+                        If c.Compare(ex, ad) < 0 Then
                             arr.Add(ex.Identifier)
                             i += 1
                         Else
@@ -258,24 +258,14 @@ Namespace Orm
                 Dim sr As IOrmSorting = Nothing
                 Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
                 If Not mgr.CanSortOnClient(_subType, col, sr) Then
+                    AcceptDual()
                     Return False
                 End If
                 Dim c As IComparer = sr.CreateSortComparer(_sort)
                 If c Is Nothing Then
+                    AcceptDual()
                     Return False
                 End If
-                'For Each id As Integer In _addedList
-                '    Dim add As OrmBase = mgr.CreateDBObject(id, _subType)
-                '    Dim pos As Integer = col.BinarySearch(add, c)
-                '    If pos >= 0 Then
-                '        Throw New InvalidOperationException("Object already in collection")
-                '    End If
-                '    col.Insert(Not pos, add)
-                'Next
-                'Dim ml As New List(Of Integer)
-                'For Each o As OrmBase In col
-                '    ml.Add(o.Identifier)
-                'Next
                 Dim ml As New List(Of Integer)
                 Dim i, j As Integer
                 Do
@@ -293,7 +283,7 @@ Namespace Orm
                     End If
                     Dim ex As OrmBase = CType(col(i), OrmBase)
                     Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
-                    If c.Compare(ex, ad) > 0 Then
+                    If c.Compare(ex, ad) < 0 Then
                         ml.Add(ex.Identifier)
                         i += 1
                     Else
@@ -312,12 +302,57 @@ Namespace Orm
             _saved = False
             RemoveNew()
 
+            AcceptDual()
             Return True
         End Function
 
+        Public Function Accept(ByVal mgr As OrmDBManager, ByVal id As Integer) As Boolean
+            If _addedList.Contains(id) Then
+                If _sort Is Nothing Then
+                    CType(_mainList, List(Of Integer)).Add(id)
+                Else
+                    Dim sr As IOrmSorting = Nothing
+                    Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
+                    If Not mgr.CanSortOnClient(_subType, col, sr) Then
+                        Return False
+                    End If
+                    Dim c As IComparer = sr.CreateSortComparer(_sort)
+                    If c Is Nothing Then
+                        Return False
+                    End If
+                    Dim ad As OrmBase = mgr.CreateDBObject(id, _subType)
+                    Dim pos As Integer = col.BinarySearch(ad, c)
+                    If pos < 0 Then
+                        _mainList.Insert(Not pos, id)
+                    End If
+                End If
+                _addedList.Remove(id)
+            ElseIf _deletedList.Contains(id) Then
+                CType(_mainList, List(Of Integer)).Remove(id)
+                _deletedList.Remove(id)
+            End If
+
+            Return True
+        End Function
+
+        Protected Sub AcceptDual()
+            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+            For Each id As Integer In _mainList
+                Dim obj As OrmBase = mgr.CreateDBObject(id, SubType)
+                Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(obj, MainType, GetRealDirect)
+                If m IsNot Nothing Then
+                    If m.Entry.Added.Contains(_mainId) OrElse m.Entry.Deleted.Contains(_mainId) Then
+                        If Not m.Entry.Accept(CType(mgr, OrmDBManager), _mainId) Then
+                            mgr.M2MCancel(obj, MainType)
+                        End If
+                    End If
+                End If
+            Next
+        End Sub
+
         Protected Sub RejectRelated(ByVal id As Integer, ByVal add As Boolean)
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
-            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect)
+            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
             Dim l As IList(Of Integer) = m.Entry.Added
             If Not add Then
                 l = m.Entry.Deleted
@@ -365,6 +400,21 @@ Namespace Orm
             If _deletedList.Contains(id) Then
                 _deletedList.Remove(id)
             Else
+                If _sort IsNot Nothing Then
+                    Dim sr As IOrmSorting = Nothing
+                    Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+                    Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _addedList, False))
+                    If mgr.CanSortOnClient(_subType, col, sr) Then
+                        Dim c As IComparer = sr.CreateSortComparer(_sort)
+                        If c IsNot Nothing Then
+                            Dim pos As Integer = col.BinarySearch(mgr.CreateDBObject(id, _subType), c)
+                            If pos < 0 Then
+                                _addedList.Insert(Not pos, id)
+                                Return
+                            End If
+                        End If
+                    End If
+                End If
                 _addedList.Add(id)
             End If
         End Sub
@@ -446,7 +496,7 @@ Namespace Orm
         End Function
 
         Protected Function CheckDual(ByVal mgr As OrmManagerBase, ByVal id As Integer) As Boolean
-            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect)
+            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
             Dim c As Boolean = True
             For Each i As Integer In m.Entry.original
                 If i = _mainId Then
