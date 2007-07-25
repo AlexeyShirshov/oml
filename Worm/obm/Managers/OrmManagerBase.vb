@@ -1865,87 +1865,16 @@ l1:
                 Throw New ArgumentNullException("subobj")
             End If
 
-            Dim m As M2MCache = FindM2MNonGeneric(mainobj, subobj.GetType, direct)
+            Dim m As M2MCache = FindM2MNonGeneric(mainobj, subobj.GetType, direct).First
             m.Entry.Delete(subobj.Identifier)
         End Sub
 
         Protected Friend Sub M2MDelete(ByVal mainobj As OrmBase, ByVal t As Type, ByVal direct As Boolean)
-            Dim m As M2MCache = FindM2MNonGeneric(mainobj, t, direct)
+            Dim m As M2MCache = FindM2MNonGeneric(mainobj, t, direct).First
             For Each id As Integer In m.Entry.Current
                 m.Entry.Delete(id)
             Next
         End Sub
-
-        'Protected Function Obj2ObjRelationDeleteInternal(ByVal mainobj As OrmBase, ByVal t As Type) As System.Data.DataTable
-
-        '    Invariant()
-
-        '    If mainobj Is Nothing Then
-        '        Throw New ArgumentNullException("mainobj parameter cannot be nothing")
-        '    End If
-
-        '    If t Is Nothing Then
-        '        Throw New ArgumentNullException("t parameter cannot be nothing")
-        '    End If
-
-        '    Dim tt1 As Type = mainobj.GetType
-        '    Dim tt2 As Type = t
-
-        '    If _schema.IsMany2ManyReadonly(tt1, tt2) Then
-        '        Throw New InvalidOperationException("Relation is readonly")
-        '    End If
-
-        '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey()
-
-        '    Dim dic As IDictionary = GetDic(_cache, key)
-
-        '    Dim id As String = mainobj.Identifier.ToString
-
-        '    Dim sync As String = id & Const_KeyStaticString & key & GetTablePostfix
-
-        '    Dim dt As System.Data.DataTable = GetDataTable(id, key & GetTablePostfix, sync, t, mainobj, Nothing, False, False, False)
-        '    Dim mid As String = tt1.Name & "ID"
-        '    'Using SyncHelper.AcquireDynamicLock(sync)
-        '    Dim rs() As System.Data.DataRow = dt.Select(mid & " = " & mainobj.Identifier)
-        '    'ResetAllM2MRelations(id, key)
-        '    For Each r As System.Data.DataRow In rs
-        '        r.Delete()
-        '    Next
-
-        '    Return dt
-        '    'End Using
-        'End Function
-
-        'Protected Friend Sub ResetAllM2MRelations(ByVal id As String, ByVal key As String)
-        '    For Each dic As IDictionary In GetDics(_cache, key, Nothing) ', " - GetTable"
-        '        For Each k As String In New ArrayList(dic.Keys)
-        '            If k <> id AndAlso k.StartsWith(id) Then
-        '                dic.Remove(k)
-        '            End If
-        '        Next
-        '    Next
-        'End Sub
-
-        'Protected Friend Function HasTableInCache(ByVal mainobj As OrmBase, ByVal subType As Type) As Boolean
-        '    Invariant()
-
-        '    If mainobj Is Nothing Then
-        '        Throw New ArgumentNullException("mainobj parameter cannot be nothing")
-        '    End If
-
-        '    If subType Is Nothing Then
-        '        Throw New ArgumentNullException("t parameter cannot be nothing")
-        '    End If
-
-        '    Dim tt1 As Type = mainobj.GetType
-        '    Dim tt2 As Type = subType
-
-        '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey() & GetTablePostfix
-
-        '    Dim dic As IDictionary = GetDic(_cache, key)
-        '    Dim id As String = mainobj.Identifier.ToString
-        '    Return dic.Contains(id)
-        'End Function
 
         Protected Function M2MSave(ByVal mainobj As OrmBase, ByVal t As Type, ByVal direct As Boolean) As OrmBase.AcceptState2
             Invariant()
@@ -1977,216 +1906,6 @@ l1:
             Return Nothing
 
         End Function
-
-        'Protected Function Obj2ObjRelationSaveAndReset2(ByVal mainobj As OrmBase, ByVal t As Type, ByRef hasNew As Boolean) As OrmBase.AcceptState
-        '    Invariant()
-
-        '    If mainobj Is Nothing Then
-        '        Throw New ArgumentNullException("mainobj parameter cannot be nothing")
-        '    End If
-
-        '    If t Is Nothing Then
-        '        Throw New ArgumentNullException("t parameter cannot be nothing")
-        '    End If
-
-        '    hasNew = False
-
-        '    Dim tt1 As Type = mainobj.GetType
-        '    Dim tt2 As Type = t
-
-        '    Dim eq As Boolean = tt1 Is tt2
-        '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey()
-        '    Dim key2 As String = tt2.Name & Const_JoinStaticString & tt1.Name & GetStaticKey()
-
-        '    If eq Then
-        '        key2 &= DbSchema.SubRelationTag
-        '    End If
-
-        '    Dim dic As IDictionary = GetDic(_cache, key2)
-        '    Dim dic2 As IDictionary = GetDic(_cache, key2 & GetTablePostfix)
-
-        '    Dim id As String = mainobj.Identifier.ToString
-        '    Dim sync As String = id & Const_KeyStaticString & key & GetTablePostfix
-        '    Dim arr As New ArrayList
-        '    Dim dt As System.Data.DataTable = GetDataTable(id, key & GetTablePostfix, sync, tt2, mainobj, Nothing, False, True, False)
-        '    Using SyncHelper.AcquireDynamicLock(sync)
-        '        For Each dr As System.Data.DataRow In dt.Rows
-        '            Dim literal As String = tt2.Name & "ID"
-        '            If eq Then
-        '                literal &= "Rev"
-        '            End If
-        '            Dim l_id As Integer = 0
-        '            If dr.RowState = System.Data.DataRowState.Deleted Then
-        '                l_id = CInt(dr.Item(literal, System.Data.DataRowVersion.Original))
-        '            Else
-        '                l_id = CInt(dr.Item(literal))
-        '            End If
-        '            Dim can_remove As Boolean = True
-        '            Dim ll As String = l_id.ToString
-
-        '            If Not IsInCache(l_id, t) AndAlso IsNewObject(tt2, l_id) Then
-        '                If dr.RowState <> System.Data.DataRowState.Deleted Then
-        '                    can_remove = False
-        '                    arr.Add(New Pair(Of System.Data.DataRow, Object())(dr, CType(dr.ItemArray.Clone, [Object]())))
-        '                    hasNew = True
-        '                End If
-        '            ElseIf GetDic(_cache, key2 & GetTablePostfix).Contains(ll) Then
-        '                Dim o As OrmBase = CreateDBObject(l_id, tt2)
-        '                Dim sync2 As String = ll & Const_KeyStaticString & key2 & GetTablePostfix
-        '                Dim dt2 As System.Data.DataTable = GetDataTable(ll, key2 & GetTablePostfix, sync2, tt1, o, Nothing, False, True, False)
-        '                If dt2 IsNot Nothing Then
-        '                    Dim literal2 As String = t.Name & "ID"
-        '                    If eq Then
-        '                        literal2 &= "Rev"
-        '                    End If
-        '                    Using SyncHelper.AcquireDynamicLock(sync2)
-        '                        For Each dr2 As System.Data.DataRow In dt2.Rows
-        '                            Dim id2 As Integer = 0
-        '                            If dr2.RowState = System.Data.DataRowState.Deleted Then
-        '                                id2 = CInt(dr2.Item(literal2, System.Data.DataRowVersion.Original))
-        '                            Else
-        '                                id2 = CInt(dr2.Item(literal2))
-        '                            End If
-        '                            If Not IsInCache(id2, t) Then
-        '                                can_remove = False
-        '                                Exit For
-        '                            End If
-        '                        Next
-        '                    End Using
-        '                End If
-        '            End If
-
-        '            If can_remove Then
-        '                dic.Remove(ll)
-        '                dic2.Remove(ll)
-        '            End If
-        '        Next
-
-        '        For Each dr As Pair(Of System.Data.DataRow, Object()) In arr
-        '            dt.Rows.Remove(dr.First)
-        '        Next
-
-        '        Obj2ObjRelationSave2(mainobj, dt, sync, t)
-        '        'ResetAllM2MRelations(id, key)
-
-        '        For Each dr As Pair(Of System.Data.DataRow, Object()) In arr
-        '            Dim new_row As System.Data.DataRow = dt.Rows.Add()
-        '            new_row.ItemArray = dr.Second
-        '        Next
-
-        '        Return New OrmBase.AcceptState(dt, id, key, t)
-        '    End Using
-        'End Function
-
-        'Protected Friend Sub Obj2ObjRelationReset(ByVal mainobj As OrmBase, ByVal t As Type)
-
-        '    Invariant()
-
-        '    If mainobj Is Nothing Then
-        '        Throw New ArgumentNullException("mainobj parameter cannot be nothing")
-        '    End If
-
-        '    If t Is Nothing Then
-        '        Throw New ArgumentNullException("t parameter cannot be nothing")
-        '    End If
-
-        '    Dim tt1 As Type = mainobj.GetType
-        '    Dim tt2 As Type = t
-
-        '    Dim eq As Boolean = tt1 Is tt2
-        '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey()
-        '    Dim key2 As String = tt2.Name & Const_JoinStaticString & tt1.Name & GetStaticKey()
-
-        '    If eq Then
-        '        key2 &= DbSchema.SubRelationTag
-        '    End If
-
-        '    Dim dic As IDictionary = GetDic(_cache, key2)
-        '    Dim dic2 As IDictionary = GetDic(Cache, key2 & GetTablePostfix)
-
-        '    Dim id As String = mainobj.Identifier.ToString
-        '    Dim sync As String = id & Const_KeyStaticString & key & GetTablePostfix
-
-        '    Dim dt As System.Data.DataTable = GetDataTable(id, key & GetTablePostfix, sync, tt2, mainobj, Nothing, False, True, False)
-        '    Using SyncHelper.AcquireDynamicLock(sync)
-        '        For Each dr As System.Data.DataRow In dt.Rows
-        '            Dim literal As String = tt2.Name & "ID"
-        '            If eq Then
-        '                literal &= "Rev"
-        '            End If
-        '            Dim l_id As Integer = 0
-        '            If dr.RowState = System.Data.DataRowState.Deleted Then
-        '                l_id = CInt(dr.Item(literal, System.Data.DataRowVersion.Original))
-        '            Else
-        '                l_id = CInt(dr.Item(literal))
-        '            End If
-        '            Dim can_remove As Boolean = True
-        '            Dim ll As String = l_id.ToString
-        '            If GetDic(_cache, key2 & GetTablePostfix).Contains(ll) Then
-        '                Dim o As OrmBase = CreateDBObject(l_id, tt2)
-        '                Dim sync2 As String = ll & Const_KeyStaticString & key2 & GetTablePostfix
-        '                Dim dt2 As System.Data.DataTable = GetDataTable(ll, key2 & GetTablePostfix, sync2, tt1, o, Nothing, False, True, False)
-        '                If dt2 IsNot Nothing Then
-        '                    Dim literal2 As String = t.Name & "ID"
-        '                    If eq Then
-        '                        literal2 &= "Rev"
-        '                    End If
-        '                    Using SyncHelper.AcquireDynamicLock(sync2)
-        '                        For Each dr2 As System.Data.DataRow In dt2.Rows
-        '                            Dim id2 As Integer = 0
-        '                            If dr2.RowState = System.Data.DataRowState.Deleted Then
-        '                                id2 = CInt(dr2.Item(literal2, System.Data.DataRowVersion.Original))
-        '                            Else
-        '                                id2 = CInt(dr2.Item(literal2))
-        '                            End If
-        '                            If Not IsInCache(id2, t) Then
-        '                                can_remove = False
-        '                                Exit For
-        '                            End If
-        '                        Next
-        '                    End Using
-        '                End If
-        '            End If
-        '            If can_remove Then
-        '                dic.Remove(ll)
-        '                dic2.Remove(ll)
-        '            End If
-        '        Next
-        '    End Using
-        'End Sub
-
-        'Protected Sub SubObjRelationUpdate(ByVal id As Integer, ByVal key As String, _
-        '    ByVal literal As String, ByVal literal2 As String, ByVal id2 As Integer, _
-        '    ByVal old As Integer, ByVal tt1 As Type, ByVal tt2 As Type)
-
-        '    Dim sync As String = id & Const_KeyStaticString & key & GetTablePostfix
-        '    'Dim dic As IDictionary = GetDic(_cache, key)
-        '    Dim dic2 As IDictionary = GetDic(_cache, key & GetTablePostfix)
-
-        '    If dic2.Contains(id.ToString) Then
-
-        '        Dim o As OrmBase = Nothing
-
-        '        If Not IsInCache(id, tt2) Then
-        '            If Not IsNewObject(tt2, id) Then
-        '                o = CreateDBObject(id, tt2)
-        '                'Throw New OrmManagerException(String.Format("Object with identifier {0} and type {1} is not in cache", id, tt2))
-        '            End If
-        '        Else
-        '            o = CreateDBObject(id, tt2)
-        '        End If
-
-        '        Dim dt As System.Data.DataTable = GetDataTable(id.ToString, key & GetTablePostfix, sync, tt1, o, Nothing, False, True, False)
-
-        '        Using SyncHelper.AcquireDynamicLock(sync)
-
-        '            For Each dr As System.Data.DataRow In dt.Select(literal & " = " & id & " and " & literal2 & " = " & old)
-        '                dr(literal2) = id2
-        '            Next
-
-        '        End Using
-        '    End If
-        'End Sub
 
         Protected Sub M2MUpdate(ByVal obj As OrmBase, ByVal oldId As Integer)
             For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEtries(obj, obj.GetOldName(oldId))
@@ -2298,7 +2017,21 @@ l1:
         '    Obj2ObjRelationAddInternal(subobj, mainobj)
         'End Sub
 
-        Protected Friend Function FindM2MNonGeneric(ByVal mainobj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As M2MCache
+        'Protected Friend Function FindM2MNonGeneric(ByVal mainobj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As M2MCache
+        '    Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
+        '    'Dim pm As New Reflection.ParameterModifier(6)
+        '    'pm(5) = True
+        '    Dim types As Type() = New Type() {GetType(OrmBase), GetType(Boolean), GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}
+        '    Dim o() As Object = New Object() {mainobj, direct, Nothing, Nothing, False}
+        '    'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
+        '    '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
+        '    Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("FindM2M", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
+        '    Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {tt2})
+        '    Dim p As Pair(Of M2MCache, Boolean) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Pair(Of M2MCache, Boolean))
+        '    Return p.First
+        'End Function
+
+        Protected Friend Function FindM2MNonGeneric(ByVal mainobj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As Pair(Of M2MCache, Boolean)
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
             'Dim pm As New Reflection.ParameterModifier(6)
             'pm(5) = True
@@ -2309,7 +2042,19 @@ l1:
             Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("FindM2M", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
             Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {tt2})
             Dim p As Pair(Of M2MCache, Boolean) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Pair(Of M2MCache, Boolean))
-            Return p.First
+            Return p
+        End Function
+
+        Protected Friend Function GetM2MNonGeneric(ByVal obj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As M2MCache
+            Dim tt1 As Type = obj.GetType
+
+            Dim key As String = GetM2MKey(tt1, tt2, direct)
+
+            Dim dic As IDictionary = GetDic(_cache, key)
+
+            Dim id As String = obj.Identifier.ToString
+
+            Return CType(dic(id), M2MCache)
         End Function
 
         Protected Sub M2MAddInternal(ByVal mainobj As OrmBase, ByVal subobj As OrmBase, ByVal direct As Boolean)
@@ -2328,7 +2073,7 @@ l1:
                 Throw New InvalidOperationException("Relation is readonly")
             End If
 
-            Dim m As M2MCache = FindM2MNonGeneric(mainobj, tt2, direct)
+            Dim m As M2MCache = FindM2MNonGeneric(mainobj, tt2, direct).First
 
             m.Entry.Add(subobj.Identifier)
         End Sub
