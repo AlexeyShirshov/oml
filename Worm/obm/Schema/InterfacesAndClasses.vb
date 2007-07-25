@@ -264,18 +264,43 @@ Namespace Orm
                 If c Is Nothing Then
                     Return False
                 End If
-                For Each id As Integer In _addedList
-                    Dim add As OrmBase = mgr.CreateDBObject(id, _subType)
-                    Dim pos As Integer = col.BinarySearch(add, c)
-                    If pos >= 0 Then
-                        Throw New InvalidOperationException("Object already in collection")
-                    End If
-                    col.Insert(Not pos, add)
-                Next
+                'For Each id As Integer In _addedList
+                '    Dim add As OrmBase = mgr.CreateDBObject(id, _subType)
+                '    Dim pos As Integer = col.BinarySearch(add, c)
+                '    If pos >= 0 Then
+                '        Throw New InvalidOperationException("Object already in collection")
+                '    End If
+                '    col.Insert(Not pos, add)
+                'Next
+                'Dim ml As New List(Of Integer)
+                'For Each o As OrmBase In col
+                '    ml.Add(o.Identifier)
+                'Next
                 Dim ml As New List(Of Integer)
-                For Each o As OrmBase In col
-                    ml.Add(o.Identifier)
-                Next
+                Dim i, j As Integer
+                Do
+                    If i = _mainList.Count Then
+                        For k As Integer = j To _addedList.Count - 1
+                            ml.Add(_addedList(k))
+                        Next
+                        Exit Do
+                    End If
+                    If j = _addedList.Count Then
+                        For k As Integer = i To _mainList.Count - 1
+                            ml.Add(_mainList(k))
+                        Next
+                        Exit Do
+                    End If
+                    Dim ex As OrmBase = CType(col(i), OrmBase)
+                    Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
+                    If c.Compare(ex, ad) > 0 Then
+                        ml.Add(ex.Identifier)
+                        i += 1
+                    Else
+                        ml.Add(ad.Identifier)
+                        j += 1
+                    End If
+                Loop While True
                 _mainList = ml
             End If
 

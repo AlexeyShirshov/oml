@@ -1206,9 +1206,10 @@ Namespace Orm
 l1:
                     Using SyncHelper.AcquireDynamicLock(sync)
                         ce = CType(dic(id), CachedItem)
-                        If ce Is Nothing OrElse del.Renew OrElse _dont_cache_lists Then
+                        Dim emp As Boolean = ce Is Nothing
+                        If emp OrElse del.Renew OrElse _dont_cache_lists Then
                             ce = del.GetCacheItem(withLoad)
-                            If Not _dont_cache_lists Then
+                            If Not _dont_cache_lists OrElse Not emp Then
                                 dic(id) = ce
                             End If
                             del.Created = True

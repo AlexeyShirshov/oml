@@ -416,7 +416,7 @@ Public Class EntitySchema4v1Implementation
             Return Compare(TryCast(x, Entity4), TryCast(y, Entity4))
         End Function
 
-        Public Function Compare1(ByVal x As Entity4, ByVal y As Entity4) As Integer Implements System.Collections.Generic.IComparer(Of Entity4).Compare
+        Public Function Compare(ByVal x As Entity4, ByVal y As Entity4) As Integer Implements System.Collections.Generic.IComparer(Of Entity4).Compare
             If x Is Nothing Then
                 If y Is Nothing Then
                     Return 0
