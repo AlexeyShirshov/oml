@@ -466,7 +466,7 @@ Namespace Orm
 #If DEBUG Then
             If _prev IsNot Nothing Then
                 If _prev._schema.Version <> _schema.Version Then
-                    Throw New OrmManagerException("Cannot create nexted managers with different schema versions")
+                    Throw New OrmManagerException("Cannot create nested managers with different schema versions")
                 End If
             End If
 #End If

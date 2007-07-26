@@ -258,12 +258,39 @@ Namespace Orm
                 If _mgr.NewObjectManager Is Nothing Then
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
+
+                Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetIdentity)
+            End Function
+
+            Public Function CreateNewObject(Of T As {OrmBase, New})(ByVal id As Integer) As T
+                If _mgr.NewObjectManager Is Nothing Then
+                    Throw New InvalidOperationException("NewObjectManager is not set")
+                End If
                 Dim o As New T
-                o.Init(_mgr.NewObjectManager.GetIdentity, _mgr.Cache, _mgr.ObjectSchema)
+                o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
                 _objs.Add(o)
                 _mgr.NewObjectManager.AddNew(o)
                 _saver.Add(o)
                 Return o
+            End Function
+
+            Public Function CreateNewObject(ByVal t As Type) As OrmBase
+                If _mgr.NewObjectManager Is Nothing Then
+                    Throw New InvalidOperationException("NewObjectManager is not set")
+                End If
+
+                Return CreateNewObject(t, _mgr.NewObjectManager.GetIdentity)
+            End Function
+
+            Public Function CreateNewObject(ByVal t As Type, ByVal id As Integer) As OrmBase
+                For Each mi As Reflection.MethodInfo In Me.GetType.GetMember("CreateNewObject", Reflection.MemberTypes.Method, _
+                    Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public)
+                    If mi.IsGenericMethod Then
+                        mi = mi.MakeGenericMethod(New Type() {t})
+                        Return CType(mi.Invoke(Me, New Object() {id}), OrmBase)
+                    End If
+                Next
+                Throw New InvalidOperationException("Cannot find method CreateNewObject")
             End Function
 
             Protected Sub Rollback()
