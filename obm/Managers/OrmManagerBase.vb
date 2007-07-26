@@ -1175,6 +1175,41 @@ Namespace Orm
             Dim p As New Pair(Of M2MCache, Boolean)(m, del.Created)
             Return p
         End Function
+
+        Protected Function FindM2MReturnKeysNonGeneric(ByVal mainobj As OrmBase, ByVal t As Type, ByVal direct As Boolean) As Pair(Of M2MCache, Pair(Of String))
+            Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
+            'Dim pm As New Reflection.ParameterModifier(6)
+            'pm(5) = True
+            Dim types As Type() = New Type() {GetType(OrmBase), GetType(Boolean)}
+            Dim o() As Object = New Object() {mainobj, direct}
+            'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
+            '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
+            Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("FindM2MReturnKeys", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
+            Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
+            Dim p As Pair(Of M2MCache, Pair(Of String)) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Global.CoreFramework.Structures.Pair(Of Global.Worm.Orm.OrmManagerBase.M2MCache, Global.CoreFramework.Structures.Pair(Of String)))
+            Return p
+        End Function
+
+        Protected Function FindM2MReturnKeys(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean) As Pair(Of M2MCache, Pair(Of String))
+            Dim tt1 As Type = obj.GetType
+            Dim tt2 As Type = GetType(T)
+
+            Dim key As String = GetM2MKey(tt1, tt2, direct)
+
+            Dim dic As IDictionary = GetDic(_cache, key)
+
+            Dim id As String = obj.Identifier.ToString
+
+            Dim sync As String = GetSync(key, id)
+
+            'CreateM2MDepends(filter, key, id)
+            Dim criteria As New CriteriaLink
+
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria), Nothing, id, key, direct)
+            Dim m As M2MCache = CType(FindAdvanced(Of T)(dic, sync, id, False, del), M2MCache)
+            Dim p As New Pair(Of M2MCache, Pair(Of String))(m, New Pair(Of String)(key, id))
+            Return p
+        End Function
 #End Region
 
 #Region " Cache "
@@ -1861,18 +1896,28 @@ l1:
         End Sub
 
         Protected Friend Sub M2MDelete(ByVal mainobj As OrmBase, ByVal subobj As OrmBase, ByVal direct As Boolean)
+            If mainobj Is Nothing Then
+                Throw New ArgumentNullException("mainobj")
+            End If
+
             If subobj Is Nothing Then
                 Throw New ArgumentNullException("subobj")
             End If
 
-            Dim m As M2MCache = FindM2MNonGeneric(mainobj, subobj.GetType, direct).First
-            m.Entry.Delete(subobj.Identifier)
+            M2MDeleteInternal(mainobj, subobj, direct)
+
+            If mainobj.GetType Is subobj.GetType Then
+                M2MDeleteInternal(subobj, mainobj, Not direct)
+            Else
+                M2MDeleteInternal(subobj, mainobj, direct)
+            End If
         End Sub
 
         Protected Friend Sub M2MDelete(ByVal mainobj As OrmBase, ByVal t As Type, ByVal direct As Boolean)
             Dim m As M2MCache = FindM2MNonGeneric(mainobj, t, direct).First
             For Each id As Integer In m.Entry.Current
-                m.Entry.Delete(id)
+                'm.Entry.Delete(id)
+                M2MDelete(mainobj, CreateDBObject(id, t), direct)
             Next
         End Sub
 
@@ -1899,7 +1944,12 @@ l1:
                             M2MSave(mainobj, t, direct, sv)
                             m2me.Entry.Saved = True
                         End If
-                        Return New OrmBase.AcceptState2(m2me, o.Second.First, o.Second.Second)
+                        'Return New OrmBase.AcceptState2(m2me, o.Second.First, o.Second.Second)
+                        Dim acs As OrmBase.AcceptState2 = mainobj.GetAccept(m2me)
+                        If acs Is Nothing Then
+                            Throw New InvalidOperationException("Accept state must exist")
+                        End If
+                        Return acs
                     End Using
                 End If
             Next
@@ -2073,48 +2123,38 @@ l1:
                 Throw New InvalidOperationException("Relation is readonly")
             End If
 
-            Dim m As M2MCache = FindM2MNonGeneric(mainobj, tt2, direct).First
+            Dim p As Pair(Of M2MCache, Pair(Of String)) = FindM2MReturnKeysNonGeneric(mainobj, tt2, direct)
+            Dim m As M2MCache = p.First
 
             m.Entry.Add(subobj.Identifier)
+
+            mainobj.AddAccept(New OrmBase.AcceptState2(m, p.Second.First, p.Second.Second))
         End Sub
 
-        'Protected Sub Obj2ObjRelationAddInternal(ByVal mainobj As OrmBase, ByVal subobj As OrmBase)
-        '    If mainobj Is Nothing Then
-        '        Throw New ArgumentNullException("mainobj parameter cannot be nothing")
-        '    End If
+        Protected Sub M2MDeleteInternal(ByVal mainobj As OrmBase, ByVal subobj As OrmBase, ByVal direct As Boolean)
+            If mainobj Is Nothing Then
+                Throw New ArgumentNullException("mainobj")
+            End If
 
-        '    If subobj Is Nothing Then
-        '        Throw New ArgumentNullException("subobj parameter cannot be nothing")
-        '    End If
+            If subobj Is Nothing Then
+                Throw New ArgumentNullException("subobj")
+            End If
 
-        '    Dim tt1 As Type = mainobj.GetType
-        '    Dim tt2 As Type = subobj.GetType
+            Dim tt1 As Type = mainobj.GetType
+            Dim tt2 As Type = subobj.GetType
 
-        '    If _schema.IsMany2ManyReadonly(tt1, tt2) Then
-        '        Throw New InvalidOperationException("Relation is readonly")
-        '    End If
+            If _schema.IsMany2ManyReadonly(tt1, tt2) Then
+                Throw New InvalidOperationException("Relation is readonly")
+            End If
 
-        '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey()
+            Dim p As Pair(Of M2MCache, Pair(Of String)) = FindM2MReturnKeysNonGeneric(mainobj, tt2, direct)
+            Dim m As M2MCache = p.First
 
-        '    'Dim dic As IDictionary = GetDic(_cache, key)
+            m.Entry.Delete(subobj.Identifier)
 
-        '    Dim id As String = mainobj.Identifier.ToString
+            mainobj.AddAccept(New OrmBase.AcceptState2(m, p.Second.First, p.Second.Second))
+        End Sub
 
-        '    Dim sync As String = id & Const_KeyStaticString & key & GetTablePostfix
-
-        '    Dim dt As System.Data.DataTable = GetDataTable(id, key & GetTablePostfix, sync, tt2, mainobj, Nothing, False, True, False)
-        '    Dim mid As String = tt1.Name & "ID"
-        '    Dim sid As String = tt2.Name & "ID"
-        '    If tt1 Is tt2 Then
-        '        sid = mid & "Rev"
-        '    End If
-        '    Using SyncHelper.AcquireDynamicLock(sync)
-        '        Dim r As System.Data.DataRow = dt.NewRow
-        '        r(mid) = mainobj.Identifier
-        '        r(sid) = subobj.Identifier
-        '        dt.Rows.Add(r)
-        '    End Using
-        'End Sub
 #End Region
 
         Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String) As ICollection(Of T)

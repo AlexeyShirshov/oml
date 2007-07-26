@@ -353,6 +353,10 @@ Public Class TestManagerRS
             Try
                 r1.Save(True)
 
+                c = t1.Find(Of Table33)(Nothing, Nothing, WithLoad)
+
+                Assert.AreEqual(2, c.Count)
+
                 c2 = t3.Find(Of Table1)(Nothing, Orm.Sorting.Field("Enum").Asc, WithLoad)
 
                 Assert.AreEqual(2, c2.Count)

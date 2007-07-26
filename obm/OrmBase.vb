@@ -67,6 +67,12 @@ Namespace Orm
             '    _id = id
             'End Sub
 
+            Public ReadOnly Property CacheItem() As OrmManagerBase.M2MCache
+                Get
+                    Return _e
+                End Get
+            End Property
+
             Public ReadOnly Property el() As EditableList
                 Get
                     Return _e.Entry
@@ -1125,6 +1131,16 @@ l1:
             Return True
         End Function
 
+        Protected Friend Function GetAccept(ByVal m As OrmManagerBase.M2MCache) As AcceptState2
+            Using SyncHelper(False)
+                For Each a As AcceptState2 In _needAccept
+                    If a.CacheItem Is m Then
+                        Return a
+                    End If
+                Next
+            End Using
+            Return Nothing
+        End Function
 #Region " Helpers "
 
         Public Function Find(ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList

@@ -212,8 +212,9 @@ Imports System.Collections.Generic
 
     <TestMethod()> _
     Public Sub TestM2MDelete()
-        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
+            Dim e2 As Entity4 = mgr.Find(Of Entity4)(12)
 
             Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(11, c.Count)
@@ -221,10 +222,45 @@ Imports System.Collections.Generic
             Dim c2 As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c2.Count)
 
-            e.Delete(mgr.Find(Of Entity4)(12))
+            Dim c3 As ICollection(Of Entity) = e2.Find(Of Entity)(Nothing, Nothing, False)
+            Assert.AreEqual(1, c3.Count)
+
+            e.Delete(e2)
 
             c = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c.Count)
+
+            c2 = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, True)
+            Assert.AreEqual(10, c2.Count)
+
+            c3 = e2.Find(Of Entity)(Nothing, Nothing, False)
+            Assert.AreEqual(0, c3.Count)
+
+            e.RejectChanges()
+
+            c = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
+            Assert.AreEqual(11, c.Count)
+
+            c3 = e2.Find(Of Entity)(Nothing, Nothing, False)
+            Assert.AreEqual(1, c3.Count)
+
+            mgr.BeginTransaction()
+            Try
+                e.Delete(e2)
+                e.Save(True)
+
+                c = e.Find(Of Entity4)(Nothing, Orm.Sorting.Field("Title").Asc, True)
+                Assert.AreEqual(10, c.Count)
+
+                c2 = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, True)
+                Assert.AreEqual(9, c2.Count)
+
+                c3 = e2.Find(Of Entity)(Nothing, Nothing, False)
+                Assert.AreEqual(0, c3.Count)
+
+            Finally
+                mgr.Rollback()
+            End Try
         End Using
     End Sub
 

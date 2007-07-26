@@ -484,18 +484,20 @@ Namespace Orm
                                 Dim acs As OrmBase.AcceptState2 = M2MSave(obj, tt, Not r.non_direct)
                                 If acs IsNot Nothing Then
                                     hasNew = hasNew OrElse acs.el.HasNew
-                                    obj.AddAccept(acs)
+                                    'obj.AddAccept(acs)
                                 End If
                             End If
                         Next
                     ElseIf sa = SaveAction.Update Then
                         If obj._needAccept IsNot Nothing Then
                             For Each acp As OrmBase.AcceptState2 In obj._needAccept
-                                Dim el As EditableList = acp.el.PrepareNewSave(Me)
+                                'Dim el As EditableList = acp.el.PrepareNewSave(Me)
+                                Dim el As EditableList = acp.el.PrepareSave(Me)
                                 If el IsNot Nothing Then
                                     M2MSave(obj, acp.el.SubType, acp.el.Direct, el)
-                                    hasNew = hasNew OrElse el.HasNew
+                                    acp.CacheItem.Entry.Saved = True
                                 End If
+                                hasNew = hasNew OrElse acp.el.HasNew
                                 processedType.Add(acp.el.SubType)
                             Next
                         End If
@@ -516,22 +518,28 @@ Namespace Orm
                                 dic.Remove(o.Second.Second)
                             Else
                                 If m2me.Entry.HasChanges AndAlso Not m2me.Entry.Saved AndAlso Not processedType.Contains(m2me.Entry.SubType) Then
-                                    Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
-                                        'Dim tt1 As Type = obj.GetType
-                                        Dim tt2 As Type = m2me.Entry.SubType
-                                        'Dim added As New List(Of Integer)
-                                        Dim sv As EditableList = m2me.Entry.PrepareSave(Me)
-                                        If sv IsNot Nothing Then
-                                            M2MSave(obj, tt2, m2me.Entry.Direct, sv)
-                                            m2me.Entry.Saved = True
-                                        End If
-                                        Dim acs As New OrmBase.AcceptState2(m2me, o.Second.First, o.Second.Second)
-                                        If acs IsNot Nothing Then
-                                            hasNew = hasNew Or acs.el.HasNew
-                                            obj.AddAccept(acs)
-                                        End If
-                                    End Using
+                                    Throw New InvalidOperationException
                                 End If
+
+                                'If m2me.Entry.HasChanges AndAlso Not m2me.Entry.Saved AndAlso Not processedType.Contains(m2me.Entry.SubType) Then
+                                '    Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
+                                '        'Dim tt1 As Type = obj.GetType
+                                '        Dim tt2 As Type = m2me.Entry.SubType
+                                '        'Dim added As New List(Of Integer)
+                                '        Dim sv As EditableList = m2me.Entry.PrepareSave(Me)
+                                '        If sv IsNot Nothing Then
+                                '            M2MSave(obj, tt2, m2me.Entry.Direct, sv)
+                                '            m2me.Entry.Saved = True
+                                '        End If
+                                '        'Dim acs As New OrmBase.AcceptState2(m2me, o.Second.First, o.Second.Second)
+                                '        'If acs IsNot Nothing Then
+                                '        '    hasNew = hasNew Or acs.el.HasNew
+                                '        '    obj.AddAccept(acs)
+                                '        'End If
+                                '        Dim acs As OrmBase.AcceptState2 = obj.GetAccept(m2me)
+                                '        hasNew = hasNew Or acs.el.HasNew
+                                '    End Using
+                                'End If
                             End If
                         Next
                     End If
@@ -582,27 +590,29 @@ Namespace Orm
                 Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
                 Dim el As EditableList = e.Entry
                 Dim obj As OrmBase = Nothing
-                If el.MainId = o1.Identifier Then
+                If el.Main.Equals(o1) Then
                     obj = o1
-                ElseIf el.MainId = o2.Identifier Then
+                ElseIf el.Main.Equals(o2) Then
                     obj = o2
                 End If
 
-                If e.Sort Is Nothing Then
-                    el.Add(obj.Identifier)
-                Else
-                    Dim s As IOrmSorting = Nothing
-                    Dim col As New ArrayList(mgr.ConvertIds2Objects(el.SubType, el.Current, False))
-                    If Not mgr.CanSortOnClient(el.SubType, col, s) Then
-                        Return False
-                    End If
-                    Dim c As IComparer = s.CreateSortComparer(e.Sort)
-                    If c Is Nothing Then
-                        Return False
-                    End If
-                    Dim pos As Integer = col.BinarySearch(obj, c)
-                    If pos < 0 Then
-                        el.Add(obj.Identifier, Not pos)
+                If obj IsNot Nothing Then
+                    If e.Sort Is Nothing Then
+                        el.Add(obj.Identifier)
+                    Else
+                        Dim s As IOrmSorting = Nothing
+                        Dim col As New ArrayList(mgr.ConvertIds2Objects(el.SubType, el.Current, False))
+                        If Not mgr.CanSortOnClient(el.SubType, col, s) Then
+                            Return False
+                        End If
+                        Dim c As IComparer = s.CreateSortComparer(e.Sort)
+                        If c Is Nothing Then
+                            Return False
+                        End If
+                        Dim pos As Integer = col.BinarySearch(obj, c)
+                        If pos < 0 Then
+                            el.Add(obj.Identifier, Not pos)
+                        End If
                     End If
                 End If
                 Return True
@@ -614,9 +624,9 @@ Namespace Orm
                 End If
 
                 Dim el As EditableList = e.Entry
-                If el.MainId = o1.Identifier Then
+                If el.Main.Equals(o1) Then
                     el.Delete(o2.Identifier)
-                ElseIf el.MainId = o2.Identifier Then
+                ElseIf el.Main.Equals(o2) Then
                     el.Delete(o1.Identifier)
                 End If
                 Return True
@@ -628,7 +638,7 @@ Namespace Orm
                 End If
 
                 Dim el As EditableList = e.Entry
-                If el.MainId = o1.Identifier OrElse el.MainId = o2.Identifier Then
+                If el.Main.Equals(o1) OrElse el.Main.Equals(o2) Then
                     el.Accept(CType(OrmManagerBase.CurrentManager, OrmDBManager))
                 End If
                 Return True
@@ -640,7 +650,7 @@ Namespace Orm
                 End If
 
                 Dim el As EditableList = e.Entry
-                If el.MainId = o1.Identifier OrElse el.MainId = o2.Identifier Then
+                If el.Main.Equals(o1) OrElse el.Main.Equals(o2) Then
                     el.Reject(False)
                 End If
                 Return True
