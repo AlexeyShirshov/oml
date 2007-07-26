@@ -468,6 +468,12 @@ Namespace Orm
             End Set
         End Property
 
+        Public ReadOnly Property Main() As OrmBase
+            Get
+                Return OrmManagerBase.CurrentManager.CreateDBObject(_mainId, _mainType)
+            End Get
+        End Property
+
         'Public Function Clone(ByVal mgr As OrmManagerBase, ByVal main As Type, ByVal subType As Type, ByVal added As List(Of Integer)) As EditableList
         '    Dim newl As EditableList = Nothing
         '    If Not mgr.IsNewObject(main, _mainId) Then
@@ -538,24 +544,24 @@ Namespace Orm
             Return newl
         End Function
 
-        Public Function PrepareNewSave(ByVal mgr As OrmManagerBase) As EditableList
-            Dim newl As EditableList = Nothing
-            If Not mgr.IsNewObject(_mainType, _mainId) AndAlso HasNew Then
-                Dim ad As New List(Of Integer)
-                For Each id As Integer In _new
-                    If mgr.IsNewObject(SubType, id) Then
-                        Throw New InvalidOperationException("List has new object " & id)
-                    ElseIf CheckDual(mgr, id) Then
-                        ad.Add(id)
-                    End If
-                Next
-                If ad.Count > 0 Then
-                    newl = New EditableList(_mainId, New List(Of Integer), _mainType, _subType, Direct, _sort)
-                    newl.AddRange(ad)
-                End If
-            End If
-            Return newl
-        End Function
+        'Public Function PrepareNewSave(ByVal mgr As OrmManagerBase) As EditableList
+        '    Dim newl As EditableList = Nothing
+        '    If Not mgr.IsNewObject(_mainType, _mainId) AndAlso HasNew Then
+        '        Dim ad As New List(Of Integer)
+        '        For Each id As Integer In _new
+        '            If mgr.IsNewObject(SubType, id) Then
+        '                Throw New InvalidOperationException("List has new object " & id)
+        '            ElseIf CheckDual(mgr, id) Then
+        '                ad.Add(id)
+        '            End If
+        '        Next
+        '        If ad.Count > 0 Then
+        '            newl = New EditableList(_mainId, New List(Of Integer), _mainType, _subType, Direct, _sort)
+        '            newl.AddRange(ad)
+        '        End If
+        '    End If
+        '    Return newl
+        'End Function
 
         Protected Friend Property Saved() As Boolean
             Get
@@ -577,7 +583,7 @@ Namespace Orm
 
             If HasNew Then
                 If _new.Remove(oldId) Then
-                    _new.Add(id)
+                    '_new.Add(id)
                 End If
             End If
         End Sub
