@@ -44,6 +44,7 @@ Namespace Orm
             Private disposedValue As Boolean
             Private _mgr As OrmManagerBase
             Private _oldvalue As Boolean
+            Private _oldExp As Date
 
             Public Sub New(ByVal mgr As OrmManagerBase, ByVal cache_lists As Boolean)
                 _mgr = mgr
@@ -51,9 +52,25 @@ Namespace Orm
                 mgr._dont_cache_lists = Not cache_lists
             End Sub
 
+            Public Sub New(ByVal mgr As OrmManagerBase, ByVal cache_lists As Boolean, ByVal liveTime As TimeSpan)
+                _mgr = mgr
+                _oldvalue = mgr._dont_cache_lists
+                mgr._dont_cache_lists = Not cache_lists
+                _oldExp = mgr._expiresPattern
+                mgr._expiresPattern = Date.Now.Add(liveTime)
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmManagerBase, ByVal liveTime As TimeSpan)
+                _mgr = mgr
+                _oldvalue = mgr._dont_cache_lists
+                _oldExp = mgr._expiresPattern
+                mgr._expiresPattern = Date.Now.Add(liveTime)
+            End Sub
+
             Protected Overridable Sub Dispose(ByVal disposing As Boolean)
                 If Not Me.disposedValue Then
                     _mgr._dont_cache_lists = _oldvalue
+                    _mgr._expiresPattern = _oldExp
                 End If
                 Me.disposedValue = True
             End Sub
@@ -71,6 +88,7 @@ Namespace Orm
             'Protected _mark As Object
             Protected _cache As OrmCacheBase
             Protected _f As IOrmFilter
+            Protected _expires As Date
 
             'Public Sub New(ByVal sort As String, ByVal obj As Object)
             '    If sort Is Nothing Then sort = String.Empty
@@ -90,13 +108,14 @@ Namespace Orm
             Protected Sub New()
             End Sub
 
-            Public Sub New(ByVal sort As Sort, ByVal filter As IOrmFilter, ByVal obj As IEnumerable, ByVal mc As OrmManagerBase)
+            Public Sub New(ByVal sort As Sort, ByVal filter As IOrmFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
                 _sort = sort
                 '_st = sortType
-                _obj = mc.ListConverter.ToWeakList(obj)
-                _cache = mc.Cache
+                _obj = mgr.ListConverter.ToWeakList(obj)
+                _cache = mgr.Cache
                 If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
                 _f = filter
+                _expires = mgr._expiresPattern
             End Sub
 
             'Public Shared Function CreateEmpty(ByVal sort As String) As CachedItem
@@ -133,6 +152,19 @@ Namespace Orm
             '    End If
             '    Return False
             'End Function
+
+            Public Sub Expire()
+                _expires = Nothing
+            End Sub
+
+            Public ReadOnly Property Expires() As Boolean
+                Get
+                    If _expires <> Date.MinValue Then
+                        Return _expires < Date.Now
+                    End If
+                    Return False
+                End Get
+            End Property
 
             Public Function SortEquals(ByVal sort As Sort) As Boolean
                 If _sort Is Nothing Then
@@ -205,28 +237,30 @@ Namespace Orm
             Inherits CachedItem
 
             Public Sub New(ByVal sort As Sort, ByVal filter As IOrmFilter, _
-                ByVal mainId As Integer, ByVal obj As IList(Of Integer), ByVal mc As OrmManagerBase, _
+                ByVal mainId As Integer, ByVal obj As IList(Of Integer), ByVal mgr As OrmManagerBase, _
                 ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean)
                 _sort = sort
                 '_st = sortType
-                _cache = mc.Cache
+                _cache = mgr.Cache
                 If obj IsNot Nothing Then
                     _cache.RegisterCreationCacheItem(Me.GetType)
                     _obj = New EditableList(mainId, obj, mainType, subType, direct, sort)
                 End If
                 _f = filter
+                _expires = mgr._expiresPattern
             End Sub
 
             Public Sub New(ByVal sort As Sort, ByVal filter As IOrmFilter, _
-                ByVal el As EditableList, ByVal mc As OrmManagerBase)
+                ByVal el As EditableList, ByVal mgr As OrmManagerBase)
                 _sort = sort
                 '_st = SortType
-                _cache = mc.Cache
+                _cache = mgr.Cache
                 If el IsNot Nothing Then
                     _cache.RegisterCreationCacheItem(Me.GetType)
                     _obj = el
                 End If
                 _f = filter
+                _expires = mgr._expiresPattern
             End Sub
 
             'Public ReadOnly Property List() As EditableList
@@ -393,6 +427,7 @@ Namespace Orm
         Private _list_converter As IListObjectConverter
         Protected Friend _dont_cache_lists As Boolean
         Private _newMgr As INewObjects
+        Private _expiresPattern As Date
 
         Public Event BeginUpdate(ByVal o As OrmBase)
         Public Event BeginDelete(ByVal o As OrmBase)
@@ -1186,7 +1221,7 @@ Namespace Orm
             '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
             Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("FindM2MReturnKeys", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
             Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
-            Dim p As Pair(Of M2MCache, Pair(Of String)) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Global.CoreFramework.Structures.Pair(Of Global.Worm.Orm.OrmManagerBase.M2MCache, Global.CoreFramework.Structures.Pair(Of String)))
+            Dim p As Pair(Of M2MCache, Pair(Of String)) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Pair(Of Global.Worm.Orm.OrmManagerBase.M2MCache, Pair(Of String)))
             Return p
         End Function
 
@@ -1260,6 +1295,12 @@ l1:
             If del.Created Then
                 del.CreateDepends()
             Else
+                If ce.Expires Then
+                    ce.Expire()
+                    del.Renew = True
+                    GoTo l1
+                End If
+
                 Dim psort As Sort = del.Sort
 
                 If ce.SortEquals(psort) OrElse psort Is Nothing Then

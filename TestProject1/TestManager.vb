@@ -1029,6 +1029,22 @@ Imports System.Collections.Generic
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestExpireCache()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
+            Dim e1 As Entity = mgr.Find(Of Entity)(1)
+            Dim e2 As Entity = mgr.Find(Of Entity)(2)
+
+            Dim c1 As ICollection(Of Entity4) = Nothing
+            Using New Orm.OrmManagerBase.CacheListSwitcher(mgr, TimeSpan.FromMilliseconds(10))
+                c1 = e1.Find(Of Entity4)(Nothing, Nothing, True)
+            End Using
+            Threading.Thread.Sleep(100)
+
+            c1 = e1.Find(Of Entity4)(Nothing, Nothing, True)
+
+        End Using
+    End Sub
 
     Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Integer) Implements Worm.Orm.OrmManagerBase.INewObjects.RemoveNew
 
