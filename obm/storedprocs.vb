@@ -32,9 +32,15 @@ Namespace Orm
 
         Private _cache As Boolean
         Private _reseted As Boolean
+        Private _expireDate As Date
 
         Protected Sub New(ByVal cache As Boolean)
             _cache = cache
+        End Sub
+
+        Protected Sub New(ByVal lifeTime As TimeSpan)
+            _cache = True
+            _expireDate = Now.Add(lifeTime)
         End Sub
 
         Public Property Cached() As Boolean
@@ -100,10 +106,11 @@ Namespace Orm
                 Dim dic As IDictionary = GetDic(mgr, key)
                 Dim sync As String = key & id
                 Dim _result As Object = dic(id)
-                If _result Is Nothing Then
+                If _result Is Nothing OrElse Expires Then
                     Using SyncHelper.AcquireDynamicLock(sync)
                         _result = dic(id)
-                        If _result Is Nothing Then
+                        If _result Is Nothing OrElse Expires Then
+                            Expire()
                             mgr.Cache.AddStoredProc(Me)
                             _result = Execute(mgr)
                             dic(id) = _result
@@ -115,6 +122,17 @@ Namespace Orm
                 Return Execute(mgr)
             End If
         End Function
+
+        Public Function Expires() As Boolean
+            If _expireDate <> Date.MinValue Then
+                Return _expireDate < Now
+            End If
+            Return False
+        End Function
+
+        Public Sub Expire()
+            _expireDate = Nothing
+        End Sub
 
         Protected Overridable Function GetDic(ByVal mgr As OrmReadOnlyDBManager, ByVal key As String) As IDictionary
             Return OrmReadOnlyDBManager.GetDic(mgr.Cache, key)
