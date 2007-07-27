@@ -999,7 +999,7 @@ Namespace Orm
             'CreateDepends(filter, key, id)
 
             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(joins, GetFilter(criteria), sort, key, id)
-            Dim ce As CachedItem = FindAdvanced(Of T)(dic, sync, id, withLoad, del)
+            Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
             Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
         End Function
 
@@ -1035,7 +1035,7 @@ Namespace Orm
             'CreateDepends(filter, key, id)
 
             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(relation, GetFilter(criteria), sort, key, id)
-            Dim ce As CachedItem = FindAdvanced(Of T)(dic, sync, id, withLoad, del)
+            Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
             Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
         End Function
 
@@ -1058,7 +1058,7 @@ Namespace Orm
             'CreateDepends(filter, key, id)
 
             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, key, id)
-            Dim ce As CachedItem = FindAdvanced(Of T)(dic, sync, id, withLoad, del)
+            Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
             Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
         End Function
 
@@ -1079,7 +1079,7 @@ Namespace Orm
             'CreateDepends(filter, key, id)
 
             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(criteria.Filter, sort, key, id, cols)
-            Return FindAdvanced(Of T)(dic, sync, id, True, del).GetObjectList(Of T)(Me, True, del.Created)
+            Return GetFromCache(Of T)(dic, sync, id, True, del).GetObjectList(Of T)(Me, True, del.Created)
         End Function
 
         Public Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal criteria As CriteriaLink, _
@@ -1110,7 +1110,7 @@ Namespace Orm
             'CreateDepends(filter, key, id)
 
             Dim del As ICustDelegate(Of T) = GetCustDelegate4Top(Of T)(top, GetFilter(criteria), sort, key, id)
-            Return FindAdvanced(Of T)(dic, sync, id, withLoad, del).GetObjectList(Of T)(Me, withLoad, del.Created)
+            Return GetFromCache(Of T)(dic, sync, id, withLoad, del).GetObjectList(Of T)(Me, withLoad, del.Created)
         End Function
 
         '<Obsolete("Use OrmBase Find method")> _
@@ -1206,7 +1206,7 @@ Namespace Orm
             'CreateM2MDepends(filter, key, id)
 
             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria), sort, id, key, direct)
-            Dim m As M2MCache = CType(FindAdvanced(Of T)(dic, sync, id, withLoad, del), M2MCache)
+            Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), M2MCache)
             Dim p As New Pair(Of M2MCache, Boolean)(m, del.Created)
             Return p
         End Function
@@ -1241,7 +1241,7 @@ Namespace Orm
             Dim criteria As New CriteriaLink
 
             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria), Nothing, id, key, direct)
-            Dim m As M2MCache = CType(FindAdvanced(Of T)(dic, sync, id, False, del), M2MCache)
+            Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, False, del), M2MCache)
             Dim p As New Pair(Of M2MCache, Pair(Of String))(m, New Pair(Of String)(key, id))
             Return p
         End Function
@@ -1249,7 +1249,7 @@ Namespace Orm
 
 #Region " Cache "
 
-        Protected Function FindAdvanced(Of T As {OrmBase, New})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+        Protected Function GetFromCache(Of T As {OrmBase, New})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
             ByVal withLoad As Boolean, ByVal del As ICustDelegate(Of T)) As CachedItem
 
             Invariant()
