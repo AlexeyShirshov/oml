@@ -222,9 +222,9 @@ Namespace Orm
 
         Public MustOverride Function GetFiltersDic() As IDictionary
 
-        Public MustOverride Function GetOrmDictionary(ByVal t As Type, Optional ByVal schema As OrmSchemaBase = Nothing) As System.Collections.IDictionary
+        Public MustOverride Function GetOrmDictionary(ByVal t As Type, ByVal schema As OrmSchemaBase) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T)(Optional ByVal schema As OrmSchemaBase = Nothing) As System.Collections.Generic.IDictionary(Of Integer, T)
+        Public MustOverride Function GetOrmDictionary(Of T)(ByVal schema As OrmSchemaBase) As System.Collections.Generic.IDictionary(Of Integer, T)
 
         Public Overridable Sub RegisterCreation(ByVal t As Type, ByVal id As Integer)
             RaiseEvent RegisterObjectCreation(t, id)
@@ -933,7 +933,7 @@ Namespace Orm
 
         'Public Overrides ReadOnly Property OrmDictionaryT(of T)() As System.Collections.Generic.IDictionary(Of Integer, T)
 
-        Public Overrides Function GetOrmDictionary(ByVal t As System.Type, Optional ByVal schema As OrmSchemaBase = Nothing) As System.Collections.IDictionary
+        Public Overrides Function GetOrmDictionary(ByVal t As System.Type, ByVal schema As OrmSchemaBase) As System.Collections.IDictionary
             Dim k As Object = t
             If schema IsNot Nothing Then
                 k = schema.GetEntityTypeKey(t)
@@ -954,8 +954,8 @@ Namespace Orm
             Return dic
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T)(Optional ByVal schema As OrmSchemaBase = Nothing) As System.Collections.Generic.IDictionary(Of Integer, T)
-            Return CType(GetOrmDictionary(GetType(T)), Global.System.Collections.Generic.IDictionary(Of Integer, T))
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal schema As OrmSchemaBase) As System.Collections.Generic.IDictionary(Of Integer, T)
+            Return CType(GetOrmDictionary(GetType(T), schema), Global.System.Collections.Generic.IDictionary(Of Integer, T))
         End Function
 
         Public Sub New()
