@@ -589,16 +589,18 @@ Namespace Orm
 
                 Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
                 Dim el As EditableList = e.Entry
-                Dim obj As OrmBase = Nothing
+                Dim obj As OrmBase = Nothing, subobj As OrmBase = Nothing
                 If el.Main.Equals(o1) Then
                     obj = o1
+                    subobj = o2
                 ElseIf el.Main.Equals(o2) Then
                     obj = o2
+                    subobj = o1
                 End If
 
                 If obj IsNot Nothing Then
                     If e.Sort Is Nothing Then
-                        el.Add(obj.Identifier)
+                        el.Add(subobj.Identifier)
                     Else
                         Dim s As IOrmSorting = Nothing
                         Dim col As New ArrayList(mgr.ConvertIds2Objects(el.SubType, el.Current, False))
@@ -609,9 +611,9 @@ Namespace Orm
                         If c Is Nothing Then
                             Return False
                         End If
-                        Dim pos As Integer = col.BinarySearch(obj, c)
+                        Dim pos As Integer = col.BinarySearch(subobj, c)
                         If pos < 0 Then
-                            el.Add(obj.Identifier, Not pos)
+                            el.Add(subobj.Identifier, Not pos)
                         End If
                     End If
                 End If
