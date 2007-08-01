@@ -140,6 +140,10 @@ Namespace Orm
         <NonSerialized()> _
         Protected Friend _needAccept As New Generic.List(Of AcceptState2)
 
+        Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
+        Public Event Deleted(ByVal sender As OrmBase, ByVal args As EventArgs)
+        Public Event Updated(ByVal sender As OrmBase, ByVal args As EventArgs)
+
         'for xml serialization
         Public Sub New()
             'Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
@@ -602,17 +606,21 @@ Namespace Orm
                             'mc.Cache.UpdateCacheOnDelete(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing)
                             Accept_AfterUpdateCacheDelete(Me, mc)
                         End If
+                        RaiseEvent Deleted(Me, EventArgs.Empty)
                     ElseIf _needAdd Then
                         Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
                         Dim o As OrmBase = CType(dic(Identifier), OrmBase)
                         If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
                             dic(Identifier) = Me
                         End If
+                        RaiseEvent Added(Me, EventArgs.Empty)
                         If updateCache Then
                             'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
                             mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
                             Accept_AfterUpdateCacheAdd(Me, mc, mo)
                         End If
+                    Else
+                        RaiseEvent Updated(Me, EventArgs.Empty)
                     End If
                 End If
             End Using
