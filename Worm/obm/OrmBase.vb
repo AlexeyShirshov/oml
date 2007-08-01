@@ -109,6 +109,21 @@ Namespace Orm
             End Function
         End Class
 
+        Public Class ObjectSavedArgs
+            Inherits EventArgs
+
+            Private _sa As OrmDBManager.SaveAction
+
+            Public Sub New(ByVal saveAction As OrmDBManager.SaveAction)
+                _sa = saveAction
+            End Sub
+
+            Public ReadOnly Property SaveAction() As OrmDBManager.SaveAction
+                Get
+                    Return _sa
+                End Get
+            End Property
+        End Class
         ''' <summary>
         ''' Состояние объекта
         ''' </summary>
@@ -140,6 +155,7 @@ Namespace Orm
         <NonSerialized()> _
         Protected Friend _needAccept As New Generic.List(Of AcceptState2)
 
+        Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
         Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
         Public Event Deleted(ByVal sender As OrmBase, ByVal args As EventArgs)
         Public Event Updated(ByVal sender As OrmBase, ByVal args As EventArgs)
@@ -1149,6 +1165,11 @@ l1:
             End Using
             Return Nothing
         End Function
+
+        Protected Friend Sub RaiseSaved(ByVal sa As OrmDBManager.SaveAction)
+            RaiseEvent Saved(Me, New ObjectSavedArgs(sa))
+        End Sub
+
 #Region " Helpers "
 
         Public Function Find(ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
