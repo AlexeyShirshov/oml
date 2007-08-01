@@ -623,7 +623,7 @@ Public Class TestManagerRS
 
             mgr.BeginTransaction()
             Try
-                Using st As New Orm.OrmReadOnlyDBManager.ObjectStateTracker(mgr)
+                Using st As New Orm.OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                     Dim tt2 As Table33 = New Table33(-100, mgr.Cache, mgr.ObjectSchema)
                     st.Add(tt2)
                     tt2.RefObject = tt1
@@ -635,6 +635,7 @@ Public Class TestManagerRS
                     t3.Table1 = tt1
                     t3.Table3 = tt2
                     t3.Title = "sdfpsdfm"
+                    st.Commit()
                 End Using
 
                 c = tt1.Find(Of Table33)(Nothing, s, WithLoad)

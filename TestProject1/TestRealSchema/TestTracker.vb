@@ -51,7 +51,7 @@ Public Class TestTracker
 
             mgr.BeginTransaction()
             Try
-                Using tracker As New Orm.OrmReadOnlyDBManager.ObjectStateTracker
+                Using tracker As New Orm.OrmReadOnlyDBManager.OrmTransactionalScope
                     Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
                     t.CreatedAt = Now
 
@@ -62,6 +62,8 @@ Public Class TestTracker
                     Assert.IsNotNull(t2)
                     Assert.IsTrue(_new_objects.ContainsKey(t2.Identifier))
                     t2.Money = 1000
+
+                    tracker.Commit()
                 End Using
             Finally
                 Assert.AreEqual(0, _new_objects.Count)
@@ -79,7 +81,7 @@ Public Class TestTracker
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()
             Try
-                Using tracker As New Orm.OrmReadOnlyDBManager.ObjectStateTracker
+                Using tracker As New Orm.OrmReadOnlyDBManager.OrmTransactionalScope
                     Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
                     t.CreatedAt = Now
 
@@ -92,6 +94,8 @@ Public Class TestTracker
                     t2.Money = 1000
 
                     tt.Code = 10
+
+                    tracker.Commit()
                 End Using
             Finally
                 Assert.AreEqual(0, _new_objects.Count)
@@ -111,7 +115,7 @@ Public Class TestTracker
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()
             Try
-                Using tracker As New Orm.OrmReadOnlyDBManager.ObjectStateTracker
+                Using tracker As New Orm.OrmReadOnlyDBManager.OrmTransactionalScope
                     Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
                     t.CreatedAt = Now
 
@@ -119,6 +123,8 @@ Public Class TestTracker
                     Assert.IsTrue(_new_objects.ContainsKey(t.Identifier))
 
                     tt.Code = 10
+
+                    tracker.Commit()
                 End Using
             Finally
                 Assert.AreEqual(0, _new_objects.Count)
@@ -144,11 +150,13 @@ Public Class TestTracker
 
             mgr.BeginTransaction()
             Try
-                Using tracker As New Orm.OrmReadOnlyDBManager.ObjectStateTracker
+                Using tracker As New Orm.OrmReadOnlyDBManager.OrmTransactionalScope
                     tracker.Saver.AcceptInBatch = True
 
                     tt.Code = 10
                     tt2.Code = 100
+
+                    tracker.Commit()
                 End Using
             Finally
                 Assert.AreEqual(10, tt.Code.Value)
