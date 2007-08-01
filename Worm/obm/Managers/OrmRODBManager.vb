@@ -192,6 +192,8 @@ Namespace Orm
             Private _mgr As OrmManagerBase
             Private _saver As Saver
 
+            Public Event SaveComplete()
+
             Public Sub New()
                 MyClass.New(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
             End Sub
@@ -324,6 +326,8 @@ Namespace Orm
                     End If
                     RemoveHandler _mgr.BeginDelete, AddressOf Delete
                     RemoveHandler _mgr.BeginUpdate, AddressOf Add
+
+                    RaiseEvent SaveComplete()
                 End If
                 Me.disposedValue = True
             End Sub
