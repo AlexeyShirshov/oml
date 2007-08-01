@@ -381,7 +381,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Enum SaveAction
+        Public Enum SaveAction
             Update
             Delete
             Insert
@@ -468,6 +468,7 @@ Namespace Orm
                     End If
 
                     obj.Save(Me)
+                    obj.RaiseSaved(sa)
 
                     If sa = SaveAction.Insert Then
                         Dim oo As IRelation = TryCast(DbSchema.GetObjectSchema(t), IRelation)
