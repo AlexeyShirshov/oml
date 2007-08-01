@@ -13,7 +13,7 @@ Namespace Orm
             Close
         End Enum
 
-        Public Class Saver
+        Public Class BatchSaver
             Implements IDisposable
 
             Private disposedValue As Boolean
@@ -21,6 +21,7 @@ Namespace Orm
             Private _mgr As OrmReadOnlyDBManager
             Private _acceptInBatch As Boolean
             Private _callbacks As OrmCache.IUpdateCacheCallbacks
+            Private _save As Nullable(Of Boolean)
 
             Public Event BeginSave(ByVal count As Integer)
             Public Event ObjectSaved(ByVal o As OrmBase)
@@ -38,6 +39,26 @@ Namespace Orm
 
             Public Sub New()
                 _mgr = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
+            End Sub
+
+            Public Property IsCommit() As Boolean
+                Get
+                    If _save.HasValue Then
+                        Return _save.Value
+                    End If
+                    Return False
+                End Get
+                Friend Set(ByVal value As Boolean)
+                    _save = value
+                End Set
+            End Property
+
+            Public Sub Commit()
+                _save = True
+            End Sub
+
+            Public Sub Rollback()
+                _save = False
             End Sub
 
             Public Property AcceptInBatch() As Boolean
@@ -168,7 +189,10 @@ Namespace Orm
 #Region " IDisposable Support "
             Protected Overridable Sub Dispose(ByVal disposing As Boolean)
                 If Not Me.disposedValue Then
-                    If disposing Then
+                    If Not _save.HasValue Then
+                        Throw New InvalidOperationException("You should commit or rollback Saver")
+                    End If
+                    If disposing AndAlso _save.Value Then
                         Save()
                     End If
                 End If
@@ -183,14 +207,14 @@ Namespace Orm
 
         End Class
 
-        Public Class ObjectStateTracker
+        Public Class OrmTransactionalScope
             Implements IDisposable
 
             Private disposedValue As Boolean
             Private _disposing As Boolean
             Private _objs As New List(Of OrmBase)
             Private _mgr As OrmManagerBase
-            Private _saver As Saver
+            Private _saver As BatchSaver
 
             Public Event SaveComplete()
 
@@ -205,11 +229,25 @@ Namespace Orm
 
                 AddHandler mgr.BeginUpdate, AddressOf Add
                 AddHandler mgr.BeginDelete, AddressOf Delete
-                _saver = New Saver(mgr)
+                _saver = New BatchSaver(mgr)
                 _mgr = mgr
             End Sub
 
-            Public ReadOnly Property Saver() As Saver
+            Public ReadOnly Property IsCommit() As Boolean
+                Get
+                    Return _saver.IsCommit
+                End Get
+            End Property
+
+            Public Sub Commit()
+                _saver.Commit()
+            End Sub
+
+            Public Sub Rollback()
+                _saver.Rollback()
+            End Sub
+
+            Public ReadOnly Property Saver() As BatchSaver
                 Get
                     Return _saver
                 End Get
@@ -295,7 +333,7 @@ Namespace Orm
                 Throw New InvalidOperationException("Cannot find method CreateNewObject")
             End Function
 
-            Protected Sub Rollback()
+            Protected Sub _Rollback()
                 For Each o As OrmBase In _objs
                     If o.ObjectState = ObjectState.Created Then
                         If _mgr.NewObjectManager IsNot Nothing Then
@@ -311,23 +349,27 @@ Namespace Orm
             ' IDisposable
             Protected Overridable Sub Dispose(ByVal disposing As Boolean)
                 If Not Me.disposedValue Then
-                    If disposing Then
-                        Dim err As Boolean = True
-                        Try
-                            _disposing = True
-                            _saver.Dispose()
-                            err = False
-                        Finally
-                            _disposing = False
-                            If err Then
-                                Rollback()
-                            End If
-                        End Try
+                    If _saver.IsCommit Then
+                        If disposing Then
+                            Dim err As Boolean = True
+                            Try
+                                _disposing = True
+                                _saver.Dispose()
+                                err = False
+                            Finally
+                                _disposing = False
+                                If err Then
+                                    _Rollback()
+                                End If
+                            End Try
+                        End If
                     End If
                     RemoveHandler _mgr.BeginDelete, AddressOf Delete
                     RemoveHandler _mgr.BeginUpdate, AddressOf Add
 
-                    RaiseEvent SaveComplete()
+                    If _saver.IsCommit Then
+                        RaiseEvent SaveComplete()
+                    End If
                 End If
                 Me.disposedValue = True
             End Sub

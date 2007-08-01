@@ -843,9 +843,10 @@ Imports System.Collections.Generic
 
             mgr.BeginTransaction()
             Try
-                Using saver As New Orm.OrmReadOnlyDBManager.Saver
+                Using saver As New Orm.OrmReadOnlyDBManager.BatchSaver
                     saver.Add(e)
                     saver.Add(e4)
+                    saver.Commit()
                 End Using
             Finally
                 c = e.Find(Of Entity4)(Nothing, Nothing, True)
@@ -879,9 +880,10 @@ Imports System.Collections.Generic
 
             mgr.BeginTransaction()
             Try
-                Using saver As New Orm.OrmReadOnlyDBManager.Saver
+                Using saver As New Orm.OrmReadOnlyDBManager.BatchSaver
                     saver.Add(e)
                     saver.Add(e4)
+                    saver.Commit()
                 End Using
 
                 c = e.Find(Of Entity4)(Nothing, Nothing, True)
@@ -919,9 +921,10 @@ Imports System.Collections.Generic
 
             mgr.BeginTransaction()
             Try
-                Using saver As New Orm.OrmReadOnlyDBManager.Saver
+                Using saver As New Orm.OrmReadOnlyDBManager.BatchSaver
                     saver.Add(e)
                     saver.Add(e4)
+                    saver.Commit()
                 End Using
 
                 c = e.Find(Of Entity4)(Nothing, Nothing, True)
