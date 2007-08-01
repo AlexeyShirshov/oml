@@ -124,6 +124,30 @@ Namespace Orm
                 End Get
             End Property
         End Class
+
+        Public Class RelatedObject
+            Private _dst As OrmBase
+            Private _props() As String
+
+            Public Sub New(ByVal src As OrmBase, ByVal dst As OrmBase, ByVal properties() As String)
+                _dst = dst
+                _props = properties
+                AddHandler src.Saved, AddressOf Added
+            End Sub
+
+            Public Sub Added(ByVal source As OrmBase, ByVal args As OrmBase.ObjectSavedArgs)
+                Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+                For Each p As String In _props
+                    If p = "ID" Then
+                        _dst._id = source._id
+                    Else
+                        Dim o As Object = source.GetValue(p)
+                        mgr.ObjectSchema.SetFieldValue(_dst, p, o)
+                    End If
+                Next
+            End Sub
+        End Class
+
         ''' <summary>
         ''' Состояние объекта
         ''' </summary>
