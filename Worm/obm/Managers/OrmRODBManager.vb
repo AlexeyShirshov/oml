@@ -16,12 +16,13 @@ Namespace Orm
         Public Class BatchSaver
             Implements IDisposable
 
-            Private disposedValue As Boolean
+            Private _disposedValue As Boolean
             Private _l As New List(Of OrmBase)
             Private _mgr As OrmReadOnlyDBManager
             Private _acceptInBatch As Boolean
             Private _callbacks As OrmCache.IUpdateCacheCallbacks
             Private _save As Nullable(Of Boolean)
+            Private _disposeMgr As Boolean
 
             Public Event BeginSave(ByVal count As Integer)
             Public Event ObjectSaved(ByVal o As OrmBase)
@@ -33,6 +34,11 @@ Namespace Orm
             Public Event BeginRejecting()
             Public Event BeginAccepting()
 
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal dispose As Boolean)
+                _mgr = mgr
+                _disposeMgr = dispose
+            End Sub
+
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager)
                 _mgr = mgr
             End Sub
@@ -40,6 +46,12 @@ Namespace Orm
             Public Sub New()
                 _mgr = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
             End Sub
+
+            Public ReadOnly Property Manager() As OrmReadOnlyDBManager
+                Get
+                    Return _mgr
+                End Get
+            End Property
 
             Public Property IsCommit() As Boolean
                 Get
@@ -188,15 +200,18 @@ Namespace Orm
 
 #Region " IDisposable Support "
             Protected Overridable Sub Dispose(ByVal disposing As Boolean)
-                If Not Me.disposedValue Then
+                If Not Me._disposedValue Then
                     If Not _save.HasValue Then
                         Throw New InvalidOperationException("You should commit or rollback Saver")
                     End If
                     If disposing AndAlso _save.Value Then
                         Save()
                     End If
+                    If _disposeMgr Then
+                        _mgr.Dispose()
+                    End If
                 End If
-                Me.disposedValue = True
+                Me._disposedValue = True
             End Sub
 
             Public Sub Dispose() Implements IDisposable.Dispose
