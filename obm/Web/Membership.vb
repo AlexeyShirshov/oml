@@ -671,6 +671,8 @@ l1:
                         End If
                         schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), 0)
                         schema.SetFieldValue(u, GetField("FailedPasswordAttemtStart"), Nothing)
+
+                        UserBlocked(u)
                     End If
                 End If
 
@@ -701,6 +703,13 @@ l1:
             Return True
         End Function
 
+        Public Overridable ReadOnly Property EmptyEmail() As Boolean
+            Get
+                Return False
+            End Get
+        End Property
+#End Region
+
         Protected Overridable Sub PasswordChanged(ByVal user As OrmBase)
 
         End Sub
@@ -709,12 +718,8 @@ l1:
 
         End Sub
 
-        Public Overridable ReadOnly Property EmptyEmail() As Boolean
-            Get
-                Return False
-            End Get
-        End Property
-#End Region
+        Protected Overridable Sub UserBlocked(ByVal user As OrmBase)
 
+        End Sub
     End Class
 End Namespace
