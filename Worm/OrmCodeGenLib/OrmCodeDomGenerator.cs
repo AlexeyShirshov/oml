@@ -7,7 +7,7 @@ using System.Reflection;
 using OrmCodeGenLib.Descriptors;
 using Worm.Orm;
 using Worm.Orm.Collections;
-using CoreFramework.Structures;
+using XMedia.Framework;
 using System.Text.RegularExpressions;
 using System.Text;
 
@@ -1786,56 +1786,62 @@ namespace OrmCodeGenLib
             Type fieldRealType;
             fieldRealType = Type.GetType(field.Type.BaseType, false);
 
-            if (fieldRealType != null)
-            {
-                CodeConditionStatement setValueStatement = new CodeConditionStatement(
-                    new CodeBinaryOperatorExpression(
-                        new CodeFieldReferenceExpression(
-                            new CodeArgumentReferenceExpression("c"),
-                            "FieldName"
-                            ),
-                        CodeBinaryOperatorType.ValueEquality,
-                        new CodePrimitiveExpression(propertyDesc.PropertyAlias)
-                        )
-                    );
 
-                if(fieldRealType.IsGenericType && typeof(Nullable<>).Equals(fieldRealType.GetGenericTypeDefinition()))
-                {
-                    setValueStatement.TrueStatements.Add(
-                        new CodeConditionStatement(
-                            new CodeBinaryOperatorExpression(
-                                new CodeArgumentReferenceExpression("value"),
-                                CodeBinaryOperatorType.IdentityInequality,
-                                new CodePrimitiveExpression(null)
-                                ),
-                                new CodeStatement[]
-                                    {
-                                        new CodeAssignStatement(
-                                                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), field.Name),
-                                                         new CodeCastExpression(field.Type.TypeArguments[0], new CodeArgumentReferenceExpression("value"))
-                                        )
-                                    },
-                                new CodeStatement[]
-                                    {
-                                        new CodeAssignStatement(
-                                                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), field.Name),
-                                                         new CodePrimitiveExpression(null)
-                                        )
-                                    }
+            CodeConditionStatement setValueStatement = new CodeConditionStatement(
+                new CodeBinaryOperatorExpression(
+                    new CodeFieldReferenceExpression(
+                        new CodeArgumentReferenceExpression("c"),
+                        "FieldName"
+                        ),
+                    CodeBinaryOperatorType.ValueEquality,
+                    new CodePrimitiveExpression(propertyDesc.PropertyAlias)
+                    )
+                );
+
+
+            if (fieldRealType != null && fieldRealType.IsGenericType &&
+                typeof (Nullable<>).Equals(fieldRealType.GetGenericTypeDefinition()))
+            {
+                setValueStatement.TrueStatements.Add(
+                    new CodeConditionStatement(
+                        new CodeBinaryOperatorExpression(
+                            new CodeArgumentReferenceExpression("value"),
+                            CodeBinaryOperatorType.IdentityInequality,
+                            new CodePrimitiveExpression(null)
+                            ),
+                        new CodeStatement[]
+                            {
+                                new CodeAssignStatement(
+                                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
+                                                                     field.Name),
+                                    new CodeCastExpression(field.Type.TypeArguments[0],
+                                                           new CodeArgumentReferenceExpression("value"))
+                                    )
+                            },
+                        new CodeStatement[]
+                            {
+                                new CodeAssignStatement(
+                                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
+                                                                     field.Name),
+                                    new CodePrimitiveExpression(null)
+                                    )
+                            }
                         )
                     );
-                }
-                else
-                {
-                    setValueStatement.TrueStatements.Add(new CodeAssignStatement(
-                                                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),field.Name),
-                                                         new CodeCastExpression(field.Type,new CodeArgumentReferenceExpression("value"))));
-                }
-                
-                
-                setValueStatement.TrueStatements.Add(new CodeMethodReturnStatement());
-                setvalueMethod.Statements.Add(setValueStatement);
             }
+            else
+            {
+                setValueStatement.TrueStatements.Add(new CodeAssignStatement(
+                                                         new CodeFieldReferenceExpression(
+                                                             new CodeThisReferenceExpression(), field.Name),
+                                                         new CodeCastExpression(field.Type,
+                                                                                new CodeArgumentReferenceExpression(
+                                                                                    "value"))));
+            }
+
+
+            setValueStatement.TrueStatements.Add(new CodeMethodReturnStatement());
+            setvalueMethod.Statements.Add(setValueStatement);
         }
 
         private CodeMemberMethod CreateCreateObjectMethod(EntityDescription entity, CodeTypeDeclaration entityClass, OrmCodeDomGeneratorSettings settings)
