@@ -145,6 +145,7 @@ Namespace Orm
                         mgr.ObjectSchema.SetFieldValue(_dst, p, o)
                     End If
                 Next
+                RemoveHandler source.Saved, AddressOf Added
             End Sub
         End Class
 
