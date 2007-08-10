@@ -88,11 +88,21 @@ Namespace Orm
             'End Property
 
             Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
-                Return New CachedItem(_sort, _f, GetValues(withLoad), _mgr)
+                Dim sortex As IOrmSortingEx = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSortingEx)
+                Dim s As TimeSpan = TimeSpan.MaxValue
+                If sortex IsNot Nothing Then
+                    s = sortex.SortExpiration(_sort)
+                End If
+                Return New CachedItem(_sort, Now.Add(s), _f, GetValues(withLoad), _mgr)
             End Function
 
             Public Overrides Function GetCacheItem(ByVal col As System.Collections.Generic.ICollection(Of T)) As OrmManagerBase.CachedItem
-                Return New CachedItem(_sort, _f, col, _mgr)
+                Dim sortex As IOrmSortingEx = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSortingEx)
+                Dim s As TimeSpan = TimeSpan.MaxValue
+                If sortex IsNot Nothing Then
+                    s = sortex.SortExpiration(_sort)
+                End If
+                Return New CachedItem(_sort, Now.Add(s), _f, col, _mgr)
             End Function
         End Class
 

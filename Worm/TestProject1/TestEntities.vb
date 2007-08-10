@@ -337,7 +337,7 @@ End Class
 
 Public Class EntitySchema4v1Implementation
     Inherits ObjectSchemaBaseImplementation
-    Implements Orm.IOrmSorting
+    Implements Orm.IOrmSortingEx
 
     Private _idx As Orm.OrmObjectIndex
     Protected _tables() As Orm.OrmTable = {New Orm.OrmTable("dbo.ent2")}
@@ -436,6 +436,11 @@ Public Class EntitySchema4v1Implementation
         End Function
     End Class
 
+    Public ReadOnly Property SortExpiration(ByVal s As Orm.Sort) As System.TimeSpan Implements Worm.Orm.IOrmSortingEx.SortExpiration
+        Get
+            Return TimeSpan.MaxValue
+        End Get
+    End Property
 End Class
 
 Public Class EntitySchema4v2Implementation
