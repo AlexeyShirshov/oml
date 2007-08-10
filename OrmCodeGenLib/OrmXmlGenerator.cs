@@ -202,7 +202,7 @@ namespace OrmCodeGenLib
                     propertyElement.SetAttribute("propertyName", property.Name);
                     if(property.Attributes != null && property.Attributes.Length > 0)
                     {
-                        propertyElement.SetAttribute("attributes", string.Join(", ", property.Attributes));
+                        propertyElement.SetAttribute("attributes", string.Join(" ", property.Attributes));
                     }
                     propertyElement.SetAttribute("table", property.Table.Identifier);
                     propertyElement.SetAttribute("fieldName", property.FieldName);
