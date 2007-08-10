@@ -89,6 +89,7 @@ Namespace Orm
             Protected _cache As OrmCacheBase
             Protected _f As IOrmFilter
             Protected _expires As Date
+            Protected _sortExpires As Date
 
             'Public Sub New(ByVal sort As String, ByVal obj As Object)
             '    If sort Is Nothing Then sort = String.Empty
@@ -108,8 +109,19 @@ Namespace Orm
             Protected Sub New()
             End Sub
 
-            Public Sub New(ByVal sort As Sort, ByVal filter As IOrmFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
+            Public Sub New(ByVal sort As Sort, ByVal sortExpire As Date, ByVal filter As IOrmFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
                 _sort = sort
+                '_st = sortType
+                _obj = mgr.ListConverter.ToWeakList(obj)
+                _cache = mgr.Cache
+                If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
+                _f = filter
+                _expires = mgr._expiresPattern
+                _sortExpires = sortExpire
+            End Sub
+
+            Public Sub New(ByVal filter As IOrmFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
+                _sort = Nothing
                 '_st = sortType
                 _obj = mgr.ListConverter.ToWeakList(obj)
                 _cache = mgr.Cache
@@ -155,12 +167,26 @@ Namespace Orm
 
             Public Sub Expire()
                 _expires = Nothing
+                SortExpire()
+            End Sub
+
+            Public Sub SortExpire()
+                _sortExpires = Nothing
             End Sub
 
             Public ReadOnly Property Expires() As Boolean
                 Get
                     If _expires <> Date.MinValue Then
                         Return _expires < Date.Now
+                    End If
+                    Return False
+                End Get
+            End Property
+
+            Public ReadOnly Property SortExpires() As Boolean
+                Get
+                    If _sortExpires <> Date.MinValue Then
+                        Return _sortExpires < Date.Now
                     End If
                     Return False
                 End Get
@@ -733,7 +759,7 @@ Namespace Orm
                             Dim key As String = _schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                             Dim dic As IDictionary = GetDic(_cache, key)
                             Dim id As String = CObj(f).ToString
-                            dic(id) = New CachedItem(Nothing, f, v, Me)
+                            dic(id) = New CachedItem(f, v, Me)
                         End If
                     End If
                 Next
@@ -1307,6 +1333,11 @@ l1:
                     If v IsNot Nothing AndAlso Not v.Validate(ce) Then
                         del.Renew = True
                         GoTo l1
+                    End If
+                    If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
+                        Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, False)
+                        ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
+                        dic(id) = ce
                     End If
                 Else
                     If Not del.SmartSort Then

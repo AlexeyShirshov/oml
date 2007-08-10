@@ -30,6 +30,12 @@ Namespace Orm
         Function CreateSortComparer(Of T As {OrmBase, New})(ByVal s As Sort) As Generic.IComparer(Of T)
     End Interface
 
+    Public Interface IOrmSortingEx
+        Inherits IOrmSorting
+
+        ReadOnly Property SortExpiration(ByVal s As Sort) As TimeSpan
+    End Interface
+
     Public Interface IOrmObjectSchema
         Inherits IOrmObjectSchemaBase
         Function GetTables() As OrmTable()
