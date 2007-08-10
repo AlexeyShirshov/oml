@@ -89,20 +89,26 @@ Namespace Orm
 
             Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
                 Dim sortex As IOrmSortingEx = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSortingEx)
-                Dim s As TimeSpan = TimeSpan.MaxValue
+                Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
-                    s = sortex.SortExpiration(_sort)
+                    Dim ts As TimeSpan = sortex.SortExpiration(_sort)
+                    If ts <> TimeSpan.MaxValue AndAlso ts <> TimeSpan.MinValue Then
+                        s = Now.Add(ts)
+                    End If
                 End If
-                Return New CachedItem(_sort, Now.Add(s), _f, GetValues(withLoad), _mgr)
+                Return New CachedItem(_sort, s, _f, GetValues(withLoad), _mgr)
             End Function
 
             Public Overrides Function GetCacheItem(ByVal col As System.Collections.Generic.ICollection(Of T)) As OrmManagerBase.CachedItem
                 Dim sortex As IOrmSortingEx = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSortingEx)
-                Dim s As TimeSpan = TimeSpan.MaxValue
+                Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
-                    s = sortex.SortExpiration(_sort)
+                    Dim ts As TimeSpan = sortex.SortExpiration(_sort)
+                    If ts <> TimeSpan.MaxValue AndAlso ts <> TimeSpan.MinValue Then
+                        s = Now.Add(ts)
+                    End If
                 End If
-                Return New CachedItem(_sort, Now.Add(s), _f, col, _mgr)
+                Return New CachedItem(_sort, s, _f, col, _mgr)
             End Function
         End Class
 
