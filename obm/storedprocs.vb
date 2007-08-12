@@ -161,11 +161,14 @@ Namespace Orm
             End If
 
             Dim t As Type = obj.GetType
-            For Each p As Pair(Of Type, Dependency) In GetDepends()
-                If t Is p.First Then
-                    Return (p.Second And Dependency.Update) = Dependency.Update
-                End If
-            Next
+            Dim en As IEnumerable(Of Pair(Of Type, Dependency)) = GetDepends()
+            If en IsNot Nothing Then
+                For Each p As Pair(Of Type, Dependency) In en
+                    If t Is p.First Then
+                        Return (p.Second And Dependency.Update) = Dependency.Update
+                    End If
+                Next
+            End If
             Return False
         End Function
 
@@ -175,11 +178,14 @@ Namespace Orm
             End If
 
             Dim t As Type = obj.GetType
-            For Each p As Pair(Of Type, Dependency) In GetDepends()
-                If t Is p.First Then
-                    Return (p.Second And Dependency.InsertDelete) = Dependency.InsertDelete
-                End If
-            Next
+            Dim en As IEnumerable(Of Pair(Of Type, Dependency)) = GetDepends()
+            If en IsNot Nothing Then
+                For Each p As Pair(Of Type, Dependency) In GetDepends()
+                    If t Is p.First Then
+                        Return (p.Second And Dependency.InsertDelete) = Dependency.InsertDelete
+                    End If
+                Next
+            End If
             Return False
         End Function
     End Class
@@ -193,6 +199,10 @@ Namespace Orm
 
         Protected Sub New()
             MyBase.new(False)
+        End Sub
+
+        Protected Sub New(ByVal lifeTime As TimeSpan)
+            MyBase.New(lifeTime)
         End Sub
 
         Protected Overloads Overrides Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
@@ -216,6 +226,10 @@ Namespace Orm
 
         Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
+        End Sub
+
+        Protected Sub New(ByVal lifeTime As TimeSpan)
+            MyBase.New(lifeTime)
         End Sub
 
         Public Sub New()
@@ -263,6 +277,10 @@ Namespace Orm
 
         Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
+        End Sub
+
+        Protected Sub New(ByVal lifeTime As TimeSpan)
+            MyBase.New(lifeTime)
         End Sub
 
         Protected Sub New()
@@ -321,6 +339,18 @@ Namespace Orm
         End Class
 
 #End Region
+
+        Protected Sub New(ByVal cache As Boolean)
+            MyBase.new(cache)
+        End Sub
+
+        Protected Sub New(ByVal lifeTime As TimeSpan)
+            MyBase.New(lifeTime)
+        End Sub
+
+        Protected Sub New()
+            MyBase.new(True)
+        End Sub
 
         Protected MustOverride Function CreateDescriptor(ByVal resultsetIdx As Integer) As IResultSetDescriptor
 
