@@ -266,10 +266,12 @@ Namespace Orm
         End Property
 
         Public Function Accept(ByVal mgr As OrmDBManager) As Boolean
+            Dim needaccept As Boolean
             If _sort Is Nothing Then
                 CType(_mainList, List(Of Integer)).AddRange(_addedList)
             Else
                 If _addedList.Count > 0 Then
+                    needaccept = True
                     Dim sr As IOrmSorting = Nothing
                     Dim c As IComparer = Nothing
                     Dim col As ArrayList = Nothing
@@ -322,11 +324,15 @@ Namespace Orm
             For Each o As Integer In _deletedList
                 CType(_mainList, List(Of Integer)).Remove(o)
             Next
+            needaccept = _deletedList.Count > 0
             _deletedList.Clear()
             _saved = False
             RemoveNew()
 
-            AcceptDual()
+            If needaccept Then
+                AcceptDual()
+            End If
+
             Return True
         End Function
 
