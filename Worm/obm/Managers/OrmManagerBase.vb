@@ -2170,11 +2170,15 @@ l1:
         Protected Friend Function GetM2MNonGeneric(ByVal obj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As M2MCache
             Dim tt1 As Type = obj.GetType
 
+            Dim id As String = obj.Identifier.ToString
+
+            Return GetM2MNonGeneric(id, tt1, tt2, direct)
+        End Function
+
+        Protected Friend Function GetM2MNonGeneric(ByVal id As String, ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As Boolean) As M2MCache
             Dim key As String = GetM2MKey(tt1, tt2, direct)
 
             Dim dic As IDictionary = GetDic(_cache, key)
-
-            Dim id As String = obj.Identifier.ToString
 
             Return CType(dic(id), M2MCache)
         End Function
