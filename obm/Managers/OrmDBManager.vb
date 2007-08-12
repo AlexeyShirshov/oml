@@ -642,7 +642,7 @@ Namespace Orm
 
                 Dim el As EditableList = e.Entry
                 If el.Main.Equals(o1) OrElse el.Main.Equals(o2) Then
-                    el.Accept(CType(OrmManagerBase.CurrentManager, OrmDBManager))
+                    Return el.Accept(CType(OrmManagerBase.CurrentManager, OrmDBManager))
                 End If
                 Return True
             End Function

@@ -202,51 +202,59 @@ Namespace Orm
 
         Public ReadOnly Property Current() As ICollection(Of Integer)
             Get
-                Dim sort As Boolean = False
-                Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
                 Dim arr As New List(Of Integer)
-                Dim col As New ArrayList
-                Dim c As IComparer = Nothing
-                If _sort IsNot Nothing Then
-                    Dim sr As IOrmSorting = Nothing
-                    col.AddRange(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                    If mgr.CanSortOnClient(_subType, col, sr) Then
-                        c = sr.CreateSortComparer(_sort)
-                        sort = c IsNot Nothing
-                    End If
-                End If
-                If Not sort Then
-                    arr.AddRange(_mainList)
-                    arr.AddRange(_addedList)
-                Else
-                    Dim i, j As Integer
-                    Do
-                        If i = _mainList.Count Then
-                            For k As Integer = j To _addedList.Count - 1
-                                arr.Add(_addedList(k))
-                            Next
-                            Exit Do
+                If _mainList.Count <> 0 OrElse _addedList.Count <> 0 Then
+                    If _addedList.Count <> 0 AndAlso _mainList.Count <> 0 Then
+                        Dim sort As Boolean = False
+                        Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+                        Dim col As New ArrayList
+                        Dim c As IComparer = Nothing
+                        If _sort IsNot Nothing Then
+                            Dim sr As IOrmSorting = Nothing
+                            col.AddRange(mgr.ConvertIds2Objects(_subType, _mainList, False))
+                            If mgr.CanSortOnClient(_subType, col, sr) Then
+                                c = sr.CreateSortComparer(_sort)
+                                sort = c IsNot Nothing
+                            End If
                         End If
-                        If j = _addedList.Count Then
-                            For k As Integer = i To _mainList.Count - 1
-                                arr.Add(_mainList(k))
-                            Next
-                            Exit Do
-                        End If
-                        Dim ex As OrmBase = CType(col(i), OrmBase)
-                        Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
-                        If c.Compare(ex, ad) < 0 Then
-                            arr.Add(ex.Identifier)
-                            i += 1
+                        If Not sort Then
+                            arr.AddRange(_mainList)
+                            arr.AddRange(_addedList)
                         Else
-                            arr.Add(ad.Identifier)
-                            j += 1
+                            Dim i, j As Integer
+                            Do
+                                If i = _mainList.Count Then
+                                    For k As Integer = j To _addedList.Count - 1
+                                        arr.Add(_addedList(k))
+                                    Next
+                                    Exit Do
+                                End If
+                                If j = _addedList.Count Then
+                                    For k As Integer = i To _mainList.Count - 1
+                                        arr.Add(_mainList(k))
+                                    Next
+                                    Exit Do
+                                End If
+                                Dim ex As OrmBase = CType(col(i), OrmBase)
+                                Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
+                                If c.Compare(ex, ad) < 0 Then
+                                    arr.Add(ex.Identifier)
+                                    i += 1
+                                Else
+                                    arr.Add(ad.Identifier)
+                                    j += 1
+                                End If
+                            Loop While True
                         End If
-                    Loop While True
+                    Else
+                        arr.AddRange(_mainList)
+                        arr.AddRange(_addedList)
+                    End If
+
+                    For Each o As Integer In _deletedList
+                        arr.Remove(o)
+                    Next
                 End If
-                For Each o As Integer In _deletedList
-                    arr.Remove(o)
-                Next
                 Return arr
             End Get
         End Property
@@ -261,46 +269,56 @@ Namespace Orm
             If _sort Is Nothing Then
                 CType(_mainList, List(Of Integer)).AddRange(_addedList)
             Else
-                Dim sr As IOrmSorting = Nothing
-                Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                If Not mgr.CanSortOnClient(_subType, col, sr) Then
-                    AcceptDual()
-                    Return False
+                If _addedList.Count > 0 Then
+                    Dim sr As IOrmSorting = Nothing
+                    Dim c As IComparer = Nothing
+                    Dim col As ArrayList = Nothing
+
+                    If _mainList.Count > 0 Then
+                        col = New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
+                        If Not mgr.CanSortOnClient(_subType, col, sr) Then
+                            AcceptDual()
+                            Return False
+                        End If
+                        c = sr.CreateSortComparer(_sort)
+                        If c Is Nothing Then
+                            AcceptDual()
+                            Return False
+                        End If
+                    End If
+
+                    Dim ml As New List(Of Integer)
+                    Dim i, j As Integer
+                    Do
+                        If i = _mainList.Count Then
+                            For k As Integer = j To _addedList.Count - 1
+                                ml.Add(_addedList(k))
+                            Next
+                            Exit Do
+                        End If
+                        If j = _addedList.Count Then
+                            For k As Integer = i To _mainList.Count - 1
+                                ml.Add(_mainList(k))
+                            Next
+                            Exit Do
+                        End If
+                        Dim ex As OrmBase = CType(col(i), OrmBase)
+                        Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
+                        If c.Compare(ex, ad) < 0 Then
+                            ml.Add(ex.Identifier)
+                            i += 1
+                        Else
+                            ml.Add(ad.Identifier)
+                            j += 1
+                        End If
+                    Loop While True
+
+                    _mainList = ml
                 End If
-                Dim c As IComparer = sr.CreateSortComparer(_sort)
-                If c Is Nothing Then
-                    AcceptDual()
-                    Return False
-                End If
-                Dim ml As New List(Of Integer)
-                Dim i, j As Integer
-                Do
-                    If i = _mainList.Count Then
-                        For k As Integer = j To _addedList.Count - 1
-                            ml.Add(_addedList(k))
-                        Next
-                        Exit Do
-                    End If
-                    If j = _addedList.Count Then
-                        For k As Integer = i To _mainList.Count - 1
-                            ml.Add(_mainList(k))
-                        Next
-                        Exit Do
-                    End If
-                    Dim ex As OrmBase = CType(col(i), OrmBase)
-                    Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
-                    If c.Compare(ex, ad) < 0 Then
-                        ml.Add(ex.Identifier)
-                        i += 1
-                    Else
-                        ml.Add(ad.Identifier)
-                        j += 1
-                    End If
-                Loop While True
-                _mainList = ml
+
+                _addedList.Clear()
             End If
 
-            _addedList.Clear()
             For Each o As Integer In _deletedList
                 CType(_mainList, List(Of Integer)).Remove(o)
             Next
@@ -344,11 +362,11 @@ Namespace Orm
         Protected Sub AcceptDual()
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
             For Each id As Integer In _mainList
-                Dim obj As OrmBase = mgr.CreateDBObject(id, SubType)
-                Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(obj, MainType, GetRealDirect)
+                Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
                 If m IsNot Nothing Then
                     If m.Entry.Added.Contains(_mainId) OrElse m.Entry.Deleted.Contains(_mainId) Then
                         If Not m.Entry.Accept(CType(mgr, OrmDBManager), _mainId) Then
+                            Dim obj As OrmBase = mgr.CreateDBObject(id, SubType)
                             mgr.M2MCancel(obj, MainType)
                         End If
                     End If
@@ -510,7 +528,7 @@ Namespace Orm
         Protected Function CheckDual(ByVal mgr As OrmManagerBase, ByVal id As Integer) As Boolean
             Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
             Dim c As Boolean = True
-            For Each i As Integer In m.Entry.original
+            For Each i As Integer In m.Entry.Original
                 If i = _mainId Then
                     c = False
                     Exit For
