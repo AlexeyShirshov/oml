@@ -430,6 +430,8 @@ Namespace Orm
         'Protected _sites() As Partner
         Protected Shared _mcSwitch As New TraceSwitch("mcSwitch", "Switch for OrmManagerBase", "3") 'info
         Protected Shared _LoadObjectsMI As Reflection.MethodInfo = Nothing
+        Private Shared _realCreateDbObjectDic As Hashtable = Hashtable.Synchronized(New Hashtable())
+
         Protected _findload As Boolean = False
         '#If DEBUG Then
         '        Protected _next As OrmManagerBase
@@ -925,8 +927,14 @@ Namespace Orm
 #End If
 
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance
-            Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("CreateDBObject", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Integer)}, Nothing)
-            Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {type})
+            Dim mi_real As Reflection.MethodInfo = TryCast(_realCreateDbObjectDic(type), Reflection.MethodInfo)
+            If (mi_real Is Nothing) Then
+                SyncLock _realCreateDbObjectDic.SyncRoot
+                    Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("CreateDBObject", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Integer)}, Nothing)
+                    mi_real = mi.MakeGenericMethod(New Type() {type})
+                    _realCreateDbObjectDic(type) = mi_real
+                End SyncLock
+            End If
             Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id}, Nothing), OrmBase)
         End Function
 
