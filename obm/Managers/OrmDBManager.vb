@@ -605,7 +605,7 @@ Namespace Orm
                     Else
                         Dim s As IOrmSorting = Nothing
                         Dim col As New ArrayList(mgr.ConvertIds2Objects(el.SubType, el.Added, False))
-                        If Not mgr.CanSortOnClient(el.SubType, col, s) Then
+                        If Not mgr.CanSortOnClient(el.SubType, col, e.Sort, s) Then
                             Return False
                         End If
                         Dim c As IComparer = s.CreateSortComparer(e.Sort)

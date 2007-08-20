@@ -1462,7 +1462,7 @@ l1:
                         dic(id) = ce
                     End If
                 Else
-                    If Not del.SmartSort Then
+                    If Not del.SmartSort OrElse psort.Previous IsNot Nothing Then
                         del.Renew = True
                         GoTo l1
                     Else
@@ -1473,7 +1473,7 @@ l1:
                             If psort.IsExternal Then
                                 ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
                                 dic(id) = ce
-                            ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), srt) Then
+                            ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
                                 Using SyncHelper.AcquireDynamicLock(sync)
                                     Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(psort)
                                     If sc IsNot Nothing Then
@@ -1502,7 +1502,11 @@ l1:
             Return ce
         End Function
 
-        Public Function CanSortOnClient(ByVal t As Type, ByVal col As ICollection, ByRef sorting As IOrmSorting) As Boolean
+        Public Function CanSortOnClient(ByVal t As Type, ByVal col As ICollection, ByVal sort As Sort, ByRef sorting As IOrmSorting) As Boolean
+            If sort.Previous IsNot Nothing Then
+                Return False
+            End If
+
             Dim schema As IOrmObjectSchemaBase = _schema.GetObjectSchema(t)
             sorting = TryCast(schema, IOrmSorting)
             If sorting Is Nothing Then
