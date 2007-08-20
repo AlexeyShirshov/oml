@@ -211,4 +211,27 @@ Public Class TestSchema
             Assert.IsTrue(t1(1).IsLoaded)
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestOrderComplex()
+        Dim schema As New Orm.DbSchema("1")
+
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(schema)
+            Dim t1 As IList(Of Table1) = CType( _
+                mgr.Find(Of Table1)( _
+                    Orm.Criteria.Field(GetType(Table1), "EnumStr").Eq("sec"), _
+                    Orm.Sorting.Field("EnumStr").Asc.NextField("Enum"), False), IList(Of Table1))
+
+            Assert.AreEqual(2, t1(0).Identifier)
+            Assert.AreEqual(3, t1(1).Identifier)
+
+            Dim t2 As IList(Of Table1) = CType( _
+                mgr.Find(Of Table1)( _
+                    Orm.Criteria.Field(GetType(Table1), "EnumStr").Eq("sec"), _
+                    Orm.Sorting.Field("EnumStr").Asc, False), IList(Of Table1))
+
+            Assert.AreEqual(3, t2(0).Identifier)
+            Assert.AreEqual(2, t2(1).Identifier)
+        End Using
+    End Sub
 End Class
