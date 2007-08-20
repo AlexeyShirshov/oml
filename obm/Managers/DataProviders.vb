@@ -196,25 +196,25 @@ Namespace Orm
             End Sub
         End Class
 
-        Protected Class FilterCustDelegate4Top(Of T As {New, OrmBase})
-            Inherits FilterCustDelegate(Of T)
+        'Protected Class FilterCustDelegate4Top(Of T As {New, OrmBase})
+        '    Inherits FilterCustDelegate(Of T)
 
-            Private _top As Integer
+        '    Private _top As Integer
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal top As Integer, ByVal f As IOrmFilter, _
-                ByVal sort As Sort, ByVal key As String, ByVal id As String)
-                MyBase.New(mgr, f, sort, key, id)
-                _top = top
-            End Sub
+        '    Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal top As Integer, ByVal f As IOrmFilter, _
+        '        ByVal sort As Sort, ByVal key As String, ByVal id As String)
+        '        MyBase.New(mgr, f, sort, key, id)
+        '        _top = top
+        '    End Sub
 
-            Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-                sb.Append(Schema.SelectTop(_top, t, almgr, pmgr, arr))
-            End Sub
+        '    Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
+        '        sb.Append(Schema.SelectTop(_top, t, almgr, pmgr, arr))
+        '    End Sub
 
-            Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-                sb.Append(Schema.SelectIDTop(_top, t, almgr, pmgr))
-            End Sub
-        End Class
+        '    Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
+        '        sb.Append(Schema.SelectIDTop(_top, t, almgr, pmgr))
+        '    End Sub
+        'End Class
 
         '        Protected Class M2MCustDelegate(Of T As {New, OrmBase})
         '            Inherits BaseDataProvider(Of T)
@@ -417,23 +417,45 @@ Namespace Orm
 
         '        End Class
 
-        Protected Class DistinctFilterCustDelegate(Of T As {New, OrmBase})
+        Protected Class JoinCustDelegate(Of T As {New, OrmBase})
             Inherits FilterCustDelegate(Of T)
 
             Private _join() As OrmJoin
+            Private _distinct As Boolean
+            Private _top As Integer = -1
+            Private _asc() As QueryAspect
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IOrmFilter, _
-                ByVal sort As Sort, ByVal key As String, ByVal id As String)
+                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal distinct As Boolean)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
+                If distinct Then
+                    _asc = New QueryAspect() {New DistinctAspect()}
+                End If
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IOrmFilter, _
+                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal top As Integer)
+                MyBase.New(mgr, f, sort, key, id)
+                _join = join
+                _asc = New QueryAspect() {New TopAspect(top)}
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IOrmFilter, _
+               ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal aspect As QueryAspect)
+                MyBase.New(mgr, f, sort, key, id)
+                _join = join
+                If aspect IsNot Nothing Then
+                    _asc = New QueryAspect() {aspect}
+                End If
             End Sub
 
             Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-                sb.Append(Schema.SelectWithJoin(t, almgr, pmgr, _join, True, True, Nothing, arr))
+                sb.Append(Schema.SelectWithJoin(t, almgr, pmgr, _join, True, _asc, Nothing, arr))
             End Sub
 
             Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-                sb.Append(Schema.SelectWithJoin(t, almgr, pmgr, _join, False, True, Nothing))
+                sb.Append(Schema.SelectWithJoin(t, almgr, pmgr, _join, False, _asc, Nothing))
             End Sub
         End Class
 

@@ -524,9 +524,9 @@ Namespace Orm
             Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal join() As OrmJoin, ByVal filter As IOrmFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IOrmFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New DistinctFilterCustDelegate(Of T)(Me, join, filter, sort, key, id)
+            Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IOrmFilter, _
@@ -557,10 +557,10 @@ Namespace Orm
             Return New FilterCustDelegate(Of T)(Me, filter, l, sort, key, id)
         End Function
 
-        Protected Overrides Function GetCustDelegate4Top(Of T As {New, OrmBase})(ByVal top As Integer, ByVal filter As IOrmFilter, _
-            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New FilterCustDelegate4Top(Of T)(Me, top, filter, sort, key, id)
-        End Function
+        'Protected Overrides Function GetCustDelegate4Top(Of T As {New, OrmBase})(ByVal top As Integer, ByVal filter As IOrmFilter, _
+        '    ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
+        '    Return New FilterCustDelegate4Top(Of T)(Me, top, filter, sort, key, id)
+        'End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
             ByVal obj As OrmBase, ByVal filter As IOrmFilter, ByVal sort As Sort, _
@@ -2008,6 +2008,15 @@ l1:
 
         Protected Overrides Function GetSearchSection() As String
             Return String.Empty
+        End Function
+
+        Protected Overrides Function MakeJoin(ByVal t As Type, ByVal selectType As Type, ByVal field As String, _
+            ByVal oper As FilterOperation, ByVal joinType As JoinType) As OrmJoin
+            Dim tbl As OrmTable = DbSchema.GetTables(t)(0)
+
+            Dim jf As New OrmFilter(tbl, "ID", selectType, field, oper)
+
+            Return New OrmJoin(tbl, joinType, jf)
         End Function
     End Class
 End Namespace

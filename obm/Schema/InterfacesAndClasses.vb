@@ -269,6 +269,7 @@ Namespace Orm
             Dim needaccept As Boolean
             If _sort Is Nothing Then
                 CType(_mainList, List(Of Integer)).AddRange(_addedList)
+                _addedList.Clear()
             Else
                 If _addedList.Count > 0 Then
                     needaccept = True
@@ -340,6 +341,7 @@ Namespace Orm
             If _addedList.Contains(id) Then
                 If _sort Is Nothing Then
                     CType(_mainList, List(Of Integer)).Add(id)
+                    _addedList.Remove(id)
                 Else
                     Dim sr As IOrmSorting = Nothing
                     Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
@@ -922,6 +924,81 @@ Namespace Orm
 
         Public Function GetSuppressedColumns() As ColumnAttribute() Implements IOrmObjectSchemaBase.GetSuppressedColumns
             Throw New NotSupportedException("GetSuppressedColumns relations is not supported in simple mode")
+        End Function
+    End Class
+
+    Public MustInherit Class QueryAspect
+        Public Enum AspectType
+            Columns
+        End Enum
+
+        Private _type As AspectType
+
+        Public ReadOnly Property AscpectType() As AspectType
+            Get
+                Return _type
+            End Get
+        End Property
+
+        Public MustOverride Function GetStaticKey() As String
+        Public MustOverride Function GetDynamicKey() As String
+        Public MustOverride Function MakeStmt(ByVal s As OrmSchemaBase) As String
+
+        Public Sub New(ByVal type As AspectType)
+            _type = type
+        End Sub
+    End Class
+
+    Public Class DistinctAspect
+        Inherits QueryAspect
+
+        Public Sub New()
+            MyBase.New(AspectType.Columns)
+        End Sub
+
+        Public Overrides Function GetDynamicKey() As String
+            Return String.Empty
+        End Function
+
+        Public Overrides Function GetStaticKey() As String
+            Return "distinct"
+        End Function
+
+        Public Overrides Function MakeStmt(ByVal s As OrmSchemaBase) As String
+            Return "distinct "
+        End Function
+    End Class
+
+    Public Class TopAspect
+        Inherits QueryAspect
+
+        Private _top As Integer
+        Private _sort As Sort
+
+        Public Sub New(ByVal top As Integer)
+            MyBase.New(AspectType.Columns)
+            _top = top
+        End Sub
+
+        Public Sub New(ByVal top As Integer, ByVal sort As Sort)
+            MyBase.New(AspectType.Columns)
+            _top = top
+            _sort = sort
+        End Sub
+
+        Public Overrides Function GetDynamicKey() As String
+            Return "-top-" & _top.ToString & "-"
+        End Function
+
+        Public Overrides Function GetStaticKey() As String
+            If _sort IsNot Nothing Then
+                Return "-top-" & _sort.ToString
+            End If
+            Return "-top-"
+        End Function
+
+        Public Overrides Function MakeStmt(ByVal s As OrmSchemaBase) As String
+            Return CType(s, DbSchema).TopStatement(_top)
         End Function
     End Class
 End Namespace

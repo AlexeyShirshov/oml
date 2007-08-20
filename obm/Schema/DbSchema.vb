@@ -137,7 +137,7 @@ Namespace Orm
             Return True
         End Function
 
-        Protected Overridable Function TopStatement(ByVal top As Integer) As String
+        Protected Friend Overridable Function TopStatement(ByVal top As Integer) As String
             Return "top " & top & " "
         End Function
 
@@ -803,7 +803,7 @@ Namespace Orm
 
         Public Overridable Function SelectWithJoin(ByVal original_type As Type, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal joins() As OrmJoin, _
-            ByVal wideLoad As Boolean, ByVal distinct As Boolean, ByVal additionalColumns As String, _
+            ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
             Optional ByVal arr As Generic.IList(Of ColumnAttribute) = Nothing) As String
 
             If original_type Is Nothing Then
@@ -817,10 +817,13 @@ Namespace Orm
             Dim selectcmd As New StringBuilder
             Dim tables() As OrmTable = GetTables(original_type)
             'Dim maintable As String = tables(0)
-            If distinct Then
-                selectcmd.Append("select distinct ")
-            Else
-                selectcmd.Append("select ")
+            selectcmd.Append("select ")
+            If aspects IsNot Nothing Then
+                For Each asp As QueryAspect In aspects
+                    If asp.AscpectType = QueryAspect.AspectType.Columns Then
+                        selectcmd.Append(asp.MakeStmt(Me))
+                    End If
+                Next
             End If
 
             If wideLoad Then
@@ -1016,47 +1019,47 @@ Namespace Orm
             'Return cmd
         End Function
 
-        Public Overridable Function SelectTop(ByVal top As Integer, ByVal original_type As Type, _
-            ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
-            Optional ByVal arr As Generic.ICollection(Of ColumnAttribute) = Nothing) As String
+        'Public Overridable Function SelectTop(ByVal top As Integer, ByVal original_type As Type, _
+        '    ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
+        '    Optional ByVal arr As Generic.ICollection(Of ColumnAttribute) = Nothing) As String
 
-            If original_type Is Nothing Then
-                Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
-            End If
+        '    If original_type Is Nothing Then
+        '        Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
+        '    End If
 
-            If almgr.IsEmpty Then
-                Throw New ArgumentNullException("parameter cannot be nothing", "almgr")
-            End If
+        '    If almgr.IsEmpty Then
+        '        Throw New ArgumentNullException("parameter cannot be nothing", "almgr")
+        '    End If
 
-            Dim columns As String = GetSelectColumnList(original_type, arr)
-            Dim selectcmd As New StringBuilder
-            Dim tables() As OrmTable = GetTables(original_type)
-            selectcmd.Append("select ").Append(TopStatement(top)).Append(columns)
-            selectcmd.Append(" from ")
-            Dim pmgr As ParamMgr = params 'New ParamMgr()
-            selectcmd = AppendFrom(original_type, almgr, tables, selectcmd, pmgr)
-            Return selectcmd.ToString
-        End Function
+        '    Dim columns As String = GetSelectColumnList(original_type, arr)
+        '    Dim selectcmd As New StringBuilder
+        '    Dim tables() As OrmTable = GetTables(original_type)
+        '    selectcmd.Append("select ").Append(TopStatement(top)).Append(columns)
+        '    selectcmd.Append(" from ")
+        '    Dim pmgr As ParamMgr = params 'New ParamMgr()
+        '    selectcmd = AppendFrom(original_type, almgr, tables, selectcmd, pmgr)
+        '    Return selectcmd.ToString
+        'End Function
 
-        Public Overridable Function SelectIDTop(ByVal top As Integer, ByVal original_type As Type, ByVal almgr As AliasMgr, ByVal params As ParamMgr) As String
-            If original_type Is Nothing Then
-                Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
-            End If
+        'Public Overridable Function SelectIDTop(ByVal top As Integer, ByVal original_type As Type, ByVal almgr As AliasMgr, ByVal params As ParamMgr) As String
+        '    If original_type Is Nothing Then
+        '        Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
+        '    End If
 
-            If almgr.IsEmpty Then
-                Throw New ArgumentNullException("parameter cannot be nothing", "almgr")
-            End If
+        '    If almgr.IsEmpty Then
+        '        Throw New ArgumentNullException("parameter cannot be nothing", "almgr")
+        '    End If
 
-            Dim selectcmd As New StringBuilder
-            Dim tables() As OrmTable = GetTables(original_type)
-            'Dim maintable As OrmTable = tables(0)
-            selectcmd.Append("select ").Append(TopStatement(top))
-            GetPKList(original_type, selectcmd)
+        '    Dim selectcmd As New StringBuilder
+        '    Dim tables() As OrmTable = GetTables(original_type)
+        '    'Dim maintable As OrmTable = tables(0)
+        '    selectcmd.Append("select ").Append(TopStatement(top))
+        '    GetPKList(original_type, selectcmd)
 
-            selectcmd.Append(" from ")
-            selectcmd = AppendFrom(original_type, almgr, tables, selectcmd, params)
-            Return selectcmd.ToString
-        End Function
+        '    selectcmd.Append(" from ")
+        '    selectcmd = AppendFrom(original_type, almgr, tables, selectcmd, params)
+        '    Return selectcmd.ToString
+        'End Function
 
         ''' <summary>
         ''' Добавление джоинов для типа, когда основная таблица может не линковаться
