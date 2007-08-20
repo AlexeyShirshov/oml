@@ -197,65 +197,157 @@ Namespace Orm
         End Property
     End Class
 
-    Public Module Sorting
+    Public Class Sorting
+        Private _t As Type
+        Private _prev As SortOrder
 
-        Public Function Field(ByVal fieldName As String) As SortOrder
-            Return New SortOrder(fieldName)
+        Protected Friend Sub New(ByVal t As Type, ByVal prev As SortOrder)
+            _t = t
+            _prev = prev
+        End Sub
+
+        Public Function NextField(ByVal fieldName As String) As SortOrder
+            Return New SortOrder(_t, fieldName, _prev)
         End Function
 
-        Public Function External(ByVal fieldName As String) As SortOrder
-            Return New SortOrder(fieldName, True)
+        Public Function NextExternal(ByVal fieldName As String) As SortOrder
+            Return New SortOrder(_t, fieldName, True, _prev)
         End Function
-    End Module
+
+        Public Shared Function Field(ByVal fieldName As String) As SortOrder
+            Return New SortOrder(Nothing, fieldName)
+        End Function
+
+        Public Shared Function External(ByVal fieldName As String) As SortOrder
+            Return New SortOrder(Nothing, fieldName, True)
+        End Function
+
+        Public Shared Function Field(ByVal t As Type, ByVal fieldName As String) As SortOrder
+            Return New SortOrder(t, fieldName)
+        End Function
+
+        Public Shared Function External(ByVal t As Type, ByVal fieldName As String) As SortOrder
+            Return New SortOrder(t, fieldName, True)
+        End Function
+
+        Public Shared Widening Operator CType(ByVal so As Sorting) As Sort
+            Return so._prev
+        End Operator
+    End Class
 
     Public Class SortOrder
         Private _f As String
         Private _ext As Boolean
+        Private _prev As SortOrder
+        Private _order As SortType
+        Private _t As Type
 
-        Protected Friend Sub New(ByVal f As String)
-            _f = f
+        Protected Friend Sub New(ByVal t As Type, ByVal prev As SortOrder)
+            _prev = prev
+            _t = t
         End Sub
 
-        Protected Friend Sub New(ByVal f As String, ByVal ext As Boolean)
+        Protected Friend Sub New(ByVal t As Type, ByVal f As String, Optional ByVal prev As SortOrder = Nothing)
+            _f = f
+            _prev = prev
+            _t = t
+        End Sub
+
+        Protected Friend Sub New(ByVal t As Type, ByVal f As String, ByVal ext As Boolean, Optional ByVal prev As SortOrder = Nothing)
             _f = f
             _ext = ext
+            _prev = prev
+            _t = t
         End Sub
 
-        Public ReadOnly Property Asc() As Sort
+        'Public Function NextSort(ByVal field As String) As SortOrder
+        '    _f = field
+        '    Return Me
+        'End Function
+
+        'Public Function NextSort(ByVal t As Type, ByVal field As String) As SortOrder
+        '    _f = field
+        '    _t = t
+        '    Return Me
+        'End Function
+
+        Public ReadOnly Property Asc() As Sorting
             Get
-                Return New Sort(_f, SortType.Asc, _ext)
+                _order = SortType.Asc
+                Return New Sorting(_t, Me)
+                'Return New Sort(_f, SortType.Asc, _ext)
             End Get
         End Property
 
-        Public ReadOnly Property Desc() As Sort
+        Public ReadOnly Property Desc() As Sorting
             Get
-                Return New Sort(_f, SortType.Desc, _ext)
+                _order = SortType.Desc
+                Return New Sorting(_t, Me)
+                'Return New Sort(_f, SortType.Desc, _ext)
             End Get
         End Property
 
-        Public Function Order(ByVal orderParam As Boolean) As Sort
+        Public Function Order(ByVal orderParam As Boolean) As Sorting
             If orderParam Then
-                Return New Sort(_f, SortType.Asc, _ext)
+                Return Asc 'New Sort(_f, SortType.Asc, _ext)
             Else
-                Return New Sort(_f, SortType.Desc, _ext)
+                Return Desc 'New Sort(_f, SortType.Desc, _ext)
             End If
         End Function
 
-        Public Function Order(ByVal orderParam As String) As Sort
-            Return New Sort(_f, (CType([Enum].Parse(GetType(SortType), orderParam, True), SortType)), _ext)
+        Public Function Order(ByVal orderParam As String) As Sorting
+            _order = CType([Enum].Parse(GetType(SortType), orderParam, True), SortType)
+            Return New Sorting(_t, Me) 'New Sort(_f, _, _ext)
         End Function
+
+        Public Shared Widening Operator CType(ByVal so As SortOrder) As Sort
+            If Not String.IsNullOrEmpty(so._f) Then
+                If so._prev Is Nothing Then
+                    Return New Sort(so._t, so._f, so._order, so._ext)
+                Else
+                    Return New Sort(so._prev, so._t, so._f, so._order, so._ext)
+                End If
+            Else
+                Return so._prev
+            End If
+        End Operator
     End Class
 
     Public Class Sort
         Private _f As String
         Private _order As SortType
         Private _ext As Boolean
+        Private _prev As Sort
+        Private _t As Type
+
+        Protected Friend Sub New(ByVal _prev As Sort, ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
+            _f = fieldName
+            _order = order
+            _ext = external
+            _t = t
+        End Sub
+
+        Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
+            _f = fieldName
+            _order = order
+            _ext = external
+            _t = t
+        End Sub
 
         Public Sub New(ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
             _f = fieldName
             _order = order
             _ext = external
         End Sub
+
+        Public Property Type() As Type
+            Get
+                Return _t
+            End Get
+            Set(ByVal value As Type)
+                _t = value
+            End Set
+        End Property
 
         Public Property FieldName() As String
             Get
@@ -285,7 +377,11 @@ Namespace Orm
         End Property
 
         Public Overrides Function ToString() As String
-            Return _f & _order.ToString & _ext.ToString
+            Dim s As String = _f & _order.ToString & _ext.ToString
+            If _t IsNot Nothing Then
+                s &= _t.ToString
+            End If
+            Return s
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -296,7 +392,7 @@ Namespace Orm
             If s Is Nothing Then
                 Return False
             Else
-                Return _f = s._f AndAlso _order = s._order AndAlso _ext = s._ext
+                Return _f = s._f AndAlso _order = s._order AndAlso _ext = s._ext AndAlso _t Is s._t
             End If
         End Function
 
