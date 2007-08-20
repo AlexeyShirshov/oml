@@ -39,6 +39,7 @@ Namespace Orm
 
         Protected map As IDictionary = Hashtable.Synchronized(New Hashtable)
         Protected sel As IDictionary = Hashtable.Synchronized(New Hashtable)
+        Protected _joins As IDictionary = Hashtable.Synchronized(New Hashtable)
         Private _version As String
         Private _mapv As ResolveEntity
         Private _mapn As ResolveEntityName
@@ -62,6 +63,7 @@ Namespace Orm
             _mapv = resolveEntity
             _mapn = resolveName
         End Sub
+
 #Region " reflection "
 
         Protected Friend Function GetProperties(ByVal t As Type) As IDictionary
@@ -640,6 +642,27 @@ Namespace Orm
                 End If
             Next
             Throw New DBSchemaException("Type " & type.Name & " doesnot contain property " & field)
+        End Function
+
+        Public Function GetFieldNameByType(ByVal type As Type, ByVal fieldType As Type) As ICollection(Of String)
+            Dim key As String = type.ToString & fieldType.ToString
+            Dim l As List(Of String) = CType(_joins(key), List(Of String))
+            If l Is Nothing Then
+                Using SyncHelper.AcquireDynamicLock(key)
+                    l = CType(_joins(key), List(Of String))
+                    If l Is Nothing Then
+                        l = New List(Of String)
+                        For Each de As DictionaryEntry In GetProperties(type)
+                            Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                            If pi.PropertyType Is fieldType Then
+                                Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                                l.Add(c.FieldName)
+                            End If
+                        Next
+                    End If
+                End Using
+            End If
+            Return l
         End Function
 
         'Protected Function GetColumnNameByFieldName4Filter(ByVal type As Type, ByVal field As String, Optional ByVal table_alias As Boolean = True, Optional ByVal pref As String = "") As String
