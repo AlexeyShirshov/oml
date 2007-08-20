@@ -212,7 +212,7 @@ Namespace Orm
                         If _sort IsNot Nothing Then
                             Dim sr As IOrmSorting = Nothing
                             col.AddRange(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                            If mgr.CanSortOnClient(_subType, col, sr) Then
+                            If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
                                 c = sr.CreateSortComparer(_sort)
                                 sort = c IsNot Nothing
                             End If
@@ -279,7 +279,7 @@ Namespace Orm
 
                     If _mainList.Count > 0 Then
                         col = New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                        If Not mgr.CanSortOnClient(_subType, col, sr) Then
+                        If Not mgr.CanSortOnClient(_subType, col, _sort, sr) Then
                             AcceptDual()
                             Return False
                         End If
@@ -345,7 +345,7 @@ Namespace Orm
                 Else
                     Dim sr As IOrmSorting = Nothing
                     Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                    If Not mgr.CanSortOnClient(_subType, col, sr) Then
+                    If Not mgr.CanSortOnClient(_subType, col, _sort, sr) Then
                         Return False
                     End If
                     Dim c As IComparer = sr.CreateSortComparer(_sort)
@@ -436,7 +436,7 @@ Namespace Orm
                     Dim sr As IOrmSorting = Nothing
                     Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
                     Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _addedList, False))
-                    If mgr.CanSortOnClient(_subType, col, sr) Then
+                    If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
                         Dim c As IComparer = sr.CreateSortComparer(_sort)
                         If c IsNot Nothing Then
                             Dim pos As Integer = col.BinarySearch(mgr.CreateDBObject(id, _subType), c)
@@ -800,8 +800,8 @@ Namespace Orm
 #End Region
 
     Public Enum SortType
-        Desc
         Asc
+        Desc
     End Enum
 
     Public Enum FilterOperation

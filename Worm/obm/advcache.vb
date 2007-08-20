@@ -34,7 +34,7 @@ Namespace Orm
             If sort Is Nothing Then
                 l.Add(obj)
                 Return True
-            ElseIf mc.CanSortOnClient(obj.GetType, l, st) Then
+            ElseIf mc.CanSortOnClient(obj.GetType, l, sort, st) Then
                 Dim c As IComparer = st.CreateSortComparer(sort)
                 If c IsNot Nothing Then
                     Dim pos As Integer = ArrayList.Adapter(l).BinarySearch(obj, c)

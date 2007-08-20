@@ -271,6 +271,14 @@ Namespace Orm
         '    Return Me
         'End Function
 
+        Public Function NextField(ByVal fieldName As String) As SortOrder
+            Return New SortOrder(_t, fieldName, Me)
+        End Function
+
+        Public Function NextExternal(ByVal fieldName As String) As SortOrder
+            Return New SortOrder(_t, fieldName, True, Me)
+        End Function
+
         Public ReadOnly Property Asc() As Sorting
             Get
                 _order = SortType.Asc
@@ -320,11 +328,12 @@ Namespace Orm
         Private _prev As Sort
         Private _t As Type
 
-        Protected Friend Sub New(ByVal _prev As Sort, ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
+        Protected Friend Sub New(ByVal prev As Sort, ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
             _f = fieldName
             _order = order
             _ext = external
             _t = t
+            _prev = prev
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
@@ -392,12 +401,28 @@ Namespace Orm
             If s Is Nothing Then
                 Return False
             Else
-                Return _f = s._f AndAlso _order = s._order AndAlso _ext = s._ext AndAlso _t Is s._t
+                Dim b As Boolean = _f = s._f AndAlso _order = s._order AndAlso _ext = s._ext AndAlso _t Is s._t
+                If b Then
+                    If Not _prev Is s._prev Then
+                        If _prev IsNot Nothing Then
+                            b = _prev.Equals(s._prev)
+                        Else
+                            b = False
+                        End If
+                    End If
+                End If
+                Return b
             End If
         End Function
 
         Public Overrides Function GetHashCode() As Integer
             Return ToString.GetHashCode
         End Function
+
+        Protected Friend ReadOnly Property Previous() As Sort
+            Get
+                Return _prev
+            End Get
+        End Property
     End Class
 End Namespace

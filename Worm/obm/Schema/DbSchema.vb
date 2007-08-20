@@ -1242,27 +1242,47 @@ Namespace Orm
             Return False
         End Function
 
-        Public Sub AppendOrder(ByVal t As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
+        Public Sub AppendOrder(ByVal selectType As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
             If sort IsNot Nothing AndAlso Not sort.IsExternal Then
-                Dim schema As IOrmObjectSchema = GetObjectSchema(t)
-                'Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
-                'If s Is Nothing Then
-
-                'End If
-                'Dim sort_field As String = schema.MapSort2FieldName(sort)
-                'If String.IsNullOrEmpty(sort_field) Then
-                '    Throw New ArgumentException("Sort " & sort & " is not supported", "sort")
-                'End If
-
-                Dim map As MapField2Column = Nothing
-                If schema.GetFieldColumnMap().TryGetValue(sort.FieldName, map) Then
-                    sb.Append(" order by ").Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
-                    If sort.Order = Orm.SortType.Desc Then
-                        sb.Append(" desc")
+                Dim ns As Sort = sort
+                sb.Append(" order by ")
+                Dim pos As Integer = sb.Length
+                Do
+                    If ns.IsExternal Then
+                        Throw New DBSchemaException("External sort must be alone")
                     End If
-                Else
-                    Throw New ArgumentException(String.Format("Field {0} is not defuned", sort.FieldName))
-                End If
+
+                    Dim st As Type = ns.Type
+                    If st Is Nothing Then
+                        st = selectType
+                    End If
+
+                    Dim schema As IOrmObjectSchema = GetObjectSchema(st)
+                    'Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
+                    'If s Is Nothing Then
+
+                    'End If
+                    'Dim sort_field As String = schema.MapSort2FieldName(sort)
+                    'If String.IsNullOrEmpty(sort_field) Then
+                    '    Throw New ArgumentException("Sort " & sort & " is not supported", "sort")
+                    'End If
+
+                    Dim map As MapField2Column = Nothing
+                    Dim sb2 As New StringBuilder
+                    If schema.GetFieldColumnMap().TryGetValue(ns.FieldName, map) Then
+                        sb2.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
+                        If ns.Order = Orm.SortType.Desc Then
+                            sb2.Append(" desc")
+                        End If
+                    Else
+                        Throw New ArgumentException(String.Format("Field {0} of type {1} is not defuned", ns.FieldName, st))
+                    End If
+                    sb2.Append(",")
+                    sb.Insert(pos, sb2.ToString)
+
+                    ns = ns.Previous
+                Loop While ns IsNot Nothing
+                sb.Length -= 1
             End If
         End Sub
 

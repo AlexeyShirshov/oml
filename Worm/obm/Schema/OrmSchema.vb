@@ -368,6 +368,10 @@ Namespace Orm
         'End Property
 
         Public Function ExternalSort(Of T As {OrmBase, New})(ByVal sort As Sort, ByVal objs As ICollection(Of T)) As ICollection(Of T)
+            If sort.Previous IsNot Nothing Then
+                Throw New ArgumentException("Sort is linked")
+            End If
+
             Dim schema As IOrmObjectSchemaBase = GetObjectSchema(GetType(T))
             Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
             If s Is Nothing Then
