@@ -725,4 +725,17 @@ Public Class TestManagerRS
             End Try
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestPager()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim cc As ICollection(Of Table1) = mgr.FindTop(Of Table1)(10, Nothing, Nothing, True)
+            Assert.AreEqual(3, cc.Count)
+
+            Using New Orm.OrmManagerBase.PagerSwitcher(mgr, 0, 1)
+                cc = mgr.FindTop(Of Table1)(10, Nothing, Nothing, True)
+                Assert.AreEqual(1, cc.Count)
+            End Using
+        End Using
+    End Sub
 End Class

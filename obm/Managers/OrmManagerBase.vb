@@ -231,8 +231,8 @@ Namespace Orm
                 End If
             End Function
 
-            Public Overridable Function GetObjectList(Of T As {OrmBase, New})(ByVal mc As OrmManagerBase, ByVal withLoad As Boolean, ByVal created As Boolean) As ICollection(Of T)
-                Return mc.ListConverter.FromWeakList(Of T)(_obj, mc, withLoad, created)
+            Public Overridable Function GetObjectList(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal withLoad As Boolean, ByVal created As Boolean) As ICollection(Of T)
+                Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr, mgr._start, mgr._length, withLoad, created)
             End Function
 
             'Public Sub SetObjectList(ByVal mc As OrmManagerBase, ByVal value As OrmBase())
@@ -322,12 +322,12 @@ Namespace Orm
             '    End Get
             'End Property
 
-            Public Overrides Function GetObjectList(Of T As {New, OrmBase})(ByVal mc As OrmManagerBase, ByVal withLoad As Boolean, ByVal created As Boolean) As System.Collections.Generic.ICollection(Of T)
+            Public Overrides Function GetObjectList(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase, ByVal withLoad As Boolean, ByVal created As Boolean) As System.Collections.Generic.ICollection(Of T)
                 'Return mc.ListConverter.FromWeakList(Of T)(, mc, withLoad, created)
                 If withLoad Then
-                    Return mc.LoadObjectsIds(Of T)(Entry.Current)
+                    Return mgr.LoadObjectsIds(Of T)(Entry.Current, mgr._start, mgr._length)
                 Else
-                    Return mc.ConvertIds2Objects(Of T)(Entry.Current, False)
+                    Return mgr.ConvertIds2Objects(Of T)(Entry.Current, mgr._start, mgr._length, False)
                 End If
             End Function
 
@@ -373,6 +373,45 @@ Namespace Orm
             Function GetCacheItem(ByVal col As ICollection(Of T)) As CachedItem
         End Interface
 
+        Public Class PagerSwitcher
+            Implements IDisposable
+
+            Private _disposedValue As Boolean = False        ' To detect redundant calls
+            Private _oldStart As Integer
+            Private _oldLength As Integer
+            Private _mgr As OrmManagerBase
+
+            Public Sub New(ByVal mgr As OrmManagerBase, ByVal start As Integer, ByVal length As Integer)
+                _mgr = mgr
+                _oldStart = mgr._start
+                mgr._start = start
+                _oldLength = mgr._length
+                mgr._length = length
+            End Sub
+
+            Public Sub New(ByVal start As Integer, ByVal length As Integer)
+                MyClass.new(OrmManagerBase.CurrentManager, start, length)
+            End Sub
+
+            ' IDisposable
+            Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+                If Not Me._disposedValue Then
+                    If disposing Then
+                        _mgr._length = _oldLength
+                        _mgr._start = _oldStart
+                    End If
+                End If
+                Me._disposedValue = True
+            End Sub
+
+            Public Sub Dispose() Implements IDisposable.Dispose
+                ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+                Dispose(True)
+                GC.SuppressFinalize(Me)
+            End Sub
+
+        End Class
+
         Public Interface ICacheValidator
             Function Validate(ByVal ce As CachedItem) As Boolean
             Function Validate() As Boolean
@@ -401,7 +440,7 @@ Namespace Orm
                     Return _renew
                 End Get
                 Set(ByVal Value As Boolean)
-                    _renew = value
+                    _renew = Value
                 End Set
             End Property
 
@@ -410,7 +449,7 @@ Namespace Orm
                     Return _created
                 End Get
                 Set(ByVal Value As Boolean)
-                    _created = value
+                    _created = Value
                 End Set
             End Property
 
@@ -483,6 +522,8 @@ Namespace Orm
         Protected Friend _dont_cache_lists As Boolean
         Private _newMgr As INewObjects
         Private _expiresPattern As Date
+        Private _start As Integer
+        Private _length As Integer = Integer.MaxValue
 
         Public Event BeginUpdate(ByVal o As OrmBase)
         Public Event BeginDelete(ByVal o As OrmBase)
@@ -2603,6 +2644,7 @@ l1:
 
         Public Overridable Function ConvertIds2Objects(Of T As {OrmBase, New})(ByVal ids As ICollection(Of Integer), ByVal check As Boolean) As ICollection(Of T)
             Dim arr As New Generic.List(Of T)
+
             Dim type As Type = GetType(T)
             For Each id As Integer In ids
                 Dim obj As T = Nothing
@@ -2619,6 +2661,33 @@ l1:
                     If obj IsNot Nothing Then arr.Add(obj)
                 End If
             Next
+            Return arr
+        End Function
+
+        Public Overridable Function ConvertIds2Objects(Of T As {OrmBase, New})(ByVal ids As IList(Of Integer), _
+            ByVal start As Integer, ByVal length As Integer, ByVal check As Boolean) As ICollection(Of T)
+
+            Dim arr As New Generic.List(Of T)
+            If start < ids.Count Then
+                Dim type As Type = GetType(T)
+                length = Math.Min(length, ids.Count)
+                For i As Integer = start To length - 1
+                    Dim id As Integer = ids(i)
+                    Dim obj As T = Nothing
+                    If Not check Then
+                        obj = CreateDBObject(Of T)(id)
+                    Else
+                        obj = LoadType(Of T)(id, False, check)
+                    End If
+
+                    If obj IsNot Nothing Then
+                        arr.Add(obj)
+                    ElseIf _newMgr IsNot Nothing Then
+                        obj = CType(_newMgr.GetNew(type, id), T)
+                        If obj IsNot Nothing Then arr.Add(obj)
+                    End If
+                Next
+            End If
             'Try
             Return arr
             'Catch ex As InvalidCastException
@@ -2628,6 +2697,10 @@ l1:
 
         Public Function LoadObjectsIds(Of T As {OrmBase, New})(ByVal ids As ICollection(Of Integer)) As ICollection(Of T)
             Return LoadObjects(Of T)(ConvertIds2Objects(Of T)(ids, False))
+        End Function
+
+        Public Function LoadObjectsIds(Of T As {OrmBase, New})(ByVal ids As IList(Of Integer), ByVal start As Integer, ByVal length As Integer) As ICollection(Of T)
+            Return LoadObjects(Of T)(ConvertIds2Objects(Of T)(ids, start, length, False))
         End Function
 
         Protected Friend Shared Function GetDic(ByVal cache As OrmCacheBase, ByVal key As String) As IDictionary

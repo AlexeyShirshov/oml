@@ -200,7 +200,7 @@ Namespace Orm
             _non_direct = Not direct
         End Sub
 
-        Public ReadOnly Property Current() As ICollection(Of Integer)
+        Public ReadOnly Property Current() As IList(Of Integer)
             Get
                 Dim arr As New List(Of Integer)
                 If _mainList.Count <> 0 OrElse _addedList.Count <> 0 Then

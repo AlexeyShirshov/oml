@@ -1630,6 +1630,11 @@ Namespace Orm
 
             Dim ids As Generic.List(Of Integer) = FormPKValues(Of T)(Me, objs, start, length)
             If ids.Count < 1 Then
+                'Dim l As New List(Of T)
+                'For Each o As T In objs
+                '    l.Add(o)
+                'Next
+                'Return l
                 Return objs
             End If
 
