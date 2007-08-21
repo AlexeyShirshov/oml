@@ -157,10 +157,10 @@ Public Class TestProcs
             Dim r0 As MultiR.r = CType(l(0), MultiR.r)
             Dim r1 As MultiR.r2 = CType(l(1), MultiR.r2)
 
-            Assert.IsNotNull(r0.GetObjects)
-            Assert.AreEqual(1, r0.GetObjects.Count)
+            Assert.IsNotNull(r0.GetObjects(mgr))
+            Assert.AreEqual(1, r0.GetObjects(mgr).Count)
 
-            Dim t As Table1 = CType(r0.GetObjects, List(Of Table1))(0)
+            Dim t As Table1 = CType(r0.GetObjects(mgr), List(Of Table1))(0)
             Assert.IsNotNull(t)
             Assert.AreEqual(1, t.Identifier)
             Assert.AreEqual(2, t.Custom)
@@ -195,9 +195,9 @@ Public Class P1Proc
         Return New List(Of Pair(Of Table1, Integer))
     End Function
 
-    Protected Overrides Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+    Protected Overrides Sub ProcessReader(ByVal mgr As Orm.OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Dim l As List(Of Pair(Of Table1, Integer)) = CType(result, Global.System.Collections.Generic.List(Of Pair(Of Global.TestProject1.Table1, Integer)))
-        Dim t1 As Table1 = Orm.OrmManagerBase.CurrentManager.CreateDBObject(Of Table1)(dr.GetInt32(0))
+        Dim t1 As Table1 = mgr.CreateDBObject(Of Table1)(dr.GetInt32(0))
         Dim cnt As Integer = dr.GetInt32(1)
         l.Add(New Pair(Of Table1, Integer)(t1, cnt))
     End Sub
@@ -238,9 +238,9 @@ Public Class P2Proc
         Return New List(Of Table1)
     End Function
 
-    Protected Overrides Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+    Protected Overrides Sub ProcessReader(ByVal mgr As Orm.OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Dim l As List(Of Table1) = CType(result, Global.System.Collections.Generic.List(Of Global.TestProject1.Table1))
-        Dim t1 As Table1 = Orm.OrmManagerBase.CurrentManager.CreateDBObject(Of Table1)(dr.GetInt32(0))
+        Dim t1 As Table1 = mgr.CreateDBObject(Of Table1)(dr.GetInt32(0))
         l.Add(t1)
     End Sub
 
@@ -316,7 +316,7 @@ Public Class P3Proc
         Return New List(Of Pair(Of Date, Decimal))
     End Function
 
-    Protected Overrides Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+    Protected Overrides Sub ProcessReader(ByVal mgr As Orm.OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Dim l As List(Of Pair(Of Date, Decimal)) = CType(result, Global.System.Collections.Generic.List(Of Pair(Of Date, Decimal)))
         Dim dt As Date = dr.GetDateTime(0)
         Dim m As Decimal = dr.GetDecimal(1)
@@ -398,7 +398,7 @@ Public Class MultiR
 
         Private _sum As Integer
 
-        Public Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements Worm.Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.ProcessReader
+        Public Sub ProcessReader(ByVal mgr As Orm.OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements Worm.Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.ProcessReader
             _sum = dr.GetInt32(0)
         End Sub
 

@@ -28,7 +28,7 @@ Namespace Orm
         Protected MustOverride Function GetInParams() As IEnumerable(Of Pair(Of String, Object))
         Protected MustOverride Function GetOutParams() As IEnumerable(Of OutParam)
         Protected MustOverride Function GetName() As String
-        Protected MustOverride Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
+        Protected MustOverride Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
 
         Private _cache As Boolean
         Private _reseted As Boolean
@@ -90,7 +90,7 @@ Namespace Orm
                 Dim b As OrmReadOnlyDBManager.ConnAction = mgr.TestConn(cmd)
                 'Dim err As Boolean = True
                 Try
-                    Return Execute(cmd)
+                    Return Execute(mgr, cmd)
                 Finally
                     mgr.CloseConn(b)
                 End Try
@@ -105,23 +105,34 @@ Namespace Orm
                 If String.IsNullOrEmpty(id) Then id = "empty"
                 Dim dic As IDictionary = GetDic(mgr, key)
                 Dim sync As String = key & id
-                Dim _result As Object = dic(id)
-                If _result Is Nothing OrElse Expires Then
+                'Dim result As Object = GetFromCache(dic, id)
+                Dim result As Object = dic(id)
+                If result Is Nothing OrElse Expires Then
                     Using SyncHelper.AcquireDynamicLock(sync)
-                        _result = dic(id)
-                        If _result Is Nothing OrElse Expires Then
+                        'result = GetFromCache(dic, id)
+                        result = dic(id)
+                        If result Is Nothing OrElse Expires Then
                             Expire()
                             mgr.Cache.AddStoredProc(Me)
-                            _result = Execute(mgr)
-                            dic(id) = _result
+                            result = Execute(mgr)
+                            'PutInCache(dic, id, result)
+                            dic(id) = result
                         End If
                     End Using
                 End If
-                Return _result
+                Return result
             Else
                 Return Execute(mgr)
             End If
         End Function
+
+        Protected Overridable Function GetFromCache(ByVal dic As IDictionary, ByVal id As String) As Object
+            Return dic(id)
+        End Function
+
+        Protected Overridable Sub PutInCache(ByVal dic As IDictionary, ByVal id As String, ByVal result As Object)
+            dic(id) = result
+        End Sub
 
         Public Function Expires() As Boolean
             If _expireDate <> Date.MinValue Then
@@ -205,7 +216,7 @@ Namespace Orm
             MyBase.New(lifeTime)
         End Sub
 
-        Protected Overloads Overrides Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
+        Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
             Dim r As Integer = cmd.ExecuteNonQuery()
             Dim out As New Dictionary(Of String, Object)
             If CheckForReturnValue(r) Then
@@ -236,20 +247,20 @@ Namespace Orm
             MyBase.new(True)
         End Sub
 
-        Protected MustOverride Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+        Protected MustOverride Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Protected MustOverride Function InitResult() As Object
 
-        Protected Overloads Overrides Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
+        Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
             Dim result As Object = InitResult()
             Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
                 Dim i As Integer = 0
                 Do While dr.Read
-                    ProcessReader(i, dr, result)
+                    ProcessReader(mgr, i, dr, result)
                 Loop
                 Do While dr.NextResult()
                     i += 1
                     Do While dr.Read
-                        ProcessReader(i, dr, result)
+                        ProcessReader(mgr, i, dr, result)
                     Loop
                 Loop
             End Using
@@ -259,9 +270,9 @@ Namespace Orm
             Return result
         End Function
 
-        Protected Overridable Sub ProcessReader(ByVal resultSet As Integer, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+        Protected Overridable Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal resultSet As Integer, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
             If resultSet = 0 Then
-                ProcessReader(dr, result)
+                ProcessReader(mgr, dr, result)
             Else
                 Throw New NotImplementedException("I must implement custom logic to process results sets")
             End If
@@ -274,6 +285,8 @@ Namespace Orm
 
     Public MustInherit Class QueryOrmStoredProcBase(Of T As {OrmBase, New})
         Inherits StoredProcBase
+
+        Private _created As Boolean
 
         Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
@@ -290,13 +303,16 @@ Namespace Orm
         Protected MustOverride Function GetColumns() As List(Of ColumnAttribute)
         Protected MustOverride Function GetWithLoad() As Boolean
 
-        Protected Overloads Overrides Function Execute(ByVal cmd As System.Data.Common.DbCommand) As Object
-            Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
-            Return mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)
+        Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
+            'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
+            Dim ce As New OrmManagerBase.CachedItem(Nothing, mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns), mgr)
+            _created = True
+            Return ce
         End Function
 
         Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ICollection(Of T)
-            Return CType(MyBase.GetResult(mgr), ICollection(Of T))
+            Dim ce As OrmManagerBase.CachedItem = CType(MyBase.GetResult(mgr), OrmManagerBase.CachedItem)
+            Return ce.GetObjectList(Of T)(mgr, GetWithLoad, _created)
         End Function
 
         Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Worm.Orm.Dependency))
@@ -316,25 +332,33 @@ Namespace Orm
 #Region " Descriptors "
 
         Public Interface IResultSetDescriptor
-            Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String)
+            Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String)
         End Interface
 
         Public MustInherit Class OrmDescriptor(Of T As {OrmBase, New})
             Implements IResultSetDescriptor
 
-            Private _l As New List(Of T)
+            'Private _l As New List(Of T)
+            Private _created As Boolean
+            Private _ce As OrmManagerBase.CachedItem
 
-            Public Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
-                Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
-                mgr.LoadFromResultSet(GetType(T), GetWithLoad, _l, GetColumns, dr, GetPrimaryKeyIndex)
+            Public Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
+                'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
+                Dim l As New List(Of T)
+                mgr.LoadFromResultSet(GetType(T), GetWithLoad, l, GetColumns, dr, GetPrimaryKeyIndex)
+                _ce = New OrmManagerBase.CachedItem(Nothing, l, mgr)
+                _created = True
             End Sub
 
             Protected MustOverride Function GetColumns() As List(Of ColumnAttribute)
             Protected MustOverride Function GetWithLoad() As Boolean
             Protected MustOverride Function GetPrimaryKeyIndex() As Integer
 
-            Public Function GetObjects() As ICollection(Of T)
-                Return _l
+            Public Function GetObjects(ByVal mgr As OrmManagerBase) As ICollection(Of T)
+                If _ce Is Nothing Then
+                    Throw New InvalidOperationException("Stored procedure is not executed")
+                End If
+                Return _ce.GetObjectList(Of T)(mgr, GetWithLoad, _created)
             End Function
         End Class
 
@@ -354,7 +378,7 @@ Namespace Orm
 
         Protected MustOverride Function CreateDescriptor(ByVal resultsetIdx As Integer) As IResultSetDescriptor
 
-        Protected Overrides Sub ProcessReader(ByVal resultSet As Integer, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+        Protected Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal resultSet As Integer, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
             Dim desc As List(Of IResultSetDescriptor) = CType(result, List(Of IResultSetDescriptor))
             Dim rd As IResultSetDescriptor = Nothing
             If desc.Count - 1 < resultSet Then
@@ -368,10 +392,10 @@ Namespace Orm
                 Throw New InvalidOperationException(String.Format("Resultset descriptor for resultset #{0} is nothing", resultSet))
             End If
 
-            rd.ProcessReader(dr, GetName)
+            rd.ProcessReader(mgr, dr, GetName)
         End Sub
 
-        Protected Overrides Sub ProcessReader(ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+        Protected Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
             Throw New NotImplementedException
         End Sub
 

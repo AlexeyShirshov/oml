@@ -7,7 +7,8 @@ Namespace Orm
 
     Public Interface IListObjectConverter
         Function ToWeakList(ByVal objects As IEnumerable) As Object
-        Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T)
+        Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase, _
+            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T)
         Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, ByVal sort As Sort) As Boolean
         Sub Delete(ByVal weak_list As Object, ByVal obj As OrmBase)
     End Interface
@@ -15,10 +16,35 @@ Namespace Orm
     Public Class FakeListConverter
         Implements IListObjectConverter
 
-        Public Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
+            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
             Dim c As Generic.ICollection(Of T) = CType(weak_list, Generic.ICollection(Of T))
             If withLoad AndAlso Not created Then
-                mc.LoadObjects(c)
+                mc.LoadObjects(c, start, length)
+            End If
+            If start < c.Count Then
+                If Not (start = 0 AndAlso length = c.Count) Then
+                    length = Math.Min(c.Count, length)
+                    Dim ar As Generic.IList(Of T) = TryCast(c, Generic.IList(Of T))
+                    Dim l As New Generic.List(Of T)
+                    If ar IsNot Nothing Then
+                        For i As Integer = start To length - 1
+                            l.Add(ar(i))
+                        Next
+                    Else
+                        Dim cnt As Integer = 0, s As Integer = 0
+                        For Each o As T In c
+                            If cnt >= start Then
+                                l.Add(o)
+                                s += 1
+                            End If
+                            If s >= length Then
+                                Exit For
+                            End If
+                        Next
+                    End If
+                    c = l
+                End If
             End If
             Return c
         End Function
@@ -113,7 +139,11 @@ Namespace Orm
             Public l As Generic.List(Of ListObjectEntry)
             Public t As Type
 
-            Public Function CanSort(ByVal mc As OrmManagerBase, ByRef arr As ArrayList) As Boolean
+            Public Function CanSort(ByVal mc As OrmManagerBase, ByRef arr As ArrayList, ByVal sort As Sort) As Boolean
+                If sort.Previous IsNot Nothing Then
+                    Return False
+                End If
+
                 arr = New ArrayList
                 For Each le As ListObjectEntry In l
                     If Not le.IsLoaded Then
@@ -137,21 +167,25 @@ Namespace Orm
         End Class
 
         Public Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
-            ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
+            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
             If weak_list Is Nothing Then Return Nothing
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
             Dim objects As New Generic.List(Of T)
-            For Each loe As ListObjectEntry In l
-                Dim o As T = loe.GetObject(Of T)(mc)
-                If o IsNot Nothing Then
-                    objects.Add(o)
-                Else
-                    OrmManagerBase.WriteWarning("Unable to create " & loe.ObjName)
+            If start < l.Count Then
+                length = Math.Min(length, l.Count)
+                For i As Integer = start To length - 1
+                    Dim loe As ListObjectEntry = l(i)
+                    Dim o As T = loe.GetObject(Of T)(mc)
+                    If o IsNot Nothing Then
+                        objects.Add(o)
+                    Else
+                        OrmManagerBase.WriteWarning("Unable to create " & loe.ObjName)
+                    End If
+                Next
+                If withLoad AndAlso Not created Then
+                    mc.LoadObjects(objects)
                 End If
-            Next
-            If withLoad AndAlso Not created Then
-                mc.LoadObjects(objects)
             End If
             Return objects
         End Function
@@ -179,7 +213,7 @@ Namespace Orm
                 l.Add(New ListObjectEntry(obj))
             Else
                 Dim arr As ArrayList = Nothing
-                If lo.CanSort(mc, arr) Then
+                If lo.CanSort(mc, arr, sort) Then
                     Dim schema As IOrmObjectSchemaBase = mc.ObjectSchema.GetObjectSchema(obj.GetType)
                     Dim st As IOrmSorting = TryCast(schema, IOrmSorting)
                     If st IsNot Nothing Then
