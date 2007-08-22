@@ -543,7 +543,7 @@ Namespace Orm
             _schema = schema
             '_check_on_find = True
 
-            _list_converter = New FakeListConverter
+            _list_converter = CreateListConverter
             CreateInternal()
         End Sub
 
@@ -552,10 +552,14 @@ Namespace Orm
             '_dispose_cash = True
             _cache = New OrmCache
             _schema = schema
-            _list_converter = New FakeListConverter
+            _list_converter = CreateListConverter()
             '_check_on_find = True
             CreateInternal()
         End Sub
+
+        Protected Overridable Function CreateListConverter() As IListObjectConverter
+            Return New FakeListConverter
+        End Function
 
         Protected Sub CreateInternal()
             _prev = CurrentManager
