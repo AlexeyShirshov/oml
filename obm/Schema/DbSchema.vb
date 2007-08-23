@@ -1269,13 +1269,25 @@ Namespace Orm
 
                     Dim map As MapField2Column = Nothing
                     Dim sb2 As New StringBuilder
-                    If schema.GetFieldColumnMap().TryGetValue(ns.FieldName, map) Then
-                        sb2.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
-                        If ns.Order = Orm.SortType.Desc Then
-                            sb2.Append(" desc")
-                        End If
+                    Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
+                    If ns.IsCustom Then
+                        Dim s As String = ns.CustomSortExpression
+                        For Each map In cm
+                            Dim pos2 As Integer = s.IndexOf("{" & map._fieldName & "}", StringComparison.InvariantCultureIgnoreCase)
+                            If pos2 <> -1 Then
+                                s = s.Replace("{" & map._fieldName & "}", almgr.Aliases(map._tableName) & "." & map._columnName)
+                            End If
+                        Next
+                        sb2.Append(s)
                     Else
-                        Throw New ArgumentException(String.Format("Field {0} of type {1} is not defuned", ns.FieldName, st))
+                        If cm.TryGetValue(ns.FieldName, map) Then
+                            sb2.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
+                            If ns.Order = Orm.SortType.Desc Then
+                                sb2.Append(" desc")
+                            End If
+                        Else
+                            Throw New ArgumentException(String.Format("Field {0} of type {1} is not defuned", ns.FieldName, st))
+                        End If
                     End If
                     sb2.Append(",")
                     sb.Insert(pos, sb2.ToString)

@@ -547,8 +547,11 @@ Namespace Orm
                     End If
                     Dim b As ConnAction = _mgr.TestConn(cmd)
                     Try
+                        Dim et As New PerfCounter
                         Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                            _mgr._exec = et.GetTime
                             Dim l As New List(Of Integer)
+                            Dim ft As New PerfCounter
                             Do While dr.Read
                                 Dim id1 As Integer = CInt(dr.GetValue(0))
                                 If id1 <> _obj.Identifier Then
@@ -567,6 +570,7 @@ Namespace Orm
                                     End If
                                 End If
                             Loop
+                            _mgr._fetch = ft.GetTime
 
                             If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                                 Dim l2 As New List(Of Integer)

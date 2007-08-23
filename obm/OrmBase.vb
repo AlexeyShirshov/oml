@@ -1115,7 +1115,7 @@ l1:
             Return False
         End Function
 
-        Public Function Reload() As OrmBase
+        Public Function EnsureLoaded() As OrmBase
             'OrmManagerBase.CurrentMediaContent.LoadObject(Me)
             Return OrmManagerBase.CurrentManager.LoadType(_id, Me.GetType, True, True)
         End Function

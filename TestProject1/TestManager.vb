@@ -56,6 +56,8 @@ Imports System.Collections.Generic
 
             Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(4, c.Count)
+            Assert.AreEqual(4, mgr.GetLastExecitionResult.Count)
+
             For Each e4 As Entity4 In c
                 Assert.IsFalse(e4.IsLoaded)
             Next
@@ -160,7 +162,7 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            mgr.Find(Of Entity4)(12).Reload()
+            mgr.Find(Of Entity4)(12).EnsureLoaded()
 
             Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Orm.Sorting.Field("Title").Asc, False)
             Assert.AreEqual(10, c.Count)
@@ -181,7 +183,7 @@ Imports System.Collections.Generic
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
-            mgr.Find(Of Entity4)(12).Reload()
+            mgr.Find(Of Entity4)(12).EnsureLoaded()
 
             Dim c As ICollection(Of Entity4) = e.Find(Of Entity4)(New Orm.Criteria(GetType(Entity4)).Field("Title").NotEq("bt"), Nothing, True)
             Assert.AreEqual(10, c.Count)

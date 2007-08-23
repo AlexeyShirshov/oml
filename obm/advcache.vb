@@ -10,6 +10,7 @@ Namespace Orm
         Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T)
         Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, ByVal sort As Sort) As Boolean
+        Function GetCount(ByVal weak_list As Object) As Integer
         Sub Delete(ByVal weak_list As Object, ByVal obj As OrmBase)
     End Interface
 
@@ -24,7 +25,7 @@ Namespace Orm
             End If
             If start < c.Count Then
                 If Not (start = 0 AndAlso length = c.Count) Then
-                    length = Math.Min(c.Count, length)
+                    length = Math.Min(c.Count, length + start)
                     Dim ar As Generic.IList(Of T) = TryCast(c, Generic.IList(Of T))
                     Dim l As New Generic.List(Of T)
                     If ar IsNot Nothing Then
@@ -78,6 +79,11 @@ Namespace Orm
             Dim l As IList = CType(weak_list, IList)
             l.Remove(obj)
         End Sub
+
+        Public Function GetCount(ByVal weak_list As Object) As Integer Implements IListObjectConverter.GetCount
+            Dim l As IList = CType(weak_list, IList)
+            Return l.Count
+        End Function
     End Class
 
     Public Class ListConverter
@@ -173,7 +179,7 @@ Namespace Orm
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
             Dim objects As New Generic.List(Of T)
             If start < l.Count Then
-                length = Math.Min(length, l.Count)
+                length = Math.Min(start + length, l.Count)
                 For i As Integer = start To length - 1
                     Dim loe As ListObjectEntry = l(i)
                     Dim o As T = loe.GetObject(Of T)(mc)
@@ -237,6 +243,11 @@ Namespace Orm
 
             lo.Remove(obj)
         End Sub
+
+        Public Function GetCount(ByVal weak_list As Object) As Integer Implements IListObjectConverter.GetCount
+            Dim lo As ListObject = CType(weak_list, ListObject)
+            Return lo.l.Count
+        End Function
     End Class
 
 End Namespace
