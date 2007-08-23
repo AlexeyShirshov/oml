@@ -30,9 +30,13 @@ Namespace Orm
         Protected MustOverride Function GetName() As String
         Protected MustOverride Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
 
+        Public MustOverride ReadOnly Property ExecutionTime() As TimeSpan
+        Public MustOverride ReadOnly Property FetchTime() As TimeSpan
+
         Private _cache As Boolean
         Private _reseted As Boolean
         Private _expireDate As Date
+        Private _cacheHit As Boolean
 
         Protected Sub New(ByVal cache As Boolean)
             _cache = cache
@@ -42,6 +46,12 @@ Namespace Orm
             _cache = True
             _expireDate = Now.Add(lifeTime)
         End Sub
+
+        Public ReadOnly Property CacheHit() As Boolean
+            Get
+                Return _cacheHit
+            End Get
+        End Property
 
         Public Property Cached() As Boolean
             Get
@@ -100,7 +110,7 @@ Namespace Orm
         Public Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As Object
             If _cache Then
                 Dim key As String = "StroredProcedure:" & GetName()
-
+                _cacheHit = True
                 Dim id As String = GetKey()
                 If String.IsNullOrEmpty(id) Then id = "empty"
                 Dim dic As IDictionary = GetDic(mgr, key)
@@ -117,11 +127,13 @@ Namespace Orm
                             result = Execute(mgr)
                             'PutInCache(dic, id, result)
                             dic(id) = result
+                            _cacheHit = False
                         End If
                     End Using
                 End If
                 Return result
             Else
+                _cacheHit = False
                 Return Execute(mgr)
             End If
         End Function
@@ -204,6 +216,8 @@ Namespace Orm
     Public MustInherit Class NonQueryStoredProcBase
         Inherits StoredProcBase
 
+        Private _exec As TimeSpan
+
         Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
         End Sub
@@ -217,7 +231,9 @@ Namespace Orm
         End Sub
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
+            Dim et As New OrmReadOnlyDBManager.PerfCounter
             Dim r As Integer = cmd.ExecuteNonQuery()
+            _exec = et.GetTime
             Dim out As New Dictionary(Of String, Object)
             If CheckForReturnValue(r) Then
                 For Each p As OutParam In GetOutParams()
@@ -230,10 +246,25 @@ Namespace Orm
         Protected Overridable Function CheckForReturnValue(ByVal returnValue As Integer) As Boolean
             Return True
         End Function
+
+        Public Overrides ReadOnly Property ExecutionTime() As System.TimeSpan
+            Get
+                Return _exec
+            End Get
+        End Property
+
+        Public Overrides ReadOnly Property FetchTime() As System.TimeSpan
+            Get
+                Return Nothing
+            End Get
+        End Property
     End Class
 
     Public MustInherit Class QueryStoredProcBase
         Inherits StoredProcBase
+
+        Private _exec As TimeSpan
+        Private _fecth As TimeSpan
 
         Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
@@ -252,8 +283,11 @@ Namespace Orm
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
             Dim result As Object = InitResult()
+            Dim et As New OrmReadOnlyDBManager.PerfCounter
             Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
+                _exec = et.GetTime
                 Dim i As Integer = 0
+                Dim ft As New OrmReadOnlyDBManager.PerfCounter
                 Do While dr.Read
                     ProcessReader(mgr, i, dr, result)
                 Loop
@@ -263,6 +297,7 @@ Namespace Orm
                         ProcessReader(mgr, i, dr, result)
                     Loop
                 Loop
+                _fecth = ft.GetTime
             End Using
             If result Is Nothing Then
                 Throw New InvalidOperationException("result must be filled")
@@ -281,12 +316,26 @@ Namespace Orm
         Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of OutParam)
             Return New List(Of Orm.OutParam)
         End Function
+
+        Public Overrides ReadOnly Property ExecutionTime() As System.TimeSpan
+            Get
+                Return _exec
+            End Get
+        End Property
+
+        Public Overrides ReadOnly Property FetchTime() As System.TimeSpan
+            Get
+                Return _fecth
+            End Get
+        End Property
     End Class
 
     Public MustInherit Class QueryOrmStoredProcBase(Of T As {OrmBase, New})
         Inherits StoredProcBase
 
-        Private _created As Boolean
+        Private _exec As TimeSpan
+        Private _fecth As TimeSpan
+        Private _count As Integer
 
         Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
@@ -306,13 +355,15 @@ Namespace Orm
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
             'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
             Dim ce As New OrmManagerBase.CachedItem(Nothing, mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns), mgr)
-            _created = True
+            _exec = ce.ExecutionTime
+            _fecth = ce.FetchTime
             Return ce
         End Function
 
         Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ICollection(Of T)
             Dim ce As OrmManagerBase.CachedItem = CType(MyBase.GetResult(mgr), OrmManagerBase.CachedItem)
-            Return ce.GetObjectList(Of T)(mgr, GetWithLoad, _created)
+            _count = ce.GetCount(mgr)
+            Return ce.GetObjectList(Of T)(mgr, GetWithLoad, Not CacheHit)
         End Function
 
         Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Worm.Orm.Dependency))
@@ -324,6 +375,24 @@ Namespace Orm
         Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of Worm.Orm.OutParam)
             Return New List(Of Orm.OutParam)
         End Function
+
+        Public Overrides ReadOnly Property ExecutionTime() As System.TimeSpan
+            Get
+                Return _exec
+            End Get
+        End Property
+
+        Public Overrides ReadOnly Property FetchTime() As System.TimeSpan
+            Get
+                Return _fecth
+            End Get
+        End Property
+
+        Public ReadOnly Property Count() As Integer
+            Get
+                Return _count
+            End Get
+        End Property
     End Class
 
     Public MustInherit Class MultiResultsetQueryOrmStoredProcBase
@@ -341,13 +410,14 @@ Namespace Orm
             'Private _l As New List(Of T)
             Private _created As Boolean
             Private _ce As OrmManagerBase.CachedItem
+            Private _count As Integer
 
             Public Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
                 'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
                 Dim l As New List(Of T)
                 mgr.LoadFromResultSet(GetType(T), GetWithLoad, l, GetColumns, dr, GetPrimaryKeyIndex)
                 _ce = New OrmManagerBase.CachedItem(Nothing, l, mgr)
-                _created = True
+                '_created = True
             End Sub
 
             Protected MustOverride Function GetColumns() As List(Of ColumnAttribute)
@@ -358,8 +428,15 @@ Namespace Orm
                 If _ce Is Nothing Then
                     Throw New InvalidOperationException("Stored procedure is not executed")
                 End If
+                _count = _ce.GetCount(mgr)
                 Return _ce.GetObjectList(Of T)(mgr, GetWithLoad, _created)
             End Function
+
+            Public ReadOnly Property Count() As Integer
+                Get
+                    Return _count
+                End Get
+            End Property
         End Class
 
 #End Region
