@@ -117,6 +117,8 @@ Namespace Orm
             Protected _f As IOrmFilter
             Protected _expires As Date
             Protected _sortExpires As Date
+            Protected _execTime As TimeSpan
+            Protected _fetchTime As TimeSpan
 
             'Public Sub New(ByVal sort As String, ByVal obj As Object)
             '    If sort Is Nothing Then sort = String.Empty
@@ -145,6 +147,8 @@ Namespace Orm
                 _f = filter
                 _expires = mgr._expiresPattern
                 _sortExpires = sortExpire
+                _execTime = mgr.Exec
+                _fetchTime = mgr.Fecth
             End Sub
 
             Public Sub New(ByVal filter As IOrmFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
@@ -155,7 +159,21 @@ Namespace Orm
                 If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
                 _f = filter
                 _expires = mgr._expiresPattern
+                _execTime = mgr.Exec
+                _fetchTime = mgr.Fecth
             End Sub
+
+            Public ReadOnly Property ExecutionTime() As TimeSpan
+                Get
+                    Return _execTime
+                End Get
+            End Property
+
+            Public ReadOnly Property FetchTime() As TimeSpan
+                Get
+                    Return _fetchTime
+                End Get
+            End Property
 
             'Public Shared Function CreateEmpty(ByVal sort As String) As CachedItem
             '    Return New CachedItem(sort, Nothing, Nothing, OrmManagerBase.CurrentManager)
@@ -191,6 +209,10 @@ Namespace Orm
             '    End If
             '    Return False
             'End Function
+
+            Public Overridable Function GetCount(ByVal mgr As OrmManagerBase) As Integer
+                Return mgr._list_converter.GetCount(_obj)
+            End Function
 
             Public Sub Expire()
                 _expires = Nothing
@@ -301,6 +323,8 @@ Namespace Orm
                 End If
                 _f = filter
                 _expires = mgr._expiresPattern
+                _execTime = mgr.Exec
+                _fetchTime = mgr.Fecth
             End Sub
 
             Public Sub New(ByVal sort As Sort, ByVal filter As IOrmFilter, _
@@ -314,6 +338,8 @@ Namespace Orm
                 End If
                 _f = filter
                 _expires = mgr._expiresPattern
+                _execTime = mgr.Exec
+                _fetchTime = mgr.Fecth
             End Sub
 
             'Public ReadOnly Property List() As EditableList
@@ -358,7 +384,26 @@ Namespace Orm
                     Return CType(_obj, EditableList)
                 End Get
             End Property
+
+            Public Overrides Function GetCount(ByVal mgr As OrmManagerBase) As Integer
+                Return Entry.CurrentCount
+            End Function
         End Class
+
+        Public Structure ExecutionResult
+            Public ReadOnly Count As Integer
+            Public ReadOnly ExecutionTime As TimeSpan
+            Public ReadOnly FetchTime As TimeSpan
+            Public ReadOnly CacheHit As Boolean
+
+            Public Sub New(ByVal count As Integer, ByVal execTime As TimeSpan, ByVal fetchTime As TimeSpan, _
+                ByVal hit As Boolean)
+                Me.Count = count
+                Me.ExecutionTime = execTime
+                Me.FetchTime = FetchTime
+                Me.CacheHit = hit
+            End Sub
+        End Structure
 
         Public Interface ICustDelegate(Of T As {OrmBase, New})
             Function GetValues(ByVal withLoad As Boolean) As Generic.ICollection(Of T)
@@ -524,6 +569,13 @@ Namespace Orm
         Private _expiresPattern As Date
         Private _start As Integer
         Private _length As Integer = Integer.MaxValue
+        Private _er As ExecutionResult
+
+        Public ReadOnly Property GetLastExecitionResult() As ExecutionResult
+            Get
+                Return _er
+            End Get
+        End Property
 
         Public Event BeginUpdate(ByVal o As OrmBase)
         Public Event BeginDelete(ByVal o As OrmBase)
@@ -1482,6 +1534,7 @@ l1:
             End If
 
             If del.Renew Then
+                _er = New ExecutionResult(ce.GetCount(Me), ce.ExecutionTime, ce.FetchTime, Not del.Created)
                 Return ce
             End If
 
@@ -1544,6 +1597,7 @@ l1:
                 End If
             End If
 
+            _er = New ExecutionResult(ce.GetCount(Me), ce.ExecutionTime, ce.FetchTime, Not del.Created)
             Return ce
         End Function
 
@@ -2674,7 +2728,7 @@ l1:
             Dim arr As New Generic.List(Of T)
             If start < ids.Count Then
                 Dim type As Type = GetType(T)
-                length = Math.Min(length, ids.Count)
+                length = Math.Min(length + start, ids.Count)
                 For i As Integer = start To length - 1
                     Dim id As Integer = ids(i)
                     Dim obj As T = Nothing
@@ -2809,6 +2863,10 @@ l1:
 
         Protected MustOverride Function MakeJoin(ByVal t As Type, ByVal selectType As Type, ByVal field As String, _
             ByVal oper As FilterOperation, ByVal joinType As JoinType) As OrmJoin
+
+        Protected MustOverride ReadOnly Property Exec() As TimeSpan
+        Protected MustOverride ReadOnly Property Fecth() As TimeSpan
+
 #End Region
 
         Protected MustOverride Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IOrmFilter, ByVal join As OrmJoin) As DicIndex(Of T)

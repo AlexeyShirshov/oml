@@ -13,6 +13,8 @@ Namespace Orm
             Close
         End Enum
 
+#Region " Classes "
+
         Public Class BatchSaver
             Implements IDisposable
 
@@ -399,10 +401,33 @@ Namespace Orm
 
         End Class
 
+#End Region
+
+        Declare Function QueryPerformanceCounter Lib "Kernel32" (ByRef X As Long) As Short
+        Declare Function QueryPerformanceFrequency Lib "Kernel32" (ByRef X As Long) As Short
+
         Private _connStr As String
         Private _tran As System.Data.Common.DbTransaction
         Private _closeConnOnCommit As ConnAction
         Private _conn As System.Data.Common.DbConnection
+        Private _exec As TimeSpan
+        Private _fetch As TimeSpan
+
+        Class PerfCounter
+            Private _start As Long
+            Private _end As Long
+
+            Public Sub New()
+                QueryPerformanceCounter(_start)
+            End Sub
+
+            Public Function GetTime() As TimeSpan
+                QueryPerformanceCounter(_end)
+                Dim f As Long
+                QueryPerformanceFrequency(f)
+                Return TimeSpan.FromSeconds((_end - _start) / f)
+            End Function
+        End Class
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
 
@@ -698,7 +723,9 @@ Namespace Orm
 
             Dim b As ConnAction = TestConn(cmd)
             Try
+                Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                    _exec = et.gettime
                     Dim firstidx As Integer = 0
                     Dim pk_name As String = _schema.GetPrimaryKeysName(firstType, False)(0)
                     Try
@@ -723,6 +750,7 @@ Namespace Orm
                         Throw New OrmManagerException("Cannot get second primary key ordinal", ex)
                     End Try
 
+                    Dim ft As New PerfCounter
                     Do While dr.Read
                         Dim id1 As Integer = CInt(dr.GetValue(firstidx))
                         Dim id2 As Integer = CInt(dr.GetValue(secidx))
@@ -747,6 +775,7 @@ Namespace Orm
                             End Using
                         End If
                     Loop
+                    _fetch = ft.GetTime
 
                     Return values
                 End Using
@@ -949,7 +978,11 @@ Namespace Orm
                         End If
                         Dim b As ConnAction = TestConn(cmd)
                         Try
+                            Dim et As New PerfCounter
                             Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                                _exec = et.GetTime
+
+                                Dim ft As New PerfCounter
                                 Do While dr.Read
                                     Dim id1 As Integer = CInt(dr.GetValue(0))
                                     Dim id2 As Integer = CInt(dr.GetValue(1))
@@ -973,6 +1006,7 @@ Namespace Orm
                                         End If
                                     End If
                                 Loop
+                                _fetch = ft.GetTime
                             End Using
                         Finally
                             CloseConn(b)
@@ -1164,6 +1198,7 @@ Namespace Orm
             Dim b As ConnAction = TestConn(cmd)
             Try
                 'Debug.WriteLine(cmd.CommandText)
+                Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     Using obj.GetSyncRoot()
                         Dim old As Boolean = obj.IsLoaded
@@ -1197,6 +1232,7 @@ Namespace Orm
                             End If
                         End If
                     End Using
+                    _cache.LogLoadTime(obj, et.GetTime)
                 End Using
             Catch
                 Throw
@@ -1216,7 +1252,9 @@ Namespace Orm
             Dim b As ConnAction = TestConn(cmd)
             Dim original_type As Type = GetType(T)
             Try
+                Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                    _exec = et.GetTime
                     If values Is Nothing Then
                         values = New Generic.List(Of T)
                     End If
@@ -1237,9 +1275,11 @@ Namespace Orm
 
                     Dim idx As Integer = GetPrimaryKeyIdx(cmd.CommandText, original_type, dr)
 
+                    Dim ft As New PerfCounter
                     Do While dr.Read
                         LoadFromResultSet(original_type, withLoad, CType(values, System.Collections.IList), arr, dr, idx)
                     Loop
+                    _fetch = ft.GetTime
 
                     Return values
                 End Using
@@ -1954,7 +1994,7 @@ l1:
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)
                 Try
-                    Dim root As DicIndex(Of T) = BuildDictionaryInternal(Of T)(cmd, level)
+                    Dim root As DicIndex(Of T) = BuildDictionaryInternal(Of T)(cmd, level, Me)
                     root.Filter = filter
                     root.Join = join
                     Return root
@@ -1964,14 +2004,18 @@ l1:
             End Using
         End Function
 
-        Protected Shared Function BuildDictionaryInternal(Of T As {New, OrmBase})(ByVal cmd As System.Data.Common.DbCommand, ByVal level As Integer) As DicIndex(Of T)
+        Protected Shared Function BuildDictionaryInternal(Of T As {New, OrmBase})(ByVal cmd As System.Data.Common.DbCommand, ByVal level As Integer, ByVal mgr As OrmReadOnlyDBManager) As DicIndex(Of T)
             Dim last As DicIndex(Of T) = New DicIndex(Of T)("ROOT", Nothing, 0)
             Dim root As DicIndex(Of T) = last
             'Dim arr As New Hashtable
             'Dim arr1 As New ArrayList
             Dim first As Boolean = True
+            Dim et As New PerfCounter
             Using dr As System.Data.IDataReader = cmd.ExecuteReader
-
+                If mgr IsNot Nothing Then
+                    mgr._exec = et.GetTime
+                End If
+                Dim ft As New PerfCounter
                 Do While dr.Read
 
                     Dim name As String = dr.GetString(0)
@@ -1979,7 +2023,9 @@ l1:
 
                     BuildDic(Of T)(name, cnt, level, root, last, first)
                 Loop
-
+                If mgr IsNot Nothing Then
+                    mgr._fetch = ft.GetTime
+                End If
             End Using
 
             'Dim tt As Type = GetType(MediaIndex(Of T))
@@ -2023,5 +2069,17 @@ l1:
 
             Return New OrmJoin(tbl, joinType, jf)
         End Function
+
+        Protected Overrides ReadOnly Property Exec() As System.TimeSpan
+            Get
+                Return _exec
+            End Get
+        End Property
+
+        Protected Overrides ReadOnly Property Fecth() As System.TimeSpan
+            Get
+                Return _fetch
+            End Get
+        End Property
     End Class
 End Namespace

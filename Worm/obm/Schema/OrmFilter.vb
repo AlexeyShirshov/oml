@@ -423,9 +423,10 @@ Namespace Orm
         End Function
 
         Public Function GetAllFilters() As System.Collections.Generic.ICollection(Of OrmFilter) Implements IOrmFilter.GetAllFilters
-            Dim l As New List(Of OrmFilter)
-            l.Add(Me)
-            Return l
+            'Dim l As New List(Of OrmFilter)
+            'l.Add(Me)
+            'Return l
+            Return New OrmFilter() {Me}
         End Function
 
         Public Function ReplaceFilter(ByVal replacement As IOrmFilter, ByVal replacer As IOrmFilter) As IOrmFilter Implements IOrmFilter.ReplaceFilter
@@ -675,14 +676,16 @@ Namespace Orm
 
         Public Function GetAllFilters() As System.Collections.Generic.ICollection(Of OrmFilter) Implements IOrmFilter.GetAllFilters
 
-            Dim l As New List(Of OrmFilter)
-            l.AddRange(_left.GetAllFilters)
+            Dim res As ICollection(Of OrmFilter) = _left.GetAllFilters
 
             If _right IsNot Nothing Then
+                Dim l As New List(Of OrmFilter)
+                l.AddRange(res)
                 l.AddRange(_right.GetAllFilters)
+                res = l
             End If
 
-            Return l.ToArray
+            Return res
         End Function
 
         Private Function _ReplaceFilter(ByVal replacement As IOrmFilter, ByVal replacer As IOrmFilter) As IOrmFilter Implements IOrmFilter.ReplaceFilter

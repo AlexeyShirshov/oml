@@ -200,6 +200,12 @@ Namespace Orm
             _non_direct = Not direct
         End Sub
 
+        Public ReadOnly Property CurrentCount() As Integer
+            Get
+                Return _mainList.Count + _addedList.Count - _deletedList.Count
+            End Get
+        End Property
+
         Public ReadOnly Property Current() As IList(Of Integer)
             Get
                 Dim arr As New List(Of Integer)

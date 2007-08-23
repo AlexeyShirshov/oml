@@ -218,6 +218,14 @@ Namespace Orm
             Return New SortOrder(Nothing, fieldName)
         End Function
 
+        Public Shared Function Custom(ByVal sortExpression As String) As SortOrder
+            Return SortOrder.CreateCustom(Nothing, sortExpression, Nothing)
+        End Function
+
+        Public Shared Function Custom(ByVal t As Type, ByVal sortExpression As String) As SortOrder
+            Return SortOrder.CreateCustom(t, sortExpression, Nothing)
+        End Function
+
         Public Shared Function External(ByVal fieldName As String) As SortOrder
             Return New SortOrder(Nothing, fieldName, True)
         End Function
@@ -241,11 +249,18 @@ Namespace Orm
         Private _prev As SortOrder
         Private _order As SortType
         Private _t As Type
+        Private _custom As String
 
         Protected Friend Sub New(ByVal t As Type, ByVal prev As SortOrder)
             _prev = prev
             _t = t
         End Sub
+
+        Protected Friend Shared Function CreateCustom(ByVal t As Type, ByVal sortExpression As String, ByVal prev As SortOrder) As SortOrder
+            Dim s As New SortOrder(t, prev)
+            s._custom = sortExpression
+            Return s
+        End Function
 
         Protected Friend Sub New(ByVal t As Type, ByVal f As String, Optional ByVal prev As SortOrder = Nothing)
             _f = f
@@ -279,8 +294,15 @@ Namespace Orm
             Return New SortOrder(_t, fieldName, True, Me)
         End Function
 
+        Public Function NextCustom(ByVal sortexpression As String) As SortOrder
+            Return CreateCustom(_t, sortexpression, Me)
+        End Function
+
         Public ReadOnly Property Asc() As Sorting
             Get
+                If IsCustom Then
+                    Throw New InvalidOperationException("Sort is custom")
+                End If
                 _order = SortType.Asc
                 Return New Sorting(_t, Me)
                 'Return New Sort(_f, SortType.Asc, _ext)
@@ -289,6 +311,9 @@ Namespace Orm
 
         Public ReadOnly Property Desc() As Sorting
             Get
+                If IsCustom Then
+                    Throw New InvalidOperationException("Sort is custom")
+                End If
                 _order = SortType.Desc
                 Return New Sorting(_t, Me)
                 'Return New Sort(_f, SortType.Desc, _ext)
@@ -296,6 +321,10 @@ Namespace Orm
         End Property
 
         Public Function Order(ByVal orderParam As Boolean) As Sorting
+            If IsCustom Then
+                Throw New InvalidOperationException("Sort is custom")
+            End If
+
             If orderParam Then
                 Return Asc 'New Sort(_f, SortType.Asc, _ext)
             Else
@@ -304,27 +333,50 @@ Namespace Orm
         End Function
 
         Public Function Order(ByVal orderParam As String) As Sorting
+            If IsCustom Then
+                Throw New InvalidOperationException("Sort is custom")
+            End If
+
             _order = CType([Enum].Parse(GetType(SortType), orderParam, True), SortType)
             Return New Sorting(_t, Me) 'New Sort(_f, _, _ext)
         End Function
 
         Public Shared Widening Operator CType(ByVal so As SortOrder) As Sort
-            If Not String.IsNullOrEmpty(so._f) Then
+            If Not String.IsNullOrEmpty(so._f) OrElse Not String.IsNullOrEmpty(so._custom) Then
                 If so._prev Is Nothing Then
-                    Return New Sort(so._t, so._f, so._order, so._ext)
+                    If so.IsCustom Then
+                        Return New Sort(so._t, so._custom)
+                    Else
+                        Return New Sort(so._t, so._f, so._order, so._ext)
+                    End If
                 Else
-                    Return New Sort(so._prev, so._t, so._f, so._order, so._ext)
+                    If so.IsCustom Then
+                        Return New Sort(so._prev, so._t, so._custom)
+                    Else
+                        Return New Sort(so._prev, so._t, so._f, so._order, so._ext)
+                    End If
                 End If
             Else
                 Return so._prev
             End If
         End Operator
+
+        Public ReadOnly Property IsCustom() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_custom)
+            End Get
+        End Property
+
     End Class
 
     Public Class Sort
         Private _f As String
         Private _order As SortType
+
+        Private _custom As String
+
         Private _ext As Boolean
+
         Private _prev As Sort
         Private _t As Type
 
@@ -334,6 +386,17 @@ Namespace Orm
             _ext = external
             _t = t
             _prev = prev
+        End Sub
+
+        Public Sub New(ByVal t As Type, ByVal sortExpression As String)
+            _t = t
+            _custom = sortExpression
+        End Sub
+
+        Public Sub New(ByVal prev As Sort, ByVal t As Type, ByVal sortExpression As String)
+            _prev = prev
+            _t = t
+            _custom = sortExpression
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
@@ -348,6 +411,15 @@ Namespace Orm
             _order = order
             _ext = external
         End Sub
+
+        Public Property CustomSortExpression() As String
+            Get
+                Return _custom
+            End Get
+            Set(ByVal value As String)
+                _custom = value
+            End Set
+        End Property
 
         Public Property Type() As Type
             Get
@@ -385,11 +457,24 @@ Namespace Orm
             End Set
         End Property
 
+        Public ReadOnly Property IsCustom() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_custom)
+            End Get
+        End Property
+
         Public Overrides Function ToString() As String
-            Dim s As String = _f & _order.ToString & _ext.ToString
+            Dim s As String = Nothing
+            If Not String.IsNullOrEmpty(_custom) Then
+                s = _custom
+            Else
+                s = _f & _order.ToString & _ext.ToString
+            End If
+
             If _t IsNot Nothing Then
                 s &= _t.ToString
             End If
+
             Return s
         End Function
 
@@ -401,7 +486,13 @@ Namespace Orm
             If s Is Nothing Then
                 Return False
             Else
-                Dim b As Boolean = _f = s._f AndAlso _order = s._order AndAlso _ext = s._ext AndAlso _t Is s._t
+                Dim b As Boolean
+                If Not String.IsNullOrEmpty(_custom) Then
+                    b = _custom = s._custom AndAlso _t Is s._t
+                Else
+                    b = _f = s._f AndAlso _order = s._order AndAlso _ext = s._ext AndAlso _t Is s._t
+                End If
+
                 If b Then
                     If Not _prev Is s._prev Then
                         If _prev IsNot Nothing Then

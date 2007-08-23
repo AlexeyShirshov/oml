@@ -738,4 +738,24 @@ Public Class TestManagerRS
             End Using
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestExecResults()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim cc As ICollection(Of Table1) = mgr.FindTop(Of Table1)(10, Nothing, Nothing, True)
+
+            Assert.AreEqual(3, mgr.GetLastExecitionResult.Count)
+            Assert.IsFalse(mgr.GetLastExecitionResult.CacheHit)
+
+            System.Diagnostics.Trace.WriteLine(mgr.GetLastExecitionResult.ExecutionTime.ToString)
+            System.Diagnostics.Trace.WriteLine(mgr.GetLastExecitionResult.FetchTime.ToString)
+
+            Dim t As Table1 = mgr.Find(Of Table1)(1)
+            t.Load()
+
+            Assert.AreEqual(1, mgr.Cache.GetLoadTime(GetType(Table1)).First)
+
+            System.Diagnostics.Trace.WriteLine(mgr.Cache.GetLoadTime(GetType(Table1)).Second.ToString)
+        End Using
+    End Sub
 End Class

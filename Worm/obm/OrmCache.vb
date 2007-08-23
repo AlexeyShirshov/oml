@@ -70,6 +70,8 @@ Namespace Orm
 
         Private _m2m_dep As New Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Object)))
 
+        Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
+
         Public Event CacheHasModification As EventHandler
 
         Public Event CacheHasnotModification As EventHandler
@@ -244,6 +246,24 @@ Namespace Orm
 
         Public Overridable Sub RegisterRemovalCacheItem(ByVal ce As OrmManagerBase.CachedItem)
             RaiseEvent RegisterCollectionRemoval(ce)
+        End Sub
+
+        Public Function GetLoadTime(ByVal t As Type) As Pair(Of Integer, TimeSpan)
+            Dim p As Pair(Of Integer, TimeSpan) = Nothing
+            _loadTimes.TryGetValue(t, p)
+            Return p
+        End Function
+
+        Protected Friend Sub LogLoadTime(ByVal obj As OrmBase, ByVal time As TimeSpan)
+            Dim t As Type = obj.GetType
+            Using SyncHelper.AcquireDynamicLock("q89rbvadfk" & t.ToString)
+                Dim p As Pair(Of Integer, TimeSpan) = Nothing
+                If _loadTimes.TryGetValue(t, p) Then
+                    _loadTimes(t) = New Pair(Of Integer, TimeSpan)(p.First + 1, p.Second.Add(time))
+                Else
+                    _loadTimes(t) = New Pair(Of Integer, TimeSpan)(1, time)
+                End If
+            End Using
         End Sub
 
         Protected Friend Sub AddFieldDepend(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
@@ -944,9 +964,7 @@ Namespace Orm
                 SyncLock SyncRoot
                     dic = CType(_dics(k), IDictionary)
                     If dic Is Nothing Then
-                        Dim gt As Type = GetType(Collections.HybridDictionary(Of ))
-                        gt = gt.MakeGenericType(New Type() {t})
-                        dic = CType(gt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IDictionary)
+                        dic = CreateDictionary(t)
                         _dics(k) = dic
                     End If
                 End SyncLock
@@ -955,12 +973,18 @@ Namespace Orm
         End Function
 
         Public Overrides Function GetOrmDictionary(Of T)(ByVal schema As OrmSchemaBase) As System.Collections.Generic.IDictionary(Of Integer, T)
-            Return CType(GetOrmDictionary(GetType(T), schema), Global.System.Collections.Generic.IDictionary(Of Integer, T))
+            Return CType(GetOrmDictionary(GetType(T), schema), IDictionary(Of Integer, T))
         End Function
 
         Public Sub New()
             Reset()
         End Sub
+
+        Protected Overridable Function CreateDictionary(ByVal t As Type) As IDictionary
+            Dim gt As Type = GetType(Collections.HybridDictionary(Of ))
+            gt = gt.MakeGenericType(New Type() {t})
+            Return CType(gt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IDictionary)
+        End Function
     End Class
 
     <Serializable()> _
@@ -978,4 +1002,54 @@ Namespace Orm
 
     End Class
 
+    Public MustInherit Class WebCache
+        Inherits OrmCache
+
+        'Private _dics As IDictionary = Hashtable.Synchronized(New Hashtable)
+
+        'Public Overrides Function GetOrmDictionary(ByVal t As System.Type, ByVal schema As OrmSchemaBase) As System.Collections.IDictionary
+
+        '    Dim td As IDictionary = CType(_dics(t), System.Collections.IDictionary)
+        '    If td Is Nothing Then
+        '        SyncLock _dics.SyncRoot
+        '            td = CType(_dics(t), System.Collections.IDictionary)
+        '            If td Is Nothing Then
+        '                Dim pol As DictionatyCachePolicy = GetPolicy(t)
+        '                Dim dt As Type = GetType(OrmDictionary(Of ))
+        '                dt = dt.MakeGenericType(New Type() {t})
+        '                Dim args() As Object = GetArgs(t, pol)
+        '                td = CType(dt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
+        '                    args), System.Collections.IDictionary)
+        '            End If
+        '        End SyncLock
+        '    End If
+
+        '    Return td
+        'End Function
+
+        Protected Overrides Function CreateDictionary(ByVal t As System.Type) As System.Collections.IDictionary
+            Dim pol As DictionatyCachePolicy = GetPolicy(t)
+            Dim args() As Object = Nothing
+            Dim dt As Type = Nothing
+            If pol Is Nothing Then
+                dt = GetType(Collections.HybridDictionary(Of ))
+            Else
+                dt = GetType(OrmDictionary(Of ))
+                args = GetArgs(t, pol)
+            End If
+            dt = dt.MakeGenericType(New Type() {t})
+            Return CType(dt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
+                args), System.Collections.IDictionary)
+        End Function
+
+        Protected Function GetArgs(ByVal t As Type, ByVal pol As DictionatyCachePolicy) As Object()
+            Return New Object() { _
+                Me, pol.AbsoluteExpiration, pol.SlidingExpiration, _
+                pol.Priority, pol.Dependency _
+            }
+        End Function
+
+        Protected MustOverride Function GetPolicy(ByVal t As Type) As DictionatyCachePolicy
+
+    End Class
 End Namespace
