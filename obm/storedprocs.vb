@@ -415,7 +415,8 @@ Namespace Orm
             Public Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
                 'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
                 Dim l As New List(Of T)
-                mgr.LoadFromResultSet(GetType(T), GetWithLoad, l, GetColumns, dr, GetPrimaryKeyIndex)
+                Dim dic As Generic.IDictionary(Of Integer, T) = mgr.GetDictionary(Of T)()
+                mgr.LoadFromResultSet(Of T)(GetWithLoad, l, GetColumns, dr, GetPrimaryKeyIndex, dic)
                 _ce = New OrmManagerBase.CachedItem(Nothing, l, mgr)
                 '_created = True
             End Sub

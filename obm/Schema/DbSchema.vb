@@ -330,7 +330,7 @@ Namespace Orm
                         Dim values_sb As New StringBuilder
                         values_sb.Append(") values(")
                         For Each f As OrmFilter In item.Value
-                            Dim p As Pair(Of String) = f.MakeSignleStmt(Me, params)
+                            Dim p As Pair(Of String) = f.MakeSingleStmt(Me, params)
                             If f.FieldName = "ID" Then
                                 Dim att As Field2DbRelations = os.GetFieldColumnMap(f.FieldName).GetAttributes(GetColumnByFieldName(type, f.FieldName))
                                 If (att And Field2DbRelations.SyncInsert) = 0 AndAlso _

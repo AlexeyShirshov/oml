@@ -1271,10 +1271,38 @@ l1:
         NotLoaded
     End Enum
 
+    Public Interface IOrmProxy(Of T As {OrmBase, New})
+        ReadOnly Property ID() As Integer
+        ReadOnly Property Entity() As T
+    End Interface
+
+    <Serializable()> _
+    Public Class OrmProxy(Of T As {OrmBase, New})
+        Implements IOrmProxy(Of T)
+
+        Private _id As Integer
+
+        Public Sub New(ByVal id As Integer)
+            _id = id
+        End Sub
+
+        Public ReadOnly Property Entity() As T Implements IOrmProxy(Of T).Entity
+            Get
+                Return OrmManagerBase.CurrentManager.Find(Of T)(_id)
+            End Get
+        End Property
+
+        Public ReadOnly Property ID() As Integer Implements IOrmProxy(Of T).ID
+            Get
+                Return _id
+            End Get
+        End Property
+    End Class
+
     <Serializable()> _
     Public MustInherit Class OrmBaseT(Of T As {New, OrmBaseT(Of T)})
         Inherits OrmBase
-        Implements IComparable(Of T), ICloneable
+        Implements IComparable(Of T), ICloneable, IOrmProxy(Of T)
 
         Protected Sub New()
 
@@ -1371,5 +1399,18 @@ l1:
             End If
             editable.CopyBody(CType(from, T), CType([to], T))
         End Sub
+
+        Public ReadOnly Property Entity() As T Implements IOrmProxy(Of T).Entity
+            Get
+                Return CType(Me, T)
+            End Get
+        End Property
+
+        Public ReadOnly Property ID() As Integer Implements IOrmProxy(Of T).ID
+            Get
+                Return Identifier
+            End Get
+        End Property
     End Class
+
 End Namespace

@@ -44,7 +44,23 @@ Module Module1
         End Property
     End Class
 
-    Sub Main()
+    Sub main()
+        Using mgr As Worm.Orm.OrmReadOnlyDBManager = New Worm.Orm.OrmDBManager(New Worm.Orm.OrmCache, New Worm.Orm.DbSchema("1"), "Data Source=vs2\sqlmain;Initial catalog=Wormtest;Integrated security=true;")
+            For i As Integer = 0 To 10000
+                mgr.Find(Of TestProject1.Table1)(Worm.Orm.Criteria.Field(GetType(TestProject1.Table1), "ID").Eq(i + 1000), Nothing, False)
+            Next
+            Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.DbSchema)
+            t.CreatedAt = Now
+            mgr.BeginTransaction()
+            Try
+                t.Save(True)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    Sub Main4()
         Dim tc As New TestProject1.TestCache
         tc.TestContext = New testctx
         tc.Write2Console = False
