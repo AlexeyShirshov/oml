@@ -1274,10 +1274,10 @@ Namespace Orm
                     'If arr Is Nothing Then arr = Schema.GetSortedFieldList(original_type)
 
                     Dim idx As Integer = GetPrimaryKeyIdx(cmd.CommandText, original_type, dr)
-
+                    Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadFromResultSet(original_type, withLoad, CType(values, System.Collections.IList), arr, dr, idx)
+                        LoadFromResultSet(Of T)(withLoad, CType(values, System.Collections.IList), arr, dr, idx, dic)
                     Loop
                     _fetch = ft.GetTime
 
@@ -1303,13 +1303,13 @@ Namespace Orm
             Return idx
         End Function
 
-        Protected Friend Sub LoadFromResultSet(ByVal original_type As Type, _
+        Protected Friend Sub LoadFromResultSet(Of T As {OrmBase, New})( _
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
-            ByVal dr As System.Data.IDataReader, ByVal idx As Integer)
+            ByVal dr As System.Data.IDataReader, ByVal idx As Integer, ByVal dic As IDictionary(Of Integer, T))
 
             Dim id As Integer = CInt(dr.GetValue(idx))
-            Dim obj As OrmBase = CreateDBObject(id, original_type)
+            Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse Not ListConverter.IsWeak)
             If obj IsNot Nothing Then
                 If withLoad AndAlso obj.ObjectState <> ObjectState.Modified Then
                     Using obj.GetSyncRoot()
@@ -1328,7 +1328,7 @@ Namespace Orm
                 End If
             Else
                 If _mcSwitch.TraceVerbose Then
-                    WriteLine("Attempt to load unallowed object " & original_type.Name & " (" & id & ")")
+                    WriteLine("Attempt to load unallowed object " & GetType(T).Name & " (" & id & ")")
                 End If
             End If
         End Sub

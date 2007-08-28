@@ -384,7 +384,7 @@ End Class
         Assert.AreEqual("t1.id >= @p1", f.MakeSQLStmt(schema, almgr.Aliases, pmgr))
         Assert.AreEqual(1, pmgr.Params.Count)
 
-        Dim p As Pair(Of String) = f.MakeSignleStmt(schema, pmgr)
+        Dim p As Pair(Of String) = f.MakeSingleStmt(schema, pmgr)
 
         Assert.AreEqual("id", p.First)
         Assert.AreEqual("@p1", p.Second)
@@ -399,14 +399,14 @@ End Class
 
         Assert.AreEqual(1, f.GetAllFilters.Count)
 
-        f.MakeSignleStmt(Nothing, Nothing)
+        f.MakeSingleStmt(Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt5()
         Dim f As New Orm.OrmFilter(GetType(Entity), "ID", New TypeWrap(Of Object)(1), Orm.FilterOperation.GreaterEqualThan)
         Dim schema As New Orm.DbSchema("1")
-        f.MakeSignleStmt(schema, Nothing)
+        f.MakeSingleStmt(schema, Nothing)
     End Sub
 
     <TestMethod()> _

@@ -12,6 +12,7 @@ Namespace Orm
         Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, ByVal sort As Sort) As Boolean
         Function GetCount(ByVal weak_list As Object) As Integer
         Sub Delete(ByVal weak_list As Object, ByVal obj As OrmBase)
+        ReadOnly Property IsWeak() As Boolean
     End Interface
 
     Public Class FakeListConverter
@@ -84,6 +85,12 @@ Namespace Orm
             Dim l As IList = CType(weak_list, IList)
             Return l.Count
         End Function
+
+        Public ReadOnly Property IsWeak() As Boolean Implements IListObjectConverter.IsWeak
+            Get
+                Return False
+            End Get
+        End Property
     End Class
 
     Public Class ListConverter
@@ -248,6 +255,13 @@ Namespace Orm
             Dim lo As ListObject = CType(weak_list, ListObject)
             Return lo.l.Count
         End Function
+
+        Public ReadOnly Property IsWeak() As Boolean Implements IListObjectConverter.IsWeak
+            Get
+                Return True
+            End Get
+        End Property
+
     End Class
 
 End Namespace

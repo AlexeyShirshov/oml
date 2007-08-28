@@ -542,6 +542,7 @@ Namespace Orm
         Protected Shared _mcSwitch As New TraceSwitch("mcSwitch", "Switch for OrmManagerBase", "3") 'info
         Protected Shared _LoadObjectsMI As Reflection.MethodInfo = Nothing
         Private Shared _realCreateDbObjectDic As Hashtable = Hashtable.Synchronized(New Hashtable())
+        Private Shared _realLoadTypeDic As Hashtable = Hashtable.Synchronized(New Hashtable())
 
         Protected _findload As Boolean = False
         '#If DEBUG Then
@@ -665,13 +666,13 @@ Namespace Orm
         '    End Get
         'End Property
 
-        Public Property ListConverter() As IListObjectConverter
+        Public ReadOnly Property ListConverter() As IListObjectConverter
             Get
                 Return _list_converter
             End Get
-            Set(ByVal value As IListObjectConverter)
-                _list_converter = value
-            End Set
+            'Set(ByVal value As IListObjectConverter)
+            '    _list_converter = value
+            'End Set
         End Property
 
         Public Shared Property CurrentManager() As OrmManagerBase
@@ -827,7 +828,7 @@ Namespace Orm
                         'con.AddFilter(criteria.Filter)
                         Dim cl As CriteriaLink = Orm.Criteria.Field(tt, fieldName).Eq(o).And(criteria)
                         Dim f As IOrmFilter = cl.Filter
-                        Dim key As String = _schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
+                        Dim key As String = FindGetKey(Of T)(f) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                         Dim dic As IDictionary = GetDic(_cache, key)
                         Dim id As String = CObj(f).ToString
                         If dic.Contains(id) Then
@@ -882,7 +883,7 @@ Namespace Orm
                             'Dim f As IOrmFilter = con.Condition
                             Dim cl As CriteriaLink = Orm.Criteria.Field(tt, fieldName).Eq(k).And(criteria)
                             Dim f As IOrmFilter = cl.Filter
-                            Dim key As String = _schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
+                            Dim key As String = FindGetKey(Of T)(f) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                             Dim dic As IDictionary = GetDic(_cache, key)
                             Dim id As String = CObj(f).ToString
                             dic(id) = New CachedItem(f, v, Me)
@@ -1043,6 +1044,35 @@ Namespace Orm
             Return o
         End Function
 
+        Public Function CreateDBObject(Of T As {OrmBase, New})(ByVal id As Integer, _
+            ByVal dic As IDictionary(Of Integer, T), ByVal addOnCreate As Boolean) As OrmBase
+            Dim o As OrmBase = LoadTypeInternal(Of T)(id, False, False, dic, addOnCreate)
+            Dim type As Type = GetType(T)
+            'Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
+            'Dim mi_real As Reflection.MethodInfo = CType(_realLoadTypeDic(type), Reflection.MethodInfo)
+            'If (mi_real Is Nothing) Then
+            '    SyncLock _realLoadTypeDic.SyncRoot
+            '        mi_real = CType(_realLoadTypeDic(type), Reflection.MethodInfo)
+            '        If (mi_real Is Nothing) Then
+            '            Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadTypeInternal", flags, Nothing, Reflection.CallingConventions.Any, _
+            '                New Type() {GetType(Integer), GetType(Boolean), GetType(Boolean), GetType(IDictionary)}, Nothing)
+            '            mi_real = mi.MakeGenericMethod(New Type() {type})
+            '            _realLoadTypeDic(type) = mi_real
+            '        End If
+            '    End SyncLock
+            'End If
+            'o = CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, False, False, dic}, Nothing), OrmBase)
+
+            'Assert(o IsNot Nothing, "Object must be created: " & id & ". Type - " & type.ToString)
+            'Using o.GetSyncRoot()
+            If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(type, id) Then
+                o.ObjectState = ObjectState.NotLoaded
+                'AddObject(o)
+            End If
+            'End Using
+            Return o
+        End Function
+
         Public Function CreateDBObject(ByVal id As Integer, ByVal type As Type) As OrmBase
 #If DEBUG Then
             If Not GetType(OrmBase).IsAssignableFrom(type) Then
@@ -1051,12 +1081,15 @@ Namespace Orm
 #End If
 
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance
-            Dim mi_real As Reflection.MethodInfo = TryCast(_realCreateDbObjectDic(type), Reflection.MethodInfo)
+            Dim mi_real As Reflection.MethodInfo = CType(_realCreateDbObjectDic(type), Reflection.MethodInfo)
             If (mi_real Is Nothing) Then
                 SyncLock _realCreateDbObjectDic.SyncRoot
-                    Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("CreateDBObject", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Integer)}, Nothing)
-                    mi_real = mi.MakeGenericMethod(New Type() {type})
-                    _realCreateDbObjectDic(type) = mi_real
+                    mi_real = CType(_realCreateDbObjectDic(type), Reflection.MethodInfo)
+                    If (mi_real Is Nothing) Then
+                        Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("CreateDBObject", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Integer)}, Nothing)
+                        mi_real = mi.MakeGenericMethod(New Type() {type})
+                        _realCreateDbObjectDic(type) = mi_real
+                    End If
                 End SyncLock
             End If
             Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id}, Nothing), OrmBase)
@@ -1119,17 +1152,8 @@ Namespace Orm
 
         'End Function
 
-        Public Function FindWithJoins(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, _
-            ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
-            ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
-
-            Dim key As String = GetStaticKey()
-
-            If aspect IsNot Nothing Then
-                key &= aspect.GetStaticKey
-            End If
-
-            key &= _schema.GetEntityKey(GetType(T))
+        Protected Function FindWithJoinsGetKey(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, ByVal joins As OrmJoin(), ByVal criteria As CriteriaLink) As String
+            Dim key As String = String.Empty
 
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 key &= criteria.Filter.GetStaticString
@@ -1143,9 +1167,18 @@ Namespace Orm
                 Next
             End If
 
-            Dim dic As IDictionary = GetDic(_cache, key)
+            If aspect IsNot Nothing Then
+                key &= aspect.GetStaticKey
+            End If
 
-            Dim id As String = GetType(T).ToString
+            key &= _schema.GetEntityKey(GetType(T))
+
+            Return key & GetStaticKey()
+        End Function
+
+        Protected Function FindWithJoinGetId(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, ByVal joins As OrmJoin(), ByVal criteria As CriteriaLink) As String
+            Dim id As String = String.Empty
+
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
                 id &= CObj(criteria.Filter).ToString
             End If
@@ -1161,6 +1194,19 @@ Namespace Orm
             If aspect IsNot Nothing Then
                 id &= aspect.GetDynamicKey
             End If
+
+            Return id & GetType(T).ToString
+        End Function
+
+        Public Function FindWithJoins(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, _
+            ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
+            ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
+
+            Dim key As String = FindWithJoinsGetKey(Of T)(aspect, joins, criteria)
+
+            Dim dic As IDictionary = GetDic(_cache, key)
+
+            Dim id As String = FindWithJoinGetId(Of T)(aspect, joins, criteria)
 
             Dim sync As String = id & GetStaticKey()
 
@@ -1278,8 +1324,12 @@ Namespace Orm
                 criteria, sort, withLoad)
         End Function
 
+        Protected Function FindGetKey(Of T As {OrmBase, New})(ByVal filter As IOrmFilter) As String
+            Return filter.GetStaticString & GetStaticKey() & _schema.GetEntityKey(GetType(T))
+        End Function
+
         Public Function Find(Of T As {OrmBase, New})(ByVal criteria As CriteriaLink, _
-                ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
+            ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
 
             If criteria Is Nothing Then
                 Throw New ArgumentNullException("filter")
@@ -1291,7 +1341,7 @@ Namespace Orm
             If HasJoins(GetType(T), filter, joins) Then
                 Return FindWithJoins(Of T)(Nothing, joins, criteria, sort, withLoad)
             Else
-                Dim key As String = _schema.GetEntityKey(GetType(T)) & filter.GetStaticString & GetStaticKey()
+                Dim key As String = FindGetKey(Of T)(filter)
 
                 Dim dic As IDictionary = GetDic(_cache, key)
 
@@ -1313,7 +1363,7 @@ Namespace Orm
                 Throw New ArgumentNullException("criteria")
             End If
 
-            Dim key As String = _schema.GetEntityKey(GetType(T)) & criteria.Filter.GetStaticString & GetStaticKey()
+            Dim key As String = FindGetKey(Of T)(criteria.Filter) '_schema.GetEntityKey(GetType(T)) & criteria.Filter.GetStaticString & GetStaticKey()
 
             Dim dic As IDictionary = GetDic(_cache, key)
 
@@ -1743,15 +1793,14 @@ l1:
             Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, load, checkOnCreate}, Nothing), OrmBase)
         End Function
 
-        Protected Friend Function LoadType(Of T As {OrmBase, New})(ByVal id As Integer, _
-            ByVal load As Boolean, ByVal checkOnCreate As Boolean) As T
+        Protected Function LoadTypeInternal(Of T As {OrmBase, New})(ByVal id As Integer, _
+            ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Integer, T), ByVal addOnCreate As Boolean) As T
 
-            Dim name As String = GetType(T).Name
-            Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
             Dim type As Type = GetType(T)
 
 #If DEBUG Then
             If dic Is Nothing Then
+                Dim name As String = GetType(T).Name
                 Throw New OrmManagerException("Collection for " & name & " not exists")
             End If
 #End If
@@ -1793,8 +1842,8 @@ l1:
             End If
 
             If a IsNot Nothing Then
-                If created Then
-                    AddObject(a)
+                If created AndAlso addOnCreate Then
+                    AddObjectInternal(a, CType(dic, System.Collections.IDictionary))
                 End If
                 If Not created AndAlso load AndAlso Not a.IsLoaded Then
                     a.Load()
@@ -1802,6 +1851,21 @@ l1:
             End If
 
             Return a
+        End Function
+
+        Protected Friend Function LoadType(Of T As {OrmBase, New})(ByVal id As Integer, _
+            ByVal load As Boolean, ByVal checkOnCreate As Boolean) As T
+
+            Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
+
+#If DEBUG Then
+            If dic Is Nothing Then
+                Dim name As String = GetType(T).Name
+                Throw New OrmManagerException("Collection for " & name & " not exists")
+            End If
+#End If
+
+            Return LoadTypeInternal(Of T)(id, load, checkOnCreate, dic, True)
         End Function
 
         Protected Sub AddObject(ByVal obj As OrmBase)
@@ -1818,14 +1882,19 @@ l1:
             'End If
 
             'Debug.Assert(obj.IsLoaded)
-            Dim name As String = obj.GetType.Name
             Dim dic As IDictionary = GetDictionary(obj.GetType)
 
             If dic Is Nothing Then
                 ''todo: throw an exception when all collections will be implemented
                 'Return
+                Dim name As String = obj.GetType.Name
                 Throw New OrmManagerException("Collection for " & name & " not exists")
             End If
+
+            AddObjectInternal(obj, dic)
+        End Sub
+
+        Protected Sub AddObjectInternal(ByVal obj As OrmBase, ByVal dic As IDictionary)
             Dim trace As Boolean = False
             Dim id As Integer = obj.Identifier
             SyncLock dic.SyncRoot
@@ -1837,7 +1906,8 @@ l1:
             End SyncLock
 
             If trace AndAlso _mcSwitch.TraceVerbose Then
-                WriteLine("Attempt to add existing object " & obj.GetType.Name & " (" & obj.Identifier & ") to cashe")
+                Dim name As String = obj.GetType.Name
+                WriteLine("Attempt to add existing object " & name & " (" & obj.Identifier & ") to cashe")
             End If
         End Sub
 
