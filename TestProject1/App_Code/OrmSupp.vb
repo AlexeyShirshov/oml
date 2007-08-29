@@ -10,7 +10,7 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
         Return False
     End Function
 
-    Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Orm.IOrmFilter Implements Worm.Orm.IOrmObjectSchema.GetFilter
+    Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Orm.IFilter Implements Worm.Orm.IOrmObjectSchema.GetFilter
         Return Nothing
     End Function
 

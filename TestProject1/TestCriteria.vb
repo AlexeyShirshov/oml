@@ -8,7 +8,7 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestComplexTypes()
-        Dim f As IOrmFilter = Criteria.Field(GetType(Entity4), "ID").Eq(56). _
+        Dim f As IEntityFilter = Criteria.Field(GetType(Entity4), "ID").Eq(56). _
             [And](GetType(Entity4), "Title").Eq("lsd").Filter
 
         Dim schema As New Orm.DbSchema("1")
@@ -27,8 +27,29 @@ Imports CoreFramework.Structures
     End Sub
 
     <TestMethod()> _
+    Public Sub TestComplexTypeless()
+        Dim f As IEntityFilter = Criteria.Field("ID").Eq(56). _
+            [And]("Title").Eq("lsd").Filter(GetType(Entity4))
+
+        Dim schema As New Orm.DbSchema("1")
+        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
+        Dim pmgr As New Orm.ParamMgr(schema, "p")
+
+        almgr.AddTable(schema.GetTables(GetType(Entity))(0))
+        almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
+
+        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeSQLStmt(schema, almgr.Aliases, pmgr))
+        'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
+        '    [And]("sdfln").Eq("lsd")
+
+        'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
+        '    [And](new Criteria(GetType(Entity)).Field("sdf").Eq(56).[Or]("sdfln").Eq("lsd"))
+    End Sub
+
+
+    <TestMethod()> _
     Public Sub TestComplexTypes2()
-        Dim f As IOrmFilter = Criteria.Field(GetType(Entity4), "ID").Eq(56). _
+        Dim f As IEntityFilter = Criteria.Field(GetType(Entity4), "ID").Eq(56). _
             [And](Criteria.Field(GetType(Entity4), "Title").Eq(56).[Or](GetType(Entity), "ID").Eq(483)).Filter
 
         Dim schema As New Orm.DbSchema("1")
@@ -48,7 +69,7 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSimpleTypes()
-        Dim f As IOrmFilter = New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
+        Dim f As IEntityFilter = New Criteria(GetType(Entity4)).AddField("ID").Eq(56). _
             [And]("Title").Eq("lsd").Filter
 
         Dim schema As New Orm.DbSchema("1")
@@ -68,8 +89,8 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSimpleTypes2()
-        Dim f As IOrmFilter = New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
-            [And](New Criteria(GetType(Entity4)).Field("Title").Eq(56).[Or]("ID").Eq(483)).Filter
+        Dim f As IEntityFilter = New Criteria(GetType(Entity4)).AddField("ID").Eq(56). _
+            [And](New Criteria(GetType(Entity4)).AddField("Title").Eq(56).[Or]("ID").Eq(483)).Filter
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create

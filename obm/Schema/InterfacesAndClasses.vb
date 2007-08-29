@@ -16,7 +16,7 @@ Namespace Orm
         Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
         'Function MapSort2FieldName(ByVal sort As String) As String
         Function GetM2MRelations() As M2MRelation()
-        Function GetFilter(ByVal filter_info As Object) As IOrmFilter
+        Function GetFilter(ByVal filter_info As Object) As IFilter
         Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
         Function GetSuppressedColumns() As ColumnAttribute()
         'ReadOnly Property IsExternalSort(ByVal sort As String) As Boolean
@@ -919,7 +919,7 @@ Namespace Orm
             Return _cols
         End Function
 
-        Public Function GetFilter(ByVal filter_info As Object) As IOrmFilter Implements IOrmObjectSchemaBase.GetFilter
+        Public Function GetFilter(ByVal filter_info As Object) As IFilter Implements IOrmObjectSchemaBase.GetFilter
             Return Nothing
         End Function
 

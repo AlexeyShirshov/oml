@@ -11,13 +11,13 @@ Namespace Orm
             Inherits CustDelegate(Of T)
             Implements ICacheValidator
 
-            Protected _f As IOrmFilter
+            Protected _f As IEntityFilter
             Protected _sort As Sort
             Protected _mgr As OrmReadOnlyDBManager
             Protected _key As String
             Protected _id As String
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IOrmFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IEntityFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 _mgr = mgr
                 _f = f
@@ -69,7 +69,7 @@ Namespace Orm
                 End If
             End Sub
 
-            Public Overrides ReadOnly Property Filter() As IOrmFilter
+            Public Overrides ReadOnly Property Filter() As IEntityFilter
                 Get
                     Return _f
                 End Get
@@ -117,12 +117,12 @@ Namespace Orm
 
             Private _cols As List(Of ColumnAttribute)
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IOrmFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IEntityFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IOrmFilter, ByVal cols As List(Of ColumnAttribute), _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IEntityFilter, ByVal cols As List(Of ColumnAttribute), _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
                 _cols = cols
@@ -151,7 +151,7 @@ Namespace Orm
                             AppendSelectID(sb, original_type, almgr, params, arr)
                         End If
 
-                        Dim c As New OrmCondition.OrmConditionConstructor
+                        Dim c As New Orm.Condition.ConditionConstructor
                         c.AddFilter(_f)
                         c.AddFilter(AppendWhere)
                         _mgr.DbSchema.AppendWhere(original_type, c.Condition, almgr, sb, _mgr.GetFilterInfo, params)

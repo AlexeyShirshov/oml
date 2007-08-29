@@ -49,7 +49,7 @@ Public MustInherit Class ObjectSchemaBaseImplementation
         Return False
     End Function
 
-    Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Orm.IOrmFilter Implements Worm.Orm.IOrmObjectSchema.GetFilter
+    Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Orm.IFilter Implements Worm.Orm.IOrmObjectSchema.GetFilter
         Return Nothing
     End Function
 
@@ -133,7 +133,7 @@ Public Class EntitySchema1v2Implementation
 
     Public Overrides Function GetJoins(ByVal left As Orm.OrmTable, ByVal right As Orm.OrmTable) As Worm.Orm.OrmJoin
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
-            Return New Orm.OrmJoin(right, Orm.JoinType.Join, New Orm.OrmFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
+            Return New Orm.OrmJoin(right, Orm.JoinType.Join, New Orm.JoinFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
         End If
         Return MyBase.GetJoins(left, right)
     End Function
@@ -163,9 +163,9 @@ Public Class EntitySchema1v3Implementation
 
     Public Overrides Function GetJoins(ByVal left As Orm.OrmTable, ByVal right As Orm.OrmTable) As Worm.Orm.OrmJoin
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
-            Dim orc As New Orm.OrmCondition.OrmConditionConstructor
-            orc.AddFilter(New Orm.OrmFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
-            orc.AddFilter(New Orm.OrmFilter(right, "s", New TypeWrap(Of Object)("a"), Orm.FilterOperation.Equal))
+            Dim orc As New Worm.Orm.Condition.ConditionConstructor
+            orc.AddFilter(New Orm.JoinFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
+            orc.AddFilter(New Orm.TableFilter(right, "s", New Orm.SimpleValue("a"), Orm.FilterOperation.Equal))
             Return New Orm.OrmJoin(right, Orm.JoinType.Join, orc.Condition)
         End If
         Return MyBase.GetJoins(left, right)
@@ -239,7 +239,7 @@ Public Class EntitySchema2v2Implementation
 
     Public Overrides Function GetJoins(ByVal left As Orm.OrmTable, ByVal right As Orm.OrmTable) As Worm.Orm.OrmJoin
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
-            Return New Orm.OrmJoin(right, Orm.JoinType.Join, New Orm.OrmFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
+            Return New Orm.OrmJoin(right, Orm.JoinType.Join, New Orm.JoinFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
         End If
         Return MyBase.GetJoins(left, right)
     End Function
@@ -453,7 +453,7 @@ Public Class EntitySchema4v2Implementation
 
     Public Overrides Function GetJoins(ByVal left As Orm.OrmTable, ByVal right As Orm.OrmTable) As Worm.Orm.OrmJoin
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
-            Return New Orm.OrmJoin(right, Orm.JoinType.Join, New Orm.OrmFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
+            Return New Orm.OrmJoin(right, Orm.JoinType.Join, New Orm.JoinFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
         End If
         Return MyBase.GetJoins(left, right)
     End Function
@@ -467,7 +467,7 @@ Public Class EntitySchema4v2Implementation
         Return _tables
     End Function
 
-    Public Overrides Function GetFilter(ByVal filter_info As Object) As Worm.Orm.IOrmFilter
+    Public Overrides Function GetFilter(ByVal filter_info As Object) As Worm.Orm.IFilter
         If filter_info Is Nothing Then
             Return Nothing
         End If
@@ -476,7 +476,7 @@ Public Class EntitySchema4v2Implementation
             Throw New Orm.OrmObjectException("Invalid filter_info type " & filter_info.GetType.Name)
         End If
 
-        Return New Orm.OrmFilter(GetTables()(Tables2.Main), "s", New TypeWrap(Of Object)(filter_info), Orm.FilterOperation.Equal)
+        Return New Orm.TableFilter(GetTables()(Tables2.Main), "s", New Orm.SimpleValue(filter_info), Orm.FilterOperation.Equal)
     End Function
 
     Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()

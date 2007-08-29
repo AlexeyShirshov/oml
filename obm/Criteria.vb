@@ -11,7 +11,7 @@ Namespace Orm
             _t = t
         End Sub
 
-        Public Function Field(ByVal fieldName As String) As CriteriaField
+        Public Function AddField(ByVal fieldName As String) As CriteriaField
             If String.IsNullOrEmpty(fieldName) Then
                 Throw New ArgumentNullException("fieldName")
             End If
@@ -31,12 +31,19 @@ Namespace Orm
             Return New CriteriaField(t, fieldName)
         End Function
 
+        Public Shared Function Field(ByVal fieldName As String) As CriteriaField
+            If String.IsNullOrEmpty(fieldName) Then
+                Throw New ArgumentNullException("fieldName")
+            End If
+
+            Return New CriteriaField(Nothing, fieldName)
+        End Function
     End Class
 
     Public Class CriteriaField
         Private _t As Type
         Private _f As String
-        Private _con As OrmCondition.OrmConditionConstructor
+        Private _con As Orm.Condition.ConditionConstructor
         Private _ct As ConditionOperator
 
         Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String)
@@ -53,64 +60,64 @@ Namespace Orm
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String, _
-            ByVal con As OrmCondition.OrmConditionConstructor, ByVal ct As ConditionOperator)
+            ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
             _t = t
             _f = fieldName
             _con = con
             _ct = ct
         End Sub
 
-        Protected Function GetLink(ByVal fl As IOrmFilter) As CriteriaLink
+        Protected Function GetLink(ByVal fl As Orm.IEntityFilter) As CriteriaLink
             If _con Is Nothing Then
-                _con = New OrmCondition.OrmConditionConstructor
+                _con = New Orm.Condition.ConditionConstructor
             End If
             _con.AddFilter(fl, _ct)
             Return New CriteriaLink(_t, _con)
         End Function
 
         Public Function Eq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New OrmFilter(_t, _f, New TypeWrap(Of Object)(value), FilterOperation.Equal))
+            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.Equal))
         End Function
 
         Public Function NotEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New OrmFilter(_t, _f, New TypeWrap(Of Object)(value), FilterOperation.NotEqual))
+            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.NotEqual))
         End Function
 
         Public Function Eq(ByVal value As OrmBase) As CriteriaLink
-            Return GetLink(New OrmFilter(_t, _f, value, FilterOperation.Equal))
+            Return GetLink(New EntityFilter(_t, _f, New EntityValue(value), FilterOperation.Equal))
         End Function
 
         Public Function NotEq(ByVal value As OrmBase) As CriteriaLink
-            Return GetLink(New OrmFilter(_t, _f, value, FilterOperation.NotEqual))
+            Return GetLink(New EntityFilter(_t, _f, New EntityValue(value), FilterOperation.NotEqual))
         End Function
 
         Public Function GreaterThanEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New OrmFilter(_t, _f, New TypeWrap(Of Object)(value), FilterOperation.GreaterEqualThan))
+            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.GreaterEqualThan))
         End Function
 
         Public Function LessThanEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New OrmFilter(_t, _f, New TypeWrap(Of Object)(value), FilterOperation.LessEqualThan))
+            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.LessEqualThan))
         End Function
 
         Public Function GreaterThan(ByVal value As Object) As CriteriaLink
-            Return GetLink(New OrmFilter(_t, _f, New TypeWrap(Of Object)(value), FilterOperation.GreaterThan))
+            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.GreaterThan))
         End Function
 
         Public Function LessThan(ByVal value As Object) As CriteriaLink
-            Return GetLink(New OrmFilter(_t, _f, New TypeWrap(Of Object)(value), FilterOperation.LessThan))
+            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.LessThan))
         End Function
 
         Public Function [Like](ByVal value As String) As CriteriaLink
-            Return GetLink(New OrmFilter(_t, _f, New TypeWrap(Of Object)(value), FilterOperation.Like))
+            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.Like))
         End Function
 
         Public Function Op(ByVal oper As FilterOperation, ByVal value As Object) As CriteriaLink
-            Return GetLink(New OrmFilter(_t, _f, New TypeWrap(Of Object)(value), oper))
+            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), oper))
         End Function
     End Class
 
     Public Class CriteriaLink
-        Private _con As OrmCondition.OrmConditionConstructor
+        Private _con As Orm.Condition.ConditionConstructor
         Private _t As Type
 
         'Protected Friend Sub New(ByVal con As OrmCondition.OrmConditionConstructor)
@@ -125,7 +132,7 @@ Namespace Orm
             _t = t
         End Sub
 
-        Protected Friend Sub New(ByVal t As Type, ByVal con As OrmCondition.OrmConditionConstructor)
+        Protected Friend Sub New(ByVal t As Type, ByVal con As Orm.Condition.ConditionConstructor)
             _con = con
             _t = t
         End Sub
@@ -186,10 +193,18 @@ Namespace Orm
             Return Me
         End Function
 
-        Public ReadOnly Property Filter() As IOrmFilter
+        Public ReadOnly Property Filter() As IEntityFilter
+            Get
+                Return Filter(Nothing)
+            End Get
+        End Property
+
+        Public ReadOnly Property Filter(ByVal t As Type) As IEntityFilter
             Get
                 If _con IsNot Nothing Then
-                    Return _con.Condition
+                    Dim ef As IEntityFilter = CType(_con.Condition, IEntityFilter)
+                    ef.GetFilterTemplate.SetType(t)
+                    Return ef
                 Else
                     Return Nothing
                 End If

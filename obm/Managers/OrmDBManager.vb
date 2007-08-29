@@ -27,7 +27,7 @@ Namespace Orm
 
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
             Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
-            Dim upd As IList(Of OrmFilter) = Nothing
+            Dim upd As IList(Of EntityFilter) = Nothing
             Using obj.GetSyncRoot()
                 Dim cmdtext As String = DbSchema.Update(obj, params, cols, upd)
                 If cmdtext.Length > 0 Then
@@ -673,15 +673,17 @@ Namespace Orm
         'ResetAllM2MRelations(id, key)
         'End Sub
 
-        Public Function Delete(ByVal f As IOrmFilter) As Integer
+        Public Function Delete(ByVal f As IEntityFilter) As Integer
             Dim t As Type = Nothing
-            For Each fl As OrmFilter In f.GetAllFilters
+#If DEBUG Then
+            For Each fl As EntityFilter In f.GetAllFilters
                 If t Is Nothing Then
-                    t = fl.Type
-                ElseIf t IsNot fl.Type Then
+                    t = fl.Template.Type
+                ElseIf t IsNot fl.Template.Type Then
                     Throw New InvalidOperationException("All filters must have the same type")
                 End If
             Next
+#End If
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim r As ConnAction = TestConn(cmd)
                 Try

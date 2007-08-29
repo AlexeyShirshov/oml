@@ -198,7 +198,7 @@ Namespace Orm
                 If obj.ObjectState = ObjectState.Created Then
                     'Dim named_params As Boolean = ParamName("p", 1) <> ParamName("p", 2)
                     'Dim type As Type = obj.GetType
-                    Dim inserted_tables As New Generic.Dictionary(Of OrmTable, IList(Of OrmFilter))
+                    Dim inserted_tables As New Generic.Dictionary(Of OrmTable, IList(Of ITemplateFilter))
                     'Dim tables_val As New System.Collections.Specialized.ListDictionary
                     'Dim params_val As New System.Collections.Specialized.ListDictionary
                     'Dim _params As New ArrayList
@@ -228,15 +228,17 @@ Namespace Orm
                                     'tb = MapUnionType2Table(real_t, uniontype)
                                 End If
 
-                                Dim f As OrmFilter = Nothing
+                                Dim f As EntityFilter = Nothing
                                 Dim v As Object = ChangeValueType(real_t, c, current)
                                 If (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault AndAlso v Is DBNull.Value Then
-                                    f = New OrmFilter(real_t, c.FieldName, DefaultValue, FilterOperation.Equal)
+                                    If Not String.IsNullOrEmpty(DefaultValue) Then
+                                        f = New EntityFilter(real_t, c.FieldName, New LiteralValue(DefaultValue), FilterOperation.Equal)
+                                    End If
                                 Else
-                                    f = New OrmFilter(real_t, c.FieldName, New TypeWrap(Of Object)(v), FilterOperation.Equal)
+                                    f = New EntityFilter(real_t, c.FieldName, New SimpleValue(v), FilterOperation.Equal)
                                 End If
                                 If Not inserted_tables.ContainsKey(tb) Then
-                                    inserted_tables.Add(tb, New List(Of OrmFilter))
+                                    inserted_tables.Add(tb, New List(Of ITemplateFilter))
                                 End If
                                 inserted_tables(tb).Add(f)
 
@@ -261,21 +263,22 @@ Namespace Orm
                         inserted_tables.Add(pkt, Nothing)
                     End If
 
-                    inserted_tables = Sort(Of OrmTable, IList(Of OrmFilter))(inserted_tables, tbls)
+                    inserted_tables = Sort(Of OrmTable, IList(Of ITemplateFilter))(inserted_tables, tbls)
 
                     For j As Integer = 1 To inserted_tables.Count - 1
                         Dim join_table As OrmTable = tbls(j)
                         Dim jn As OrmJoin = GetJoins(real_t, pkt, join_table)
                         If Not jn.IsEmpty Then
-                            Dim f As IOrmFilter = OrmFilter.ChangeValueToLiteral(jn.Condition, real_t, prim_key.FieldName, "@id")
+                            Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(jn.Condition, real_t, prim_key.FieldName, "@id")
 
                             If f Is Nothing Then
                                 Throw New DBSchemaException("Cannot change join")
                             End If
 
-                            For Each fl As OrmFilter In f.GetAllFilters
-                                inserted_tables(join_table).Add(fl)
-                            Next
+                            'For Each fl As OrmFilter In f.GetAllFilters
+                            '    inserted_tables(join_table).Add(fl)
+                            'Next
+                            CType(inserted_tables(join_table), List(Of IFilter)).AddRange(f.GetAllFilters)
                         End If
                     Next
                     dbparams = FormInsert(inserted_tables, ins_cmd, real_t, sel_columns, _
@@ -288,7 +291,7 @@ Namespace Orm
             End Using
         End Function
 
-        Protected Overridable Function FormInsert(ByVal inserted_tables As Dictionary(Of OrmTable, IList(Of OrmFilter)), _
+        Protected Overridable Function FormInsert(ByVal inserted_tables As Dictionary(Of OrmTable, IList(Of ITemplateFilter)), _
             ByVal ins_cmd As StringBuilder, ByVal type As Type, _
             ByVal sel_columns As Generic.List(Of ColumnAttribute), _
             ByVal unions() As String, ByVal params As ICreateParam) As ICollection(Of System.Data.Common.DbParameter)
@@ -311,7 +314,7 @@ Namespace Orm
                 Dim b As Boolean = False
                 Dim os As IOrmObjectSchema = GetObjectSchema(type)
                 Dim pk_table As OrmTable = os.GetTables(0)
-                For Each item As Generic.KeyValuePair(Of OrmTable, IList(Of OrmFilter)) In inserted_tables
+                For Each item As Generic.KeyValuePair(Of OrmTable, IList(Of ITemplateFilter)) In inserted_tables
                     If b Then
                         ins_cmd.Append(EndLine)
                         If SupportIf() Then
@@ -329,10 +332,11 @@ Namespace Orm
                         ins_cmd.Append("insert into ").Append(item.Key).Append(" (")
                         Dim values_sb As New StringBuilder
                         values_sb.Append(") values(")
-                        For Each f As OrmFilter In item.Value
+                        For Each f As ITemplateFilter In item.Value
                             Dim p As Pair(Of String) = f.MakeSingleStmt(Me, params)
-                            If f.FieldName = "ID" Then
-                                Dim att As Field2DbRelations = os.GetFieldColumnMap(f.FieldName).GetAttributes(GetColumnByFieldName(type, f.FieldName))
+                            Dim ef As EntityFilter = TryCast(f, EntityFilter)
+                            If ef IsNot Nothing AndAlso ef.Template.FieldName = "ID" Then
+                                Dim att As Field2DbRelations = os.GetFieldColumnMap(ef.Template.FieldName).GetAttributes(GetColumnByFieldName(type, ef.Template.FieldName))
                                 If (att And Field2DbRelations.SyncInsert) = 0 AndAlso _
                                     (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                     pk_id = p.Second
@@ -416,13 +420,13 @@ Namespace Orm
 
         Protected Structure TableUpdate
             Public _table As OrmTable
-            Public _updates As IList(Of OrmFilter)
-            Public _where4update As OrmCondition.OrmConditionConstructor
+            Public _updates As IList(Of EntityFilter)
+            Public _where4update As Orm.Condition.ConditionConstructor
 
             Public Sub New(ByVal table As OrmTable)
                 _table = table
-                _updates = New List(Of OrmFilter)
-                _where4update = New OrmCondition.OrmConditionConstructor
+                _updates = New List(Of EntityFilter)
+                _where4update = New Orm.Condition.ConditionConstructor
             End Sub
 
         End Structure
@@ -459,9 +463,9 @@ Namespace Orm
                                 'param_vals.Add(fieldTable, New ArrayList)
                             End If
 
-                            Dim updates As IList(Of OrmFilter) = tables(fieldTable)._updates
+                            Dim updates As IList(Of EntityFilter) = tables(fieldTable)._updates
 
-                            updates.Add(New OrmFilter(rt, c.FieldName, New TypeWrap(Of Object)(current), FilterOperation.Equal))
+                            updates.Add(New EntityFilter(rt, c.FieldName, New SimpleValue(current), FilterOperation.Equal))
 
                             'Dim tb_sb As StringBuilder = CType(tables(fieldTable), StringBuilder)
                             'Dim _params As ArrayList = CType(param_vals(fieldTable), ArrayList)
@@ -555,11 +559,11 @@ Namespace Orm
                             'Dim de_table As TableUpdate = updated_tables(tb)
                             If de_table.Key.Equals(tb) Then
                                 'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
-                                de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, New TypeWrap(Of Object)(original), FilterOperation.Equal))
+                                de_table.Value._where4update.AddFilter(New EntityFilter(rt, c.FieldName, New SimpleValue(original), FilterOperation.Equal))
                             Else
                                 Dim join As OrmJoin = GetJoins(rt, tb, de_table.Key)
                                 If Not join.IsEmpty Then
-                                    Dim f As IOrmFilter = OrmFilter.ChangeValueToParam(join.Condition, rt, c.FieldName, original)
+                                    Dim f As IFilter = JoinFilter.ChangeEntityJoinToParam(join.Condition, rt, c.FieldName, New TypeWrap(Of Object)(original))
 
                                     If f Is Nothing Then
                                         Throw New DBSchemaException("Cannot replace join")
@@ -576,7 +580,7 @@ Namespace Orm
         End Sub
 
         Public Overridable Function Update(ByVal obj As OrmBase, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
-            ByRef select_columns As Generic.IList(Of ColumnAttribute), ByRef updated_fields As IList(Of OrmFilter)) As String
+            ByRef select_columns As Generic.IList(Of ColumnAttribute), ByRef updated_fields As IList(Of EntityFilter)) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
@@ -604,7 +608,7 @@ Namespace Orm
 
                     GetChangedFields(obj, updated_tables, sel_columns, unions)
 
-                    Dim l As New List(Of OrmFilter)
+                    Dim l As New List(Of EntityFilter)
                     For Each tu As TableUpdate In updated_tables.Values
                         l.AddRange(tu._updates)
                     Next
@@ -632,7 +636,7 @@ Namespace Orm
                             Dim [alias] As String = amgr.AddTable(tbl, sch, params)
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
-                            For Each f As OrmFilter In item.Value._updates
+                            For Each f As EntityFilter In item.Value._updates
                                 upd_cmd.Append(f.MakeSQLStmt(Me, amgr.Aliases, params)).Append(",")
                             Next
                             upd_cmd.Length -= 1
@@ -688,7 +692,7 @@ Namespace Orm
                                 sel_sb = sel_sb.Replace(pk_table.TableName, [alias])
                                 sel_sb.Append(" from ").Append(pk_table).Append(" ").Append([alias]).Append(" where ")
                                 'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
-                                sel_sb.Append(New OrmFilter(rt, "ID", obj, FilterOperation.Equal).MakeSQLStmt(Me, amgr.Aliases, params))
+                                sel_sb.Append(New EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeSQLStmt(Me, amgr.Aliases, params))
 
                                 upd_cmd.Append(sel_sb)
                             End If
@@ -706,22 +710,22 @@ Namespace Orm
         Protected Overridable Sub CorrectUpdateWithInsert(ByVal table As OrmTable, ByVal tableinfo As TableUpdate, _
             ByVal upd_cmd As StringBuilder, ByVal obj As OrmBase, ByVal params As ICreateParam)
 
-            Dim dic As New Dictionary(Of OrmTable, IList(Of OrmFilter))
-            Dim l As New List(Of OrmFilter)
-            l.AddRange(tableinfo._updates)
-            l.AddRange(tableinfo._where4update.Condition.GetAllFilters)
+            Dim dic As New Dictionary(Of OrmTable, IList(Of ITemplateFilter))
+            Dim l As New List(Of ITemplateFilter)
+            l.AddRange(CType(tableinfo._updates, IEnumerable(Of ITemplateFilter)))
+            l.AddRange(CType(tableinfo._where4update.Condition.GetAllFilters, IEnumerable(Of ITemplateFilter)))
             dic.Add(table, l.ToArray)
             upd_cmd.Append(EndLine).Append("if ").Append(RowCount).Append(" = 0 ")
             FormInsert(dic, upd_cmd, obj.GetType, Nothing, Nothing, params)
         End Sub
 
-        Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of OrmTable, IOrmFilter), ByVal type As Type, ByVal obj As OrmBase)
+        Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of OrmTable, IFilter), ByVal type As Type, ByVal obj As OrmBase)
             Dim tables() As OrmTable = GetTables(type)
             Dim pk_table As OrmTable = tables(0)
             For j As Integer = 0 To tables.Length - 1
                 Dim table As OrmTable = tables(j)
                 deleted_tables.Add(table, Nothing)
-                Dim o As New OrmCondition.OrmConditionConstructor
+                Dim o As New Orm.Condition.ConditionConstructor
                 If table.Equals(pk_table) Then
                     For Each de As DictionaryEntry In GetProperties(type)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
@@ -729,17 +733,17 @@ Namespace Orm
                         If c IsNot Nothing Then
                             Dim att As Field2DbRelations = GetAttributes(type, c)
                             If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                o.AddFilter(New OrmFilter(type, c.FieldName, "@id", FilterOperation.Equal))
+                                o.AddFilter(New EntityFilter(type, c.FieldName, New LiteralValue("@id"), FilterOperation.Equal))
                             ElseIf (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
                                 Dim v As Object = pi.GetValue(obj, Nothing)
-                                o.AddFilter((New OrmFilter(type, c.FieldName, New TypeWrap(Of Object)(v), FilterOperation.Equal)))
+                                o.AddFilter((New EntityFilter(type, c.FieldName, New SimpleValue(v), FilterOperation.Equal)))
                             End If
                         End If
                     Next
                 Else
                     Dim join As OrmJoin = GetJoins(type, tables(0), table)
                     If Not join.IsEmpty Then
-                        Dim f As IOrmFilter = OrmFilter.ChangeValueToLiteral(join.Condition, type, "ID", "@id")
+                        Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(join.Condition, type, "ID", "@id")
 
                         If f Is Nothing Then
                             Throw New DBSchemaException("Cannot replace join")
@@ -765,14 +769,14 @@ Namespace Orm
                 If obj.ObjectState = ObjectState.Deleted Then
                     Dim type As Type = obj.GetType
                     Dim params As New ParamMgr(Me, "p")
-                    Dim deleted_tables As New Generic.Dictionary(Of OrmTable, IOrmFilter)
+                    Dim deleted_tables As New Generic.Dictionary(Of OrmTable, IFilter)
 
                     del_cmd.Append(DeclareVariable("@id", "int")).Append(EndLine)
                     del_cmd.Append("set @id = ").Append(params.CreateParam(obj.Identifier)).Append(EndLine)
 
                     GetDeletedConditions(deleted_tables, type, obj)
 
-                    For Each de As KeyValuePair(Of OrmTable, IOrmFilter) In deleted_tables
+                    For Each de As KeyValuePair(Of OrmTable, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(de.Key)
                         del_cmd.Append(" where ").Append(de.Value.MakeSQLStmt(Me, Nothing, params))
                         del_cmd.Append(EndLine)
@@ -785,7 +789,7 @@ Namespace Orm
             End Using
         End Function
 
-        Public Overridable Function Delete(ByVal t As Type, ByVal filter As IOrmFilter, ByVal params As ParamMgr) As String
+        Public Overridable Function Delete(ByVal t As Type, ByVal filter As IFilter, ByVal params As ParamMgr) As String
             If t Is Nothing Then
                 Throw New ArgumentNullException("t parameter cannot be nothing")
             End If
@@ -890,7 +894,7 @@ Namespace Orm
 
                 Dim r2 As M2MRelation = GetM2MRelation(relation.Type, original_type, True)
                 Dim tbl As OrmTable = relation.Table
-                Dim f As New OrmFilter(tbl, r2.Column, original_type, "ID", FilterOperation.Equal)
+                Dim f As New JoinFilter(tbl, r2.Column, original_type, "ID", FilterOperation.Equal)
                 Dim join As New OrmJoin(tbl, JoinType.Join, f)
 
                 almgr.AddTable(tbl)
@@ -1087,7 +1091,8 @@ Namespace Orm
                     If Not join.IsEmpty Then
                         almgr.AddTable(tables(j), Nothing, Nothing)
 
-                        OrmFilter.ChangeValueToLiteral(join, selectedType, "ID", table, id)
+                        join.InjectJoinFilter(selectedType, "ID", table, id)
+                        'OrmFilter.ChangeValueToLiteral(join, selectedType, "ID", table, id)
                         'For Each fl As OrmFilter In join.Condition.GetAllFilters
                         '    If Not fl.IsLiteralValue Then
                         '        Dim f2 As IOrmFilter = Nothing
@@ -1120,7 +1125,7 @@ Namespace Orm
                     adal = True
                 End If
                 Dim sch As IOrmObjectSchema = GetObjectSchema(selectedType)
-                Dim j As New OrmJoin(tbl, JoinType.Join, New OrmFilter(table, id, selectedType, "ID", FilterOperation.Equal))
+                Dim j As New OrmJoin(tbl, JoinType.Join, New JoinFilter(table, id, selectedType, "ID", FilterOperation.Equal))
                 Dim al As String = almgr.AddTable(tbl, sch, pname)
                 If adal Then
                     almgr.AddTable(pk_table, al)
@@ -1228,11 +1233,11 @@ Namespace Orm
             Return selectcmd
         End Function
 
-        Public Overridable Function AppendWhere(ByVal t As Type, ByVal filter As IOrmFilter, _
+        Public Overridable Function AppendWhere(ByVal t As Type, ByVal filter As IFilter, _
             ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ParamMgr) As Boolean
 
             Dim schema As IOrmObjectSchema = GetObjectSchema(t)
-            Dim con As New OrmCondition.OrmConditionConstructor
+            Dim con As New Orm.Condition.ConditionConstructor
             con.AddFilter(schema.GetFilter(filter_info)).AddFilter(filter)
 
             If Not con.IsEmpty Then
@@ -1384,7 +1389,7 @@ Namespace Orm
             Return sb.ToString
         End Function
 
-        Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As OrmBase, ByVal type As Type, ByVal filter As IOrmFilter, _
+        Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As OrmBase, ByVal type As Type, ByVal filter As IFilter, _
             ByVal filter_info As Object, ByVal appJoins As Boolean, ByVal withLoad As Boolean, ByVal appendMain As Boolean, _
             ByRef params As IList(Of System.Data.Common.DbParameter), ByVal direct As Boolean) As String
 
@@ -1422,8 +1427,8 @@ Namespace Orm
 
             Dim table As OrmTable = selected_r.Table
 
-            Dim f As New OrmFilter(table, id_clm, obj, FilterOperation.Equal)
-            Dim con As New OrmCondition.OrmConditionConstructor
+            Dim f As New TableFilter(table, id_clm, New EntityValue(obj), FilterOperation.Equal)
+            Dim con As New Orm.Condition.ConditionConstructor
             con.AddFilter(f)
             con.AddFilter(filter)
             AppendWhere(type, con.Condition, almgr, sb, filter_info, pmgr)
@@ -1486,18 +1491,19 @@ Namespace Orm
             End If
 
             If Not join.IsEmpty Then
-                Dim r As New OrmFilter(t, "ID", New TypeWrap(Of Object)(Nothing), FilterOperation.Equal)
-                Dim r2 As IOrmFilter = Nothing
-                For Each f As IOrmFilter In join.Condition.GetAllFilters
-                    If f.GetStaticString = r.GetStaticString Then
-                        r2 = New OrmFilter(ct, "[key]", New TypeWrap(Of Object)(r.Value), FilterOperation.Equal)
+                Dim r As New EntityFilter(t, "ID", New SimpleValue(Nothing), FilterOperation.Equal)
+                Dim r2 As TableFilter = Nothing
+                For Each f As IFilter In join.Condition.GetAllFilters
+                    Dim tf As ITemplateFilter = TryCast(f, ITemplateFilter)
+                    If tf IsNot Nothing AndAlso tf.Template.Equals(r.Template) Then
+                        r2 = New TableFilter(ct, "[key]", New SimpleValue(r.Value), FilterOperation.Equal)
+                        join.ReplaceFilter(f, r2)
+                        Exit For
                     End If
                 Next
 
                 If r2 Is Nothing Then
                     Throw New DBSchemaException("Invalid join")
-                Else
-                    join.ReplaceFilter(r, r2)
                 End If
 
                 sb.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
@@ -1558,18 +1564,19 @@ Namespace Orm
             End If
 
             If Not join.IsEmpty Then
-                Dim r As New OrmFilter(t, "ID", New TypeWrap(Of Object)(Nothing), FilterOperation.Equal)
-                Dim r2 As IOrmFilter = Nothing
-                For Each f As IOrmFilter In join.Condition.GetAllFilters
-                    If f.GetStaticString = r.GetStaticString Then
-                        r2 = New OrmFilter(ft, "[key]", New TypeWrap(Of Object)(r.Value), FilterOperation.Equal)
+                Dim r As New EntityFilter(t, "ID", New SimpleValue(Nothing), FilterOperation.Equal)
+                Dim r2 As TableFilter = Nothing
+                For Each f As IFilter In join.Condition.GetAllFilters
+                    Dim filt As ITemplateFilter = TryCast(f, ITemplateFilter)
+                    If filt IsNot Nothing AndAlso filt.Template.Equals(r.Template) Then
+                        r2 = New TableFilter(ft, "[key]", New SimpleValue(r.Value), FilterOperation.Equal)
+                        join.ReplaceFilter(r, r2)
+                        Exit For
                     End If
                 Next
 
                 If r2 Is Nothing Then
                     Throw New DBSchemaException("Invalid join")
-                Else
-                    join.ReplaceFilter(r, r2)
                 End If
 
                 sb.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
@@ -1580,7 +1587,7 @@ Namespace Orm
         End Function
 
         Public Function GetDictionarySelect(ByVal type As Type, ByVal level As Integer, _
-            ByVal params As ParamMgr, ByVal filter As IOrmFilter, ByVal filter_info As Object) As String
+            ByVal params As ParamMgr, ByVal filter As IFilter, ByVal filter_info As Object) As String
 
             Dim odic As IOrmDictionary = TryCast(GetObjectSchema(type), IOrmDictionary)
             If odic Is Nothing OrElse String.IsNullOrEmpty(odic.GetFirstDicField) Then
@@ -1604,7 +1611,7 @@ Namespace Orm
         End Function
 
         Protected Function GetDicStmt(ByVal t As Type, ByVal field As String, ByVal level As Integer, _
-            ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filter As IOrmFilter, _
+            ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filter As IFilter, _
             ByVal filter_info As Object, ByVal appendOrder As Boolean) As String
             Dim sb As New StringBuilder
             Dim tbl As OrmTable = GetTables(t)(0)
