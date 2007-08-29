@@ -544,22 +544,22 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IOrmFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IEntityFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IOrmFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IEntityFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IOrmFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IEntityFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IOrmFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IEntityFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManagerBase.ICustDelegate(Of T)
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
@@ -588,7 +588,7 @@ Namespace Orm
         'End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
-            ByVal obj As OrmBase, ByVal filter As IOrmFilter, ByVal sort As Sort, _
+            ByVal obj As OrmBase, ByVal filter As IEntityFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, filter, sort, id, key, direct)
         End Function
@@ -601,8 +601,8 @@ Namespace Orm
         'End Function
 
         Protected Function FindConnected(ByVal ct As Type, ByVal selectedType As Type, _
-            ByVal filterType As Type, ByVal connectedFilter As IOrmFilter, _
-            ByVal filter As IOrmFilter, ByVal withLoad As Boolean, _
+            ByVal filterType As Type, ByVal connectedFilter As IEntityFilter, _
+            ByVal filter As IEntityFilter, ByVal withLoad As Boolean, _
             ByVal sort As Sort) As IList
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim arr As Generic.List(Of ColumnAttribute) = Nothing
@@ -650,7 +650,7 @@ Namespace Orm
                             End If
                         Next
                     End If
-                    Dim con As New OrmCondition.OrmConditionConstructor
+                    Dim con As New Orm.Condition.ConditionConstructor
                     con.AddFilter(connectedFilter)
                     con.AddFilter(filter)
                     con.AddFilter(schema2.GetFilter(GetFilterInfo))
@@ -877,7 +877,7 @@ Namespace Orm
 
         'End Function
 
-        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IOrmFilter, _
+        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IEntityFilter, _
             ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Integer, EditableList)
             Invariant()
 
@@ -1017,7 +1017,7 @@ Namespace Orm
             Return edic
         End Function
 
-        Protected Overloads Function GetObjects(ByVal ct As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IOrmFilter, ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As IList
+        Protected Overloads Function GetObjects(ByVal ct As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IEntityFilter, ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As IList
             If ids Is Nothing Then
                 Throw New ArgumentNullException("ids")
             End If
@@ -1076,7 +1076,7 @@ Namespace Orm
             Return objs
         End Function
 
-        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal ids As Generic.IList(Of Integer), ByVal f As IOrmFilter, ByVal objs As IList(Of T), _
+        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal ids As Generic.IList(Of Integer), ByVal f As IEntityFilter, ByVal objs As IList(Of T), _
             ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As Generic.IList(Of T)
             Invariant()
 
@@ -1162,7 +1162,7 @@ Namespace Orm
 
             Dim original_type As Type = obj.GetType
 
-            Dim filter As New OrmFilter(original_type, "ID", obj, FilterOperation.Equal)
+            Dim filter As New EntityFilter(original_type, "ID", New EntityValue(obj), FilterOperation.Equal)
 
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim arr As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
@@ -1726,9 +1726,9 @@ Namespace Orm
                 Dim sb As New StringBuilder
 
                 For Each p As Pair(Of Integer) In mr.Pairs
-                    Dim con As New OrmCondition.OrmConditionConstructor
-                    con.AddFilter(New OrmFilter(original_type, fieldName, New TypeWrap(Of Object)(p.First), FilterOperation.GreaterEqualThan))
-                    con.AddFilter(New OrmFilter(original_type, fieldName, New TypeWrap(Of Object)(p.Second), FilterOperation.LessEqualThan))
+                    Dim con As New Orm.Condition.ConditionConstructor
+                    con.AddFilter(New EntityFilter(original_type, fieldName, New SimpleValue(p.First), FilterOperation.GreaterEqualThan))
+                    con.AddFilter(New EntityFilter(original_type, fieldName, New SimpleValue(p.Second), FilterOperation.LessEqualThan))
                     sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr.Aliases, params))
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
@@ -1747,7 +1747,7 @@ Namespace Orm
                         If sb2.Length > DbSchema.QueryLength - sb.Length Then
                             sb2.Length -= 1
                             sb2.Append(")")
-                            Dim f As New OrmFilter(original_type, fieldName, sb2.ToString, FilterOperation.In)
+                            Dim f As New EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), FilterOperation.In)
 
                             sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
 
@@ -1761,7 +1761,7 @@ Namespace Orm
                     If sb2.Length <> 1 Then
                         sb2.Length -= 1
                         sb2.Append(")")
-                        Dim f As New OrmFilter(original_type, fieldName, sb2.ToString, FilterOperation.In)
+                        Dim f As New EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), FilterOperation.In)
                         sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
 
                         sb.Insert(0, " and (")
@@ -1793,9 +1793,9 @@ Namespace Orm
                 Dim sb As New StringBuilder
 
                 For Each p As Pair(Of Integer) In mr.Pairs
-                    Dim con As New OrmCondition.OrmConditionConstructor
-                    con.AddFilter(New OrmFilter(table, column, New TypeWrap(Of Object)(p.First), FilterOperation.GreaterEqualThan))
-                    con.AddFilter(New OrmFilter(table, column, New TypeWrap(Of Object)(p.Second), FilterOperation.LessEqualThan))
+                    Dim con As New Orm.Condition.ConditionConstructor
+                    con.AddFilter(New TableFilter(table, column, New SimpleValue(p.First), FilterOperation.GreaterEqualThan))
+                    con.AddFilter(New TableFilter(table, column, New SimpleValue(p.Second), FilterOperation.LessEqualThan))
                     sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr.Aliases, params))
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
@@ -1814,7 +1814,7 @@ Namespace Orm
                         If sb2.Length > DbSchema.QueryLength - sb.Length Then
                             sb2.Length -= 1
                             sb2.Append(")")
-                            Dim f As New OrmFilter(table, column, sb2.ToString, FilterOperation.In)
+                            Dim f As New TableFilter(table, column, New LiteralValue(sb2.ToString), FilterOperation.In)
 
                             sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
 
@@ -1828,7 +1828,7 @@ Namespace Orm
                     If sb2.Length <> 1 Then
                         sb2.Length -= 1
                         sb2.Append(")")
-                        Dim f As New OrmFilter(table, column, sb2.ToString, FilterOperation.In)
+                        Dim f As New TableFilter(table, column, New LiteralValue(sb2.ToString), FilterOperation.In)
                         sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
 
                         sb.Insert(0, " and (")
@@ -1985,7 +1985,7 @@ l1:
             Return res
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IOrmFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IEntityFilter, ByVal join As OrmJoin) As DicIndex(Of T)
             Invariant()
             Dim params As New Orm.ParamMgr(DbSchema, "p")
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
@@ -2065,7 +2065,7 @@ l1:
             ByVal oper As FilterOperation, ByVal joinType As JoinType) As OrmJoin
             Dim tbl As OrmTable = DbSchema.GetTables(t)(0)
 
-            Dim jf As New OrmFilter(tbl, "ID", selectType, field, oper)
+            Dim jf As New JoinFilter(tbl, "ID", selectType, field, oper)
 
             Return New OrmJoin(tbl, joinType, jf)
         End Function

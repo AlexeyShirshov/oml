@@ -316,7 +316,7 @@ Imports System.Diagnostics
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
             Dim sel As IList(Of Orm.ColumnAttribute) = Nothing
-            Dim upd As IList(Of Orm.OrmFilter) = Nothing
+            Dim upd As IList(Of Orm.EntityFilter) = Nothing
             Assert.AreEqual(String.Empty, schemaV1.Update(o, params, sel, upd))
 
             Dim o2 As New Entity2(2, mgr.Cache, schemaV1)
@@ -371,7 +371,7 @@ Imports System.Diagnostics
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
             Dim sel As IList(Of Orm.ColumnAttribute) = Nothing
-            Dim upd As IList(Of Orm.OrmFilter) = Nothing
+            Dim upd As IList(Of Orm.EntityFilter) = Nothing
             Assert.AreEqual(expected, schemaV1.Update(o, params, sel, upd))
 
             Dim i As Integer = 0

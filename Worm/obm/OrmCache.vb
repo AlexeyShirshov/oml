@@ -700,7 +700,7 @@ Namespace Orm
                             End If
                             For Each id As String In p.Value.Keys
                                 Dim ce As OrmManagerBase.CachedItem = TryCast(dic(id), OrmManagerBase.CachedItem)
-                                Dim f As IOrmFilter = Nothing
+                                Dim f As IEntityFilter = Nothing
                                 If ce IsNot Nothing Then
                                     If callbacks IsNot Nothing Then
                                         callbacks.BeginUpdateList(p.Key, id)
@@ -718,7 +718,7 @@ Namespace Orm
                                         If obj._needAdd OrElse obj._needDelete Then
                                             f = ce.Filter
                                             Dim r As Boolean = False
-                                            Dim er As IOrmFilter.EvalResult = IOrmFilter.EvalResult.Found
+                                            Dim er As IEntityFilter.EvalResult = IEntityFilter.EvalResult.Found
                                             If m2m Then
                                                 'Dim oo As IRelation = TryCast(schema.GetObjectSchema(t), IRelation)
                                                 'If oo IsNot Nothing Then
@@ -737,12 +737,12 @@ Namespace Orm
                                                 Continue For
                                             ElseIf f IsNot Nothing Then
                                                 er = f.Eval(schema, obj, oschema)
-                                                r = er = IOrmFilter.EvalResult.Unknown
+                                                r = er = IEntityFilter.EvalResult.Unknown
                                             End If
 
                                             If r Then
                                                 dic.Remove(id)
-                                            ElseIf er = IOrmFilter.EvalResult.Found Then
+                                            ElseIf er = IEntityFilter.EvalResult.Found Then
                                                 Dim sync As String = id & mgr.GetStaticKey
                                                 Using SyncHelper.AcquireDynamicLock(sync)
                                                     If obj._needAdd Then
@@ -809,16 +809,16 @@ Namespace Orm
         '    End Using
         'End Sub
 
-        Private Shared Function Normalize(ByVal t As Type, ByVal f As IOrmFilter) As IOrmFilter
-            If f IsNot Nothing Then
-                For Each fl As OrmFilter In f.GetAllFilters
-                    If fl.Type Is t Then
-                        Return f
-                    End If
-                Next
-            End If
-            Return Nothing
-        End Function
+        'Private Shared Function Normalize(ByVal t As Type, ByVal f As IOrmFilter) As IOrmFilter
+        '    If f IsNot Nothing Then
+        '        For Each fl As OrmFilter In f.GetAllFilters
+        '            If fl.Type Is t Then
+        '                Return f
+        '            End If
+        '        Next
+        '    End If
+        '    Return Nothing
+        'End Function
 
         ''' <summary>
         ''' Зависимость выбираемого типа от ключа в кеше
