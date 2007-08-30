@@ -651,7 +651,7 @@ namespace OrmCodeGenLib
                 entitySchemaDefClass.Members.Add(method);
                 method.Name = "GetFilter";
                 // тип возвращаемого значения
-                method.ReturnType = new CodeTypeReference(typeof(IOrmFilter));
+                method.ReturnType = new CodeTypeReference(typeof(IFilter));
                 // модификаторы доступа
                 method.Attributes = MemberAttributes.Public;
                 method.Parameters.Add(

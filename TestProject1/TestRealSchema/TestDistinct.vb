@@ -13,7 +13,7 @@ Public Class TestDistinct
         Dim s As New DbSchema("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tbl As OrmTable = s.GetTables(GetType(Tables1to3))(0)
-            Dim f As New OrmFilter(tbl, "table1", GetType(Table1), "ID", FilterOperation.Equal)
+            Dim f As New JoinFilter(tbl, "table1", GetType(Table1), "ID", FilterOperation.Equal)
             Dim join As New OrmJoin(tbl, JoinType.Join, f)
 
             Dim joins() As OrmJoin = New OrmJoin() {join}
@@ -39,7 +39,7 @@ Public Class TestDistinct
                 field = fld
             Next
 
-            Dim f As New OrmFilter(tbl, "ID", t, field, FilterOperation.Equal)
+            Dim f As New JoinFilter(tbl, "ID", t, field, FilterOperation.Equal)
 
             Dim join As New OrmJoin(tbl, JoinType.Join, f)
 
@@ -128,7 +128,7 @@ Public Class TestDistinct
         Dim s As New DbSchema("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tbl As OrmTable = s.GetTables(GetType(Tables1to3))(0)
-            Dim f As New OrmFilter(tbl, "table1", GetType(Table1), "ID", FilterOperation.Equal)
+            Dim f As New JoinFilter(tbl, "table1", GetType(Table1), "ID", FilterOperation.Equal)
             Dim join As New OrmJoin(tbl, JoinType.Join, f)
 
             Dim joins() As OrmJoin = New OrmJoin() {join}
