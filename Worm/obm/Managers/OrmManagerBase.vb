@@ -940,7 +940,7 @@ Namespace Orm
                         Dim tt1 As Type = o.GetType
                         Dim key As String = GetM2MKey(tt1, type2load, direct)
                         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                            key &= criteria.Filter.GetStaticString
+                            key &= criteria.Filter.Template.GetStaticString
                         End If
 
                         Dim dic As IDictionary = GetDic(_cache, key)
@@ -998,7 +998,7 @@ Namespace Orm
                                 Dim tt1 As Type = o.GetType
                                 Dim key As String = GetM2MKey(tt1, type2load, direct)
                                 If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                                    key &= criteria.Filter.GetStaticString
+                                    key &= criteria.Filter.Template.GetStaticString
                                 End If
 
                                 Dim dic As IDictionary = GetDic(_cache, key)
@@ -1101,7 +1101,7 @@ Namespace Orm
             Using o.GetSyncRoot()
                 If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(GetType(T), id) Then
                     o.ObjectState = ObjectState.NotLoaded
-                    AddObject(o)
+                    'AddObject(o)
                 End If
             End Using
             Return o
@@ -1156,7 +1156,7 @@ Namespace Orm
             Dim key As String = String.Empty
 
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                key &= criteria.Filter.GetStaticString
+                key &= criteria.Filter.Template.GetStaticString
             End If
 
             If joins IsNot Nothing Then
@@ -1266,7 +1266,7 @@ Namespace Orm
             Dim key As String = "distinct" & _schema.GetEntityKey(GetType(T))
 
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                key &= criteria.Filter.GetStaticString
+                key &= criteria.Filter.Template.GetStaticString
             End If
 
             If relation IsNot Nothing Then
@@ -1325,7 +1325,7 @@ Namespace Orm
         End Function
 
         Protected Function FindGetKey(Of T As {OrmBase, New})(ByVal filter As IEntityFilter) As String
-            Return filter.GetStaticString & GetStaticKey() & _schema.GetEntityKey(GetType(T))
+            Return filter.Template.GetStaticString & GetStaticKey() & _schema.GetEntityKey(GetType(T))
         End Function
 
         Public Function Find(Of T As {OrmBase, New})(ByVal criteria As CriteriaLink, _
@@ -1486,7 +1486,7 @@ Namespace Orm
 
             Dim key As String = GetM2MKey(tt1, tt2, direct)
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                key &= criteria.Filter.GetStaticString
+                key &= criteria.Filter.Template.GetStaticString
             End If
 
             Dim dic As IDictionary = GetDic(_cache, key)
@@ -2955,7 +2955,7 @@ l1:
             Dim key As String = String.Empty
 
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                key = criteria.Filter.GetStaticString & _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Dics"
+                key = criteria.Filter.Template.GetStaticString & _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Dics"
             Else
                 key = _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Dics"
             End If

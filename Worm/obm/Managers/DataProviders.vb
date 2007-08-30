@@ -29,14 +29,14 @@ Namespace Orm
 
             Public Overridable Function Validate() As Boolean Implements OrmManagerBase.ICacheValidator.Validate
                 If _f IsNot Nothing Then
-                    For Each f As OrmFilter In _f.GetAllFilters
+                    For Each f As EntityFilter In _f.GetAllFilters
                         Dim fields As List(Of String) = Nothing
-                        If _mgr.Cache.GetUpdatedFields(f.Type, fields) Then
-                            Dim idx As Integer = fields.IndexOf(f.FieldName)
+                        If _mgr.Cache.GetUpdatedFields(f.Template.Type, fields) Then
+                            Dim idx As Integer = fields.IndexOf(f.Template.FieldName)
                             If idx >= 0 Then
-                                Dim p As New Pair(Of String, Type)(f.FieldName, f.Type)
+                                Dim p As New Pair(Of String, Type)(f.Template.FieldName, f.Template.Type)
                                 _mgr.Cache.ResetFieldDepends(p)
-                                _mgr.Cache.RemoveUpdatedFields(f.Type, f.FieldName)
+                                _mgr.Cache.RemoveUpdatedFields(f.Template.Type, f.Template.FieldName)
                                 Return False
                             End If
                         End If
@@ -54,14 +54,15 @@ Namespace Orm
                     _mgr.Cache.AddDependType(GetType(T), _key, _id)
 
                     If _f IsNot Nothing Then
-                        For Each f As OrmFilter In _f.GetAllFilters
-                            If f.IsParamOrm Then
+                        For Each f As EntityFilter In _f.GetAllFilters
+                            Dim v As EntityValue = TryCast(f.Value, EntityValue)
+                            If v IsNot Nothing Then
                                 'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
                                 'If GetType(OrmBase).IsAssignableFrom(tp) Then
-                                _mgr.Cache.AddDepend(f.ValueOrm(_mgr), _key, _id)
+                                _mgr.Cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
                                 'End If
                             Else
-                                Dim p As New Pair(Of String, Type)(f.FieldName, f.Type)
+                                Dim p As New Pair(Of String, Type)(f.Template.FieldName, f.Template.Type)
                                 _mgr.Cache.AddFieldDepend(p, _key, _id)
                             End If
                         Next
@@ -183,7 +184,7 @@ Namespace Orm
                 End Get
             End Property
 
-            Protected Overridable Function AppendWhere() As IOrmFilter
+            Protected Overridable Function AppendWhere() As IFilter
                 Return Nothing
             End Function
 
@@ -425,7 +426,7 @@ Namespace Orm
             Private _top As Integer = -1
             Private _asc() As QueryAspect
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IOrmFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IEntityFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal distinct As Boolean)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
@@ -434,14 +435,14 @@ Namespace Orm
                 End If
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IOrmFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IEntityFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal top As Integer)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
                 _asc = New QueryAspect() {New TopAspect(top)}
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IOrmFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IEntityFilter, _
                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal aspect As QueryAspect)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
@@ -465,7 +466,7 @@ Namespace Orm
             Private _rel As M2MRelation
             Private _appendSecong As Boolean
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal relation As M2MRelation, ByVal f As IOrmFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal relation As M2MRelation, ByVal f As IEntityFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
                 _rel = relation
@@ -474,8 +475,8 @@ Namespace Orm
                     _appendSecong = True
                 Else
                     If f IsNot Nothing Then
-                        For Each fl As OrmFilter In f.GetAllFilters
-                            If fl.Type Is relation.Type Then
+                        For Each fl As EntityFilter In f.GetAllFilters
+                            If fl.Template.Type Is relation.Type Then
                                 _appendSecong = True
                                 Exit For
                             End If
@@ -492,7 +493,7 @@ Namespace Orm
                 sb.Append(Schema.SelectDistinct(t, almgr, pmgr, _rel, False, _appendSecong))
             End Sub
 
-            Protected Overrides Function AppendWhere() As IOrmFilter
+            Protected Overrides Function AppendWhere() As IFilter
                 Return Mgr.ObjectSchema.GetObjectSchema(_rel.Type).GetFilter(Mgr.GetFilterInfo)
             End Function
 
@@ -507,7 +508,7 @@ Namespace Orm
             'Private _rev As Boolean
             'Private _soft_renew As Boolean
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As OrmBase, ByVal filter As IOrmFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As OrmBase, ByVal filter As IEntityFilter, _
                 ByVal sort As Sort, _
                 ByVal id As String, ByVal key As String, ByVal direct As Boolean)
                 MyBase.New(mgr, filter, sort, key, id)
@@ -597,7 +598,7 @@ Namespace Orm
                     End If
                     Dim f1 As String = _mgr.DbSchema.GetConnectedTypeField(ct, mt)
                     Dim f2 As String = _mgr.DbSchema.GetConnectedTypeField(ct, t)
-                    Dim fl As New OrmFilter(ct, f1, _obj, FilterOperation.Equal)
+                    Dim fl As New EntityFilter(ct, f1, New EntityValue(_obj), FilterOperation.Equal)
                     Dim l As New List(Of Integer)
                     'Dim external_sort As Boolean = False
 

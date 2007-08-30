@@ -55,19 +55,19 @@ Partial Friend NotInheritable Class MySettings
     
     <Global.System.Configuration.ApplicationScopedSettingAttribute(),  _
      Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("D:\Work\Worm-Public")>  _
-    Public ReadOnly Property WormRoot() As String
+     Global.System.Configuration.DefaultSettingValueAttribute("Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=wormtest;")>  _
+    Public ReadOnly Property FullTextEnabledConn() As String
         Get
-            Return CType(Me("WormRoot"),String)
+            Return CType(Me("FullTextEnabledConn"),String)
         End Get
     End Property
     
     <Global.System.Configuration.ApplicationScopedSettingAttribute(),  _
      Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=wormtest;")>  _
-    Public ReadOnly Property FullTextEnabledConn() As String
+     Global.System.Configuration.DefaultSettingValueAttribute("D:\Work\Worm")>  _
+    Public ReadOnly Property WormRoot() As String
         Get
-            Return CType(Me("FullTextEnabledConn"),String)
+            Return CType(Me("WormRoot"),String)
         End Get
     End Property
 End Class

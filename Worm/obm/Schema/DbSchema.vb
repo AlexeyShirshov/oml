@@ -278,7 +278,7 @@ Namespace Orm
                             'For Each fl As OrmFilter In f.GetAllFilters
                             '    inserted_tables(join_table).Add(fl)
                             'Next
-                            CType(inserted_tables(join_table), List(Of IFilter)).AddRange(f.GetAllFilters)
+                            CType(inserted_tables(join_table), List(Of ITemplateFilter)).AddRange(CType(f.GetAllFilters, IEnumerable(Of ITemplateFilter)))
                         End If
                     Next
                     dbparams = FormInsert(inserted_tables, ins_cmd, real_t, sel_columns, _
@@ -712,8 +712,14 @@ Namespace Orm
 
             Dim dic As New Dictionary(Of OrmTable, IList(Of ITemplateFilter))
             Dim l As New List(Of ITemplateFilter)
-            l.AddRange(CType(tableinfo._updates, IEnumerable(Of ITemplateFilter)))
-            l.AddRange(CType(tableinfo._where4update.Condition.GetAllFilters, IEnumerable(Of ITemplateFilter)))
+            For Each f As EntityFilter In tableinfo._updates
+                l.Add(f)
+            Next
+
+            For Each f As ITemplateFilter In tableinfo._where4update.Condition.GetAllFilters
+                l.Add(f)
+            Next
+
             dic.Add(table, l.ToArray)
             upd_cmd.Append(EndLine).Append("if ").Append(RowCount).Append(" = 0 ")
             FormInsert(dic, upd_cmd, obj.GetType, Nothing, Nothing, params)

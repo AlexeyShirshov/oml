@@ -42,6 +42,9 @@ Namespace Orm
                 v = f.PrepareValue(schema, v)
             End If
 
+            If paramMgr Is Nothing Then
+                Throw New ArgumentNullException("paramMgr")
+            End If
             'Dim p As String = _pname
             'If String.IsNullOrEmpty(p) Then
             '    p = paramMgr.CreateParam(v)
@@ -78,6 +81,10 @@ Namespace Orm
                 Return _v
             End Get
         End Property
+
+        Protected Sub SetValue(ByVal v As Object)
+            _v = v
+        End Sub
     End Class
 
     Public Class LiteralValue
@@ -101,21 +108,20 @@ Namespace Orm
     Public Class EntityValue
         Inherits SimpleValue
 
-        Private _id As Integer
         Private _t As Type
 
         Public Sub New(ByVal o As OrmBase)
             MyBase.New()
             If o IsNot Nothing Then
-                _id = o.Identifier
                 _t = o.GetType
+                SetValue(o.Identifier)
             Else
                 _t = GetType(OrmBase)
             End If
         End Sub
 
         Public Function GetOrmValue(ByVal mgr As OrmManagerBase) As OrmBase
-            Return mgr.CreateDBObject(_id, _t)
+            Return mgr.CreateDBObject(CInt(Value), _t)
         End Function
 
         Public ReadOnly Property OrmType() As Type
@@ -124,11 +130,11 @@ Namespace Orm
             End Get
         End Property
 
-        Public Overrides ReadOnly Property Value() As Object
-            Get
-                Return GetOrmValue(OrmManagerBase.CurrentManager)
-            End Get
-        End Property
+        'Public Overrides ReadOnly Property Value() As Object
+        '    Get
+        '        Return GetOrmValue(OrmManagerBase.CurrentManager)
+        '    End Get
+        'End Property
     End Class
 
 #End Region
@@ -148,7 +154,7 @@ Namespace Orm
 
     Public Interface ITemplateFilter
         Inherits IFilter
-        Function GetStaticString() As String
+        'Function GetStaticString() As String
         Function ReplaceByTemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter
         ReadOnly Property Template() As TemplateBase
         Function MakeSingleStmt(ByVal schema As DbSchema, ByVal pname As ICreateParam) As Pair(Of String)
@@ -385,9 +391,9 @@ Namespace Orm
             _templ = template
         End Sub
 
-        Public Function GetStaticString() As String Implements ITemplateFilter.GetStaticString
-            Return _templ.GetStaticString
-        End Function
+        'Public Function GetStaticString() As String Implements ITemplateFilter.GetStaticString
+        '    Return _templ.GetStaticString
+        'End Function
 
         Public Function Replacetemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter Implements ITemplateFilter.ReplaceByTemplate
             If Not _templ.Equals(replacement.Template) Then
@@ -417,7 +423,7 @@ Namespace Orm
 
         Protected Overrides Function _ToString() As String
             'Return _templ.Table.TableName & _templ.Column & Value._ToString & _templ.OperToString
-            Return Value._ToString & GetStaticString()
+            Return Value._ToString & Template.GetStaticString()
         End Function
 
         'Public Overrides Function GetStaticString() As String
@@ -536,10 +542,12 @@ Namespace Orm
 
         Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As IFilterValue, ByVal operation As FilterOperation)
             MyBase.New(value, New OrmFilterTemplate(t, fieldName, operation))
-            _str = value._ToString & Template.GetStaticString
         End Sub
 
         Protected Overrides Function _ToString() As String
+            If _str Is Nothing Then
+                _str = Value._ToString & Template.GetStaticString
+            End If
             Return _str
         End Function
 
@@ -554,6 +562,10 @@ Namespace Orm
         End Property
 
         Public Overrides Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String), ByVal pname As ICreateParam) As String
+            If schema Is Nothing Then
+                Throw New ArgumentNullException("schema")
+            End If
+
             Dim map As MapField2Column = schema.GetObjectSchema(Template.Type).GetFieldColumnMap()(Template.FieldName)
             Dim [alias] As String = String.Empty
 
@@ -581,19 +593,24 @@ Namespace Orm
                     Dim v As Object = obj.GetValue(Template.FieldName, oschema) 'schema.GetFieldValue(obj, _fieldname)
                     If v IsNot Nothing Then
                         Dim tt As Type = v.GetType
+                        Dim val As Object = evval.Value
                         Dim orm As OrmBase = TryCast(v, OrmBase)
                         Dim b As Boolean = orm IsNot Nothing
                         If b Then
-                            Dim ov As EntityValue = TryCast(Value, EntityValue)
+                            Dim ov As EntityValue = TryCast(evval, EntityValue)
                             If ov Is Nothing Then
                                 Throw New InvalidOperationException(String.Format("Field {0} is Entity but param is not", Template.FieldName))
                             End If
                             If tt IsNot ov.OrmType Then
-                                Throw New InvalidOperationException(String.Format("Field {0} is type of {1} but param is type of {2}", Template.FieldName, tt.ToString, ov.OrmType.ToString))
+                                If val Is Nothing Then
+                                    Return IEntityFilter.EvalResult.NotFound
+                                Else
+                                    Throw New InvalidOperationException(String.Format("Field {0} is type of {1} but param is type of {2}", Template.FieldName, tt.ToString, ov.OrmType.ToString))
+                                End If
                             End If
+                            val = ov.GetOrmValue(OrmManagerBase.CurrentManager)
                         End If
 
-                        Dim val As Object = evval.Value
                         Select Case Template.Operation
                             Case FilterOperation.Equal
                                 If Equals(v, val) Then
@@ -627,7 +644,7 @@ Namespace Orm
                                 r = IEntityFilter.EvalResult.Unknown
                         End Select
                     Else
-                        If Value Is Nothing Then
+                        If evval.Value Is Nothing Then
                             r = IEntityFilter.EvalResult.Found
                         End If
                     End If
@@ -682,7 +699,7 @@ Namespace Orm
 
 
             Dim map As MapField2Column = schema.GetObjectSchema(Template.Type).GetFieldColumnMap()(Template.FieldName)
-            Dim v As IValuableFilter = TryCast(Value, IValuableFilter)
+            Dim v As IEvaluableValue = TryCast(Value, IEvaluableValue)
             If v IsNot Nothing AndAlso v.Value Is DBNull.Value Then
                 If schema.GetFieldTypeByName(Template.Type, Template.FieldName) Is GetType(Byte()) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Binary
@@ -793,6 +810,8 @@ Namespace Orm
 
             Dim b As Boolean = (Equals(v1, ve1) AndAlso Equals(v2, ve2)) _
                 OrElse (Equals(v1, ve2) AndAlso Equals(v2, ve1))
+
+            Return b
         End Function
 
         Protected Shared Function ChangeEntityJoinToValue(ByVal source As IFilter, ByVal t As Type, ByVal field As String, ByVal value As IFilterValue) As IFilter
@@ -827,7 +846,7 @@ Namespace Orm
         End Function
 
         Public Shared Function ChangeEntityJoinToParam(ByVal source As IFilter, ByVal t As Type, ByVal field As String, ByVal value As TypeWrap(Of Object)) As IFilter
-            Return ChangeEntityJoinToValue(source, t, field, New SimpleValue(value))
+            Return ChangeEntityJoinToValue(source, t, field, New SimpleValue(value.Value))
         End Function
 
         Public Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
@@ -1419,13 +1438,13 @@ Namespace Orm
 
             Protected Function AddFilter(ByVal f As IFilter, ByVal [operator] As ConditionOperator, ByVal useOper As Boolean) As ConditionConstructor
                 If _cond Is Nothing AndAlso f IsNot Nothing Then
-                    If TypeOf (f) Is EntityFilter Then
+                    If GetType(IEntityFilter).IsAssignableFrom(CObj(f).GetType) Then
                         _cond = New EntityCondition(CType(f, IEntityFilter), Nothing, [operator])
                     Else
                         _cond = New Condition(f, Nothing, [operator])
                     End If
                 ElseIf _cond IsNot Nothing AndAlso _cond._right Is Nothing AndAlso f IsNot Nothing Then
-                    If Not TypeOf (f) Is EntityFilter AndAlso TypeOf (_cond) Is EntityCondition Then
+                    If Not GetType(IEntityFilter).IsAssignableFrom(CObj(f).GetType) AndAlso TypeOf (_cond) Is EntityCondition Then
                         _cond = New Condition(_cond, f, [operator])
                     Else
                         _cond._right = f
@@ -1434,7 +1453,7 @@ Namespace Orm
                         End If
                     End If
                 ElseIf f IsNot Nothing Then
-                    If TypeOf (f) Is EntityFilter AndAlso TypeOf (_cond) Is EntityCondition Then
+                    If GetType(IEntityFilter).IsAssignableFrom(CObj(f).GetType) AndAlso TypeOf (_cond) Is EntityCondition Then
                         _cond = New EntityCondition(CType(_cond, IEntityFilter), CType(f, IEntityFilter), [operator])
                     Else
                         _cond = New Condition(_cond, f, [operator])
@@ -1467,6 +1486,26 @@ Namespace Orm
             End Property
         End Class
 
+        Private Class ConditionTemplate
+            Inherits TemplateBase
+
+            Private _con As Condition
+
+            Public Sub New(ByVal con As Condition)
+                _con = con
+            End Sub
+
+            Public Overrides Function GetStaticString() As String
+                Dim sb As New StringBuilder
+                sb.Append(CType(_con._left, ITemplateFilter).Template.GetStaticString)
+                sb.Append(_con.Condition2String())
+                If _con._right IsNot Nothing Then
+                    sb.Append(CType(_con._right, ITemplateFilter).Template.GetStaticString)
+                End If
+                Return sb.ToString
+            End Function
+        End Class
+
         Protected _left As IFilter
         Protected _right As IFilter
         Protected _oper As ConditionOperator
@@ -1490,16 +1529,16 @@ Namespace Orm
             Return res
         End Function
 
-        Public Function GetStaticString() As String Implements ITemplateFilter.GetStaticString
-            Dim r As String = String.Empty
-            If _right IsNot Nothing Then
-                Dim rt As ITemplateFilter = CType(_right, ITemplateFilter)
-                r = rt.GetStaticString
-            End If
+        'Public Function GetStaticString() As String Implements ITemplateFilter.GetStaticString
+        '    Dim r As String = String.Empty
+        '    If _right IsNot Nothing Then
+        '        Dim rt As ITemplateFilter = CType(_right, ITemplateFilter)
+        '        r = rt.GetStaticString
+        '    End If
 
-            Dim lt As ITemplateFilter = CType(_left, ITemplateFilter)
-            Return lt.GetStaticString & Condition2String() & r
-        End Function
+        '    Dim lt As ITemplateFilter = CType(_left, ITemplateFilter)
+        '    Return lt.GetStaticString & Condition2String() & r
+        'End Function
 
         Public Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal tableAliases As IDictionary(Of OrmTable, String), ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt
             If _right Is Nothing Then
@@ -1561,7 +1600,7 @@ Namespace Orm
             Return _left.Equals(con._left) AndAlso r AndAlso _oper = con._oper
         End Function
 
-        Private Function Condition2String() As String
+        Protected Function Condition2String() As String
             If _oper = ConditionOperator.And Then
                 Return " and "
             Else
@@ -1575,7 +1614,7 @@ Namespace Orm
 
         Public Overridable ReadOnly Property Template() As TemplateBase Implements ITemplateFilter.Template
             Get
-                Throw New NotImplementedException
+                Return New ConditionTemplate(Me)
             End Get
         End Property
 
@@ -1619,7 +1658,7 @@ Namespace Orm
         Inherits Condition
         Implements IEntityFilter
 
-        Class ConditionTemplate
+        Private Class ConditionTemplate
             Inherits TemplateBase
             Implements IOrmFilterTemplate
 
@@ -1630,15 +1669,29 @@ Namespace Orm
             End Sub
 
             Public Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As IEntityFilter Implements IOrmFilterTemplate.MakeFilter
-
+                Dim r As IEntityFilter = Nothing
+                If _con._right IsNot Nothing Then
+                    r = _con.Right.GetFilterTemplate.MakeFilter(schema, obj)
+                End If
+                Dim e As New EntityCondition(_con.Left.GetFilterTemplate.MakeFilter(schema, obj), r, _con._oper)
+                Return e
             End Function
 
             Public Sub SetType(ByVal t As System.Type) Implements IOrmFilterTemplate.SetType
-
+                _con.Left.GetFilterTemplate.SetType(t)
+                If _con._right IsNot Nothing Then
+                    _con.Right.GetFilterTemplate.SetType(t)
+                End If
             End Sub
 
             Public Overrides Function GetStaticString() As String
-
+                Dim s As New StringBuilder
+                s.Append(_con.Left.Template.GetStaticString)
+                s.Append(_con.Condition2String())
+                If _con._right IsNot Nothing Then
+                    s.Append(_con.Right.Template.GetStaticString)
+                End If
+                Return s.ToString
             End Function
         End Class
 
@@ -1699,13 +1752,13 @@ Namespace Orm
 
         Public Overrides Function ReplaceCondition(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As Condition
             If replacement.Equals(_left) Then
-                If TypeOf (replacer) Is EntityFilter Then
+                If GetType(IEntityFilter).IsAssignableFrom(CObj(replacer).GetType) Then
                     Return New EntityCondition(CType(replacer, IEntityFilter), CType(_right, IEntityFilter), _oper)
                 Else
                     Return New Condition(replacer, _right, _oper)
                 End If
             ElseIf replacement.Equals(_right) Then
-                If TypeOf (replacer) Is EntityFilter Then
+                If GetType(IEntityFilter).IsAssignableFrom(CObj(replacer).GetType) Then
                     Return New EntityCondition(CType(_left, IEntityFilter), CType(replacer, IEntityFilter), _oper)
                 Else
                     Return New Condition(_left, replacer, _oper)
@@ -1946,7 +1999,7 @@ Namespace Orm
 
         Public Sub New(ByVal Table As OrmTable, ByVal joinType As JoinType, ByVal condition As IFilter)
             _table = Table
-            _joinType = JoinType
+            _joinType = joinType
             _condition = condition
         End Sub
 

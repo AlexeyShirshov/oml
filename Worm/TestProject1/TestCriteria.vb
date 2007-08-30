@@ -28,7 +28,7 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestComplexTypeless()
-        Dim f As IEntityFilter = Criteria.Field("ID").Eq(56). _
+        Dim f As IEntityFilter = Criteria.AutoTypeField("ID").Eq(56). _
             [And]("Title").Eq("lsd").Filter(GetType(Entity4))
 
         Dim schema As New Orm.DbSchema("1")
@@ -69,7 +69,7 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSimpleTypes()
-        Dim f As IEntityFilter = New Criteria(GetType(Entity4)).AddField("ID").Eq(56). _
+        Dim f As IEntityFilter = New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
             [And]("Title").Eq("lsd").Filter
 
         Dim schema As New Orm.DbSchema("1")
@@ -89,8 +89,8 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSimpleTypes2()
-        Dim f As IEntityFilter = New Criteria(GetType(Entity4)).AddField("ID").Eq(56). _
-            [And](New Criteria(GetType(Entity4)).AddField("Title").Eq(56).[Or]("ID").Eq(483)).Filter
+        Dim f As IEntityFilter = New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
+            [And](New Criteria(GetType(Entity4)).Field("Title").Eq(56).[Or]("ID").Eq(483)).Filter
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create

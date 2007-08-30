@@ -667,7 +667,7 @@ Public Class TestManagerRS
     <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
     Public Sub TestMultipleDelete()
         Using mgr As Orm.OrmDBManager = CType(CreateManager(GetSchema("1")), Orm.OrmDBManager)
-            Dim f As New Orm.OrmFilter(GetType(Table3), "Code", New TypeWrap(Of Object)(1), Orm.FilterOperation.LessEqualThan)
+            Dim f As New Orm.EntityFilter(GetType(Table3), "Code", New Orm.SimpleValue(1), Orm.FilterOperation.LessEqualThan)
             mgr.BeginTransaction()
 
             Try

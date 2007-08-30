@@ -11,7 +11,7 @@ Namespace Orm
             _t = t
         End Sub
 
-        Public Function AddField(ByVal fieldName As String) As CriteriaField
+        Public Function Field(ByVal fieldName As String) As CriteriaField
             If String.IsNullOrEmpty(fieldName) Then
                 Throw New ArgumentNullException("fieldName")
             End If
@@ -31,7 +31,7 @@ Namespace Orm
             Return New CriteriaField(t, fieldName)
         End Function
 
-        Public Shared Function Field(ByVal fieldName As String) As CriteriaField
+        Public Shared Function AutoTypeField(ByVal fieldName As String) As CriteriaField
             If String.IsNullOrEmpty(fieldName) Then
                 Throw New ArgumentNullException("fieldName")
             End If
