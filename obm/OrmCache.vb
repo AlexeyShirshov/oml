@@ -38,7 +38,53 @@ Namespace Orm
 
     Public MustInherit Class OrmCacheBase
 
+        Private Class HashIds
+            Inherits Dictionary(Of String, List(Of String))
+
+            Private _default As New List(Of String)
+
+            Public Function GetIds(ByVal hash As String) As List(Of String)
+                If hash = EntityFilter.EmptyHash Then
+                    Return _default
+                Else
+                    Dim h As List(Of String) = Nothing
+                    If Not Me.TryGetValue(hash, h) Then
+                        h = New List(Of String)
+                        Me(hash) = h
+                    End If
+                    Return h
+                End If
+            End Function
+        End Class
+
+        Private Class TemplateHashs
+            Inherits Dictionary(Of String, Pair(Of HashIds, IOrmFilterTemplate))
+
+            Public Function GetIds(ByVal key As String, ByVal filter As IEntityFilter) As List(Of String)
+                Dim p As Pair(Of HashIds, IOrmFilterTemplate) = Nothing
+                If Not TryGetValue(key, p) Then
+                    p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, filter.GetFilterTemplate)
+                    Me(key) = p
+                End If
+                Return p.First.GetIds(filter.MakeHash)
+            End Function
+        End Class
+
+        Private Class TypeDepends
+            Inherits Dictionary(Of Type, TemplateHashs)
+
+            Public Function GetFilters(ByVal t As Type) As TemplateHashs
+                Dim r As TemplateHashs = Nothing
+                If Not TryGetValue(t, r) Then
+                    r = New TemplateHashs
+                    Me(t) = r
+                End If
+                Return r
+            End Function
+        End Class
+
         Public ReadOnly DateTimeCreated As Date
+
         Private _filters As IDictionary
         Private _modifiedobjects As IDictionary
         'Private _invalidate_types As New List(Of Type)
@@ -58,13 +104,6 @@ Namespace Orm
         ''' </summary>
         ''' <remarks></remarks>
         Private _field_depends As New Dictionary(Of Pair(Of String, Type), Dictionary(Of String, List(Of String)))
-
-        ''' <summary>
-        ''' type - тип
-        ''' зависит от dictionary.key - ключ в кеше и dictionary.value - id в кеше
-        ''' </summary>
-        ''' <remarks></remarks>
-        Private _type_depends As New Dictionary(Of Type, Dictionary(Of String, Dictionary(Of String, Object)))
 
         Private _ct_depends As New Dictionary(Of Type, Dictionary(Of String, Dictionary(Of String, Object)))
 
@@ -674,7 +713,7 @@ Namespace Orm
         '    Next
         'End Sub
 
-        Protected Friend Sub UpdateCache(ByVal schema As OrmSchemaBase, _
+        Protected Friend Sub UpdateCacheOld(ByVal schema As OrmSchemaBase, _
             ByVal objs As IList, ByVal mgr As OrmManagerBase, ByVal afterDelegate As OnUpdated, _
             ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks)
 
@@ -803,6 +842,134 @@ Namespace Orm
             End If
         End Sub
 
+        Protected Friend Sub UpdateCache(ByVal schema As OrmSchemaBase, _
+            ByVal objs As IList, ByVal mgr As OrmManagerBase, ByVal afterDelegate As OnUpdated, _
+            ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks)
+
+            Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
+                Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
+                Dim tt As Type = Nothing
+                For Each obj As OrmBase In objs
+                    If obj Is Nothing Then
+                        Throw New ArgumentNullException("obj")
+                    End If
+                    tt = obj.GetType
+                    Exit For
+                Next
+
+                Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(tt)
+                If _type_depends.TryGetValue(tt, l) Then
+                    For Each p As KeyValuePair(Of String, Dictionary(Of String, Object)) In l
+                        Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
+                        Dim m2m As Boolean = p.Key.Contains(OrmManagerBase.Const_JoinStaticString)
+                        If dic IsNot Nothing Then
+                            If callbacks IsNot Nothing Then
+                                callbacks.BeginUpdate(p.Value.Count * objs.Count)
+                            End If
+                            For Each id As String In p.Value.Keys
+                                Dim ce As OrmManagerBase.CachedItem = TryCast(dic(id), OrmManagerBase.CachedItem)
+                                Dim f As IEntityFilter = Nothing
+                                If ce IsNot Nothing Then
+                                    If callbacks IsNot Nothing Then
+                                        callbacks.BeginUpdateList(p.Key, id)
+                                    End If
+
+                                    For Each obj As OrmBase In objs
+                                        If obj Is Nothing Then
+                                            Throw New ArgumentNullException("obj")
+                                        End If
+
+                                        If tt IsNot obj.GetType Then
+                                            Throw New ArgumentException("Collection contains different types")
+                                        End If
+
+                                        If obj._needAdd OrElse obj._needDelete Then
+                                            f = ce.Filter
+                                            Dim r As Boolean = False
+                                            Dim er As IEntityFilter.EvalResult = IEntityFilter.EvalResult.Found
+                                            If m2m Then
+                                                'Dim oo As IRelation = TryCast(schema.GetObjectSchema(t), IRelation)
+                                                'If oo IsNot Nothing Then
+                                                '    Dim p1 As Pair(Of String, Type) = oo.GetFirstType
+                                                '    Dim p2 As Pair(Of String, Type) = oo.GetSecondType
+                                                '    Dim o1 As OrmBase = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
+                                                '    Dim o2 As OrmBase = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
+                                                '    Dim el As EditableList = CType(ce, OrmManagerBase.M2MCache).Entry
+                                                '    If el.MainId <> o1.Identifier Then
+                                                '        Throw New OrmManagerException("Invalid cache entry")
+                                                '    End If
+                                                '    el.Add(o2.Identifier)
+                                                'Else
+                                                '    r = True
+                                                'End If
+                                                Continue For
+                                            ElseIf f IsNot Nothing Then
+                                                er = f.Eval(schema, obj, oschema)
+                                                r = er = IEntityFilter.EvalResult.Unknown
+                                            End If
+
+                                            If r Then
+                                                dic.Remove(id)
+                                            ElseIf er = IEntityFilter.EvalResult.Found Then
+                                                Dim sync As String = id & mgr.GetStaticKey
+                                                Using SyncHelper.AcquireDynamicLock(sync)
+                                                    If obj._needAdd Then
+                                                        If Not ce.Add(mgr, obj) Then
+                                                            dic.Remove(id)
+                                                        End If
+                                                    ElseIf obj._needDelete Then
+                                                        ce.Delete(mgr, obj)
+                                                        'Else
+                                                        '    Throw New InvalidOperationException
+                                                    End If
+                                                End Using
+                                                If callbacks IsNot Nothing Then
+                                                    callbacks.ObjectDependsUpdated(obj)
+                                                End If
+                                            End If
+                                        End If
+                                    Next
+
+                                    If callbacks IsNot Nothing Then
+                                        callbacks.EndUpdateList(p.Key, id)
+                                    End If
+                                Else
+                                    dic.Remove(id)
+                                End If
+                                'Debug.WriteLine(t.Name & ": remove dependent " & id)
+                            Next
+                            If callbacks IsNot Nothing Then
+                                callbacks.EndUpdate()
+                            End If
+                            '_filters.Remove(p.Key)
+                        End If
+                    Next
+                End If
+            End Using
+            If callbacks IsNot Nothing Then
+                callbacks.BeginUpdateProcs()
+            End If
+            For Each obj As OrmBase In objs
+                If obj Is Nothing Then
+                    Throw New ArgumentNullException("obj")
+                End If
+
+                If obj._needAdd Then
+                    ValidateSPOnInsertDelete(obj)
+                ElseIf obj._needDelete Then
+                    ValidateSPOnInsertDelete(obj)
+                    'Else
+                    '    Throw New InvalidOperationException
+                End If
+
+                If afterDelegate IsNot Nothing Then
+                    afterDelegate(obj, mgr, contextKey)
+                End If
+            Next
+            If callbacks IsNot Nothing Then
+                callbacks.EndUpdateProcs()
+            End If
+        End Sub
         'Protected Friend Sub DeleteAddOrDelete(ByVal t As Type)
         '    Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
         '        _invalidate_types.Remove(t)
@@ -911,7 +1078,7 @@ Namespace Orm
 
         Protected Friend Sub AddStoredProc(ByVal sp As StoredProcBase)
             Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
-                If sp.cached AndAlso Not _procs.Contains(sp) Then
+                If sp.Cached AndAlso Not _procs.Contains(sp) Then
                     _procs.Add(sp)
                 End If
             End Using
