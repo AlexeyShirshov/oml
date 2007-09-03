@@ -139,7 +139,14 @@ Namespace Orm
                 Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
                 For Each p As String In _props
                     If p = "ID" Then
+                        Dim nm As OrmManagerBase.INewObjects = mgr.NewObjectManager
+                        If nm IsNot Nothing Then
+                            nm.RemoveNew(_dst)
+                        End If
                         _dst._id = source._id
+                        If nm IsNot Nothing Then
+                            mgr.NewObjectManager.AddNew(_dst)
+                        End If
                     Else
                         Dim o As Object = source.GetValue(p)
                         mgr.ObjectSchema.SetFieldValue(_dst, p, o)
@@ -1413,4 +1420,88 @@ l1:
         End Property
     End Class
 
+    <Serializable()> _
+    Public Class EntityProxy
+        Private _id As Integer
+        Private _t As Type
+
+        Public Sub New(ByVal id As Integer, ByVal type As Type)
+            _id = id
+            _t = type
+        End Sub
+
+        Public Sub New(ByVal o As OrmBase)
+            _id = o.Identifier
+            _t = o.GetType
+        End Sub
+
+        Public Function GetEntity() As OrmBase
+            Return OrmManagerBase.CurrentManager.Find(_id, _t)
+        End Function
+
+        Public ReadOnly Property OrmType() As Type
+            Get
+                Return _t
+            End Get
+        End Property
+
+        Public ReadOnly Property ID() As Integer
+            Get
+                Return _id
+            End Get
+        End Property
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, EntityProxy))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As EntityProxy) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+            Return _t Is obj._t AndAlso _id = obj._id
+        End Function
+
+        Public Overrides Function GetHashCode() As Integer
+            Return _t.GetHashCode() Xor _id.GetHashCode
+        End Function
+    End Class
+
+    <Serializable()> _
+    Public Class EntityField
+        Private _field As String
+        Private _t As Type
+
+        Public Sub New(ByVal field As String, ByVal type As Type)
+            _field = field
+            _t = type
+        End Sub
+
+        Public ReadOnly Property OrmType() As Type
+            Get
+                Return _t
+            End Get
+        End Property
+
+        Public ReadOnly Property Field() As String
+            Get
+                Return _field
+            End Get
+        End Property
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, EntityField))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As EntityField) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+            Return _t Is obj._t AndAlso _field = obj._field
+        End Function
+
+        Public Overrides Function GetHashCode() As Integer
+            Return _t.GetHashCode() Xor _field.GetHashCode
+        End Function
+    End Class
 End Namespace

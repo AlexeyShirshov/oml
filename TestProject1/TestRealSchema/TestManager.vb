@@ -7,6 +7,7 @@ Imports System.Diagnostics
 
 <TestClass()> _
 Public Class TestManagerRS
+    Implements Orm.OrmManagerBase.INewObjects
 
     Private _schemas As New Collections.Hashtable
     Public Function GetSchema(ByVal v As String) As Orm.DbSchema
@@ -39,7 +40,9 @@ Public Class TestManagerRS
     End Function
 
     Public Function CreateManager(ByVal schema As Orm.DbSchema) As Orm.OrmReadOnlyDBManager
-        Return New Orm.OrmDBManager(GetCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & My.Settings.WormRoot & "\TestProject1\Databases\wormtest.mdf';User Instance=true;Integrated security=true;")
+        Dim mgr As New Orm.OrmDBManager(GetCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & My.Settings.WormRoot & "\TestProject1\Databases\wormtest.mdf';User Instance=true;Integrated security=true;")
+        mgr.NewObjectManager = Me
+        Return mgr
     End Function
 
     Private _l As Boolean
@@ -757,5 +760,40 @@ Public Class TestManagerRS
 
             System.Diagnostics.Trace.WriteLine(mgr.Cache.GetLoadTime(GetType(Table1)).Second.ToString)
         End Using
+    End Sub
+
+    Private _id As Integer = -100
+    Private _new_objects As New Dictionary(Of Integer, Orm.OrmBase)
+
+    Public Sub AddNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.Orm.OrmManagerBase.INewObjects.AddNew
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
+
+        _new_objects.Add(obj.Identifier, obj)
+    End Sub
+
+    Public Function GetIdentity() As Integer Implements Worm.Orm.OrmManagerBase.INewObjects.GetIdentity
+        Dim i As Integer = _id
+        _id += -1
+        Return i
+    End Function
+
+    Public Function GetNew(ByVal t As System.Type, ByVal id As Integer) As Worm.Orm.OrmBase Implements Worm.Orm.OrmManagerBase.INewObjects.GetNew
+        Dim o As Orm.OrmBase = Nothing
+        _new_objects.TryGetValue(id, o)
+        Return o
+    End Function
+
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Integer) Implements Worm.Orm.OrmManagerBase.INewObjects.RemoveNew
+        _new_objects.Remove(id)
+    End Sub
+
+    Public Sub RemoveNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.Orm.OrmManagerBase.INewObjects.RemoveNew
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
+
+        _new_objects.Remove(obj.Identifier)
     End Sub
 End Class

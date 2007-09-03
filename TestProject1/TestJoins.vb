@@ -466,7 +466,7 @@ End Class
 
         Dim o As New Entity(1, Nothing, schema)
 
-        Assert.AreEqual(f.MakeHash, f.Template.MakeHash(schema, o))
+        Assert.AreEqual(f.MakeHash, f.Template.MakeHash(schema, Nothing, o))
     End Sub
 
     <TestMethod()> _
@@ -487,7 +487,7 @@ End Class
 
         Dim o As New Entity2(1, Nothing, schema)
 
-        Assert.AreEqual(CType(cAnd.Condition, Orm.IEntityFilter).MakeHash, CType(cAnd.Condition, Orm.IEntityFilter).GetFilterTemplate.MakeHash(schema, o))
-        Assert.AreEqual(Orm.EntityFilter.EmptyHash, CType(cOr.Condition, Orm.IEntityFilter).GetFilterTemplate.MakeHash(schema, o))
+        Assert.AreEqual(CType(cAnd.Condition, Orm.IEntityFilter).MakeHash, CType(cAnd.Condition, Orm.IEntityFilter).GetFilterTemplate.MakeHash(schema, Nothing, o))
+        Assert.AreEqual(Orm.EntityFilter.EmptyHash, CType(cOr.Condition, Orm.IEntityFilter).GetFilterTemplate.MakeHash(schema, Nothing, o))
     End Sub
 End Class
