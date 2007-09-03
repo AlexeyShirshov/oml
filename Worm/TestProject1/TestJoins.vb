@@ -455,4 +455,39 @@ End Class
         Dim f3 As New Orm.JoinFilter(schema.GetTables(GetType(Entity2))(0), "ID", t, "ID", Orm.FilterOperation.GreaterEqualThan)
         Orm.JoinFilter.ChangeEntityJoinToLiteral(f3, GetType(Entity), "ID", "pmqer")
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestMakeHash()
+        Dim schema As New Orm.DbSchema("1")
+        Dim t As Type = GetType(Entity)
+
+        Dim f As New Orm.EntityFilter(t, "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Assert.AreEqual(f.ToString, f.MakeHash)
+
+        Dim o As New Entity(1, Nothing, schema)
+
+        Assert.AreEqual(f.MakeHash, f.Template.MakeHash(schema, o))
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestMakeHash2()
+        Dim schema As New Orm.DbSchema("1")
+        Dim t As Type = GetType(Entity2)
+
+        Dim f As New Orm.EntityFilter(t, "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Dim f2 As New Orm.EntityFilter(t, "Str", New Orm.SimpleValue("d"), Orm.FilterOperation.Like)
+        Dim cAnd As New Orm.Condition.ConditionConstructor
+        cAnd.AddFilter(f).AddFilter(f2)
+
+        Dim cOr As New Orm.Condition.ConditionConstructor
+        cOr.AddFilter(f).AddFilter(f2, Orm.ConditionOperator.Or)
+
+        Assert.AreEqual(f.ToString, CType(cAnd.Condition, Orm.IEntityFilter).MakeHash)
+        Assert.AreEqual(CType(cOr.Condition, Orm.IEntityFilter).MakeHash, Orm.EntityFilter.EmptyHash)
+
+        Dim o As New Entity2(1, Nothing, schema)
+
+        Assert.AreEqual(CType(cAnd.Condition, Orm.IEntityFilter).MakeHash, CType(cAnd.Condition, Orm.IEntityFilter).GetFilterTemplate.MakeHash(schema, o))
+        Assert.AreEqual(Orm.EntityFilter.EmptyHash, CType(cOr.Condition, Orm.IEntityFilter).GetFilterTemplate.MakeHash(schema, o))
+    End Sub
 End Class
