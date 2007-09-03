@@ -311,7 +311,13 @@ Namespace Orm
                 Throw New ArgumentNullException("type")
             End If
 
-            Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
+            Return ChangeValueType(GetObjectSchema(type), c, o)
+        End Function
+
+        Public Function ChangeValueType(ByVal schema As IOrmObjectSchemaBase, ByVal c As ColumnAttribute, ByVal o As Object) As Object
+            If schema Is Nothing Then
+                Throw New ArgumentNullException("schema")
+            End If
 
             If o Is Nothing Then Return DBNull.Value
 
@@ -338,23 +344,36 @@ Namespace Orm
             Return v
         End Function
 
+        '<CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
+        'Protected Function GetFieldTable(ByVal type As Type, ByVal field As String) As OrmTable
+        '    If type Is Nothing Then
+        '        Throw New ArgumentNullException("type")
+        '    End If
+
+        '    Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
+
+        '    Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
+
+        '    Try
+        '        Return coll(field)._tableName
+        '    Catch ex As Exception
+        '        Throw New DBSchemaException("Unknown field name: " & field, ex)
+        '    End Try
+        'End Function
+
         <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
-        Protected Function GetFieldTable(ByVal type As Type, ByVal field As String) As OrmTable
-            If type Is Nothing Then
-                Throw New ArgumentNullException("type")
+        Protected Function GetFieldTable(ByVal schema As IOrmObjectSchemaBase, ByVal field As String) As OrmTable
+            If schema Is Nothing Then
+                Throw New ArgumentNullException("schema")
             End If
 
-            Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
-
             Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
-
             Try
                 Return coll(field)._tableName
             Catch ex As Exception
                 Throw New DBSchemaException("Unknown field name: " & field, ex)
             End Try
         End Function
-
         'Public ReadOnly Property IsExternalSort(ByVal sort As String, ByVal type As Type) As Boolean
         '    Get
         '        If type Is Nothing Then
@@ -402,15 +421,17 @@ Namespace Orm
 #End Region
 
 #Region " Helpers "
-        Protected Sub GetPKList(ByVal type As Type, ByVal ids As StringBuilder)
-            If ids Is Nothing Then
-                Throw New ArgumentNullException("ids")
-            End If
+        Protected Sub GetPKList(ByVal schema As IOrmObjectSchemaBase, ByVal ids As StringBuilder)
+            'If ids Is Nothing Then
+            '    Throw New ArgumentNullException("ids")
+            'End If
 
-            For Each pk As String In GetPrimaryKeysName(type)
-                ids.Append(pk).Append(",")
-            Next
-            ids.Length -= 1
+            'For Each pk As String In GetPrimaryKeysName(type)
+            '    ids.Append(pk).Append(",")
+            'Next
+            'ids.Length -= 1            
+            Dim p As MapField2Column = schema.GetFieldColumnMap("ID")
+            ids.Append(p._tableName.TableName).Append(".").Append(p._columnName)
         End Sub
 
         Public Function HasField(ByVal t As Type, ByVal field As String) As Boolean
@@ -632,6 +653,41 @@ Namespace Orm
 
         '    Return sb.ToString
         'End Function
+
+        Protected Friend Function GetJoinFieldNameByType(ByVal mainType As Type, ByVal subType As Type, ByVal oschema As IOrmObjectSchemaBase) As String
+            Dim j As IJoinBehavior = TryCast(oschema, IJoinBehavior)
+            Dim r As String = Nothing
+            If j IsNot Nothing Then
+                r = j.GetJoinField(subType)
+            Else
+                Dim c As ICollection(Of String) = GetFieldNameByType(mainType, subType)
+                If c.Count = 1 Then
+                    For Each s As String In c
+                        r = s
+                    Next
+                End If
+            End If
+            Return r
+        End Function
+
+        Public Function GetJoinObj(ByVal oschema As IOrmObjectSchemaBase, _
+            ByVal obj As OrmBase, ByVal subType As Type) As OrmBase
+            Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, oschema)
+            Dim r As OrmBase = Nothing
+            If Not String.IsNullOrEmpty(c) Then
+                Dim o As Object = GetFieldValue(obj, c, oschema)
+                r = TryCast(o, OrmBase)
+                If r Is Nothing Then
+                    Try
+                        Dim id As Integer = Convert.ToInt32(o)
+                        r = OrmManagerBase.CurrentManager.Find(id, subType)
+                    Catch ex As InvalidCastException
+                    End Try
+                End If
+            End If
+            Return r
+        End Function
+
 
         Protected Function GetColumnNameByFieldName(ByVal type As Type, ByVal field As String) As String
             Return GetColumnNameByFieldNameInternal(type, field)

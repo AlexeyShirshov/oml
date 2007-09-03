@@ -397,7 +397,7 @@ End Class
 
         Assert.AreEqual("1", schema.Version)
 
-        schema.GetTables(Nothing)
+        schema.GetTables(CType(Nothing, Type))
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _

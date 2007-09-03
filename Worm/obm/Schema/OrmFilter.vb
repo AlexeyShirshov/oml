@@ -140,8 +140,8 @@ Namespace Orm
 #End Region
 
     Public Interface IOrmFilterTemplate
-        Function MakeHash(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As String
-        Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As IEntityFilter
+        Function MakeHash(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As String
+        Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter
         Sub SetType(ByVal t As Type)
     End Interface
 
@@ -410,7 +410,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public MustOverride Function MakeSingleStmt(ByVal schema As DbSchema, ByVal pname As ICreateParam) As CoreFramework.Structures.Pair(Of String) Implements ITemplateFilter.MakeSingleStmt
+        Public MustOverride Function MakeSingleStmt(ByVal schema As DbSchema, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleStmt
     End Class
 
     Public Class TableFilter
@@ -453,7 +453,7 @@ Namespace Orm
             Return New TableFilter() {Me}
         End Function
 
-        Public Overrides Function MakeSingleStmt(ByVal schema As DbSchema, ByVal pname As ICreateParam) As CoreFramework.Structures.Pair(Of String)
+        Public Overrides Function MakeSingleStmt(ByVal schema As DbSchema, ByVal pname As ICreateParam) As Pair(Of String)
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -484,18 +484,22 @@ Namespace Orm
             '_appl = appl
         End Sub
 
-        Public Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As IEntityFilter Implements IOrmFilterTemplate.MakeFilter
+        Public Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter Implements IOrmFilterTemplate.MakeFilter
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
 
             If obj.GetType IsNot _t Then
-                Throw New ArgumentException(String.Format("Template type {0} is not match {1}", _t.ToString, obj.GetType))
+                Dim o As OrmBase = schema.GetJoinObj(oschema, obj, _t)
+                If o Is Nothing Then
+                    Throw New ArgumentException(String.Format("Template type {0} is not match {1}", _t.ToString, obj.GetType))
+                End If
+                Return MakeFilter(schema, schema.GetObjectSchema(_t), o)
+            Else
+                Dim v As Object = schema.GetFieldValue(obj, _fieldname, oschema)
+
+                Return New EntityFilter(_t, _fieldname, New SimpleValue(v), Operation)
             End If
-
-            Dim v As Object = schema.GetFieldValue(obj, _fieldname)
-
-            Return New EntityFilter(_t, _fieldname, New SimpleValue(v), Operation)
         End Function
 
         Public ReadOnly Property Type() As Type
@@ -535,9 +539,9 @@ Namespace Orm
             Return _t.ToString & _fieldname & Oper2String()
         End Function
 
-        Public Function MakeHash(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As String Implements IOrmFilterTemplate.MakeHash
+        Public Function MakeHash(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As String Implements IOrmFilterTemplate.MakeHash
             If Operation = FilterOperation.Equal Then
-                Return MakeFilter(schema, obj).ToString
+                Return MakeFilter(schema, oschema, obj).ToString
             Else
                 Return EntityFilter.EmptyHash
             End If
@@ -550,6 +554,7 @@ Namespace Orm
 
         'Private _templ As OrmFilterTemplate
         Private _str As String
+        Private _oschema As IOrmObjectSchemaBase
 
         Public Const EmptyHash As String = "fd_empty_hash_aldf"
 
@@ -579,7 +584,11 @@ Namespace Orm
                 Throw New ArgumentNullException("schema")
             End If
 
-            Dim map As MapField2Column = schema.GetObjectSchema(Template.Type).GetFieldColumnMap()(Template.FieldName)
+            If _oschema Is Nothing Then
+                _oschema = schema.GetObjectSchema(Template.Type)
+            End If
+
+            Dim map As MapField2Column = _oschema.GetFieldColumnMap()(Template.FieldName)
             Dim [alias] As String = String.Empty
 
             If tableAliases IsNot Nothing Then
@@ -663,6 +672,11 @@ Namespace Orm
                     End If
 
                     Return r
+                Else
+                    Dim o As OrmBase = schema.GetJoinObj(oschema, obj, Template.Type)
+                    If o IsNot Nothing Then
+                        Return Eval(schema, o, schema.GetObjectSchema(Template.Type))
+                    End If
                 End If
             End If
 
@@ -681,7 +695,7 @@ Namespace Orm
         End Function
 
         Public Function PrepareValue(ByVal schema As OrmSchemaBase, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue
-            Return schema.ChangeValueType(Template.Type, schema.GetColumnByFieldName(Template.Type, Template.FieldName), v)
+            Return schema.ChangeValueType(_oschema, New ColumnAttribute(Template.FieldName), v)
         End Function
 
         'Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -708,10 +722,14 @@ Namespace Orm
                 Throw New ArgumentNullException("pname")
             End If
 
+            If _oschema Is Nothing Then
+                _oschema = schema.GetObjectSchema(Template.Type)
+            End If
+
             Dim prname As String = Value.GetParam(schema, pname, Me)
 
+            Dim map As MapField2Column = _oschema.GetFieldColumnMap()(Template.FieldName)
 
-            Dim map As MapField2Column = schema.GetObjectSchema(Template.Type).GetFieldColumnMap()(Template.FieldName)
             Dim v As IEvaluableValue = TryCast(Value, IEvaluableValue)
             If v IsNot Nothing AndAlso v.Value Is DBNull.Value Then
                 If schema.GetFieldTypeByName(Template.Type, Template.FieldName) Is GetType(Byte()) Then
@@ -1116,7 +1134,7 @@ Namespace Orm
             Return Nothing
         End Function
 
-        Public Function MakeSingleStmt(ByVal schema As DbSchema, ByVal pname As ICreateParam) As CoreFramework.Structures.Pair(Of String) Implements ITemplateFilter.MakeSingleStmt
+        Public Function MakeSingleStmt(ByVal schema As DbSchema, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleStmt
             Throw New NotSupportedException
         End Function
 
@@ -1144,12 +1162,12 @@ Namespace Orm
                 _con = con
             End Sub
 
-            Public Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As IEntityFilter Implements IOrmFilterTemplate.MakeFilter
+            Public Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter Implements IOrmFilterTemplate.MakeFilter
                 Dim r As IEntityFilter = Nothing
                 If _con._right IsNot Nothing Then
-                    r = _con.Right.GetFilterTemplate.MakeFilter(schema, obj)
+                    r = _con.Right.GetFilterTemplate.MakeFilter(schema, oschema, obj)
                 End If
-                Dim e As New EntityCondition(_con.Left.GetFilterTemplate.MakeFilter(schema, obj), r, _con._oper)
+                Dim e As New EntityCondition(_con.Left.GetFilterTemplate.MakeFilter(schema, oschema, obj), r, _con._oper)
                 Return e
             End Function
 
@@ -1170,10 +1188,10 @@ Namespace Orm
                 Return s.ToString
             End Function
 
-            Public Function MakeHash(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase) As String Implements IOrmFilterTemplate.MakeHash
-                Dim l As String = _con.Left.GetFilterTemplate.MakeHash(schema, obj)
+            Public Function MakeHash(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As String Implements IOrmFilterTemplate.MakeHash
+                Dim l As String = _con.Left.GetFilterTemplate.MakeHash(schema, oschema, obj)
                 If _con._right IsNot Nothing Then
-                    Dim r As String = _con.Right.GetFilterTemplate.MakeHash(schema, obj)
+                    Dim r As String = _con.Right.GetFilterTemplate.MakeHash(schema, oschema, obj)
                     If r = EntityFilter.EmptyHash Then
                         If _con._oper <> ConditionOperator.And Then
                             l = r

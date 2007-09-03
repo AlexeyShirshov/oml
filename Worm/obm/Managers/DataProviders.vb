@@ -51,19 +51,24 @@ Namespace Orm
 
             Public Overrides Sub CreateDepends()
                 If Not _mgr._dont_cache_lists Then
-                    _mgr.Cache.AddDependType(GetType(T), _key, _id)
-
                     If _f IsNot Nothing Then
+                        Dim tt As System.Type = GetType(T)
+                        Dim cache As OrmCacheBase = _mgr.Cache
+                        cache.AddDependType(tt, _key, _id, _f)
+
                         For Each f As EntityFilter In _f.GetAllFilters
                             Dim v As EntityValue = TryCast(f.Value, EntityValue)
                             If v IsNot Nothing Then
                                 'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
                                 'If GetType(OrmBase).IsAssignableFrom(tp) Then
-                                _mgr.Cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
+                                cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
                                 'End If
                             Else
                                 Dim p As New Pair(Of String, Type)(f.Template.FieldName, f.Template.Type)
-                                _mgr.Cache.AddFieldDepend(p, _key, _id)
+                                cache.AddFieldDepend(p, _key, _id)
+                            End If
+                            If tt IsNot f.Template.Type Then
+                                cache.AddJoinDepend(f.Template.Type, tt)
                             End If
                         Next
                     End If
@@ -196,227 +201,6 @@ Namespace Orm
                 sb.Append(_mgr.DbSchema.SelectID(t, almgr, pmgr))
             End Sub
         End Class
-
-        'Protected Class FilterCustDelegate4Top(Of T As {New, OrmBase})
-        '    Inherits FilterCustDelegate(Of T)
-
-        '    Private _top As Integer
-
-        '    Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal top As Integer, ByVal f As IOrmFilter, _
-        '        ByVal sort As Sort, ByVal key As String, ByVal id As String)
-        '        MyBase.New(mgr, f, sort, key, id)
-        '        _top = top
-        '    End Sub
-
-        '    Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-        '        sb.Append(Schema.SelectTop(_top, t, almgr, pmgr, arr))
-        '    End Sub
-
-        '    Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-        '        sb.Append(Schema.SelectIDTop(_top, t, almgr, pmgr))
-        '    End Sub
-        'End Class
-
-        '        Protected Class M2MCustDelegate(Of T As {New, OrmBase})
-        '            Inherits BaseDataProvider(Of T)
-
-        '            Private _obj As OrmBase
-        '            Private _sync As String
-        '            Private _rev As Boolean
-        '            Private _soft_renew As Boolean
-
-        '            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As OrmBase, ByVal filter As IOrmFilter, ByVal sort As String, ByVal st As SortType, _
-        '                ByVal id As String, ByVal sync As String, ByVal key As String, ByVal rev As Boolean)
-        '                MyBase.New(mgr, filter, sort, st, key, id)
-        '                _obj = obj
-        '                _sync = sync & OrmManagerBase.GetTablePostfix
-        '                _rev = rev
-        '            End Sub
-
-        '            Public Overrides Function GetValues(ByVal withLoad As Boolean) As System.Collections.Generic.ICollection(Of T)
-        '                Dim type As Type = GetType(T)
-        '                Dim dt As System.Data.DataTable = _mgr.GetDataTable(_id, _key & OrmManagerBase.GetTablePostfix, _sync, type, _obj, _f, _rev, True, Renew And Not _soft_renew)
-        '                Dim id_clm As String = type.Name & "ID"
-        '                If type Is _obj.GetType Then
-        '                    id_clm = id_clm & "Rev"
-        '                End If
-        '                Dim forse_load As Boolean = False
-        '                Dim loaded As Integer = 0, not_loaded As Integer = 0
-        'l1:
-        '                Dim present As List(Of T) = New List(Of T)
-        '                Dim load_ids As New Collections.IntList
-
-        '                Using SyncHelper.AcquireDynamicLock(_sync)
-        '                    Dim dic_ids As New Specialized.OrderedDictionary
-
-        '                    For Each dr As System.Data.DataRow In dt.Rows
-        '                        If dr.RowState = System.Data.DataRowState.Deleted Then Continue For
-        '                        Dim id As Integer = CInt(dr(id_clm))
-        '                        If forse_load Then
-        '                            If Not dic_ids.Contains(id) Then
-        '                                dic_ids.Add(id, Nothing)
-        '                                not_loaded += 1
-        '                            End If
-        '                            load_ids.Append(id)
-        '                        Else
-        '                            Dim dic As IDictionary(Of Integer, T) = _mgr.GetDictionary(Of T)()
-
-        '                            Dim obj As T = Nothing
-        '                            If Not dic.TryGetValue(id, obj) Then
-        '                                If _mgr.NewObjectManager IsNot Nothing Then
-        '                                    obj = CType(_mgr.NewObjectManager.GetNew(type, id), T)
-        '                                End If
-
-        '                                If obj Is Nothing Then
-        '                                    load_ids.Append(id)
-        '                                Else
-        '                                    present.Add(obj)
-        '                                    'If obj.IsLoaded Then loaded += 1
-        '                                End If
-        '                            Else
-        '                                present.Add(obj)
-        '                                'If obj.IsLoaded Then loaded += 1
-        '                            End If
-
-        '                            If Not dic_ids.Contains(id) Then
-        '                                dic_ids.Add(id, Nothing)
-
-        '                                If obj Is Nothing Then
-        '                                    not_loaded += 1
-        '                                ElseIf obj.IsLoaded Then
-        '                                    loaded += 1
-        '                                End If
-        '                                'Else
-        '                                'Throw New OrmManagerException(String.Format("Many to many relation is not seems to be unique. Relation {0} to {1}. Duplicate value {2}:{3}.", type, _obj.GetType, id_clm, id))
-        '                            End If
-        '                        End If
-        '                    Next
-        '                End Using
-
-        '                If load_ids.Count > 0 Then
-        '                    Dim sort_on_client As Boolean = not_loaded < 10
-        '                    If Not sort_on_client Then
-        '                        For Each o As OrmBase In present
-        '                            If o.ObjectState <> ObjectState.Created Then load_ids.Append(o.Identifier)
-        '                        Next
-        '                    End If
-
-        '                    Dim loaded_objects As New List(Of T)
-
-        '                    If String.IsNullOrEmpty(_sort) Then
-        '                        loaded_objects.AddRange(_mgr.ConvertIds2Objects(Of T)(load_ids.Ints, False))
-        '                        If withLoad Then
-        '                            _mgr.LoadObjects(loaded_objects)
-        '                        End If
-
-        '                        For Each o As T In present
-        '                            If o.ObjectState = ObjectState.Created OrElse sort_on_client Then
-        '                                loaded_objects.Add(o)
-        '                            End If
-        '                        Next
-
-        '                        present = loaded_objects
-        '                    Else
-        '                        _mgr.GetObjects(Of T)(load_ids.Ints, Nothing, loaded_objects, sort_on_client OrElse withLoad, "ID", False)
-
-        '                        If sort_on_client Then
-        '                            loaded_objects.AddRange(present)
-        '                        Else
-        '                            For Each o As T In present
-        '                                If o.ObjectState = ObjectState.Created Then
-        '                                    loaded_objects.Add(o)
-        '                                End If
-        '                            Next
-        '                        End If
-
-        '                        If _mgr.Schema.IsExternalSort(_sort, type) Then
-        '                            present = _mgr.Schema.ExternalSort(Of T)(_sort, _st, loaded_objects)
-        '                        Else
-        '                            If sort_on_client Then
-        '                                CType(loaded_objects, List(Of T)).Sort(CType(loaded_objects(0), OrmBase).CreateSortComparer(Of T)(_sort, _st))
-        '                            End If
-        '                            present = loaded_objects
-        '                        End If
-        '                    End If
-        '                ElseIf Not String.IsNullOrEmpty(_sort) Then
-        '                    If _mgr.Schema.IsExternalSort(_sort, type) Then
-        '                        present = _mgr.Schema.ExternalSort(Of T)(_sort, _st, present)
-        '                    ElseIf present.Count > 0 Then
-        '                        Dim sort_on_client As Boolean = (dt.Rows.Count - loaded) < 10
-
-        '                        If sort_on_client Then
-        '                            CType(present, List(Of T)).Sort(CType(present(0), OrmBase).CreateSortComparer(Of T)(_sort, _st))
-        '                        Else
-        '                            forse_load = True
-        '                            For Each obj As T In New List(Of T)(present)
-        '                                If obj.ObjectState <> ObjectState.Created Then present.Remove(obj)
-        '                            Next
-        '                            GoTo l1
-        '                        End If
-        '                    End If
-        '                End If
-
-        '                Return present
-        '            End Function
-
-        '            Public Overrides Function Validate(ByVal ce As OrmManagerBase.CachedItem) As Boolean
-        '                Dim tt As System.Type = GetType(T)
-
-        '                'Dim cnt As Type = _mgr.DatabaseSchema.GetConnectedType(_obj.GetType, tt)
-
-        '                'If cnt IsNot Nothing Then
-        '                '    If _mgr.Cache.IsAddOrDelete(cnt) Then
-        '                '        Return False
-        '                '    End If
-        '                'End If
-
-        '                Dim dt As System.Data.DataTable = _mgr.GetDataTable(_id, _key & OrmManagerBase.GetTablePostfix, _sync, tt, _obj, _f, _rev, True, False)
-        '                Dim existing As ICollection(Of T) = ce.GetObjectList(Of T)(_mgr, False, False)
-        '                Using SyncHelper.AcquireDynamicLock(_sync)
-        '                    Dim b As Boolean = dt.Select(Nothing, Nothing, System.Data.DataViewRowState.CurrentRows).Length = existing.Count
-        '                    If Not b Then
-        '                        _soft_renew = True
-        '                    End If
-        '                    Return b
-        '                End Using
-        '            End Function
-
-        '            Public Overrides ReadOnly Property SmartSort() As Boolean
-        '                Get
-        '                    Return False
-        '                End Get
-        '            End Property
-
-        '            Public Overrides Sub CreateDepends()
-        '                Dim tt As System.Type = GetType(T)
-
-        '                _mgr.Cache.AddDependType(tt, _key, _id)
-        '                _mgr.Cache.AddDependType(tt, _key & OrmManagerBase.GetTablePostfix, _id)
-
-        '                Dim cnt As Type = _mgr.DatabaseSchema.GetConnectedType(_obj.GetType, tt)
-        '                If cnt IsNot Nothing Then
-        '                    _mgr.Cache.AddDependType(cnt, _key, _id)
-        '                    _mgr.Cache.AddDependType(cnt, _key & OrmManagerBase.GetTablePostfix, _id)
-        '                End If
-
-        '                If _f IsNot Nothing Then
-        '                    For Each f As OrmFilter In _f.GetAllFilters
-        '                        'Dim tp As Type = _mgr.Schema.GetFieldTypeByName(f.Type, f.FieldName)
-        '                        If f.IsParamOrm Then 'AndAlso GetType(OrmBase).IsAssignableFrom(tp) Then
-        '                            'Dim tp As Type = f.Value.GetType
-        '                            Dim k As OrmBase = f.ValueOrm(_mgr) 'CType(f.Value, OrmBase)
-        '                            _mgr.Cache.AddDepend(k, _key, _id)
-        '                            _mgr.Cache.AddDepend(k, _key & OrmManagerBase.GetTablePostfix, _id)
-        '                        Else 'If f.IsParamValue Then
-        '                            Dim p As New Pair(Of String, Type)(f.FieldName, f.Type)
-        '                            _mgr.Cache.AddFieldDepend(p, _key, _id)
-        '                            _mgr.Cache.AddFieldDepend(p, _key & OrmManagerBase.GetTablePostfix, _id)
-        '                        End If
-        '                    Next
-        '                End If
-        '            End Sub
-
-        '        End Class
 
         Protected Class JoinCustDelegate(Of T As {New, OrmBase})
             Inherits FilterCustDelegate(Of T)

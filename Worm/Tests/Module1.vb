@@ -48,6 +48,9 @@ Module Module1
         Using mgr As Worm.Orm.OrmReadOnlyDBManager = New Worm.Orm.OrmDBManager(New Worm.Orm.OrmCache, New Worm.Orm.DbSchema("1"), "Data Source=vs2\sqlmain;Initial catalog=Wormtest;Integrated security=true;")
             For i As Integer = 0 To 10000
                 mgr.Find(Of TestProject1.Table1)(Worm.Orm.Criteria.Field(GetType(TestProject1.Table1), "ID").Eq(i + 1000), Nothing, False)
+                If i Mod 1000 = 0 Then
+                    Console.WriteLine(i / 1000)
+                End If
             Next
             Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.DbSchema)
             t.CreatedAt = Now

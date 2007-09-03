@@ -156,7 +156,7 @@ End Class
 
 Public Class Table1Implementation
     Inherits ObjectSchemaBaseImplementation
-    Implements IOrmDictionary, IOrmSchemaInit, IOrmSorting
+    Implements IOrmDictionary, IOrmSchemaInit, IOrmSorting, IJoinBehavior
 
     Private _idx As Orm.OrmObjectIndex
     'Private _schema As OrmSchemaBase
@@ -313,6 +313,18 @@ Public Class Table1Implementation
         End Function
     End Class
 
+    Public ReadOnly Property AlwaysJoinMainTable() As Boolean Implements Worm.Orm.IJoinBehavior.AlwaysJoinMainTable
+        Get
+            Return False
+        End Get
+    End Property
+
+    Public Function GetJoinField(ByVal t As System.Type) As String Implements Worm.Orm.IJoinBehavior.GetJoinField
+        If t Is GetType(Table2) Then
+            Return "ID"
+        End If
+        Return Nothing
+    End Function
 End Class
 
 Public Class Table12Implementation

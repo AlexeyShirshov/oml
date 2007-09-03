@@ -110,6 +110,7 @@
     <Compile Include="Managers\OrmManagerBase.vb">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Relation.vb" />
     <Compile Include="Schema\DbSchema.vb" />
     <Compile Include="Schema\InterfacesAndClasses.vb" />
     <Compile Include="Schema\OrmFilter.vb" />

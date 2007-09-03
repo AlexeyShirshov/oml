@@ -639,7 +639,7 @@ Namespace Orm
                     '    arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
                     '    sb.Append(Schema.SelectID(ct, almgr, params))
                     'End If
-                    Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse TryCast(schema2, IAlwaysJoinMainTable) IsNot Nothing
+                    Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse DbSchema.NeedJoin(schema2)
                     'Dim table As String = schema2.GetTables(0)
                     DbSchema.AppendJoins(selectedType, almgr, schema2.GetTables, sb, params, DbSchema.GetObjectSchema(ct).GetTables(0), id_clm, appendMainTable)
                     If withLoad Then

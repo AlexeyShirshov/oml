@@ -1020,7 +1020,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Function Find(ByVal id As Integer, ByVal t As Type) As OrmBase
+        Protected Friend Function Find(ByVal id As Integer, ByVal t As Type) As OrmBase
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
             Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Integer)}, Nothing)
             Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
