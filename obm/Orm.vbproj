@@ -138,6 +138,7 @@
     <Compile Include="SQL2005Schema.vb" />
     <Compile Include="storedprocs.vb" />
     <Compile Include="Web\Listener.vb" />
+    <Compile Include="Web\Management.vb" />
     <Compile Include="Web\Membership.vb" />
     <Compile Include="Web\Profile.vb" />
     <Compile Include="Web\Role.vb" />
