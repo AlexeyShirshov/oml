@@ -36,6 +36,11 @@ Namespace Orm
         End Function
     End Class
 
+    Public Interface IExploreCache
+        Function GetAllKeys() As ArrayList
+        Function GetDictionary(ByVal key As Object) As IDictionary
+    End Interface
+
     Public MustInherit Class OrmCacheBase
 
 #Region " Classes "
@@ -268,7 +273,7 @@ Namespace Orm
 
 #End Region
 
-        Public MustOverride Function GetFiltersDic() As IDictionary
+        Public MustOverride Function CreateResultsetsDictionary() As IDictionary
 
         Public MustOverride Function GetOrmDictionary(ByVal t As Type, ByVal schema As OrmSchemaBase) As System.Collections.IDictionary
 
@@ -825,6 +830,7 @@ Namespace Orm
 
     Public Class OrmCache
         Inherits OrmCacheBase
+        Implements IExploreCache
 
         Private _dics As IDictionary = Hashtable.Synchronized(New Hashtable)
 
@@ -832,7 +838,7 @@ Namespace Orm
             _dics = Hashtable.Synchronized(New Hashtable)
         End Sub
 
-        Public Overrides Function GetFiltersDic() As System.Collections.IDictionary
+        Public Overrides Function CreateResultsetsDictionary() As System.Collections.IDictionary
             Return Hashtable.Synchronized(New Hashtable)
         End Function
 
@@ -869,6 +875,14 @@ Namespace Orm
             Dim gt As Type = GetType(Collections.HybridDictionary(Of ))
             gt = gt.MakeGenericType(New Type() {t})
             Return CType(gt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IDictionary)
+        End Function
+
+        Public Function GetAllKeys() As System.Collections.ArrayList Implements IExploreCache.GetAllKeys
+            Return New ArrayList(_dics.Keys)
+        End Function
+
+        Public Function GetDictionary(ByVal key As Object) As System.Collections.IDictionary Implements IExploreCache.GetDictionary
+            Return CType(_dics(key), System.Collections.IDictionary)
         End Function
     End Class
 
