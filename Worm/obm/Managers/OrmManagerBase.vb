@@ -2837,7 +2837,7 @@ l1:
                 Using SyncHelper.AcquireDynamicLock(key)
                     dic = CType(cache.Filters(key), IDictionary)
                     If dic Is Nothing Then
-                        dic = cache.GetFiltersDic() 'Hashtable.Synchronized(New Hashtable)
+                        dic = cache.CreateResultsetsDictionary() 'Hashtable.Synchronized(New Hashtable)
                         cache.Filters.Add(key, dic)
                     End If
                 End Using

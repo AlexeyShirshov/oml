@@ -50,11 +50,14 @@ Namespace Web
         End Sub
 
         Public Overrides Sub ProcessEvent(ByVal eventRaised As System.Web.Management.WebBaseEvent)
-            eventRaised = TransformEvent(eventRaised)
-            If UseBuffering Then
-                MyBase.ProcessEvent(eventRaised)
-            Else
-                LogEvent(eventRaised)
+            For Each ev As WebBaseEvent In TransformEvent(eventRaised)
+                If UseBuffering Then
+                    MyBase.ProcessEvent(ev)
+                Else
+                    LogEvent(ev)
+                End If
+            Next
+            If Not UseBuffering Then
                 StoreEvents()
             End If
         End Sub
@@ -148,25 +151,14 @@ Namespace Web
             Return _file.Replace("yyyy", Now.Year.ToString).Replace("MM", Now.Month.ToString).Replace("dd", Now.Day.ToString)
         End Function
 
-        Protected Overridable Function TransformEvent(ByVal eventRaised As WebBaseEvent) As WebBaseEvent
-            Return eventRaised
+        Protected Overridable Function TransformEvent(ByVal eventRaised As WebBaseEvent) As ICollection(Of WebBaseEvent)
+            Return New WebBaseEvent() {eventRaised}
         End Function
     End Class
 
-    <AspNetHostingPermission(SecurityAction.LinkDemand, Level:=AspNetHostingPermissionLevel.Minimal), AspNetHostingPermission(SecurityAction.InheritanceDemand, Level:=AspNetHostingPermissionLevel.Minimal)> _
-    Public Class WebProcessStatistic
+    Public MustInherit Class WebEventBase
         Inherits WebBaseEvent
         Implements IRelationalEventData
-
-        Private _appdomainCount As Integer
-        Private _managedHeapSize As Long
-        Private _peakWorkingSet As Long
-        Private _requestsExecuting As Integer
-        Private _requestsQueued As Integer
-        Private _requestsRejected As Integer
-        Private _startTime As DateTime
-        Private _threadCount As Integer
-        Private _workingSet As Long
 
         Private _dt As Date
 
@@ -186,14 +178,43 @@ Namespace Web
             CollectStat()
         End Sub
 
-        Public ReadOnly Property Columns() As System.Collections.Generic.ICollection(Of String) Implements IRelationalEventData.Columns
+        Public ReadOnly Property CreatedAt() As Date Implements IRelationalEventData.CreatedAt
+            Get
+                Return _dt
+            End Get
+        End Property
+
+        Protected MustOverride Sub CollectStat()
+        Public MustOverride ReadOnly Property Columns() As System.Collections.Generic.ICollection(Of String) Implements IRelationalEventData.Columns
+        Public MustOverride Function GetValue(ByVal idx As Integer) As String Implements IRelationalEventData.GetValue
+    End Class
+
+    <AspNetHostingPermission(SecurityAction.LinkDemand, Level:=AspNetHostingPermissionLevel.Minimal), AspNetHostingPermission(SecurityAction.InheritanceDemand, Level:=AspNetHostingPermissionLevel.Minimal)> _
+    Public Class WebProcessStatistic
+        Inherits WebEventBase
+
+        Private _appdomainCount As Integer
+        Private _managedHeapSize As Long
+        Private _peakWorkingSet As Long
+        Private _requestsExecuting As Integer
+        Private _requestsQueued As Integer
+        Private _requestsRejected As Integer
+        Private _startTime As DateTime
+        Private _threadCount As Integer
+        Private _workingSet As Long
+
+        Public Sub New(ByVal e As WebBaseEvent)
+            MyBase.New(e)
+        End Sub
+
+        Public Overrides ReadOnly Property Columns() As System.Collections.Generic.ICollection(Of String)
             Get
                 Return New String() {"AppDomainCount", "ManagedHeapSize", "PeakWorkingSet", "ProcessStartTime", _
                     "RequestsExecuting", "RequestsQueued", "RequestsRejected", "ThreadCount", "WorkingSet"}
             End Get
         End Property
 
-        Protected Sub CollectStat()
+        Protected Overrides Sub CollectStat()
             With New WebProcessStatistics
                 _appdomainCount = .AppDomainCount
                 _managedHeapSize = .ManagedHeapSize
@@ -207,7 +228,7 @@ Namespace Web
             End With
         End Sub
 
-        Public Function GetValue(ByVal idx As Integer) As String Implements IRelationalEventData.GetValue
+        Public Overrides Function GetValue(ByVal idx As Integer) As String
             Select Case idx
                 Case 0
                     Return _appdomainCount.ToString
@@ -232,10 +253,41 @@ Namespace Web
             End Select
         End Function
 
-        Public ReadOnly Property CreatedAt() As Date Implements IRelationalEventData.CreatedAt
+    End Class
+
+    Public MustInherit Class OrmEntityStatBase
+        Inherits WebEventBase
+
+        Private _l As List(Of Pair(Of String, Integer))
+
+        Public Sub New(ByVal e As WebBaseEvent)
+            MyBase.New(e)
+        End Sub
+
+        Protected Overrides Sub CollectStat()
+            _l = New List(Of Pair(Of String, Integer))
+            Dim ce As Worm.Orm.IExploreCache = TryCast(Cache, Orm.IExploreCache)
+            If ce IsNot Nothing Then
+                For Each key As Object In ce.GetAllKeys
+                    _l.Add(New Pair(Of String, Integer)(key.ToString, ce.GetDictionary(key).Count))
+                Next
+            End If
+        End Sub
+
+        Public Overrides ReadOnly Property Columns() As System.Collections.Generic.ICollection(Of String)
             Get
-                Return _dt
+                Dim l As New List(Of String)
+                For Each p As Pair(Of String, Integer) In _l
+                    l.Add(p.First)
+                Next
+                Return l
             End Get
         End Property
+
+        Public Overrides Function GetValue(ByVal idx As Integer) As String
+            Return _l(idx).Second.ToString
+        End Function
+
+        Protected MustOverride ReadOnly Property Cache() As Orm.OrmCacheBase
     End Class
 End Namespace
