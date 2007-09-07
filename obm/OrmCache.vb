@@ -105,7 +105,8 @@ Namespace Orm
         Private _invalidate As New Dictionary(Of Type, List(Of String))
         'Private _relations As New Dictionary(Of Type, List(Of Type))
         Private _object_depends As New Dictionary(Of EntityProxy, Dictionary(Of String, List(Of String)))
-        Private _procs As New List(Of StoredProcBase)
+        Private _procs As New Dictionary(Of String, StoredProcBase)
+        Private _procTypes As New Dictionary(Of Type, List(Of StoredProcBase))
         ''' <summary>
         ''' pair.first - поле
         ''' pair.second - тип
@@ -799,31 +800,71 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Friend Sub AddStoredProc(ByVal sp As StoredProcBase)
+        Private Sub AddStoredProcType(ByVal sp As StoredProcBase, ByVal t As Type)
+            Dim l As List(Of StoredProcBase) = Nothing
+            If _procTypes.TryGetValue(t, l) Then
+                Dim pos As Integer = l.IndexOf(sp)
+                If pos < 0 Then
+                    l.Add(sp)
+                Else
+                    l(pos) = sp
+                End If
+            Else
+                l = New List(Of StoredProcBase)
+                l.Add(sp)
+                _procTypes(t) = l
+            End If
+        End Sub
+
+        Protected Friend Sub AddStoredProc(ByVal key As String, ByVal sp As StoredProcBase)
             Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
-                If sp.Cached AndAlso Not _procs.Contains(sp) Then
-                    _procs.Add(sp)
+                If sp.Cached Then
+                    _procs(key) = sp
+                    Dim types As ICollection(Of Type) = sp.GetTypesToValidate
+                    If types IsNot Nothing AndAlso types.Count > 0 Then
+                        For Each t As Type In types
+                            AddStoredProcType(sp, t)
+                        Next
+                    Else
+                        AddStoredProcType(sp, GetType(Object))
+                    End If
                 End If
             End Using
         End Sub
 
-        Protected Sub ValidateSPOnInsertDelete(ByVal obj As OrmBase)
-            Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
-                For Each sp As StoredProcBase In _procs
+        Private Sub ValidateSPByType(ByVal t As Type, ByVal obj As OrmBase)
+            Dim l As List(Of StoredProcBase) = Nothing
+            If _procTypes.TryGetValue(t, l) Then
+                For Each sp As StoredProcBase In l
                     If Not sp.IsReseted AndAlso sp.ValidateOnInsertDelete(obj) Then
                         sp.ResetCache(Me)
                     End If
                 Next
+            End If
+        End Sub
+
+        Private Sub ValidateUpdateSPByType(ByVal t As Type, ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
+            Dim l As List(Of StoredProcBase) = Nothing
+            If _procTypes.TryGetValue(t, l) Then
+                For Each sp As StoredProcBase In l
+                    If Not sp.IsReseted AndAlso sp.ValidateOnUpdate(obj, fields) Then
+                        sp.ResetCache(Me)
+                    End If
+                Next
+            End If
+        End Sub
+
+        Protected Sub ValidateSPOnInsertDelete(ByVal obj As OrmBase)
+            Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
+                ValidateSPByType(obj.GetType, obj)
+                ValidateSPByType(GetType(Object), obj)
             End Using
         End Sub
 
         Protected Sub ValidateSPOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
             Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
-                For Each sp As StoredProcBase In _procs
-                    If Not sp.IsReseted AndAlso sp.ValidateOnUpdate(obj, fields) Then
-                        sp.ResetCache(Me)
-                    End If
-                Next
+                ValidateUpdateSPByType(obj.GetType, obj, fields)
+                ValidateUpdateSPByType(GetType(Object), obj, fields)
             End Using
         End Sub
     End Class
