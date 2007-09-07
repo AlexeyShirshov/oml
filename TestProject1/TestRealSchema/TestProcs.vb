@@ -170,6 +170,8 @@ Public Class TestProcs
     End Sub
 End Class
 
+#Region " procs "
+
 Public Class P1Proc
     Inherits Orm.QueryStoredProcBase
 
@@ -432,3 +434,5 @@ Public Class MultiR
         Return "dbo.MultiR"
     End Function
 End Class
+
+#End Region
