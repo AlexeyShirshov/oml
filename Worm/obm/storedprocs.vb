@@ -123,7 +123,7 @@ Namespace Orm
                         result = dic(id)
                         If result Is Nothing OrElse Expires Then
                             Expire()
-                            mgr.Cache.AddStoredProc(Me)
+                            mgr.Cache.AddStoredProc(sync, Me)
                             result = Execute(mgr)
                             'PutInCache(dic, id, result)
                             dic(id) = result
@@ -210,6 +210,28 @@ Namespace Orm
                 Next
             End If
             Return False
+        End Function
+
+        Protected Friend Overridable Function GetTypesToValidate() As ICollection(Of Type)
+            Return New Type() {}
+        End Function
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, StoredProcBase))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As StoredProcBase) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+            Return GetSync() = obj.GetSync
+        End Function
+
+        Protected Function GetSync() As String
+            Dim key As String = "StroredProcedure:" & GetName()
+            Dim id As String = GetKey()
+            If String.IsNullOrEmpty(id) Then id = "empty"
+            Return key & id
         End Function
     End Class
 
