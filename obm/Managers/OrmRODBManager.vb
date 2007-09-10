@@ -1252,6 +1252,7 @@ Namespace Orm
             Dim b As ConnAction = TestConn(cmd)
             Dim original_type As Type = GetType(T)
             Try
+                _loadedInLastFetch = 0
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
@@ -1277,7 +1278,7 @@ Namespace Orm
                     Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadFromResultSet(Of T)(withLoad, CType(values, System.Collections.IList), arr, dr, idx, dic)
+                        LoadFromResultSet(Of T)(withLoad, CType(values, System.Collections.IList), arr, dr, idx, dic, _loadedInLastFetch)
                     Loop
                     _fetch = ft.GetTime
 
@@ -1306,7 +1307,8 @@ Namespace Orm
         Protected Friend Sub LoadFromResultSet(Of T As {OrmBase, New})( _
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
-            ByVal dr As System.Data.IDataReader, ByVal idx As Integer, ByVal dic As IDictionary(Of Integer, T))
+            ByVal dr As System.Data.IDataReader, ByVal idx As Integer, _
+            ByVal dic As IDictionary(Of Integer, T), ByRef loaded As Integer)
 
             Dim id As Integer = CInt(dr.GetValue(idx))
             Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse Not ListConverter.IsWeak)
@@ -1321,10 +1323,14 @@ Namespace Orm
                         'Else
                         If obj.ObjectState = ObjectState.NotLoaded Then obj.ObjectState = ObjectState.None
                         values.Add(obj)
+                        loaded += 1
                         'End If
                     End Using
                 Else
                     values.Add(obj)
+                    If obj.IsLoaded Then
+                        loaded += 1
+                    End If
                 End If
             Else
                 If _mcSwitch.TraceVerbose Then

@@ -42,9 +42,9 @@ Namespace Orm
             _cache = cache
         End Sub
 
-        Protected Sub New(ByVal lifeTime As TimeSpan)
+        Protected Sub New(ByVal timeout As TimeSpan)
             _cache = True
-            _expireDate = Now.Add(lifeTime)
+            _expireDate = Now.Add(timeout)
         End Sub
 
         Public ReadOnly Property CacheHit() As Boolean
@@ -248,8 +248,8 @@ Namespace Orm
             MyBase.new(False)
         End Sub
 
-        Protected Sub New(ByVal lifeTime As TimeSpan)
-            MyBase.New(lifeTime)
+        Protected Sub New(ByVal timeout As TimeSpan)
+            MyBase.New(timeout)
         End Sub
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
@@ -292,8 +292,8 @@ Namespace Orm
             MyBase.new(cache)
         End Sub
 
-        Protected Sub New(ByVal lifeTime As TimeSpan)
-            MyBase.New(lifeTime)
+        Protected Sub New(ByVal timeout As TimeSpan)
+            MyBase.New(timeout)
         End Sub
 
         Public Sub New()
@@ -363,8 +363,8 @@ Namespace Orm
             MyBase.new(cache)
         End Sub
 
-        Protected Sub New(ByVal lifeTime As TimeSpan)
-            MyBase.New(lifeTime)
+        Protected Sub New(ByVal timeout As TimeSpan)
+            MyBase.New(timeout)
         End Sub
 
         Protected Sub New()
@@ -376,6 +376,9 @@ Namespace Orm
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
             'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
+            If mgr._externalFilter IsNot Nothing Then
+                Throw New InvalidOperationException("External filter is not applicable for store procedures")
+            End If
             Dim ce As New OrmManagerBase.CachedItem(Nothing, mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns), mgr)
             _exec = ce.ExecutionTime
             _fecth = ce.FetchTime
@@ -385,7 +388,12 @@ Namespace Orm
         Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ICollection(Of T)
             Dim ce As OrmManagerBase.CachedItem = CType(MyBase.GetResult(mgr), OrmManagerBase.CachedItem)
             _count = ce.GetCount(mgr)
-            Return ce.GetObjectList(Of T)(mgr, GetWithLoad, Not CacheHit)
+            Dim s As Boolean
+            Dim r As ICollection(Of T) = ce.GetObjectList(Of T)(mgr, GetWithLoad, Not CacheHit, s)
+            If Not s Then
+                Throw New InvalidOperationException("External filter is not applicable for store procedures")
+            End If
+            Return r
         End Function
 
         Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Worm.Orm.Dependency))
@@ -433,12 +441,17 @@ Namespace Orm
             Private _created As Boolean
             Private _ce As OrmManagerBase.CachedItem
             Private _count As Integer
+            Private _loaded As Integer
 
             Public Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
                 'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
+                If mgr._externalFilter IsNot Nothing Then
+                    Throw New InvalidOperationException("External filter is not applicable for store procedures")
+                End If
                 Dim l As New List(Of T)
                 Dim dic As Generic.IDictionary(Of Integer, T) = mgr.GetDictionary(Of T)()
-                mgr.LoadFromResultSet(Of T)(GetWithLoad, l, GetColumns, dr, GetPrimaryKeyIndex, dic)
+                _loaded = 0
+                mgr.LoadFromResultSet(Of T)(GetWithLoad, l, GetColumns, dr, GetPrimaryKeyIndex, dic, _loaded)
                 _ce = New OrmManagerBase.CachedItem(Nothing, l, mgr)
                 '_created = True
             End Sub
@@ -452,12 +465,23 @@ Namespace Orm
                     Throw New InvalidOperationException("Stored procedure is not executed")
                 End If
                 _count = _ce.GetCount(mgr)
-                Return _ce.GetObjectList(Of T)(mgr, GetWithLoad, _created)
+                Dim s As Boolean = True
+                Dim r As ICollection(Of T) = _ce.GetObjectList(Of T)(mgr, GetWithLoad, _created, s)
+                If Not s Then
+                    Throw New InvalidOperationException("External filter is not applicable for store procedures")
+                End If
+                Return r
             End Function
 
             Public ReadOnly Property Count() As Integer
                 Get
                     Return _count
+                End Get
+            End Property
+
+            Public ReadOnly Property LoadedInResultset() As Integer
+                Get
+                    Return _loaded
                 End Get
             End Property
         End Class
@@ -468,8 +492,8 @@ Namespace Orm
             MyBase.new(cache)
         End Sub
 
-        Protected Sub New(ByVal lifeTime As TimeSpan)
-            MyBase.New(lifeTime)
+        Protected Sub New(ByVal timeout As TimeSpan)
+            MyBase.New(timeout)
         End Sub
 
         Protected Sub New()
