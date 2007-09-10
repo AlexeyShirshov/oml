@@ -332,6 +332,7 @@ Namespace Orm
                     End If
                     Dim b As ConnAction = _mgr.TestConn(cmd)
                     Try
+                        _mgr._loadedInLastFetch = 0
                         Dim et As New PerfCounter
                         Using dr As System.Data.IDataReader = cmd.ExecuteReader
                             _mgr._exec = et.GetTime
@@ -351,6 +352,7 @@ Namespace Orm
                                             If obj.IsLoaded Then obj.IsLoaded = False
                                             _mgr.LoadFromDataReader(obj, dr, arr, False, 2)
                                             If obj.ObjectState = ObjectState.NotLoaded Then obj.ObjectState = ObjectState.None
+                                            _mgr._loadedInLastFetch += 1
                                         End Using
                                     End If
                                 End If

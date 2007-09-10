@@ -2,13 +2,15 @@ Imports System
 Imports System.Configuration.Install
 Imports System.Diagnostics
 Imports System.ComponentModel
+Imports CoreFramework.Structures
 
 Namespace Orm
 
     Public Interface IListObjectConverter
         Function ToWeakList(ByVal objects As IEnumerable) As Object
+        Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As Generic.ICollection(Of T)
         Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase, _
-            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T)
+            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As Boolean) As Generic.ICollection(Of T)
         Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, ByVal sort As Sort) As Boolean
         Function GetCount(ByVal weak_list As Object) As Integer
         Sub Delete(ByVal weak_list As Object, ByVal obj As OrmBase)
@@ -19,12 +21,38 @@ Namespace Orm
         Implements IListObjectConverter
 
         Public Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
-            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
+            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As Boolean) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
             Dim c As Generic.ICollection(Of T) = CType(weak_list, Generic.ICollection(Of T))
+            successed = True
             If withLoad AndAlso Not created Then
                 mc.LoadObjects(c, start, length)
+                c = mc.ApplyFilter(Of T)(c, mc._externalFilter)
+            ElseIf mc._externalFilter IsNot Nothing Then
+                Dim er As OrmManagerBase.ExecutionResult = mc.GetLastExecitionResult
+                Dim l As Integer = 0
+                If er.LoadedInResultset.HasValue Then
+                    l = er.LoadedInResultset.Value
+                Else
+                    l = mc.GetLoadedCount(Of T)(c)
+                End If
+                If l < er.Count Then
+                    Dim tt As TimeSpan = er.FetchTime + er.ExecutionTime
+                    'Dim p As Pair(Of Integer, TimeSpan) = mc.Cache.GetLoadTime(GetType(T))
+                    Dim slt As Double = er.FetchTime.TotalMilliseconds / er.Count
+                    Dim ttl As TimeSpan = TimeSpan.FromMilliseconds(slt * (er.Count - l))
+                    If tt > ttl Then
+                        mc.LoadObjects(c)
+                    Else
+                        successed = False
+                    End If
+                Else
+                    c = mc.ApplyFilter(Of T)(c, mc._externalFilter)
+                End If
             End If
             If start < c.Count Then
+                If mc._externalFilter IsNot Nothing Then
+                    Throw New InvalidOperationException("Paging is not supported with external filter")
+                End If
                 If Not (start = 0 AndAlso length = c.Count) Then
                     length = Math.Min(c.Count, length + start)
                     Dim ar As Generic.IList(Of T) = TryCast(c, Generic.IList(Of T))
@@ -91,6 +119,11 @@ Namespace Orm
                 Return False
             End Get
         End Property
+
+        Public Function FromWeakList(Of T As {New, OrmBase})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As System.Collections.Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
+            Dim c As Generic.ICollection(Of T) = CType(weak_list, Generic.ICollection(Of T))
+            Return c
+        End Function
     End Class
 
     Public Class ListConverter
@@ -180,7 +213,7 @@ Namespace Orm
         End Class
 
         Public Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
-            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
+            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As Boolean) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
             If weak_list Is Nothing Then Return Nothing
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
@@ -262,6 +295,21 @@ Namespace Orm
             End Get
         End Property
 
+        Public Function FromWeakList(Of T As {New, OrmBase})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As System.Collections.Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
+            If weak_list Is Nothing Then Return Nothing
+            Dim lo As ListObject = CType(weak_list, ListObject)
+            Dim l As Generic.List(Of ListObjectEntry) = lo.l
+            Dim objects As New Generic.List(Of T)
+            For Each loe As ListObjectEntry In l
+                Dim o As T = loe.GetObject(Of T)(mgr)
+                If o IsNot Nothing Then
+                    objects.Add(o)
+                Else
+                    OrmManagerBase.WriteWarning("Unable to create " & loe.ObjName)
+                End If
+            Next
+            Return objects
+        End Function
     End Class
 
 End Namespace

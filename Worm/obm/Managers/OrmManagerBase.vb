@@ -253,8 +253,13 @@ Namespace Orm
                 End If
             End Function
 
-            Public Overridable Function GetObjectList(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal withLoad As Boolean, ByVal created As Boolean) As ICollection(Of T)
-                Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr, mgr._start, mgr._length, withLoad, created)
+            Public Overridable Function GetObjectList(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, _
+                ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As Boolean) As ICollection(Of T)
+                Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr, mgr.GetStart, mgr.GetLength, withLoad, created, successed)
+            End Function
+
+            Public Overridable Function GetObjectList(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase) As ICollection(Of T)
+                Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr)
             End Function
 
             'Public Sub SetObjectList(ByVal mc As OrmManagerBase, ByVal value As OrmBase())
@@ -348,12 +353,13 @@ Namespace Orm
             '    End Get
             'End Property
 
-            Public Overrides Function GetObjectList(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase, ByVal withLoad As Boolean, ByVal created As Boolean) As System.Collections.Generic.ICollection(Of T)
+            Public Overrides Function GetObjectList(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase, _
+                ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As Boolean) As System.Collections.Generic.ICollection(Of T)
                 'Return mc.ListConverter.FromWeakList(Of T)(, mc, withLoad, created)
                 If withLoad Then
-                    Return mgr.LoadObjectsIds(Of T)(Entry.Current, mgr._start, mgr._length)
+                    Return mgr.LoadObjectsIds(Of T)(Entry.Current, mgr.GetStart, mgr.GetLength)
                 Else
-                    Return mgr.ConvertIds2Objects(Of T)(Entry.Current, mgr._start, mgr._length, False)
+                    Return mgr.ConvertIds2Objects(Of T)(Entry.Current, mgr.GetStart, mgr.GetLength, False)
                 End If
             End Function
 
@@ -395,13 +401,15 @@ Namespace Orm
             Public ReadOnly ExecutionTime As TimeSpan
             Public ReadOnly FetchTime As TimeSpan
             Public ReadOnly CacheHit As Boolean
+            Public ReadOnly LoadedInResultset As Nullable(Of Integer)
 
             Public Sub New(ByVal count As Integer, ByVal execTime As TimeSpan, ByVal fetchTime As TimeSpan, _
-                ByVal hit As Boolean)
+                ByVal hit As Boolean, ByVal loaded As Nullable(Of Integer))
                 Me.Count = count
                 Me.ExecutionTime = execTime
-                Me.FetchTime = FetchTime
+                Me.FetchTime = fetchTime
                 Me.CacheHit = hit
+                Me.LoadedInResultset = loaded
             End Sub
         End Structure
 
@@ -571,6 +579,22 @@ Namespace Orm
         Private _start As Integer
         Private _length As Integer = Integer.MaxValue
         Private _er As ExecutionResult
+        Friend _externalFilter As IEntityFilter
+        Protected Friend _loadedInLastFetch As Integer
+
+        Private Function GetStart() As Integer
+            If _externalFilter IsNot Nothing Then
+                Return 0
+            End If
+            Return _start
+        End Function
+
+        Private Function GetLength() As Integer
+            If _externalFilter IsNot Nothing Then
+                Return Integer.MaxValue
+            End If
+            Return _length
+        End Function
 
         Public ReadOnly Property GetLastExecitionResult() As ExecutionResult
             Get
@@ -596,7 +620,7 @@ Namespace Orm
             _schema = schema
             '_check_on_find = True
 
-            _list_converter = CreateListConverter
+            _list_converter = CreateListConverter()
             CreateInternal()
         End Sub
 
@@ -1198,9 +1222,77 @@ Namespace Orm
             Return id & GetType(T).ToString
         End Function
 
+        Private Function GetResultset(Of T As {OrmBase, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String, ByVal del As ICustDelegate(Of T)) As ICollection(Of T)
+            Dim v As ICacheValidator = TryCast(del, ICacheValidator)
+            Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
+            Dim s As Boolean = True
+            Dim r As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.Created, s)
+            If Not s Then
+                withLoad = True
+l1:
+                del.Renew = True
+                ce = GetFromCache(Of T)(dic, sync, id, withLoad, del)
+                r = ce.GetObjectList(Of T)(Me, withLoad, del.Created, s)
+                Assert(s, "Withload should always successed")
+            End If
+
+            'If Not del.Created Then
+            '    Dim psort As Sort = del.Sort
+
+            '    If ce.SortEquals(psort) OrElse psort Is Nothing Then
+            '        If v IsNot Nothing AndAlso Not v.Validate(ce) Then
+            '            del.Renew = True
+            '            GoTo l1
+            '        End If
+            '        If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
+            '            Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, False)
+            '            ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
+            '            dic(id) = ce
+            '        End If
+            '    Else
+            '        If Not del.SmartSort OrElse psort.Previous IsNot Nothing Then
+            '            del.Renew = True
+            '            GoTo l1
+            '        Else
+            '            'Dim loaded As Integer = 0
+            '            Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, False)
+            '            If objs IsNot Nothing AndAlso objs.Count > 0 Then
+            '                Dim srt As IOrmSorting = Nothing
+            '                If psort.IsExternal Then
+            '                    ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
+            '                    dic(id) = ce
+            '                ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
+            '                    Using SyncHelper.AcquireDynamicLock(sync)
+            '                        Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(psort)
+            '                        If sc IsNot Nothing Then
+            '                            Dim os As New Generic.List(Of T)(objs)
+            '                            os.Sort(sc)
+            '                            ce = del.GetCacheItem(os)
+            '                            dic(id) = ce
+            '                        Else
+            '                            del.Renew = True
+            '                            GoTo l1
+            '                        End If
+            '                    End Using
+            '                Else
+            '                    del.Renew = True
+            '                    GoTo l1
+            '                End If
+            '            Else
+            '                'dic.Remove(id)
+            '                del.Renew = True
+            '                GoTo l1
+            '            End If
+            '        End If
+            '    End If
+            'End If
+
+            Return r
+        End Function
+
         Public Function FindWithJoins(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, _
-            ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
-            ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
+        ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
+        ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
 
             Dim key As String = FindWithJoinsGetKey(Of T)(aspect, joins, criteria)
 
@@ -1213,8 +1305,7 @@ Namespace Orm
             'CreateDepends(filter, key, id)
 
             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(aspect, joins, GetFilter(criteria), sort, key, id)
-            Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
-            Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
+            Return GetResultset(Of T)(withLoad, dic, id, sync, del)
         End Function
 
         'Public Function FindDistinct(Of T As {OrmBase, New})(ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
@@ -1292,7 +1383,7 @@ Namespace Orm
 
             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(relation, GetFilter(criteria), sort, key, id)
             Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
-            Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
+            Return GetResultset(Of T)(withLoad, dic, id, sync, del)
         End Function
 
         Public Function FindJoin(Of T As {OrmBase, New})(ByVal type2join As Type, ByVal joinField As String, ByVal criteria As CriteriaLink, _
@@ -1352,7 +1443,7 @@ Namespace Orm
 
                 Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, key, id)
                 Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
-                Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
+                Return GetResultset(Of T)(withLoad, dic, id, sync, del)
             End If
         End Function
 
@@ -1373,7 +1464,7 @@ Namespace Orm
             'CreateDepends(filter, key, id)
 
             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(criteria.Filter, sort, key, id, cols)
-            Return GetFromCache(Of T)(dic, sync, id, True, del).GetObjectList(Of T)(Me, True, del.Created)
+            Return GetResultset(Of T)(True, dic, id, sync, del)
         End Function
 
         Public Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal criteria As CriteriaLink, _
@@ -1476,7 +1567,8 @@ Namespace Orm
         Protected Friend Function FindMany2Many2(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal criteria As CriteriaLink, _
             ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ICollection(Of T)
             Dim p As Pair(Of M2MCache, Boolean) = FindM2M(Of T)(obj, direct, criteria, sort, withLoad)
-            Return p.First.GetObjectList(Of T)(Me, withLoad, p.Second)
+            'Return p.First.GetObjectList(Of T)(Me, withLoad, p.Second.Created)
+            return GetResultset(of T)(withload,dic,
         End Function
 
         Protected Function FindM2M(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean, ByVal criteria As CriteriaLink, _
@@ -1539,6 +1631,7 @@ Namespace Orm
             Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, False, del), M2MCache)
             Dim p As New Pair(Of M2MCache, Pair(Of String))(m, New Pair(Of String)(key, id))
             Return p
+            sgbggfbg()
         End Function
 #End Region
 
@@ -1584,7 +1677,7 @@ l1:
             End If
 
             If del.Renew Then
-                _er = New ExecutionResult(ce.GetCount(Me), ce.ExecutionTime, ce.FetchTime, Not del.Created)
+                _er = New ExecutionResult(ce.GetCount(Me), ce.ExecutionTime, ce.FetchTime, Not del.Created, _loadedInLastFetch)
                 Return ce
             End If
 
@@ -1605,7 +1698,7 @@ l1:
                         GoTo l1
                     End If
                     If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
-                        Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, False)
+                        Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me)
                         ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
                         dic(id) = ce
                     End If
@@ -1615,7 +1708,7 @@ l1:
                         GoTo l1
                     Else
                         'Dim loaded As Integer = 0
-                        Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, False)
+                        Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me)
                         If objs IsNot Nothing AndAlso objs.Count > 0 Then
                             Dim srt As IOrmSorting = Nothing
                             If psort.IsExternal Then
@@ -1647,7 +1740,11 @@ l1:
                 End If
             End If
 
-            _er = New ExecutionResult(ce.GetCount(Me), ce.ExecutionTime, ce.FetchTime, Not del.Created)
+            Dim l As Nullable(Of Integer) = Nothing
+            If del.Created Then
+                l = _loadedInLastFetch
+            End If
+            _er = New ExecutionResult(ce.GetCount(Me), ce.ExecutionTime, ce.FetchTime, Not del.Created, l)
             Return ce
         End Function
 
@@ -2460,6 +2557,7 @@ l1:
             Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {tt2})
             Dim p As Pair(Of M2MCache, Boolean) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Pair(Of M2MCache, Boolean))
             Return p
+            cCDADFVADFV()
         End Function
 
         Protected Friend Function GetM2MNonGeneric(ByVal obj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As M2MCache

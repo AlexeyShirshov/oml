@@ -662,6 +662,25 @@ Namespace Orm
                                 If Not Equals(v, val) Then
                                     r = IEntityFilter.EvalResult.Found
                                 End If
+                            Case FilterOperation.Like
+                                Dim par As String = CStr(val)
+                                Dim str As String = CStr(v)
+                                r = IEntityFilter.EvalResult.NotFound
+                                If par.StartsWith("%") Then
+                                    If par.EndsWith("%") Then
+                                        If str.IndexOf(par, StringComparison.InvariantCultureIgnoreCase) >= 0 Then
+                                            r = IEntityFilter.EvalResult.Found
+                                        End If
+                                    Else
+                                        If str.EndsWith(par) Then
+                                            r = IEntityFilter.EvalResult.Found
+                                        End If
+                                    End If
+                                ElseIf par.EndsWith("%") Then
+                                    If str.StartsWith(par) Then
+                                        r = IEntityFilter.EvalResult.Found
+                                    End If
+                                End If
                             Case Else
                                 r = IEntityFilter.EvalResult.Unknown
                         End Select
