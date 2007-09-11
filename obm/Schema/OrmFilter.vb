@@ -617,8 +617,7 @@ Namespace Orm
                         Dim tt As Type = v.GetType
                         Dim val As Object = evval.Value
                         Dim orm As OrmBase = TryCast(v, OrmBase)
-                        Dim b As Boolean = orm IsNot Nothing
-                        If b Then
+                        If orm IsNot Nothing Then
                             Dim ov As EntityValue = TryCast(evval, EntityValue)
                             If ov Is Nothing Then
                                 Throw New InvalidOperationException(String.Format("Field {0} is Entity but param is not", Template.FieldName))

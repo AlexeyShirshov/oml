@@ -388,9 +388,9 @@ Namespace Orm
         Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ICollection(Of T)
             Dim ce As OrmManagerBase.CachedItem = CType(MyBase.GetResult(mgr), OrmManagerBase.CachedItem)
             _count = ce.GetCount(mgr)
-            Dim s As Boolean
+            Dim s As IListObjectConverter.ExtractListResult
             Dim r As ICollection(Of T) = ce.GetObjectList(Of T)(mgr, GetWithLoad, Not CacheHit, s)
-            If Not s Then
+            If s <> IListObjectConverter.ExtractListResult.Successed Then
                 Throw New InvalidOperationException("External filter is not applicable for store procedures")
             End If
             Return r
@@ -465,9 +465,9 @@ Namespace Orm
                     Throw New InvalidOperationException("Stored procedure is not executed")
                 End If
                 _count = _ce.GetCount(mgr)
-                Dim s As Boolean = True
+                Dim s As IListObjectConverter.ExtractListResult
                 Dim r As ICollection(Of T) = _ce.GetObjectList(Of T)(mgr, GetWithLoad, _created, s)
-                If Not s Then
+                If s <> IListObjectConverter.ExtractListResult.Successed Then
                     Throw New InvalidOperationException("External filter is not applicable for store procedures")
                 End If
                 Return r
