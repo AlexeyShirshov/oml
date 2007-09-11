@@ -120,9 +120,9 @@ Namespace Orm
         Private _con As Orm.Condition.ConditionConstructor
         Private _t As Type
 
-        'Protected Friend Sub New(ByVal con As OrmCondition.OrmConditionConstructor)
-        '    _con = con
-        'End Sub
+        Protected Friend Sub New(ByVal con As Condition.ConditionConstructor)
+            _con = con
+        End Sub
 
         Public Sub New()
 
@@ -199,7 +199,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public ReadOnly Property Filter(ByVal t As Type) As IEntityFilter
+        Public Overridable ReadOnly Property Filter(ByVal t As Type) As IEntityFilter
             Get
                 If _con IsNot Nothing Then
                     Dim ef As IEntityFilter = CType(_con.Condition, IEntityFilter)
@@ -211,6 +211,22 @@ Namespace Orm
             End Get
         End Property
     End Class
+
+    'Friend Class _CriteriaLink
+    '    Inherits CriteriaLink
+
+    '    Private _f As IEntityFilter
+
+    '    Public Sub New(ByVal f As IEntityFilter)
+    '        _f = f
+    '    End Sub
+
+    '    Public Overrides ReadOnly Property Filter(ByVal t As System.Type) As IEntityFilter
+    '        Get
+    '            Return _f
+    '        End Get
+    '    End Property
+    'End Class
 
     Public Class Sorting
         Private _t As Type

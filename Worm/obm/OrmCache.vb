@@ -724,7 +724,10 @@ Namespace Orm
             'Debug.WriteLine(t.Name & ": add dependent " & id)
             Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
                 Dim l As TemplateHashs = _tp.GetFilters(t)
-                l.GetIds(key, f).Add(id)
+                Dim h As List(Of String) = l.GetIds(key, f)
+                If Not h.Contains(id) Then
+                    h.Add(id)
+                End If
             End Using
         End Sub
 

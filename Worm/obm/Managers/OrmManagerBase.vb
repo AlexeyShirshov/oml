@@ -254,7 +254,7 @@ Namespace Orm
             End Function
 
             Public Overridable Function GetObjectList(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, _
-                ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As Boolean) As ICollection(Of T)
+                ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ICollection(Of T)
                 Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr, mgr.GetStart, mgr.GetLength, withLoad, created, successed)
             End Function
 
@@ -354,13 +354,35 @@ Namespace Orm
             'End Property
 
             Public Overrides Function GetObjectList(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase, _
-                ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As Boolean) As System.Collections.Generic.ICollection(Of T)
-                'Return mc.ListConverter.FromWeakList(Of T)(, mc, withLoad, created)
-                If withLoad Then
-                    Return mgr.LoadObjectsIds(Of T)(Entry.Current, mgr.GetStart, mgr.GetLength)
+                ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As System.Collections.Generic.ICollection(Of T)
+                successed = IListObjectConverter.ExtractListResult.Successed
+                Dim r As ICollection(Of T) = Nothing
+                If withLoad OrElse mgr._externalFilter IsNot Nothing Then
+                    Dim c As Integer = mgr.GetLoadedCount(Of T)(Entry.Current)
+                    Dim cnt As Integer = Entry.CurrentCount
+                    If c < cnt Then
+                        If Not mgr.IsGoodTime(_fetchTime, _execTime, cnt, c) Then
+                            successed = IListObjectConverter.ExtractListResult.NeedLoad
+                            Return r
+                        Else
+                            r = mgr.LoadObjectsIds(Of T)(Entry.Current, mgr.GetStart, mgr.GetLength)
+                        End If
+                    Else
+                        r = mgr.LoadObjectsIds(Of T)(Entry.Current, mgr.GetStart, mgr.GetLength)
+                    End If
+                    Dim s As Boolean = True
+                    r = mgr.ApplyFilter(r, mgr._externalFilter, s)
+                    If Not s Then
+                        successed = IListObjectConverter.ExtractListResult.CantApplyFilter
+                    End If
                 Else
-                    Return mgr.ConvertIds2Objects(Of T)(Entry.Current, mgr.GetStart, mgr.GetLength, False)
+                    r = mgr.ConvertIds2Objects(Of T)(Entry.Current, mgr.GetStart, mgr.GetLength, False)
                 End If
+                Return r
+            End Function
+
+            Public Overrides Function GetObjectList(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase) As System.Collections.Generic.ICollection(Of T)
+                Return mgr.ConvertIds2Objects(Of T)(Entry.Current, False)
             End Function
 
             Public Overrides Function Add(ByVal mgr As OrmManagerBase, ByVal obj As OrmBase) As Boolean
@@ -463,6 +485,50 @@ Namespace Orm
                 GC.SuppressFinalize(Me)
             End Sub
 
+        End Class
+
+        Public Class ApplyCriteria
+            Implements IDisposable
+
+            Private _disposedValue As Boolean = False        ' To detect redundant calls
+            Private _f As IEntityFilter
+            Private _mgr As OrmManagerBase
+
+            Public Sub New(ByVal f As IEntityFilter)
+                _mgr = OrmManagerBase.CurrentManager
+                _f = _mgr._externalFilter
+                _mgr._externalFilter = f
+            End Sub
+
+            Public Sub New(ByVal c As CriteriaLink)
+                MyClass.new(c.Filter)
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmManagerBase, ByVal f As IEntityFilter)
+                _mgr = mgr
+                _f = mgr._externalFilter
+                mgr._externalFilter = f
+            End Sub
+
+            Protected Friend ReadOnly Property oldfilter() As IEntityFilter
+                Get
+                    Return _f
+                End Get
+            End Property
+
+            Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+                If Not Me._disposedValue Then
+                    If disposing Then
+                        _mgr._externalFilter = _f
+                    End If
+                End If
+                Me._disposedValue = True
+            End Sub
+
+            Public Sub Dispose() Implements IDisposable.Dispose
+                Dispose(True)
+                GC.SuppressFinalize(Me)
+            End Sub
         End Class
 
         Public Interface ICacheValidator
@@ -815,10 +881,10 @@ Namespace Orm
         End Function
 
         Public Function LoadObjects(Of T As {OrmBase, New})(ByVal fieldName As String, ByVal criteria As CriteriaLink, _
-            ByVal col As ICollection, ByVal start As Integer, ByVal length As Integer) As ICollection(Of T)
+            ByVal ecol As IEnumerable, ByVal start As Integer, ByVal length As Integer) As ICollection(Of T)
             Dim tt As Type = GetType(T)
 
-            If col Is Nothing Then
+            If ecol Is Nothing Then
                 Throw New ArgumentNullException("col")
             End If
 
@@ -826,14 +892,18 @@ Namespace Orm
                 Throw New ArgumentNullException(fieldName)
             End If
 
-            If col.Count = 0 OrElse length = 0 OrElse start + length > col.Count Then
-                Return New List(Of T)
+            Dim col As ICollection = TryCast(ecol, ICollection)
+            If col IsNot Nothing Then
+                If col.Count = 0 OrElse length = 0 OrElse start + length > col.Count Then
+                    Return New List(Of T)
+                End If
+                'Else
+                '    col = New ArrayList(ecol)
             End If
-
 
 #If DEBUG Then
             Dim ft As Type = _schema.GetFieldTypeByName(tt, fieldName)
-            For Each o As OrmBase In col
+            For Each o As OrmBase In ecol
                 If o.GetType IsNot ft Then
                     Throw New ArgumentNullException(String.Format("Cannot load {0} with such collection. There is not relation", tt.Name))
                 End If
@@ -846,7 +916,7 @@ Namespace Orm
             Using SyncHelper.AcquireDynamicLock("9h13bhpqergfbjadflbq34f89h134g")
                 If Not _dont_cache_lists Then
                     Dim i As Integer = start
-                    For Each o As OrmBase In col
+                    For Each o As OrmBase In ecol
                         'Dim con As New OrmCondition.OrmConditionConstructor
                         'con.AddFilter(New OrmFilter(tt, fieldName, o, FilterOperation.Equal))
                         'con.AddFilter(criteria.Filter)
@@ -879,7 +949,7 @@ Namespace Orm
                     ids.Append(o.Identifier)
                 Next
                 Dim c As New List(Of T)
-                GetObjects(Of T)(ids.Ints, GetFilter(criteria), c, True, fieldName, False)
+                GetObjects(Of T)(ids.Ints, GetFilter(criteria, tt), c, True, fieldName, False)
                 'l.AddRange(c)
 
                 Dim lookups As New Dictionary(Of OrmBase, List(Of T))
@@ -964,19 +1034,19 @@ Namespace Orm
                         Dim tt1 As Type = o.GetType
                         Dim key As String = GetM2MKey(tt1, type2load, direct)
                         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                            key &= criteria.Filter.Template.GetStaticString
+                            key &= criteria.Filter(type2load).Template.GetStaticString
                         End If
 
                         Dim dic As IDictionary = GetDic(_cache, key)
 
                         Dim id As String = o.Identifier.ToString
                         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                            id &= CObj(criteria.Filter).ToString
+                            id &= criteria.Filter(type2load).ToString
                         End If
 
                         If dic.Contains(id) Then
                             'Dim sync As String = GetSync(key, id)
-                            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(o, GetFilter(criteria), Nothing, id, key, direct)
+                            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(o, GetFilter(criteria, type2load), Nothing, id, key, direct)
                             Dim v As ICacheValidator = TryCast(del, ICacheValidator)
                             If v Is Nothing OrElse v.Validate() Then
                                 Dim e As M2MCache = CType(dic(id), M2MCache)
@@ -1005,7 +1075,7 @@ Namespace Orm
                         type = o.GetType
                     End If
                 Next
-                Dim edic As IDictionary(Of Integer, EditableList) = GetObjects(Of T)(type, ids.Ints, GetFilter(criteria), relation, False, True)
+                Dim edic As IDictionary(Of Integer, EditableList) = GetObjects(Of T)(type, ids.Ints, GetFilter(criteria, type2load), relation, False, True)
                 'l.AddRange(c)
 
                 If (target IsNot Nothing OrElse Not _dont_cache_lists) AndAlso edic IsNot Nothing Then
@@ -1022,19 +1092,19 @@ Namespace Orm
                                 Dim tt1 As Type = o.GetType
                                 Dim key As String = GetM2MKey(tt1, type2load, direct)
                                 If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                                    key &= criteria.Filter.Template.GetStaticString
+                                    key &= criteria.Filter(type2load).Template.GetStaticString
                                 End If
 
                                 Dim dic As IDictionary = GetDic(_cache, key)
 
                                 Dim id As String = o.Identifier.ToString
                                 If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                                    id &= CObj(criteria.Filter).ToString
+                                    id &= criteria.Filter(type2load).ToString
                                 End If
 
                                 'Dim sync As String = GetSync(key, id)
                                 el.Accept(Nothing)
-                                dic(id) = New M2MCache(Nothing, GetFilter(criteria), el, Me)
+                                dic(id) = New M2MCache(Nothing, GetFilter(criteria, type2load), el, Me)
                             End If
 
                             'Cache.AddRelationValue(o.GetType, type2load)
@@ -1180,7 +1250,7 @@ Namespace Orm
             Dim key As String = String.Empty
 
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                key &= criteria.Filter.Template.GetStaticString
+                key &= criteria.Filter(GetType(T)).Template.GetStaticString
             End If
 
             If joins IsNot Nothing Then
@@ -1204,7 +1274,7 @@ Namespace Orm
             Dim id As String = String.Empty
 
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                id &= CObj(criteria.Filter).ToString
+                id &= criteria.Filter(GetType(T)).ToString
             End If
 
             If joins IsNot Nothing Then
@@ -1222,77 +1292,86 @@ Namespace Orm
             Return id & GetType(T).ToString
         End Function
 
-        Private Function GetResultset(Of T As {OrmBase, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String, ByVal del As ICustDelegate(Of T)) As ICollection(Of T)
+        Private Function GetResultset(Of T As {OrmBase, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, _
+            ByVal id As String, ByVal sync As String, ByVal del As ICustDelegate(Of T), ByRef succeeded As Boolean) As ICollection(Of T)
             Dim v As ICacheValidator = TryCast(del, ICacheValidator)
             Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
-            Dim s As Boolean = True
+            Dim s As IListObjectConverter.ExtractListResult
             Dim r As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.Created, s)
-            If Not s Then
+            succeeded = True
+
+            If s = IListObjectConverter.ExtractListResult.NeedLoad Then
                 withLoad = True
 l1:
                 del.Renew = True
                 ce = GetFromCache(Of T)(dic, sync, id, withLoad, del)
                 r = ce.GetObjectList(Of T)(Me, withLoad, del.Created, s)
-                Assert(s, "Withload should always successed")
+                Assert(s = IListObjectConverter.ExtractListResult.NeedLoad, "Withload should always successed")
             End If
 
-            'If Not del.Created Then
-            '    Dim psort As Sort = del.Sort
+            If s = IListObjectConverter.ExtractListResult.CantApplyFilter Then
+                succeeded = False
+                Return r
+            End If
 
-            '    If ce.SortEquals(psort) OrElse psort Is Nothing Then
-            '        If v IsNot Nothing AndAlso Not v.Validate(ce) Then
-            '            del.Renew = True
-            '            GoTo l1
-            '        End If
-            '        If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
-            '            Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, False)
-            '            ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
-            '            dic(id) = ce
-            '        End If
-            '    Else
-            '        If Not del.SmartSort OrElse psort.Previous IsNot Nothing Then
-            '            del.Renew = True
-            '            GoTo l1
-            '        Else
-            '            'Dim loaded As Integer = 0
-            '            Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me, withLoad, False)
-            '            If objs IsNot Nothing AndAlso objs.Count > 0 Then
-            '                Dim srt As IOrmSorting = Nothing
-            '                If psort.IsExternal Then
-            '                    ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
-            '                    dic(id) = ce
-            '                ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
-            '                    Using SyncHelper.AcquireDynamicLock(sync)
-            '                        Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(psort)
-            '                        If sc IsNot Nothing Then
-            '                            Dim os As New Generic.List(Of T)(objs)
-            '                            os.Sort(sc)
-            '                            ce = del.GetCacheItem(os)
-            '                            dic(id) = ce
-            '                        Else
-            '                            del.Renew = True
-            '                            GoTo l1
-            '                        End If
-            '                    End Using
-            '                Else
-            '                    del.Renew = True
-            '                    GoTo l1
-            '                End If
-            '            Else
-            '                'dic.Remove(id)
-            '                del.Renew = True
-            '                GoTo l1
-            '            End If
-            '        End If
-            '    End If
-            'End If
+            If _externalFilter IsNot Nothing Then
+                If Not del.Created Then
+                    Dim psort As Sort = del.Sort
 
+                    If ce.SortEquals(psort) OrElse psort Is Nothing Then
+                        If v IsNot Nothing AndAlso Not v.Validate(ce) Then
+                            del.Renew = True
+                            GoTo l1
+                        End If
+                        If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
+                            Dim objs As ICollection(Of T) = r
+                            ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
+                            dic(id) = ce
+                        End If
+                    Else
+                        If Not del.SmartSort OrElse psort.Previous IsNot Nothing Then
+                            del.Renew = True
+                            GoTo l1
+                        Else
+                            'Dim loaded As Integer = 0
+                            Dim objs As ICollection(Of T) = r
+                            If objs IsNot Nothing AndAlso objs.Count > 0 Then
+                                Dim srt As IOrmSorting = Nothing
+                                If psort.IsExternal Then
+                                    ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
+                                    dic(id) = ce
+                                ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
+                                    Using SyncHelper.AcquireDynamicLock(sync)
+                                        Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(psort)
+                                        If sc IsNot Nothing Then
+                                            Dim os As New Generic.List(Of T)(objs)
+                                            os.Sort(sc)
+                                            ce = del.GetCacheItem(os)
+                                            dic(id) = ce
+                                        Else
+                                            del.Renew = True
+                                            GoTo l1
+                                        End If
+                                    End Using
+                                Else
+                                    del.Renew = True
+                                    GoTo l1
+                                End If
+                            Else
+                                'dic.Remove(id)
+                                del.Renew = True
+                                GoTo l1
+                            End If
+                        End If
+                    End If
+                End If
+            End If
             Return r
         End Function
 
         Public Function FindWithJoins(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, _
-        ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
-        ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
+            ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
+            ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
 
             Dim key As String = FindWithJoinsGetKey(Of T)(aspect, joins, criteria)
 
@@ -1304,8 +1383,18 @@ l1:
 
             'CreateDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(aspect, joins, GetFilter(criteria), sort, key, id)
-            Return GetResultset(Of T)(withLoad, dic, id, sync, del)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(aspect, joins, GetFilter(criteria, GetType(T)), sort, key, id)
+            Dim s As Boolean = True
+            Dim r As ICollection(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
+            If Not s Then
+                Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
+                Using ac As New ApplyCriteria(Me, Nothing)
+                    Dim c As New Condition.ConditionConstructor
+                    c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
+                    r = FindWithJoins(Of T)(aspect, joins, New CriteriaLink(c), sort, withLoad)
+                End Using
+            End If
+            Return r
         End Function
 
         'Public Function FindDistinct(Of T As {OrmBase, New})(ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
@@ -1357,7 +1446,7 @@ l1:
             Dim key As String = "distinct" & _schema.GetEntityKey(GetType(T))
 
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                key &= criteria.Filter.Template.GetStaticString
+                key &= criteria.Filter(GetType(T)).Template.GetStaticString
             End If
 
             If relation IsNot Nothing Then
@@ -1370,7 +1459,7 @@ l1:
 
             Dim id As String = GetType(T).ToString
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                id &= CObj(criteria.Filter).ToString
+                id &= criteria.Filter(GetType(T)).ToString
             End If
 
             If relation IsNot Nothing Then
@@ -1381,9 +1470,19 @@ l1:
 
             'CreateDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(relation, GetFilter(criteria), sort, key, id)
-            Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
-            Return GetResultset(Of T)(withLoad, dic, id, sync, del)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(relation, GetFilter(criteria, GetType(T)), sort, key, id)
+            'Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
+            Dim s As Boolean = True
+            Dim r As ICollection(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
+            If Not s Then
+                Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
+                Using ac As New ApplyCriteria(Me, Nothing)
+                    Dim c As New Condition.ConditionConstructor
+                    c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
+                    r = FindDistinct(Of T)(relation, New CriteriaLink(c), sort, withLoad)
+                End Using
+            End If
+            Return r
         End Function
 
         Public Function FindJoin(Of T As {OrmBase, New})(ByVal type2join As Type, ByVal joinField As String, ByVal criteria As CriteriaLink, _
@@ -1426,7 +1525,7 @@ l1:
                 Throw New ArgumentNullException("filter")
             End If
 
-            Dim filter As IEntityFilter = criteria.Filter
+            Dim filter As IEntityFilter = criteria.Filter(GetType(T))
 
             Dim joins() As OrmJoin = Nothing
             If HasJoins(GetType(T), filter, joins) Then
@@ -1442,8 +1541,18 @@ l1:
                 'CreateDepends(filter, key, id)
 
                 Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, key, id)
-                Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
-                Return GetResultset(Of T)(withLoad, dic, id, sync, del)
+                'Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
+                Dim s As Boolean = True
+                Dim r As ICollection(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
+                If Not s Then
+                    Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
+                    Using ac As New ApplyCriteria(Me, Nothing)
+                        Dim c As New Condition.ConditionConstructor
+                        c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
+                        r = Find(Of T)(New CriteriaLink(c), sort, withLoad)
+                    End Using
+                End If
+                Return r
             End If
         End Function
 
@@ -1454,17 +1563,29 @@ l1:
                 Throw New ArgumentNullException("criteria")
             End If
 
-            Dim key As String = FindGetKey(Of T)(criteria.Filter) '_schema.GetEntityKey(GetType(T)) & criteria.Filter.GetStaticString & GetStaticKey()
+            Dim filter As IEntityFilter = criteria.Filter(GetType(T))
+
+            Dim key As String = FindGetKey(Of T)(filter) '_schema.GetEntityKey(GetType(T)) & criteria.Filter.GetStaticString & GetStaticKey()
 
             Dim dic As IDictionary = GetDic(_cache, key)
 
-            Dim id As String = CObj(criteria.Filter).ToString
+            Dim id As String = CObj(filter).ToString
             Dim sync As String = id & GetStaticKey()
 
             'CreateDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(criteria.Filter, sort, key, id, cols)
-            Return GetResultset(Of T)(True, dic, id, sync, del)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, key, id, cols)
+            Dim s As Boolean = True
+            Dim r As ICollection(Of T) = GetResultset(Of T)(True, dic, id, sync, del, s)
+            If Not s Then
+                Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
+                Using ac As New ApplyCriteria(Me, Nothing)
+                    Dim c As New Condition.ConditionConstructor
+                    c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
+                    r = Find(Of T)(New CriteriaLink(c), sort, cols)
+                End Using
+            End If
+            Return r
         End Function
 
         Public Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal criteria As CriteriaLink, _
@@ -1566,9 +1687,40 @@ l1:
 
         Protected Friend Function FindMany2Many2(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal criteria As CriteriaLink, _
             ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ICollection(Of T)
-            Dim p As Pair(Of M2MCache, Boolean) = FindM2M(Of T)(obj, direct, criteria, sort, withLoad)
-            'Return p.First.GetObjectList(Of T)(Me, withLoad, p.Second.Created)
-            return GetResultset(of T)(withload,dic,
+            '    Dim p As Pair(Of M2MCache, Boolean) = FindM2M(Of T)(obj, direct, criteria, sort, withLoad)
+            '    'Return p.First.GetObjectList(Of T)(Me, withLoad, p.Second.Created)
+            '    return GetResultset(of T)(withload,dic,
+            Dim tt1 As Type = obj.GetType
+            Dim tt2 As Type = GetType(T)
+
+            Dim key As String = GetM2MKey(tt1, tt2, direct)
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+                key &= criteria.Filter(tt2).Template.GetStaticString
+            End If
+
+            Dim dic As IDictionary = GetDic(_cache, key)
+
+            Dim id As String = obj.Identifier.ToString
+            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+                id &= criteria.Filter(tt2).ToString
+            End If
+
+            Dim sync As String = GetSync(key, id)
+
+            'CreateM2MDepends(filter, key, id)
+
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
+            Dim s As Boolean = True
+            Dim r As ICollection(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
+            If Not s Then
+                Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
+                Using ac As New ApplyCriteria(Me, Nothing)
+                    Dim c As New Condition.ConditionConstructor
+                    c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
+                    r = FindMany2Many2(Of T)(obj, New CriteriaLink(c), sort, direct, withLoad)
+                End Using
+            End If
+            Return r
         End Function
 
         Protected Function FindM2M(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean, ByVal criteria As CriteriaLink, _
@@ -1578,21 +1730,21 @@ l1:
 
             Dim key As String = GetM2MKey(tt1, tt2, direct)
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                key &= criteria.Filter.Template.GetStaticString
+                key &= criteria.Filter(tt2).Template.GetStaticString
             End If
 
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim id As String = obj.Identifier.ToString
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                id &= CObj(criteria.Filter).ToString
+                id &= criteria.Filter(tt2).ToString
             End If
 
             Dim sync As String = GetSync(key, id)
 
             'CreateM2MDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria), sort, id, key, direct)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
             Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), M2MCache)
             Dim p As New Pair(Of M2MCache, Boolean)(m, del.Created)
             Return p
@@ -1627,11 +1779,10 @@ l1:
             'CreateM2MDepends(filter, key, id)
             Dim criteria As New CriteriaLink
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria), Nothing, id, key, direct)
+            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt1), Nothing, id, key, direct)
             Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, False, del), M2MCache)
             Dim p As New Pair(Of M2MCache, Pair(Of String))(m, New Pair(Of String)(key, id))
             Return p
-            sgbggfbg()
         End Function
 #End Region
 
@@ -1690,51 +1841,53 @@ l1:
                     GoTo l1
                 End If
 
-                Dim psort As Sort = del.Sort
+                If _externalFilter Is Nothing Then
+                    Dim psort As Sort = del.Sort
 
-                If ce.SortEquals(psort) OrElse psort Is Nothing Then
-                    If v IsNot Nothing AndAlso Not v.Validate(ce) Then
-                        del.Renew = True
-                        GoTo l1
-                    End If
-                    If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
-                        Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me)
-                        ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
-                        dic(id) = ce
-                    End If
-                Else
-                    If Not del.SmartSort OrElse psort.Previous IsNot Nothing Then
-                        del.Renew = True
-                        GoTo l1
+                    If ce.SortEquals(psort) OrElse psort Is Nothing Then
+                        If v IsNot Nothing AndAlso Not v.Validate(ce) Then
+                            del.Renew = True
+                            GoTo l1
+                        End If
+                        If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
+                            Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me)
+                            ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
+                            dic(id) = ce
+                        End If
                     Else
-                        'Dim loaded As Integer = 0
-                        Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me)
-                        If objs IsNot Nothing AndAlso objs.Count > 0 Then
-                            Dim srt As IOrmSorting = Nothing
-                            If psort.IsExternal Then
-                                ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
-                                dic(id) = ce
-                            ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
-                                Using SyncHelper.AcquireDynamicLock(sync)
-                                    Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(psort)
-                                    If sc IsNot Nothing Then
-                                        Dim os As New Generic.List(Of T)(objs)
-                                        os.Sort(sc)
-                                        ce = del.GetCacheItem(os)
-                                        dic(id) = ce
-                                    Else
-                                        del.Renew = True
-                                        GoTo l1
-                                    End If
-                                End Using
+                        If Not del.SmartSort OrElse psort.Previous IsNot Nothing Then
+                            del.Renew = True
+                            GoTo l1
+                        Else
+                            'Dim loaded As Integer = 0
+                            Dim objs As ICollection(Of T) = ce.GetObjectList(Of T)(Me)
+                            If objs IsNot Nothing AndAlso objs.Count > 0 Then
+                                Dim srt As IOrmSorting = Nothing
+                                If psort.IsExternal Then
+                                    ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
+                                    dic(id) = ce
+                                ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
+                                    Using SyncHelper.AcquireDynamicLock(sync)
+                                        Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(psort)
+                                        If sc IsNot Nothing Then
+                                            Dim os As New Generic.List(Of T)(objs)
+                                            os.Sort(sc)
+                                            ce = del.GetCacheItem(os)
+                                            dic(id) = ce
+                                        Else
+                                            del.Renew = True
+                                            GoTo l1
+                                        End If
+                                    End Using
+                                Else
+                                    del.Renew = True
+                                    GoTo l1
+                                End If
                             Else
+                                'dic.Remove(id)
                                 del.Renew = True
                                 GoTo l1
                             End If
-                        Else
-                            'dic.Remove(id)
-                            del.Renew = True
-                            GoTo l1
                         End If
                     End If
                 End If
@@ -2557,7 +2710,6 @@ l1:
             Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {tt2})
             Dim p As Pair(Of M2MCache, Boolean) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Pair(Of M2MCache, Boolean))
             Return p
-            cCDADFVADFV()
         End Function
 
         Protected Friend Function GetM2MNonGeneric(ByVal obj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As M2MCache
@@ -2625,6 +2777,63 @@ l1:
         End Sub
 
 #End Region
+
+        Public Function ApplyFilter(Of T As OrmBase)(ByVal col As ICollection(Of T), ByVal f As IEntityFilter, ByRef r As Boolean) As ICollection(Of T)
+            r = True
+            If f Is Nothing Then
+                Return col
+            Else
+                Dim l As New List(Of T)
+                Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(GetType(T))
+                Dim i As Integer = 0
+                For Each o As T In col
+                    Dim er As IEntityFilter.EvalResult = f.Eval(_schema, o, oschema)
+                    Select Case er
+                        Case IEntityFilter.EvalResult.Found
+                            If i >= _start Then
+                                l.Add(o)
+                            End If
+                        Case IEntityFilter.EvalResult.Unknown
+                            r = False
+                            Exit For
+                    End Select
+                    If i >= (_start + _length) Then
+                        Exit For
+                    End If
+                    i += 1
+                Next
+                Return l
+            End If
+        End Function
+
+        Public Function IsGoodTime(ByVal fetchTime As TimeSpan, ByVal execTime As TimeSpan, ByVal totalCount As Integer, ByVal loadedCount As Integer) As Boolean
+            Dim tt As TimeSpan = fetchTime + execTime
+            'Dim p As Pair(Of Integer, TimeSpan) = mc.Cache.GetLoadTime(GetType(T))
+            Dim slt As Double = (fetchTime.TotalMilliseconds / totalCount)
+            Dim ttl As TimeSpan = TimeSpan.FromMilliseconds(slt * (totalCount - loadedCount) * 1.1)
+            Return tt > ttl
+        End Function
+
+        Public Function GetLoadedCount(Of T As OrmBase)(ByVal col As ICollection(Of T)) As Integer
+            Dim r As Integer = 0
+            For Each o As OrmBase In col
+                If o.IsLoaded Then
+                    r += 1
+                End If
+            Next
+            Return r
+        End Function
+
+        Public Function GetLoadedCount(Of T As OrmBase)(ByVal ids As IList(Of Integer)) As Integer
+            Dim r As Integer = 0
+            Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
+            For Each id As Integer In ids
+                If dic.ContainsKey(id) Then
+                    r += 1
+                End If
+            Next
+            Return r
+        End Function
 
         Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String) As ICollection(Of T)
             Invariant()
@@ -2954,9 +3163,9 @@ l1:
             Return dics
         End Function
 
-        Private Shared Function GetFilter(ByVal criteria As CriteriaLink) As IEntityFilter
+        Private Shared Function GetFilter(ByVal criteria As CriteriaLink, ByVal t As Type) As IEntityFilter
             If criteria IsNot Nothing Then
-                Return criteria.Filter
+                Return criteria.Filter(t)
             End If
             Return Nothing
         End Function
@@ -3052,17 +3261,18 @@ l1:
 
             Dim key As String = String.Empty
 
+            Dim tt As System.Type = GetType(T)
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                key = criteria.Filter.Template.GetStaticString & _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Dics"
+                key = criteria.Filter(tt).Template.GetStaticString & _schema.GetEntityKey(tt) & GetStaticKey() & "Dics"
             Else
-                key = _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Dics"
+                key = _schema.GetEntityKey(tt) & GetStaticKey() & "Dics"
             End If
 
             Dim dic As IDictionary = GetDic(_cache, key)
 
             Dim f As String = String.Empty
             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                f = CObj(criteria.Filter).ToString
+                f = criteria.Filter(tt).ToString
             End If
 
             Dim id As String = f & " - dics - "
@@ -3075,7 +3285,7 @@ l1:
                 Using SyncHelper.AcquireDynamicLock(sync)
                     roots = CType(dic(id), DicIndex(Of T))
                     If roots Is Nothing Then
-                        roots = BuildDictionary(Of T)(level, GetFilter(criteria), join)
+                        roots = BuildDictionary(Of T)(level, GetFilter(criteria, tt), join)
                         dic.Add(id, roots)
                     End If
                 End Using
