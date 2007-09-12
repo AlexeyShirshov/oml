@@ -274,6 +274,7 @@ Namespace Orm
                 If Not s Then
                     successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                 End If
+                Return c
             End If
             Return objects
         End Function

@@ -667,16 +667,16 @@ Namespace Orm
                                 r = IEntityFilter.EvalResult.NotFound
                                 If par.StartsWith("%") Then
                                     If par.EndsWith("%") Then
-                                        If str.IndexOf(par, StringComparison.InvariantCultureIgnoreCase) >= 0 Then
+                                        If str.IndexOf(par.Trim("%"c), StringComparison.InvariantCultureIgnoreCase) >= 0 Then
                                             r = IEntityFilter.EvalResult.Found
                                         End If
                                     Else
-                                        If str.EndsWith(par) Then
+                                        If str.EndsWith(par.TrimStart("%"c)) Then
                                             r = IEntityFilter.EvalResult.Found
                                         End If
                                     End If
                                 ElseIf par.EndsWith("%") Then
-                                    If str.StartsWith(par) Then
+                                    If str.StartsWith(par.TrimEnd("%"c)) Then
                                         r = IEntityFilter.EvalResult.Found
                                     End If
                                 End If
