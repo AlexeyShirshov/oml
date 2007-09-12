@@ -501,8 +501,15 @@ Namespace Orm
             End Sub
 
             Public Sub New(ByVal c As CriteriaLink)
-                MyClass.new(c.Filter)
+                MyClass.new(GetFilter(c))
             End Sub
+
+            Protected Shared Function GetFilter(ByVal c As CriteriaLink) As IEntityFilter
+                If c IsNot Nothing Then
+                    Return c.Filter
+                End If
+                Return Nothing
+            End Function
 
             Public Sub New(ByVal mgr As OrmManagerBase, ByVal f As IEntityFilter)
                 _mgr = mgr
