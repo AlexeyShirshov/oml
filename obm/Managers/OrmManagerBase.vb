@@ -361,7 +361,7 @@ Namespace Orm
                     Dim c As Integer = mgr.GetLoadedCount(Of T)(Entry.Current)
                     Dim cnt As Integer = Entry.CurrentCount
                     If c < cnt Then
-                        If Not mgr.IsGoodTime(_fetchTime, _execTime, cnt, c) Then
+                        If Not mgr.IsGoodTime4Load(_fetchTime, _execTime, cnt, c) Then
                             successed = IListObjectConverter.ExtractListResult.NeedLoad
                             Return r
                         Else
@@ -1313,7 +1313,7 @@ l1:
                 del.Renew = True
                 ce = GetFromCache(Of T)(dic, sync, id, withLoad, del)
                 r = ce.GetObjectList(Of T)(Me, withLoad, del.Created, s)
-                Assert(s = IListObjectConverter.ExtractListResult.NeedLoad, "Withload should always successed")
+                Assert(s = IListObjectConverter.ExtractListResult.Successed, "Withload should always successed")
             End If
 
             If s = IListObjectConverter.ExtractListResult.CantApplyFilter Then
@@ -2813,11 +2813,16 @@ l1:
             End If
         End Function
 
-        Public Function IsGoodTime(ByVal fetchTime As TimeSpan, ByVal execTime As TimeSpan, ByVal totalCount As Integer, ByVal loadedCount As Integer) As Boolean
-            Dim tt As TimeSpan = fetchTime + execTime
+        Public Shared Function GetK(ByVal cnt As Integer) As Double
+            Return 1
+        End Function
+
+        Public Shared Function IsGoodTime4Load(ByVal fetchTime As TimeSpan, ByVal execTime As TimeSpan, ByVal totalCount As Integer, ByVal loadedCount As Integer) As Boolean
+            Dim tt As TimeSpan = TimeSpan.FromMilliseconds((fetchTime + execTime).TotalMilliseconds * GetK(totalCount))
             'Dim p As Pair(Of Integer, TimeSpan) = mc.Cache.GetLoadTime(GetType(T))
-            Dim slt As Double = (fetchTime.TotalMilliseconds / totalCount)
-            Dim ttl As TimeSpan = TimeSpan.FromMilliseconds(slt * (totalCount - loadedCount) * 1.1)
+            'Dim tt As TimeSpan = TimeSpan.FromMilliseconds(fetchTime.TotalMilliseconds * 40) + execTime
+            Dim slt As Double = 0.0005 '(fetchTime.TotalMilliseconds / totalCount)
+            Dim ttl As TimeSpan = TimeSpan.FromSeconds(slt * (totalCount - loadedCount))
             Return tt > ttl
         End Function
 
