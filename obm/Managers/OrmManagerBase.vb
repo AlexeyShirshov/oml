@@ -361,7 +361,7 @@ Namespace Orm
                     Dim c As Integer = mgr.GetLoadedCount(Of T)(Entry.Current)
                     Dim cnt As Integer = Entry.CurrentCount
                     If c < cnt Then
-                        If Not mgr.IsGoodTime4Load(_fetchTime, _execTime, cnt, c) Then
+                        If Not OrmManagerBase.IsGoodTime4Load(_fetchTime, _execTime, cnt, c) Then
                             successed = IListObjectConverter.ExtractListResult.NeedLoad
                             Return r
                         Else

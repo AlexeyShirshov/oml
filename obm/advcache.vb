@@ -51,7 +51,7 @@ Namespace Orm
                     ''Dim p As Pair(Of Integer, TimeSpan) = mc.Cache.GetLoadTime(GetType(T))
                     'Dim slt As Double = (er.FetchTime.TotalMilliseconds / er.Count)
                     'Dim ttl As TimeSpan = TimeSpan.FromMilliseconds(slt * (er.Count - l) * 1.1)
-                    If mc.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, l) Then
+                    If OrmManagerBase.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, l) Then
                         mc.LoadObjects(c)
                     Else
                         successed = IListObjectConverter.ExtractListResult.NeedLoad
@@ -261,7 +261,7 @@ Namespace Orm
                 Dim c As Generic.ICollection(Of T) = Nothing
                 If loaded < l.Count Then
                     Dim er As OrmManagerBase.ExecutionResult = mc.GetLastExecitionResult
-                    If mc.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, loaded) Then
+                    If OrmManagerBase.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, loaded) Then
                         c = FromWeakList(Of T)(weak_list, mc)
                         mc.LoadObjects(c)
                     Else
