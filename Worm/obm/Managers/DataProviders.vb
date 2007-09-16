@@ -432,15 +432,37 @@ Namespace Orm
             End Function
 
             Public Overrides Sub CreateDepends()
-                MyBase.CreateDepends()
-
                 If Not _mgr._dont_cache_lists Then
+                    Dim tt As Type = GetType(T)
+                    If _f IsNot Nothing Then
+                        Dim cache As OrmCacheBase = _mgr.Cache
+                        'cache.AddDependType(tt, _key, _id, _f)
+
+                        For Each f As EntityFilter In _f.GetAllFilters
+                            Dim v As EntityValue = TryCast(f.Value, EntityValue)
+                            If v IsNot Nothing Then
+                                'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
+                                'If GetType(OrmBase).IsAssignableFrom(tp) Then
+                                cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
+                                'End If
+                            Else
+                                Dim p As New Pair(Of String, Type)(f.Template.FieldName, f.Template.Type)
+                                cache.AddFieldDepend(p, _key, _id)
+                            End If
+                            'If tt IsNot f.Template.Type Then
+                            '    cache.AddJoinDepend(f.Template.Type, tt)
+                            'End If
+                        Next
+                    End If
+
                     Dim mt As Type = _obj.GetType
-                    Dim t As Type = GetType(T)
-                    Dim ct As Type = _mgr.DbSchema.GetConnectedType(mt, t)
+                    Dim ct As Type = _mgr.DbSchema.GetConnectedType(mt, tt)
                     If ct Is Nothing Then
                         _mgr.Cache.AddM2MObjDependent(_obj, _key, _id)
                     End If
+                End If
+
+                If Not _mgr._dont_cache_lists Then
                 End If
             End Sub
 
