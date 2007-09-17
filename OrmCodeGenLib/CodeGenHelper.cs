@@ -221,10 +221,12 @@ namespace OrmCodeGenLib
                 return Add(name, name);
             }
 
+/*
             public void Remove(string name)
             {
                 _dictionary.Remove(name);
             }
+*/
 
             public CodeRegion this[string name]
             {
@@ -238,6 +240,7 @@ namespace OrmCodeGenLib
             }
         }
 
+/*
         class MemberSearchCriteria
         {
             public readonly CodeTypeMember SearchObject;
@@ -249,5 +252,6 @@ namespace OrmCodeGenLib
                 CriteriaValue = criteriaValue;
             }
         }
+*/
     }
 }

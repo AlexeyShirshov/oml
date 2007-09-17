@@ -203,6 +203,11 @@
 				<xs:documentation>Уровень доступа к полю класса</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
+		<xs:attribute name="disabled" type="xs:boolean" use="optional" default="false">
+			<xs:annotation>
+				<xs:documentation>Признак отключения проперти</xs:documentation>
+			</xs:annotation>
+		</xs:attribute>
 	</xs:complexType>
 	<xs:complexType name="PropertiesCollection_t">
 		<xs:annotation>
@@ -347,6 +352,7 @@
 			<xs:documentation>Пользовательский тип не подлежащий проверке</xs:documentation>
 		</xs:annotation>
 		<xs:attribute name="name" type="xs:string" use="required" />
+		<xs:attribute name="hint" type="TypeHint_t" use="optional" />
 	</xs:complexType>
 	<xs:complexType name="TypeRef_t">
 		<xs:annotation>
@@ -381,6 +387,17 @@
 					<xs:enumeration value="PrimaryKey" />
 					<xs:enumeration value="Private" />
 					<xs:enumeration value="Factory" />
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:list>
+	</xs:simpleType>
+	<xs:simpleType name="TypeHint_t">
+		<xs:list>
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="Enum" />
+					<xs:enumeration value="ValueType" />
+					<xs:enumeration value="Nullable" />
 				</xs:restriction>
 			</xs:simpleType>
 		</xs:list>

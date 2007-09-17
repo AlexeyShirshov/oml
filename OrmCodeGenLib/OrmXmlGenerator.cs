@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using OrmCodeGenLib.Descriptors;
-using System.Reflection;
 
 namespace OrmCodeGenLib
 {
@@ -215,7 +214,8 @@ namespace OrmCodeGenLib
                         propertyElement.SetAttribute("propertyAccessLevel", property.PropertyAccessLevel.ToString());
                     if (property.PropertyAlias != property.Name)
                         propertyElement.SetAttribute("propertyAlias", property.PropertyAlias);
-
+                    if (property.Disabled)
+                        propertyElement.SetAttribute("disabled", XmlConvert.ToString(true));
                     propertiesNode.AppendChild(propertyElement);
                 }
                 entityElement.AppendChild(propertiesNode);
@@ -244,6 +244,10 @@ namespace OrmCodeGenLib
                 {
                     typeSubElement = CreateElement("UserType");
                     typeSubElement.SetAttribute("name", type.TypeName);
+                    if(type.UserTypeHint.HasValue && type.UserTypeHint != UserTypeHintFlags.None)
+                    {
+                        typeSubElement.SetAttribute("hint", type.UserTypeHint.ToString().Replace(",", string.Empty));
+                    }
                 }
                 else
                 {
