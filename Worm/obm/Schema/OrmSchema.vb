@@ -659,7 +659,8 @@ Namespace Orm
             Dim r As String = Nothing
             If j IsNot Nothing Then
                 r = j.GetJoinField(subType)
-            Else
+            End If
+            If String.IsNullOrEmpty(r) Then
                 Dim c As ICollection(Of String) = GetFieldNameByType(mainType, subType)
                 If c.Count = 1 Then
                     For Each s As String In c
