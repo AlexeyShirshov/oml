@@ -3472,19 +3472,17 @@ l1:
 
         Protected Function HasJoins(ByVal t As Type, ByVal filter As IEntityFilter, ByRef joins() As OrmJoin) As Boolean
             Dim l As New List(Of OrmJoin)
-
+            Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(t)
             For Each f As EntityFilter In filter.GetAllFilters
-                If f.Template.Type IsNot t Then
-                    Dim col As ICollection(Of String) = _schema.GetFieldNameByType(t, f.Template.Type)
-                    If col.Count = 0 Then
-                        Continue For
-                    ElseIf col.Count > 1 Then
-                        Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous. Use FindJoin method", t, f.Template.Type))
+                Dim tt As System.Type = f.Template.Type
+                If tt IsNot t Then
+                    Dim field As String = _schema.GetJoinFieldNameByType(t, tt, oschema)
+
+                    If String.IsNullOrEmpty(field) Then
+                        Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", t, tt))
                     End If
 
-                    Dim field As String = CType(col, List(Of String))(0)
-
-                    l.Add(MakeJoin(f.Template.Type, t, field, FilterOperation.Equal, JoinType.Join))
+                    l.Add(MakeJoin(tt, t, field, FilterOperation.Equal, JoinType.Join))
                 End If
             Next
 
