@@ -158,7 +158,7 @@ Namespace Orm
         End Sub
 
         Protected Overridable Function GetDic(ByVal mgr As OrmReadOnlyDBManager, ByVal key As String) As IDictionary
-            Return OrmReadOnlyDBManager.GetDic(mgr.Cache, key)
+            Return mgr.GetDic(mgr.Cache, key)
         End Function
 
         Public Sub ResetCache(ByVal c As OrmCacheBase)
@@ -166,7 +166,7 @@ Namespace Orm
 
             Dim id As String = GetKey()
             If String.IsNullOrEmpty(id) Then id = "empty"
-            Dim dic As IDictionary = OrmReadOnlyDBManager.GetDic(c, key)
+            Dim dic As IDictionary = OrmReadOnlyDBManager._GetDic(c, key)
             If dic IsNot Nothing Then
                 _reseted = True
                 dic.Remove(id)

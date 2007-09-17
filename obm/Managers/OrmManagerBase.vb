@@ -65,18 +65,26 @@ Namespace Orm
 
         End Class
 
-        Public Class CacheListSwitcher
+        Public Class CacheListBehavior
             Implements IDisposable
 
             Private _disposedValue As Boolean
             Private _mgr As OrmManagerBase
             Private _oldvalue As Boolean
             Private _oldExp As Date
+            Private _oldMark As String
 
             Public Sub New(ByVal mgr As OrmManagerBase, ByVal cache_lists As Boolean)
                 _mgr = mgr
                 _oldvalue = mgr._dont_cache_lists
                 mgr._dont_cache_lists = Not cache_lists
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmManagerBase, ByVal liveTime As TimeSpan)
+                _mgr = mgr
+                _oldvalue = mgr._dont_cache_lists
+                _oldExp = mgr._expiresPattern
+                mgr._expiresPattern = Date.Now.Add(liveTime)
             End Sub
 
             Public Sub New(ByVal mgr As OrmManagerBase, ByVal cache_lists As Boolean, ByVal liveTime As TimeSpan)
@@ -87,17 +95,38 @@ Namespace Orm
                 mgr._expiresPattern = Date.Now.Add(liveTime)
             End Sub
 
-            Public Sub New(ByVal mgr As OrmManagerBase, ByVal liveTime As TimeSpan)
+            Public Sub New(ByVal mgr As OrmManagerBase, ByVal cache_lists As Boolean, ByVal mark As String)
+                _mgr = mgr
+                _oldvalue = mgr._dont_cache_lists
+                mgr._dont_cache_lists = Not cache_lists
+                _oldMark = mgr._list
+                mgr._list = mark
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmManagerBase, ByVal liveTime As TimeSpan, ByVal mark As String)
                 _mgr = mgr
                 _oldvalue = mgr._dont_cache_lists
                 _oldExp = mgr._expiresPattern
                 mgr._expiresPattern = Date.Now.Add(liveTime)
+                _oldMark = mgr._list
+                mgr._list = mark
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmManagerBase, ByVal cache_lists As Boolean, ByVal liveTime As TimeSpan, ByVal mark As String)
+                _mgr = mgr
+                _oldvalue = mgr._dont_cache_lists
+                mgr._dont_cache_lists = Not cache_lists
+                _oldExp = mgr._expiresPattern
+                mgr._expiresPattern = Date.Now.Add(liveTime)
+                _oldMark = mgr._list
+                mgr._list = mark
             End Sub
 
             Protected Overridable Sub Dispose(ByVal disposing As Boolean)
                 If Not Me._disposedValue Then
                     _mgr._dont_cache_lists = _oldvalue
                     _mgr._expiresPattern = _oldExp
+                    _mgr._list = _oldMark
                 End If
                 Me._disposedValue = True
             End Sub
@@ -654,6 +683,7 @@ Namespace Orm
         Private _er As ExecutionResult
         Friend _externalFilter As IEntityFilter
         Protected Friend _loadedInLastFetch As Integer
+        Private _list As String
 
         Private Function GetStart() As Integer
             If _externalFilter IsNot Nothing Then
@@ -3150,13 +3180,27 @@ l1:
             Return LoadObjects(Of T)(ConvertIds2Objects(Of T)(ids, start, length, False))
         End Function
 
-        Protected Friend Shared Function GetDic(ByVal cache As OrmCacheBase, ByVal key As String) As IDictionary
+        Protected Friend Shared Function _GetDic(ByVal cache As OrmCacheBase, ByVal key As String) As IDictionary
             Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
             If dic Is Nothing Then
                 Using SyncHelper.AcquireDynamicLock(key)
                     dic = CType(cache.Filters(key), IDictionary)
                     If dic Is Nothing Then
                         dic = cache.CreateResultsetsDictionary() 'Hashtable.Synchronized(New Hashtable)
+                        cache.Filters.Add(key, dic)
+                    End If
+                End Using
+            End If
+            Return dic
+        End Function
+
+        Protected Friend Function GetDic(ByVal cache As OrmCacheBase, ByVal key As String) As IDictionary
+            Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
+            If dic Is Nothing Then
+                Using SyncHelper.AcquireDynamicLock(key)
+                    dic = CType(cache.Filters(key), IDictionary)
+                    If dic Is Nothing Then
+                        dic = cache.CreateResultsetsDictionary(_list) 'Hashtable.Synchronized(New Hashtable)
                         cache.Filters.Add(key, dic)
                     End If
                 End Using

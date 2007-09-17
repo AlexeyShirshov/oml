@@ -94,7 +94,7 @@ Namespace Orm
 
         Public ReadOnly DateTimeCreated As Date
 
-        Private _filters As IDictionary
+        Protected _filters As IDictionary
         Private _modifiedobjects As IDictionary
         'Private _invalidate_types As New List(Of Type)
         ''' <summary>
@@ -870,6 +870,13 @@ Namespace Orm
                 ValidateUpdateSPByType(GetType(Object), obj, fields)
             End Using
         End Sub
+
+        Public Overridable Function CreateResultsetsDictionary(ByVal mark As String) As IDictionary
+            If String.IsNullOrEmpty(mark) Then
+                Return CreateResultsetsDictionary()
+            End If
+            Throw New NotImplementedException(String.Format("Mark {0} is not supported", mark))
+        End Function
     End Class
 
     Public Class OrmCache

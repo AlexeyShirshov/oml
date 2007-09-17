@@ -1713,11 +1713,31 @@ Namespace Orm
             Next
 
             values.Clear()
-            For Each o As T In objs
-                If o.IsLoaded Then
-                    values.Add(o)
+            Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
+            If remove_not_found Then
+                For Each o As T In objs
+                    If o.IsLoaded Then
+                        values.Add(o)
+                    ElseIf ListConverter.IsWeak Then
+                        If dic.ContainsKey(o.Identifier) Then
+                            values.Add(dic(o.Identifier))
+                        End If
+                    End If
+                Next
+            Else
+                If ListConverter.IsWeak Then
+                    For Each o As T In objs
+                        Dim obj As T = Nothing
+                        If dic.TryGetValue(o.Identifier, obj) Then
+                            values.Add(obj)
+                        Else
+                            values.Add(o)
+                        End If
+                    Next
+                Else
+                    Return objs
                 End If
-            Next
+            End If
             Return values
         End Function
 

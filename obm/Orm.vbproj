@@ -100,8 +100,9 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="advcache.vb" />
-    <Compile Include="Criteria.vb" />
+    <Compile Include="Cache\advcache.vb" />
+    <Compile Include="Criteria\Criteria.vb" />
+    <Compile Include="Criteria\JoinAndCondition.vb" />
     <Compile Include="Managers\DataProviders.vb" />
     <Compile Include="OrmDictionary.vb" />
     <Compile Include="MetaAttributes.vb" />
@@ -113,10 +114,10 @@
     <Compile Include="Relation.vb" />
     <Compile Include="Schema\DbSchema.vb" />
     <Compile Include="Schema\InterfacesAndClasses.vb" />
-    <Compile Include="Schema\OrmFilter.vb" />
+    <Compile Include="Criteria\OrmFilter.vb" />
     <Compile Include="Schema\OrmSchema.vb" />
-    <Compile Include="HttpCacheDic.vb" />
-    <Compile Include="OrmCache.vb" />
+    <Compile Include="Web\HttpCacheDic.vb" />
+    <Compile Include="Cache\OrmCache.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
       <DependentUpon>Application.myapp</DependentUpon>
@@ -135,7 +136,7 @@
     <Compile Include="OrmBase.vb" />
     <Compile Include="other.vb" />
     <Compile Include="search.vb" />
-    <Compile Include="SQL2005Schema.vb" />
+    <Compile Include="Schema\SQL2005Schema.vb" />
     <Compile Include="storedprocs.vb" />
     <Compile Include="Web\Listener.vb" />
     <Compile Include="Web\Management.vb" />
