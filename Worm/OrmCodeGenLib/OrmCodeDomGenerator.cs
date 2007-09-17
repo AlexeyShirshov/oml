@@ -1,15 +1,13 @@
 using System;
 using System.CodeDom;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Reflection;
+using System.Text;
 using OrmCodeGenLib.Descriptors;
 using Worm.Orm;
 using Worm.Orm.Collections;
-using CoreFramework.Structures;
-using System.Text.RegularExpressions;
-using System.Text;
+using XMedia.Framework;
 
 namespace OrmCodeGenLib
 {
@@ -102,7 +100,7 @@ namespace OrmCodeGenLib
             if(entity.BaseEntity == null)
             {
                 //entityClass.BaseTypes.Add(new CodeTypeReference(typeof(OrmBaseT)));
-                CodeTypeReference entityType = new CodeTypeReference(typeof (Worm.Orm.OrmBaseT<>));
+                CodeTypeReference entityType = new CodeTypeReference(typeof (OrmBaseT<>));
                 entityType.TypeArguments.Add(
                     new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity, settings)));
                 entityClass.BaseTypes.Add(entityType);
@@ -319,7 +317,7 @@ namespace OrmCodeGenLib
 
             #region void CreateObject(string fieldName, object value)
             
-            CodeMemberMethod createobjectMethod = CreateCreateObjectMethod(entity, entityClass, settings);
+            CodeMemberMethod createobjectMethod = CreateCreateObjectMethod(entity, entityClass);
 
             #endregion void CreateObject(string fieldName, object value)
 
@@ -405,7 +403,7 @@ namespace OrmCodeGenLib
             #endregion метод public static OrmTable GetMainTable()
 
             #region поле _idx
-            field = new CodeMemberField(new CodeTypeReference(typeof(Worm.Orm.Collections.IndexedCollection<string, Worm.Orm.MapField2Column>)), "_idx");
+            field = new CodeMemberField(new CodeTypeReference(typeof(IndexedCollection<string, MapField2Column>)), "_idx");
             entitySchemaDefClass.Members.Add(field);
             #endregion поле _idx
 
@@ -801,7 +799,7 @@ namespace OrmCodeGenLib
             foreach (RelationDescription relationDescription in usedM2MRelation)
             {
                 m2mArrayCreationExpression.Initializers.AddRange(
-                    GetM2MRelationCreationExpressions(relationDescription, entity));
+                    GetM2MRelationCreationExpressions(relationDescription, entity, settings));
             }
             inlockStatemets.Add(new CodeVariableDeclarationStatement(
                                     method.ReturnType,
@@ -926,7 +924,7 @@ namespace OrmCodeGenLib
             }
             else
                 // реализует метод базового класса
-                method.ImplementationTypes.Add(new CodeTypeReference(typeof (Worm.Orm.IOrmObjectSchema)));
+                method.ImplementationTypes.Add(new CodeTypeReference(typeof (IOrmObjectSchema)));
             // параметры
             //...
             // для лока
@@ -939,7 +937,7 @@ namespace OrmCodeGenLib
             List<CodeStatement> condTrueStatements = new List<CodeStatement>();
             condTrueStatements.Add(
                 new CodeVariableDeclarationStatement(
-                    new CodeTypeReference(typeof(Worm.Orm.Collections.IndexedCollection<string, Worm.Orm.MapField2Column>)),
+                    new CodeTypeReference(typeof(IndexedCollection<string, MapField2Column>)),
                     "idx",
                     (entity.BaseEntity == null) ? 
                     (CodeExpression)
@@ -1261,7 +1259,7 @@ namespace OrmCodeGenLib
             method.Parameters.Add(prm);
 
             prm = new CodeParameterDeclarationExpression(
-                new CodeTypeReference(typeof (Worm.Orm.IOrmObjectSchemaBase)),
+                new CodeTypeReference(typeof (IOrmObjectSchemaBase)),
                 "schema"
                 );
             method.Parameters.Add(prm);
@@ -1305,7 +1303,7 @@ namespace OrmCodeGenLib
             return expression;
         }
 
-        private CodeExpression[] GetM2MRelationCreationExpressions(RelationDescription relationDescription, EntityDescription entity)
+        private CodeExpression[] GetM2MRelationCreationExpressions(RelationDescription relationDescription, EntityDescription entity, OrmCodeDomGeneratorSettings settings)
         {
             if (relationDescription.Left.Entity != relationDescription.Right.Entity)
             {
@@ -1314,19 +1312,19 @@ namespace OrmCodeGenLib
                 string fieldName = entity == relationDescription.Left.Entity ? relationDescription.Right.FieldName : relationDescription.Left.FieldName;
                 bool cascadeDelete = entity == relationDescription.Left.Entity ? relationDescription.Right.CascadeDelete : relationDescription.Left.CascadeDelete;
 
-                return new CodeExpression[] {GetM2MRelationCreationExpression(relatedEntity, relationDescription.Table, relationDescription.UnderlyingEntity, fieldName, cascadeDelete, null)};
+                return new CodeExpression[] {GetM2MRelationCreationExpression(relatedEntity, relationDescription.Table, relationDescription.UnderlyingEntity, fieldName, cascadeDelete, null, settings)};
             }
             else
             {
                 return new CodeExpression[]
                     {
-                        GetM2MRelationCreationExpression(entity, relationDescription.Table, relationDescription.UnderlyingEntity, relationDescription.Right.FieldName, relationDescription.Right.CascadeDelete, true),
-                        GetM2MRelationCreationExpression(entity, relationDescription.Table, relationDescription.UnderlyingEntity, relationDescription.Left.FieldName, relationDescription.Left.CascadeDelete, false)
+                        GetM2MRelationCreationExpression(entity, relationDescription.Table, relationDescription.UnderlyingEntity, relationDescription.Right.FieldName, relationDescription.Right.CascadeDelete, true, settings),
+                        GetM2MRelationCreationExpression(entity, relationDescription.Table, relationDescription.UnderlyingEntity, relationDescription.Left.FieldName, relationDescription.Left.CascadeDelete, false, settings)
                     };
             }
         }
 
-        private CodeExpression GetM2MRelationCreationExpression(EntityDescription relatedEntity, TableDescription relationTable, EntityDescription underlyingEntity, string fieldName, bool cascadeDelete, bool? direct)
+        private CodeExpression GetM2MRelationCreationExpression(EntityDescription relatedEntity, TableDescription relationTable, EntityDescription underlyingEntity, string fieldName, bool cascadeDelete, bool? direct, OrmCodeDomGeneratorSettings settings)
         {
             if (underlyingEntity != null && direct.HasValue)
                 throw new NotImplementedException("M2M relation on sefl cannot have underlying entity.");
@@ -1346,7 +1344,8 @@ namespace OrmCodeGenLib
                         ),
                     "GetTypeByEntityName"
                     ),
-                    new CodePrimitiveExpression(relatedEntity.Name)
+                OrmCodeGenHelper.GetEntityNameReferenceExpression(relatedEntity, settings)
+                    //new CodePrimitiveExpression(relatedEntity.Name)
                 );
             if (underlyingEntity == null)
                 tableExpression = new CodeMethodInvokeExpression(
@@ -1364,7 +1363,8 @@ namespace OrmCodeGenLib
                     new CodeMethodInvokeExpression(
                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
                         "GetTypeByEntityName",
-                        new CodePrimitiveExpression(underlyingEntity.Name)
+                        OrmCodeGenHelper.GetEntityNameReferenceExpression(underlyingEntity, settings)
+                        //new CodePrimitiveExpression(underlyingEntity.Name)
                         )
                     );
 
@@ -1376,7 +1376,7 @@ namespace OrmCodeGenLib
 
             if (underlyingEntity != null)
             {
-                CodeExpression connectedTypeExpression = null;
+                CodeExpression connectedTypeExpression;
                 connectedTypeExpression = new CodeMethodInvokeExpression(
                     new CodeMethodReferenceExpression(
                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
@@ -1538,6 +1538,8 @@ namespace OrmCodeGenLib
                 #region создание проперти и etc
                 PropertyDescription propertyDesc;
                 propertyDesc = completeEntity.Properties[idx];
+                if (propertyDesc.Disabled)
+                    continue;
 
                 {
                     CodeMemberField propConst = new CodeMemberField(typeof(string), propertyDesc.Name);
@@ -1701,7 +1703,7 @@ namespace OrmCodeGenLib
 
             #region void SetValue(System.Reflection.PropertyInfo pi, ColumnAttribute c, object value)
 
-            UpdateSetValueMethod(property, field, propertyDesc, setvalueMethod);
+            UpdateSetValueMethod(field, propertyDesc, setvalueMethod, settings);
 
             #endregion void SetValue(System.Reflection.PropertyInfo pi, ColumnAttribute c, object value)
 
@@ -1781,53 +1783,204 @@ namespace OrmCodeGenLib
                 );
         }
 
-        private void UpdateSetValueMethod(CodeMemberProperty property, CodeMemberField field, PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod)
+        private void UpdateSetValueMethod(CodeMemberField field, PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod, OrmCodeDomGeneratorSettings settings)
         {
-            Type fieldRealType;
-            fieldRealType = Type.GetType(field.Type.BaseType, false);
+            //Type fieldRealType;
+            //fieldRealType = Type.GetType(field.Type.BaseType, false);
 
 
             CodeConditionStatement setValueStatement = new CodeConditionStatement(
-                new CodeBinaryOperatorExpression(
-                    new CodeFieldReferenceExpression(
-                        new CodeArgumentReferenceExpression("c"),
-                        "FieldName"
-                        ),
-                    CodeBinaryOperatorType.ValueEquality,
-                    new CodePrimitiveExpression(propertyDesc.PropertyAlias)
-                    )
+                new CodeMethodInvokeExpression(
+                    OrmCodeGenHelper.GetFieldNameReferenceExpression(propertyDesc, settings), 
+                    "Equals", 
+                    new CodeVariableReferenceExpression("fieldName"))
+
                 );
 
 
-            if (fieldRealType != null && fieldRealType.IsGenericType &&
-                typeof (Nullable<>).Equals(fieldRealType.GetGenericTypeDefinition()))
+            //if (propertyDesc.PropertyType.IsNullableType)
+            //{
+            //    setValueStatement.TrueStatements.Add(
+            //        new CodeConditionStatement(
+            //            new CodeBinaryOperatorExpression(
+            //                new CodeArgumentReferenceExpression("value"),
+            //                CodeBinaryOperatorType.IdentityInequality,
+            //                new CodePrimitiveExpression(null)
+            //                ),
+            //            new CodeStatement[]
+            //                {
+            //                    new CodeAssignStatement(
+            //                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
+            //                                                         field.Name),
+            //                        new CodeCastExpression(field.Type.TypeArguments[0],
+            //                                               new CodeArgumentReferenceExpression("value"))
+            //                        )
+            //                },
+            //            new CodeStatement[]
+            //                {
+            //                    new CodeAssignStatement(
+            //                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
+            //                                                         field.Name),
+            //                        new CodePrimitiveExpression(null)
+            //                        )
+            //                }
+            //            )
+            //        );
+            //}
+            //else 
+            if(propertyDesc.PropertyType.IsEnum && ((settings.LanguageSpecificHacks & LanguageSpecificHacks.SafeUnboxToEnum) == LanguageSpecificHacks.SafeUnboxToEnum))
             {
-                setValueStatement.TrueStatements.Add(
-                    new CodeConditionStatement(
-                        new CodeBinaryOperatorExpression(
-                            new CodeArgumentReferenceExpression("value"),
-                            CodeBinaryOperatorType.IdentityInequality,
-                            new CodePrimitiveExpression(null)
+                if(propertyDesc.PropertyType.IsNullableType)
+                {
+                    setValueStatement.TrueStatements.Add(
+                        new CodeConditionStatement(
+                            new CodeBinaryOperatorExpression(
+                                new CodeArgumentReferenceExpression("value"),
+                                CodeBinaryOperatorType.IdentityEquality,
+                                new CodePrimitiveExpression(null)
                             ),
-                        new CodeStatement[]
-                            {
-                                new CodeAssignStatement(
-                                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
-                                                                     field.Name),
-                                    new CodeCastExpression(field.Type.TypeArguments[0],
-                                                           new CodeArgumentReferenceExpression("value"))
-                                    )
-                            },
-                        new CodeStatement[]
-                            {
-                                new CodeAssignStatement(
-                                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
-                                                                     field.Name),
-                                    new CodePrimitiveExpression(null)
-                                    )
-                            }
+                            new CodeStatement[]
+                                {
+                                    new CodeAssignStatement(
+                                                         new CodeFieldReferenceExpression(
+                                                             new CodeThisReferenceExpression(), field.Name),
+                                                         new CodePrimitiveExpression(null))
+                },
+                            new CodeStatement[]
+                                {
+                                    new CodeVariableDeclarationStatement(
+                                        new CodeTypeReference(typeof(Type)),
+                                        "t",
+                                        new CodeArrayIndexerExpression(
+                                                                new CodeMethodInvokeExpression(
+                                                                    new CodeTypeOfExpression(field.Type),
+                                                                    "GetGenericArguments"
+                                                                ),
+                                                                new CodePrimitiveExpression(0)
+                                                            )
+                                    ),
+                                    new CodeAssignStatement(
+                                                         new CodeFieldReferenceExpression(
+                                                             new CodeThisReferenceExpression(), field.Name),
+                                                         new CodeCastExpression(
+                                                         field.Type,
+                                                         new CodeMethodInvokeExpression(
+                                                            new CodeTypeReferenceExpression(typeof(Enum)),
+                                                            "ToObject",
+                                                            // typeof(Nullable<int>).GetGenericArguments()[0]
+                                                            new CodeVariableReferenceExpression("t"),
+                                                            new CodeArgumentReferenceExpression(
+                                                                                    "value")
+                                    )))
+                    
+                                                            
+                }
+
                         )
                     );
+                }
+                else
+                {
+                    setValueStatement.TrueStatements.Add(new CodeAssignStatement(
+                                                         new CodeFieldReferenceExpression(
+                                                             new CodeThisReferenceExpression(), field.Name),
+                                                         new CodeCastExpression(
+                                                         field.Type,
+                                                         new CodeMethodInvokeExpression(
+                                                            new CodeTypeReferenceExpression(typeof(Enum)),
+                                                            "ToObject",
+                        // typeof(Nullable<int>).GetGenericArguments()[0]
+                                                            new CodeTypeOfExpression(field.Type),
+                                                            new CodeArgumentReferenceExpression(
+                                                                                    "value")
+                                    ))));
+                }
+                //CodeTypeReference mediateCastType = propertyDesc.PropertyType.IsNullableType
+                //                                    ? new CodeTypeReference(typeof (int?))
+                //                                    : new CodeTypeReference(typeof (int));
+                //setValueStatement.TrueStatements.Add(new CodeAssignStatement(
+                //                                         new CodeFieldReferenceExpression(
+                //                                             new CodeThisReferenceExpression(), field.Name),
+                //                                         new CodeCastExpression(
+                //                                            field.Type,
+                //                                            new CodeCastExpression(
+                //                                                mediateCastType,
+                //                                                                new CodeArgumentReferenceExpression(
+                //                                                                    "value")))));
+                //setValueStatement.TrueStatements.Add(
+                //    propertyDesc.PropertyType.IsNullableType
+                //        ?
+                //            (CodeStatement) new CodeConditionStatement(
+                //                                new CodeBinaryOperatorExpression(
+                //                                    new CodeArgumentReferenceExpression("value"),
+                //                                    CodeBinaryOperatorType.IdentityEquality,
+                //                                    new CodePrimitiveExpression(null)
+                //                                    ),
+                //                                new CodeStatement[]
+                //                                    {
+                //                                        (CodeStatement) new CodeAssignStatement(
+                //                                                            new CodeFieldReferenceExpression(
+                //                                                                new CodeThisReferenceExpression(),
+                //                                                                field.Name
+                //                                                                ),
+                //                                                            new CodePrimitiveExpression(null)
+                //                                                            )
+                //                                    },
+                //                                new CodeStatement[]
+                //                                    {
+                //                                        new CodeConditionStatement(
+                //                                            new CodeMethodInvokeExpression(
+                //                                                new CodePrimitiveExpression(0), 
+                //                                                "Equals", 
+                //                                                new CodeArgumentReferenceExpression("value")
+                //                                            ),
+                //                                            new CodeStatement[] {
+                //                                            new CodeAssignStatement(
+                //                                                new CodeFieldReferenceExpression(
+                //                                                                new CodeThisReferenceExpression(),
+                //                                                                field.Name),
+                //                                                new CodeDefaultValueExpression( field.Type)
+                //                                                )
+                //                                            },
+                //                                            new CodeStatement[]
+                //                                                {
+                //                                                    new CodeAssignStatement(
+                //                                                            new CodeFieldReferenceExpression(
+                //                                                                new CodeThisReferenceExpression(),
+                //                                                                field.Name),
+                //                                                            CodeSafeUnboxToEnum(new CodeArgumentReferenceExpression("value"),
+                //                                                                                field.Type.TypeArguments[0]))           
+                //                                                }
+                //                                        )
+                //                                    }
+                //                                )
+                //        :
+                //            new CodeConditionStatement(
+                //                new CodeMethodInvokeExpression(
+                //                    new CodePrimitiveExpression(0),
+                //                    "Equals",
+                //                    new CodeArgumentReferenceExpression("value")
+                //                ),
+                //                new CodeStatement[] {
+                //                new CodeAssignStatement(
+                //                    new CodeFieldReferenceExpression(
+                //                                    new CodeThisReferenceExpression(),
+                //                                    field.Name),
+                //                    new CodeDefaultValueExpression( field.Type)
+                //                    )
+                //                },
+                //                new CodeStatement[]
+                //                    {
+                //                        new CodeAssignStatement(
+                //                                new CodeFieldReferenceExpression(
+                //                                    new CodeThisReferenceExpression(),
+                //                                    field.Name),
+                //                                CodeSafeUnboxToEnum(new CodeArgumentReferenceExpression("value"),
+                //                                                    field.Type))           
+                //                    }
+                //            )
+                //    );
+                    
             }
             else
             {
@@ -1844,7 +1997,7 @@ namespace OrmCodeGenLib
             setvalueMethod.Statements.Add(setValueStatement);
         }
 
-        private CodeMemberMethod CreateCreateObjectMethod(EntityDescription entity, CodeTypeDeclaration entityClass, OrmCodeDomGeneratorSettings settings)
+        private CodeMemberMethod CreateCreateObjectMethod(EntityDescription entity, CodeTypeDeclaration entityClass)
         {
             CodeMemberMethod createobjectMethod;
             createobjectMethod = new CodeMemberMethod();
@@ -1884,6 +2037,16 @@ namespace OrmCodeGenLib
             setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(PropertyInfo), "pi"));
             setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(ColumnAttribute), "c"));
             setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "value"));
+            setvalueMethod.Statements.Add(
+                new CodeVariableDeclarationStatement(
+                    new CodeTypeReference(typeof (string)), 
+                    "fieldName",
+                    new CodePropertyReferenceExpression(
+                        new CodeArgumentReferenceExpression("c"), 
+                        "FieldName"
+                    )
+                )
+            );
             return setvalueMethod;
         }
 

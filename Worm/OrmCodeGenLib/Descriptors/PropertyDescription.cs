@@ -19,6 +19,7 @@ namespace OrmCodeGenLib.Descriptors
         private AccessLevel _propertyAccessLevel;
         private bool _isSuppressed;
         private EntityDescription _entity;
+        private bool _disabled;
 
         public PropertyDescription(EntityDescription entity, string name)
             : this(entity, name, null, null, null, null, null, null, false, default(AccessLevel), default(AccessLevel), true, false)
@@ -132,6 +133,12 @@ namespace OrmCodeGenLib.Descriptors
         {
             get { return _entity; }
             set { _entity = value; }
+        }
+
+        public bool Disabled
+        {
+            get { return _disabled; }
+            set { _disabled = value; }
         }
 
         #region ICloneable Members

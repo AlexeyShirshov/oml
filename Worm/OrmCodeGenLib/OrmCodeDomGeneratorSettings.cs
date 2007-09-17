@@ -96,15 +96,22 @@ namespace OrmCodeGenLib
         /// Generic члены производных классов требует наличия констрейтов
         /// </summary>
         DerivedGenericMembersRequireConstraits = 0x0001,
+        /// <summary>
+        /// Генерировать методы вместо параметризованых пропертей
+        /// </summary>
         MethodsInsteadParametrizedProperties = 0x0002,
         AddOptionsStrict = 0x0004,
         OptionsStrictOn = 0x0008,
         AddOptionsExplicit = 0x0010,
-        OptionsExplicitOn = 0x0011,
-        GenerateCSUsingStatement = 0x0012,
-        GenerateVBUsingStatement = 0x0014,
+        OptionsExplicitOn = 0x0020,
+        GenerateCSUsingStatement = 0x0040,
+        GenerateVBUsingStatement = 0x0080,
+        /// <summary>
+        /// Безопасная распаковка переменных с кастом в энам
+        /// </summary>
+        SafeUnboxToEnum = 0x0100,
 
-        CSharp = MethodsInsteadParametrizedProperties | GenerateCSUsingStatement,
+        CSharp = MethodsInsteadParametrizedProperties | GenerateCSUsingStatement | SafeUnboxToEnum,
         VisualBasic = DerivedGenericMembersRequireConstraits | AddOptionsExplicit | AddOptionsStrict | OptionsExplicitOn | OptionsStrictOn | GenerateVBUsingStatement
     }
 

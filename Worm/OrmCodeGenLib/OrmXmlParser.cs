@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
 using System.Xml;
 using System.Xml.Schema;
 using OrmCodeGenLib.Descriptors;
-using System.IO;
 
 namespace OrmCodeGenLib
 {
@@ -15,12 +14,12 @@ namespace OrmCodeGenLib
         private readonly List<string> _validationResult;
         private readonly XmlReader _reader;
         private XmlDocument _ormXmlDocument;
-        private OrmObjectsDef _ormObjectsDef;
+        private readonly OrmObjectsDef _ormObjectsDef;
 
-        private XmlNamespaceManager _nsMgr;
-        private XmlNameTable _nametable;
+        private readonly XmlNamespaceManager _nsMgr;
+        private readonly XmlNameTable _nametable;
 
-        private XmlResolver _xmlResolver;
+        private readonly XmlResolver _xmlResolver;
 
         internal protected OrmXmlParser(XmlReader reader) : this(reader, null)
         {
@@ -130,12 +129,15 @@ namespace OrmCodeGenLib
             {
                 TypeDescription type;
                 string id;
-                id = (typeNode as XmlElement).GetAttribute("id");
+                XmlElement typeElement = (XmlElement)typeNode;
+                id = typeElement.GetAttribute("id");
                 
                 XmlNode typeDefNode = typeNode.LastChild;
+                XmlElement typeDefElement = (XmlElement)typeDefNode;
                 if(typeDefNode.LocalName.Equals("Entity"))
                 {
-                    string entityId = (typeDefNode as XmlElement).GetAttribute("ref");
+                    string entityId;
+                    entityId = typeDefElement.GetAttribute("ref");
                     EntityDescription entity = _ormObjectsDef.GetEntity(entityId);
                     if (entity == null)
                         throw new KeyNotFoundException(
@@ -144,8 +146,19 @@ namespace OrmCodeGenLib
                 }
                 else
                 {
-                    string name = (typeDefNode as XmlElement).GetAttribute("name");
-                    type = new TypeDescription(id, name, typeDefNode.LocalName.Equals("UserType"));
+                    string name = typeDefElement.GetAttribute("name");
+                    if (typeDefNode.LocalName.Equals("UserType"))
+                    {
+                        UserTypeHintFlags? hint = null;
+                        XmlAttribute hintAttribute = typeDefNode.Attributes["hint"];
+                        if (hintAttribute != null)
+                            hint = (UserTypeHintFlags) Enum.Parse(typeof (UserTypeHintFlags), hintAttribute.Value.Replace(" ", ", "));
+                        type = new TypeDescription(id, name, hint);
+                    }
+                    else
+                    {
+                        type = new TypeDescription(id, name, false);
+                    }
                 }
                 _ormObjectsDef.Types.Add(type);
             }
@@ -162,7 +175,8 @@ namespace OrmCodeGenLib
                         string.Format("{0}:Entities/{0}:Entity[@id='{1}']", OrmCodeGenLib.OrmObjectsDef.NS_PREFIX,
                                       entity.Identifier), _nsMgr);
 
-                string baseEntityId = (entityNode as XmlElement).GetAttribute("baseEntity");
+                XmlElement entityElement = (XmlElement)entityNode;
+                string baseEntityId = entityElement.GetAttribute("baseEntity");
 
                 if (!string.IsNullOrEmpty(baseEntityId))
                 {
@@ -189,14 +203,13 @@ namespace OrmCodeGenLib
             XmlNodeList propertiesList;
             propertiesList = entityNode.SelectNodes(string.Format("{0}:SuppressedProperties/{0}:Property", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
-            PropertyDescription property;
-
             foreach (XmlNode propertyNode in propertiesList)
             {
                 string name;
-                name = (propertyNode as XmlElement).GetAttribute("name");
+                XmlElement propertyElement = (XmlElement) propertyNode;
+                name = propertyElement.GetAttribute("name");
 
-                property = new PropertyDescription(name);
+                PropertyDescription property = new PropertyDescription(name);
 
                 entity.SuppressedProperties.Add(property);
             }
@@ -210,7 +223,7 @@ namespace OrmCodeGenLib
             if (!string.IsNullOrEmpty(baseUriString))
             {
                 Uri baseUri = new Uri(baseUriString, UriKind.RelativeOrAbsolute);
-                _ormObjectsDef.FileName = System.IO.Path.GetFileName(baseUri.ToString());
+                _ormObjectsDef.FileName = Path.GetFileName(baseUri.ToString());
             }
         }
 
@@ -228,11 +241,12 @@ namespace OrmCodeGenLib
                 string id, name, description, nameSpace, behaviourName;
                 EntityBehaviuor behaviour = EntityBehaviuor.Default;
 
-                id = (entityNode as XmlElement).GetAttribute("id");
-                name = (entityNode as XmlElement).GetAttribute("name");
-                description = (entityNode as XmlElement).GetAttribute("description");
-                nameSpace = (entityNode as XmlElement).GetAttribute("namespace");
-                behaviourName = (entityNode as XmlElement).GetAttribute("behaviour");
+                XmlElement entityElement = (XmlElement) entityNode;
+                id = entityElement.GetAttribute("id");
+                name = entityElement.GetAttribute("name");
+                description = entityElement.GetAttribute("description");
+                nameSpace = entityElement.GetAttribute("namespace");
+                behaviourName = entityElement.GetAttribute("behaviour");
 
                 if (!string.IsNullOrEmpty(behaviourName))
                     behaviour = (EntityBehaviuor) Enum.Parse(typeof (EntityBehaviuor), behaviourName);
@@ -258,8 +272,6 @@ namespace OrmCodeGenLib
             XmlNodeList propertiesList;
             propertiesList = entityNode.SelectNodes(string.Format("{0}:Properties/{0}:Property", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
-            PropertyDescription property;
-
             foreach (XmlNode propertyNode in propertiesList)
             {
                 string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias;
@@ -267,15 +279,16 @@ namespace OrmCodeGenLib
                 TableDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
 
-                description = (propertyNode as XmlElement).GetAttribute("description");
-                name = (propertyNode as XmlElement).GetAttribute("propertyName");
-                fieldname = (propertyNode as XmlElement).GetAttribute("fieldName");
-                typeId = (propertyNode as XmlElement).GetAttribute("typeRef");
-                sAttributes = (propertyNode as XmlElement).GetAttribute("attributes");
-                tableId = (propertyNode as XmlElement).GetAttribute("table");
-                fieldAccessLevelName = (propertyNode as XmlElement).GetAttribute("classfieldAccessLevel");
-                propertyAccessLevelName = (propertyNode as XmlElement).GetAttribute("propertyAccessLevel");
-                propertyAlias = (propertyNode as XmlElement).GetAttribute("propertyAlias");
+                XmlElement propertyElement = (XmlElement) propertyNode;
+                description = propertyElement.GetAttribute("description");
+                name = propertyElement.GetAttribute("propertyName");
+                fieldname = propertyElement.GetAttribute("fieldName");
+                typeId = propertyElement.GetAttribute("typeRef");
+                sAttributes = propertyElement.GetAttribute("attributes");
+                tableId = propertyElement.GetAttribute("table");
+                fieldAccessLevelName = propertyElement.GetAttribute("classfieldAccessLevel");
+                propertyAccessLevelName = propertyElement.GetAttribute("propertyAccessLevel");
+                propertyAlias = propertyElement.GetAttribute("propertyAlias");
 
                 attributes = sAttributes.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                 if (!string.IsNullOrEmpty(propertyAccessLevelName))
@@ -297,7 +310,7 @@ namespace OrmCodeGenLib
 
                 TypeDescription typeDesc = _ormObjectsDef.GetType(typeId, true);
                 
-                property = new PropertyDescription(entity ,name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
+                PropertyDescription property = new PropertyDescription(entity ,name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
 
                 entity.Properties.Add(property);
             }
@@ -308,45 +321,36 @@ namespace OrmCodeGenLib
             XmlNodeList relationNodes;
             relationNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:EntityRelations/{0}:Relation", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
-            RelationDescription relation;
-
-            TableDescription relationTable;
-            string relationTableId;
-            EntityDescription underlyingEntity;
-            string underlyingEntityId, disabledValue;
-            EntityDescription leftLinkTargetEntity, rightLinkTargetEntity;
-            string leftLinkTargetEntityId, rightLinkTargetEntityId;
-            bool leftCascadeDelete, rightCascadeDelete, disabled;
-            string leftFieldName, rightFieldName;
-            LinkTarget leftLinkTarget, rightLinkTarget;
-
-            XmlNode leftTargetNode, rightTargetNode;
-
             foreach (XmlNode relationNode in relationNodes)
             {
-                leftTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Left", OrmObjectsDef.NS_PREFIX), _nsMgr);
-                rightTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Right", OrmObjectsDef.NS_PREFIX), _nsMgr);
+                XmlNode leftTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Left", OrmObjectsDef.NS_PREFIX), _nsMgr);
+                XmlNode rightTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Right", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
-                relationTableId = (relationNode as XmlElement).GetAttribute("table");
-                underlyingEntityId = (relationNode as XmlElement).GetAttribute("underlyingEntity");
-                disabledValue = (relationNode as XmlElement).GetAttribute("disabled");
+                XmlElement relationElement = (XmlElement) relationNode;
+                string relationTableId = relationElement.GetAttribute("table");
+                string underlyingEntityId = relationElement.GetAttribute("underlyingEntity");
+                string disabledValue = relationElement.GetAttribute("disabled");
 
-                leftLinkTargetEntityId = (leftTargetNode as XmlElement).GetAttribute("entity");
-                rightLinkTargetEntityId = (rightTargetNode as XmlElement).GetAttribute("entity");
+                XmlElement leftTargetElement = (XmlElement) leftTargetNode;
+                string leftLinkTargetEntityId = leftTargetElement.GetAttribute("entity");
+                XmlElement rightTargetElement = (XmlElement) rightTargetNode;
+                string rightLinkTargetEntityId = rightTargetElement.GetAttribute("entity");
 
-                leftFieldName = (leftTargetNode as XmlElement).GetAttribute("fieldName");
-                rightFieldName = (rightTargetNode as XmlElement).GetAttribute("fieldName");
+                string leftFieldName = leftTargetElement.GetAttribute("fieldName");
+                string rightFieldName = rightTargetElement.GetAttribute("fieldName");
 
-                leftCascadeDelete = XmlConvert.ToBoolean((leftTargetNode as XmlElement).GetAttribute("cascadeDelete"));
-                rightCascadeDelete = XmlConvert.ToBoolean((rightTargetNode as XmlElement).GetAttribute("cascadeDelete"));
+                bool leftCascadeDelete = XmlConvert.ToBoolean(leftTargetElement.GetAttribute("cascadeDelete"));
+                bool rightCascadeDelete = XmlConvert.ToBoolean(rightTargetElement.GetAttribute("cascadeDelete"));
 
-                relationTable = _ormObjectsDef.GetTable(relationTableId);
+                TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
 
+                EntityDescription underlyingEntity;
                 if (string.IsNullOrEmpty(underlyingEntityId))
                     underlyingEntity = null;
                 else
                     underlyingEntity = _ormObjectsDef.GetEntity(underlyingEntityId);
 
+                bool disabled;
                 if (string.IsNullOrEmpty(disabledValue))
                     disabled = false;
                 else
@@ -354,14 +358,14 @@ namespace OrmCodeGenLib
 
 
 
-                leftLinkTargetEntity = _ormObjectsDef.GetEntity(leftLinkTargetEntityId);
+                EntityDescription leftLinkTargetEntity = _ormObjectsDef.GetEntity(leftLinkTargetEntityId);
 
-                rightLinkTargetEntity = _ormObjectsDef.GetEntity(rightLinkTargetEntityId);
+                EntityDescription rightLinkTargetEntity = _ormObjectsDef.GetEntity(rightLinkTargetEntityId);
 
-                leftLinkTarget = new LinkTarget(leftLinkTargetEntity, leftFieldName, leftCascadeDelete);
-                rightLinkTarget = new LinkTarget(rightLinkTargetEntity, rightFieldName, rightCascadeDelete);
+                LinkTarget leftLinkTarget = new LinkTarget(leftLinkTargetEntity, leftFieldName, leftCascadeDelete);
+                LinkTarget rightLinkTarget = new LinkTarget(rightLinkTargetEntity, rightFieldName, rightCascadeDelete);
 
-                relation = new RelationDescription(leftLinkTarget, rightLinkTarget, relationTable, underlyingEntity, disabled);
+                RelationDescription relation = new RelationDescription(leftLinkTarget, rightLinkTarget, relationTable, underlyingEntity, disabled);
                 _ormObjectsDef.Relations.Add(relation);
             }
         }
@@ -376,7 +380,8 @@ namespace OrmCodeGenLib
                 string id;
                 string name;
 
-                id = (tableNode as XmlElement).GetAttribute("id");
+                XmlElement tableElement = (XmlElement) tableNode;
+                id = tableElement.GetAttribute("id");
                 name = tableNode.InnerText;
                 _ormObjectsDef.Tables.Add(new TableDescription(id, name));
             }
@@ -396,14 +401,13 @@ namespace OrmCodeGenLib
 
             tableNodes = entityNode.SelectNodes(string.Format("{0}:Tables/{0}:Table", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
-            TableDescription table;
-
             foreach (XmlNode tableNode in tableNodes)
             {
                 string tableId;
-                tableId = (tableNode as XmlElement).GetAttribute("ref");
+                XmlElement tableElement = (XmlElement) tableNode;
+                tableId = tableElement.GetAttribute("ref");
 
-                table = entity.OrmObjectsDef.GetTable(tableId);
+                TableDescription table = entity.OrmObjectsDef.GetTable(tableId);
 
                 entity.Tables.Add(table);
             }
@@ -431,8 +435,7 @@ namespace OrmCodeGenLib
             xmlReaderSettings.Schemas = schemaSet;
             xmlReaderSettings.ValidationFlags = XmlSchemaValidationFlags.ReportValidationWarnings | XmlSchemaValidationFlags.AllowXmlAttributes | XmlSchemaValidationFlags.ProcessIdentityConstraints;
             xmlReaderSettings.ValidationType = ValidationType.Schema;
-            xmlReaderSettings.ValidationEventHandler +=
-                new ValidationEventHandler(xmlReaderSettings_ValidationEventHandler);
+            xmlReaderSettings.ValidationEventHandler += xmlReaderSettings_ValidationEventHandler;
 
             XmlDocument xml;
             xml = new XmlDocument(_nametable);
@@ -466,7 +469,7 @@ namespace OrmCodeGenLib
         {
             if(e.Severity == XmlSeverityType.Warning)
                 return;
-            throw new OrmXmlParserException(string.Format("Xml document format error{1}: {0}", e.Message, (e.Exception as XmlSchemaException) != null ? string.Format("({0},{1})", (e.Exception as XmlSchemaException).LineNumber, (e.Exception as XmlSchemaException).LinePosition) : string.Empty));
+            throw new OrmXmlParserException(string.Format("Xml document format error{1}: {0}", e.Message, (e.Exception != null) ? string.Format("({0},{1})", e.Exception.LineNumber, (e.Exception as XmlSchemaException).LinePosition) : string.Empty));
         }
 
         internal protected XmlDocument SourceXmlDocument
