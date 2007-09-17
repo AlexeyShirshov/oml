@@ -89,7 +89,7 @@ Namespace Orm
                 If _e IsNot Nothing Then
                     Dim leave As Boolean = _e.Entry.Accept(mgr) AndAlso _e.Filter Is Nothing
                     If Not leave Then
-                        Dim dic As IDictionary = OrmManagerBase.GetDic(mgr.Cache, _key)
+                        Dim dic As IDictionary = mgr.GetDic(mgr.Cache, _key)
                         dic.Remove(_id)
                     End If
                 End If

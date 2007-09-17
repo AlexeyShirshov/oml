@@ -267,7 +267,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestSwitchCache()
         Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Using New Orm.OrmManagerBase.CacheListSwitcher(mgr, False)
+            Using New Orm.OrmManagerBase.CacheListBehavior(mgr, False)
                 Dim c2 As ICollection(Of Table1) = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("Code").Eq(2), Nothing, WithLoad)
 
                 Assert.AreEqual(1, c2.Count)
@@ -293,7 +293,7 @@ Public Class TestManagerRS
                     n = Now
                 End If
 
-                Using New Orm.OrmManagerBase.CacheListSwitcher(mgr, need)
+                Using New Orm.OrmManagerBase.CacheListBehavior(mgr, need)
                     Dim c2 As ICollection(Of Table1) = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("Code").Eq(2), Nothing, WithLoad)
 
                     Assert.AreEqual(1, c2.Count)

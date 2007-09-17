@@ -948,7 +948,7 @@ Imports System.Collections.Generic
     Public Sub TestLoadWithAlter()
         Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim c As ICollection(Of Entity2) = Nothing
-            Using New Orm.OrmManagerBase.CacheListSwitcher(mgr, False)
+            Using New Orm.OrmManagerBase.CacheListBehavior(mgr, False)
                 c = mgr.FindTop(Of Entity2)(100, Nothing, Nothing, True)
             End Using
 
@@ -1041,7 +1041,7 @@ Imports System.Collections.Generic
             Dim e2 As Entity = mgr.Find(Of Entity)(2)
 
             Dim c1 As ICollection(Of Entity4) = Nothing
-            Using New Orm.OrmManagerBase.CacheListSwitcher(mgr, TimeSpan.FromMilliseconds(10))
+            Using New Orm.OrmManagerBase.CacheListBehavior(mgr, TimeSpan.FromMilliseconds(10))
                 c1 = e1.Find(Of Entity4)(Nothing, Nothing, True)
             End Using
             Threading.Thread.Sleep(100)
