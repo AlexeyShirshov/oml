@@ -917,6 +917,17 @@ Namespace Orm
             Return LoadObjects(Of T)(fieldName, criteria, col, 0, col.Count)
         End Function
 
+        ''' <summary>
+        ''' Load child collections from parents
+        ''' </summary>
+        ''' <typeparam name="T">Type to load. This is child type.</typeparam>
+        ''' <param name="fieldName">Field name of property in child type what references to parent type</param>
+        ''' <param name="criteria">Additional criteria</param>
+        ''' <param name="ecol">Collection of parent objects.</param>
+        ''' <param name="start">Point in parent collection from where start to load</param>
+        ''' <param name="length">Length of loaded window</param>
+        ''' <returns>Collection of child objects arranged in order of parent in parent collection</returns>
+        ''' <remarks></remarks>
         Public Function LoadObjects(Of T As {OrmBase, New})(ByVal fieldName As String, ByVal criteria As CriteriaLink, _
             ByVal ecol As IEnumerable, ByVal start As Integer, ByVal length As Integer) As ICollection(Of T)
             Dim tt As Type = GetType(T)
@@ -3037,6 +3048,16 @@ l1:
             Return ss
         End Function
 
+        ''' <summary>
+        ''' Load parent objects from collection of childs
+        ''' </summary>
+        ''' <typeparam name="T">Type of child collection</typeparam>
+        ''' <param name="objs">Child collection</param>
+        ''' <param name="fields">Array of properties in child type, used to get parent object</param>
+        ''' <param name="start">Point in child collection from where start to load</param>
+        ''' <param name="length">Length of loaded window</param>
+        ''' <returns>Collection of child objects</returns>
+        ''' <remarks></remarks>
         Public Function LoadObjects(Of T As {OrmBase, New})(ByVal objs As ICollection(Of T), ByVal fields() As String, _
             ByVal start As Integer, ByVal length As Integer) As ICollection(Of T)
 
