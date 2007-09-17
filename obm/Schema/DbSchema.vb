@@ -1502,7 +1502,7 @@ Namespace Orm
             Dim pname As String = params.CreateParam(value)
             'cols = New Generic.List(Of ColumnAttribute)
             Dim sb As New StringBuilder, columns As New StringBuilder
-            Dim tbl As OrmTable = GetTables(t)(0)
+            'Dim tbl As OrmTable = GetTables(t)(0)
             sb.Append("select [key] ").Append(obj_schema.GetFieldColumnMap("ID")._columnName)
             Dim appendMain As Boolean = False
             Dim main_table As OrmTable = GetTables(t)(0)
@@ -1515,7 +1515,7 @@ Namespace Orm
                 Next
             End If
             sb.Append(" from containstable(")
-            sb.Append(tbl).Append(",")
+            sb.Append(main_table.TableName).Append(",")
             If queryFields Is Nothing OrElse queryFields.Length = 0 Then
                 sb.Append("*")
             Else
