@@ -1,0 +1,151 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>8.0.50727</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{9D39DD33-0A52-460D-A5E2-8576E46B334F}</ProjectGuid>
+    <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{F184B08F-C81C-45F6-A57F-5ABD9991F28F}</ProjectTypeGuids>
+    <OutputType>Library</OutputType>
+    <StartupObject>
+    </StartupObject>
+    <RootNamespace>TestProject1</RootNamespace>
+    <AssemblyName>TestProject1</AssemblyName>
+    <OptionStrict>On</OptionStrict>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <IncrementalBuild>true</IncrementalBuild>
+    <OutputPath>bin\</OutputPath>
+    <DocumentationFile>TestProject1.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>false</DebugSymbols>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <IncrementalBuild>false</IncrementalBuild>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\</OutputPath>
+    <DocumentationFile>TestProject1.xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="CoreFramework.dll">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>../CoreFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>C:\WINDOWS\assembly\GAC_MSIL\Microsoft.VisualStudio.QualityTools.UnitTestFramework\8.0.0.0__b03f5f7f11d50a3a\Microsoft.VisualStudio.QualityTools.UnitTestFramework.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Web" />
+  </ItemGroup>
+  <ItemGroup>
+    <Import Include="Microsoft.VisualBasic" />
+    <Import Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="App_Code\MyMembership.vb" />
+    <Compile Include="App_Code\MyRoles.vb" />
+    <Compile Include="App_Code\OrmSupp.vb" />
+    <Compile Include="App_Code\Profile.vb" />
+    <Compile Include="ASPHosting\TestMembership.vb" />
+    <Compile Include="ASPHosting\TestProfile.vb" />
+    <Compile Include="ASPHosting\TestCache.vb" />
+    <Compile Include="ASPHosting\TestProcess.vb" />
+    <Compile Include="My Project\Settings.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="Settings.vb" />
+    <Compile Include="TestCriteria.vb" />
+    <Compile Include="TestRealSchema\TestExFilter.vb" />
+    <Compile Include="TestRealSchema\MultiTable.vb" />
+    <Compile Include="TestRealSchema\SimpleObj.vb" />
+    <Compile Include="TestRealSchema\TestListManager.vb" />
+    <Compile Include="My Project\AssemblyInfo.vb" />
+    <Compile Include="OrmBaseTest.vb" />
+    <Compile Include="TestEntities.vb" />
+    <Compile Include="Testm2m.vb" />
+    <Compile Include="TestManager.vb" />
+    <Compile Include="TestMerge.vb" />
+    <Compile Include="TestPmgr.vb" />
+    <Compile Include="TestJoins.vb" />
+    <Compile Include="TestRealSchema\Table1.vb" />
+    <Compile Include="TestRealSchema\Table10.vb" />
+    <Compile Include="TestRealSchema\Table2.vb" />
+    <Compile Include="TestRealSchema\Table3.vb" />
+    <Compile Include="TestRealSchema\Table4.vb" />
+    <Compile Include="TestRealSchema\Tables1to3.vb" />
+    <Compile Include="TestRealSchema\TestDic.vb" />
+    <Compile Include="TestRealSchema\TestDistinct.vb" />
+    <Compile Include="TestRealSchema\TestJoins.vb" />
+    <Compile Include="TestRealSchema\TestManager.vb" />
+    <Compile Include="TestRealSchema\TestProcs.vb" />
+    <Compile Include="TestRealSchema\TestReject.vb" />
+    <Compile Include="TestRealSchema\TestSchema.vb" />
+    <Compile Include="TestRealSchema\TestSearch.vb" />
+    <Compile Include="TestRealSchema\TestSerialization.vb" />
+    <Compile Include="TestRealSchema\TestTracker.vb" />
+    <Compile Include="VSCodeGenAccessors.vb" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ASPNETHosting\ASPNETHosting.vbproj">
+      <Project>{7D8F3864-281D-495E-B0E4-5731FC31D007}</Project>
+      <Name>ASPNETHosting</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\obm\Orm.vbproj">
+      <Project>{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}</Project>
+      <Name>Orm</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ASPHosting\Web\TestMembership.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <Content Include="ASPHosting\Web\TestProfile.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <Content Include="ASPHosting\Web\httpcache-stresstest.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <EmbeddedResource Include="ASPHosting\Web\kl.js" />
+    <Content Include="ASPHosting\Web\test.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+    <Content Include="ASPHosting\Web\testhttpcache.aspx">
+    </Content>
+    <Content Include="ASPHosting\Web\testobjects.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="app.config" />
+    <None Include="My Project\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.vb</LastGenOutput>
+    </None>
+    <None Include="Web.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.Targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
+</Project>
