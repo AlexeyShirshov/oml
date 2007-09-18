@@ -17,8 +17,8 @@ Namespace Orm
         Private _name As String = Guid.NewGuid.ToString
 
         Public Sub New()
-            _abs_expiration = Cache.NoAbsoluteExpiration
-            _sld_expiration = Cache.NoSlidingExpiration
+            _abs_expiration = Caching.Cache.NoAbsoluteExpiration
+            _sld_expiration = Caching.Cache.NoSlidingExpiration
             _priority = Caching.CacheItemPriority.Default
         End Sub
 
