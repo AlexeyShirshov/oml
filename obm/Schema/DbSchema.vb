@@ -1284,10 +1284,13 @@ Namespace Orm
             Return False
         End Function
 
-        Public Sub AppendOrder(ByVal selectType As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
+        Public Sub AppendOrder(ByVal defaultType As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, _
+            ByVal sb As StringBuilder, Optional ByVal appendOrder As Boolean = True)
             If sort IsNot Nothing AndAlso Not sort.IsExternal Then
                 Dim ns As Sort = sort
-                sb.Append(" order by ")
+                If appendOrder Then
+                    sb.Append(" order by ")
+                End If
                 Dim pos As Integer = sb.Length
                 Do
                     If ns.IsExternal Then
@@ -1296,7 +1299,7 @@ Namespace Orm
 
                     Dim st As Type = ns.Type
                     If st Is Nothing Then
-                        st = selectType
+                        st = defaultType
                     End If
 
                     Dim schema As IOrmObjectSchema = GetObjectSchema(st)
@@ -1488,17 +1491,18 @@ Namespace Orm
 
         Public Function MakeSearchStatement(ByVal searchType As Type, ByVal selectType As Type, _
             ByVal tokens() As String, ByVal fields As ICollection(Of Pair(Of String, Type)), _
-            ByVal sectionName As String, ByVal join As OrmJoin, ByVal sort_type As SortType, _
+            ByVal sectionName As String, ByVal joins As ICollection(Of OrmJoin), ByVal sort_type As SortType, _
             ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String(), _
-            ByVal top As Integer, ByVal del As ValueForSearchDelegate, ByVal table As String) As String
+            ByVal top As Integer, ByVal del As ValueForSearchDelegate, ByVal table As String, _
+            ByVal sort As Sort, ByVal appendBySort As Boolean) As String
 
-            If searchType IsNot selectType AndAlso join.IsEmpty Then
-                Throw New ArgumentException("Join is empty while type to load differs from type to search")
-            End If
+            'If searchType IsNot selectType AndAlso join.IsEmpty Then
+            '    Throw New ArgumentException("Join is empty while type to load differs from type to search")
+            'End If
 
-            If Not join.IsEmpty AndAlso searchType Is selectType Then
-                Throw New ArgumentException("Join is not empty while type to load the same as type to search")
-            End If
+            'If Not join.IsEmpty AndAlso searchType Is selectType Then
+            '    Throw New ArgumentException("Join is not empty while type to load the same as type to search")
+            'End If
 
             Dim selSchema As IOrmObjectSchema = GetObjectSchema(selectType)
             Dim searchSchema As IOrmObjectSchema = GetObjectSchema(searchType)
@@ -1517,7 +1521,7 @@ Namespace Orm
             Dim sb As New StringBuilder, columns As New StringBuilder
             'Dim tbl As OrmTable = GetTables(t)(0)
             sb.Append("select ")
-            Dim appendMain As Boolean = False
+            Dim appendMain As Boolean = appendBySort
             Dim selTable As OrmTable = GetTables(selectType)(0)
             Dim searchTable As OrmTable = GetTables(searchType)(0)
             Dim ins_idx As Integer = sb.Length
@@ -1588,51 +1592,44 @@ Namespace Orm
                 appendMain = selSchema.GetFilter(filter_info) IsNot Nothing
             End If
             AppendJoins(searchType, almgr, GetTables(searchType), sb, params, ct, "[key]", appendMain)
-            If fields.Count > 0 Then
-                If appendMain Then
-                    Dim mainAlias As String = almgr.Aliases(searchTable)
-                    columns = columns.Replace(searchTable.TableName & ".", mainAlias & ".")
-                End If
-                If searchType IsNot selectType Then
-                    almgr.AddTable(selTable)
-                    Dim joinAlias As String = almgr.Aliases(selTable)
-                    columns = columns.Replace(selTable.TableName & ".", joinAlias & ".")
-                End If
-                sb.Insert(ins_idx, columns.ToString)
+            'If fields.Count > 0 Then
+            If appendMain Then
+                Dim mainAlias As String = almgr.Aliases(searchTable)
+                columns = columns.Replace(searchTable.TableName & ".", mainAlias & ".")
             End If
+            'If searchType IsNot selectType Then
+            '    almgr.AddTable(selTable)
+            '    Dim joinAlias As String = almgr.Aliases(selTable)
+            '    columns = columns.Replace(selTable.TableName & ".", joinAlias & ".")
+            'End If
+            'End If
 
-            If Not join.IsEmpty Then
-                'Dim r As New EntityFilter(t, "ID", New SimpleValue(Nothing), FilterOperation.Equal)
-                'Dim tm As TemplateBase = New OrmFilterTemplate(t, "ID", FilterOperation.Equal)
-                'Dim r2 As TableFilter = Nothing
-                'For Each f As IFilter In join.Condition.GetAllFilters
-                '    Dim jf As JoinFilter = TryCast(f, JoinFilter)
-                '    If jf IsNot Nothing Then
-                '        Dim tf As ITemplateFilter = TryCast(f, ITemplateFilter)
-                '        If tf IsNot Nothing AndAlso tf.Template.Equals(tm) Then
-                '            r2 = New JoinFilter(ct, "[key]", , FilterOperation.Equal)
-                '            join.ReplaceFilter(f, r2)
-                '            Exit For
-                '        End If
-                '    End If
-                'Next
-
-                'If r2 Is Nothing Then
-                '    Throw New DBSchemaException("Invalid join")
-                'End If
-
-                Dim tm As OrmFilterTemplate = CType(join.InjectJoinFilter(searchType, "ID", ct, "[key]"), OrmFilterTemplate)
-                If tm Is Nothing Then
-                    Throw New DBSchemaException("Invalid join")
+            For Each join As OrmJoin In joins
+                If Not join.IsEmpty Then
+                    'Dim tm As OrmFilterTemplate = CType(join.InjectJoinFilter(searchType, "ID", ct, "[key]"), OrmFilterTemplate)
+                    'If tm Is Nothing Then
+                    '    Throw New DBSchemaException("Invalid join")
+                    'End If
+                    join.InjectJoinFilter(searchType, "ID", ct, "[key]")
+                    Dim al As String = almgr.AddTable(join.Table)
+                    columns = columns.Replace(join.Table.TableName & ".", al & ".")
+                    sb.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
+                    'Else
+                    '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
                 End If
-
-                sb.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
-                'Else
-                '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
+            Next
+            If columns.Length > 0 Then
+                sb.Insert(ins_idx, columns.ToString)
             End If
             'sb = sb.Replace("{XXXXXX}", almgr.Aliases(selTable) & "." & selSchema.GetFieldColumnMap("ID")._columnName)
             AppendWhere(selectType, Nothing, almgr, sb, filter_info, params)
-            sb.Append(" order by rank ").Append(sort_type.ToString)
+            'sb.Append(" order by rank ").Append(sort_type.ToString)
+            If sort IsNot Nothing Then
+                'sb.Append(",")
+                AppendOrder(selectType, sort, almgr, sb)
+            Else
+                sb.Append(" order by rank ").Append(sort_type.ToString)
+            End If
             Return sb.ToString
         End Function
 

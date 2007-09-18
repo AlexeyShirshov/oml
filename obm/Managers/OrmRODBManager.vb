@@ -1897,7 +1897,7 @@ Namespace Orm
         End Class
 
         Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal type2search As Type, ByVal tokens() As String, _
-            ByVal join As OrmJoin, ByVal contextKey As Object) As System.Collections.Generic.ICollection(Of T)
+            ByVal contextKey As Object, ByVal sort As Sort) As System.Collections.Generic.ICollection(Of T)
 
             Dim fields As New List(Of Pair(Of String, Type))
             Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
@@ -1923,6 +1923,68 @@ Namespace Orm
             If selectType IsNot type2search Then
                 selCols.Insert(0, New ColumnAttribute("ID"))
                 fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
+            End If
+
+            Dim joins As New List(Of OrmJoin)
+            If selectType IsNot type2search Then
+                Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2search, selSchema)
+
+                If String.IsNullOrEmpty(field) Then
+                    field = _schema.GetJoinFieldNameByType(type2search, selectType, searchSchema)
+
+                    If String.IsNullOrEmpty(field) Then
+                        Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
+                    End If
+
+                    joins.Add(MakeJoin(selectType, type2search, field, FilterOperation.Equal, JoinType.Join))
+                Else
+                    joins.Add(MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True))
+                End If
+
+            End If
+            Dim appendBySort As Boolean = False
+            If sort IsNot Nothing Then
+                Dim ns As Sort = sort
+                Do
+                    Dim sortType As System.Type = ns.Type
+                    ns = ns.Previous
+                    If selectType IsNot sortType Then
+                        If type2search Is sortType Then
+                            appendBySort = True
+                        Else
+                            Dim srtschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
+                            Dim field As String = _schema.GetJoinFieldNameByType(sortType, type2search, srtschema)
+                            If Not String.IsNullOrEmpty(field) Then
+                                joins.Add(MakeJoin(type2search, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                                Continue Do
+                            End If
+
+                            field = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
+                            If Not String.IsNullOrEmpty(field) Then
+                                joins.Add(MakeJoin(sortType, type2search, field, FilterOperation.Equal, JoinType.Join))
+                                Continue Do
+                            End If
+
+                            If selectType IsNot type2search Then
+                                field = _schema.GetJoinFieldNameByType(sortType, selectType, srtschema)
+                                If Not String.IsNullOrEmpty(field) Then
+                                    joins.Add(MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
+                                    Continue Do
+                                End If
+
+                                field = _schema.GetJoinFieldNameByType(selectType, sortType, selSchema)
+                                If Not String.IsNullOrEmpty(field) Then
+                                    joins.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                                    Continue Do
+                                End If
+                            End If
+
+                            If String.IsNullOrEmpty(field) Then
+                                Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
+                            End If
+                        End If
+                    End If
+                Loop While ns IsNot Nothing
             End If
 
             If fsearch IsNot Nothing Then
@@ -1961,8 +2023,9 @@ Namespace Orm
 
                     Dim params As New ParamMgr(DbSchema, "p")
                     .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
-                        GetSearchSection, join, SortType.Desc, params, GetFilterInfo, queryFields, _
-                        Integer.MinValue, AddressOf Configuration.SearchSection.GetValueForContains, "containstable")
+                        GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
+                        Integer.MinValue, AddressOf Configuration.SearchSection.GetValueForContains, _
+                        "containstable", sort, appendBySort)
                     params.AppendParams(.Parameters)
                 End With
 
@@ -1981,8 +2044,8 @@ Namespace Orm
 
                         Dim params As New ParamMgr(DbSchema, "p")
                         .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
-                            GetSearchSection, join, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
-                            AddressOf New FProxy(type2search).GetValue, "freetexttable")
+                            GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
+                            AddressOf New FProxy(type2search).GetValue, "freetexttable", sort, appendBySort)
                         params.AppendParams(.Parameters)
                     End With
 
@@ -1995,7 +2058,7 @@ Namespace Orm
             End If
 
             Dim res As List(Of T) = Nothing
-            If fields IsNot Nothing AndAlso selectType Is type2search Then
+            If fields IsNot Nothing AndAlso selectType Is type2search AndAlso sort Is Nothing Then
                 Dim query As String, sb As New StringBuilder
                 For Each tk As String In tokens
                     sb.Append(tk).Append(" ")

@@ -2898,20 +2898,25 @@ l1:
             Return New List(Of T)()
         End Function
 
-        Public Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal [string] As String, ByVal contextKey As Object) As ICollection(Of T)
+        Public Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal [string] As String, Optional ByVal contextKey As Object = Nothing) As ICollection(Of T)
+            Return Search(Of T)(type2search, [string], Nothing, contextKey)
+        End Function
+
+        Public Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal [string] As String, _
+            ByVal sort As Sort, Optional ByVal contextKey As Object = Nothing) As ICollection(Of T)
             Dim selectType As Type = GetType(T)
-            If selectType IsNot type2search Then
-                Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2search, Nothing)
+            'If selectType IsNot type2search Then
+            '    Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2search, Nothing)
 
-                If String.IsNullOrEmpty(field) Then
-                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
-                End If
+            '    If String.IsNullOrEmpty(field) Then
+            '        Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
+            '    End If
 
-                If [string] IsNot Nothing AndAlso [string].Length > 0 Then
-                    Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
-                    Dim join As OrmJoin = MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True)
-                    Return Search(Of T)(type2search, ss, join, contextKey)
-                End If
+            If [string] IsNot Nothing AndAlso [string].Length > 0 Then
+                Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
+                'Dim join As OrmJoin = MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True)
+                Return Search(Of T)(type2search, ss, contextKey, sort)
+                'End If
                 Return New List(Of T)()
             Else
                 Return Search(Of T)([string], contextKey)
@@ -2923,7 +2928,7 @@ l1:
 
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
                 Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
-                Return Search(Of T)(GetType(T), ss, Nothing, contextKey)
+                Return Search(Of T)(GetType(T), ss, contextKey, Nothing)
             End If
             Return New List(Of T)()
         End Function
@@ -3271,7 +3276,7 @@ l1:
 
         Protected MustOverride Function GetSearchSection() As String
 
-        Protected MustOverride Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal tokens() As String, ByVal join As OrmJoin, ByVal contextKey As Object) As ICollection(Of T)
+        Protected MustOverride Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal tokens() As String, ByVal contextKey As Object, ByVal sort As Sort) As ICollection(Of T)
 
         Protected Friend MustOverride Function GetStaticKey() As String
 
@@ -3493,14 +3498,17 @@ l1:
         Protected Function HasJoins(ByVal selectType As Type, ByVal filter As IEntityFilter, ByVal s As Sort, ByRef joins() As OrmJoin) As Boolean
             Dim l As New List(Of OrmJoin)
             Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(selectType)
+            Dim types As New List(Of Type)
             For Each f As EntityFilter In filter.GetAllFilters
                 Dim type2join As System.Type = f.Template.Type
-                If type2join IsNot selectType Then
+                If type2join IsNot selectType AndAlso Not types.Contains(type2join) Then
                     Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2join, oschema)
 
                     If String.IsNullOrEmpty(field) Then
                         Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
                     End If
+
+                    types.Add(type2join)
 
                     l.Add(MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
                 End If
@@ -3509,14 +3517,24 @@ l1:
             If s IsNot Nothing Then
                 Dim ns As Sort = s
                 Do
-                    If ns.Type IsNot selectType AndAlso ns.Type IsNot Nothing Then
-                        Dim field As String = _schema.GetJoinFieldNameByType(selectType, ns.Type, oschema)
+                    Dim sortType As System.Type = ns.Type
+                    If sortType IsNot selectType AndAlso sortType IsNot Nothing AndAlso Not types.Contains(sortType) Then
+                        Dim field As String = _schema.GetJoinFieldNameByType(selectType, sortType, oschema)
 
-                        If String.IsNullOrEmpty(field) Then
-                            Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, ns.Type))
+                        If Not String.IsNullOrEmpty(field) Then
+                            types.Add(sortType)
+                            l.Add(MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
+                            Continue Do
                         End If
 
-                        l.Add(MakeJoin(ns.Type, selectType, field, FilterOperation.Equal, JoinType.Join))
+                        Dim sschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
+                        field = _schema.GetJoinFieldNameByType(sortType, selectType, sschema)
+                        If String.IsNullOrEmpty(field) Then
+                            Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, sortType))
+                        End If
+
+                        types.Add(sortType)
+                        l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
                     End If
                     ns = ns.Previous
                 Loop While ns IsNot Nothing
