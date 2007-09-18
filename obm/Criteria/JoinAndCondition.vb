@@ -635,39 +635,48 @@ Namespace Orm
             Return _table.TableName & JoinTypeString() & _condition.ToString
         End Function
 
-        Public ReadOnly Property Table() As OrmTable
+        Public Property Table() As OrmTable
             Get
                 Return _table
             End Get
+            Friend Set(ByVal value As OrmTable)
+                _table = value
+            End Set
         End Property
 
-        Public Sub InjectJoinFilter(ByVal t As Type, ByVal field As String, ByVal table As OrmTable, ByVal column As String)
+        Public Function InjectJoinFilter(ByVal t As Type, ByVal field As String, ByVal table As OrmTable, ByVal column As String) As TemplateBase
             For Each _fl As IFilter In _condition.GetAllFilters()
                 Dim f As JoinFilter = Nothing
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
+                Dim tm As TemplateBase = Nothing
                 If fl._e1 IsNot Nothing AndAlso fl._e1.First Is t AndAlso fl._e1.Second = field Then
                     If fl._e2 IsNot Nothing Then
                         f = New JoinFilter(table, column, fl._e2.First, fl._e2.Second, fl._oper)
+                        tm = New OrmFilterTemplate(fl._e2.First, fl._e2.Second, fl._oper)
                     Else
                         f = New JoinFilter(table, column, fl._t2.First, fl._t2.Second, fl._oper)
+                        tm = New TableFilterTemplate(fl._t2.First, fl._t2.Second, fl._oper)
                     End If
                 End If
                 If f Is Nothing Then
                     If fl._e2 IsNot Nothing AndAlso fl._e2.First Is t AndAlso fl._e2.Second = field Then
                         If fl._e1 IsNot Nothing Then
                             f = New JoinFilter(table, column, fl._e1.First, fl._e1.Second, fl._oper)
+                            tm = New OrmFilterTemplate(fl._e1.First, fl._e1.Second, fl._oper)
                         Else
                             f = New JoinFilter(table, column, fl._t1.First, fl._t1.Second, fl._oper)
+                            tm = New TableFilterTemplate(fl._t1.First, fl._t1.Second, fl._oper)
                         End If
                     End If
                 End If
 
                 If f IsNot Nothing Then
                     ReplaceFilter(fl, f)
-                    Exit For
+                    Return tm
                 End If
             Next
-        End Sub
+            Return Nothing
+        End Function
 
     End Structure
 End Namespace

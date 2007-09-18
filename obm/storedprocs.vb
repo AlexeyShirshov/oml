@@ -117,11 +117,11 @@ Namespace Orm
                 Dim sync As String = key & id
                 'Dim result As Object = GetFromCache(dic, id)
                 Dim result As Object = dic(id)
-                If result Is Nothing OrElse Expires Then
+                If result Is Nothing OrElse Expires() Then
                     Using SyncHelper.AcquireDynamicLock(sync)
                         'result = GetFromCache(dic, id)
                         result = dic(id)
-                        If result Is Nothing OrElse Expires Then
+                        If result Is Nothing OrElse Expires() Then
                             Expire()
                             mgr.Cache.AddStoredProc(sync, Me)
                             result = Execute(mgr)
@@ -303,6 +303,10 @@ Namespace Orm
         Protected MustOverride Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Protected MustOverride Function InitResult() As Object
 
+        Protected Overridable Sub EndProcess(ByVal result As Object, ByVal mgr As OrmManagerBase)
+
+        End Sub
+
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
             Dim result As Object = InitResult()
             Dim et As New OrmReadOnlyDBManager.PerfCounter
@@ -320,6 +324,7 @@ Namespace Orm
                     Loop
                 Loop
                 _fecth = ft.GetTime
+                EndProcess(result, mgr)
             End Using
             If result Is Nothing Then
                 Throw New InvalidOperationException("result must be filled")
@@ -432,12 +437,13 @@ Namespace Orm
 
         Public Interface IResultSetDescriptor
             Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String)
+            Sub EndProcess(ByVal mgr As OrmManagerBase)
         End Interface
 
         Public MustInherit Class OrmDescriptor(Of T As {OrmBase, New})
             Implements IResultSetDescriptor
 
-            'Private _l As New List(Of T)
+            Private _l As List(Of T)
             Private _created As Boolean
             Private _ce As OrmManagerBase.CachedItem
             Private _count As Integer
@@ -448,12 +454,13 @@ Namespace Orm
                 If mgr._externalFilter IsNot Nothing Then
                     Throw New InvalidOperationException("External filter is not applicable for store procedures")
                 End If
-                Dim l As New List(Of T)
+                If _l Is Nothing Then
+                    _l = New List(Of T)
+                End If
                 Dim dic As Generic.IDictionary(Of Integer, T) = mgr.GetDictionary(Of T)()
-                _loaded = 0
-                mgr.LoadFromResultSet(Of T)(GetWithLoad, l, GetColumns, dr, GetPrimaryKeyIndex, dic, _loaded)
-                _ce = New OrmManagerBase.CachedItem(Nothing, l, mgr)
-                '_created = True
+                Dim loaded As Integer
+                mgr.LoadFromResultSet(Of T)(GetWithLoad, _l, GetColumns, dr, GetPrimaryKeyIndex, dic, loaded)
+                _loaded += loaded
             End Sub
 
             Protected MustOverride Function GetColumns() As List(Of ColumnAttribute)
@@ -484,6 +491,11 @@ Namespace Orm
                     Return _loaded
                 End Get
             End Property
+
+            Public Sub EndProcess(ByVal mgr As OrmManagerBase) Implements IResultSetDescriptor.EndProcess
+                _ce = New OrmManagerBase.CachedItem(Nothing, _l, mgr)
+                _l = Nothing
+            End Sub
         End Class
 
 #End Region
@@ -530,5 +542,11 @@ Namespace Orm
         Public Overloads Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As List(Of IResultSetDescriptor)
             Return CType(MyBase.GetResult(mgr), List(Of IResultSetDescriptor))
         End Function
+
+        Protected Overrides Sub EndProcess(ByVal result As Object, ByVal mgr As OrmManagerBase)
+            For Each d As IResultSetDescriptor In CType(result, IList)
+                d.EndProcess(mgr)
+            Next
+        End Sub
     End Class
 End Namespace
