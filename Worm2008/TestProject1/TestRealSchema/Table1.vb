@@ -6,7 +6,7 @@ Public Enum Enum1 As Byte
     sec = 2
 End Enum
 
-<Entity(GetType(Table1Implementation), "1"), Entity(GetType(Table12Implementation), "2"), Entity(GetType(Table13Implementation), "3")> _
+<Entity(GetType(Table1Implementation), "1"), Entity(GetType(Table12Implementation), "2"), Entity(GetType(Table13Implementation), "3"), Entity(GetType(Table1Search), "Search")> _
 Public Class Table1
     Inherits OrmBaseT(Of Table1)
     Implements IOrmEditable(Of Table1)
@@ -322,6 +322,28 @@ Public Class Table1Implementation
     Public Function GetJoinField(ByVal t As System.Type) As String Implements Worm.Orm.IJoinBehavior.GetJoinField
         If t Is GetType(Table2) Then
             Return "ID"
+        End If
+        Return Nothing
+    End Function
+End Class
+
+Public Class Table1Search
+    Inherits Table1Implementation
+    Implements IOrmFullTextSupport
+
+    Public ReadOnly Property ApplayAsterisk() As Boolean Implements Worm.Orm.IOrmFullTextSupport.ApplayAsterisk
+        Get
+            Return True
+        End Get
+    End Property
+
+    Public Function GetIndexedFields() As String() Implements Worm.Orm.IOrmFullTextSupport.GetIndexedFields
+        Return New String() {"EnumStr", "Title"}
+    End Function
+
+    Public Function GetQueryFields(ByVal contextKey As Object) As String() Implements Worm.Orm.IOrmFullTextSupport.GetQueryFields
+        If CStr(contextKey) = "sf" Then
+            Return New String() {"Title"}
         End If
         Return Nothing
     End Function

@@ -409,6 +409,10 @@ Public Class MultiR
                 Return _sum
             End Get
         End Property
+
+        Public Sub EndProcess(ByVal mgr As Worm.Orm.OrmManagerBase) Implements Worm.Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.EndProcess
+
+        End Sub
     End Class
 
     Public Sub New()
