@@ -1484,153 +1484,230 @@ Namespace Orm
             Return sb.ToString
         End Function
 
-        Public Function MakeSearchContainsStatements(ByVal t As Type, ByVal tokens() As String, ByVal fields() As String, _
+        Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport) As String
+
+        Public Function MakeSearchStatement(ByVal searchType As Type, ByVal selectType As Type, _
+            ByVal tokens() As String, ByVal fields As ICollection(Of Pair(Of String, Type)), _
             ByVal sectionName As String, ByVal join As OrmJoin, ByVal sort_type As SortType, _
-            ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String()) As String
+            ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String(), _
+            ByVal top As Integer, ByVal del As ValueForSearchDelegate, ByVal table As String) As String
 
-            Dim obj_schema As IOrmObjectSchema = GetObjectSchema(t)
-            Dim fs As IOrmFullTextSupport = TryCast(obj_schema, IOrmFullTextSupport)
+            If searchType IsNot selectType AndAlso join.IsEmpty Then
+                Throw New ArgumentException("Join is empty while type to load differs from type to search")
+            End If
 
-            Dim value As String = Configuration.SearchSection.GetValueForContains(tokens, sectionName, fs)
+            If Not join.IsEmpty AndAlso searchType Is selectType Then
+                Throw New ArgumentException("Join is not empty while type to load the same as type to search")
+            End If
+
+            Dim selSchema As IOrmObjectSchema = GetObjectSchema(selectType)
+            Dim searchSchema As IOrmObjectSchema = GetObjectSchema(searchType)
+            Dim fs As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
+
+            Dim value As String = del(tokens, sectionName, fs)
             If String.IsNullOrEmpty(value) Then
                 Return Nothing
             End If
 
             Dim almgr As AliasMgr = AliasMgr.Create
-            Dim ct As New OrmTable("containstable")
+            Dim ct As New OrmTable(table)
             Dim [alias] As String = almgr.AddTable(ct)
             Dim pname As String = params.CreateParam(value)
             'cols = New Generic.List(Of ColumnAttribute)
             Dim sb As New StringBuilder, columns As New StringBuilder
-            Dim tbl As OrmTable = GetTables(t)(0)
-            sb.Append("select [key] ").Append(obj_schema.GetFieldColumnMap("ID")._columnName)
+            'Dim tbl As OrmTable = GetTables(t)(0)
+            sb.Append("select ")
             Dim appendMain As Boolean = False
-            Dim main_table As OrmTable = GetTables(t)(0)
+            Dim selTable As OrmTable = GetTables(selectType)(0)
+            Dim searchTable As OrmTable = GetTables(searchType)(0)
             Dim ins_idx As Integer = sb.Length
-            If fields IsNot Nothing AndAlso fields.Length > 0 Then
-                appendMain = True
-                For Each field As String In fields
-                    columns.Append(",").Append(main_table).Append(".")
-                    columns.Append(GetColumnNameByFieldNameInternal(t, field, False))
-                Next
+            If fields IsNot Nothing AndAlso fields.Count > 0 Then
+                If searchType IsNot selectType Then
+                    For Each field As Pair(Of String, Type) In fields
+                        If field.Second Is selectType Then
+                            Dim m As MapField2Column = selSchema.GetFieldColumnMap(field.First)
+                            columns.Append(m._tableName).Append(".")
+                            columns.Append(m._columnName).Append(",")
+                        End If
+                    Next
+
+                    For Each field As Pair(Of String, Type) In fields
+                        If field.Second Is searchType Then
+                            Dim m As MapField2Column = searchSchema.GetFieldColumnMap(field.First)
+                            columns.Append(m._tableName).Append(".")
+                            columns.Append(m._columnName).Append(",")
+                        End If
+                    Next
+                Else
+                    For Each field As Pair(Of String, Type) In fields
+                        appendMain = True
+                        Dim m As MapField2Column = searchSchema.GetFieldColumnMap(field.First)
+                        columns.Append(m._tableName).Append(".")
+                        columns.Append(m._columnName).Append(",")
+                    Next
+                End If
+                'For Each field As Pair(Of String, Type) In fields
+                '    If field.Second Is searchType Then
+                '        appendMain = True
+                '        Dim m As MapField2Column = searchSchema.GetFieldColumnMap(field.First)
+                '        columns.Append(m._tableName).Append(".")
+                '        columns.Append(m._columnName).Append(",")
+                '    ElseIf field.Second Is selectType Then
+                '        Dim m As MapField2Column = selSchema.GetFieldColumnMap(field.First)
+                '        columns.Append(m._tableName).Append(".")
+                '        columns.Append(m._columnName).Append(",")
+                '    End If
+                'Next
+                If columns.Length > 0 Then
+                    columns.Length -= 1
+                End If
+            Else
+                Dim m As MapField2Column = searchSchema.GetFieldColumnMap("ID")
+                sb.Append("[key] ").Append(m._columnName)
             End If
-            sb.Append(" from containstable(")
-            sb.Append(tbl).Append(",")
+            sb.Append(" from ").Append(table).Append("(")
+            sb.Append(searchTable.TableName).Append(",")
             If queryFields Is Nothing OrElse queryFields.Length = 0 Then
                 sb.Append("*")
             Else
                 sb.Append("(")
                 For Each f As String In queryFields
-                    sb.Append(f)
+                    Dim m As MapField2Column = searchSchema.GetFieldColumnMap(f)
+                    sb.Append(m._columnName).Append(",")
                 Next
+                sb.Length -= 1
                 sb.Append(")")
             End If
             sb.Append(",")
-            sb.Append(pname).Append(") ").Append([alias])
-            If Not appendMain Then
-                appendMain = obj_schema.GetFilter(filter_info) IsNot Nothing
+            sb.Append(pname)
+            If top <> Integer.MinValue Then
+                sb.Append(",").Append(top)
             End If
-            AppendJoins(t, almgr, GetTables(t), sb, params, ct, "[key]", appendMain)
-            If appendMain Then
-                Dim mainAlias As String = almgr.Aliases(main_table)
-                sb.Insert(ins_idx, columns.Replace(main_table.TableName, mainAlias).ToString)
+            sb.Append(") ").Append([alias])
+            If Not appendMain Then
+                appendMain = selSchema.GetFilter(filter_info) IsNot Nothing
+            End If
+            AppendJoins(searchType, almgr, GetTables(searchType), sb, params, ct, "[key]", appendMain)
+            If fields.Count > 0 Then
+                If appendMain Then
+                    Dim mainAlias As String = almgr.Aliases(searchTable)
+                    columns = columns.Replace(searchTable.TableName & ".", mainAlias & ".")
+                End If
+                If searchType IsNot selectType Then
+                    almgr.AddTable(selTable)
+                    Dim joinAlias As String = almgr.Aliases(selTable)
+                    columns = columns.Replace(selTable.TableName & ".", joinAlias & ".")
+                End If
+                sb.Insert(ins_idx, columns.ToString)
             End If
 
             If Not join.IsEmpty Then
-                Dim r As New EntityFilter(t, "ID", New SimpleValue(Nothing), FilterOperation.Equal)
-                Dim r2 As TableFilter = Nothing
-                For Each f As IFilter In join.Condition.GetAllFilters
-                    Dim tf As ITemplateFilter = TryCast(f, ITemplateFilter)
-                    If tf IsNot Nothing AndAlso tf.Template.Equals(r.Template) Then
-                        r2 = New TableFilter(ct, "[key]", New SimpleValue(r.Value), FilterOperation.Equal)
-                        join.ReplaceFilter(f, r2)
-                        Exit For
-                    End If
-                Next
+                'Dim r As New EntityFilter(t, "ID", New SimpleValue(Nothing), FilterOperation.Equal)
+                'Dim tm As TemplateBase = New OrmFilterTemplate(t, "ID", FilterOperation.Equal)
+                'Dim r2 As TableFilter = Nothing
+                'For Each f As IFilter In join.Condition.GetAllFilters
+                '    Dim jf As JoinFilter = TryCast(f, JoinFilter)
+                '    If jf IsNot Nothing Then
+                '        Dim tf As ITemplateFilter = TryCast(f, ITemplateFilter)
+                '        If tf IsNot Nothing AndAlso tf.Template.Equals(tm) Then
+                '            r2 = New JoinFilter(ct, "[key]", , FilterOperation.Equal)
+                '            join.ReplaceFilter(f, r2)
+                '            Exit For
+                '        End If
+                '    End If
+                'Next
 
-                If r2 Is Nothing Then
+                'If r2 Is Nothing Then
+                '    Throw New DBSchemaException("Invalid join")
+                'End If
+
+                Dim tm As OrmFilterTemplate = CType(join.InjectJoinFilter(searchType, "ID", ct, "[key]"), OrmFilterTemplate)
+                If tm Is Nothing Then
                     Throw New DBSchemaException("Invalid join")
                 End If
 
                 sb.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
+                'Else
+                '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
             End If
-            AppendWhere(t, Nothing, almgr, sb, filter_info, params)
+            'sb = sb.Replace("{XXXXXX}", almgr.Aliases(selTable) & "." & selSchema.GetFieldColumnMap("ID")._columnName)
+            AppendWhere(selectType, Nothing, almgr, sb, filter_info, params)
             sb.Append(" order by rank ").Append(sort_type.ToString)
             Return sb.ToString
         End Function
 
-        Public Function MakeSearchFreetextStatements(ByVal t As Type, ByVal tokens() As String, ByVal fields() As String, _
-            ByVal sectionName As String, ByVal join As OrmJoin, ByVal sort_type As SortType, _
-            ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String()) As String
+        'Public Function MakeSearchFreetextStatements(ByVal t As Type, ByVal tokens() As String, ByVal fields() As String, _
+        '    ByVal sectionName As String, ByVal join As OrmJoin, ByVal sort_type As SortType, _
+        '    ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String()) As String
 
-            Dim value As String = Configuration.SearchSection.GetValueForFreeText(t, tokens, sectionName)
-            If String.IsNullOrEmpty(value) Then
-                Return Nothing
-            End If
+        '    Dim value As String = Configuration.SearchSection.GetValueForFreeText(t, tokens, sectionName)
+        '    If String.IsNullOrEmpty(value) Then
+        '        Return Nothing
+        '    End If
 
-            Dim almgr As AliasMgr = AliasMgr.Create
-            Dim ft As New OrmTable("freetexttable")
-            Dim [alias] As String = almgr.AddTable(ft)
-            Dim pname As String = params.CreateParam(value)
-            'cols = New Generic.List(Of ColumnAttribute)
-            Dim sb As New StringBuilder, columns As New StringBuilder
-            Dim tbl As OrmTable = GetTables(t)(0)
-            Dim obj_schema As IOrmObjectSchema = GetObjectSchema(t)
-            sb.Append("select [key] ").Append(obj_schema.GetFieldColumnMap("ID")._columnName)
-            Dim appendMain As Boolean = False
-            Dim main_table As OrmTable = GetTables(t)(0)
-            Dim ins_idx As Integer = sb.Length
-            If fields IsNot Nothing AndAlso fields.Length > 0 Then
-                appendMain = True
-                For Each field As String In fields
-                    columns.Append(",").Append(main_table).Append(".")
-                    columns.Append(GetColumnNameByFieldNameInternal(t, field, False))
-                Next
-            End If
-            sb.Append(" from freetexttable(")
-            sb.Append(tbl).Append(",")
-            If queryFields Is Nothing OrElse queryFields.Length = 0 Then
-                sb.Append("*")
-            Else
-                sb.Append("(")
-                For Each f As String In queryFields
-                    sb.Append(f)
-                Next
-                sb.Append(")")
-            End If
-            sb.Append(",")
-            sb.Append(pname).Append(",500) ").Append([alias])
-            If Not appendMain Then
-                appendMain = obj_schema.GetFilter(filter_info) IsNot Nothing
-            End If
-            AppendJoins(t, almgr, GetTables(t), sb, params, ft, "[key]", appendMain)
-            If appendMain Then
-                Dim mainAlias As String = almgr.Aliases(main_table)
-                sb.Insert(ins_idx, columns.Replace(main_table.TableName, mainAlias).ToString)
-            End If
+        '    Dim almgr As AliasMgr = AliasMgr.Create
+        '    Dim ft As New OrmTable("freetexttable")
+        '    Dim [alias] As String = almgr.AddTable(ft)
+        '    Dim pname As String = params.CreateParam(value)
+        '    'cols = New Generic.List(Of ColumnAttribute)
+        '    Dim sb As New StringBuilder, columns As New StringBuilder
+        '    Dim tbl As OrmTable = GetTables(t)(0)
+        '    Dim obj_schema As IOrmObjectSchema = GetObjectSchema(t)
+        '    sb.Append("select [key] ").Append(obj_schema.GetFieldColumnMap("ID")._columnName)
+        '    Dim appendMain As Boolean = False
+        '    Dim main_table As OrmTable = GetTables(t)(0)
+        '    Dim ins_idx As Integer = sb.Length
+        '    If fields IsNot Nothing AndAlso fields.Length > 0 Then
+        '        appendMain = True
+        '        For Each field As String In fields
+        '            columns.Append(",").Append(main_table).Append(".")
+        '            columns.Append(GetColumnNameByFieldNameInternal(t, field, False))
+        '        Next
+        '    End If
+        '    sb.Append(" from freetexttable(")
+        '    sb.Append(tbl).Append(",")
+        '    If queryFields Is Nothing OrElse queryFields.Length = 0 Then
+        '        sb.Append("*")
+        '    Else
+        '        sb.Append("(")
+        '        For Each f As String In queryFields
+        '            sb.Append(f)
+        '        Next
+        '        sb.Append(")")
+        '    End If
+        '    sb.Append(",")
+        '    sb.Append(pname).Append(",500) ").Append([alias])
+        '    If Not appendMain Then
+        '        appendMain = obj_schema.GetFilter(filter_info) IsNot Nothing
+        '    End If
+        '    AppendJoins(t, almgr, GetTables(t), sb, params, ft, "[key]", appendMain)
+        '    If appendMain Then
+        '        Dim mainAlias As String = almgr.Aliases(main_table)
+        '        sb.Insert(ins_idx, columns.Replace(main_table.TableName, mainAlias).ToString)
+        '    End If
 
-            If Not join.IsEmpty Then
-                Dim r As New EntityFilter(t, "ID", New SimpleValue(Nothing), FilterOperation.Equal)
-                Dim r2 As TableFilter = Nothing
-                For Each f As IFilter In join.Condition.GetAllFilters
-                    Dim filt As ITemplateFilter = TryCast(f, ITemplateFilter)
-                    If filt IsNot Nothing AndAlso filt.Template.Equals(r.Template) Then
-                        r2 = New TableFilter(ft, "[key]", New SimpleValue(r.Value), FilterOperation.Equal)
-                        join.ReplaceFilter(r, r2)
-                        Exit For
-                    End If
-                Next
+        '    If Not join.IsEmpty Then
+        '        Dim r As New EntityFilter(t, "ID", New SimpleValue(Nothing), FilterOperation.Equal)
+        '        Dim r2 As TableFilter = Nothing
+        '        For Each f As IFilter In join.Condition.GetAllFilters
+        '            Dim filt As ITemplateFilter = TryCast(f, ITemplateFilter)
+        '            If filt IsNot Nothing AndAlso filt.Template.Equals(r.Template) Then
+        '                r2 = New TableFilter(ft, "[key]", New SimpleValue(r.Value), FilterOperation.Equal)
+        '                join.ReplaceFilter(r, r2)
+        '                Exit For
+        '            End If
+        '        Next
 
-                If r2 Is Nothing Then
-                    Throw New DBSchemaException("Invalid join")
-                End If
+        '        If r2 Is Nothing Then
+        '            Throw New DBSchemaException("Invalid join")
+        '        End If
 
-                sb.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
-            End If
-            AppendWhere(t, Nothing, almgr, sb, filter_info, params)
-            sb.Append(" order by rank ").Append(sort_type.ToString)
-            Return sb.ToString
-        End Function
+        '        sb.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
+        '    End If
+        '    AppendWhere(t, Nothing, almgr, sb, filter_info, params)
+        '    sb.Append(" order by rank ").Append(sort_type.ToString)
+        '    Return sb.ToString
+        'End Function
 
         Public Function GetDictionarySelect(ByVal type As Type, ByVal level As Integer, _
             ByVal params As ParamMgr, ByVal filter As IFilter, ByVal filter_info As Object) As String

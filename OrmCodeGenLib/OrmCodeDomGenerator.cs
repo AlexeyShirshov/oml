@@ -7,7 +7,7 @@ using System.Text;
 using OrmCodeGenLib.Descriptors;
 using Worm.Orm;
 using Worm.Orm.Collections;
-using XMedia.Framework;
+using CoreFramework.Structures;
 
 namespace OrmCodeGenLib
 {
@@ -18,7 +18,6 @@ namespace OrmCodeGenLib
         public OrmCodeDomGenerator(OrmObjectsDef ormObjectsDefinition)
         {
             _ormObjectsDefinition = ormObjectsDefinition;
-
         }
 
         public Dictionary<string, CodeCompileUnit> GetFullDom(OrmCodeDomGeneratorSettings settings)

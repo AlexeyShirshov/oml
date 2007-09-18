@@ -665,7 +665,7 @@ Namespace Orm
                 End With
 
                 If withLoad Then
-                    Return LoadMultipleObjects(ct, selectedType, cmd)
+                    Return LoadMultipleObjects(ct, selectedType, cmd, Nothing, Nothing)
                 Else
                     Return LoadMultipleObjects(ct, cmd, True, arr)
                 End If
@@ -715,17 +715,24 @@ Namespace Orm
         'End Function
 
         Protected Function LoadMultipleObjects(ByVal firstType As Type, _
-            ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand) As IList
+            ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, _
+            ByVal first_cols As List(Of ColumnAttribute), ByVal sec_cols As List(Of ColumnAttribute)) As IList
 
-            Dim values As New ArrayList
-            Dim first_cols As List(Of ColumnAttribute) = DbSchema.GetSortedFieldList(firstType)
-            Dim sec_cols As List(Of ColumnAttribute) = DbSchema.GetSortedFieldList(secondType)
+            Dim values As IList
+            values = CType(GetType(List(Of )).MakeGenericType(New Type() {firstType}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
+            If first_cols Is Nothing Then
+                first_cols = DbSchema.GetSortedFieldList(firstType)
+            End If
+
+            If sec_cols Is Nothing Then
+                sec_cols = DbSchema.GetSortedFieldList(secondType)
+            End If
 
             Dim b As ConnAction = TestConn(cmd)
             Try
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
-                    _exec = et.gettime
+                    _exec = et.GetTime
                     Dim firstidx As Integer = 0
                     Dim pk_name As String = _schema.GetPrimaryKeysName(firstType, False)(0)
                     Try
@@ -1719,8 +1726,9 @@ Namespace Orm
                     If o.IsLoaded Then
                         values.Add(o)
                     ElseIf ListConverter.IsWeak Then
-                        If dic.ContainsKey(o.Identifier) Then
-                            values.Add(dic(o.Identifier))
+                        Dim obj As T = Nothing
+                        If dic.TryGetValue(o.Identifier, obj) AndAlso obj.IsLoaded Then
+                            values.Add(obj)
                         End If
                     End If
                 Next
@@ -1875,39 +1883,94 @@ Namespace Orm
             Return l
         End Function
 
-        Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal tokens() As String, ByVal join As OrmJoin, ByVal contextKey As Object) As System.Collections.Generic.ICollection(Of T)
-            Dim fields() As String = Nothing
-            Dim oschema As IOrmObjectSchema = DbSchema.GetObjectSchema(GetType(T))
-            Dim fs As IOrmFullTextSupport = TryCast(oschema, IOrmFullTextSupport)
+        Private Class FProxy
+
+            Private _t As Type
+
+            Public Sub New(ByVal t As Type)
+                _t = t
+            End Sub
+
+            Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String, ByVal f As IOrmFullTextSupport) As String
+                Return Configuration.SearchSection.GetValueForFreeText(_t, tokens, sectionName)
+            End Function
+        End Class
+
+        Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal type2search As Type, ByVal tokens() As String, _
+            ByVal join As OrmJoin, ByVal contextKey As Object) As System.Collections.Generic.ICollection(Of T)
+
+            Dim fields As New List(Of Pair(Of String, Type))
+            Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
+            Dim selectType As System.Type = GetType(T)
+            Dim selSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(selectType)
+            Dim fsearch As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
             Dim queryFields As String() = Nothing
-            If fs IsNot Nothing Then
-                fields = fs.GetIndexedFields
-
-                If contextKey IsNot Nothing Then
-                    queryFields = fs.GetQueryFields(contextKey)
-                End If
+            Dim selCols, searchCols As New List(Of ColumnAttribute)
+            Dim ssearch As IOrmFullTextSupport = TryCast(selSchema, IOrmFullTextSupport)
+            'If ssearch IsNot Nothing Then
+            '    Dim ss() As String = fsearch.GetIndexedFields
+            '    If ss IsNot Nothing Then
+            '        For Each s As String In ss
+            '            fields.Add(New Pair(Of String, Type)(s, selectType))
+            '            selCols.Add(New ColumnAttribute(s))
+            '        Next
+            '    End If
+            '    If selCols.Count > 0 Then
+            '        selCols.Insert(0, New ColumnAttribute("ID"))
+            '        fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
+            '    End If
+            'End If
+            If selectType IsNot type2search Then
+                selCols.Insert(0, New ColumnAttribute("ID"))
+                fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
             End If
-            Dim col As ICollection(Of T) = Nothing
-            Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
-                Dim cols As Generic.List(Of ColumnAttribute) = Nothing
 
-                If fields IsNot Nothing Then
-                    cols = New List(Of ColumnAttribute)
-                    cols.Add(DbSchema.GetColumnByFieldName(GetType(T), "ID"))
-                    For Each f As String In fields
-                        cols.Add(DbSchema.GetColumnByFieldName(GetType(T), f))
+            If fsearch IsNot Nothing Then
+                Dim ss() As String = fsearch.GetIndexedFields
+                If ss IsNot Nothing Then
+                    For Each s As String In ss
+                        fields.Add(New Pair(Of String, Type)(s, type2search))
+                        searchCols.Add(New ColumnAttribute(s))
                     Next
                 End If
+
+                If searchCols.Count > 0 Then
+                    searchCols.Insert(0, New ColumnAttribute("ID"))
+                    fields.Insert(0, New Pair(Of String, Type)("ID", type2search))
+                End If
+
+                If contextKey IsNot Nothing Then
+                    queryFields = fsearch.GetQueryFields(contextKey)
+                End If
+            End If
+
+            Dim col As ICollection(Of T) = Nothing
+            Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                'Dim cols As Generic.List(Of ColumnAttribute) = Nothing
+
+                'If fields.Count > 0 Then
+                '    cols = New List(Of ColumnAttribute)
+                '    cols.Add(DbSchema.GetColumnByFieldName(selectType, "ID"))
+                '    For Each f As Pair(Of String, Type) In fields
+                '        cols.Add(DbSchema.GetColumnByFieldName(f.Second, f.First))
+                '    Next
+                'End If
 
                 With cmd
                     .CommandType = System.Data.CommandType.Text
 
                     Dim params As New ParamMgr(DbSchema, "p")
-                    .CommandText = DbSchema.MakeSearchContainsStatements(GetType(T), tokens, fields, GetSearchSection, join, SortType.Desc, params, GetFilterInfo, queryFields)
+                    .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
+                        GetSearchSection, join, SortType.Desc, params, GetFilterInfo, queryFields, _
+                        Integer.MinValue, AddressOf Configuration.SearchSection.GetValueForContains, "containstable")
                     params.AppendParams(.Parameters)
                 End With
 
-                col = CType(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, cols), List(Of T))
+                If type2search Is selectType OrElse searchCols.Count = 0 Then
+                    col = CType(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols), List(Of T))
+                Else
+                    col = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T))
+                End If
             End Using
 
             Dim col2 As ICollection(Of T) = Nothing
@@ -1917,16 +1980,22 @@ Namespace Orm
                         .CommandType = System.Data.CommandType.Text
 
                         Dim params As New ParamMgr(DbSchema, "p")
-                        .CommandText = DbSchema.MakeSearchFreetextStatements(GetType(T), tokens, Nothing, GetSearchSection, join, SortType.Desc, params, GetFilterInfo, queryFields)
+                        .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
+                            GetSearchSection, join, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
+                            AddressOf New FProxy(type2search).GetValue, "freetexttable")
                         params.AppendParams(.Parameters)
                     End With
 
-                    col2 = CType(LoadMultipleObjects(Of T)(cmd, False, Nothing, Nothing), List(Of T))
+                    If type2search Is selectType OrElse searchCols.Count = 0 Then
+                        col2 = CType(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols), List(Of T))
+                    Else
+                        col2 = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T))
+                    End If
                 End Using
             End If
 
             Dim res As List(Of T) = Nothing
-            If fields IsNot Nothing Then
+            If fields IsNot Nothing AndAlso selectType Is type2search Then
                 Dim query As String, sb As New StringBuilder
                 For Each tk As String In tokens
                     sb.Append(tk).Append(" ")
@@ -1940,8 +2009,10 @@ Namespace Orm
                 Dim other As New List(Of T)
                 For Each o As T In col
                     Dim str As Boolean = False
-                    For Each f As String In fields
-                        Dim s As String = CStr(o.GetValue(f, oschema))
+                    For Each p As Pair(Of String, Type) In fields
+                        'If p.Second Is selectType Then
+                        Dim f As String = p.First
+                        Dim s As String = CStr(o.GetValue(f, searchSchema))
                         If s IsNot Nothing Then
                             If s.Equals(query, StringComparison.InvariantCultureIgnoreCase) Then
                                 full.Add(o)
@@ -1977,8 +2048,8 @@ Namespace Orm
                             If Not str AndAlso s.StartsWith(query, StringComparison.InvariantCultureIgnoreCase) Then
                                 str = True
                             End If
-
                         End If
+                        'End If
                     Next
                     If str Then
                         starts.Add(o)
@@ -2087,11 +2158,15 @@ l1:
             Return String.Empty
         End Function
 
-        Protected Overrides Function MakeJoin(ByVal t As Type, ByVal selectType As Type, ByVal field As String, _
-            ByVal oper As FilterOperation, ByVal joinType As JoinType) As OrmJoin
-            Dim tbl As OrmTable = DbSchema.GetTables(t)(0)
+        Protected Overrides Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
+            ByVal oper As FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
 
-            Dim jf As New JoinFilter(tbl, "ID", selectType, field, oper)
+            Dim tbl As OrmTable = DbSchema.GetTables(type2join)(0)
+            If switchTable Then
+                tbl = DbSchema.GetTables(selectType)(0)
+            End If
+
+            Dim jf As New JoinFilter(type2join, "ID", selectType, field, oper)
 
             Return New OrmJoin(tbl, joinType, jf)
         End Function
