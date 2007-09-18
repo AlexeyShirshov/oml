@@ -1,63 +1,28 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Orm", "obm\Orm.vbproj", "{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
-EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "TestProject1", "TestProject1\TestProject1.vbproj", "{9D39DD33-0A52-460D-A5E2-8576E46B334F}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
-EndProject
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6E64006B-2B21-4A31-85D8-C669B9C4E7B3}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 	ProjectSection(SolutionItems) = preProject
 		ReadMe.txt = ReadMe.txt
 		TestRunConfig1.testrunconfig = TestRunConfig1.testrunconfig
 		Worm1.vsmdi = Worm1.vsmdi
 	EndProjectSection
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Orm", "obm\Orm.vbproj", "{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "TestProject1", "TestProject1\TestProject1.vbproj", "{9D39DD33-0A52-460D-A5E2-8576E46B334F}"
+EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Tests", "Tests\Tests.vbproj", "{8E02FB04-15DE-416A-9468-0C99CC1DBE65}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ASPNETHosting", "ASPNETHosting\ASPNETHosting.vbproj", "{7D8F3864-281D-495E-B0E4-5731FC31D007}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrmCodeGen", "OrmCodeGen\OrmCodeGen.csproj", "{ADEDBCD7-24DA-43CF-A5A0-0FBB4F12A001}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrmCodeGenLib", "OrmCodeGenLib\OrmCodeGenLib.csproj", "{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XmlSchemaGen", "XmlSchemaGen\XmlSchemaGen.csproj", "{F657DAB2-909A-4D7C-8B88-38A7CCF0BF40}"
-	ProjectSection(WebsiteProperties) = preProject
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.Debug = "False"
-	EndProjectSection
 EndProject
 Global
-	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
-		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
-	EndGlobalSection
 	GlobalSection(TeamFoundationVersionControl) = preSolution
 		SccNumberOfProjects = 8
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
@@ -154,5 +119,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
 	EndGlobalSection
 EndGlobal
