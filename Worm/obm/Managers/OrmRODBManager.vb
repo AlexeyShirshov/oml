@@ -1948,6 +1948,9 @@ Namespace Orm
                 Do
                     Dim sortType As System.Type = ns.Type
                     ns = ns.Previous
+                    If sortType Is Nothing Then
+                        sortType = selectType
+                    End If
                     If selectType IsNot sortType Then
                         If type2search Is sortType Then
                             appendBySort = True
