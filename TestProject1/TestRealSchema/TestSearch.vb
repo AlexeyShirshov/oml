@@ -32,7 +32,7 @@ Public Class TestSearch
             '    Assert.AreEqual(2, t.Identifier)
             'Next
 
-            c = mgr.Search(Of Table1)("sec", "sf")
+            c = mgr.Search(Of Table1)("sec", Nothing, "sf")
             Assert.AreEqual(1, c.Count)
         End Using
     End Sub
@@ -51,6 +51,33 @@ Public Class TestSearch
             c = mgr.Search(Of Table2)(GetType(Table1), "second", Nothing)
 
             Assert.AreEqual(0, c.Count)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSortSearch()
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Orm.DbSchema("1"))
+            Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
+                Orm.Sorting.Field("DT"), Nothing)
+
+            Assert.AreEqual(2, c.Count)
+
+            Dim l As IList(Of Table1) = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
+
+            Assert.AreEqual(2, l(0).Identifier)
+            Assert.AreEqual(3, l(1).Identifier)
+
+            Dim c2 As ICollection(Of Table2) = mgr.Search(Of Table2)(GetType(Table1), "first", Orm.Sorting.Field("DT"))
+
+            Assert.AreEqual(2, c.Count)
+        End Using
+    End Sub
+
+    <TestMethod(), ExpectedException(GetType(Orm.OrmManagerException))> _
+    Public Sub TestSortSearchWrong()
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Orm.DbSchema("1"))
+            Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("first", _
+                Orm.Sorting.Field(GetType(Table2), "Money"), Nothing)
         End Using
     End Sub
 End Class

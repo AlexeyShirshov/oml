@@ -2903,7 +2903,7 @@ l1:
         End Function
 
         Public Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal [string] As String, _
-            ByVal sort As Sort, Optional ByVal contextKey As Object = Nothing) As ICollection(Of T)
+            ByVal sort As Sort, ByVal contextKey As Object) As ICollection(Of T)
             Dim selectType As Type = GetType(T)
             'If selectType IsNot type2search Then
             '    Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2search, Nothing)
@@ -2919,16 +2919,16 @@ l1:
                 'End If
                 Return New List(Of T)()
             Else
-                Return Search(Of T)([string], contextKey)
+                Return Search(Of T)([string], sort, contextKey)
             End If
         End Function
 
-        Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal contextKey As Object) As ICollection(Of T)
+        Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal sort As Sort, ByVal contextKey As Object) As ICollection(Of T)
             Invariant()
 
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
                 Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
-                Return Search(Of T)(GetType(T), ss, contextKey, Nothing)
+                Return Search(Of T)(GetType(T), ss, contextKey, sort)
             End If
             Return New List(Of T)()
         End Function
