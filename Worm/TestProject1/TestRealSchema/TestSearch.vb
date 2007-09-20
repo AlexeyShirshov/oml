@@ -75,9 +75,21 @@ Public Class TestSearch
 
     <TestMethod(), ExpectedException(GetType(Orm.OrmManagerException))> _
     Public Sub TestSortSearchWrong()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Orm.DbSchema("1"))
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Orm.DbSchema("Search"))
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("first", _
                 Orm.Sorting.Field(GetType(Table2), "Money"), Nothing)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestPageSearch()
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Orm.DbSchema("1"))
+            Using New Orm.OrmManagerBase.PagerSwitcher(mgr, 0, 1)
+                Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
+                    Orm.Sorting.Field("DT"), Nothing)
+
+                Assert.AreEqual(1, c.Count)
+            End Using
         End Using
     End Sub
 End Class

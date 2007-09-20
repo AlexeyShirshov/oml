@@ -678,8 +678,8 @@ Namespace Orm
         Protected Friend _dont_cache_lists As Boolean
         Private _newMgr As INewObjects
         Private _expiresPattern As Date
-        Private _start As Integer
-        Private _length As Integer = Integer.MaxValue
+        Protected _start As Integer
+        Protected _length As Integer = Integer.MaxValue
         Private _er As ExecutionResult
         Friend _externalFilter As IEntityFilter
         Protected Friend _loadedInLastFetch As Integer
@@ -3527,14 +3527,14 @@ l1:
                             Continue Do
                         End If
 
-                        Dim sschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
-                        field = _schema.GetJoinFieldNameByType(sortType, selectType, sschema)
+                        'Dim sschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
+                        'field = _schema.GetJoinFieldNameByType(sortType, selectType, sschema)
                         If String.IsNullOrEmpty(field) Then
                             Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, sortType))
                         End If
 
-                        types.Add(sortType)
-                        l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                        'types.Add(sortType)
+                        'l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
                     End If
                     ns = ns.Previous
                 Loop While ns IsNot Nothing

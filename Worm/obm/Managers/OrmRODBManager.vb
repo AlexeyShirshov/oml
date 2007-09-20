@@ -1951,29 +1951,28 @@ Namespace Orm
                     If sortType Is Nothing Then
                         sortType = selectType
                     End If
+                    appendBySort = type2search Is sortType
                     If selectType IsNot sortType Then
-                        If type2search Is sortType Then
-                            appendBySort = True
-                        Else
+                        If type2search IsNot sortType Then
                             Dim srtschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
-                            Dim field As String = _schema.GetJoinFieldNameByType(sortType, type2search, srtschema)
-                            If Not String.IsNullOrEmpty(field) Then
-                                joins.Add(MakeJoin(type2search, sortType, field, FilterOperation.Equal, JoinType.Join, True))
-                                Continue Do
-                            End If
-
-                            field = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
+                            Dim field As String = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
                             If Not String.IsNullOrEmpty(field) Then
                                 joins.Add(MakeJoin(sortType, type2search, field, FilterOperation.Equal, JoinType.Join))
                                 Continue Do
                             End If
 
+                            'field = _schema.GetJoinFieldNameByType(sortType, type2search, srtschema)
+                            'If Not String.IsNullOrEmpty(field) Then
+                            '    joins.Add(MakeJoin(type2search, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                            '    Continue Do
+                            'End If
+
                             If selectType IsNot type2search Then
-                                field = _schema.GetJoinFieldNameByType(sortType, selectType, srtschema)
-                                If Not String.IsNullOrEmpty(field) Then
-                                    joins.Add(MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
-                                    Continue Do
-                                End If
+                                'field = _schema.GetJoinFieldNameByType(sortType, selectType, srtschema)
+                                'If Not String.IsNullOrEmpty(field) Then
+                                '    joins.Add(MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
+                                '    Continue Do
+                                'End If
 
                                 field = _schema.GetJoinFieldNameByType(selectType, sortType, selSchema)
                                 If Not String.IsNullOrEmpty(field) Then
@@ -2098,7 +2097,6 @@ Namespace Orm
                                         Else
                                             full_part.Add(o)
                                         End If
-
                                         GoTo l1
                                     ElseIf ps.Replace(".", "").Equals(query, StringComparison.InvariantCultureIgnoreCase) Then
                                         If i = 0 Then
@@ -2130,17 +2128,30 @@ l1:
                 full.AddRange(other)
                 res = full
             Else
-                res = New List(Of T)(col)
+                If _length = Integer.MaxValue AndAlso _start = 0 Then
+                    res = New List(Of T)(col)
+                Else
+                    Dim l As IList(Of T) = CType(col, Global.System.Collections.Generic.IList(Of T))
+                    res = New List(Of T)
+                    For i As Integer = _start To Math.Min(_start + _length, col.Count) - 1
+                        res.Add(l(i))
+                    Next
+                End If
             End If
 
-            If col2 IsNot Nothing Then
+            If col2 IsNot Nothing AndAlso res.Count < _length Then
                 Dim dic As New Dictionary(Of Integer, T)
                 For Each o As T In res
                     dic.Add(o.Identifier, o)
                 Next
+                Dim i As Integer = res.Count
                 For Each o As T In col2
                     If Not dic.ContainsKey(o.Identifier) Then
                         res.Add(o)
+                        i += 1
+                        If i = _start + _length Then
+                            Exit For
+                        End If
                     End If
                 Next
             End If

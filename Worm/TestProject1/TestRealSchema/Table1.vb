@@ -319,7 +319,7 @@ Public Class Table1Implementation
         End Get
     End Property
 
-    Public Function GetJoinField(ByVal t As System.Type) As String Implements Worm.Orm.IJoinBehavior.GetJoinField
+    Public Overridable Function GetJoinField(ByVal t As System.Type) As String Implements Worm.Orm.IJoinBehavior.GetJoinField
         If t Is GetType(Table2) Then
             Return "ID"
         End If
@@ -346,6 +346,10 @@ Public Class Table1Search
             Return New String() {"Title"}
         End If
         Return Nothing
+    End Function
+
+    Public Overrides Function GetJoinField(ByVal t As System.Type) As String
+        Return String.Empty
     End Function
 End Class
 
