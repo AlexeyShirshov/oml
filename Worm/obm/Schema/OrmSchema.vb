@@ -67,7 +67,7 @@ Namespace Orm
 #Region " reflection "
 
         Protected Friend Function GetProperties(ByVal t As Type) As IDictionary
-            Return GetProperties(t, GetObjectSchema(t))
+            Return GetProperties(t, GetObjectSchema(t, False))
         End Function
 
         'Protected Friend Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchema) As IDictionary
@@ -1104,6 +1104,10 @@ Namespace Orm
         End Function
 
         Public Function GetObjectSchema(ByVal t As Type) As IOrmObjectSchemaBase
+            Return GetObjectSchema(t, True)
+        End Function
+
+        Protected Function GetObjectSchema(ByVal t As Type, ByVal check As Boolean) As IOrmObjectSchemaBase
             If t Is Nothing Then Throw New ArgumentNullException("t")
 
             Dim idic As IDictionary = CType(map("GetObjectSchema"), System.Collections.IDictionary)
@@ -1120,7 +1124,7 @@ Namespace Orm
             End If
             Dim schema As IOrmObjectSchemaBase = CType(idic(t), IOrmObjectSchemaBase)
 
-            If schema Is Nothing Then
+            If schema Is Nothing AndAlso check Then
                 Throw New ArgumentException(String.Format("Cannot find schema for type {0}", t))
             End If
 
