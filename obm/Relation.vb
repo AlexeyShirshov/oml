@@ -106,7 +106,7 @@ Namespace Orm
 
         Public Function Accept(ByVal mgr As OrmDBManager) As Boolean
             _cantgetCurrent = False
-            Dim needaccept As Boolean
+            Dim needaccept As Boolean = _addedList.Count > 0
             If _sort Is Nothing Then
                 CType(_mainList, List(Of Integer)).AddRange(_addedList)
                 _addedList.Clear()
@@ -165,7 +165,7 @@ Namespace Orm
             For Each o As Integer In _deletedList
                 CType(_mainList, List(Of Integer)).Remove(o)
             Next
-            needaccept = _deletedList.Count > 0
+            needaccept = needaccept OrElse _deletedList.Count > 0
             _deletedList.Clear()
             _saved = False
             RemoveNew()
