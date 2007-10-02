@@ -1491,7 +1491,7 @@ Namespace Orm
                                     If TypeOf (value) Is String Then
                                         Dim svalue As String = CStr(value).Trim
                                         If svalue = String.Empty Then
-                                            v = 0
+                                            v = [Enum].ToObject(t, 0)
                                         Else
                                             v = [Enum].Parse(t, svalue, True)
                                         End If
