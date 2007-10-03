@@ -110,9 +110,12 @@ namespace OrmCodeGenLib
         /// Безопасная распаковка переменных с кастом в энам
         /// </summary>
         SafeUnboxToEnum = 0x0100,
+		GenerateCsIsStatement = 0x0200,
+		GenerateVbTypeOfIsStatement = 0x0400,
+		GenerateCsAsStatement = 0x0800,
+		GenerateVbTryCastStatement = 0x1000,
 
-        CSharp = MethodsInsteadParametrizedProperties | GenerateCSUsingStatement | SafeUnboxToEnum,
-        VisualBasic = DerivedGenericMembersRequireConstraits | AddOptionsExplicit | AddOptionsStrict | OptionsExplicitOn | OptionsStrictOn | GenerateVBUsingStatement
+        CSharp = MethodsInsteadParametrizedProperties | GenerateCSUsingStatement | SafeUnboxToEnum | GenerateCsAsStatement | GenerateCsIsStatement,
+        VisualBasic = DerivedGenericMembersRequireConstraits | AddOptionsExplicit | AddOptionsStrict | OptionsExplicitOn | OptionsStrictOn | GenerateVBUsingStatement | GenerateVbTryCastStatement | GenerateVbTypeOfIsStatement,
     }
-
 }

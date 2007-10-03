@@ -217,7 +217,7 @@ namespace OrmCodeGenLib
 
         internal protected void FillFileDescriptions()
         {
-            _ormObjectsDef.Namespace = _ormXmlDocument.DocumentElement.GetAttribute("namespace");
+            _ormObjectsDef.Namespace = _ormXmlDocument.DocumentElement.GetAttribute("defaultNamespace");
             _ormObjectsDef.SchemaVersion = _ormXmlDocument.DocumentElement.GetAttribute("schemaVersion");
             string baseUriString = _ormXmlDocument.DocumentElement.GetAttribute("xml:base");
             if (!string.IsNullOrEmpty(baseUriString))
@@ -274,10 +274,11 @@ namespace OrmCodeGenLib
 
             foreach (XmlNode propertyNode in propertiesList)
             {
-                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias;
+                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled;
                 string[] attributes;
                 TableDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
+                bool disabled = false;
 
                 XmlElement propertyElement = (XmlElement) propertyNode;
                 description = propertyElement.GetAttribute("description");
@@ -289,6 +290,7 @@ namespace OrmCodeGenLib
                 fieldAccessLevelName = propertyElement.GetAttribute("classfieldAccessLevel");
                 propertyAccessLevelName = propertyElement.GetAttribute("propertyAccessLevel");
                 propertyAlias = propertyElement.GetAttribute("propertyAlias");
+                propertyDisabled = propertyElement.GetAttribute("disabled");
 
                 attributes = sAttributes.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                 if (!string.IsNullOrEmpty(propertyAccessLevelName))
@@ -303,6 +305,9 @@ namespace OrmCodeGenLib
 
                 table = entity.GetTable(tableId);
 
+                if (!String.IsNullOrEmpty(propertyDisabled))
+                    disabled = XmlConvert.ToBoolean(propertyDisabled);
+
                 if (table == null)
                     throw new OrmXmlParserException(
                         string.Format("Table '{0}' for property '{1}' of entity '{2}' not found.", tableId, name,
@@ -311,6 +316,7 @@ namespace OrmCodeGenLib
                 TypeDescription typeDesc = _ormObjectsDef.GetType(typeId, true);
                 
                 PropertyDescription property = new PropertyDescription(entity ,name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
+                property.Disabled = disabled;
 
                 entity.Properties.Add(property);
             }
