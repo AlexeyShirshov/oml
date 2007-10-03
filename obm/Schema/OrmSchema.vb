@@ -362,7 +362,7 @@ Namespace Orm
         'End Function
 
         <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
-        Protected Function GetFieldTable(ByVal schema As IOrmObjectSchemaBase, ByVal field As String) As OrmTable
+        Protected Function GetFieldTable(ByVal schema As IOrmPropertyMap, ByVal field As String) As OrmTable
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If

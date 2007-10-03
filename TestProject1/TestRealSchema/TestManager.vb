@@ -762,6 +762,49 @@ Public Class TestManagerRS
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestCompositeDelete()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+            Dim e As Composite = mgr.Find(Of Composite)(1)
+            Assert.AreEqual(1, e.ID)
+            Assert.AreEqual("привет", e.Message)
+            Assert.AreEqual("hi", e.Message2)
+
+            e.Delete()
+            mgr.BeginTransaction()
+            Try
+                e.Save(True)
+
+                Assert.IsFalse(mgr.IsInCache(e))
+
+                e = mgr.Find(Of Composite)(1)
+
+                Assert.IsNull(e)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestCompositeUpdate()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+            Dim e As Composite = mgr.Find(Of Composite)(1)
+            Assert.AreEqual(1, e.ID)
+            Assert.AreEqual("привет", e.Message)
+            Assert.AreEqual("hi", e.Message2)
+
+            e.Message2 = "adfgopmi"
+
+            mgr.BeginTransaction()
+            Try
+                e.Save(True)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
     Private _id As Integer = -100
     Private _new_objects As New Dictionary(Of Integer, Orm.OrmBase)
 

@@ -62,7 +62,7 @@ Namespace Orm
             Return schema.GetTables
         End Function
 
-        Public Function GetTables(ByVal schema As IOrmObjectSchema) As OrmTable()
+        Public Function GetTables(ByVal schema As IOrmRelationalSchema) As OrmTable()
             If schema Is Nothing Then
                 Throw New ArgumentNullException("type")
             End If
@@ -80,7 +80,7 @@ Namespace Orm
             Return schema.GetJoins(left, right)
         End Function
 
-        Protected Function GetJoins(ByVal schema As IOrmObjectSchema, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
+        Protected Function GetJoins(ByVal schema As IOrmRelationalSchema, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
             If schema Is Nothing Then
                 Throw New ArgumentNullException("type")
             End If
@@ -308,7 +308,7 @@ Namespace Orm
         End Function
 
         Protected Overridable Function FormInsert(ByVal inserted_tables As Dictionary(Of OrmTable, IList(Of ITemplateFilter)), _
-            ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IOrmObjectSchema, _
+            ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IRelMapObjectSchema, _
             ByVal sel_columns As Generic.List(Of ColumnAttribute), _
             ByVal unions() As String, ByVal params As ICreateParam) As ICollection(Of System.Data.Common.DbParameter)
 
@@ -447,12 +447,13 @@ Namespace Orm
 
         End Structure
 
-        Protected Sub GetChangedFields(ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchema, ByVal tables As IDictionary(Of OrmTable, TableUpdate), _
+        Protected Sub GetChangedFields(ByVal obj As OrmBase, ByVal oschema As IOrmPropertyMap, ByVal tables As IDictionary(Of OrmTable, TableUpdate), _
             ByVal sel_columns As Generic.List(Of ColumnAttribute), ByVal unions As String())
 
             Dim rt As Type = obj.GetType
+            Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
-            For Each de As DictionaryEntry In GetProperties(rt)
+            For Each de As DictionaryEntry In GetProperties(rt, TryCast(oschema, IOrmObjectSchemaBase))
                 'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
@@ -461,74 +462,77 @@ Namespace Orm
 
                     'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) <> Field2DbRelations.PrimaryKey AndAlso _
                     '    (c.SyncBehavior And Field2DbRelations.RowVersion) <> Field2DbRelations.RowVersion Then
-                    Dim att As Field2DbRelations = GetAttributes(rt, c)
-                    If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
+                    Dim map As MapField2Column = Nothing
+                    If col.TryGetValue(c.FieldName, map) Then
+                        Dim att As Field2DbRelations = map.GetAttributes(c)
+                        If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
 
-                        Dim current As Object = pi.GetValue(obj, Nothing)
-                        If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
-                            (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse obj.ForseUpdate(c) Then
-                            Dim fieldTable As OrmTable = GetFieldTable(oschema, c.FieldName)
+                            Dim current As Object = pi.GetValue(obj, Nothing)
+                            If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
+                                (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse obj.ForseUpdate(c) Then
+                                Dim fieldTable As OrmTable = GetFieldTable(oschema, c.FieldName)
 
-                            If unions IsNot Nothing Then
-                                Throw New NotImplementedException
-                                'fieldTable = MapUnionType2Table(rt, uniontype)
+                                If unions IsNot Nothing Then
+                                    Throw New NotImplementedException
+                                    'fieldTable = MapUnionType2Table(rt, uniontype)
+                                End If
+
+                                If Not tables.ContainsKey(fieldTable) Then
+                                    tables.Add(fieldTable, New TableUpdate(fieldTable))
+                                    'param_vals.Add(fieldTable, New ArrayList)
+                                End If
+
+                                Dim updates As IList(Of EntityFilter) = tables(fieldTable)._updates
+
+                                updates.Add(New EntityFilter(rt, c.FieldName, New SimpleValue(current), FilterOperation.Equal))
+
+                                'Dim tb_sb As StringBuilder = CType(tables(fieldTable), StringBuilder)
+                                'Dim _params As ArrayList = CType(param_vals(fieldTable), ArrayList)
+                                'If tb_sb.Length <> 0 Then
+                                '    tb_sb.Append(", ")
+                                'End If
+                                'If unions IsNot Nothing Then
+                                '    Throw New NotSupportedException
+                                '    'tb_sb.Append(GetColumnNameByFieldName(type, c.FieldName, tb))
+                                'Else
+                                '    tb_sb.Append(GetColumnNameByFieldNameInternal(type, c.FieldName, False))
+                                'End If
+                                'tb_sb.Append(" = ").Append(ParamName("p", i))
+                                '_params.Add(CreateDBParameter(ParamName("p", i), ChangeValueType(type, c, current)))
+                                'i += 1
                             End If
-
-                            If Not tables.ContainsKey(fieldTable) Then
-                                tables.Add(fieldTable, New TableUpdate(fieldTable))
-                                'param_vals.Add(fieldTable, New ArrayList)
-                            End If
-
-                            Dim updates As IList(Of EntityFilter) = tables(fieldTable)._updates
-
-                            updates.Add(New EntityFilter(rt, c.FieldName, New SimpleValue(current), FilterOperation.Equal))
-
-                            'Dim tb_sb As StringBuilder = CType(tables(fieldTable), StringBuilder)
-                            'Dim _params As ArrayList = CType(param_vals(fieldTable), ArrayList)
-                            'If tb_sb.Length <> 0 Then
-                            '    tb_sb.Append(", ")
-                            'End If
-                            'If unions IsNot Nothing Then
-                            '    Throw New NotSupportedException
-                            '    'tb_sb.Append(GetColumnNameByFieldName(type, c.FieldName, tb))
                             'Else
-                            '    tb_sb.Append(GetColumnNameByFieldNameInternal(type, c.FieldName, False))
-                            'End If
-                            'tb_sb.Append(" = ").Append(ParamName("p", i))
-                            '_params.Add(CreateDBParameter(ParamName("p", i), ChangeValueType(type, c, current)))
-                            'i += 1
+                            '    If sbwhere.Length > 0 Then sbwhere.Append(" and ")
+                            '    sbwhere.Append(GetColumnNameByFieldName(type, c.FieldName))
+                            '    Dim pname As String = "pk"
+                            '    If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
+                            '        pname = "rv"
+                            '    Else
+                            '        If sbsel_where.Length = 0 Then
+                            '            'sbsel_where.Append(" from ").Append(GetTables(type)(0))
+                            '            sbsel_where.Append(" where ")
+                            '        Else
+                            '            sbsel_where.Append(" and ")
+                            '        End If
+
+                            '        sbsel_where.Append(GetColumnNameByFieldName(type, c.FieldName))
+                            '        sbsel_where.Append(" = ").Append(ParamName(pname, i))
+                            '    End If
+                            '    sbwhere.Append(" = ").Append(ParamName(pname, i))
+                            '    _params.Add(CreateDBParameter(ParamName(pname, i), original))
+                            '    i += 1
                         End If
-                        'Else
-                        '    If sbwhere.Length > 0 Then sbwhere.Append(" and ")
-                        '    sbwhere.Append(GetColumnNameByFieldName(type, c.FieldName))
-                        '    Dim pname As String = "pk"
-                        '    If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
-                        '        pname = "rv"
-                        '    Else
-                        '        If sbsel_where.Length = 0 Then
-                        '            'sbsel_where.Append(" from ").Append(GetTables(type)(0))
-                        '            sbsel_where.Append(" where ")
-                        '        Else
-                        '            sbsel_where.Append(" and ")
-                        '        End If
 
-                        '        sbsel_where.Append(GetColumnNameByFieldName(type, c.FieldName))
-                        '        sbsel_where.Append(" = ").Append(ParamName(pname, i))
-                        '    End If
-                        '    sbwhere.Append(" = ").Append(ParamName(pname, i))
-                        '    _params.Add(CreateDBParameter(ParamName(pname, i), original))
-                        '    i += 1
-                    End If
+                        If (att And Field2DbRelations.SyncUpdate) = Field2DbRelations.SyncUpdate Then
+                            'If sbselect.Length = 0 Then
+                            '    sbselect.Append("if @@rowcount > 0 select ")
+                            'Else
+                            '    sbselect.Append(", ")
+                            'End If
 
-                    If (att And Field2DbRelations.SyncUpdate) = Field2DbRelations.SyncUpdate Then
-                        'If sbselect.Length = 0 Then
-                        '    sbselect.Append("if @@rowcount > 0 select ")
-                        'Else
-                        '    sbselect.Append(", ")
-                        'End If
-
-                        'sbselect.Append(GetColumnNameByFieldName(type, c.FieldName))
-                        sel_columns.Add(c)
+                            'sbselect.Append(GetColumnNameByFieldName(type, c.FieldName))
+                            sel_columns.Add(c)
+                        End If
                     End If
                 End If
             Next
@@ -539,7 +543,7 @@ Namespace Orm
 
             Dim rt As Type = obj.GetType
 
-            For Each de As DictionaryEntry In GetProperties(rt)
+            For Each de As DictionaryEntry In GetProperties(rt, oschema)
                 'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
@@ -622,8 +626,13 @@ Namespace Orm
 
                     'Dim sb_updates As New StringBuilder
                     Dim oschema As IOrmObjectSchema = GetObjectSchema(rt)
+                    Dim esch As IRelMapObjectSchema = oschema
+                    Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
+                    If ro IsNot Nothing Then
+                        esch = ro.GetEditableSchema
+                    End If
 
-                    GetChangedFields(obj, oschema, updated_tables, sel_columns, unions)
+                    GetChangedFields(obj, esch, updated_tables, sel_columns, unions)
 
                     Dim l As New List(Of EntityFilter)
                     For Each tu As TableUpdate In updated_tables.Values
@@ -636,8 +645,8 @@ Namespace Orm
                     select_columns = sel_columns
 
                     If updated_tables.Count > 0 Then
-                        Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
-                        Dim pk_table As OrmTable = sch.GetTables()(0)
+                        'Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
+                        Dim pk_table As OrmTable = esch.GetTables()(0)
                         Dim amgr As AliasMgr = AliasMgr.Create
                         Dim params As New ParamMgr(Me, "p")
 
@@ -650,7 +659,7 @@ Namespace Orm
                             End If
 
                             Dim tbl As OrmTable = item.Key
-                            Dim [alias] As String = amgr.AddTable(tbl, sch, params)
+                            Dim [alias] As String = amgr.AddTable(tbl, oschema, params)
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
                             For Each f As EntityFilter In item.Value._updates
@@ -742,20 +751,21 @@ Namespace Orm
             FormInsert(dic, upd_cmd, obj.GetType, oschema, Nothing, Nothing, params)
         End Sub
 
-        Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of OrmTable, IFilter), ByVal type As Type, ByVal obj As OrmBase)
-            Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
-            Dim tables() As OrmTable = GetTables(oschema)
+        Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of OrmTable, IFilter), _
+            ByVal type As Type, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchema, ByVal relSchema As IOrmRelationalSchema)
+            'Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
+            Dim tables() As OrmTable = GetTables(relSchema)
             Dim pk_table As OrmTable = tables(0)
             For j As Integer = 0 To tables.Length - 1
                 Dim table As OrmTable = tables(j)
                 deleted_tables.Add(table, Nothing)
                 Dim o As New Orm.Condition.ConditionConstructor
                 If table.Equals(pk_table) Then
-                    For Each de As DictionaryEntry In GetProperties(type)
+                    For Each de As DictionaryEntry In GetProperties(type, oschema)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         If c IsNot Nothing Then
-                            Dim att As Field2DbRelations = GetAttributes(type, c)
+                            Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.FieldName).GetAttributes(c) 'GetAttributes(type, c)
                             If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                 o.AddFilter(New EntityFilter(type, c.FieldName, New LiteralValue("@id"), FilterOperation.Equal))
                             ElseIf (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
@@ -765,7 +775,7 @@ Namespace Orm
                         End If
                     Next
                 Else
-                    Dim join As OrmJoin = GetJoins(oschema, tables(0), table)
+                    Dim join As OrmJoin = GetJoins(relSchema, tables(0), table)
                     If Not join.IsEmpty Then
                         Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(join.Condition, type, "ID", "@id")
 
@@ -792,13 +802,20 @@ Namespace Orm
 
                 If obj.ObjectState = ObjectState.Deleted Then
                     Dim type As Type = obj.GetType
+                    Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
+                    Dim relSchema As IOrmRelationalSchema = oschema
+                    Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
+                    If ro IsNot Nothing Then
+                        relSchema = ro.GetEditableSchema
+                    End If
+
                     Dim params As New ParamMgr(Me, "p")
                     Dim deleted_tables As New Generic.Dictionary(Of OrmTable, IFilter)
 
                     del_cmd.Append(DeclareVariable("@id", "int")).Append(EndLine)
                     del_cmd.Append("set @id = ").Append(params.CreateParam(obj.Identifier)).Append(EndLine)
 
-                    GetDeletedConditions(deleted_tables, type, obj)
+                    GetDeletedConditions(deleted_tables, type, obj, oschema, relSchema)
 
                     For Each de As KeyValuePair(Of OrmTable, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(de.Key)

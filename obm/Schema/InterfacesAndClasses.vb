@@ -12,8 +12,13 @@ Namespace Orm
         Function GetSecondType() As Pair(Of String, Type)
     End Interface
 
-    Public Interface IOrmObjectSchemaBase
+    Public Interface IOrmPropertyMap
         Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
+    End Interface
+
+    Public Interface IOrmObjectSchemaBase
+        Inherits IOrmPropertyMap
+        'Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
         'Function MapSort2FieldName(ByVal sort As String) As String
         Function GetM2MRelations() As M2MRelation()
         Function GetFilter(ByVal filter_info As Object) As IFilter
@@ -36,10 +41,21 @@ Namespace Orm
         ReadOnly Property SortExpiration(ByVal s As Sort) As TimeSpan
     End Interface
 
-    Public Interface IOrmObjectSchema
-        Inherits IOrmObjectSchemaBase
+    Public Interface IOrmRelationalSchema
         Function GetTables() As OrmTable()
         Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
+    End Interface
+
+    Public Interface IOrmObjectSchema
+        Inherits IOrmObjectSchemaBase, IRelMapObjectSchema
+    End Interface
+
+    Public Interface IRelMapObjectSchema
+        Inherits IOrmRelationalSchema, IOrmPropertyMap
+    End Interface
+
+    Public Interface IReadonlyObjectSchema
+        Function GetEditableSchema() As IRelMapObjectSchema
     End Interface
 
     'Public Interface IOrmTableFunction
