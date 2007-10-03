@@ -279,7 +279,7 @@ namespace OrmCodeGenLib
 
         private void FillFileDescriptions()
         {
-            _ormXmlDocumentMain.DocumentElement.SetAttribute("namespace", _ormObjectsDef.Namespace);
+            _ormXmlDocumentMain.DocumentElement.SetAttribute("defaultNamespace", _ormObjectsDef.Namespace);
             _ormXmlDocumentMain.DocumentElement.SetAttribute("schemaVersion", _ormObjectsDef.SchemaVersion);
 
             StringBuilder commentBuilder = new StringBuilder();
