@@ -19,6 +19,11 @@ Namespace Orm
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IEntityFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
+
+                If mgr Is Nothing Then
+                    Throw New ArgumentNullException("mgr")
+                End If
+
                 _mgr = mgr
                 _f = f
                 _sort = sort
@@ -253,6 +258,11 @@ Namespace Orm
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal relation As M2MRelation, ByVal f As IEntityFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
+
+                If relation Is Nothing Then
+                    Throw New ArgumentNullException("relation")
+                End If
+
                 _rel = relation
 
                 If mgr.ObjectSchema.GetObjectSchema(relation.Type).GetFilter(mgr.GetFilterInfo) IsNot Nothing Then

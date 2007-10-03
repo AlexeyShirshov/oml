@@ -168,6 +168,15 @@ Public Class TestProcs
             Assert.AreEqual(2, r1.Sum)
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestScalar()
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+            Dim p As New ScalarProc(10)
+            Assert.AreEqual(20, p.GetResult(mgr))
+            Assert.AreEqual(100, p.GetResult(90, mgr))
+        End Using
+    End Sub
 End Class
 
 #Region " procs "
@@ -439,4 +448,28 @@ Public Class MultiR
     End Function
 End Class
 
+Public Class ScalarProc
+    Inherits Orm.ScalarStoredProc(Of Integer)
+
+    Private _i As Integer
+
+    Public Sub New(ByVal i As Integer)
+        _i = i
+    End Sub
+
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Object))
+        Dim l As New List(Of Pair(Of String, Object))
+        l.Add(New Pair(Of String, Object)("i", _i))
+        Return l
+    End Function
+
+    Protected Overrides Function GetName() As String
+        Return "dbo.ScalarProc"
+    End Function
+
+    Public Overloads Function GetResult(ByVal i As Integer, ByVal mgr As Orm.OrmReadOnlyDBManager) As Integer
+        _i = i
+        Return MyBase.GetResult(mgr)
+    End Function
+End Class
 #End Region

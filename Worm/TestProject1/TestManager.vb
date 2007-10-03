@@ -698,6 +698,29 @@ Imports System.Collections.Generic
     End Sub
 
     <TestMethod()> _
+    Public Sub TestCompositeDelete()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("2"))
+            Dim e As Entity2 = mgr.Find(Of Entity2)(10)
+            Assert.AreEqual(10, e.ID)
+            Assert.AreEqual("a", e.Str)
+
+            e.Delete()
+            mgr.BeginTransaction()
+            Try
+                e.Save(True)
+
+                Assert.IsFalse(mgr.IsInCache(e))
+
+                e = mgr.Find(Of Entity2)(10)
+
+                Assert.IsNull(e)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestM2MTag()
         Using mgr As Orm.OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity5 = mgr.Find(Of Entity5)(1)
