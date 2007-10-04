@@ -805,6 +805,21 @@ Public Class TestManagerRS
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestCompositeInsert()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+            Dim e As New Composite(1, mgr.Cache, mgr.DbSchema)
+            e.Message = "don"
+            e.Message2 = "dionsd"
+            mgr.BeginTransaction()
+            Try
+                e.Save(True)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
     Private _id As Integer = -100
     Private _new_objects As New Dictionary(Of Integer, Orm.OrmBase)
 
