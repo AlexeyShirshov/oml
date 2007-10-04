@@ -9,6 +9,14 @@ Public Class Composite
     Private _m As String
     Private _m2 As String
 
+    Public Sub New()
+        MyBase.New()
+    End Sub
+
+    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
+        MyBase.New(id, cache, schema)
+    End Sub
+
     <Column("Title")> _
     Public Property Message() As String
         Get
@@ -23,7 +31,7 @@ Public Class Composite
         End Set
     End Property
 
-    <Column("Title2")> _
+    <Column("Title2", Field2DbRelations.ReadOnly)> _
     Public Property Message2() As String
         Get
             Using SyncHelper(True, "Title2")

@@ -230,6 +230,12 @@ Namespace Orm
                         'uniontype = GetUnionType(obj)
                     End If
 
+                    Dim rs As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
+                    Dim es As IRelMapObjectSchema = oschema
+                    If rs IsNot Nothing Then
+                        es = rs.GetEditableSchema
+                    End If
+
                     For Each de As DictionaryEntry In GetProperties(real_t)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
@@ -238,7 +244,7 @@ Namespace Orm
                             Dim att As Field2DbRelations = GetAttributes(real_t, c)
                             If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse _
                                 (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
-                                Dim tb As OrmTable = GetFieldTable(oschema, c.FieldName)
+                                Dim tb As OrmTable = GetFieldTable(es, c.FieldName)
                                 If unions IsNot Nothing Then
                                     Throw New NotImplementedException
                                     'tb = MapUnionType2Table(real_t, uniontype)
@@ -271,7 +277,7 @@ Namespace Orm
                         End If
                     Next
 
-                    Dim tbls() As OrmTable = GetTables(oschema)
+                    Dim tbls() As OrmTable = GetTables(es)
 
                     Dim pkt As OrmTable = tbls(0)
 
@@ -283,7 +289,7 @@ Namespace Orm
 
                     For j As Integer = 1 To inserted_tables.Count - 1
                         Dim join_table As OrmTable = tbls(j)
-                        Dim jn As OrmJoin = GetJoins(oschema, pkt, join_table)
+                        Dim jn As OrmJoin = GetJoins(es, pkt, join_table)
                         If Not jn.IsEmpty Then
                             Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(jn.Condition, real_t, prim_key.FieldName, "@id")
 
@@ -297,7 +303,7 @@ Namespace Orm
                             CType(inserted_tables(join_table), List(Of ITemplateFilter)).AddRange(CType(f.GetAllFilters, IEnumerable(Of ITemplateFilter)))
                         End If
                     Next
-                    dbparams = FormInsert(inserted_tables, ins_cmd, real_t, oschema, sel_columns, _
+                    dbparams = FormInsert(inserted_tables, ins_cmd, real_t, es, sel_columns, _
                          unions, Nothing)
 
                     select_columns = sel_columns
