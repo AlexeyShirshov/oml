@@ -1943,10 +1943,10 @@ namespace OrmCodeGenLib
 					OrmCodeDomGeneratorSettings settings = SettingsManager.CurrentManager.OrmCodeDomGeneratorSettings;
 
 					if ((settings.LanguageSpecificHacks & LanguageSpecificHacks.GenerateCsAsStatement) == LanguageSpecificHacks.GenerateCsAsStatement)
-						return Delegates.CodePatternIsExpressionDelegates.CsExpression;
+						return Delegates.CodePatternAsExpressionDelegates.CsExpression;
 					else if ((settings.LanguageSpecificHacks & LanguageSpecificHacks.GenerateVbTryCastStatement) == LanguageSpecificHacks.GenerateVbTryCastStatement)
-						return Delegates.CodePatternIsExpressionDelegates.VbExpression;
-					else return Delegates.CodePatternIsExpressionDelegates.CommonExpression;
+						return Delegates.CodePatternAsExpressionDelegates.VbExpression;
+					else return Delegates.CodePatternAsExpressionDelegates.CommonExpression;
 				}
 			}
 
@@ -1983,7 +1983,7 @@ namespace OrmCodeGenLib
 					//                                                    "value"))));
 
 					// new: solves problem of direct casts with Nullable<>
-					if (propertyDesc.PropertyType.IsNullableType && propertyDesc.PropertyType.IsClrType && propertyDesc.PropertyType.ClrType.GetGenericArguments()[0].IsPrimitive)
+					if (propertyDesc.PropertyType.IsNullableType && propertyDesc.PropertyType.IsClrType && propertyDesc.PropertyType.ClrType.GetGenericArguments()[0].IsValueType)
 					{
 						setValueStatement.TrueStatements.Add(
 							new CodeVariableDeclarationStatement(typeof (IConvertible), "iconvVal",
@@ -1992,7 +1992,7 @@ namespace OrmCodeGenLib
 						setValueStatement.TrueStatements.Add(
 							new CodeConditionStatement(
 								new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression("iconvVal"),
-								                                 CodeBinaryOperatorType.IdentityInequality, new CodePrimitiveExpression(null)),
+								                                 CodeBinaryOperatorType.IdentityEquality, new CodePrimitiveExpression(null)),
 								new CodeStatement[]
 									{
 										new CodeAssignStatement(
