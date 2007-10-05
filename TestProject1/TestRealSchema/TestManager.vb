@@ -764,7 +764,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestCompositeDelete()
-        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Composite = mgr.Find(Of Composite)(1)
             Assert.AreEqual(1, e.ID)
             Assert.AreEqual("привет", e.Message)
@@ -788,7 +788,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestCompositeUpdate()
-        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As Composite = mgr.Find(Of Composite)(1)
             Assert.AreEqual(1, e.ID)
             Assert.AreEqual("привет", e.Message)
@@ -807,7 +807,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestCompositeInsert()
-        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim e As New Composite(1, mgr.Cache, mgr.DbSchema)
             e.Message = "don"
             e.Message2 = "dionsd"
