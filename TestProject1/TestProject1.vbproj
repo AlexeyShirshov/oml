@@ -71,6 +71,7 @@
     <Compile Include="Settings.vb" />
     <Compile Include="TestCriteria.vb" />
     <Compile Include="TestRealSchema\Composite.vb" />
+    <Compile Include="TestRealSchema\Table1to1.vb" />
     <Compile Include="TestRealSchema\TestExFilter.vb" />
     <Compile Include="TestRealSchema\MultiTable.vb" />
     <Compile Include="TestRealSchema\SimpleObj.vb" />
