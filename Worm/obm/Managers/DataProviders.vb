@@ -389,11 +389,11 @@ Namespace Orm
                 Dim t As Type = GetType(T)
                 Dim ct As Type = _mgr.DbSchema.GetConnectedType(mt, t)
                 If ct IsNot Nothing Then
-                    If Not _direct Then
-                        Throw New NotSupportedException("Tag is not supported with connected type")
-                    End If
-                    Dim f1 As String = _mgr.DbSchema.GetConnectedTypeField(ct, mt)
-                    Dim f2 As String = _mgr.DbSchema.GetConnectedTypeField(ct, t)
+                    'If Not _direct Then
+                    '    Throw New NotSupportedException("Tag is not supported with connected type")
+                    'End If
+                    Dim f1 As String = _mgr.DbSchema.GetConnectedTypeField(ct, mt, Not _direct)
+                    Dim f2 As String = _mgr.DbSchema.GetConnectedTypeField(ct, t, _direct)
                     Dim fl As New EntityFilter(ct, f1, New EntityValue(_obj), FilterOperation.Equal)
                     Dim l As New List(Of Integer)
                     'Dim external_sort As Boolean = False

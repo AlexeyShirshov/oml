@@ -268,16 +268,26 @@ Namespace Orm
             End If
         End Function
 
-        Public Function GetConnectedTypeField(ByVal ct As Type, ByVal t As Type) As String
+        Public Function GetConnectedTypeField(ByVal ct As Type, ByVal t As Type, ByVal direction As Boolean) As String
             Dim rel As IRelation = GetConnectedTypeRelation(ct)
             If rel Is Nothing Then
                 Throw New ArgumentException("Type is not implement IRelation")
             End If
-            Dim p As Pair(Of String, Type) = rel.GetFirstType
-            If p.Second Is t Then
-                p = rel.GetSecondType
+            Dim p As IRelation.RelationDesc = rel.GetFirstType
+            Dim p2 As IRelation.RelationDesc = rel.GetSecondType
+            If p.EntityType Is p2.EntityType Then
+                If p.Direction = direction Then
+                    Return p.PropertyName
+                Else
+                    Return p2.PropertyName
+                End If
+            Else
+                If p.EntityType IsNot t Then
+                    Return p.PropertyName
+                Else
+                    Return p2.PropertyName
+                End If
             End If
-            Return p.First
         End Function
 
         Public Function GetConnectedTypeRelation(ByVal ct As Type) As IRelation

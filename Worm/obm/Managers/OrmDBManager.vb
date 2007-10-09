@@ -567,8 +567,8 @@ Namespace Orm
         Friend Class M2MEnum
             Public ReadOnly o As IRelation
             'Public ReadOnly obj As OrmBase
-            Dim p1 As Pair(Of String, Type)
-            Dim p2 As Pair(Of String, Type)
+            Dim p1 As IRelation.RelationDesc 'Pair(Of String, Type)
+            Dim p2 As IRelation.RelationDesc 'Pair(Of String, Type)
             Dim o1 As OrmBase
             Dim o2 As OrmBase
 
@@ -579,8 +579,8 @@ Namespace Orm
                 p2 = o.GetSecondType
                 'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
                 'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
-                o1 = CType(obj.GetValue(p1.First), OrmBase)
-                o2 = CType(obj.GetValue(p2.First), OrmBase)
+                o1 = CType(obj.GetValue(p1.PropertyName), OrmBase)
+                o2 = CType(obj.GetValue(p2.PropertyName), OrmBase)
             End Sub
 
             Public Function Add(ByVal e As M2MCache) As Boolean

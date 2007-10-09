@@ -1517,7 +1517,7 @@ Namespace Orm
             ByVal sectionName As String, ByVal joins As ICollection(Of OrmJoin), ByVal sort_type As SortType, _
             ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String(), _
             ByVal top As Integer, ByVal del As ValueForSearchDelegate, ByVal table As String, _
-            ByVal sort As Sort, ByVal appendBySort As Boolean) As String
+            ByVal sort As Sort, ByVal appendBySort As Boolean, ByVal filter As IFilter) As String
 
             'If searchType IsNot selectType AndAlso join.IsEmpty Then
             '    Throw New ArgumentException("Join is empty while type to load differs from type to search")
@@ -1645,7 +1645,7 @@ Namespace Orm
                 sb.Insert(ins_idx, columns.ToString)
             End If
             'sb = sb.Replace("{XXXXXX}", almgr.Aliases(selTable) & "." & selSchema.GetFieldColumnMap("ID")._columnName)
-            AppendWhere(selectType, Nothing, almgr, sb, filter_info, params)
+            AppendWhere(selectType, filter, almgr, sb, filter_info, params)
             'sb.Append(" order by rank ").Append(sort_type.ToString)
             If sort IsNot Nothing Then
                 'sb.Append(",")
