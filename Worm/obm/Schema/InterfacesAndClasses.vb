@@ -85,6 +85,11 @@ Namespace Orm
         ReadOnly Property ApplayAsterisk() As Boolean
     End Interface
 
+    Public Interface IOrmFullTextSupport2
+        Inherits IOrmFullTextSupport
+
+    End Interface
+
     Public Interface IOrmDictionary
         Function GetFirstDicField() As String
         Function GetSecondDicField() As String
