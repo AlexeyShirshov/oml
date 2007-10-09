@@ -820,6 +820,13 @@ Public Class TestManagerRS
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestEntityM2M()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+
+        End Using
+    End Sub
+
     Private _id As Integer = -100
     Private _new_objects As New Dictionary(Of Integer, Orm.OrmBase)
 

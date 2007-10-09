@@ -128,12 +128,12 @@ Public Class TablesImplementation
         Return _tables
     End Function
 
-    Public Function GetFirstType() As Pair(Of String, System.Type) Implements Worm.Orm.IRelation.GetFirstType
-        Return New Pair(Of String, Type)("Table1", GetType(Table33))
+    Public Function GetFirstType() As IRelation.RelationDesc Implements Worm.Orm.IRelation.GetFirstType
+        Return New IRelation.RelationDesc("Table1", GetType(Table33))
     End Function
 
-    Public Function GetSecondType() As Pair(Of String, System.Type) Implements Worm.Orm.IRelation.GetSecondType
-        Return New Pair(Of String, Type)("Table3", GetType(Table1))
+    Public Function GetSecondType() As IRelation.RelationDesc Implements Worm.Orm.IRelation.GetSecondType
+        Return New IRelation.RelationDesc("Table3", GetType(Table1))
     End Function
 
 End Class

@@ -92,4 +92,20 @@ Public Class TestSearch
             End Using
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestFilterSearch()
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Orm.DbSchema("1"))
+
+            Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
+                Orm.Sorting.Field("DT"), Nothing, Orm.Criteria.Field(GetType(Table1), "Code").Eq(45).Filter)
+
+            Assert.AreEqual(1, c.Count)
+
+            c = mgr.Search(Of Table1)("sec", _
+                Nothing, Nothing, Orm.Criteria.Field(GetType(Table1), "Code").Eq(45).Filter)
+
+            Assert.AreEqual(1, c.Count)
+        End Using
+    End Sub
 End Class
