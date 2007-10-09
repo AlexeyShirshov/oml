@@ -6,7 +6,7 @@
       <Value Profile="(Default)">Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=wormtest;</Value>
     </Setting>
     <Setting Name="WormRoot" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">D:\Work\Worm</Value>
+      <Value Profile="(Default)">D:\Work\Worm-Public</Value>
     </Setting>
   </Settings>
 </SettingsFile>

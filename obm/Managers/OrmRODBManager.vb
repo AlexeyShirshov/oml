@@ -911,14 +911,14 @@ Namespace Orm
             Dim edic As New Dictionary(Of Integer, EditableList)
 
             If ct IsNot Nothing Then
-                If Not direct Then
-                    Throw New NotSupportedException("Tag is not supported with connected type")
-                End If
+                'If Not direct Then
+                '    Throw New NotSupportedException("Tag is not supported with connected type")
+                'End If
 
                 'Dim oschema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(type2load)
                 'Dim r2 As M2MRelation = DbSchema.GetM2MRelation(type2load, type, direct)
-                Dim f1 As String = DbSchema.GetConnectedTypeField(ct, type)
-                Dim f2 As String = DbSchema.GetConnectedTypeField(ct, type2load)
+                Dim f1 As String = DbSchema.GetConnectedTypeField(ct, type, Not direct)
+                Dim f2 As String = DbSchema.GetConnectedTypeField(ct, type2load, direct)
                 'Dim col1 As String = type.Name & "ID"
                 'Dim col2 As String = orig_type.Name & "ID"
                 'dt.Columns.Add(col1, GetType(Integer))
@@ -1897,7 +1897,7 @@ Namespace Orm
         End Class
 
         Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal type2search As Type, ByVal tokens() As String, _
-            ByVal contextKey As Object, ByVal sort As Sort) As System.Collections.Generic.ICollection(Of T)
+            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter) As System.Collections.Generic.ICollection(Of T)
 
             Dim fields As New List(Of Pair(Of String, Type))
             Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
@@ -1925,7 +1925,9 @@ Namespace Orm
                 fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
             End If
 
+            Dim types As New List(Of Type)
             Dim joins As New List(Of OrmJoin)
+
             If selectType IsNot type2search Then
                 Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2search, selSchema)
 
@@ -1941,7 +1943,9 @@ Namespace Orm
                     joins.Add(MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True))
                 End If
 
+                types.Add(selectType)
             End If
+
             Dim appendBySort As Boolean = False
             If sort IsNot Nothing Then
                 Dim ns As Sort = sort
@@ -1951,13 +1955,14 @@ Namespace Orm
                     If sortType Is Nothing Then
                         sortType = selectType
                     End If
-                    appendBySort = type2search Is sortType
-                    If selectType IsNot sortType Then
+                    appendBySort = type2search Is sortType OrElse appendBySort
+                    If Not types.Contains(sortType) Then
                         If type2search IsNot sortType Then
                             Dim srtschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
                             Dim field As String = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
                             If Not String.IsNullOrEmpty(field) Then
                                 joins.Add(MakeJoin(sortType, type2search, field, FilterOperation.Equal, JoinType.Join))
+                                types.Add(sortType)
                                 Continue Do
                             End If
 
@@ -1977,6 +1982,7 @@ Namespace Orm
                                 field = _schema.GetJoinFieldNameByType(selectType, sortType, selSchema)
                                 If Not String.IsNullOrEmpty(field) Then
                                     joins.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                                    types.Add(sortType)
                                     Continue Do
                                 End If
                             End If
@@ -1987,6 +1993,39 @@ Namespace Orm
                         End If
                     End If
                 Loop While ns IsNot Nothing
+            End If
+
+            If filter IsNot Nothing Then
+                For Each f As IFilter In filter.GetAllFilters
+                    Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
+                    If ef IsNot Nothing Then
+                        Dim type2join As System.Type = CType(ef.GetFilterTemplate, OrmFilterTemplate).Type
+                        appendBySort = type2search Is type2join OrElse appendBySort
+                        If type2search IsNot type2join Then
+                            If Not types.Contains(type2join) Then
+                                Dim field As String = _schema.GetJoinFieldNameByType(type2search, type2join, searchSchema)
+
+                                If Not String.IsNullOrEmpty(field) Then
+                                    joins.Add(MakeJoin(type2join, type2search, field, FilterOperation.Equal, JoinType.Join))
+                                    types.Add(type2join)
+                                Else
+                                    If selectType IsNot type2search Then
+                                        field = _schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
+                                        If Not String.IsNullOrEmpty(field) Then
+                                            joins.Add(MakeJoin(selectType, type2join, field, FilterOperation.Equal, JoinType.Join, True))
+                                            types.Add(type2join)
+                                            Continue For
+                                        End If
+                                    End If
+
+                                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+                                End If
+                            End If
+                        End If
+                    Else
+                        Throw New NotImplementedException("")
+                    End If
+                Next
             End If
 
             If fsearch IsNot Nothing Then
@@ -2027,7 +2066,7 @@ Namespace Orm
                     .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
                         Integer.MinValue, AddressOf Configuration.SearchSection.GetValueForContains, _
-                        "containstable", sort, appendBySort)
+                        "containstable", sort, appendBySort, filter)
                     params.AppendParams(.Parameters)
                 End With
 
@@ -2047,7 +2086,7 @@ Namespace Orm
                         Dim params As New ParamMgr(DbSchema, "p")
                         .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
                             GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
-                            AddressOf New FProxy(type2search).GetValue, "freetexttable", sort, appendBySort)
+                            AddressOf New FProxy(type2search).GetValue, "freetexttable", sort, appendBySort, filter)
                         params.AppendParams(.Parameters)
                     End With
 

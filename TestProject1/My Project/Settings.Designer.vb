@@ -64,7 +64,7 @@ Partial Friend NotInheritable Class MySettings
     
     <Global.System.Configuration.ApplicationScopedSettingAttribute(),  _
      Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("D:\Work\Worm")>  _
+     Global.System.Configuration.DefaultSettingValueAttribute("D:\Work\Worm-Public")>  _
     Public ReadOnly Property WormRoot() As String
         Get
             Return CType(Me("WormRoot"),String)

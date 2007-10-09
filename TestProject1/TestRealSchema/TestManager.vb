@@ -822,8 +822,19 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestEntityM2M()
-        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim t As Tables1to1 = mgr.Find(Of Tables1to1)(1)
+            Dim t1 As Table1 = mgr.Find(Of Table1)(1)
+            Dim t1back As Table1 = mgr.Find(Of Table1)(2)
 
+            Assert.AreEqual(1, t.Identifier)
+
+            Assert.AreEqual(t1, t.Table1)
+            Assert.AreEqual(t1back, t.Table1Back)
+
+            Assert.AreEqual(1, t1.Find(Of Table1)(Nothing, Nothing, True, False).Count)
+
+            Assert.AreEqual(2, t1.Find(Of Table1)(Nothing, Nothing, False, False).Count)
         End Using
     End Sub
 

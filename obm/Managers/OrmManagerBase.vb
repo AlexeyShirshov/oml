@@ -2888,12 +2888,14 @@ l1:
             Return r
         End Function
 
+#Region " Search "
+
         Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String) As ICollection(Of T)
             Invariant()
 
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
                 Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
-                Return Search(Of T)(GetType(T), ss, Nothing, Nothing)
+                Return Search(Of T)(GetType(T), ss, Nothing, Nothing, Nothing)
             End If
             Return New List(Of T)()
         End Function
@@ -2915,7 +2917,7 @@ l1:
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
                 Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
                 'Dim join As OrmJoin = MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True)
-                Return Search(Of T)(type2search, ss, contextKey, sort)
+                Return Search(Of T)(type2search, ss, contextKey, sort, Nothing)
                 'End If
                 Return New List(Of T)()
             Else
@@ -2924,11 +2926,16 @@ l1:
         End Function
 
         Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal sort As Sort, ByVal contextKey As Object) As ICollection(Of T)
+            Return Search(Of T)([string], sort, contextKey, Nothing)
+        End Function
+
+        Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal sort As Sort, _
+            ByVal contextKey As Object, ByVal filter As IFilter) As ICollection(Of T)
             Invariant()
 
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
                 Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
-                Return Search(Of T)(GetType(T), ss, contextKey, sort)
+                Return Search(Of T)(GetType(T), ss, contextKey, sort, filter)
             End If
             Return New List(Of T)()
         End Function
@@ -3072,6 +3079,8 @@ l1:
             End If
             Return ss
         End Function
+
+#End Region
 
         ''' <summary>
         ''' Load parent objects from collection of childs
@@ -3276,7 +3285,8 @@ l1:
 
         Protected MustOverride Function GetSearchSection() As String
 
-        Protected MustOverride Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal tokens() As String, ByVal contextKey As Object, ByVal sort As Sort) As ICollection(Of T)
+        Protected MustOverride Function Search(Of T As {OrmBase, New})( _
+            ByVal type2search As Type, ByVal tokens() As String, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter) As ICollection(Of T)
 
         Protected Friend MustOverride Function GetStaticKey() As String
 

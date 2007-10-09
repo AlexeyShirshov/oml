@@ -8,8 +8,25 @@ Namespace Orm
 
 #Region " Interfaces "
     Public Interface IRelation
-        Function GetFirstType() As Pair(Of String, Type)
-        Function GetSecondType() As Pair(Of String, Type)
+        Structure RelationDesc
+            Public PropertyName As String
+            Public EntityType As Type
+            Public Direction As Boolean
+
+            Public Sub New(ByVal propertyName As String, ByVal entityType As Type)
+                Me.PropertyName = propertyName
+                Me.EntityType = entityType
+            End Sub
+
+            Public Sub New(ByVal propertyName As String, ByVal entityType As Type, ByVal direction As Boolean)
+                Me.PropertyName = propertyName
+                Me.EntityType = entityType
+                Me.Direction = direction
+            End Sub
+        End Structure
+
+        Function GetFirstType() As RelationDesc
+        Function GetSecondType() As RelationDesc
     End Interface
 
     Public Interface IOrmPropertyMap
@@ -189,6 +206,13 @@ Namespace Orm
         Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
             MyClass.New(type, table, column, delete, mapping)
+            Me.ConnectedType = connectedType
+        End Sub
+
+        Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
+            ByVal connectedType As Type, ByVal direct As Boolean)
+            MyClass.New(type, table, column, delete, mapping, direct)
             Me.ConnectedType = connectedType
         End Sub
     End Class

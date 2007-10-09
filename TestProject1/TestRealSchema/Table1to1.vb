@@ -2,7 +2,7 @@ Imports Worm
 Imports Worm.Orm
 Imports CoreFramework.Structures
 
-<Entity(GetType(TablesImplementation), "1")> _
+<Entity(GetType(Tables1to1.TablesImplementation), "1")> _
 Public Class Tables1to1
     Inherits OrmBaseT(Of Tables1to1)
     Implements IOrmEditable(Of Tables1to1)
@@ -103,7 +103,7 @@ Public Class Tables1to1
         Implements IRelation
 
         Private _idx As Orm.OrmObjectIndex
-        Public Shared _tables() As OrmTable = {New OrmTable("dbo.Tables1to1")}
+        Public Shared _tables() As OrmTable = {New OrmTable("dbo.Table1to1")}
 
         Public Enum Tables
             Main
