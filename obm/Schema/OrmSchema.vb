@@ -74,7 +74,7 @@ Namespace Orm
         '    Return GetProperties(t, schema)
         'End Function
 
-        Protected Friend Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As IDictionary
+        Public Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As IDictionary
             If t Is Nothing Then Throw New ArgumentNullException("original_type")
 
             Dim key As String = "properties" & t.ToString
