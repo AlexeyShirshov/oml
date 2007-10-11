@@ -1946,7 +1946,7 @@ Namespace Orm
                 types.Add(selectType)
             End If
 
-            Dim appendBySort As Boolean = False
+            Dim appendMain As Boolean = False
             If sort IsNot Nothing Then
                 Dim ns As Sort = sort
                 Do
@@ -1955,7 +1955,7 @@ Namespace Orm
                     If sortType Is Nothing Then
                         sortType = selectType
                     End If
-                    appendBySort = type2search Is sortType OrElse appendBySort
+                    appendMain = type2search Is sortType OrElse appendMain
                     If Not types.Contains(sortType) Then
                         If type2search IsNot sortType Then
                             Dim srtschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
@@ -2000,7 +2000,7 @@ Namespace Orm
                     Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
                     If ef IsNot Nothing Then
                         Dim type2join As System.Type = CType(ef.GetFilterTemplate, OrmFilterTemplate).Type
-                        appendBySort = type2search Is type2join OrElse appendBySort
+                        appendMain = type2search Is type2join OrElse appendMain
                         If type2search IsNot type2join Then
                             If Not types.Contains(type2join) Then
                                 Dim field As String = _schema.GetJoinFieldNameByType(type2search, type2join, searchSchema)
@@ -2023,7 +2023,16 @@ Namespace Orm
                             End If
                         End If
                     Else
-                        Throw New NotImplementedException("")
+                        Dim tf As TableFilter = TryCast(f, TableFilter)
+                        If tf IsNot Nothing Then
+                            If tf.Template.Table IsNot selSchema.GetTables(0) Then
+                                Throw New NotImplementedException
+                            Else
+                                appendMain = True
+                            End If
+                        Else
+                            Throw New NotImplementedException
+                        End If
                     End If
                 Next
             End If
@@ -2066,7 +2075,7 @@ Namespace Orm
                     .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
                         Integer.MinValue, AddressOf Configuration.SearchSection.GetValueForContains, _
-                        "containstable", sort, appendBySort, filter)
+                        "containstable", sort, appendMain, filter)
                     params.AppendParams(.Parameters)
                 End With
 
@@ -2086,7 +2095,7 @@ Namespace Orm
                         Dim params As New ParamMgr(DbSchema, "p")
                         .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
                             GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
-                            AddressOf New FProxy(type2search).GetValue, "freetexttable", sort, appendBySort, filter)
+                            AddressOf New FProxy(type2search).GetValue, "freetexttable", sort, appendMain, filter)
                         params.AppendParams(.Parameters)
                     End With
 

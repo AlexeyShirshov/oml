@@ -53,10 +53,15 @@
     <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeCsIsExpression.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeIsExpressionBase.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeVbIsExpression.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\LockStatement\CodeCsLockStatement.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\LockStatement\CodeLockStatement.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\LockStatement\CodeVbLockStatement.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeCSUsingStatement.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeUsingStatement.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeVBUsingStatement.cs" />
     <Compile Include="CodeGenHelper.cs" />
+    <Compile Include="Descriptors\SelfRelationDescription.cs" />
+    <Compile Include="Descriptors\SelfRelationTarget.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="OrmCodeGenHelper.cs" />
     <Compile Include="OrmCodeGenNameHelper.cs" />

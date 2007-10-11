@@ -25,23 +25,21 @@ namespace OrmCodeGenLib.CodeDomPatterns
 			throw new NotImplementedException();
 		}
 
-    	public static CodeStatement[] CodePatternLock(CodeExpression lockExpression, params CodeStatement[] statements)
+    	public static CodeStatement CodePatternLock(CodeExpression lockExpression, params CodeStatement[] statements)
         {
             if (lockExpression == null)
                 throw new ArgumentNullException("lockExpression");
 
-            CodeStatement[] resutStatements;
-            resutStatements = new CodeStatement[3];
-            
-            string lockCachedExpression = GetUniqueId("lockCachedExpression");
+			string lockCachedExpression = GetUniqueId("lockCachedExpression");
 
-            resutStatements[0] = new CodeVariableDeclarationStatement(
+    		CodeStatement lockStatement = new CodeConditionStatement(
+				new CodeBinaryOperatorExpression(lockExpression, CodeBinaryOperatorType.IdentityInequality, new CodePrimitiveExpression(null)),
+				new CodeVariableDeclarationStatement(
                     new CodeTypeReference(typeof(object)),
                     lockCachedExpression,
                     lockExpression
-                );
-
-            resutStatements[1] = new CodeExpressionStatement(
+                ),
+				new CodeExpressionStatement(
                 new CodeMethodInvokeExpression(
                     new CodeMethodReferenceExpression(
                         new CodeTypeReferenceExpression(new CodeTypeReference(typeof (System.Threading.Monitor))),
@@ -49,9 +47,8 @@ namespace OrmCodeGenLib.CodeDomPatterns
                         ),
                     new CodeVariableReferenceExpression(lockCachedExpression)
                     )
-                );
-
-            resutStatements[2] = new CodeTryCatchFinallyStatement(
+                ),
+				new CodeTryCatchFinallyStatement(
                     statements,
                     new CodeCatchClause[] {},
                     new CodeStatement[] {
@@ -66,26 +63,11 @@ namespace OrmCodeGenLib.CodeDomPatterns
                             )
                         )
                     }
-                );
+                )
+			);
 
-            return resutStatements;
-        }
-
-        public static CodeStatement CodePatternDoubleCheckLock(CodeExpression lockExpression, CodeExpression condition, params CodeStatement[] statements)
-        {
-            if (condition == null)
-                throw new ArgumentNullException("condition");
-
-            return new CodeConditionStatement(
-                condition,
-                    CodePatternLock(lockExpression,
-                        new CodeConditionStatement(
-                            condition,
-                            statements
-                        )
-                    )
-                );
-        }
+			return lockStatement;
+        }     
 
         public static CodeStatement[] CodePatternUsingStatement(CodeExpression usingExpression, params CodeStatement[] statements)
         {
@@ -125,9 +107,10 @@ namespace OrmCodeGenLib.CodeDomPatterns
 
         private static string GetUniqueId()
         {
-            Guid guid = Guid.NewGuid();
-            return guid.ToString("N");
+            return (s_uniqueId++).ToString();
         }
+
+    	private static int s_uniqueId = 0;
 
         private static string GetUniqueId(string prefix)
         {
