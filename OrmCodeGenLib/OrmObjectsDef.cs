@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Xml;
+using System.Xml.Serialization;
 using OrmCodeGenLib.Descriptors;
 
 namespace OrmCodeGenLib
 {
+	[Serializable]
     public class OrmObjectsDef
     {
         public const string NS_PREFIX = "oos";
@@ -16,6 +18,7 @@ namespace OrmCodeGenLib
         private readonly List<EntityDescription> _entities;
         private readonly List<TableDescription> _tables;
         private readonly List<RelationDescription> _relations;
+    	private readonly List<SelfRelationDescription> _selfRelations;
         private readonly List<TypeDescription> _types;
         private readonly IncludesCollection _includes;
         private OrmObjectsDef _base;
@@ -25,8 +28,8 @@ namespace OrmCodeGenLib
         private string _uri;
         private readonly List<string> _userComments;
         private readonly List<string> _systemComments;
-        private string _appName;
-        private string _appVersion;
+        private readonly string _appName;
+        private readonly string _appVersion;
 
         private string _fileName;
 
@@ -36,6 +39,7 @@ namespace OrmCodeGenLib
         {
             _entities = new List<EntityDescription>();
             _relations = new List<RelationDescription>();
+        	_selfRelations = new List<SelfRelationDescription>();
             _tables = new List<TableDescription>();
             _types = new List<TypeDescription>();
             _userComments = new List<string>();
@@ -52,6 +56,7 @@ namespace OrmCodeGenLib
         }
 
         #region Properties
+		[XmlElement("Entities", Order=1)]
         public List<EntityDescription> Entities
         {
             get
@@ -59,6 +64,8 @@ namespace OrmCodeGenLib
                 return _entities;
             }
         }
+
+		[XmlElement("Tables", Order = 3)]
         public List<TableDescription> Tables
         {
             get
@@ -66,6 +73,7 @@ namespace OrmCodeGenLib
                 return _tables;
             }
         }
+		[XmlIgnore]
         public List<RelationDescription> Relations
         {
             get
@@ -121,13 +129,20 @@ namespace OrmCodeGenLib
             set { _fileName = value; }
         }
 
+
         public OrmObjectsDef BaseSchema
         {
             get { return _base; }
             internal protected set { _base = value; }
         }
 
-        #endregion Properties
+		[XmlIgnore]
+    	public List<SelfRelationDescription> SelfRelations
+    	{
+    		get { return _selfRelations; }
+    	}
+
+    	#endregion Properties
 
         #region Methods
 

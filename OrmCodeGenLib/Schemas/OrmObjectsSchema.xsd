@@ -245,21 +245,66 @@
       <xs:documentation>Коллекция связей сущностей</xs:documentation>
     </xs:annotation>
     <xs:sequence>
-      <xs:element name="Relation" type="EntityRelation_t" minOccurs="0" maxOccurs="unbounded">
-        <xs:keyref name="RelationTableRef" refer="TableId">
-          <xs:selector xpath="." />
-          <xs:field xpath="@table" />
-        </xs:keyref>
-        <xs:keyref name="RelationEntityRef" refer="EntityId">
-          <xs:selector xpath="." />
-          <xs:field xpath="@underlyingEntity" />
-        </xs:keyref>
-        <xs:keyref name="EntityRelationTargetEntity" refer="EntityId">
-          <xs:selector xpath=".//." />
-          <xs:field xpath="@entity" />
-        </xs:keyref>
-      </xs:element>
+	  <xs:choice minOccurs="0" maxOccurs="unbounded">
+		<xs:element name="Relation" type="EntityRelation_t">
+		  <xs:keyref name="RelationTableRef" refer="TableId">
+			<xs:selector xpath="." />
+			<xs:field xpath="@table" />
+		  </xs:keyref>
+		  <xs:keyref name="RelationEntityRef" refer="EntityId">
+			<xs:selector xpath="." />
+			<xs:field xpath="@underlyingEntity" />
+		  </xs:keyref>
+		  <xs:keyref name="EntityRelationTargetEntity" refer="EntityId">
+			<xs:selector xpath=".//." />
+			<xs:field xpath="@entity" />
+		  </xs:keyref>
+		</xs:element>
+		<xs:element name="SelfRelation" type="EntitySelfRelation_t">
+		  <xs:keyref name="SelftRelationTableRef" refer="TableId">
+			<xs:selector xpath="." />
+			<xs:field xpath="@table" />
+		  </xs:keyref>
+		  <xs:keyref name="SelfRelationEntityRef" refer="EntityId">
+			<xs:selector xpath="." />
+			<xs:field xpath="@underlyingEntity" />
+		  </xs:keyref>
+		  <xs:keyref name="EntitySelfRelationTargetEntity" refer="EntityId">
+			<xs:selector xpath="." />
+			<xs:field xpath="@entity" />
+		  </xs:keyref>
+		</xs:element>
+	  </xs:choice>      
     </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="EntitySelfRelation_t">
+	<xs:annotation>
+	  <xs:documentation>Связь сущности самой с собой</xs:documentation>
+	</xs:annotation>
+	<xs:all>
+	  <xs:element name="Direct" type="SelfDirectionTarget_t" minOccurs="1" maxOccurs="1"></xs:element>
+	  <xs:element name="Reverse" type="SelfDirectionTarget_t" minOccurs="1" maxOccurs="1"></xs:element>
+	</xs:all>
+	<xs:attribute name="table" type="xs:Name" use="required">
+	  <xs:annotation>
+		<xs:documentation>Имя таблицы связи</xs:documentation>
+	  </xs:annotation>
+	</xs:attribute>
+	<xs:attribute name="underlyingEntity" type="Name_t" use="optional">
+	  <xs:annotation>
+		<xs:documentation>Сущность реализующая связь</xs:documentation>
+	  </xs:annotation>
+	</xs:attribute>
+	<xs:attribute name="entity" type="Name_t" use="required">
+	  <xs:annotation>
+		<xs:documentation>Сущность реализующая связь</xs:documentation>
+	  </xs:annotation>
+	</xs:attribute>
+	<xs:attribute name="disabled" type="xs:boolean" use="optional" default="false">
+	  <xs:annotation>
+		<xs:documentation>Disable relation</xs:documentation>
+	  </xs:annotation>
+	</xs:attribute>
   </xs:complexType>
   <xs:complexType name="EntityRelation_t">
     <xs:annotation>
@@ -278,7 +323,7 @@
     </xs:attribute>
     <xs:attribute name="underlyingEntity" type="Name_t" use="optional">
       <xs:annotation>
-        <xs:documentation>Сущность реализующая связь</xs:documentation>
+        <xs:documentation>Сущность</xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="disabled" type="xs:boolean" use="optional" default="false">
@@ -286,6 +331,21 @@
         <xs:documentation>Disable relation</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+  </xs:complexType>
+  <xs:complexType name="SelfDirectionTarget_t">
+	<xs:annotation>
+	  <xs:documentation>Точка ссылки</xs:documentation>
+	</xs:annotation>
+	<xs:attribute name="fieldName" type="xs:Name" use="required">
+	  <xs:annotation>
+		<xs:documentation>Имя поля таблицы связи</xs:documentation>
+	  </xs:annotation>
+	</xs:attribute>
+	<xs:attribute name="cascadeDelete" type="xs:Name" use="required">
+	  <xs:annotation>
+		<xs:documentation>Каскадное удаление</xs:documentation>
+	  </xs:annotation>
+	</xs:attribute>
   </xs:complexType>
   <xs:complexType name="LinkTarget_t">
     <xs:annotation>
@@ -366,7 +426,7 @@
     <xs:sequence>
       <xs:element name="OrmObjects" minOccurs="0" maxOccurs="unbounded" type="OrmObjects_t">
       </xs:element>
-      <xs:element minOccurs="0" maxOccurs="unbounded" ref="xi:include"/>
+      <!--<xs:element minOccurs="0" maxOccurs="unbounded" ref="xi:include"/>-->
     </xs:sequence>
   </xs:complexType>
   <xs:simpleType name="PropertyAttributeEnum_t">
@@ -467,7 +527,7 @@
     <xs:all>
       <xs:element name="Entities" type="EntitiesCollection_t" minOccurs="0" maxOccurs="1" />
       <xs:element name="Tables" type="TableCollection_t" minOccurs="0" maxOccurs="1" />
-      <xs:element name="EntityRelations" type="EntityRelationsCollection_t" minOccurs="0" maxOccurs="1" />
+	  <xs:element name="EntityRelations" type="EntityRelationsCollection_t" minOccurs="0" maxOccurs="1" />
       <xs:element name="Types" type="TypesCollection_t" maxOccurs="1" minOccurs="0" />
       <xs:element name="Includes" type="IncludesCollection_t" maxOccurs="1" minOccurs="0" />
     </xs:all>
