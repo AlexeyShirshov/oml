@@ -1003,7 +1003,7 @@ namespace OrmCodeGenLib
     			new CodeMethodReturnStatement(
     				new CodeObjectCreateExpression(
     					new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc)),
-    					new CodePrimitiveExpression(OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Left.FieldName; }))),
+    					OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Left.FieldName; })),
     					new CodeMethodInvokeExpression(
     						new CodeMethodReferenceExpression(
     							new CodeFieldReferenceExpression(
@@ -1036,7 +1036,7 @@ namespace OrmCodeGenLib
     			new CodeMethodReturnStatement(
     				new CodeObjectCreateExpression(
     					new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc)),
-    					new CodePrimitiveExpression(entity.CompleteEntity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Right.FieldName; }).PropertyAlias),
+						OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.CompleteEntity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Right.FieldName; })),
     					new CodeMethodInvokeExpression(
     						new CodeMethodReferenceExpression(
     							new CodeFieldReferenceExpression(
@@ -1075,9 +1075,9 @@ namespace OrmCodeGenLib
 				new CodeMethodReturnStatement(
 					new CodeObjectCreateExpression(
 						new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc)),
-						new CodePrimitiveExpression(
+						OrmCodeGenHelper.GetFieldNameReferenceExpression(
 							entity.Properties.Find(
-								delegate(PropertyDescription match) { return match.FieldName == relation.Direct.FieldName; }).PropertyAlias),
+								delegate(PropertyDescription match) { return match.FieldName == relation.Direct.FieldName; })),
 						new CodeMethodInvokeExpression(
 							new CodeMethodReferenceExpression(
 								new CodeFieldReferenceExpression(
@@ -1111,7 +1111,7 @@ namespace OrmCodeGenLib
 				new CodeMethodReturnStatement(
 					new CodeObjectCreateExpression(
 						new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc)),
-						new CodePrimitiveExpression(entity.CompleteEntity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Reverse.FieldName; }).PropertyAlias),
+						OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.CompleteEntity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Reverse.FieldName; })),
 						new CodeMethodInvokeExpression(
 							new CodeMethodReferenceExpression(
 								new CodeFieldReferenceExpression(
