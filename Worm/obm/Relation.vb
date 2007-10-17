@@ -52,7 +52,11 @@ Namespace Orm
                             Dim sr As IOrmSorting = Nothing
                             col.AddRange(mgr.ConvertIds2Objects(_subType, _mainList, False))
                             If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
-                                c = sr.CreateSortComparer(_sort)
+                                If sr Is Nothing Then
+                                    c = New OrmComparer(Of OrmBase)(_subType, _sort)
+                                Else
+                                    c = sr.CreateSortComparer(_sort)
+                                End If
                                 If c Is Nothing Then
                                     Throw New InvalidOperationException("Cannot prepare current data view. Use Original and Added or save changes.")
                                 End If
@@ -123,7 +127,11 @@ Namespace Orm
                             AcceptDual()
                             Return False
                         End If
-                        c = sr.CreateSortComparer(_sort)
+                        If sr Is Nothing Then
+                            c = New OrmComparer(Of OrmBase)(_subType, _sort)
+                        Else
+                            c = sr.CreateSortComparer(_sort)
+                        End If
                         If c Is Nothing Then
                             AcceptDual()
                             Return False
@@ -188,7 +196,12 @@ Namespace Orm
                     If Not mgr.CanSortOnClient(_subType, col, _sort, sr) Then
                         Return False
                     End If
-                    Dim c As IComparer = sr.CreateSortComparer(_sort)
+                    Dim c As IComparer = Nothing
+                    If sr Is Nothing Then
+                        c = New OrmComparer(Of OrmBase)(_subType, _sort)
+                    Else
+                        c = sr.CreateSortComparer(_sort)
+                    End If
                     If c Is Nothing Then
                         Return False
                     End If
@@ -280,7 +293,12 @@ Namespace Orm
                     Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
                     Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _addedList, False))
                     If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
-                        Dim c As IComparer = sr.CreateSortComparer(_sort)
+                        Dim c As IComparer = Nothing
+                        If sr Is Nothing Then
+                            c = New OrmComparer(Of OrmBase)(_subType, _sort)
+                        Else
+                            c = sr.CreateSortComparer(_sort)
+                        End If
                         If c IsNot Nothing Then
                             Dim pos As Integer = col.BinarySearch(mgr.CreateDBObject(id, _subType), c)
                             If pos < 0 Then

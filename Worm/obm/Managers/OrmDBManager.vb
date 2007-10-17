@@ -608,7 +608,12 @@ Namespace Orm
                         If Not mgr.CanSortOnClient(el.SubType, col, e.Sort, s) Then
                             Return False
                         End If
-                        Dim c As IComparer = s.CreateSortComparer(e.Sort)
+                        Dim c As IComparer = Nothing
+                        If s Is Nothing Then
+                            c = New OrmComparer(Of OrmBase)(el.SubType, e.Sort)
+                        Else
+                            c = s.CreateSortComparer(e.Sort)
+                        End If
                         If c Is Nothing Then
                             Return False
                         End If
