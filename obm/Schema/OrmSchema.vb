@@ -492,7 +492,7 @@ Namespace Orm
             Return GetProperty(t, schema, New ColumnAttribute(field))
         End Function
 
-        Protected Friend Function GetSortedFieldList(ByVal original_type As Type) As Generic.List(Of ColumnAttribute)
+        Public Function GetSortedFieldList(ByVal original_type As Type) As Generic.List(Of ColumnAttribute)
             'Dim cl_type As String = New StringBuilder().Append("columnlist").Append(type.ToString).ToString
             Dim cl_type As String = "columnlist" & original_type.ToString
 
