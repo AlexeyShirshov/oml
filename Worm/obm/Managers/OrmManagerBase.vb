@@ -2867,7 +2867,7 @@ l1:
             End If
         End Function
 
-        Public Function ApplySort(Of T As {OrmBase})(ByVal c As ICollection(Of T), ByVal s As Sort) As ICollection(Of T)
+        Public Function ApplySort(Of T As {OrmBase})(ByVal c As ICollection(Of T), ByVal s As Sort, ByVal getObj As OrmComparer(Of T).GetObjectDelegate) As ICollection(Of T)
             Dim q As New Stack(Of Sort)
             If s IsNot Nothing AndAlso Not s.IsExternal Then
                 Dim ns As Sort = s
@@ -2883,10 +2883,14 @@ l1:
                 Loop While ns IsNot Nothing
 
                 Dim l As New List(Of T)(c)
-                l.Sort(New OrmComparer(Of T)(q))
+                l.Sort(New OrmComparer(Of T)(q, getObj))
                 c = l
             End If
             Return c
+        End Function
+
+        Public Function ApplySort(Of T As {OrmBase})(ByVal c As ICollection(Of T), ByVal s As Sort) As ICollection(Of T)
+            Return ApplySort(c, s, Nothing)
         End Function
 
         Public Function ApplySortT(ByVal c As ICollection, ByVal s As Sort) As ICollection
