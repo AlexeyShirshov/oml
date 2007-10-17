@@ -1390,7 +1390,12 @@ l1:
                                     dic(id) = ce
                                 ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
                                     Using SyncHelper.AcquireDynamicLock(sync)
-                                        Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(psort)
+                                        Dim sc As IComparer(Of T) = Nothing
+                                        If srt IsNot Nothing Then
+                                            sc = srt.CreateSortComparer(Of T)(psort)
+                                        Else
+                                            sc = New OrmComparer(Of T)(psort)
+                                        End If
                                         If sc IsNot Nothing Then
                                             Dim os As New Generic.List(Of T)(objs)
                                             os.Sort(sc)
@@ -1916,7 +1921,12 @@ l1:
                                     dic(id) = ce
                                 ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
                                     Using SyncHelper.AcquireDynamicLock(sync)
-                                        Dim sc As IComparer(Of T) = srt.CreateSortComparer(Of T)(psort)
+                                        Dim sc As IComparer(Of T) = Nothing
+                                        If srt IsNot Nothing Then
+                                            sc = srt.CreateSortComparer(Of T)(psort)
+                                        Else
+                                            sc = New OrmComparer(Of T)(psort)
+                                        End If
                                         If sc IsNot Nothing Then
                                             Dim os As New Generic.List(Of T)(objs)
                                             os.Sort(sc)
@@ -1950,20 +1960,23 @@ l1:
         End Function
 
         Public Function CanSortOnClient(ByVal t As Type, ByVal col As ICollection, ByVal sort As Sort, ByRef sorting As IOrmSorting) As Boolean
-            If sort.Previous IsNot Nothing Then
-                Return False
-            End If
+            'If sort.Previous IsNot Nothing Then
+            '    Return False
+            'End If
 
             Dim schema As IOrmObjectSchemaBase = _schema.GetObjectSchema(t)
             sorting = TryCast(schema, IOrmSorting)
-            If sorting Is Nothing Then
-                Return False
-            End If
+            'If sorting Is Nothing Then
+            '    Return False
+            'End If
             Dim loaded As Integer = 0
             For Each o As OrmBase In col
                 If o.IsLoaded Then loaded += 1
+                If col.Count - loaded > 10 Then
+                    Return False
+                End If
             Next
-            Return col.Count - loaded < 10
+            Return True
         End Function
 
         Protected Sub InvalidateCache(ByVal obj As OrmBase, ByVal upd As IList(Of EntityFilter))
@@ -2852,6 +2865,52 @@ l1:
                 Next
                 Return l
             End If
+        End Function
+
+        Public Function ApplySort(Of T As {OrmBase})(ByVal c As ICollection(Of T), ByVal s As Sort) As ICollection(Of T)
+            Dim q As New Stack(Of Sort)
+            If s IsNot Nothing AndAlso Not s.IsExternal Then
+                Dim ns As Sort = s
+                Do
+                    If ns.IsExternal Then
+                        Throw New DBSchemaException("External sort must be alone")
+                    End If
+                    If ns.IsCustom Then
+                        Throw New DBSchemaException("Custom sort is not supported")
+                    End If
+                    q.Push(ns)
+                    ns = ns.Previous
+                Loop While ns IsNot Nothing
+
+                Dim l As New List(Of T)(c)
+                l.Sort(New OrmComparer(Of T)(q))
+                c = l
+            End If
+            Return c
+        End Function
+
+        Public Function ApplySortT(ByVal c As ICollection, ByVal s As Sort) As ICollection
+            Dim q As New Stack(Of Sort)
+            If s IsNot Nothing AndAlso Not s.IsExternal Then
+                Dim ns As Sort = s
+                Do
+                    If ns.IsExternal Then
+                        Throw New DBSchemaException("External sort must be alone")
+                    End If
+                    If ns.IsCustom Then
+                        Throw New DBSchemaException("Custom sort is not supported")
+                    End If
+                    q.Push(ns)
+                    ns = ns.Previous
+                Loop While ns IsNot Nothing
+
+                Dim l As New ArrayList(c)
+                If l.Count > 0 Then
+                    l.Sort(New OrmComparer(Of OrmBase)(l(0).GetType, q))
+                    c = l
+                End If
+            End If
+            Return c
         End Function
 
         Public Shared Function GetK(ByVal cnt As Integer) As Double

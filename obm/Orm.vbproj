@@ -103,6 +103,7 @@
     <Compile Include="Cache\advcache.vb" />
     <Compile Include="Criteria\Criteria.vb" />
     <Compile Include="Criteria\JoinAndCondition.vb" />
+    <Compile Include="Criteria\Sorting.vb" />
     <Compile Include="Managers\DataProviders.vb" />
     <Compile Include="OrmDictionary.vb" />
     <Compile Include="MetaAttributes.vb" />

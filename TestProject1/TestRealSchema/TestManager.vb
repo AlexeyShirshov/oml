@@ -838,6 +838,82 @@ Public Class TestManagerRS
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestFilter()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Money").Eq(1), Nothing, False)
+            Dim c2 As ICollection(Of Table2) = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Money").Eq(2), Nothing, False)
+
+            Assert.AreEqual(1, c.Count)
+            Assert.AreEqual(1, c2.Count)
+
+            mgr.BeginTransaction()
+            Try
+                Dim t As Table2 = mgr.Find(Of Table2)(1)
+                Assert.AreEqual(1D, t.Money)
+
+                t.Money = 2
+                t.Save(True)
+
+                c = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Money").Eq(1), Nothing, False)
+                c2 = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Money").Eq(2), Nothing, False)
+
+                Assert.AreEqual(0, c.Count)
+                Assert.AreEqual(2, c2.Count)
+
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSort()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim tt() As Table10 = New Table10() {mgr.Find(Of Table10)(2), mgr.Find(Of Table10)(1), mgr.Find(Of Table10)(3)}
+            Dim c As ICollection(Of Table10) = mgr.ApplySort(tt, Orm.Sorting.Field("Table1"))
+            Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
+            Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
+            Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
+
+            c = mgr.ApplySort(tt, Orm.Sorting.Field("Table1").Desc)
+            Assert.AreEqual(3, GetList(Of Table10)(c)(0).Identifier)
+            Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
+            Assert.AreEqual(1, GetList(Of Table10)(c)(2).Identifier)
+
+            c = mgr.ApplySort(tt, Orm.Sorting.Field("Table1").NextField("ID"))
+            Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
+            Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
+            Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
+
+            c = mgr.ApplySort(tt, Orm.Sorting.Field("Table1").NextField("ID").Desc)
+            Assert.AreEqual(2, GetList(Of Table10)(c)(0).Identifier)
+            Assert.AreEqual(1, GetList(Of Table10)(c)(1).Identifier)
+            Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSortEx()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim tt() As Table10 = New Table10() {mgr.Find(Of Table10)(2), mgr.Find(Of Table10)(1), mgr.Find(Of Table10)(3)}
+            Dim c As ICollection(Of Table10) = mgr.ApplySort(tt, Orm.Sorting.Field(GetType(Table1), "Title"))
+            Assert.AreEqual(1, GetList(Of Table10)(c)(0).Identifier)
+            Assert.AreEqual(2, GetList(Of Table10)(c)(1).Identifier)
+            Assert.AreEqual(3, GetList(Of Table10)(c)(2).Identifier)
+
+            Dim c2 As System.Collections.ICollection = mgr.ApplySortT(tt, Orm.Sorting.Field(GetType(Table1), "Title"))
+            Dim l2 As System.Collections.IList = CType(c2, Collections.IList)
+            Assert.AreEqual(1, CType(l2(0), Table10).Identifier)
+            Assert.AreEqual(2, CType(l2(1), Table10).Identifier)
+            Assert.AreEqual(3, CType(l2(2), Table10).Identifier)
+        End Using
+    End Sub
+
+    Private Function GetList(Of T As {Orm.OrmBase})(ByVal col As ICollection(Of T)) As List(Of T)
+        Return CType(col, Global.System.Collections.Generic.List(Of T))
+    End Function
+
     Private _id As Integer = -100
     Private _new_objects As New Dictionary(Of Integer, Orm.OrmBase)
 

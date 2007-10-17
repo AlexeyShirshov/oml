@@ -4,7 +4,7 @@ Imports Worm.Orm
 <Entity(GetType(Table10Implementation), "1")> _
 Public Class Table10
     Inherits OrmBaseT(Of Table10)
-Implements IOrmEditable(Of Table10)
+    Implements IOrmEditable(Of Table10)
     Private _tbl1 As Table1
 
     Public Sub New()
