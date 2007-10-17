@@ -787,19 +787,22 @@ Namespace Orm
             End Get
         End Property
 
-        Protected Function PrepareRead(ByVal FieldName As String, ByVal d As IDisposable) As IDisposable
+        Protected Function PrepareRead(ByVal fieldName As String, ByVal d As IDisposable) As IDisposable
             If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) Then
                 d = SyncHelper(True)
-                If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) Then
-                    Dim c As New ColumnAttribute(FieldName)
-                    Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
-                    Dim idx As Integer = arr.BinarySearch(c)
-                    If idx < 0 Then Throw New OrmObjectException("There is no such field " & c.FieldName)
-
-                    If Not _members_load_state(idx) Then Load()
+                If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) AndAlso Not IsFieldLoaded(FieldName) Then
+                    Load()
                 End If
             End If
             Return d
+        End Function
+
+        Public Function IsFieldLoaded(ByVal fieldName As String) As Boolean
+            Dim c As New ColumnAttribute(fieldName)
+            Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
+            Dim idx As Integer = arr.BinarySearch(c)
+            If idx < 0 Then Throw New OrmObjectException("There is no such field " & fieldName)
+            Return _members_load_state(idx)
         End Function
 
         'Protected Sub PrepareRead()

@@ -686,9 +686,14 @@ Namespace Orm
             Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, oschema)
             Dim r As OrmBase = Nothing
             If Not String.IsNullOrEmpty(c) Then
-                Dim o As Object = GetFieldValue(obj, c, oschema)
+                Dim o As Object = Nothing
+                If obj.IsFieldLoaded(c) Then
+                    o = obj.GetValue(c)
+                Else
+                    o = GetFieldValue(obj, c, oschema)
+                End If
                 r = TryCast(o, OrmBase)
-                If r Is Nothing Then
+                If r Is Nothing AndAlso o IsNot Nothing Then
                     Try
                         Dim id As Integer = Convert.ToInt32(o)
                         r = OrmManagerBase.CurrentManager.Find(id, subType)

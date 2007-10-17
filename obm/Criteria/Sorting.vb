@@ -1,3 +1,5 @@
+Imports CoreFramework.Structures
+
 Namespace Orm
 
     Public Class Sorting
@@ -327,10 +329,13 @@ Namespace Orm
     Public Class OrmComparer(Of T As {OrmBase})
         Implements Generic.IComparer(Of T), IComparer
 
+        Public Delegate Function GetObjectDelegate(ByVal x As T, ByVal t As Type) As OrmBase
+
         'Private _q As Generic.List(Of Sort)
         Private _mgr As OrmManagerBase
         Private _s As Generic.Stack(Of Sort)
         Private _t As Type
+        Private _getobj As GetObjectDelegate
 
         Public Sub New(ByVal t As Type, ByVal q As Generic.Stack(Of Sort))
             _s = q
@@ -353,15 +358,14 @@ Namespace Orm
         End Sub
 
         Public Sub New(ByVal q As Generic.Stack(Of Sort))
-            'Dim s As Sort = Nothing
-            '_q = New Generic.List(Of Sort)
-            'Do While q.Count > 0
-            '    s = q.Pop
-            '    _q.Add(s)
-            'Loop
             _s = q
             _mgr = OrmManagerBase.CurrentManager
             _t = GetType(T)
+        End Sub
+
+        Public Sub New(ByVal q As Generic.Stack(Of Sort), ByVal getObj As GetObjectDelegate)
+            MyClass.New(q)
+            _getobj = getObj
         End Sub
 
         Public Sub New(ByVal fieldName As String, ByVal st As SortType)
@@ -375,8 +379,19 @@ Namespace Orm
         Public Function Compare(ByVal x As T, ByVal y As T) As Integer Implements System.Collections.Generic.IComparer(Of T).Compare
             Dim p As Integer = 0
             For Each s As Sort In _s
-                Dim xo As Object = GetValue(x, s)
-                Dim yo As Object = GetValue(y, s)
+                Dim ss As IOrmObjectSchemaBase = Nothing
+                Dim xo As Object = GetValue(x, s, ss)
+                Dim yo As Object = GetValue(y, s, ss)
+                Dim pr As Pair(Of OrmBase, IOrmSorting) = TryCast(yo, Pair(Of OrmBase, IOrmSorting))
+                If pr IsNot Nothing Then
+                    Dim c As IComparer = pr.Second.CreateSortComparer(s)
+                    p = c.Compare(CType(xo, Pair(Of OrmBase, IOrmSorting)).First, pr.First)
+                    If p = 0 Then
+                        Continue For
+                    Else
+                        Exit For
+                    End If
+                End If
                 Dim k As Integer = 1
                 If s.Order = SortType.Desc Then
                     k = -1
@@ -408,11 +423,22 @@ Namespace Orm
             Return p
         End Function
 
-        Private Function GetValue(ByVal x As T, ByVal s As Sort) As Object
+        Private Function GetValue(ByVal x As T, ByVal s As Sort, ByRef oschema As IOrmObjectSchemaBase) As Object
             Dim xo As OrmBase = x
             If s.Type IsNot Nothing AndAlso _t IsNot s.Type Then
                 Dim schema As OrmSchemaBase = _mgr.ObjectSchema
-                xo = schema.GetJoinObj(schema.GetObjectSchema(_t), xo, s.Type)
+                If _getobj IsNot Nothing Then
+                    xo = _getobj(x, s.Type)
+                Else
+                    xo = schema.GetJoinObj(schema.GetObjectSchema(_t), xo, s.Type)
+                End If
+                If oschema Is Nothing Then
+                    oschema = schema.GetObjectSchema(s.Type)
+                End If
+                Dim ss As IOrmSorting = TryCast(oschema, IOrmSorting)
+                If ss IsNot Nothing Then
+                    Return New Pair(Of OrmBase, IOrmSorting)(xo, ss)
+                End If
             End If
             Return xo.GetValue(s.FieldName)
         End Function
