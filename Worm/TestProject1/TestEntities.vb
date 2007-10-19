@@ -165,7 +165,7 @@ Public Class EntitySchema1v3Implementation
         If left.Equals(GetTables()(Tables2.Main)) AndAlso right.Equals(GetTables()(Tables2.Second)) Then
             Dim orc As New Worm.Orm.Condition.ConditionConstructor
             orc.AddFilter(New Orm.JoinFilter(right, "i", _objectType, "ID", Orm.FilterOperation.Equal))
-            orc.AddFilter(New Orm.TableFilter(right, "s", New Orm.SimpleValue("a"), Orm.FilterOperation.Equal))
+            orc.AddFilter(New Orm.TableFilter(right, "s", New Orm.ScalarValue("a"), Orm.FilterOperation.Equal))
             Return New Orm.OrmJoin(right, Orm.JoinType.Join, orc.Condition)
         End If
         Return MyBase.GetJoins(left, right)
@@ -476,7 +476,7 @@ Public Class EntitySchema4v2Implementation
             Throw New Orm.OrmObjectException("Invalid filter_info type " & filter_info.GetType.Name)
         End If
 
-        Return New Orm.TableFilter(GetTables()(Tables2.Main), "s", New Orm.SimpleValue(filter_info), Orm.FilterOperation.Equal)
+        Return New Orm.TableFilter(GetTables()(Tables2.Main), "s", New Orm.ScalarValue(filter_info), Orm.FilterOperation.Equal)
     End Function
 
     Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()

@@ -76,44 +76,72 @@ Namespace Orm
         End Function
 
         Public Function Eq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.Equal))
+            If value Is Nothing OrElse value Is DBNull.Value Then
+                Return IsNull()
+            Else
+                Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.Equal))
+            End If
         End Function
 
         Public Function NotEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.NotEqual))
+            If value Is Nothing OrElse value Is DBNull.Value Then
+                Return IsNotNull()
+            Else
+                Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.NotEqual))
+            End If
         End Function
 
         Public Function Eq(ByVal value As OrmBase) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New EntityValue(value), FilterOperation.Equal))
+            If value Is Nothing Then
+                Return IsNull()
+            Else
+                Return GetLink(New EntityFilter(_t, _f, New EntityValue(value), FilterOperation.Equal))
+            End If
         End Function
 
         Public Function NotEq(ByVal value As OrmBase) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New EntityValue(value), FilterOperation.NotEqual))
+            If value Is Nothing Then
+                Return IsNotNull()
+            Else
+                Return GetLink(New EntityFilter(_t, _f, New EntityValue(value), FilterOperation.NotEqual))
+            End If
         End Function
 
         Public Function GreaterThanEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.GreaterEqualThan))
+            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.GreaterEqualThan))
         End Function
 
         Public Function LessThanEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.LessEqualThan))
+            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.LessEqualThan))
         End Function
 
         Public Function GreaterThan(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.GreaterThan))
+            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.GreaterThan))
         End Function
 
         Public Function LessThan(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.LessThan))
+            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.LessThan))
         End Function
 
         Public Function [Like](ByVal value As String) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.Like))
+            If String.IsNullOrEmpty(value) Then
+                Throw New ArgumentNullException("value")
+            End If
+            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.Like))
+        End Function
+
+        Public Function IsNull() As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New DBNullValue(), FilterOperation.Is))
+        End Function
+
+        Public Function IsNotNull() As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New DBNullValue(), FilterOperation.IsNot))
         End Function
 
         Public Function Op(ByVal oper As FilterOperation, ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), oper))
+            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), oper))
         End Function
+
     End Class
 
     Public Class CriteriaLink

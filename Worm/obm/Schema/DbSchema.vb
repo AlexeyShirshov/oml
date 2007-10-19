@@ -257,7 +257,7 @@ Namespace Orm
                                         f = New EntityFilter(real_t, c.FieldName, New LiteralValue(DefaultValue), FilterOperation.Equal)
                                     End If
                                 Else
-                                    f = New EntityFilter(real_t, c.FieldName, New SimpleValue(v), FilterOperation.Equal)
+                                    f = New EntityFilter(real_t, c.FieldName, New ScalarValue(v), FilterOperation.Equal)
                                 End If
                                 If Not inserted_tables.ContainsKey(tb) Then
                                     inserted_tables.Add(tb, New List(Of ITemplateFilter))
@@ -490,7 +490,7 @@ Namespace Orm
 
                                 Dim updates As IList(Of EntityFilter) = tables(fieldTable)._updates
 
-                                updates.Add(New EntityFilter(rt, c.FieldName, New SimpleValue(current), FilterOperation.Equal))
+                                updates.Add(New EntityFilter(rt, c.FieldName, New ScalarValue(current), FilterOperation.Equal))
 
                                 'Dim tb_sb As StringBuilder = CType(tables(fieldTable), StringBuilder)
                                 'Dim _params As ArrayList = CType(param_vals(fieldTable), ArrayList)
@@ -585,7 +585,7 @@ Namespace Orm
                             'Dim de_table As TableUpdate = updated_tables(tb)
                             If de_table.Key.Equals(tb) Then
                                 'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
-                                de_table.Value._where4update.AddFilter(New EntityFilter(rt, c.FieldName, New SimpleValue(original), FilterOperation.Equal))
+                                de_table.Value._where4update.AddFilter(New EntityFilter(rt, c.FieldName, New ScalarValue(original), FilterOperation.Equal))
                             Else
                                 Dim join As OrmJoin = GetJoins(oschema, tb, de_table.Key)
                                 If Not join.IsEmpty Then
@@ -776,7 +776,7 @@ Namespace Orm
                                 o.AddFilter(New EntityFilter(type, c.FieldName, New LiteralValue("@id"), FilterOperation.Equal))
                             ElseIf (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
                                 Dim v As Object = pi.GetValue(obj, Nothing)
-                                o.AddFilter((New EntityFilter(type, c.FieldName, New SimpleValue(v), FilterOperation.Equal)))
+                                o.AddFilter((New EntityFilter(type, c.FieldName, New ScalarValue(v), FilterOperation.Equal)))
                             End If
                         End If
                     Next

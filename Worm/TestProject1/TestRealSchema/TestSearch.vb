@@ -109,7 +109,7 @@ Public Class TestSearch
 
             Dim os As Orm.IOrmObjectSchema = CType(mgr.ObjectSchema.GetObjectSchema(GetType(Table1)), Orm.IOrmObjectSchema)
             Dim cn As New Orm.Condition.ConditionConstructor
-            cn.AddFilter(New Orm.TableFilter(os.GetTables(0), "code", New Orm.SimpleValue(8923), Orm.FilterOperation.Equal))
+            cn.AddFilter(New Orm.TableFilter(os.GetTables(0), "code", New Orm.ScalarValue(8923), Orm.FilterOperation.Equal))
 
             c = mgr.Search(Of Table1)("sec", Nothing, Nothing, cn.Condition)
 

@@ -1761,8 +1761,8 @@ Namespace Orm
 
                 For Each p As Pair(Of Integer) In mr.Pairs
                     Dim con As New Orm.Condition.ConditionConstructor
-                    con.AddFilter(New EntityFilter(original_type, fieldName, New SimpleValue(p.First), FilterOperation.GreaterEqualThan))
-                    con.AddFilter(New EntityFilter(original_type, fieldName, New SimpleValue(p.Second), FilterOperation.LessEqualThan))
+                    con.AddFilter(New EntityFilter(original_type, fieldName, New ScalarValue(p.First), FilterOperation.GreaterEqualThan))
+                    con.AddFilter(New EntityFilter(original_type, fieldName, New ScalarValue(p.Second), FilterOperation.LessEqualThan))
                     sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr.Aliases, params))
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
@@ -1828,8 +1828,8 @@ Namespace Orm
 
                 For Each p As Pair(Of Integer) In mr.Pairs
                     Dim con As New Orm.Condition.ConditionConstructor
-                    con.AddFilter(New TableFilter(table, column, New SimpleValue(p.First), FilterOperation.GreaterEqualThan))
-                    con.AddFilter(New TableFilter(table, column, New SimpleValue(p.Second), FilterOperation.LessEqualThan))
+                    con.AddFilter(New TableFilter(table, column, New ScalarValue(p.First), FilterOperation.GreaterEqualThan))
+                    con.AddFilter(New TableFilter(table, column, New ScalarValue(p.Second), FilterOperation.LessEqualThan))
                     sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr.Aliases, params))
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))

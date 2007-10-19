@@ -391,6 +391,8 @@ Namespace Orm
         [In]
         NotIn
         [Like]
+        [Is]
+        [IsNot]
     End Enum
 
     Public Enum ConditionOperator

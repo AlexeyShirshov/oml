@@ -139,7 +139,7 @@ Namespace Orm
         End Function
 
         Public Shared Function ChangeEntityJoinToParam(ByVal source As IFilter, ByVal t As Type, ByVal field As String, ByVal value As TypeWrap(Of Object)) As IFilter
-            Return ChangeEntityJoinToValue(source, t, field, New SimpleValue(value.Value))
+            Return ChangeEntityJoinToValue(source, t, field, New ScalarValue(value.Value))
         End Function
 
         Public Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters

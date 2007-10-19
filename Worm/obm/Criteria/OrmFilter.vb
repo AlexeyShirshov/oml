@@ -18,7 +18,7 @@ Namespace Orm
         ReadOnly Property Value() As Object
     End Interface
 
-    Public Class SimpleValue
+    Public Class ScalarValue
         Implements IEvaluableValue
 
         Private _v As Object
@@ -105,8 +105,17 @@ Namespace Orm
         End Function
     End Class
 
+    Public Class DBNullValue
+        Inherits LiteralValue
+
+        Public Sub New()
+            MyBase.New("null")
+        End Sub
+
+    End Class
+
     Public Class EntityValue
-        Inherits SimpleValue
+        Inherits ScalarValue
 
         Private _t As Type
 
@@ -219,6 +228,10 @@ Namespace Orm
                         Return "Like"
                     Case FilterOperation.LessThan
                         Return "LessThan"
+                    Case FilterOperation.Is
+                        Return "Is"
+                    Case FilterOperation.IsNot
+                        Return "IsNot"
                     Case Else
                         Throw New DBSchemaException("Operation " & _oper & " not supported")
                 End Select
@@ -249,6 +262,10 @@ Namespace Orm
                     Return " like "
                 Case FilterOperation.LessThan
                     Return " < "
+                Case FilterOperation.Is
+                    Return " is "
+                Case FilterOperation.IsNot
+                    Return " is not "
                 Case Else
                     Throw New DBSchemaException("invalid opration " & oper.ToString)
             End Select
@@ -498,7 +515,7 @@ Namespace Orm
             Else
                 Dim v As Object = schema.GetFieldValue(obj, _fieldname, oschema)
 
-                Return New EntityFilter(_t, _fieldname, New SimpleValue(v), Operation)
+                Return New EntityFilter(_t, _fieldname, New ScalarValue(v), Operation)
             End If
         End Function
 
@@ -671,12 +688,12 @@ Namespace Orm
                                             r = IEntityFilter.EvalResult.Found
                                         End If
                                     Else
-                                        If str.EndsWith(par.TrimStart("%"c)) Then
+                                        If str.EndsWith(par.TrimStart("%"c), StringComparison.InvariantCultureIgnoreCase) Then
                                             r = IEntityFilter.EvalResult.Found
                                         End If
                                     End If
                                 ElseIf par.EndsWith("%") Then
-                                    If str.StartsWith(par.TrimEnd("%"c)) Then
+                                    If str.StartsWith(par.TrimEnd("%"c), StringComparison.InvariantCultureIgnoreCase) Then
                                         r = IEntityFilter.EvalResult.Found
                                     End If
                                 End If
@@ -706,10 +723,10 @@ Namespace Orm
         End Function
 
         Public Function GetFilterTemplate() As IOrmFilterTemplate Implements IEntityFilter.GetFilterTemplate
-            If TryCast(Value, IEvaluableValue) IsNot Nothing Then
-                Return Template
-            End If
-            Return Nothing
+            'If TryCast(Value, IEvaluableValue) IsNot Nothing Then
+            Return Template
+            'End If
+            'Return Nothing
         End Function
 
         Public Function PrepareValue(ByVal schema As OrmSchemaBase, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue

@@ -382,14 +382,20 @@ Namespace Orm
                 Dim ss As IOrmObjectSchemaBase = Nothing
                 Dim xo As Object = GetValue(x, s, ss)
                 Dim yo As Object = GetValue(y, s, ss)
-                Dim pr As Pair(Of OrmBase, IOrmSorting) = TryCast(yo, Pair(Of OrmBase, IOrmSorting))
-                If pr IsNot Nothing Then
-                    Dim c As IComparer = pr.Second.CreateSortComparer(s)
-                    p = c.Compare(CType(xo, Pair(Of OrmBase, IOrmSorting)).First, pr.First)
-                    If p = 0 Then
-                        Continue For
+                Dim pr2 As Pair(Of OrmBase, IOrmSorting) = TryCast(yo, Pair(Of OrmBase, IOrmSorting))
+                If pr2 IsNot Nothing Then
+                    Dim c As IComparer = pr2.Second.CreateSortComparer(s)
+                    If c IsNot Nothing Then
+                        p = c.Compare(CType(xo, Pair(Of OrmBase, IOrmSorting)).First, pr2.First)
+                        If p = 0 Then
+                            Continue For
+                        Else
+                            Exit For
+                        End If
                     Else
-                        Exit For
+                        Dim pr As Pair(Of OrmBase, IOrmSorting) = TryCast(xo, Pair(Of OrmBase, IOrmSorting))
+                        xo = pr.First.GetValue(s.FieldName)
+                        yo = pr2.First.GetValue(s.FieldName)
                     End If
                 End If
                 Dim k As Integer = 1
