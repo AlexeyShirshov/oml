@@ -27,7 +27,7 @@ Imports CoreFramework.Structures
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt2()
-        Dim j As New Orm.OrmJoin(New Orm.OrmTable("table1"), Orm.JoinType.Join, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal))
+        Dim j As New Orm.OrmJoin(New Orm.OrmTable("table1"), Orm.JoinType.Join, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal))
 
         Dim schema As New Orm.DbSchema("1")
 
@@ -38,7 +38,7 @@ Imports CoreFramework.Structures
     Public Sub TestMakeSQLStmt3()
         Dim schema As New Orm.DbSchema("1")
         Dim t As Orm.OrmTable = schema.GetTables(GetType(Entity))(0)
-        Dim j As New Orm.OrmJoin(t, Orm.JoinType.Join, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal))
+        Dim j As New Orm.OrmJoin(t, Orm.JoinType.Join, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal))
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
         almgr.AddTable(t)
         j.MakeSQLStmt(schema, almgr.Aliases, Nothing)
@@ -47,7 +47,7 @@ Imports CoreFramework.Structures
     <TestMethod(), ExpectedException(GetType(System.Collections.Generic.KeyNotFoundException))> _
     Public Sub TestMakeSQLStmt4()
         Dim t As New Orm.OrmTable("table1")
-        Dim j As New Orm.OrmJoin(t, Orm.JoinType.Join, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal))
+        Dim j As New Orm.OrmJoin(t, Orm.JoinType.Join, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal))
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
@@ -59,7 +59,7 @@ Imports CoreFramework.Structures
     <TestMethod()> _
     Public Sub TestMakeSQLStmt5()
         Dim t As New Orm.OrmTable("table1")
-        Dim j As New Orm.OrmJoin(t, Orm.JoinType.Join, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal))
+        Dim j As New Orm.OrmJoin(t, Orm.JoinType.Join, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal))
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
@@ -99,7 +99,7 @@ Imports CoreFramework.Structures
         Dim t2 As New Orm.OrmTable("table2")
 
         Dim j As New Orm.OrmJoin(t, Orm.JoinType.Join, _
-            New Orm.TableFilter(t2, "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal))
+            New Orm.TableFilter(t2, "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal))
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
@@ -127,7 +127,7 @@ Imports CoreFramework.Structures
 
         Assert.AreEqual(cc.Condition, f)
 
-        cc.AddFilter(New Orm.TableFilter(tbl, "s", New Orm.SimpleValue("1"), Orm.FilterOperation.Equal))
+        cc.AddFilter(New Orm.TableFilter(tbl, "s", New Orm.ScalarValue("1"), Orm.FilterOperation.Equal))
         Dim j As New Orm.OrmJoin(tbl, Orm.JoinType.Join, cc.Condition)
 
         Dim schema As New Orm.DbSchema("1")
@@ -142,7 +142,7 @@ Imports CoreFramework.Structures
 
         Assert.AreEqual("1", pmgr.GetParameter("@p1").Value)
 
-        Dim f2 As New Orm.TableFilter(tbl, "id", New Orm.SimpleValue(10), Orm.FilterOperation.Equal)
+        Dim f2 As New Orm.TableFilter(tbl, "id", New Orm.ScalarValue(10), Orm.FilterOperation.Equal)
         j.ReplaceFilter(f, f2)
 
         Assert.AreEqual(" join table1 t2 on (t2.id = @p2 and t2.s = @p1)", j.MakeSQLStmt(schema, almgr.Aliases, pmgr))
@@ -157,7 +157,7 @@ Imports CoreFramework.Structures
     <TestMethod()> _
     Public Sub TestMakeSQLStmt8()
         Dim tbl As New Orm.OrmTable("table1")
-        Dim j As New Orm.OrmJoin(tbl, Orm.JoinType.FullJoin, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal))
+        Dim j As New Orm.OrmJoin(tbl, Orm.JoinType.FullJoin, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal))
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
@@ -171,15 +171,15 @@ Imports CoreFramework.Structures
 
         Assert.AreEqual(1, pmgr.GetParameter("@p1").Value)
 
-        j = New Orm.OrmJoin(tbl, Orm.JoinType.LeftOuterJoin, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal))
+        j = New Orm.OrmJoin(tbl, Orm.JoinType.LeftOuterJoin, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal))
 
         Assert.AreEqual(" left join table1 t1 on t2.id = @p2", j.MakeSQLStmt(schema, almgr.Aliases, pmgr))
 
-        j = New Orm.OrmJoin(tbl, Orm.JoinType.RightOuterJoin, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal))
+        j = New Orm.OrmJoin(tbl, Orm.JoinType.RightOuterJoin, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal))
 
         Assert.AreEqual(" right join table1 t1 on t2.id = @p3", j.MakeSQLStmt(schema, almgr.Aliases, pmgr))
 
-        j = New Orm.OrmJoin(tbl, Orm.JoinType.CrossJoin, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal))
+        j = New Orm.OrmJoin(tbl, Orm.JoinType.CrossJoin, New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal))
 
         Assert.AreEqual(" cross join table1 t1 on t2.id = @p4", j.MakeSQLStmt(schema, almgr.Aliases, pmgr))
     End Sub
@@ -209,7 +209,7 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt()
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal)
         Dim c As New Worm.Orm.Condition(f, Nothing, Orm.ConditionOperator.Or)
 
         Assert.AreEqual(f.Template.GetStaticString & " or ", c.Template.GetStaticString)
@@ -224,7 +224,7 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt2()
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal)
         Dim c As New Worm.Orm.Condition(f, Nothing, Orm.ConditionOperator.Or)
 
         Dim schema As New Orm.DbSchema("1")
@@ -234,7 +234,7 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt3()
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal)
         Dim c As New Worm.Orm.Condition(f, Nothing, Orm.ConditionOperator.Or)
 
         Dim schema As New Orm.DbSchema("1")
@@ -245,7 +245,7 @@ End Class
 
     <TestMethod()> _
     Public Sub TestMakeSQLStmt4()
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal)
         Dim c As New Worm.Orm.Condition(f, Nothing, Orm.ConditionOperator.Or)
 
         Dim schema As New Orm.DbSchema("1")
@@ -257,9 +257,9 @@ End Class
 
     <TestMethod()> _
     Public Sub TestMakeSQLStmt5()
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal)
         Dim tbl As New Orm.OrmTable("table1")
-        Dim f2 As New Orm.TableFilter(tbl, "id", New Orm.SimpleValue(1), Orm.FilterOperation.GreaterThan)
+        Dim f2 As New Orm.TableFilter(tbl, "id", New Orm.ScalarValue(1), Orm.FilterOperation.GreaterThan)
         Dim c As New Worm.Orm.Condition(f, f2, Orm.ConditionOperator.Or)
 
         Assert.AreEqual(f.Template.GetStaticString & " or " & f2.Template.GetStaticString, c.Template.GetStaticString)
@@ -279,9 +279,9 @@ End Class
     <TestMethod()> _
     Public Sub TestReplace()
 
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal)
         Dim tbl As New Orm.OrmTable("table1")
-        Dim f2 As New Orm.TableFilter(tbl, "id", New Orm.SimpleValue(1), Orm.FilterOperation.GreaterThan)
+        Dim f2 As New Orm.TableFilter(tbl, "id", New Orm.ScalarValue(1), Orm.FilterOperation.GreaterThan)
         Dim c As New Worm.Orm.Condition(f, f2, Orm.ConditionOperator.Or)
 
         Dim schema As New Orm.DbSchema("1")
@@ -292,7 +292,7 @@ End Class
 
         Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeSQLStmt(schema, almgr.Aliases, pmgr))
 
-        Dim f3 As New Orm.TableFilter(tbl, "id", New Orm.SimpleValue(10), Orm.FilterOperation.NotEqual)
+        Dim f3 As New Orm.TableFilter(tbl, "id", New Orm.ScalarValue(10), Orm.FilterOperation.NotEqual)
 
         Dim c2 As Orm.IFilter = c.ReplaceFilter(f2, f3)
 
@@ -354,14 +354,14 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt()
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal)
 
         f.MakeSQLStmt(Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt2()
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal)
         Dim schema As New Orm.DbSchema("1")
 
         Dim e As New Entity(1, Nothing, schema)
@@ -374,7 +374,7 @@ End Class
 
     <TestMethod()> _
     Public Sub TestMakeSQLStmt3()
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.GreaterEqualThan)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.GreaterEqualThan)
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
@@ -392,7 +392,7 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt4()
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.GreaterEqualThan)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.GreaterEqualThan)
 
         Assert.AreEqual("TestProject1.EntityID >= ", f.Template.GetStaticString)
 
@@ -403,7 +403,7 @@ End Class
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt5()
-        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.SimpleValue(1), Orm.FilterOperation.GreaterEqualThan)
+        Dim f As New Orm.EntityFilter(GetType(Entity), "ID", New Orm.ScalarValue(1), Orm.FilterOperation.GreaterEqualThan)
         Dim schema As New Orm.DbSchema("1")
         f.MakeSingleStmt(schema, Nothing)
     End Sub
@@ -461,7 +461,7 @@ End Class
         Dim schema As New Orm.DbSchema("1")
         Dim t As Type = GetType(Entity)
 
-        Dim f As New Orm.EntityFilter(t, "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
+        Dim f As New Orm.EntityFilter(t, "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal)
         Assert.AreEqual(f.ToString, f.MakeHash)
 
         Dim o As New Entity(1, Nothing, schema)
@@ -474,8 +474,8 @@ End Class
         Dim schema As New Orm.DbSchema("1")
         Dim t As Type = GetType(Entity2)
 
-        Dim f As New Orm.EntityFilter(t, "ID", New Orm.SimpleValue(1), Orm.FilterOperation.Equal)
-        Dim f2 As New Orm.EntityFilter(t, "Str", New Orm.SimpleValue("d"), Orm.FilterOperation.Like)
+        Dim f As New Orm.EntityFilter(t, "ID", New Orm.ScalarValue(1), Orm.FilterOperation.Equal)
+        Dim f2 As New Orm.EntityFilter(t, "Str", New Orm.ScalarValue("d"), Orm.FilterOperation.Like)
         Dim cAnd As New Orm.Condition.ConditionConstructor
         cAnd.AddFilter(f).AddFilter(f2)
 

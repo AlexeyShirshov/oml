@@ -670,7 +670,7 @@ Public Class TestManagerRS
     <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
     Public Sub TestMultipleDelete()
         Using mgr As Orm.OrmDBManager = CType(CreateManager(GetSchema("1")), Orm.OrmDBManager)
-            Dim f As New Orm.EntityFilter(GetType(Table3), "Code", New Orm.SimpleValue(1), Orm.FilterOperation.LessEqualThan)
+            Dim f As New Orm.EntityFilter(GetType(Table3), "Code", New Orm.ScalarValue(1), Orm.FilterOperation.LessEqualThan)
             mgr.BeginTransaction()
 
             Try
@@ -907,6 +907,15 @@ Public Class TestManagerRS
             Assert.AreEqual(1, CType(l2(0), Table10).Identifier)
             Assert.AreEqual(2, CType(l2(1), Table10).Identifier)
             Assert.AreEqual(3, CType(l2(2), Table10).Identifier)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestIsNull()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim t As ICollection(Of Table3) = mgr.Find(Of Table3)(Orm.Criteria.AutoTypeField("XML").IsNull, Nothing, False)
+
+            Assert.AreEqual(1, t.Count)
         End Using
     End Sub
 
