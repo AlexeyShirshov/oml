@@ -919,6 +919,32 @@ Public Class TestManagerRS
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestIn()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim t As ICollection(Of Table1) = mgr.Find(Of Table1)(Orm.Criteria.AutoTypeField("EnumStr").In( _
+                New String() {"first", "sec"}), Nothing, False)
+
+            Assert.AreEqual(3, t.Count)
+
+            Dim r As Boolean
+            t = mgr.ApplyFilter(t, New Orm.Criteria(GetType(Table1)).Field("Code").In( _
+                New Integer() {45, 8923}).Filter, r)
+
+            Assert.AreEqual(2, t.Count)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestNotIn()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim t As ICollection(Of Table1) = mgr.Find(Of Table1)(Orm.Criteria.AutoTypeField("EnumStr").NotIn( _
+                New String() {"sec"}), Nothing, False)
+
+            Assert.AreEqual(1, t.Count)
+        End Using
+    End Sub
+
     Private Function GetList(Of T As {Orm.OrmBase})(ByVal col As ICollection(Of T)) As List(Of T)
         Return CType(col, Global.System.Collections.Generic.List(Of T))
     End Function
