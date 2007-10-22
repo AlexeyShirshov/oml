@@ -138,6 +138,14 @@ Namespace Orm
             Return GetLink(New EntityFilter(_t, _f, New DBNullValue(), FilterOperation.IsNot))
         End Function
 
+        Public Function [In](ByVal arr As ICollection) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New InValue(arr), FilterOperation.In))
+        End Function
+
+        Public Function NotIn(ByVal arr As ICollection) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New InValue(arr), FilterOperation.NotIn))
+        End Function
+
         Public Function Op(ByVal oper As FilterOperation, ByVal value As Object) As CriteriaLink
             Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), oper))
         End Function

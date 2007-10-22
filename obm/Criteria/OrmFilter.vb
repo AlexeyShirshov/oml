@@ -172,6 +172,8 @@ Namespace Orm
                 Case Else
                     r = IEntityFilter.EvalResult.Unknown
             End Select
+
+            Return r
         End Function
     End Class
 
@@ -267,11 +269,11 @@ Namespace Orm
         Private _l As New List(Of String)
         Private _str As String
 
-        Public Sub New(ByVal value As ICollection(Of Object))
+        Public Sub New(ByVal value As ICollection)
             MyBase.New(value)
         End Sub
 
-        Public Sub New(ByVal value As ICollection(Of Object), ByVal caseSensitive As Boolean)
+        Public Sub New(ByVal value As ICollection, ByVal caseSensitive As Boolean)
             MyBase.New(value, caseSensitive)
         End Sub
 
@@ -292,26 +294,26 @@ Namespace Orm
         End Function
 
         Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEntityFilter.EvalResult
-            Dim r As IEntityFilter.EvalResult
+            Dim r As IEntityFilter.EvalResult = IEntityFilter.EvalResult.NotFound
 
-            Dim val As Object = GetValue(v, template, r)
-            If r <> IEntityFilter.EvalResult.Unknown Then
-                Return r
-            Else
-                r = IEntityFilter.EvalResult.NotFound
-            End If
+            'Dim val As Object = GetValue(v, template, r)
+            'If r <> IEntityFilter.EvalResult.Unknown Then
+            '    Return r
+            'Else
+            '    r = IEntityFilter.EvalResult.NotFound
+            'End If
 
             Select Case template.Operation
                 Case FilterOperation.In
                     For Each o As Object In Value
-                        If Not Object.Equals(o, val) Then
-                            r = IEntityFilter.EvalResult.NotFound
+                        If Object.Equals(o, v) Then
+                            r = IEntityFilter.EvalResult.Found
                             Exit For
                         End If
                     Next
                 Case FilterOperation.NotIn
                     For Each o As Object In Value
-                        If Object.Equals(o, val) Then
+                        If Object.Equals(o, v) Then
                             r = IEntityFilter.EvalResult.NotFound
                             Exit For
                         End If
@@ -323,9 +325,9 @@ Namespace Orm
             Return r
         End Function
 
-        Public Shadows ReadOnly Property Value() As ICollection(Of Object)
+        Public Shadows ReadOnly Property Value() As ICollection
             Get
-                Return CType(MyBase.Value, Global.System.Collections.Generic.ICollection(Of Object))
+                Return CType(MyBase.Value, Global.System.Collections.ICollection)
             End Get
         End Property
 
