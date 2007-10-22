@@ -16,6 +16,7 @@ Namespace Orm
     Public Interface IEvaluableValue
         Inherits IFilterValue
         ReadOnly Property Value() As Object
+        Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEntityFilter.EvalResult
     End Interface
 
     Public Class ScalarValue
@@ -23,6 +24,7 @@ Namespace Orm
 
         Private _v As Object
         Private _pname As String
+        Private _case As Boolean
         'Private _f As IEntityFilter
 
         Protected Sub New()
@@ -36,7 +38,12 @@ Namespace Orm
             _v = value
         End Sub
 
-        Public Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IFilterValue.GetParam
+        Public Sub New(ByVal value As Object, ByVal caseSensitive As Boolean)
+            _v = value
+            _case = caseSensitive
+        End Sub
+
+        Public Overridable Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IFilterValue.GetParam
             Dim v As Object = _v
             If f IsNot Nothing Then
                 v = f.PrepareValue(schema, v)
@@ -69,6 +76,15 @@ Namespace Orm
         '    End Set
         'End Property
 
+        Public Property CaseSensitive() As Boolean
+            Get
+                Return _case
+            End Get
+            Protected Set(ByVal value As Boolean)
+                _case = value
+            End Set
+        End Property
+
         Public Overridable Function _ToString() As String Implements IFilterValue._ToString
             If _v IsNot Nothing Then
                 Return _v.ToString
@@ -85,6 +101,78 @@ Namespace Orm
         Protected Sub SetValue(ByVal v As Object)
             _v = v
         End Sub
+
+        Protected Overridable Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplate, ByRef r As IEntityFilter.EvalResult) As Object
+            r = IEntityFilter.EvalResult.Unknown
+            Return Value
+        End Function
+
+        Public Overridable Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEntityFilter.EvalResult Implements IEvaluableValue.Eval
+            Dim r As IEntityFilter.EvalResult
+
+            Dim val As Object = GetValue(v, template, r)
+            If r <> IEntityFilter.EvalResult.Unknown Then
+                Return r
+            Else
+                r = IEntityFilter.EvalResult.NotFound
+            End If
+
+            Select Case template.Operation
+                Case FilterOperation.Equal
+                    If Equals(v, val) Then
+                        r = IEntityFilter.EvalResult.Found
+                    End If
+                Case FilterOperation.GreaterEqualThan
+                    Dim i As Integer = CType(v, IComparable).CompareTo(val)
+                    If i >= 0 Then
+                        r = IEntityFilter.EvalResult.Found
+                    End If
+                Case FilterOperation.GreaterThan
+                    Dim i As Integer = CType(v, IComparable).CompareTo(val)
+                    If i > 0 Then
+                        r = IEntityFilter.EvalResult.Found
+                    End If
+                Case FilterOperation.LessEqualThan
+                    Dim i As Integer = CType(v, IComparable).CompareTo(val)
+                    If i <= 0 Then
+                        r = IEntityFilter.EvalResult.Found
+                    End If
+                Case FilterOperation.LessThan
+                    Dim i As Integer = CType(v, IComparable).CompareTo(val)
+                    If i < 0 Then
+                        r = IEntityFilter.EvalResult.Found
+                    End If
+                Case FilterOperation.NotEqual
+                    If Not Equals(v, val) Then
+                        r = IEntityFilter.EvalResult.Found
+                    End If
+                Case FilterOperation.Like
+                    Dim par As String = CStr(val)
+                    Dim str As String = CStr(v)
+                    r = IEntityFilter.EvalResult.NotFound
+                    Dim [case] As StringComparison = StringComparison.InvariantCulture
+                    If Not _case Then
+                        [case] = StringComparison.InvariantCultureIgnoreCase
+                    End If
+                    If par.StartsWith("%") Then
+                        If par.EndsWith("%") Then
+                            If str.IndexOf(par.Trim("%"c), [case]) >= 0 Then
+                                r = IEntityFilter.EvalResult.Found
+                            End If
+                        Else
+                            If str.EndsWith(par.TrimStart("%"c), [case]) Then
+                                r = IEntityFilter.EvalResult.Found
+                            End If
+                        End If
+                    ElseIf par.EndsWith("%") Then
+                        If str.StartsWith(par.TrimEnd("%"c), [case]) Then
+                            r = IEntityFilter.EvalResult.Found
+                        End If
+                    End If
+                Case Else
+                    r = IEntityFilter.EvalResult.Unknown
+            End Select
+        End Function
     End Class
 
     Public Class LiteralValue
@@ -129,6 +217,11 @@ Namespace Orm
             End If
         End Sub
 
+        Public Sub New(ByVal o As OrmBase, ByVal caseSensitive As Boolean)
+            MyClass.New(o)
+            Me.CaseSensitive = caseSensitive
+        End Sub
+
         Public Function GetOrmValue(ByVal mgr As OrmManagerBase) As OrmBase
             Return mgr.CreateDBObject(CInt(Value), _t)
         End Function
@@ -139,6 +232,28 @@ Namespace Orm
             End Get
         End Property
 
+        Protected Overrides Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplate, ByRef r As IEntityFilter.EvalResult) As Object
+            r = IEntityFilter.EvalResult.Unknown
+            Dim tt As Type = v.GetType
+            Dim orm As OrmBase = TryCast(v, OrmBase)
+            If orm IsNot Nothing Then
+                Dim ov As EntityValue = TryCast(Me, EntityValue)
+                If ov Is Nothing Then
+                    Throw New InvalidOperationException(String.Format("Field {0} is Entity but param is not", template.FieldName))
+                End If
+                If tt IsNot ov.OrmType Then
+                    If Value Is Nothing Then
+                        r = IEntityFilter.EvalResult.NotFound
+                        Return Nothing
+                    Else
+                        Throw New InvalidOperationException(String.Format("Field {0} is type of {1} but param is type of {2}", template.FieldName, tt.ToString, ov.OrmType.ToString))
+                    End If
+                End If
+                Return ov.GetOrmValue(OrmManagerBase.CurrentManager)
+            End If
+            Return Value
+        End Function
+
         'Public Overrides ReadOnly Property Value() As Object
         '    Get
         '        Return GetOrmValue(OrmManagerBase.CurrentManager)
@@ -146,6 +261,108 @@ Namespace Orm
         'End Property
     End Class
 
+    Public Class InValue
+        Inherits ScalarValue
+
+        Private _l As New List(Of String)
+        Private _str As String
+
+        Public Sub New(ByVal value As ICollection(Of Object))
+            MyBase.New(value)
+        End Sub
+
+        Public Sub New(ByVal value As ICollection(Of Object), ByVal caseSensitive As Boolean)
+            MyBase.New(value, caseSensitive)
+        End Sub
+
+        Public Overrides Function _ToString() As String
+            If String.IsNullOrEmpty(_str) Then
+                Dim l As New List(Of String)
+                For Each o As Object In Value
+                    l.Add(o.ToString)
+                Next
+                l.Sort()
+                Dim sb As New StringBuilder
+                For Each s As String In l
+                    sb.Append(s).Append("$")
+                Next
+                _str = sb.ToString
+            End If
+            Return _str
+        End Function
+
+        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEntityFilter.EvalResult
+            Dim r As IEntityFilter.EvalResult
+
+            Dim val As Object = GetValue(v, template, r)
+            If r <> IEntityFilter.EvalResult.Unknown Then
+                Return r
+            Else
+                r = IEntityFilter.EvalResult.NotFound
+            End If
+
+            Select Case template.Operation
+                Case FilterOperation.In
+                    For Each o As Object In Value
+                        If Not Object.Equals(o, val) Then
+                            r = IEntityFilter.EvalResult.NotFound
+                            Exit For
+                        End If
+                    Next
+                Case FilterOperation.NotIn
+                    For Each o As Object In Value
+                        If Object.Equals(o, val) Then
+                            r = IEntityFilter.EvalResult.NotFound
+                            Exit For
+                        End If
+                    Next
+                Case Else
+                    Throw New InvalidOperationException(String.Format("Invalid operation {0} for InValue", template.OperToString))
+            End Select
+
+            Return r
+        End Function
+
+        Public Shadows ReadOnly Property Value() As ICollection(Of Object)
+            Get
+                Return CType(MyBase.Value, Global.System.Collections.Generic.ICollection(Of Object))
+            End Get
+        End Property
+
+        Public Overrides Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
+            Dim sb As New StringBuilder
+            Dim idx As Integer
+            For Each o As Object In Value
+                Dim v As Object = o
+                If f IsNot Nothing Then
+                    v = f.PrepareValue(schema, o)
+                End If
+
+                If paramMgr Is Nothing Then
+                    Throw New ArgumentNullException("paramMgr")
+                End If
+
+                Dim pname As String = Nothing
+                Dim add As Boolean
+                If _l.Count < idx Then
+                    pname = _l(idx)
+                Else
+                    add = True
+                End If
+
+                pname = paramMgr.AddParam(pname, v)
+                If add Then
+                    _l.Add(pname)
+                End If
+
+                sb.Append(pname).Append(",")
+                idx += 1
+            Next
+            sb.Length -= 1
+            sb.Insert(0, "(").Append(")")
+            Return sb.ToString
+        End Function
+    End Class
 #End Region
 
     Public Interface IOrmFilterTemplate
@@ -631,75 +848,7 @@ Namespace Orm
                     Dim r As IEntityFilter.EvalResult = IEntityFilter.EvalResult.NotFound
                     Dim v As Object = obj.GetValue(Template.FieldName, oschema) 'schema.GetFieldValue(obj, _fieldname)
                     If v IsNot Nothing Then
-                        Dim tt As Type = v.GetType
-                        Dim val As Object = evval.Value
-                        Dim orm As OrmBase = TryCast(v, OrmBase)
-                        If orm IsNot Nothing Then
-                            Dim ov As EntityValue = TryCast(evval, EntityValue)
-                            If ov Is Nothing Then
-                                Throw New InvalidOperationException(String.Format("Field {0} is Entity but param is not", Template.FieldName))
-                            End If
-                            If tt IsNot ov.OrmType Then
-                                If val Is Nothing Then
-                                    Return IEntityFilter.EvalResult.NotFound
-                                Else
-                                    Throw New InvalidOperationException(String.Format("Field {0} is type of {1} but param is type of {2}", Template.FieldName, tt.ToString, ov.OrmType.ToString))
-                                End If
-                            End If
-                            val = ov.GetOrmValue(OrmManagerBase.CurrentManager)
-                        End If
-
-                        Select Case Template.Operation
-                            Case FilterOperation.Equal
-                                If Equals(v, val) Then
-                                    r = IEntityFilter.EvalResult.Found
-                                End If
-                            Case FilterOperation.GreaterEqualThan
-                                Dim i As Integer = CType(v, IComparable).CompareTo(val)
-                                If i >= 0 Then
-                                    r = IEntityFilter.EvalResult.Found
-                                End If
-                            Case FilterOperation.GreaterThan
-                                Dim i As Integer = CType(v, IComparable).CompareTo(val)
-                                If i > 0 Then
-                                    r = IEntityFilter.EvalResult.Found
-                                End If
-                            Case FilterOperation.LessEqualThan
-                                Dim i As Integer = CType(v, IComparable).CompareTo(val)
-                                If i <= 0 Then
-                                    r = IEntityFilter.EvalResult.Found
-                                End If
-                            Case FilterOperation.LessThan
-                                Dim i As Integer = CType(v, IComparable).CompareTo(val)
-                                If i < 0 Then
-                                    r = IEntityFilter.EvalResult.Found
-                                End If
-                            Case FilterOperation.NotEqual
-                                If Not Equals(v, val) Then
-                                    r = IEntityFilter.EvalResult.Found
-                                End If
-                            Case FilterOperation.Like
-                                Dim par As String = CStr(val)
-                                Dim str As String = CStr(v)
-                                r = IEntityFilter.EvalResult.NotFound
-                                If par.StartsWith("%") Then
-                                    If par.EndsWith("%") Then
-                                        If str.IndexOf(par.Trim("%"c), StringComparison.InvariantCultureIgnoreCase) >= 0 Then
-                                            r = IEntityFilter.EvalResult.Found
-                                        End If
-                                    Else
-                                        If str.EndsWith(par.TrimStart("%"c), StringComparison.InvariantCultureIgnoreCase) Then
-                                            r = IEntityFilter.EvalResult.Found
-                                        End If
-                                    End If
-                                ElseIf par.EndsWith("%") Then
-                                    If str.StartsWith(par.TrimEnd("%"c), StringComparison.InvariantCultureIgnoreCase) Then
-                                        r = IEntityFilter.EvalResult.Found
-                                    End If
-                                End If
-                            Case Else
-                                r = IEntityFilter.EvalResult.Unknown
-                        End Select
+                        r = evval.Eval(v, Template)
                     Else
                         If evval.Value Is Nothing Then
                             r = IEntityFilter.EvalResult.Found
