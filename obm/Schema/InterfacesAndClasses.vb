@@ -149,7 +149,7 @@ Namespace Orm
             Return _table
         End Function
 
-        Public Overridable Function OnTableAdd(ByVal pmgr As ParamMgr) As OrmTable
+        Public Overridable Function OnTableAdd(ByVal pmgr As ICreateParam) As OrmTable
             Return Nothing
         End Function
     End Class
@@ -334,10 +334,10 @@ Namespace Orm
         End Function
 
         Public Function AddTable(ByRef table As OrmTable) As String
-            Return AddTable(table, Nothing, Nothing)
+            Return AddTable(table, CType(Nothing, ParamMgr))
         End Function
 
-        Public Function AddTable(ByRef table As OrmTable, ByVal schema As IOrmObjectSchema, ByVal pmgr As ParamMgr) As String
+        Public Function AddTable(ByRef table As OrmTable, ByVal pmgr As ICreateParam) As String
             'Dim tf As IOrmTableFunction = TryCast(schema, IOrmTableFunction)
             Dim t As OrmTable = table
             Dim tt As OrmTable = table.OnTableAdd(pmgr)
@@ -393,6 +393,8 @@ Namespace Orm
         [Like]
         [Is]
         [IsNot]
+        Exists
+        NotExists
     End Enum
 
     Public Enum ConditionOperator

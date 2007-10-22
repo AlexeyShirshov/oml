@@ -916,6 +916,10 @@ Public Class TestManagerRS
             Dim t As ICollection(Of Table3) = mgr.Find(Of Table3)(Orm.Criteria.AutoTypeField("XML").IsNull, Nothing, False)
 
             Assert.AreEqual(1, t.Count)
+
+            Dim t2 As ICollection(Of Table2) = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Table1").IsNull, Nothing, False)
+
+            Assert.AreEqual(0, t2.Count)
         End Using
     End Sub
 
@@ -928,8 +932,8 @@ Public Class TestManagerRS
             Assert.AreEqual(3, t.Count)
 
             Dim r As Boolean
-            t = mgr.ApplyFilter(t, New Orm.Criteria(GetType(Table1)).Field("Code").In( _
-                New Integer() {45, 8923}).Filter, r)
+            t = mgr.ApplyFilter(t, CType(New Orm.Criteria(GetType(Table1)).Field("Code").In( _
+                New Integer() {45, 8923}).Filter, Orm.IEntityFilter), r)
 
             Assert.AreEqual(2, t.Count)
         End Using
@@ -942,6 +946,50 @@ Public Class TestManagerRS
                 New String() {"sec"}), Nothing, False)
 
             Assert.AreEqual(1, t.Count)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestInSubQuery()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+            Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Table1").In( _
+                GetType(Table1)), Nothing, False)
+
+            Assert.AreEqual(2, t.Count)
+
+            t = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Money").In( _
+                GetType(Table1), "Code"), Nothing, False)
+
+            Assert.AreEqual(1, t.Count)
+            Assert.AreEqual(2D, GetList(t)(0).Money)
+
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestExistSubQuery()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+            Dim tt2 As Type = GetType(Table2)
+
+            Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(New Orm.Criteria(tt2).Field("Table1").Exists( _
+                GetType(Table1)), Nothing, False)
+
+            Assert.AreEqual(2, t.Count)
+
+            t = mgr.Find(Of Table2)(New Orm.Criteria(tt2).Field("Table1").NotExists( _
+                GetType(Table1)), Nothing, False)
+
+            Assert.AreEqual(0, t.Count)
+
+            Dim c As New Orm.Condition.ConditionConstructor
+            c.AddFilter(New Orm.JoinFilter(tt2, "Table1", GetType(Table1), "ID", Orm.FilterOperation.Equal))
+            c.AddFilter(New Orm.EntityFilter(GetType(Table1), "Code", New Orm.ScalarValue(45), Orm.FilterOperation.Equal))
+            Dim f As Orm.IFilter = c.Condition
+
+            t = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Table1").NotExists( _
+                GetType(Table1), f), Nothing, False)
+
+            Assert.AreEqual(2, t.Count)
         End Using
     End Sub
 

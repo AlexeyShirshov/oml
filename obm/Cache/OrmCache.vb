@@ -614,15 +614,15 @@ Namespace Orm
                                         If obj._needAdd OrElse obj._needDelete OrElse forseEval Then
                                             f = ce.Filter
                                             Dim r As Boolean = False
-                                            Dim er As IEntityFilter.EvalResult = IEntityFilter.EvalResult.Found
+                                            Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
                                             If f IsNot Nothing Then
                                                 er = f.Eval(schema, obj, oschema)
-                                                r = er = IEntityFilter.EvalResult.Unknown
+                                                r = er = IEvaluableValue.EvalResult.Unknown
                                             End If
 
                                             If r Then
                                                 dic.Remove(id)
-                                            ElseIf er = IEntityFilter.EvalResult.Found Then
+                                            ElseIf er = IEvaluableValue.EvalResult.Found Then
                                                 Dim sync As String = id & mgr.GetStaticKey
                                                 Using SyncHelper.AcquireDynamicLock(sync)
                                                     If obj._needAdd Then

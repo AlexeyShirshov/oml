@@ -38,7 +38,9 @@ Namespace Orm
         '    Throw New NotSupportedException
         'End Function
 
-        Public Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String), ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt
+        Public Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt
+            Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases
+
             Dim map As MapField2Column = Nothing
             If _e1 IsNot Nothing Then
                 map = schema.GetObjectSchema(_e1.First).GetFieldColumnMap(_e1.Second)
@@ -288,12 +290,12 @@ Namespace Orm
         '    Return lt.GetStaticString & Condition2String() & r
         'End Function
 
-        Public Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal tableAliases As IDictionary(Of OrmTable, String), ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt
+        Public Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt
             If _right Is Nothing Then
-                Return _left.MakeSQLStmt(schema, tableAliases, pname)
+                Return _left.MakeSQLStmt(schema, almgr, pname)
             End If
 
-            Return "(" & _left.MakeSQLStmt(schema, tableAliases, pname) & Condition2String() & _right.MakeSQLStmt(schema, tableAliases, pname) & ")"
+            Return "(" & _left.MakeSQLStmt(schema, almgr, pname) & Condition2String() & _right.MakeSQLStmt(schema, almgr, pname) & ")"
         End Function
 
         Private Function _ReplaceTemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter Implements ITemplateFilter.ReplaceByTemplate
@@ -474,7 +476,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IEntityFilter.EvalResult Implements IEntityFilter.Eval
+        Public Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -483,17 +485,17 @@ Namespace Orm
                 Throw New ArgumentNullException("obj")
             End If
 
-            Dim b As IEntityFilter.EvalResult = Left.Eval(schema, obj, oschema)
+            Dim b As IEvaluableValue.EvalResult = Left.Eval(schema, obj, oschema)
             If _right IsNot Nothing Then
                 If _oper = ConditionOperator.And Then
-                    If b = IEntityFilter.EvalResult.Found Then
+                    If b = IEvaluableValue.EvalResult.Found Then
                         b = Right.Eval(schema, obj, oschema)
                     End If
                 ElseIf _oper = ConditionOperator.Or Then
-                    If b <> IEntityFilter.EvalResult.Unknown Then
-                        Dim r As IEntityFilter.EvalResult = Right.Eval(schema, obj, oschema)
-                        If r <> IEntityFilter.EvalResult.Unknown Then
-                            If b <> IEntityFilter.EvalResult.Found Then
+                    If b <> IEvaluableValue.EvalResult.Unknown Then
+                        Dim r As IEvaluableValue.EvalResult = Right.Eval(schema, obj, oschema)
+                        If r <> IEvaluableValue.EvalResult.Unknown Then
+                            If b <> IEvaluableValue.EvalResult.Found Then
                                 b = r
                             End If
                         Else
@@ -576,7 +578,7 @@ Namespace Orm
             _condition = condition
         End Sub
 
-        Public Function MakeSQLStmt(ByVal schema As DbSchema, ByVal tableAliases As IDictionary(Of OrmTable, String), ByVal pname As ICreateParam) As String
+        Public Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String
             If IsEmpty Then
                 Throw New InvalidOperationException("Object must be created")
             End If
@@ -585,13 +587,14 @@ Namespace Orm
                 Throw New InvalidOperationException("Join condition must be specified")
             End If
 
-            If tableAliases Is Nothing Then
-                Throw New ArgumentNullException("tableAliases")
+            If almgr.IsEmpty Then
+                Throw New ArgumentNullException("almgr")
             End If
 
+            Dim tableAliases As IDictionary(Of OrmTable, String) = almgr.Aliases
             'Dim table As String = _table
             'Dim sch as IOrmObjectSchema = schema.GetObjectSchema(
-            Return JoinTypeString() & _table.TableName & " " & tableAliases(_table) & " on " & _condition.MakeSQLStmt(schema, tableAliases, pname)
+            Return JoinTypeString() & _table.TableName & " " & tableAliases(_table) & " on " & _condition.MakeSQLStmt(schema, almgr, pname)
         End Function
 
         Public ReadOnly Property IsEmpty() As Boolean
