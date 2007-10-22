@@ -1763,7 +1763,7 @@ Namespace Orm
                     Dim con As New Orm.Condition.ConditionConstructor
                     con.AddFilter(New EntityFilter(original_type, fieldName, New ScalarValue(p.First), FilterOperation.GreaterEqualThan))
                     con.AddFilter(New EntityFilter(original_type, fieldName, New ScalarValue(p.Second), FilterOperation.LessEqualThan))
-                    sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                    sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr, params))
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
                         sb.Length = 0
@@ -1783,7 +1783,7 @@ Namespace Orm
                             sb2.Append(")")
                             Dim f As New EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), FilterOperation.In)
 
-                            sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                            sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1796,7 +1796,7 @@ Namespace Orm
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), FilterOperation.In)
-                        sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                        sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1830,7 +1830,7 @@ Namespace Orm
                     Dim con As New Orm.Condition.ConditionConstructor
                     con.AddFilter(New TableFilter(table, column, New ScalarValue(p.First), FilterOperation.GreaterEqualThan))
                     con.AddFilter(New TableFilter(table, column, New ScalarValue(p.Second), FilterOperation.LessEqualThan))
-                    sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                    sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr, params))
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
                         sb.Length = 0
@@ -1850,7 +1850,7 @@ Namespace Orm
                             sb2.Append(")")
                             Dim f As New TableFilter(table, column, New LiteralValue(sb2.ToString), FilterOperation.In)
 
-                            sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                            sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1863,7 +1863,7 @@ Namespace Orm
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New TableFilter(table, column, New LiteralValue(sb2.ToString), FilterOperation.In)
-                        sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                        sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))

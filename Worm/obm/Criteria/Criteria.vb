@@ -38,6 +38,10 @@ Namespace Orm
 
             Return New CriteriaField(Nothing, fieldName)
         End Function
+
+        'Public Shared Function Exists(ByVal t As Type, ByVal fieldName As String) As CriteriaLink
+        '    Return New CriteriaLink().AndExists(t, fieldName)
+        'End Function
     End Class
 
     Public Class CriteriaField
@@ -67,7 +71,7 @@ Namespace Orm
             _ct = ct
         End Sub
 
-        Protected Function GetLink(ByVal fl As Orm.IEntityFilter) As CriteriaLink
+        Protected Function GetLink(ByVal fl As Orm.IFilter) As CriteriaLink
             If _con Is Nothing Then
                 _con = New Orm.Condition.ConditionConstructor
             End If
@@ -146,8 +150,76 @@ Namespace Orm
             Return GetLink(New EntityFilter(_t, _f, New InValue(arr), FilterOperation.NotIn))
         End Function
 
-        Public Function Op(ByVal oper As FilterOperation, ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), oper))
+        Public Function [In](ByVal t As Type) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing), FilterOperation.In))
+        End Function
+
+        Public Function NotIn(ByVal t As Type) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing), FilterOperation.NotIn))
+        End Function
+
+        Public Function [In](ByVal t As Type, ByVal fieldName As String) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing, fieldName), FilterOperation.In))
+        End Function
+
+        Public Function NotIn(ByVal t As Type, ByVal fieldName As String) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing, fieldName), FilterOperation.NotIn))
+        End Function
+
+        Public Function Exists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
+            Dim j As New JoinFilter(_t, _f, t, joinField, FilterOperation.Equal)
+            Return GetLink(New DefaultFilter(New SubQuery(t, j), FilterOperation.Exists))
+        End Function
+
+        Public Function NotExists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
+            Dim j As New JoinFilter(_t, _f, t, joinField, FilterOperation.Equal)
+            Return GetLink(New DefaultFilter(New SubQuery(t, j), FilterOperation.NotExists))
+        End Function
+
+        Public Function Exists(ByVal t As Type) As CriteriaLink
+            Return Exists(t, "ID")
+        End Function
+
+        Public Function NotExists(ByVal t As Type) As CriteriaLink
+            Return NotExists(t, "ID")
+        End Function
+
+        Public Function Exists(ByVal t As Type, ByVal f As IFilter) As CriteriaLink
+            Return GetLink(New DefaultFilter(New SubQuery(t, f), FilterOperation.Exists))
+        End Function
+
+        Public Function NotExists(ByVal t As Type, ByVal f As IFilter) As CriteriaLink
+            Return GetLink(New DefaultFilter(New SubQuery(t, f), FilterOperation.NotExists))
+        End Function
+
+        Public Function Op(ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, value, oper))
+        End Function
+    End Class
+
+    Public Class CriteriaNonField
+        Private _con As Orm.Condition.ConditionConstructor
+        Private _ct As ConditionOperator
+
+        Protected Friend Sub New(ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
+            _con = con
+            _ct = ct
+        End Sub
+
+        Protected Function GetLink(ByVal fl As Orm.IFilter) As CriteriaLink
+            If _con Is Nothing Then
+                _con = New Orm.Condition.ConditionConstructor
+            End If
+            _con.AddFilter(fl, _ct)
+            Return New CriteriaLink(_con)
+        End Function
+
+        Public Function Exists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return GetLink(New DefaultFilter(New SubQuery(t, joinFilter), FilterOperation.Exists))
+        End Function
+
+        Public Function NotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return GetLink(New DefaultFilter(New SubQuery(t, joinFilter), FilterOperation.NotExists))
         End Function
 
     End Class
@@ -229,18 +301,40 @@ Namespace Orm
             Return Me
         End Function
 
-        Public ReadOnly Property Filter() As IEntityFilter
+        Public Function AndExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return New CriteriaNonField(_con, ConditionOperator.And).Exists(t, joinFilter)
+        End Function
+
+        Public Function AndNotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return New CriteriaNonField(_con, ConditionOperator.And).NotExists(t, joinFilter)
+        End Function
+
+        Public Function OrExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return New CriteriaNonField(_con, ConditionOperator.Or).Exists(t, joinFilter)
+        End Function
+
+        Public Function OrNotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return New CriteriaNonField(_con, ConditionOperator.Or).NotExists(t, joinFilter)
+        End Function
+
+        Public ReadOnly Property Filter() As IFilter
             Get
-                Return Filter(Nothing)
+                If _con IsNot Nothing Then
+                    Return _con.Condition
+                Else
+                    Return Nothing
+                End If
             End Get
         End Property
 
-        Public Overridable ReadOnly Property Filter(ByVal t As Type) As IEntityFilter
+        Public Overridable ReadOnly Property Filter(ByVal t As Type) As IFilter
             Get
                 If _con IsNot Nothing Then
-                    Dim ef As IEntityFilter = CType(_con.Condition, IEntityFilter)
-                    ef.GetFilterTemplate.SetType(t)
-                    Return ef
+                    Dim ef As IEntityFilter = TryCast(_con.Condition, IEntityFilter)
+                    If ef IsNot Nothing Then
+                        ef.GetFilterTemplate.SetType(t)
+                    End If
+                    Return _con.Condition
                 Else
                     Return Nothing
                 End If

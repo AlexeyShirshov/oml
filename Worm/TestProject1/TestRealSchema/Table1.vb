@@ -404,7 +404,7 @@ Public Class table1func
         MyBase.New(tableName)
     End Sub
 
-    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable
+    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ICreateParam) As OrmTable
         Return New OrmTable("dbo.table1func()")
     End Function
 
@@ -417,7 +417,7 @@ Public Class table2func
         MyBase.New(tableName)
     End Sub
 
-    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable
+    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ICreateParam) As OrmTable
         Return New OrmTable("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
     End Function
 End Class

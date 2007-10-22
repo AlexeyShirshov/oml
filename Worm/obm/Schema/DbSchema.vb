@@ -665,15 +665,15 @@ Namespace Orm
                             End If
 
                             Dim tbl As OrmTable = item.Key
-                            Dim [alias] As String = amgr.AddTable(tbl, oschema, params)
+                            Dim [alias] As String = amgr.AddTable(tbl, params)
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
                             For Each f As EntityFilter In item.Value._updates
-                                upd_cmd.Append(f.MakeSQLStmt(Me, amgr.Aliases, params)).Append(",")
+                                upd_cmd.Append(f.MakeSQLStmt(Me, amgr, params)).Append(",")
                             Next
                             upd_cmd.Length -= 1
                             upd_cmd.Append(" from ").Append(tbl).Append(" ").Append([alias])
-                            upd_cmd.Append(" where ").Append(item.Value._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
+                            upd_cmd.Append(" where ").Append(item.Value._where4update.Condition.MakeSQLStmt(Me, amgr, params))
                             If Not item.Key.Equals(pk_table) Then
                                 'Dim pcnt As Integer = 0
                                 'If Not named_params Then pcnt = XMedia.Framework.Data.DBA.ExtractParamsCount(upd_cmd.ToString)
@@ -724,7 +724,7 @@ Namespace Orm
                                 sel_sb = sel_sb.Replace(pk_table.TableName, [alias])
                                 sel_sb.Append(" from ").Append(pk_table).Append(" ").Append([alias]).Append(" where ")
                                 'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
-                                sel_sb.Append(New EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeSQLStmt(Me, amgr.Aliases, params))
+                                sel_sb.Append(New EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeSQLStmt(Me, amgr, params))
 
                                 upd_cmd.Append(sel_sb)
                             End If
@@ -852,8 +852,64 @@ Namespace Orm
             Return del_cmd.ToString
         End Function
 
+        Public Overridable Function SelectWithJoin(ByVal original_type As Type, ByVal tables() As OrmTable, _
+            ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As OrmJoin, _
+            ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
+            ByVal arr As Generic.IList(Of ColumnAttribute), ByVal schema As IOrmObjectSchema) As String
+
+            Dim selectcmd As New StringBuilder
+            'Dim maintable As String = tables(0)
+            selectcmd.Append("select ")
+            If aspects IsNot Nothing Then
+                For Each asp As QueryAspect In aspects
+                    If asp.AscpectType = QueryAspect.AspectType.Columns Then
+                        selectcmd.Append(asp.MakeStmt(Me))
+                    End If
+                Next
+            End If
+
+            If original_type IsNot Nothing Then
+                If wideLoad Then
+                    Dim columns As String = GetSelectColumnList(original_type, arr)
+                    selectcmd.Append(columns)
+                    If Not String.IsNullOrEmpty(additionalColumns) Then
+                        selectcmd.Append(",").Append(additionalColumns)
+                    End If
+                Else
+                    GetPKList(schema, selectcmd)
+                End If
+            Else
+                selectcmd.Append("*")
+            End If
+
+            selectcmd.Append(" from ")
+            Dim unions() As String = Nothing
+            If original_type IsNot Nothing Then
+                unions = GetUnions(original_type)
+            End If
+            'Dim pmgr As ParamMgr = params 'New ParamMgr()
+
+            If unions Is Nothing Then
+                AppendFrom(almgr, tables, selectcmd, params, schema)
+                If joins IsNot Nothing Then
+                    For i As Integer = 0 To joins.Length - 1
+                        Dim join As OrmJoin = joins(i)
+
+                        If Not join.IsEmpty Then
+                            almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
+                            selectcmd.Append(join.MakeSQLStmt(Me, almgr, params))
+                        End If
+                    Next
+                End If
+            Else
+                Throw New NotImplementedException
+            End If
+
+            Return selectcmd.ToString
+        End Function
+
         Public Overridable Function SelectWithJoin(ByVal original_type As Type, _
-            ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal joins() As OrmJoin, _
+            ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As OrmJoin, _
             ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
             Optional ByVal arr As Generic.IList(Of ColumnAttribute) = Nothing) As String
 
@@ -866,48 +922,9 @@ Namespace Orm
             End If
 
             Dim schema As IOrmObjectSchema = GetObjectSchema(original_type)
-            Dim selectcmd As New StringBuilder
-            Dim tables() As OrmTable = GetTables(schema)
-            'Dim maintable As String = tables(0)
-            selectcmd.Append("select ")
-            If aspects IsNot Nothing Then
-                For Each asp As QueryAspect In aspects
-                    If asp.AscpectType = QueryAspect.AspectType.Columns Then
-                        selectcmd.Append(asp.MakeStmt(Me))
-                    End If
-                Next
-            End If
 
-            If wideLoad Then
-                Dim columns As String = GetSelectColumnList(original_type, arr)
-                selectcmd.Append(columns)
-                If Not String.IsNullOrEmpty(additionalColumns) Then
-                    selectcmd.Append(",").Append(additionalColumns)
-                End If
-            Else
-                GetPKList(schema, selectcmd)
-            End If
-            selectcmd.Append(" from ")
-            Dim unions() As String = GetUnions(original_type)
-            Dim pmgr As ParamMgr = params 'New ParamMgr()
-
-            If unions Is Nothing Then
-                AppendFrom(original_type, almgr, tables, selectcmd, pmgr, schema)
-                If joins IsNot Nothing Then
-                    For i As Integer = 0 To joins.Length - 1
-                        Dim join As OrmJoin = joins(i)
-
-                        If Not join.IsEmpty Then
-                            almgr.AddTable(join.Table, Nothing, Nothing)
-                            selectcmd.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
-                        End If
-                    Next
-                End If
-            Else
-                Throw New NotImplementedException
-            End If
-
-            Return selectcmd.ToString
+            Return SelectWithJoin(original_type, GetTables(schema), almgr, params, joins, wideLoad, aspects, _
+                additionalColumns, arr, schema)
         End Function
 
         Public Overridable Function SelectDistinct(ByVal original_type As Type, _
@@ -939,7 +956,7 @@ Namespace Orm
             Dim pmgr As ParamMgr = params 'New ParamMgr()
 
             If unions Is Nothing Then
-                AppendFrom(original_type, almgr, tables, selectcmd, pmgr, schema)
+                AppendFrom(almgr, tables, selectcmd, pmgr, schema)
 
                 Dim r2 As M2MRelation = GetM2MRelation(relation.Type, original_type, True)
                 Dim tbl As OrmTable = relation.Table
@@ -947,7 +964,7 @@ Namespace Orm
                 Dim join As New OrmJoin(tbl, JoinType.Join, f)
 
                 almgr.AddTable(tbl)
-                selectcmd.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
+                selectcmd.Append(join.MakeSQLStmt(Me, almgr, params))
 
                 If appendSecondTable Then
                     AppendJoins(relation.Type, almgr, GetTables(relation.Type), selectcmd, params, tbl, relation.Column, True)
@@ -1150,7 +1167,7 @@ Namespace Orm
                     Dim join As OrmJoin = GetJoins(sch, pk_table, tables(j))
 
                     If Not join.IsEmpty Then
-                        almgr.AddTable(tables(j), Nothing, Nothing)
+                        almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
 
                         join.InjectJoinFilter(selectedType, "ID", table, id)
                         'OrmFilter.ChangeValueToLiteral(join, selectedType, "ID", table, id)
@@ -1172,7 +1189,7 @@ Namespace Orm
                         '    End If
                         'Next
 
-                        selectcmd.Append(join.MakeSQLStmt(Me, almgr.Aliases, pname))
+                        selectcmd.Append(join.MakeSQLStmt(Me, almgr, pname))
                     End If
                 Next
             Else
@@ -1186,17 +1203,17 @@ Namespace Orm
                     adal = True
                 End If
                 Dim j As New OrmJoin(tbl, JoinType.Join, New JoinFilter(table, id, selectedType, "ID", FilterOperation.Equal))
-                Dim al As String = almgr.AddTable(tbl, sch, pname)
+                Dim al As String = almgr.AddTable(tbl, pname)
                 If adal Then
                     almgr.AddTable(pk_table, al)
                 End If
-                selectcmd.Append(j.MakeSQLStmt(Me, almgr.Aliases, pname))
+                selectcmd.Append(j.MakeSQLStmt(Me, almgr, pname))
                 For i As Integer = 1 To tables.Length - 1
                     Dim join As OrmJoin = sch.GetJoins(pk_table, tables(i))
 
                     If Not join.IsEmpty Then
-                        almgr.AddTable(tables(i), Nothing, Nothing)
-                        selectcmd.Append(join.MakeSQLStmt(Me, almgr.Aliases, pname))
+                        almgr.AddTable(tables(i), CType(Nothing, ParamMgr))
+                        selectcmd.Append(join.MakeSQLStmt(Me, almgr, pname))
                     End If
                 Next
             End If
@@ -1249,22 +1266,23 @@ Namespace Orm
         ''' <summary>
         ''' Построение таблиц, включая джоины
         ''' </summary>
-        ''' <param name="original_type"></param>
         ''' <param name="almgr"></param>
         ''' <param name="tables"></param>
         ''' <param name="selectcmd"></param>
         ''' <param name="pname"></param>
+        ''' <param name="sch"></param>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Protected Function AppendFrom(ByVal original_type As Type, ByVal almgr As AliasMgr, _
-            ByVal tables As OrmTable(), ByVal selectcmd As StringBuilder, ByVal pname As ParamMgr, ByVal sch As IOrmObjectSchema) As StringBuilder
+        Protected Function AppendFrom(ByVal almgr As AliasMgr, _
+            ByVal tables As OrmTable(), ByVal selectcmd As StringBuilder, ByVal pname As ICreateParam, _
+            ByVal sch As IOrmObjectSchema) As StringBuilder
             'Dim sch As IOrmObjectSchema = GetObjectSchema(original_type)
             For i As Integer = 0 To tables.Length - 1
                 Dim tbl As OrmTable = tables(i)
                 Dim tbl_real As OrmTable = tbl
                 Dim [alias] As String = Nothing
                 If Not almgr.Aliases.TryGetValue(tbl, [alias]) Then
-                    [alias] = almgr.AddTable(tbl_real, sch, pname)
+                    [alias] = almgr.AddTable(tbl_real, pname)
                 Else
                     tbl_real = tbl.OnTableAdd(pname)
                     If tbl_real Is Nothing Then
@@ -1278,30 +1296,36 @@ Namespace Orm
                     selectcmd.Append(tbl_real.TableName).Append(" ").Append([alias])
                 End If
 
-                For j As Integer = i + 1 To tables.Length - 1
-                    Dim join As OrmJoin = GetJoins(sch, tbl, tables(j))
+                If sch IsNot Nothing Then
+                    For j As Integer = i + 1 To tables.Length - 1
+                        Dim join As OrmJoin = GetJoins(sch, tbl, tables(j))
 
-                    If Not join.IsEmpty Then
-                        If Not almgr.Aliases.ContainsKey(tables(j)) Then
-                            almgr.AddTable(tables(j), Nothing, Nothing)
+                        If Not join.IsEmpty Then
+                            If Not almgr.Aliases.ContainsKey(tables(j)) Then
+                                almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
+                            End If
+                            selectcmd.Append(join.MakeSQLStmt(Me, almgr, pname))
                         End If
-                        selectcmd.Append(join.MakeSQLStmt(Me, almgr.Aliases, pname))
-                    End If
-                Next
+                    Next
+                End If
             Next
 
             Return selectcmd
         End Function
 
         Public Overridable Function AppendWhere(ByVal t As Type, ByVal filter As IFilter, _
-            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ParamMgr) As Boolean
+            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
 
-            Dim schema As IOrmObjectSchema = GetObjectSchema(t)
             Dim con As New Orm.Condition.ConditionConstructor
-            con.AddFilter(schema.GetFilter(filter_info)).AddFilter(filter)
+            con.AddFilter(filter)
+
+            If t IsNot Nothing Then
+                Dim schema As IOrmObjectSchema = GetObjectSchema(t)
+                con.AddFilter(schema.GetFilter(filter_info))
+            End If
 
             If Not con.IsEmpty Then
-                sb.Append(" where ").Append(con.Condition.MakeSQLStmt(Me, almgr.Aliases, pmgr))
+                sb.Append(" where ").Append(con.Condition.MakeSQLStmt(Me, almgr, pmgr))
                 Return True
             End If
             Return False
@@ -1416,7 +1440,7 @@ Namespace Orm
                 Throw New ArgumentException("Invalid relation", filteredType.ToString)
             End If
 
-            Dim [alias] As String = almgr.AddTable(table, Nothing, Nothing)
+            Dim [alias] As String = almgr.AddTable(table, CType(Nothing, ParamMgr))
 
             Dim sb As New StringBuilder
             Dim id_clm As String = selected_r.Column
@@ -1636,7 +1660,7 @@ Namespace Orm
                     join.InjectJoinFilter(searchType, "ID", ct, "[key]")
                     Dim al As String = almgr.AddTable(join.Table)
                     columns = columns.Replace(join.Table.TableName & ".", al & ".")
-                    sb.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
+                    sb.Append(join.MakeSQLStmt(Me, almgr, params))
                     'Else
                     '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
                 End If
@@ -1769,7 +1793,7 @@ Namespace Orm
             sb.Append("select left(")
             sb.Append(al).Append(".").Append(n)
             sb.Append(",").Append(level).Append(") name,count(*) cnt from ")
-            AppendFrom(t, almgr, GetTables(t), sb, params, schema)
+            AppendFrom(almgr, GetTables(t), sb, params, schema)
 
             AppendWhere(t, filter, almgr, sb, filter_info, params)
 

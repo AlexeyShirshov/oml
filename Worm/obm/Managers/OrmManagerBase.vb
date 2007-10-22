@@ -535,7 +535,7 @@ Namespace Orm
 
             Protected Shared Function GetFilter(ByVal c As CriteriaLink) As IEntityFilter
                 If c IsNot Nothing Then
-                    Return c.Filter
+                    Return CType(c.Filter, IEntityFilter)
                 End If
                 Return Nothing
             End Function
@@ -969,7 +969,7 @@ Namespace Orm
                         'con.AddFilter(New OrmFilter(tt, fieldName, o, FilterOperation.Equal))
                         'con.AddFilter(criteria.Filter)
                         Dim cl As CriteriaLink = Orm.Criteria.Field(tt, fieldName).Eq(o).And(criteria)
-                        Dim f As IEntityFilter = cl.Filter
+                        Dim f As IEntityFilter = CType(cl.Filter, IEntityFilter)
                         Dim key As String = FindGetKey(Of T)(f) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                         Dim dic As IDictionary = GetDic(_cache, key)
                         Dim id As String = CObj(f).ToString
@@ -1024,7 +1024,7 @@ Namespace Orm
                             'con.AddFilter(filter)
                             'Dim f As IOrmFilter = con.Condition
                             Dim cl As CriteriaLink = Orm.Criteria.Field(tt, fieldName).Eq(k).And(criteria)
-                            Dim f As IEntityFilter = cl.Filter
+                            Dim f As IEntityFilter = CType(cl.Filter, IEntityFilter)
                             Dim key As String = FindGetKey(Of T)(f) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                             Dim dic As IDictionary = GetDic(_cache, key)
                             Dim id As String = CObj(f).ToString
@@ -1588,7 +1588,7 @@ l1:
 
                 Dim dic As IDictionary = GetDic(_cache, key)
 
-                Dim id As String = CObj(filter).ToString
+                Dim id As String = filter.ToString
                 Dim sync As String = id & GetStaticKey()
 
                 'CreateDepends(filter, key, id)
@@ -2848,13 +2848,13 @@ l1:
                 Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(GetType(T))
                 Dim i As Integer = 0
                 For Each o As T In col
-                    Dim er As IEntityFilter.EvalResult = f.Eval(_schema, o, oschema)
+                    Dim er As IEvaluableValue.EvalResult = f.Eval(_schema, o, oschema)
                     Select Case er
-                        Case IEntityFilter.EvalResult.Found
+                        Case IEvaluableValue.EvalResult.Found
                             If i >= _start Then
                                 l.Add(o)
                             End If
-                        Case IEntityFilter.EvalResult.Unknown
+                        Case IEvaluableValue.EvalResult.Unknown
                             r = False
                             Exit For
                     End Select

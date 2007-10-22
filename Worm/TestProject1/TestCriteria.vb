@@ -8,8 +8,8 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestComplexTypes()
-        Dim f As IEntityFilter = Criteria.Field(GetType(Entity4), "ID").Eq(56). _
-            [And](GetType(Entity4), "Title").Eq("lsd").Filter
+        Dim f As IEntityFilter = CType(Criteria.Field(GetType(Entity4), "ID").Eq(56). _
+            [And](GetType(Entity4), "Title").Eq("lsd").Filter, IEntityFilter)
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
@@ -18,7 +18,7 @@ Imports CoreFramework.Structures
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
 
-        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeSQLStmt(schema, almgr.Aliases, pmgr))
+        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeSQLStmt(schema, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -38,7 +38,7 @@ Imports CoreFramework.Structures
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
 
-        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeSQLStmt(schema, almgr.Aliases, pmgr))
+        Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeSQLStmt(schema, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -49,8 +49,8 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestComplexTypes2()
-        Dim f As IEntityFilter = Criteria.Field(GetType(Entity4), "ID").Eq(56). _
-            [And](Criteria.Field(GetType(Entity4), "Title").Eq(56).[Or](GetType(Entity), "ID").Eq(483)).Filter
+        Dim f As IEntityFilter = CType(Criteria.Field(GetType(Entity4), "ID").Eq(56). _
+            [And](Criteria.Field(GetType(Entity4), "Title").Eq(56).[Or](GetType(Entity), "ID").Eq(483)).Filter, IEntityFilter)
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
@@ -59,7 +59,7 @@ Imports CoreFramework.Structures
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
 
-        Assert.AreEqual("(t2.id = @p1 and (t2.name = @p2 or t1.id = @p3))", f.MakeSQLStmt(schema, almgr.Aliases, pmgr))
+        Assert.AreEqual("(t2.id = @p1 and (t2.name = @p2 or t1.id = @p3))", f.MakeSQLStmt(schema, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -69,8 +69,8 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSimpleTypes()
-        Dim f As IEntityFilter = New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
-            [And]("Title").Eq("lsd").Filter
+        Dim f As IEntityFilter = CType(New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
+            [And]("Title").Eq("lsd").Filter, IEntityFilter)
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
@@ -79,7 +79,7 @@ Imports CoreFramework.Structures
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
 
-        Assert.AreEqual("(t1.id = @p1 and t1.name = @p2)", f.MakeSQLStmt(schema, almgr.Aliases, pmgr))
+        Assert.AreEqual("(t1.id = @p1 and t1.name = @p2)", f.MakeSQLStmt(schema, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
@@ -89,8 +89,8 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSimpleTypes2()
-        Dim f As IEntityFilter = New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
-            [And](New Criteria(GetType(Entity4)).Field("Title").Eq(56).[Or]("ID").Eq(483)).Filter
+        Dim f As IEntityFilter = CType(New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
+            [And](New Criteria(GetType(Entity4)).Field("Title").Eq(56).[Or]("ID").Eq(483)).Filter, IEntityFilter)
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
@@ -99,7 +99,7 @@ Imports CoreFramework.Structures
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
 
-        Assert.AreEqual("(t1.id = @p1 and (t1.name = @p2 or t1.id = @p3))", f.MakeSQLStmt(schema, almgr.Aliases, pmgr))
+        Assert.AreEqual("(t1.id = @p1 and (t1.name = @p2 or t1.id = @p3))", f.MakeSQLStmt(schema, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 
