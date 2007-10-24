@@ -28,8 +28,8 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestComplexTypeless()
-        Dim f As IEntityFilter = Criteria.AutoTypeField("ID").Eq(56). _
-            [And]("Title").Eq("lsd").Filter(GetType(Entity4))
+        Dim f As IEntityFilter = CType(Criteria.AutoTypeField("ID").Eq(56). _
+            [And]("Title").Eq("lsd").Filter(GetType(Entity4)), IEntityFilter)
 
         Dim schema As New Orm.DbSchema("1")
         Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create

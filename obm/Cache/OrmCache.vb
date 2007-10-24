@@ -67,13 +67,22 @@ Namespace Orm
         Private Class TemplateHashs
             Inherits Dictionary(Of String, Pair(Of HashIds, IOrmFilterTemplate))
 
-            Public Function GetIds(ByVal key As String, ByVal filter As IEntityFilter) As List(Of String)
+            Public Function GetIds(ByVal key As String, ByVal filter As IFilter) As List(Of String)
                 Dim p As Pair(Of HashIds, IOrmFilterTemplate) = Nothing
+                Dim f As IEntityFilter = TryCast(filter, IEntityFilter)
                 If Not TryGetValue(key, p) Then
-                    p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, filter.GetFilterTemplate)
+                    If f IsNot Nothing Then
+                        p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, f.GetFilterTemplate)
+                    Else
+                        p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, Nothing)
+                    End If
                     Me(key) = p
                 End If
-                Return p.First.GetIds(filter.MakeHash)
+                If f IsNot Nothing Then
+                    Return p.First.GetIds(f.MakeHash)
+                Else
+                    Return p.First.GetIds(EntityFilter.EmptyHash)
+                End If
             End Function
         End Class
 
@@ -601,18 +610,24 @@ Namespace Orm
                                     Throw New ArgumentException("Collection contains different types")
                                 End If
 
-                                Dim ids As List(Of String) = p.Value.First.GetIds(p.Value.Second.MakeHash(schema, oschema, obj))
+                                Dim h As String = EntityFilter.EmptyHash
+                                If p.Value.Second IsNot Nothing Then
+                                    h = p.Value.Second.MakeHash(schema, oschema, obj)
+                                End If
+                                Dim ids As List(Of String) = p.Value.First.GetIds(h)
                                 Dim rm As New List(Of String)
                                 For Each id As String In ids
                                     Dim ce As OrmManagerBase.CachedItem = TryCast(dic(id), OrmManagerBase.CachedItem)
                                     Dim f As IEntityFilter = Nothing
                                     If ce IsNot Nothing Then
+                                        f = TryCast(ce.Filter, IEntityFilter)
+                                    End If
+                                    If ce IsNot Nothing AndAlso f IsNot Nothing Then
                                         If callbacks IsNot Nothing Then
                                             callbacks.BeginUpdateList(p.Key, id)
                                         End If
 
                                         If obj._needAdd OrElse obj._needDelete OrElse forseEval Then
-                                            f = ce.Filter
                                             Dim r As Boolean = False
                                             Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
                                             If f IsNot Nothing Then
@@ -720,7 +735,7 @@ Namespace Orm
         ''' <param name="key"></param>
         ''' <param name="id"></param>
         ''' <remarks></remarks>
-        Protected Friend Sub AddDependType(ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IEntityFilter)
+        Protected Friend Sub AddDependType(ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
             Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
                 Dim l As TemplateHashs = _tp.GetFilters(t)

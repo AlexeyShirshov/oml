@@ -168,12 +168,12 @@ Namespace Orm
 
         Public Function Exists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
             Dim j As New JoinFilter(_t, _f, t, joinField, FilterOperation.Equal)
-            Return GetLink(New DefaultFilter(New SubQuery(t, j), FilterOperation.Exists))
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, j), FilterOperation.Exists))
         End Function
 
         Public Function NotExists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
             Dim j As New JoinFilter(_t, _f, t, joinField, FilterOperation.Equal)
-            Return GetLink(New DefaultFilter(New SubQuery(t, j), FilterOperation.NotExists))
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, j), FilterOperation.NotExists))
         End Function
 
         Public Function Exists(ByVal t As Type) As CriteriaLink
@@ -185,11 +185,11 @@ Namespace Orm
         End Function
 
         Public Function Exists(ByVal t As Type, ByVal f As IFilter) As CriteriaLink
-            Return GetLink(New DefaultFilter(New SubQuery(t, f), FilterOperation.Exists))
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.Exists))
         End Function
 
         Public Function NotExists(ByVal t As Type, ByVal f As IFilter) As CriteriaLink
-            Return GetLink(New DefaultFilter(New SubQuery(t, f), FilterOperation.NotExists))
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.NotExists))
         End Function
 
         Public Function Op(ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
@@ -215,16 +215,23 @@ Namespace Orm
         End Function
 
         Public Function Exists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
-            Return GetLink(New DefaultFilter(New SubQuery(t, joinFilter), FilterOperation.Exists))
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.Exists))
         End Function
 
         Public Function NotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
-            Return GetLink(New DefaultFilter(New SubQuery(t, joinFilter), FilterOperation.NotExists))
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.NotExists))
         End Function
 
     End Class
 
+    Public Interface IGetFilter
+        ReadOnly Property Filter() As IFilter
+        ReadOnly Property Filter(ByVal t As Type) As IFilter
+    End Interface
+
     Public Class CriteriaLink
+        Implements IGetFilter
+
         Private _con As Orm.Condition.ConditionConstructor
         Private _t As Type
 
@@ -317,7 +324,7 @@ Namespace Orm
             Return New CriteriaNonField(_con, ConditionOperator.Or).NotExists(t, joinFilter)
         End Function
 
-        Public ReadOnly Property Filter() As IFilter
+        Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter
             Get
                 If _con IsNot Nothing Then
                     Return _con.Condition
@@ -327,14 +334,15 @@ Namespace Orm
             End Get
         End Property
 
-        Public Overridable ReadOnly Property Filter(ByVal t As Type) As IFilter
+        Public Overridable ReadOnly Property Filter(ByVal t As Type) As IFilter Implements IGetFilter.Filter
             Get
                 If _con IsNot Nothing Then
-                    Dim ef As IEntityFilter = TryCast(_con.Condition, IEntityFilter)
+                    Dim f As IFilter = _con.Condition
+                    Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
                     If ef IsNot Nothing Then
                         ef.GetFilterTemplate.SetType(t)
                     End If
-                    Return _con.Condition
+                    Return f
                 Else
                     Return Nothing
                 End If

@@ -544,22 +544,22 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IEntityFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IEntityFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IEntityFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IEntityFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManagerBase.ICustDelegate(Of T)
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
@@ -588,7 +588,7 @@ Namespace Orm
         'End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
-            ByVal obj As OrmBase, ByVal filter As IEntityFilter, ByVal sort As Sort, _
+            ByVal obj As OrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, filter, sort, id, key, direct)
         End Function
@@ -601,8 +601,8 @@ Namespace Orm
         'End Function
 
         Protected Function FindConnected(ByVal ct As Type, ByVal selectedType As Type, _
-            ByVal filterType As Type, ByVal connectedFilter As IEntityFilter, _
-            ByVal filter As IEntityFilter, ByVal withLoad As Boolean, _
+            ByVal filterType As Type, ByVal connectedFilter As IFilter, _
+            ByVal filter As IFilter, ByVal withLoad As Boolean, _
             ByVal sort As Sort) As IList
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim arr As Generic.List(Of ColumnAttribute) = Nothing
@@ -884,7 +884,7 @@ Namespace Orm
 
         'End Function
 
-        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IEntityFilter, _
+        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IFilter, _
             ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Integer, EditableList)
             Invariant()
 
@@ -1024,7 +1024,8 @@ Namespace Orm
             Return edic
         End Function
 
-        Protected Overloads Function GetObjects(ByVal ct As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IEntityFilter, ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As IList
+        Protected Overloads Function GetObjects(ByVal ct As Type, ByVal ids As Generic.IList(Of Integer), _
+            ByVal f As IFilter, ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As IList
             If ids Is Nothing Then
                 Throw New ArgumentNullException("ids")
             End If
@@ -1083,7 +1084,7 @@ Namespace Orm
             Return objs
         End Function
 
-        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal ids As Generic.IList(Of Integer), ByVal f As IEntityFilter, ByVal objs As IList(Of T), _
+        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal ids As Generic.IList(Of Integer), ByVal f As IFilter, ByVal objs As IList(Of T), _
             ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As Generic.IList(Of T)
             Invariant()
 
@@ -2207,7 +2208,7 @@ l1:
             Return res
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IEntityFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
             Invariant()
             Dim params As New Orm.ParamMgr(DbSchema, "p")
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand

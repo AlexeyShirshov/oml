@@ -174,6 +174,10 @@ Namespace Orm
         Public Overrides Function GetHashCode() As Integer
             Return _ToString.GetHashCode
         End Function
+
+        Public Function ToStaticString() As String Implements IFilter.ToStaticString
+            Return _ToString()
+        End Function
     End Class
 
     Public Class Condition
@@ -401,6 +405,15 @@ Namespace Orm
             End If
 
             Return _left.ToString() & Condition2String() & r
+        End Function
+
+        Public Function ToStaticString() As String Implements IFilter.ToStaticString
+            Dim r As String = String.Empty
+            If _right IsNot Nothing Then
+                r = _right.ToStaticString()
+            End If
+
+            Return _left.ToStaticString() & Condition2String() & r
         End Function
     End Class
 
