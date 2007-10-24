@@ -47,7 +47,7 @@ Namespace Orm
         Private dic As IDictionary
         Private dic_id As IDictionary
         Protected childs As ArrayList
-        Protected _filter As IEntityFilter
+        Protected _filter As IFilter
         Protected _root As DicIndexBase
         Protected _join As OrmJoin
         'Protected _complex As Boolean
@@ -188,11 +188,11 @@ Namespace Orm
         '    End If
         'End Function
 
-        Public Property Filter() As IEntityFilter
+        Public Property Filter() As IFilter
             Get
                 Return _filter
             End Get
-            Protected Friend Set(ByVal value As IEntityFilter)
+            Protected Friend Set(ByVal value As IFilter)
                 _filter = value
             End Set
         End Property

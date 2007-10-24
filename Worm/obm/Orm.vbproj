@@ -102,6 +102,7 @@
   <ItemGroup>
     <Compile Include="Cache\advcache.vb" />
     <Compile Include="Criteria\Criteria.vb" />
+    <Compile Include="Criteria\FilterValues.vb" />
     <Compile Include="Criteria\JoinAndCondition.vb" />
     <Compile Include="Criteria\Sorting.vb" />
     <Compile Include="Managers\DataProviders.vb" />

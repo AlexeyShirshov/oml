@@ -963,6 +963,25 @@ Public Class TestManagerRS
             Assert.AreEqual(1, t.Count)
             Assert.AreEqual(2D, GetList(t)(0).Money)
 
+            t = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Money").In( _
+                GetType(Table1), "Code"), Nothing, False)
+
+            Assert.AreEqual(1, t.Count)
+
+            mgr.BeginTransaction()
+            Try
+                Dim t2 As New Table2(1934, mgr.Cache, mgr.DbSchema)
+                t2.Tbl = mgr.Find(Of Table1)(1)
+                t2.Money = 2
+                t2.Save(True)
+
+                t = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Money").In( _
+                    GetType(Table1), "Code"), Nothing, False)
+
+                Assert.AreEqual(2, t.Count)
+            Finally
+                mgr.Rollback()
+            End Try
         End Using
     End Sub
 
@@ -990,6 +1009,25 @@ Public Class TestManagerRS
                 GetType(Table1), f), Nothing, False)
 
             Assert.AreEqual(2, t.Count)
+
+            t = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Table1").NotExists( _
+                GetType(Table1), f), Nothing, False)
+
+            Assert.AreEqual(2, t.Count)
+
+            mgr.BeginTransaction()
+            Try
+                Dim t2 As New Table2(1934, mgr.Cache, mgr.DbSchema)
+                t2.Tbl = mgr.Find(Of Table1)(1)
+                t2.Save(True)
+
+                t = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Table1").NotExists( _
+                    GetType(Table1), f), Nothing, False)
+
+                Assert.AreEqual(3, t.Count)
+            Finally
+                mgr.Rollback()
+            End Try
         End Using
     End Sub
 
