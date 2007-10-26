@@ -1149,10 +1149,6 @@ Namespace Orm
             Return String.Empty
         End Function
 
-        Protected Overridable Function GetFilterInfo() As Object
-            Return Nothing
-        End Function
-
         'Protected Overridable Function GetNewObject(ByVal type As Type, ByVal id As Integer) As OrmBase
         '    Dim o As OrmBase = Nothing
         '    If  IsNot Nothing Then

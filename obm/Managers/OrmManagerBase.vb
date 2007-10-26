@@ -1582,7 +1582,9 @@ l1:
 
             Dim joins() As OrmJoin = Nothing
             If HasJoins(GetType(T), filter, sort, joins) Then
-                Return FindWithJoins(Of T)(Nothing, joins, criteria, sort, withLoad)
+                Dim c As New Condition.ConditionConstructor()
+                c.AddFilter(filter)
+                Return FindWithJoins(Of T)(Nothing, joins, New CriteriaLink(c), sort, withLoad)
             Else
                 Dim key As String = FindGetKey(Of T)(filter)
 
@@ -3345,6 +3347,10 @@ l1:
             Return Nothing
         End Function
 
+        Protected Overridable Function GetFilterInfo() As Object
+            Return Nothing
+        End Function
+
 #Region " Abstract members "
 
         Protected MustOverride Function GetSearchSection() As String
@@ -3569,7 +3575,7 @@ l1:
             Return l.Length + 1
         End Function
 
-        Protected Function HasJoins(ByVal selectType As Type, ByVal filter As IFilter, ByVal s As Sort, ByRef joins() As OrmJoin) As Boolean
+        Protected Function HasJoins(ByVal selectType As Type, ByRef filter As IFilter, ByVal s As Sort, ByRef joins() As OrmJoin) As Boolean
             Dim l As New List(Of OrmJoin)
             Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(selectType)
             Dim types As New List(Of Type)
@@ -3587,6 +3593,24 @@ l1:
                         types.Add(type2join)
 
                         l.Add(MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
+
+                        Dim ts As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2join), IOrmObjectSchema)
+                        Dim pk_table As OrmTable = ts.GetTables(0)
+                        For i As Integer = 1 To ts.GetTables.Length - 1
+                            Dim join As OrmJoin = ts.GetJoins(pk_table, ts.GetTables(i))
+
+                            If Not join.IsEmpty Then
+                                l.Add(join)
+                            End If
+                        Next
+
+                        Dim newfl As IFilter = ts.GetFilter(GetFilterInfo)
+                        If newfl IsNot Nothing Then
+                            Dim con As New Condition.ConditionConstructor()
+                            con.AddFilter(filter)
+                            con.AddFilter(newfl)
+                            filter = con.Condition
+                        End If
                     End If
                 End If
             Next
