@@ -28,6 +28,7 @@ Namespace Orm
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
             Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
             Dim upd As IList(Of EntityFilter) = Nothing
+            Dim inv As Boolean
             Using obj.GetSyncRoot()
                 Dim cmdtext As String = DbSchema.Update(obj, params, cols, upd)
                 If cmdtext.Length > 0 Then
@@ -45,7 +46,7 @@ Namespace Orm
 
                                 LoadSingleObject(cmd, cols, obj, False, False, False)
 
-                                InvalidateCache(obj, upd)
+                                inv = True
                             Finally
                                 CloseConn(b)
                             End Try
@@ -102,7 +103,7 @@ Namespace Orm
                                 End Using
                             Next
 
-                            InvalidateCache(obj, upd)
+                            inv = True
                         Finally
                             If tran Is Nothing Then
                                 Commit()
@@ -111,6 +112,10 @@ Namespace Orm
                     End If
                 End If
             End Using
+
+            If inv Then
+                InvalidateCache(obj, upd)
+            End If
         End Sub
 
         Protected Overridable Sub InsertObject(ByVal obj As OrmBase)
