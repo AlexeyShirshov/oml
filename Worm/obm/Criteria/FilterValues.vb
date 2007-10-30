@@ -453,4 +453,77 @@ Namespace Orm
         End Function
     End Class
 
+    Public Class BetweenValue
+        Inherits ScalarValue
+
+        Private _l As String
+        Private _r As String
+
+        Public Sub New(ByVal left As Object, ByVal right As Object)
+            MyBase.New(New Pair(Of Object)(left, right))
+
+            If left Is Nothing Then
+                Throw New ArgumentNullException("left")
+            End If
+
+            If right Is Nothing Then
+                Throw New ArgumentNullException("right")
+            End If
+        End Sub
+
+        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult
+            Dim r As IEvaluableValue.EvalResult
+
+            Dim val As Object = GetValue(v, template, r)
+            If r <> IEvaluableValue.EvalResult.Unknown Then
+                Return r
+            Else
+                r = IEvaluableValue.EvalResult.NotFound
+            End If
+
+            If template.Operation = FilterOperation.Between Then
+                Dim int_v As Pair(Of Object) = Value
+                Dim i As Integer = CType(v, IComparable).CompareTo(int_v.First)
+                If i >= 0 Then
+                    i = CType(v, IComparable).CompareTo(int_v.Second)
+                    If i <= 0 Then
+                        r = IEvaluableValue.EvalResult.Found
+                    End If
+                End If
+            Else
+                Throw New InvalidOperationException(String.Format("Invalid operation {0} for BetweenValue", template.OperToString))
+            End If
+
+            Return r
+        End Function
+
+        Public Overrides Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, _
+            ByVal f As IEntityFilter, ByVal almgr As AliasMgr) As String
+
+            If paramMgr Is Nothing Then
+                Throw New ArgumentNullException("paramMgr")
+            End If
+
+            Dim left As Object = Value.First, right As Object = Value.Second
+            If f IsNot Nothing Then
+                left = f.PrepareValue(schema, left)
+                right = f.PrepareValue(schema, right)
+            End If
+
+            _l = paramMgr.AddParam(_l, left)
+            _r = paramMgr.AddParam(_r, right)
+
+            Return _l & " and " & _r
+        End Function
+
+        Public Overrides Function _ToString() As String
+            Return Value.First.ToString & "__$__" & Value.Second.ToString
+        End Function
+
+        Public Shadows ReadOnly Property Value() As Pair(Of Object)
+            Get
+                Return CType(MyBase.Value, Pair(Of Object))
+            End Get
+        End Property
+    End Class
 End Namespace

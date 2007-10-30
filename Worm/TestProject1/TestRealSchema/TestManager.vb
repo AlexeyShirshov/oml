@@ -951,7 +951,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestInSubQuery()
-        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Table1").In( _
                 GetType(Table1)), Nothing, False)
 
@@ -987,7 +987,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestExistSubQuery()
-        Using mgr As Orm.OrmReadOnlyDBManager = CreateManagerSharedFullText(GetSchema("1"))
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim tt2 As Type = GetType(Table2)
 
             Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(New Orm.Criteria(tt2).Field("Table1").Exists( _
@@ -1005,12 +1005,12 @@ Public Class TestManagerRS
             c.AddFilter(New Orm.EntityFilter(GetType(Table1), "Code", New Orm.ScalarValue(45), Orm.FilterOperation.Equal))
             Dim f As Orm.IFilter = c.Condition
 
-            t = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Table1").NotExists( _
+            t = mgr.Find(Of Table2)(Orm.Criteria.NotExists( _
                 GetType(Table1), f), Nothing, False)
 
             Assert.AreEqual(2, t.Count)
 
-            t = mgr.Find(Of Table2)(Orm.Criteria.AutoTypeField("Table1").NotExists( _
+            t = mgr.Find(Of Table2)(Orm.Criteria.NotExists( _
                 GetType(Table1), f), Nothing, False)
 
             Assert.AreEqual(2, t.Count)
@@ -1028,6 +1028,55 @@ Public Class TestManagerRS
             Finally
                 mgr.Rollback()
             End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestBetween()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(Orm.Criteria.AutoTypeField("Code").Between(2, 45), Orm.Sorting.Field("Code"), False)
+
+            Assert.AreEqual(2, c.Count)
+
+            Assert.AreEqual(2, GetList(c)(0).Code)
+            Assert.AreEqual(45, GetList(c)(1).Code)
+
+            mgr.BeginTransaction()
+            Try
+                GetList(c)(0).Code = 100
+                GetList(c)(0).Save(True)
+
+                c = mgr.Find(Of Table1)(Orm.Criteria.AutoTypeField("Code").Between(2, 45), Orm.Sorting.Field("Code"), False)
+
+                Assert.AreEqual(1, c.Count)
+
+                Dim t As New Table1(GetIdentity, mgr.Cache, mgr.ObjectSchema)
+                t.Code = 30
+                t.CreatedAt = Now
+                t.Save(True)
+
+                c = mgr.Find(Of Table1)(Orm.Criteria.AutoTypeField("Code").Between(2, 45), Orm.Sorting.Field("Code"), False)
+
+                Assert.AreEqual(2, c.Count)
+                Assert.AreEqual(30, GetList(c)(0).Code)
+                Assert.AreEqual(45, GetList(c)(1).Code)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestCustomFilter()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)( _
+                Orm.Criteria.Custom(GetType(Table1), "Code", "power({0}.{1},2)").GreaterThan(1000), _
+                Orm.Sorting.Field("Code"), False)
+
+            Assert.AreEqual(2, c.Count)
+
+            Assert.AreEqual(3, GetList(c)(0).Identifier)
+            Assert.AreEqual(2, GetList(c)(1).Identifier)
         End Using
     End Sub
 

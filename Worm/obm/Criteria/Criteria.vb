@@ -39,9 +39,21 @@ Namespace Orm
             Return New CriteriaField(Nothing, fieldName)
         End Function
 
-        'Public Shared Function Exists(ByVal t As Type, ByVal fieldName As String) As CriteriaLink
-        '    Return New CriteriaLink().AndExists(t, fieldName)
-        'End Function
+        Public Shared Function Exists(ByVal t As Type, ByVal filter As IFilter) As CriteriaLink
+            Return New CriteriaLink(New Condition.ConditionConstructor).AndExists(t, filter)
+        End Function
+
+        Public Shared Function NotExists(ByVal t As Type, ByVal filter As IFilter) As CriteriaLink
+            Return New CriteriaLink(New Condition.ConditionConstructor).AndNotExists(t, filter)
+        End Function
+
+        Public Shared Function Custom(ByVal t As Type, ByVal field As String) As CriteriaField
+            Return New CustomCF(t, field)
+        End Function
+
+        Public Shared Function Custom(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField
+            Return New CustomCF(t, field, format)
+        End Function
     End Class
 
     Public Class CriteriaField
@@ -79,11 +91,27 @@ Namespace Orm
             Return New CriteriaLink(_t, _con)
         End Function
 
+        Protected Overridable Function CreateFilter(ByVal v As IFilterValue, ByVal oper As FilterOperation) As IFilter
+            Return New EntityFilter(_t, _f, v, oper)
+        End Function
+
+        Protected ReadOnly Property Type() As Type
+            Get
+                Return _t
+            End Get
+        End Property
+
+        Protected ReadOnly Property Field() As String
+            Get
+                Return _f
+            End Get
+        End Property
+
         Public Function Eq(ByVal value As Object) As CriteriaLink
             If value Is Nothing OrElse value Is DBNull.Value Then
                 Return IsNull()
             Else
-                Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.Equal))
+                Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.Equal))
             End If
         End Function
 
@@ -91,7 +119,7 @@ Namespace Orm
             If value Is Nothing OrElse value Is DBNull.Value Then
                 Return IsNotNull()
             Else
-                Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.NotEqual))
+                Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.NotEqual))
             End If
         End Function
 
@@ -99,7 +127,7 @@ Namespace Orm
             If value Is Nothing Then
                 Return IsNull()
             Else
-                Return GetLink(New EntityFilter(_t, _f, New EntityValue(value), FilterOperation.Equal))
+                Return GetLink(CreateFilter(New EntityValue(value), FilterOperation.Equal))
             End If
         End Function
 
@@ -107,47 +135,47 @@ Namespace Orm
             If value Is Nothing Then
                 Return IsNotNull()
             Else
-                Return GetLink(New EntityFilter(_t, _f, New EntityValue(value), FilterOperation.NotEqual))
+                Return GetLink(CreateFilter(New EntityValue(value), FilterOperation.NotEqual))
             End If
         End Function
 
         Public Function GreaterThanEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.GreaterEqualThan))
+            Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.GreaterEqualThan))
         End Function
 
         Public Function LessThanEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.LessEqualThan))
+            Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.LessEqualThan))
         End Function
 
         Public Function GreaterThan(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.GreaterThan))
+            Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.GreaterThan))
         End Function
 
         Public Function LessThan(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.LessThan))
+            Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.LessThan))
         End Function
 
         Public Function [Like](ByVal value As String) As CriteriaLink
             If String.IsNullOrEmpty(value) Then
                 Throw New ArgumentNullException("value")
             End If
-            Return GetLink(New EntityFilter(_t, _f, New ScalarValue(value), FilterOperation.Like))
+            Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.Like))
         End Function
 
         Public Function IsNull() As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New DBNullValue(), FilterOperation.Is))
+            Return GetLink(CreateFilter(New DBNullValue(), FilterOperation.Is))
         End Function
 
         Public Function IsNotNull() As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New DBNullValue(), FilterOperation.IsNot))
+            Return GetLink(CreateFilter(New DBNullValue(), FilterOperation.IsNot))
         End Function
 
         Public Function [In](ByVal arr As ICollection) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New InValue(arr), FilterOperation.In))
+            Return GetLink(CreateFilter(New InValue(arr), FilterOperation.In))
         End Function
 
         Public Function NotIn(ByVal arr As ICollection) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New InValue(arr), FilterOperation.NotIn))
+            Return GetLink(CreateFilter(New InValue(arr), FilterOperation.NotIn))
         End Function
 
         Public Function [In](ByVal t As Type) As CriteriaLink
@@ -192,8 +220,47 @@ Namespace Orm
             Return GetLink(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.NotExists))
         End Function
 
+        Public Function Between(ByVal left As Object, ByVal right As Object) As CriteriaLink
+            Return GetLink(CreateFilter(New BetweenValue(left, right), FilterOperation.Between))
+        End Function
+
         Public Function Op(ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, value, oper))
+            Return GetLink(CreateFilter(value, oper))
+        End Function
+
+    End Class
+
+    Public Class CustomCF
+        Inherits CriteriaField
+
+        Private _format As String
+
+        Protected Friend Sub New(ByVal t As Type, ByVal field As String, ByVal format As String)
+            MyBase.New(t, field)
+            _format = format
+        End Sub
+
+        Protected Friend Sub New(ByVal t As Type, ByVal field As String)
+            MyBase.New(t, field)
+        End Sub
+
+        Protected Friend Sub New(ByVal t As Type, ByVal field As String, ByVal format As String, _
+            ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
+            MyBase.New(t, field, con, ct)
+            _format = format
+        End Sub
+
+        Protected Friend Sub New(ByVal t As Type, ByVal field As String, _
+            ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
+            MyBase.New(t, field, con, ct)
+        End Sub
+
+        Protected Overrides Function CreateFilter(ByVal v As IFilterValue, ByVal oper As FilterOperation) As IFilter
+            If String.IsNullOrEmpty(_format) Then
+                Return New CustomFilter(Type, Field, v, oper)
+            Else
+                Return New CustomFilter(Type, Field, _format, v, oper)
+            End If
         End Function
     End Class
 
@@ -222,6 +289,13 @@ Namespace Orm
             Return GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.NotExists))
         End Function
 
+        'Public Function Custom(ByVal t As Type, ByVal field As String, ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
+        '    Return GetLink(New CustomFilter(t, field, value, oper))
+        'End Function
+
+        'Public Function Custom(ByVal t As Type, ByVal field As String, ByVal format As String, ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
+        '    Return GetLink(New CustomFilter(t, field, format, value, oper))
+        'End Function
     End Class
 
     Public Interface IGetFilter
@@ -322,6 +396,22 @@ Namespace Orm
 
         Public Function OrNotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
             Return New CriteriaNonField(_con, ConditionOperator.Or).NotExists(t, joinFilter)
+        End Function
+
+        Public Function CustomAnd(ByVal t As Type, ByVal field As String) As CriteriaField
+            Return New CustomCF(t, field, _con, ConditionOperator.And)
+        End Function
+
+        Public Function CustomOr(ByVal t As Type, ByVal field As String) As CriteriaField
+            Return New CustomCF(t, field, _con, ConditionOperator.Or)
+        End Function
+
+        Public Function CustomAnd(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField
+            Return New CustomCF(t, field, format, _con, ConditionOperator.And)
+        End Function
+
+        Public Function CustomOr(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField
+            Return New CustomCF(t, field, format, _con, ConditionOperator.Or)
         End Function
 
         Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter

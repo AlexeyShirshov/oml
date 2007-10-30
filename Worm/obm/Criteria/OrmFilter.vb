@@ -87,6 +87,8 @@ Namespace Orm
                         Return "Exists"
                     Case FilterOperation.NotExists
                         Return "NotExists"
+                    Case FilterOperation.Between
+                        Return "Between"
                     Case Else
                         Throw New DBSchemaException("Operation " & _oper & " not supported")
                 End Select
@@ -125,6 +127,8 @@ Namespace Orm
                     Return " exists "
                 Case FilterOperation.NotExists
                     Return " not exists "
+                Case FilterOperation.Between
+                    Return " between "
                 Case Else
                     Throw New DBSchemaException("invalid opration " & oper.ToString)
             End Select
@@ -590,6 +594,7 @@ Namespace Orm
         Inherits FilterBase
 
         Private _oper As FilterOperation
+        Private _str As String
 
         Public Sub New(ByVal value As IFilterValue, ByVal oper As FilterOperation)
             MyBase.New(value)
@@ -597,7 +602,10 @@ Namespace Orm
         End Sub
 
         Protected Overrides Function _ToString() As String
-            Return Value._ToString & TemplateBase.Oper2String(_oper)
+            If String.IsNullOrEmpty(_str) Then
+                _str = Value._ToString & TemplateBase.Oper2String(_oper)
+            End If
+            Return _str
         End Function
 
         Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter)
@@ -614,6 +622,93 @@ Namespace Orm
                 Throw New NotImplementedException("Value is not implement INonTemplateValue")
             End If
             Return v.GetStaticString & "$" & TemplateBase.Oper2String(_oper)
+        End Function
+    End Class
+
+    Public Class CustomFilter
+        Inherits FilterBase
+
+        Private _t As Type
+        Private _tbl As OrmTable
+        Private _field As String
+        Private _format As String
+        Private _oper As FilterOperation
+        Private _str As String
+
+        Public Sub New(ByVal table As Type, ByVal field As String, ByVal format As String, ByVal value As IFilterValue, ByVal oper As FilterOperation)
+            MyBase.New(value)
+            _t = table
+            _field = field
+            _format = format
+            _oper = oper
+        End Sub
+
+        Public Sub New(ByVal table As Type, ByVal field As String, ByVal value As IFilterValue, ByVal oper As FilterOperation)
+            MyClass.New(table, field, "{0}.{1}", value, oper)
+        End Sub
+
+        Public Sub New(ByVal table As OrmTable, ByVal field As String, ByVal format As String, ByVal value As IFilterValue, ByVal oper As FilterOperation)
+            MyBase.New(value)
+            _tbl = table
+            _field = field
+            _format = format
+            _oper = oper
+        End Sub
+
+        Public Sub New(ByVal table As OrmTable, ByVal field As String, ByVal value As IFilterValue, ByVal oper As FilterOperation)
+            MyClass.New(table, field, "{0}.{1}", value, oper)
+        End Sub
+
+        Protected Overrides Function _ToString() As String
+            If String.IsNullOrEmpty(_str) Then
+                _str = Value._ToString & TemplateBase.Oper2String(_oper)
+            End If
+            Return _str
+        End Function
+
+        Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter)
+            Return New CustomFilter() {Me}
+        End Function
+
+        Public Overrides Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String
+            Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases
+
+            If schema Is Nothing Then
+                Throw New ArgumentNullException("schema")
+            End If
+
+            Dim [alias] As String = String.Empty
+            Dim fld As String = _field
+
+            If _t IsNot Nothing Then
+                Dim oschema As IOrmObjectSchema = CType(schema.GetObjectSchema(_t), IOrmObjectSchema)
+                Dim tbl As OrmTable = Nothing
+                Dim map As MapField2Column = Nothing
+                If oschema.GetFieldColumnMap.TryGetValue(_field, map) Then
+                    fld = map._columnName
+                    tbl = map._tableName
+                Else
+                    tbl = oschema.GetTables(0)
+                End If
+
+                If tableAliases IsNot Nothing Then
+                    [alias] = tableAliases(tbl)
+                End If
+            Else
+                If tableAliases IsNot Nothing Then
+                    [alias] = tableAliases(_tbl)
+                End If
+            End If
+
+            Return String.Format(_format, [alias], fld) & TemplateBase.Oper2String(_oper) & GetParam(schema, pname, almgr)
+        End Function
+
+        Public Overrides Function ToStaticString() As String
+            Dim o As Object = _t
+            If o Is Nothing Then
+                o = _tbl.TableName
+            End If
+            Return String.Format(_format, o.ToString, _field) & TemplateBase.Oper2String(_oper)
         End Function
     End Class
 End Namespace
