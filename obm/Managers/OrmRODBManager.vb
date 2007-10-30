@@ -2028,7 +2028,8 @@ Namespace Orm
                                 appendMain = True
                             End If
                         Else
-                            Throw New NotImplementedException
+                            appendMain = True
+                            'Throw New NotImplementedException
                         End If
                     End If
                 Next

@@ -395,6 +395,7 @@ Namespace Orm
         [IsNot]
         Exists
         NotExists
+        Between
     End Enum
 
     Public Enum ConditionOperator
