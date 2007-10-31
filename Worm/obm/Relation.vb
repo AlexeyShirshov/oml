@@ -102,7 +102,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public ReadOnly Property Original() As ICollection(Of Integer)
+        Public ReadOnly Property Original() As IList(Of Integer)
             Get
                 Return _mainList
             End Get

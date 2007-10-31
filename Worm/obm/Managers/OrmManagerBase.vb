@@ -405,13 +405,21 @@ Namespace Orm
                         successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                     End If
                 Else
-                    r = mgr.ConvertIds2Objects(Of T)(Entry.Current, mgr.GetStart, mgr.GetLength, False)
+                    Try
+                        r = mgr.ConvertIds2Objects(Of T)(Entry.Current, mgr.GetStart, mgr.GetLength, False)
+                    Catch ex As InvalidOperationException When ex.Message.StartsWith("Cannot prepare current data view")
+                        r = mgr.ConvertIds2Objects(Of T)(Entry.Original, mgr.GetStart, mgr.GetLength, False)
+                    End Try
                 End If
                 Return r
             End Function
 
             Public Overrides Function GetObjectList(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase) As System.Collections.Generic.ICollection(Of T)
-                Return mgr.ConvertIds2Objects(Of T)(Entry.Current, False)
+                Try
+                    Return mgr.ConvertIds2Objects(Of T)(Entry.Current, False)
+                Catch ex As InvalidOperationException When ex.Message.StartsWith("Cannot prepare current data view")
+                    Return mgr.ConvertIds2Objects(Of T)(Entry.Original, False)
+                End Try
             End Function
 
             Public Overrides Function Add(ByVal mgr As OrmManagerBase, ByVal obj As OrmBase) As Boolean
