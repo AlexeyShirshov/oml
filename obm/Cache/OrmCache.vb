@@ -87,13 +87,13 @@ Namespace Orm
         End Class
 
         Private Class TypeDepends
-            Inherits Dictionary(Of Type, TemplateHashs)
+            Inherits Dictionary(Of Object, TemplateHashs)
 
-            Public Function GetFilters(ByVal t As Type) As TemplateHashs
+            Public Function GetFilters(ByVal type As Object) As TemplateHashs
                 Dim r As TemplateHashs = Nothing
-                If Not TryGetValue(t, r) Then
+                If Not TryGetValue(type, r) Then
                     r = New TemplateHashs
-                    Me(t) = r
+                    Me(type) = r
                 End If
                 Return r
             End Function
@@ -591,9 +591,13 @@ Namespace Orm
             Next
 
             Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(tt)
-
+            Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
+            Dim k As Object = tt
+            If c IsNot Nothing Then
+                k = c.GetEntityTypeKey
+            End If
             Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
-                Dim l As TemplateHashs = _tp.GetFilters(tt)
+                Dim l As TemplateHashs = _tp.GetFilters(k)
                 If l.Count > 0 Then
                     For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In l
                         Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
@@ -735,10 +739,10 @@ Namespace Orm
         ''' <param name="key"></param>
         ''' <param name="id"></param>
         ''' <remarks></remarks>
-        Protected Friend Sub AddDependType(ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter)
+        Protected Friend Sub AddDependType(ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter, ByVal schema As OrmSchemaBase)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
             Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
-                Dim l As TemplateHashs = _tp.GetFilters(t)
+                Dim l As TemplateHashs = _tp.GetFilters(schema.GetEntityTypeKey(t))
                 Dim h As List(Of String) = l.GetIds(key, f)
                 If Not h.Contains(id) Then
                     h.Add(id)
