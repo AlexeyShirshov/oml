@@ -250,7 +250,7 @@ Namespace Orm
                 If ov Is Nothing Then
                     Throw New InvalidOperationException(String.Format("Field {0} is Entity but param is not", template.FieldName))
                 End If
-                If tt IsNot ov.OrmType Then
+                If Not tt.IsAssignableFrom(ov.OrmType) Then
                     If Value Is Nothing Then
                         r = IEvaluableValue.EvalResult.NotFound
                         Return Nothing
