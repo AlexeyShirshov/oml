@@ -134,7 +134,13 @@ Namespace Web
             Dim path As String = GetFileName()
             Dim xdoc As New XmlDocument
             If IO.File.Exists(path) Then
-                xdoc.Load(path)
+                Try
+                    xdoc.Load(path)
+                Catch ex As xmlexception
+                    xdoc = New xmldocument
+                    Dim r As XmlElement = xdoc.CreateElement("root")
+                    xdoc.AppendChild(r)
+                End Try
             Else
                 Dim r As XmlElement = xdoc.CreateElement("root")
                 xdoc.AppendChild(r)
