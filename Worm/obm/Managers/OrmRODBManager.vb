@@ -380,6 +380,8 @@ Namespace Orm
                                 End If
                             End Try
                         End If
+                    Else
+                        _Rollback()
                     End If
                     RemoveHandler _mgr.BeginDelete, AddressOf Delete
                     RemoveHandler _mgr.BeginUpdate, AddressOf Add
