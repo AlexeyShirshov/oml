@@ -116,4 +116,23 @@ Public Class TestSearch
             Assert.AreEqual(1, c.Count)
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestSearchPaging()
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New Orm.DbSchema("Search"))
+            Using New Orm.OrmReadOnlyDBManager.PagerSwitcher(mgr, 0, 1)
+                Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec")
+
+                Assert.AreEqual(1, c.Count)
+            End Using
+
+            Using New Orm.OrmReadOnlyDBManager.PagerSwitcher(mgr, 1, 1)
+                Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec")
+
+                Assert.AreEqual(1, c.Count)
+            End Using
+
+        End Using
+    End Sub
+
 End Class

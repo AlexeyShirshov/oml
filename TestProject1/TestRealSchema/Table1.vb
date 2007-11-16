@@ -72,10 +72,20 @@ Public Class Table1
                 CreatedAt = CDate(value)
             Case "Custom"
                 _cust = CInt(value)
+            Case "ddd"
+                Name = CStr(value)
             Case Else
                 MyBase.SetValue(pi, c, value)
         End Select
     End Sub
+
+    Public Overrides Function GetValue(ByVal propAlias As String) As Object
+        If propAlias = "ddd" Then
+            Return Name
+        Else
+            Return MyBase.GetValue(propAlias)
+        End If
+    End Function
 
     <Column("Title")> _
     Public Property Name() As String
