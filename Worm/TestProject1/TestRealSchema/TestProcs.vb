@@ -177,6 +177,19 @@ Public Class TestProcs
             Assert.AreEqual(100, p.GetResult(90, mgr))
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestPartial()
+        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+            Dim p As New PartialLoadProc(1)
+            Dim c As ICollection(Of Table1) = p.GetResult(mgr)
+
+            Assert.AreEqual(1, c.Count)
+
+            Dim t As Table1 = CType(c, IList(Of Table1))(0)
+
+        End Using
+    End Sub
 End Class
 
 #Region " procs "
@@ -472,4 +485,35 @@ Public Class ScalarProc
         Return MyBase.GetResult(mgr)
     End Function
 End Class
+
+Public Class PartialLoadProc
+    Inherits Orm.QueryOrmStoredProcBase(Of Table1)
+
+    Private _params As List(Of Pair(Of String, Object))
+
+    Public Sub New(ByVal i As Integer)
+        _params = New List(Of Pair(Of String, Object))
+        _params.Add(New Pair(Of String, Object)("id", i))
+    End Sub
+
+    Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Worm.Orm.ColumnAttribute)
+        Dim l As New List(Of Orm.ColumnAttribute)
+        l.Add(New Orm.ColumnAttribute("ID"))
+        l.Add(New Orm.ColumnAttribute("ddd"))
+        Return l
+    End Function
+
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
+        Return _params
+    End Function
+
+    Protected Overrides Function GetName() As String
+        Return "dbo.partialload"
+    End Function
+
+    Protected Overrides Function GetWithLoad() As Boolean
+        Return True
+    End Function
+End Class
+
 #End Region

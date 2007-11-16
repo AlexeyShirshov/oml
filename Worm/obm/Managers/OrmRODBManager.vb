@@ -2170,10 +2170,32 @@ Namespace Orm
                     End If
 l1:
                 Next
-                full.AddRange(full_part1)
-                full.AddRange(full_part)
-                full.AddRange(starts)
-                full.AddRange(other)
+                Dim cnt As Integer = full.Count
+                Dim rf As Integer = Math.Max(0, _start - cnt)
+                full.RemoveRange(0, Math.Min(_start, cnt))
+                cnt = full.Count
+                If cnt < _length Then
+                    'If full_part1.Count + cnt < _length Then
+                    '    full.AddRange(full_part1)
+                    'Else
+                    '    full_part1.RemoveRange(0, _length - cnt)
+                    '    full.AddRange(full_part1)
+                    '    GoTo l2
+                    'End If
+                    If AddPart(full, full_part1, cnt, rf) Then
+                        If AddPart(full, full_part, cnt, rf) Then
+                            If AddPart(full, starts, cnt, rf) Then
+                                AddPart(full, other, cnt, rf)
+                            End If
+                        End If
+                    End If
+                    'full.AddRange(full_part)
+                    'full.AddRange(starts)
+                    'full.AddRange(other)
+                Else
+                    full.RemoveRange(0, _length)
+                End If
+l2:
                 res = full
             Else
                 If _length = Integer.MaxValue AndAlso _start = 0 Then
@@ -2187,24 +2209,40 @@ l1:
                 End If
             End If
 
-            If col2 IsNot Nothing AndAlso res.Count < _length Then
-                Dim dic As New Dictionary(Of Integer, T)
-                For Each o As T In res
-                    dic.Add(o.Identifier, o)
-                Next
-                Dim i As Integer = res.Count
-                For Each o As T In col2
-                    If Not dic.ContainsKey(o.Identifier) Then
-                        res.Add(o)
-                        i += 1
-                        If i = _start + _length Then
-                            Exit For
+                If col2 IsNot Nothing AndAlso res.Count < _length Then
+                    Dim dic As New Dictionary(Of Integer, T)
+                    For Each o As T In res
+                        dic.Add(o.Identifier, o)
+                    Next
+                    Dim i As Integer = res.Count
+                    For Each o As T In col2
+                        If Not dic.ContainsKey(o.Identifier) Then
+                            res.Add(o)
+                            i += 1
+                            If i = _start + _length Then
+                                Exit For
+                            End If
                         End If
-                    End If
-                Next
-            End If
+                    Next
+                End If
 
-            Return res
+                Return res
+        End Function
+
+        Private Function AddPart(Of T)(ByVal full As List(Of T), ByVal part As List(Of T), ByRef cnt As Integer, ByRef rf As Integer) As Boolean
+            Dim r As Integer = rf
+            Dim pcnt As Integer = part.Count
+            rf = Math.Max(0, rf - pcnt)
+            part.RemoveRange(0, Math.Min(r, pcnt))
+            If pcnt + cnt <= _length Then
+                full.AddRange(part)
+                cnt = full.Count
+            Else
+                part.RemoveRange(0, _length - cnt)
+                full.AddRange(part)
+                Return False
+            End If
+            Return cnt < _length
         End Function
 
         Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
