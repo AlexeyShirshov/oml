@@ -2171,6 +2171,7 @@ Namespace Orm
 l1:
                 Next
                 Dim cnt As Integer = full.Count
+                _er = New ExecutionResult(cnt + full_part1.Count + full_part.Count + starts.Count + other.Count, Nothing, Nothing, False, 0)
                 Dim rf As Integer = Math.Max(0, _start - cnt)
                 full.RemoveRange(0, Math.Min(_start, cnt))
                 cnt = full.Count
@@ -2198,6 +2199,7 @@ l1:
 l2:
                 res = full
             Else
+                _er = New ExecutionResult(col.Count, Nothing, Nothing, False, 0)
                 If _length = Integer.MaxValue AndAlso _start = 0 Then
                     res = New List(Of T)(col)
                 Else
@@ -2209,24 +2211,25 @@ l2:
                 End If
             End If
 
-                If col2 IsNot Nothing AndAlso res.Count < _length Then
-                    Dim dic As New Dictionary(Of Integer, T)
-                    For Each o As T In res
-                        dic.Add(o.Identifier, o)
-                    Next
-                    Dim i As Integer = res.Count
-                    For Each o As T In col2
-                        If Not dic.ContainsKey(o.Identifier) Then
-                            res.Add(o)
-                            i += 1
-                            If i = _start + _length Then
-                                Exit For
-                            End If
+            If col2 IsNot Nothing AndAlso res.Count < _length Then
+                Dim dic As New Dictionary(Of Integer, T)
+                For Each o As T In res
+                    dic.Add(o.Identifier, o)
+                Next
+                Dim i As Integer = res.Count
+                For Each o As T In col2
+                    If Not dic.ContainsKey(o.Identifier) Then
+                        res.Add(o)
+                        i += 1
+                        If i = _start + _length Then
+                            Exit For
                         End If
-                    Next
-                End If
+                    End If
+                Next
+                _er = New ExecutionResult(_er.Count + col2.Count, Nothing, Nothing, False, 0)
+            End If
 
-                Return res
+            Return res
         End Function
 
         Private Function AddPart(Of T)(ByVal full As List(Of T), ByVal part As List(Of T), ByRef cnt As Integer, ByRef rf As Integer) As Boolean
@@ -2234,11 +2237,12 @@ l2:
             Dim pcnt As Integer = part.Count
             rf = Math.Max(0, rf - pcnt)
             part.RemoveRange(0, Math.Min(r, pcnt))
+            pcnt = part.Count
             If pcnt + cnt <= _length Then
                 full.AddRange(part)
                 cnt = full.Count
             Else
-                part.RemoveRange(0, _length - cnt)
+                part.RemoveRange(_length - cnt, pcnt - (_length - cnt))
                 full.AddRange(part)
                 Return False
             End If

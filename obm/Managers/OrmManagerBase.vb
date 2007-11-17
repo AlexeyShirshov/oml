@@ -688,7 +688,7 @@ Namespace Orm
         Private _expiresPattern As Date
         Protected _start As Integer
         Protected _length As Integer = Integer.MaxValue
-        Private _er As ExecutionResult
+        Protected _er As ExecutionResult
         Friend _externalFilter As IFilter
         Protected Friend _loadedInLastFetch As Integer
         Private _list As String
