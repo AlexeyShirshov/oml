@@ -692,7 +692,9 @@ Namespace Orm
         Friend _externalFilter As IFilter
         Protected Friend _loadedInLastFetch As Integer
         Private _list As String
-
+#If TraceManagerCreation Then
+        private _callstack as string
+#End If
         Private Function GetStart() As Integer
             If _externalFilter IsNot Nothing Then
                 Return 0
@@ -757,6 +759,9 @@ Namespace Orm
                     Throw New OrmManagerException("Cannot create nested managers with different schema versions")
                 End If
             End If
+#End If
+#If TraceManagerCreation Then
+_callstack = environment.StackTrace
 #End If
             'Thread.SetData(LocalStorage, Me)
 
@@ -894,6 +899,11 @@ Namespace Orm
                     '#End If
                 End If
                 Me._disposed = True
+#If TraceManagerCreation Then
+                If Not disposing Then
+                    Throw New OrmManagerException("Manager finalize stack: " & _callstack)
+                End If
+#End If
             End SyncLock
         End Sub
 
