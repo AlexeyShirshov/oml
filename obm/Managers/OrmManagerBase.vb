@@ -1036,18 +1036,20 @@ _callstack = environment.StackTrace
                     Dim v As List(Of T) = Nothing
                     If lookups.TryGetValue(k, v) Then
                         l.AddRange(v)
-                        If Not _dont_cache_lists Then
-                            'Dim con As New OrmCondition.OrmConditionConstructor
-                            'con.AddFilter(New OrmFilter(tt, fieldName, k, FilterOperation.Equal))
-                            'con.AddFilter(filter)
-                            'Dim f As IOrmFilter = con.Condition
-                            Dim cl As CriteriaLink = Orm.Criteria.Field(tt, fieldName).Eq(k).And(criteria)
-                            Dim f As IFilter = cl.Filter
-                            Dim key As String = FindGetKey(Of T)(f) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
-                            Dim dic As IDictionary = GetDic(_cache, key)
-                            Dim id As String = CObj(f).ToString
-                            dic(id) = New CachedItem(f, v, Me)
-                        End If
+                    Else
+                        v = New List(Of T)
+                    End If
+                    If Not _dont_cache_lists Then
+                        'Dim con As New OrmCondition.OrmConditionConstructor
+                        'con.AddFilter(New OrmFilter(tt, fieldName, k, FilterOperation.Equal))
+                        'con.AddFilter(filter)
+                        'Dim f As IOrmFilter = con.Condition
+                        Dim cl As CriteriaLink = Orm.Criteria.Field(tt, fieldName).Eq(k).And(criteria)
+                        Dim f As IFilter = cl.Filter
+                        Dim key As String = FindGetKey(Of T)(f) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
+                        Dim dic As IDictionary = GetDic(_cache, key)
+                        Dim id As String = f.ToString
+                        dic(id) = New CachedItem(f, v, Me)
                     End If
                 Next
 
