@@ -426,7 +426,11 @@ Namespace Orm
             Dim old_state As ObjectState = state
             Dim hasNew As Boolean = False
             Try
-                Using obj.GetSyncRoot()
+#If DebugLocks Then
+                Using SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
+#Else
+                Using SyncHelper.AcquireDynamicLock("4098jwefpv345mfds-" & t.ToString & obj.Identifier)
+#End If
                     Dim processedType As New List(Of Type)
                     If sa = SaveAction.Delete Then
                         For Each r As M2MRelation In DbSchema.GetM2MRelations(t)
@@ -507,7 +511,7 @@ Namespace Orm
                                 processedType.Add(acp.el.SubType)
                             Next
                         End If
-                        For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEtries(obj, Nothing)
+                        For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
                             'Dim m As M2MCache = o.First
                             'If Not Schema.IsMany2ManyReadonly(t, m.Entry.SubType) AndAlso Not processedType.Contains(m.Entry.SubType) Then
                             '    'Dim r As M2MRelation = Schema.GetM2MRelation(t, m.Entry.SubType, m.Entry.Direct)

@@ -976,8 +976,9 @@ _callstack = environment.StackTrace
                 Exit For
             Next
 #End If
-            Dim l As New List(Of T)
+            Dim lookups As New Dictionary(Of OrmBase, List(Of T))
             Dim newc As New List(Of OrmBase)
+            Dim hasInCache As New Dictionary(Of OrmBase, Object)
 
             Using SyncHelper.AcquireDynamicLock("9h13bhpqergfbjadflbq34f89h134g")
                 If Not _dont_cache_lists Then
@@ -996,7 +997,9 @@ _callstack = environment.StackTrace
                             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(f, Nothing, key, id)
                             Dim v As ICacheValidator = TryCast(del, ICacheValidator)
                             If v Is Nothing OrElse v.Validate() Then
-                                l.AddRange(Find(Of T)(cl, Nothing, True))
+                                'l.AddRange(Find(Of T)(cl, Nothing, True))
+                                lookups.Add(o, New List(Of T)(Find(Of T)(cl, Nothing, True)))
+                                hasInCache.Add(o, Nothing)
                             Else
                                 newc.Add(o)
                             End If
@@ -1015,10 +1018,10 @@ _callstack = environment.StackTrace
                     ids.Append(o.Identifier)
                 Next
                 Dim c As New List(Of T)
-                GetObjects(Of T)(ids.Ints, GetFilter(criteria, tt), c, True, fieldName, False)
-                'l.AddRange(c)
 
-                Dim lookups As New Dictionary(Of OrmBase, List(Of T))
+                'If ids.Ints.Count > 0 Then
+                GetObjects(Of T)(ids.Ints, GetFilter(criteria, tt), c, True, fieldName, False)
+
                 Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(tt)
                 For Each o As T In c
                     'Dim v As OrmBase = CType(_schema.GetFieldValue(o, fieldName), OrmBase)
@@ -1031,20 +1034,21 @@ _callstack = environment.StackTrace
                     ll.Add(o)
                 Next
 
+                Dim l As New List(Of T)
                 For Each obj As OrmBase In col
-                    Dim k As OrmBase = obj
+                    'Dim k As OrmBase = obj
                     Dim v As List(Of T) = Nothing
-                    If lookups.TryGetValue(k, v) Then
+                    If lookups.TryGetValue(obj, v) Then
                         l.AddRange(v)
                     Else
                         v = New List(Of T)
                     End If
-                    If Not _dont_cache_lists Then
+                    If Not _dont_cache_lists AndAlso Not hasInCache.ContainsKey(obj) Then
                         'Dim con As New OrmCondition.OrmConditionConstructor
                         'con.AddFilter(New OrmFilter(tt, fieldName, k, FilterOperation.Equal))
                         'con.AddFilter(filter)
                         'Dim f As IOrmFilter = con.Condition
-                        Dim cl As CriteriaLink = Orm.Criteria.Field(tt, fieldName).Eq(k).And(criteria)
+                        Dim cl As CriteriaLink = Orm.Criteria.Field(tt, fieldName).Eq(obj).And(criteria)
                         Dim f As IFilter = cl.Filter
                         Dim key As String = FindGetKey(Of T)(f) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                         Dim dic As IDictionary = GetDic(_cache, key)
@@ -1052,6 +1056,7 @@ _callstack = environment.StackTrace
                         dic(id) = New CachedItem(f, v, Me)
                     End If
                 Next
+                'End If
 
                 Return l
             End Using
@@ -2266,7 +2271,7 @@ l1:
             _cache.RemoveDepends(obj)
 
             'Dim l As List(Of Type) = Nothing
-            For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEtries(obj, Nothing)
+            For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
                 Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
                 mdic.Remove(o.Second.Second)
             Next
@@ -2588,7 +2593,7 @@ l1:
         'End Sub
 
         Protected Friend Sub M2MCancel(ByVal mainobj As OrmBase, ByVal t As Type)
-            For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEtries(mainobj, Nothing)
+            For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
                 If o.First.Entry.SubType Is t Then
                     o.First.Entry.Reject(True)
                 End If
@@ -2635,7 +2640,7 @@ l1:
             'Dim tt1 As Type = mainobj.GetType
             'Dim tt2 As Type = t
 
-            For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEtries(mainobj, Nothing)
+            For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
                 Dim m2me As M2MCache = o.First
                 If m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso m2me.Entry.Direct = direct Then
                     Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
@@ -2658,7 +2663,7 @@ l1:
         End Function
 
         Protected Sub M2MUpdate(ByVal obj As OrmBase, ByVal oldId As Integer)
-            For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEtries(obj, obj.GetOldName(oldId))
+            For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, obj.GetOldName(oldId))
                 Dim key As String = o.Second.First
                 Dim id As String = o.Second.Second
                 Dim m As M2MCache = o.First
@@ -2673,7 +2678,7 @@ l1:
                 dic.Add(id, m)
             Next
 
-            Cache.UpdateM2MEtries(obj, oldId, obj.GetOldName(oldId))
+            Cache.UpdateM2MEntries(obj, oldId, obj.GetOldName(oldId))
             Dim tt1 As Type = obj.GetType
 
             For Each r As M2MRelation In _schema.GetM2MRelations(obj.GetType)
@@ -2695,7 +2700,7 @@ l1:
         End Sub
 
         Protected Sub M2MSubUpdate(ByVal obj As OrmBase, ByVal id As Integer, ByVal oldId As Integer, ByVal t As Type)
-            For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEtries(obj, Nothing)
+            For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
                 Dim m As M2MCache = o.First
                 If m.Entry.SubType Is t Then
                     m.Entry.Update(id, oldId)

@@ -367,7 +367,11 @@ Namespace Orm
         End Function
 
         Protected Overridable Function SyncHelper(ByVal reader As Boolean) As IDisposable
+#If DebugLocks Then
+            Return New CSScopeMgr_Debug(Me, "d:\temp\")
+#Else
             Return New CSScopeMgr(Me)
+#End If
         End Function
 
         Protected Function Read(ByVal fieldName As String) As IDisposable

@@ -13,7 +13,7 @@ Namespace Orm
         Private _new As Generic.List(Of Integer)
         Private _sort As Sort
         Private _cantgetCurrent As Boolean
-        Private _syncLock As New Object
+        Private _syncRoot As New Object
 
         Sub New(ByVal mainId As Integer, ByVal mainList As IList(Of Integer), ByVal mainType As Type, ByVal subType As Type, ByVal sort As Sort)
             _mainList = mainList
@@ -30,9 +30,9 @@ Namespace Orm
 
         Public ReadOnly Property CurrentCount() As Integer
             Get
-                SyncLock _syncLock
+                Using SyncRoot
                     Return _mainList.Count + _addedList.Count - _deletedList.Count
-                End SyncLock
+                End Using
             End Get
         End Property
 
@@ -42,7 +42,7 @@ Namespace Orm
                     Throw New InvalidOperationException("Cannot prepare current data view. Use Original and Added or save changes.")
                 End If
 
-                SyncLock _syncLock
+                Using SyncRoot
                     Dim arr As New List(Of Integer)
                     If _mainList.Count <> 0 OrElse _addedList.Count <> 0 Then
                         If _addedList.Count <> 0 AndAlso _mainList.Count <> 0 Then
@@ -103,7 +103,7 @@ Namespace Orm
                         Next
                     End If
                     Return arr
-                End SyncLock
+                End Using
             End Get
         End Property
 
@@ -115,7 +115,7 @@ Namespace Orm
 
         Public Function Accept(ByVal mgr As OrmDBManager) As Boolean
             _cantgetCurrent = False
-            SyncLock _syncLock
+            Using SyncRoot
                 Dim needaccept As Boolean = _addedList.Count > 0
                 If _sort Is Nothing Then
                     CType(_mainList, List(Of Integer)).AddRange(_addedList)
@@ -187,12 +187,12 @@ Namespace Orm
                 If needaccept Then
                     AcceptDual()
                 End If
-            End SyncLock
+            End Using
             Return True
         End Function
 
         Public Function Accept(ByVal mgr As OrmDBManager, ByVal id As Integer) As Boolean
-            SyncLock _syncLock
+            Using SyncRoot
                 If _addedList.Contains(id) Then
                     If _sort Is Nothing Then
                         CType(_mainList, List(Of Integer)).Add(id)
@@ -226,7 +226,7 @@ Namespace Orm
                     CType(_mainList, List(Of Integer)).Remove(id)
                     _deletedList.Remove(id)
                 End If
-            End SyncLock
+            End Using
 
             Return True
         End Function
@@ -261,7 +261,7 @@ Namespace Orm
         End Sub
 
         Public Sub Reject(ByVal rejectDual As Boolean)
-            SyncLock _syncLock
+            Using SyncRoot
                 If rejectDual Then
                     For Each id As Integer In _addedList
                         RejectRelated(id, True)
@@ -275,7 +275,7 @@ Namespace Orm
                 End If
                 _deletedList.Clear()
                 RemoveNew()
-            End SyncLock
+            End Using
         End Sub
 
         Public ReadOnly Property Deleted() As IList(Of Integer)
@@ -297,7 +297,7 @@ Namespace Orm
         End Sub
 
         Public Sub Add(ByVal id As Integer)
-            SyncLock _syncLock
+            Using SyncRoot
                 If _deletedList.Contains(id) Then
                     _deletedList.Remove(id)
                 Else
@@ -327,27 +327,27 @@ Namespace Orm
                     End If
                     _addedList.Add(id)
                 End If
-            End SyncLock
+            End Using
         End Sub
 
         Public Sub Add(ByVal id As Integer, ByVal idx As Integer)
-            SyncLock _syncLock
+            Using SyncRoot
                 If _deletedList.Contains(id) Then
                     _deletedList.Remove(id)
                 Else
                     _addedList.Insert(idx, id)
                 End If
-            End SyncLock
+            End Using
         End Sub
 
         Public Sub Delete(ByVal id As Integer)
-            SyncLock _syncLock
+            Using SyncRoot
                 If _addedList.Contains(id) Then
                     _addedList.Remove(id)
                 Else
                     _deletedList.Add(id)
                 End If
-            End SyncLock
+            End Using
         End Sub
 
         Public ReadOnly Property HasDeleted() As Boolean
@@ -524,6 +524,12 @@ Namespace Orm
         Public ReadOnly Property HasNew() As Boolean
             Get
                 Return _new IsNot Nothing AndAlso _new.Count > 0
+            End Get
+        End Property
+
+        Protected ReadOnly Property SyncRoot() As IDisposable
+            Get
+                Return New CoreFramework.Threading.CSScopeMgr_DebugWithStack(_syncRoot, "d:\temp\")
             End Get
         End Property
     End Class
