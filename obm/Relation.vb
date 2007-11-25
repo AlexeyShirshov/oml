@@ -529,7 +529,11 @@ Namespace Orm
 
         Protected ReadOnly Property SyncRoot() As IDisposable
             Get
+#If DebugLocks Then
                 Return New CoreFramework.Threading.CSScopeMgr_DebugWithStack(_syncRoot, "d:\temp\")
+#Else
+                Return New CoreFramework.Threading.CSScopeMgr(_syncRoot)
+#End If
             End Get
         End Property
     End Class
