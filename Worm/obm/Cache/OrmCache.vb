@@ -185,7 +185,11 @@ Namespace Orm
 
         Public ReadOnly Property SyncRoot() As IDisposable
             Get
+#If DebugLocks Then
                 Return New CSScopeMgr_DebugWithStack(Me, "d:\temp\")
+#Else
+                Return New CSScopeMgr(Me)
+#End If
             End Get
         End Property
 
