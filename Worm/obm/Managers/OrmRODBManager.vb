@@ -270,7 +270,7 @@ Namespace Orm
                 End Get
             End Property
 
-            Public Sub AddRange(ByVal objs As ICollection(Of OrmBase))
+            Public Overridable Sub AddRange(ByVal objs As ICollection(Of OrmBase))
                 If objs Is Nothing Then
                     Throw New ArgumentNullException("objects")
                 End If
@@ -283,7 +283,7 @@ Namespace Orm
                 _saver.AddRange(objs)
             End Sub
 
-            Public Sub Add(ByVal obj As OrmBase)
+            Public Overridable Sub Add(ByVal obj As OrmBase)
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("object")
                 End If
@@ -319,15 +319,16 @@ Namespace Orm
                 Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetIdentity)
             End Function
 
-            Public Function CreateNewObject(Of T As {OrmBase, New})(ByVal id As Integer) As T
+            Public Overridable Function CreateNewObject(Of T As {OrmBase, New})(ByVal id As Integer) As T
                 If _mgr.NewObjectManager Is Nothing Then
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
                 Dim o As New T
                 o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
-                _objs.Add(o)
                 _mgr.NewObjectManager.AddNew(o)
-                _saver.Add(o)
+                '_objs.Add(o)
+                '_saver.Add(o)
+                Add(o)
                 Return o
             End Function
 
