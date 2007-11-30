@@ -1534,14 +1534,15 @@ Namespace Orm
             Return sb.ToString
         End Function
 
-        Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport) As String
+        Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport, ByVal contextKey As Object) As String
 
         Public Function MakeSearchStatement(ByVal searchType As Type, ByVal selectType As Type, _
             ByVal tokens() As String, ByVal fields As ICollection(Of Pair(Of String, Type)), _
             ByVal sectionName As String, ByVal joins As ICollection(Of OrmJoin), ByVal sort_type As SortType, _
             ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String(), _
             ByVal top As Integer, ByVal del As ValueForSearchDelegate, ByVal table As String, _
-            ByVal sort As Sort, ByVal appendBySort As Boolean, ByVal filter As IFilter) As String
+            ByVal sort As Sort, ByVal appendBySort As Boolean, ByVal filter As IFilter, ByVal contextKey As Object, _
+            ByVal selSchema As IOrmObjectSchema, ByVal searchSchema As IOrmObjectSchema) As String
 
             'If searchType IsNot selectType AndAlso join.IsEmpty Then
             '    Throw New ArgumentException("Join is empty while type to load differs from type to search")
@@ -1551,11 +1552,11 @@ Namespace Orm
             '    Throw New ArgumentException("Join is not empty while type to load the same as type to search")
             'End If
 
-            Dim selSchema As IOrmObjectSchema = GetObjectSchema(selectType)
-            Dim searchSchema As IOrmObjectSchema = GetObjectSchema(searchType)
+            'Dim selSchema As IOrmObjectSchema = GetObjectSchema(selectType)
+            'Dim searchSchema As IOrmObjectSchema = GetObjectSchema(searchType)
             Dim fs As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
 
-            Dim value As String = del(tokens, sectionName, fs)
+            Dim value As String = del(tokens, sectionName, fs, contextKey)
             If String.IsNullOrEmpty(value) Then
                 Return Nothing
             End If
@@ -1577,8 +1578,12 @@ Namespace Orm
                     For Each field As Pair(Of String, Type) In fields
                         If field.Second Is selectType Then
                             Dim m As MapField2Column = selSchema.GetFieldColumnMap(field.First)
-                            columns.Append(m._tableName).Append(".")
-                            columns.Append(m._columnName).Append(",")
+                            If appendMain Then
+                                columns.Append(m._tableName).Append(".")
+                                columns.Append(m._columnName).Append(",")
+                            Else
+                                columns.Append([alias]).Append(".[key] ").Append(m._columnName).Append(",")
+                            End If
                         End If
                     Next
 

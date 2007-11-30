@@ -1891,7 +1891,8 @@ Namespace Orm
                 _t = t
             End Sub
 
-            Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String, ByVal f As IOrmFullTextSupport) As String
+            Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String, _
+                ByVal f As IOrmFullTextSupport, ByVal contextkey As Object) As String
                 Return Configuration.SearchSection.GetValueForFreeText(_t, tokens, sectionName)
             End Function
         End Class
@@ -1907,167 +1908,13 @@ Namespace Orm
             Dim queryFields As String() = Nothing
             Dim selCols, searchCols As New List(Of ColumnAttribute)
             Dim ssearch As IOrmFullTextSupport = TryCast(selSchema, IOrmFullTextSupport)
-            'If ssearch IsNot Nothing Then
-            '    Dim ss() As String = fsearch.GetIndexedFields
-            '    If ss IsNot Nothing Then
-            '        For Each s As String In ss
-            '            fields.Add(New Pair(Of String, Type)(s, selectType))
-            '            selCols.Add(New ColumnAttribute(s))
-            '        Next
-            '    End If
-            '    If selCols.Count > 0 Then
-            '        selCols.Insert(0, New ColumnAttribute("ID"))
-            '        fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
-            '    End If
-            'End If
-            If selectType IsNot type2search Then
-                selCols.Insert(0, New ColumnAttribute("ID"))
-                fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
-            End If
 
-            Dim types As New List(Of Type)
             Dim joins As New List(Of OrmJoin)
-
-            If selectType IsNot type2search Then
-                Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2search, selSchema)
-
-                If String.IsNullOrEmpty(field) Then
-                    field = _schema.GetJoinFieldNameByType(type2search, selectType, searchSchema)
-
-                    If String.IsNullOrEmpty(field) Then
-                        Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
-                    End If
-
-                    joins.Add(MakeJoin(selectType, type2search, field, FilterOperation.Equal, JoinType.Join))
-                Else
-                    joins.Add(MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True))
-                End If
-
-                types.Add(selectType)
-            End If
-
-            Dim appendMain As Boolean = False
-            If sort IsNot Nothing Then
-                Dim ns As Sort = sort
-                Do
-                    Dim sortType As System.Type = ns.Type
-                    ns = ns.Previous
-                    If sortType Is Nothing Then
-                        sortType = selectType
-                    End If
-                    appendMain = type2search Is sortType OrElse appendMain
-                    If Not types.Contains(sortType) Then
-                        If type2search IsNot sortType Then
-                            Dim srtschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
-                            Dim field As String = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
-                            If Not String.IsNullOrEmpty(field) Then
-                                joins.Add(MakeJoin(sortType, type2search, field, FilterOperation.Equal, JoinType.Join))
-                                types.Add(sortType)
-                                Continue Do
-                            End If
-
-                            'field = _schema.GetJoinFieldNameByType(sortType, type2search, srtschema)
-                            'If Not String.IsNullOrEmpty(field) Then
-                            '    joins.Add(MakeJoin(type2search, sortType, field, FilterOperation.Equal, JoinType.Join, True))
-                            '    Continue Do
-                            'End If
-
-                            If selectType IsNot type2search Then
-                                'field = _schema.GetJoinFieldNameByType(sortType, selectType, srtschema)
-                                'If Not String.IsNullOrEmpty(field) Then
-                                '    joins.Add(MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
-                                '    Continue Do
-                                'End If
-
-                                field = _schema.GetJoinFieldNameByType(selectType, sortType, selSchema)
-                                If Not String.IsNullOrEmpty(field) Then
-                                    joins.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
-                                    types.Add(sortType)
-                                    Continue Do
-                                End If
-                            End If
-
-                            If String.IsNullOrEmpty(field) Then
-                                Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
-                            End If
-                        End If
-                    End If
-                Loop While ns IsNot Nothing
-            End If
-
-            If filter IsNot Nothing Then
-                For Each f As IFilter In filter.GetAllFilters
-                    Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
-                    If ef IsNot Nothing Then
-                        Dim type2join As System.Type = CType(ef.GetFilterTemplate, OrmFilterTemplate).Type
-                        appendMain = type2search Is type2join OrElse appendMain
-                        If type2search IsNot type2join Then
-                            If Not types.Contains(type2join) Then
-                                Dim field As String = _schema.GetJoinFieldNameByType(type2search, type2join, searchSchema)
-
-                                If Not String.IsNullOrEmpty(field) Then
-                                    joins.Add(MakeJoin(type2join, type2search, field, FilterOperation.Equal, JoinType.Join))
-                                    types.Add(type2join)
-                                Else
-                                    If selectType IsNot type2search Then
-                                        field = _schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
-                                        If Not String.IsNullOrEmpty(field) Then
-                                            joins.Add(MakeJoin(selectType, type2join, field, FilterOperation.Equal, JoinType.Join, True))
-                                            types.Add(type2join)
-                                            Continue For
-                                        End If
-                                    End If
-
-                                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
-                                End If
-                            End If
-                        End If
-                    Else
-                        Dim tf As TableFilter = TryCast(f, TableFilter)
-                        If tf IsNot Nothing Then
-                            If tf.Template.Table IsNot selSchema.GetTables(0) Then
-                                Throw New NotImplementedException
-                            Else
-                                appendMain = True
-                            End If
-                        Else
-                            appendMain = True
-                            'Throw New NotImplementedException
-                        End If
-                    End If
-                Next
-            End If
-
-            If fsearch IsNot Nothing Then
-                Dim ss() As String = fsearch.GetIndexedFields
-                If ss IsNot Nothing Then
-                    For Each s As String In ss
-                        fields.Add(New Pair(Of String, Type)(s, type2search))
-                        searchCols.Add(New ColumnAttribute(s))
-                    Next
-                End If
-
-                If searchCols.Count > 0 Then
-                    searchCols.Insert(0, New ColumnAttribute("ID"))
-                    fields.Insert(0, New Pair(Of String, Type)("ID", type2search))
-                End If
-
-                If contextKey IsNot Nothing Then
-                    queryFields = fsearch.GetQueryFields(contextKey)
-                End If
-            End If
+            Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
+                joins, selCols, searchCols, queryFields, searchSchema, selSchema)
 
             Dim col As ICollection(Of T) = Nothing
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
-                'Dim cols As Generic.List(Of ColumnAttribute) = Nothing
-
-                'If fields.Count > 0 Then
-                '    cols = New List(Of ColumnAttribute)
-                '    cols.Add(DbSchema.GetColumnByFieldName(selectType, "ID"))
-                '    For Each f As Pair(Of String, Type) In fields
-                '        cols.Add(DbSchema.GetColumnByFieldName(f.Second, f.First))
-                '    Next
-                'End If
 
                 With cmd
                     .CommandType = System.Data.CommandType.Text
@@ -2076,7 +1923,7 @@ Namespace Orm
                     .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
                         Integer.MinValue, AddressOf Configuration.SearchSection.GetValueForContains, _
-                        "containstable", sort, appendMain, filter)
+                        "containstable", sort, appendMain, filter, contextKey, searchSchema, selSchema)
                     params.AppendParams(.Parameters)
                 End With
 
@@ -2088,7 +1935,8 @@ Namespace Orm
             End Using
 
             Dim col2 As ICollection(Of T) = Nothing
-            If tokens.Length > 1 Then
+            Dim f2 As IOrmFullTextSupport2 = TryCast(searchSchema, IOrmFullTextSupport2)
+            If tokens.Length > 1 AndAlso (f2 Is Nothing OrElse f2.UseFreeText) Then
                 Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                     With cmd
                         .CommandType = System.Data.CommandType.Text
@@ -2096,7 +1944,8 @@ Namespace Orm
                         Dim params As New ParamMgr(DbSchema, "p")
                         .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
                             GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
-                            AddressOf New FProxy(type2search).GetValue, "freetexttable", sort, appendMain, filter)
+                            AddressOf New FProxy(type2search).GetValue, "freetexttable", sort, appendMain, filter, _
+                            contextKey, searchSchema, selSchema)
                         params.AppendParams(.Parameters)
                     End With
 
@@ -2231,6 +2080,220 @@ l2:
             End If
 
             Return res
+        End Function
+
+        Protected Overrides Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal tokens() As String, _
+            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
+            ByVal limit As Integer, ByVal del As DbSchema.ValueForSearchDelegate) As ICollection(Of T)
+
+            Dim selectType As System.Type = GetType(T)
+            Dim fields As New List(Of Pair(Of String, Type))
+            Dim joins As New List(Of OrmJoin)
+            Dim selCols, searchCols As New List(Of ColumnAttribute)
+            Dim queryFields As String() = Nothing
+
+            Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
+            Dim selSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(selectType)
+
+            Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
+                joins, selCols, searchCols, queryFields, searchSchema, selSchema)
+
+            Return MakeSqlStmtSearch(Of T)(type2search, selectType, tokens, fields, queryFields, joins.ToArray, sort, appendMain, _
+                filter, selCols, searchCols, ftsText, limit, del, contextKey)
+        End Function
+
+        Public Function PrepareSearch(ByVal selectType As Type, ByVal type2search As Type, ByVal filter As IFilter, _
+            ByVal sort As Sort, ByVal contextKey As Object, ByVal fields As IList(Of Pair(Of String, Type)), _
+            ByVal joins As IList(Of OrmJoin), ByVal selCols As IList(Of ColumnAttribute), _
+            ByVal searchCols As IList(Of ColumnAttribute), ByRef queryFields As String(), _
+            ByVal searchSchema As IOrmObjectSchema, ByVal selSchema As IOrmObjectSchema) As Boolean
+
+            'Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
+            'Dim selSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(selectType)
+            Dim fsearch As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
+            'Dim queryFields As String() = Nothing
+            Dim ssearch As IOrmFullTextSupport = TryCast(selSchema, IOrmFullTextSupport)
+            'If ssearch IsNot Nothing Then
+            '    Dim ss() As String = fsearch.GetIndexedFields
+            '    If ss IsNot Nothing Then
+            '        For Each s As String In ss
+            '            fields.Add(New Pair(Of String, Type)(s, selectType))
+            '            selCols.Add(New ColumnAttribute(s))
+            '        Next
+            '    End If
+            '    If selCols.Count > 0 Then
+            '        selCols.Insert(0, New ColumnAttribute("ID"))
+            '        fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
+            '    End If
+            'End If
+            If selectType IsNot type2search Then
+                selCols.Insert(0, New ColumnAttribute("ID"))
+                fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
+            End If
+
+            Dim types As New List(Of Type)
+
+            If selectType IsNot type2search Then
+                Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2search, selSchema)
+
+                If String.IsNullOrEmpty(field) Then
+                    field = _schema.GetJoinFieldNameByType(type2search, selectType, searchSchema)
+
+                    If String.IsNullOrEmpty(field) Then
+                        Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
+                    End If
+
+                    joins.Add(MakeJoin(selectType, type2search, field, FilterOperation.Equal, JoinType.Join))
+                Else
+                    joins.Add(MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True))
+                End If
+
+                types.Add(selectType)
+            End If
+
+            Dim appendMain As Boolean = False
+            If sort IsNot Nothing Then
+                Dim ns As Sort = sort
+                Do
+                    Dim sortType As System.Type = ns.Type
+                    ns = ns.Previous
+                    If sortType Is Nothing Then
+                        sortType = selectType
+                    End If
+                    appendMain = type2search Is sortType OrElse appendMain
+                    If Not types.Contains(sortType) Then
+                        If type2search IsNot sortType Then
+                            Dim srtschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
+                            Dim field As String = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
+                            If Not String.IsNullOrEmpty(field) Then
+                                joins.Add(MakeJoin(sortType, type2search, field, FilterOperation.Equal, JoinType.Join))
+                                types.Add(sortType)
+                                Continue Do
+                            End If
+
+                            'field = _schema.GetJoinFieldNameByType(sortType, type2search, srtschema)
+                            'If Not String.IsNullOrEmpty(field) Then
+                            '    joins.Add(MakeJoin(type2search, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                            '    Continue Do
+                            'End If
+
+                            If selectType IsNot type2search Then
+                                'field = _schema.GetJoinFieldNameByType(sortType, selectType, srtschema)
+                                'If Not String.IsNullOrEmpty(field) Then
+                                '    joins.Add(MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
+                                '    Continue Do
+                                'End If
+
+                                field = _schema.GetJoinFieldNameByType(selectType, sortType, selSchema)
+                                If Not String.IsNullOrEmpty(field) Then
+                                    joins.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                                    types.Add(sortType)
+                                    Continue Do
+                                End If
+                            End If
+
+                            If String.IsNullOrEmpty(field) Then
+                                Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
+                            End If
+                        End If
+                    End If
+                Loop While ns IsNot Nothing
+            End If
+
+            If filter IsNot Nothing Then
+                For Each f As IFilter In filter.GetAllFilters
+                    Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
+                    If ef IsNot Nothing Then
+                        Dim type2join As System.Type = CType(ef.GetFilterTemplate, OrmFilterTemplate).Type
+                        appendMain = type2search Is type2join OrElse appendMain
+                        If type2search IsNot type2join Then
+                            If Not types.Contains(type2join) Then
+                                Dim field As String = _schema.GetJoinFieldNameByType(type2search, type2join, searchSchema)
+
+                                If Not String.IsNullOrEmpty(field) Then
+                                    joins.Add(MakeJoin(type2join, type2search, field, FilterOperation.Equal, JoinType.Join))
+                                    types.Add(type2join)
+                                Else
+                                    If selectType IsNot type2search Then
+                                        field = _schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
+                                        If Not String.IsNullOrEmpty(field) Then
+                                            joins.Add(MakeJoin(selectType, type2join, field, FilterOperation.Equal, JoinType.Join, True))
+                                            types.Add(type2join)
+                                            Continue For
+                                        End If
+                                    End If
+
+                                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+                                End If
+                            End If
+                        End If
+                    Else
+                        Dim tf As TableFilter = TryCast(f, TableFilter)
+                        If tf IsNot Nothing Then
+                            If tf.Template.Table IsNot selSchema.GetTables(0) Then
+                                Throw New NotImplementedException
+                            Else
+                                appendMain = True
+                            End If
+                        Else
+                            appendMain = True
+                            'Throw New NotImplementedException
+                        End If
+                    End If
+                Next
+            End If
+
+            If fsearch IsNot Nothing Then
+                Dim ss() As String = fsearch.GetIndexedFields
+                If ss IsNot Nothing Then
+                    For Each s As String In ss
+                        fields.Add(New Pair(Of String, Type)(s, type2search))
+                        searchCols.Add(New ColumnAttribute(s))
+                    Next
+                End If
+
+                If searchCols.Count > 0 Then
+                    searchCols.Insert(0, New ColumnAttribute("ID"))
+                    fields.Insert(0, New Pair(Of String, Type)("ID", type2search))
+                End If
+
+                If contextKey IsNot Nothing Then
+                    queryFields = fsearch.GetQueryFields(contextKey)
+                End If
+            End If
+
+            Return appendMain
+        End Function
+
+        Public Function MakeSqlStmtSearch(Of T As {OrmBase, New})(ByVal type2search As Type, _
+            ByVal selectType As Type, ByVal tokens() As String, ByVal fields As ICollection(Of Pair(Of String, Type)), ByVal queryFields() As String, _
+            ByVal joins() As OrmJoin, ByVal sort As Sort, ByVal appendMain As Boolean, ByVal filter As IFilter, _
+            ByVal selCols As List(Of ColumnAttribute), ByVal searchCols As List(Of ColumnAttribute), _
+            ByVal ftsText As String, ByVal limit As Integer, ByVal del As DbSchema.ValueForSearchDelegate, ByVal contextkey As Object) As ICollection(Of T)
+            Dim col As ICollection(Of T) = Nothing
+
+            Dim selSchema As IOrmObjectSchema = CType(_schema.GetObjectSchema(selectType), IOrmObjectSchema)
+            Dim searchSchema As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2search), IOrmObjectSchema)
+
+            Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+
+                With cmd
+                    .CommandType = System.Data.CommandType.Text
+
+                    Dim params As New ParamMgr(DbSchema, "p")
+                    .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
+                        GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
+                        limit, del, ftsText, sort, appendMain, filter, contextkey, selSchema, searchSchema)
+                    params.AppendParams(.Parameters)
+                End With
+
+                If type2search Is selectType OrElse searchCols.Count = 0 Then
+                    col = CType(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols), List(Of T))
+                Else
+                    col = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T))
+                End If
+            End Using
+            Return col
         End Function
 
         Private Function AddPart(Of T)(ByVal full As List(Of T), ByVal part As List(Of T), ByRef cnt As Integer, ByRef rf As Integer) As Boolean

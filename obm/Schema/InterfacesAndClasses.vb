@@ -88,6 +88,8 @@ Namespace Orm
     Public Interface IOrmFullTextSupport2
         Inherits IOrmFullTextSupport
 
+        ReadOnly Property UseFreeText() As Boolean
+        Sub MakeSearchString(ByVal contextKey As Object, ByVal tokens() As String, ByVal sb As StringBuilder)
     End Interface
 
     Public Interface IOrmDictionary
