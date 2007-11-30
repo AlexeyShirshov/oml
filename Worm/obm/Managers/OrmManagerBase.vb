@@ -3031,6 +3031,29 @@ l1:
             Return New List(Of T)()
         End Function
 
+        Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal sort As Sort, _
+            ByVal contextKey As Object, ByVal filter As IFilter, ByVal ftsText As String, _
+            ByVal limit As Integer, ByVal del As DbSchema.ValueForSearchDelegate) As ICollection(Of T)
+            Invariant()
+
+            If [string] IsNot Nothing AndAlso [string].Length > 0 Then
+                Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
+                Return SearchEx(Of T)(GetType(T), ss, contextKey, sort, filter, ftsText, limit, del)
+            End If
+            Return New List(Of T)()
+        End Function
+
+        Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, _
+            ByVal del As DbSchema.ValueForSearchDelegate) As ICollection(Of T)
+            Invariant()
+
+            If [string] IsNot Nothing AndAlso [string].Length > 0 Then
+                Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
+                Return SearchEx(Of T)(GetType(T), ss, Nothing, Nothing, Nothing, "containstable", Integer.MinValue, del)
+            End If
+            Return New List(Of T)()
+        End Function
+
         Protected Shared Function Split4FullTextSearch(ByVal str As String, ByVal sectionName As String) As String()
             If str Is Nothing Then
                 Throw New ArgumentNullException("str parameter cannot be nothing")
@@ -3379,6 +3402,10 @@ l1:
 #Region " Abstract members "
 
         Protected MustOverride Function GetSearchSection() As String
+
+        Protected MustOverride Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal tokens() As String, _
+            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
+            ByVal limit As Integer, ByVal del As DbSchema.ValueForSearchDelegate) As ICollection(Of T)
 
         Protected MustOverride Function Search(Of T As {OrmBase, New})( _
             ByVal type2search As Type, ByVal tokens() As String, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter) As ICollection(Of T)

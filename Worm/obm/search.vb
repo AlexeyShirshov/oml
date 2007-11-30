@@ -72,7 +72,8 @@ Namespace Orm
                 Return CType(System.Configuration.ConfigurationManager.GetSection(name), SearchSection)
             End Function
 
-            Public Shared Function GetValueForContains(ByVal tokens() As String, ByVal sectionName As String, ByVal f As IOrmFullTextSupport) As String
+            Public Shared Function GetValueForContains(ByVal tokens() As String, ByVal sectionName As String, _
+                ByVal f As IOrmFullTextSupport, ByVal contextkey As Object) As String
                 Dim value As New StringBuilder
 
                 'Dim l As Integer = value.Length
@@ -99,11 +100,16 @@ Namespace Orm
                     End If
 l2:
                 Else
-                    value.Append("""")
-                    For Each s As String In tokens
-                        value.Append(s).Append(" ")
-                    Next
-                    value.Append("""")
+                    Dim f2 As IOrmFullTextSupport2 = TryCast(f, IOrmFullTextSupport2)
+                    If f2 IsNot Nothing Then
+                        f2.MakeSearchString(contextkey, tokens, value)
+                    Else
+                        value.Append("""")
+                        For Each s As String In tokens
+                            value.Append(s).Append(" ")
+                        Next
+                        value.Append("""")
+                    End If
                 End If
 
                 If value.Length < 2 Then
