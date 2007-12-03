@@ -122,6 +122,11 @@ Namespace Orm
         ReadOnly Property AlwaysJoinMainTable() As Boolean
         Function GetJoinField(ByVal t As Type) As String
     End Interface
+
+    Public Interface IFtsStringFormater
+        Function GetFtsString(ByVal section As String, ByVal contextKey As Object, ByVal f As IOrmFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String
+        Function GetTokens() As String()
+    End Interface
 #End Region
 
 #Region " Classes "

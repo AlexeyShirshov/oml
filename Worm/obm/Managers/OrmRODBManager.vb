@@ -1883,22 +1883,8 @@ Namespace Orm
             Return l
         End Function
 
-        Private Class FProxy
-
-            Private _t As Type
-
-            Public Sub New(ByVal t As Type)
-                _t = t
-            End Sub
-
-            Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String, _
-                ByVal f As IOrmFullTextSupport, ByVal contextkey As Object) As String
-                Return Configuration.SearchSection.GetValueForFreeText(_t, tokens, sectionName)
-            End Function
-        End Class
-
-        Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal type2search As Type, ByVal tokens() As String, _
-            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter) As System.Collections.Generic.ICollection(Of T)
+        Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal type2search As Type, _
+            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal frmt As IFtsStringFormater) As System.Collections.Generic.ICollection(Of T)
 
             Dim fields As New List(Of Pair(Of String, Type))
             Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
@@ -1920,9 +1906,9 @@ Namespace Orm
                     .CommandType = System.Data.CommandType.Text
 
                     Dim params As New ParamMgr(DbSchema, "p")
-                    .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
+                    .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, frmt, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
-                        Integer.MinValue, AddressOf Configuration.SearchSection.GetValueForContains, _
+                        Integer.MinValue, _
                         "containstable", sort, appendMain, filter, contextKey, searchSchema, selSchema)
                     params.AppendParams(.Parameters)
                 End With
@@ -1936,15 +1922,16 @@ Namespace Orm
 
             Dim col2 As ICollection(Of T) = Nothing
             Dim f2 As IOrmFullTextSupport2 = TryCast(searchSchema, IOrmFullTextSupport2)
+            Dim tokens() As String = frmt.GetTokens
             If tokens.Length > 1 AndAlso (f2 Is Nothing OrElse f2.UseFreeText) Then
                 Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                     With cmd
                         .CommandType = System.Data.CommandType.Text
 
                         Dim params As New ParamMgr(DbSchema, "p")
-                        .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
+                        .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, frmt, fields, _
                             GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
-                            AddressOf New FProxy(type2search).GetValue, "freetexttable", sort, appendMain, filter, _
+                            "freetexttable", sort, appendMain, filter, _
                             contextKey, searchSchema, selSchema)
                         params.AppendParams(.Parameters)
                     End With
@@ -2082,9 +2069,9 @@ l2:
             Return res
         End Function
 
-        Protected Overrides Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal tokens() As String, _
+        Protected Overrides Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, _
             ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
-            ByVal limit As Integer, ByVal del As DbSchema.ValueForSearchDelegate) As ICollection(Of T)
+            ByVal limit As Integer, ByVal fts As IFtsStringFormater) As ICollection(Of T)
 
             Dim selectType As System.Type = GetType(T)
             Dim fields As New List(Of Pair(Of String, Type))
@@ -2098,8 +2085,8 @@ l2:
             Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
                 joins, selCols, searchCols, queryFields, searchSchema, selSchema)
 
-            Return MakeSqlStmtSearch(Of T)(type2search, selectType, tokens, fields, queryFields, joins.ToArray, sort, appendMain, _
-                filter, selCols, searchCols, ftsText, limit, del, contextKey)
+            Return MakeSqlStmtSearch(Of T)(type2search, selectType, fields, queryFields, joins.ToArray, sort, appendMain, _
+                filter, selCols, searchCols, ftsText, limit, fts, contextKey)
         End Function
 
         Public Function PrepareSearch(ByVal selectType As Type, ByVal type2search As Type, ByVal filter As IFilter, _
@@ -2266,10 +2253,10 @@ l2:
         End Function
 
         Public Function MakeSqlStmtSearch(Of T As {OrmBase, New})(ByVal type2search As Type, _
-            ByVal selectType As Type, ByVal tokens() As String, ByVal fields As ICollection(Of Pair(Of String, Type)), ByVal queryFields() As String, _
+            ByVal selectType As Type, ByVal fields As ICollection(Of Pair(Of String, Type)), ByVal queryFields() As String, _
             ByVal joins() As OrmJoin, ByVal sort As Sort, ByVal appendMain As Boolean, ByVal filter As IFilter, _
             ByVal selCols As List(Of ColumnAttribute), ByVal searchCols As List(Of ColumnAttribute), _
-            ByVal ftsText As String, ByVal limit As Integer, ByVal del As DbSchema.ValueForSearchDelegate, ByVal contextkey As Object) As ICollection(Of T)
+            ByVal ftsText As String, ByVal limit As Integer, ByVal fts As IFtsStringFormater, ByVal contextkey As Object) As ICollection(Of T)
             Dim col As ICollection(Of T) = Nothing
 
             Dim selSchema As IOrmObjectSchema = CType(_schema.GetObjectSchema(selectType), IOrmObjectSchema)
@@ -2281,9 +2268,9 @@ l2:
                     .CommandType = System.Data.CommandType.Text
 
                     Dim params As New ParamMgr(DbSchema, "p")
-                    .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
+                    .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, fts, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
-                        limit, del, ftsText, sort, appendMain, filter, contextkey, selSchema, searchSchema)
+                        limit, ftsText, sort, appendMain, filter, contextkey, selSchema, searchSchema)
                     params.AppendParams(.Parameters)
                 End With
 

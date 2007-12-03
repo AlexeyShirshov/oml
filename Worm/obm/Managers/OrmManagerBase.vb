@@ -2985,13 +2985,13 @@ l1:
             Invariant()
 
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
-                Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
-                Return Search(Of T)(GetType(T), ss, Nothing, Nothing, Nothing)
+                'Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
+                Return Search(Of T)(GetType(T), [string], Nothing, Nothing)
             End If
             Return New List(Of T)()
         End Function
 
-        Public Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal [string] As String, Optional ByVal contextKey As Object = Nothing) As ICollection(Of T)
+        Public Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal [string] As String, ByVal contextKey As Object) As ICollection(Of T)
             Return Search(Of T)(type2search, [string], Nothing, contextKey)
         End Function
 
@@ -3006,9 +3006,9 @@ l1:
             '    End If
 
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
-                Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
+                'Dim ss() As String = Split4FullTextSearch()
                 'Dim join As OrmJoin = MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True)
-                Return Search(Of T)(type2search, ss, contextKey, sort, Nothing)
+                Return Search(Of T)(type2search, contextKey, sort, Nothing, New FtsDef([string], GetSearchSection))
                 'End If
                 Return New List(Of T)()
             Else
@@ -3020,13 +3020,51 @@ l1:
             Return Search(Of T)([string], sort, contextKey, Nothing)
         End Function
 
+        Class FtsDef
+            Implements IFtsStringFormater
+
+            Private Class FProxy
+
+                Private _t As Type
+
+                Public Sub New(ByVal t As Type)
+                    _t = t
+                End Sub
+
+                Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String, _
+                    ByVal f As IOrmFullTextSupport, ByVal contextkey As Object) As String
+                    Return Configuration.SearchSection.GetValueForFreeText(_t, tokens, sectionName)
+                End Function
+            End Class
+
+            Private _toks() As String
+
+            Public Sub New(ByVal s As String, ByVal sn As String)
+                _toks = Split4FullTextSearch(s, sn)
+            End Sub
+
+            Public Function GetFtsString(ByVal section As String, ByVal contextKey As Object, _
+                ByVal f As IOrmFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String Implements IFtsStringFormater.GetFtsString
+                If ftsString = "freetexttable" Then
+                    Return New FProxy(type2search).GetValue(_toks, section, f, contextKey)
+                ElseIf ftsString = "containstable" Then
+                    Return Configuration.SearchSection.GetValueForContains(_toks, section, f, contextKey)
+                Else
+                    Throw New NotSupportedException
+                End If
+            End Function
+
+            Public Function GetTokens() As String() Implements IFtsStringFormater.GetTokens
+                Return _toks
+            End Function
+        End Class
+
         Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal sort As Sort, _
             ByVal contextKey As Object, ByVal filter As IFilter) As ICollection(Of T)
             Invariant()
 
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
-                Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
-                Return Search(Of T)(GetType(T), ss, contextKey, sort, filter)
+                Return Search(Of T)(GetType(T), contextKey, sort, filter, New FtsDef([string], GetSearchSection))
             End If
             Return New List(Of T)()
         End Function
@@ -3037,22 +3075,21 @@ l1:
             Invariant()
 
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
-                Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
-                Return SearchEx(Of T)(GetType(T), ss, contextKey, sort, filter, ftsText, limit, del)
+                Return SearchEx(Of T)(GetType(T), contextKey, sort, filter, ftsText, limit, New FtsDef([string], GetSearchSection))
             End If
             Return New List(Of T)()
         End Function
 
-        Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, _
-            ByVal del As DbSchema.ValueForSearchDelegate) As ICollection(Of T)
-            Invariant()
+        'Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, _
+        '    ByVal del As DbSchema.ValueForSearchDelegate) As ICollection(Of T)
+        '    Invariant()
 
-            If [string] IsNot Nothing AndAlso [string].Length > 0 Then
-                Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
-                Return SearchEx(Of T)(GetType(T), ss, Nothing, Nothing, Nothing, "containstable", Integer.MinValue, del)
-            End If
-            Return New List(Of T)()
-        End Function
+        '    If [string] IsNot Nothing AndAlso [string].Length > 0 Then
+        '        Dim ss() As String = Split4FullTextSearch([string], GetSearchSection)
+        '        Return SearchEx(Of T)(GetType(T), ss, Nothing, Nothing, Nothing, "containstable", Integer.MinValue, del)
+        '    End If
+        '    Return New List(Of T)()
+        'End Function
 
         Protected Shared Function Split4FullTextSearch(ByVal str As String, ByVal sectionName As String) As String()
             If str Is Nothing Then
@@ -3403,12 +3440,17 @@ l1:
 
         Protected MustOverride Function GetSearchSection() As String
 
-        Protected MustOverride Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal tokens() As String, _
+        'Protected MustOverride Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal tokens() As String, _
+        '    ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
+        '    ByVal limit As Integer, ByVal del As DbSchema.ValueForSearchDelegate) As ICollection(Of T)
+
+        Protected MustOverride Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, _
             ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
-            ByVal limit As Integer, ByVal del As DbSchema.ValueForSearchDelegate) As ICollection(Of T)
+            ByVal limit As Integer, ByVal frmt As IFtsStringFormater) As ICollection(Of T)
 
         Protected MustOverride Function Search(Of T As {OrmBase, New})( _
-            ByVal type2search As Type, ByVal tokens() As String, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter) As ICollection(Of T)
+            ByVal type2search As Type, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, _
+            ByVal frmt As IFtsStringFormater) As ICollection(Of T)
 
         Protected Friend MustOverride Function GetStaticKey() As String
 
