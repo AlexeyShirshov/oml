@@ -1537,10 +1537,10 @@ Namespace Orm
         Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport, ByVal contextKey As Object) As String
 
         Public Function MakeSearchStatement(ByVal searchType As Type, ByVal selectType As Type, _
-            ByVal tokens() As String, ByVal fields As ICollection(Of Pair(Of String, Type)), _
+            ByVal fts As IFtsStringFormater, ByVal fields As ICollection(Of Pair(Of String, Type)), _
             ByVal sectionName As String, ByVal joins As ICollection(Of OrmJoin), ByVal sort_type As SortType, _
             ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String(), _
-            ByVal top As Integer, ByVal del As ValueForSearchDelegate, ByVal table As String, _
+            ByVal top As Integer, ByVal table As String, _
             ByVal sort As Sort, ByVal appendBySort As Boolean, ByVal filter As IFilter, ByVal contextKey As Object, _
             ByVal selSchema As IOrmObjectSchema, ByVal searchSchema As IOrmObjectSchema) As String
 
@@ -1556,7 +1556,8 @@ Namespace Orm
             'Dim searchSchema As IOrmObjectSchema = GetObjectSchema(searchType)
             Dim fs As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
 
-            Dim value As String = del(tokens, sectionName, fs, contextKey)
+            'Dim value As String = del(tokens, sectionName, fs, contextKey)
+            Dim value As String = fts.GetFtsString(sectionName, contextKey, fs, searchType, table)
             If String.IsNullOrEmpty(value) Then
                 Return Nothing
             End If
