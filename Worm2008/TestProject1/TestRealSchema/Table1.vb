@@ -72,10 +72,20 @@ Public Class Table1
                 CreatedAt = CDate(value)
             Case "Custom"
                 _cust = CInt(value)
+            Case "ddd"
+                Name = CStr(value)
             Case Else
                 MyBase.SetValue(pi, c, value)
         End Select
     End Sub
+
+    Public Overrides Function GetValue(ByVal propAlias As String) As Object
+        If propAlias = "ddd" Then
+            Return Name
+        Else
+            Return MyBase.GetValue(propAlias)
+        End If
+    End Function
 
     <Column("Title")> _
     Public Property Name() As String
@@ -216,7 +226,9 @@ Public Class Table1Implementation
 
         If _rels Is Nothing Then
             _rels = New M2MRelation() { _
-                New Orm.M2MRelation(t, TablesImplementation._tables(0), "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)) _
+                New Orm.M2MRelation(t, TablesImplementation._tables(0), "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
+                New Orm.M2MRelation(_objectType, Tables1to1.TablesImplementation._tables(0), "table1", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), False), _
+                New Orm.M2MRelation(_objectType, Tables1to1.TablesImplementation._tables(0), "table1_back", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), True) _
             }
         End If
         Return _rels
@@ -319,7 +331,7 @@ Public Class Table1Implementation
         End Get
     End Property
 
-    Public Function GetJoinField(ByVal t As System.Type) As String Implements Worm.Orm.IJoinBehavior.GetJoinField
+    Public Overridable Function GetJoinField(ByVal t As System.Type) As String Implements Worm.Orm.IJoinBehavior.GetJoinField
         If t Is GetType(Table2) Then
             Return "ID"
         End If
@@ -346,6 +358,10 @@ Public Class Table1Search
             Return New String() {"Title"}
         End If
         Return Nothing
+    End Function
+
+    Public Overrides Function GetJoinField(ByVal t As System.Type) As String
+        Return String.Empty
     End Function
 End Class
 
@@ -398,7 +414,7 @@ Public Class table1func
         MyBase.New(tableName)
     End Sub
 
-    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable
+    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ICreateParam) As OrmTable
         Return New OrmTable("dbo.table1func()")
     End Function
 
@@ -411,7 +427,7 @@ Public Class table2func
         MyBase.New(tableName)
     End Sub
 
-    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable
+    Public Overrides Function OnTableAdd(ByVal pmgr As Worm.Orm.ICreateParam) As OrmTable
         Return New OrmTable("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
     End Function
 End Class

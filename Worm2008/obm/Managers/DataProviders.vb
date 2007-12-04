@@ -11,17 +11,22 @@ Namespace Orm
             Inherits CustDelegate(Of T)
             Implements ICacheValidator
 
-            Protected _f As IEntityFilter
+            Protected _f As IFilter
             Protected _sort As Sort
             Protected _mgr As OrmReadOnlyDBManager
             Protected _key As String
             Protected _id As String
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IEntityFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
+
+                If mgr Is Nothing Then
+                    Throw New ArgumentNullException("mgr")
+                End If
+
                 _mgr = mgr
                 _f = f
-                _sort = sort
+                _sort = Sort
                 '_st = st
                 _key = key
                 _id = id
@@ -29,15 +34,20 @@ Namespace Orm
 
             Public Overridable Function Validate() As Boolean Implements OrmManagerBase.ICacheValidator.Validate
                 If _f IsNot Nothing Then
-                    For Each f As EntityFilter In _f.GetAllFilters
-                        Dim fields As List(Of String) = Nothing
-                        If _mgr.Cache.GetUpdatedFields(f.Template.Type, fields) Then
-                            Dim idx As Integer = fields.IndexOf(f.Template.FieldName)
-                            If idx >= 0 Then
-                                Dim p As New Pair(Of String, Type)(f.Template.FieldName, f.Template.Type)
-                                _mgr.Cache.ResetFieldDepends(p)
-                                _mgr.Cache.RemoveUpdatedFields(f.Template.Type, f.Template.FieldName)
-                                Return False
+                    For Each fl As IFilter In _f.GetAllFilters
+                        Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
+                        If f IsNot Nothing Then
+                            Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+
+                            Dim fields As List(Of String) = Nothing
+                            If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
+                                Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
+                                If idx >= 0 Then
+                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                    _mgr.Cache.ResetFieldDepends(p)
+                                    _mgr.Cache.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                                    Return False
+                                End If
                             End If
                         End If
                     Next
@@ -54,28 +64,32 @@ Namespace Orm
                     If _f IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
                         Dim cache As OrmCacheBase = _mgr.Cache
-                        cache.AddDependType(tt, _key, _id, _f)
+                        cache.AddDependType(tt, _key, _id, _f, _mgr.ObjectSchema)
 
-                        For Each f As EntityFilter In _f.GetAllFilters
-                            Dim v As EntityValue = TryCast(f.Value, EntityValue)
-                            If v IsNot Nothing Then
-                                'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
-                                'If GetType(OrmBase).IsAssignableFrom(tp) Then
-                                cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
-                                'End If
-                            Else
-                                Dim p As New Pair(Of String, Type)(f.Template.FieldName, f.Template.Type)
-                                cache.AddFieldDepend(p, _key, _id)
-                            End If
-                            If tt IsNot f.Template.Type Then
-                                cache.AddJoinDepend(f.Template.Type, tt)
+                        For Each fl As IFilter In _f.GetAllFilters
+                            Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
+                            If f IsNot Nothing Then
+                                Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                                Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
+                                If v IsNot Nothing Then
+                                    'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
+                                    'If GetType(OrmBase).IsAssignableFrom(tp) Then
+                                    cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
+                                    'End If
+                                Else
+                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                    cache.AddFieldDepend(p, _key, _id)
+                                End If
+                                If tt IsNot tmpl.Type Then
+                                    cache.AddJoinDepend(tmpl.Type, tt)
+                                End If
                             End If
                         Next
                     End If
                 End If
             End Sub
 
-            Public Overrides ReadOnly Property Filter() As IEntityFilter
+            Public Overrides ReadOnly Property Filter() As IFilter
                 Get
                     Return _f
                 End Get
@@ -123,12 +137,12 @@ Namespace Orm
 
             Private _cols As List(Of ColumnAttribute)
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IEntityFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IEntityFilter, ByVal cols As List(Of ColumnAttribute), _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IFilter, ByVal cols As List(Of ColumnAttribute), _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
                 _cols = cols
@@ -210,7 +224,7 @@ Namespace Orm
             Private _top As Integer = -1
             Private _asc() As QueryAspect
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IEntityFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal distinct As Boolean)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
@@ -219,14 +233,14 @@ Namespace Orm
                 End If
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IEntityFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal top As Integer)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
                 _asc = New QueryAspect() {New TopAspect(top)}
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IEntityFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IFilter, _
                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal aspect As QueryAspect)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
@@ -250,9 +264,14 @@ Namespace Orm
             Private _rel As M2MRelation
             Private _appendSecong As Boolean
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal relation As M2MRelation, ByVal f As IEntityFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal relation As M2MRelation, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
+
+                If relation Is Nothing Then
+                    Throw New ArgumentNullException("relation")
+                End If
+
                 _rel = relation
 
                 If mgr.ObjectSchema.GetObjectSchema(relation.Type).GetFilter(mgr.GetFilterInfo) IsNot Nothing Then
@@ -292,7 +311,7 @@ Namespace Orm
             'Private _rev As Boolean
             'Private _soft_renew As Boolean
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As OrmBase, ByVal filter As IEntityFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As OrmBase, ByVal filter As IFilter, _
                 ByVal sort As Sort, _
                 ByVal id As String, ByVal key As String, ByVal direct As Boolean)
                 MyBase.New(mgr, filter, sort, key, id)
@@ -379,11 +398,11 @@ Namespace Orm
                 Dim t As Type = GetType(T)
                 Dim ct As Type = _mgr.DbSchema.GetConnectedType(mt, t)
                 If ct IsNot Nothing Then
-                    If Not _direct Then
-                        Throw New NotSupportedException("Tag is not supported with connected type")
-                    End If
-                    Dim f1 As String = _mgr.DbSchema.GetConnectedTypeField(ct, mt)
-                    Dim f2 As String = _mgr.DbSchema.GetConnectedTypeField(ct, t)
+                    'If Not _direct Then
+                    '    Throw New NotSupportedException("Tag is not supported with connected type")
+                    'End If
+                    Dim f1 As String = _mgr.DbSchema.GetConnectedTypeField(ct, mt, Not _direct)
+                    Dim f2 As String = _mgr.DbSchema.GetConnectedTypeField(ct, t, _direct)
                     Dim fl As New EntityFilter(ct, f1, New EntityValue(_obj), FilterOperation.Equal)
                     Dim l As New List(Of Integer)
                     'Dim external_sort As Boolean = False

@@ -13,6 +13,7 @@ Namespace Orm
         Private _new As Generic.List(Of Integer)
         Private _sort As Sort
         Private _cantgetCurrent As Boolean
+        Private _syncRoot As New Object
 
         Sub New(ByVal mainId As Integer, ByVal mainList As IList(Of Integer), ByVal mainType As Type, ByVal subType As Type, ByVal sort As Sort)
             _mainList = mainList
@@ -29,7 +30,9 @@ Namespace Orm
 
         Public ReadOnly Property CurrentCount() As Integer
             Get
-                Return _mainList.Count + _addedList.Count - _deletedList.Count
+                Using SyncRoot
+                    Return _mainList.Count + _addedList.Count - _deletedList.Count
+                End Using
             End Get
         End Property
 
@@ -39,66 +42,72 @@ Namespace Orm
                     Throw New InvalidOperationException("Cannot prepare current data view. Use Original and Added or save changes.")
                 End If
 
-                Dim arr As New List(Of Integer)
-                If _mainList.Count <> 0 OrElse _addedList.Count <> 0 Then
-                    If _addedList.Count <> 0 AndAlso _mainList.Count <> 0 Then
-                        Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
-                        Dim col As New ArrayList
-                        Dim c As IComparer = Nothing
-                        If _sort Is Nothing Then
-                            arr.AddRange(_mainList)
-                            arr.AddRange(_addedList)
-                        Else
-                            Dim sr As IOrmSorting = Nothing
-                            col.AddRange(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                            If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
-                                c = sr.CreateSortComparer(_sort)
-                                If c Is Nothing Then
+                Using SyncRoot
+                    Dim arr As New List(Of Integer)
+                    If _mainList.Count <> 0 OrElse _addedList.Count <> 0 Then
+                        If _addedList.Count <> 0 AndAlso _mainList.Count <> 0 Then
+                            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+                            Dim col As New ArrayList
+                            Dim c As IComparer = Nothing
+                            If _sort Is Nothing Then
+                                arr.AddRange(_mainList)
+                                arr.AddRange(_addedList)
+                            Else
+                                Dim sr As IOrmSorting = Nothing
+                                col.AddRange(mgr.ConvertIds2Objects(_subType, _mainList, False))
+                                If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
+                                    If sr Is Nothing Then
+                                        c = New OrmComparer(Of OrmBase)(_subType, _sort)
+                                    Else
+                                        c = sr.CreateSortComparer(_sort)
+                                    End If
+                                    If c Is Nothing Then
+                                        Throw New InvalidOperationException("Cannot prepare current data view. Use Original and Added or save changes.")
+                                    End If
+                                Else
                                     Throw New InvalidOperationException("Cannot prepare current data view. Use Original and Added or save changes.")
                                 End If
-                            Else
-                                Throw New InvalidOperationException("Cannot prepare current data view. Use Original and Added or save changes.")
+
+                                Dim i, j As Integer
+                                Do
+                                    If i = _mainList.Count Then
+                                        For k As Integer = j To _addedList.Count - 1
+                                            arr.Add(_addedList(k))
+                                        Next
+                                        Exit Do
+                                    End If
+                                    If j = _addedList.Count Then
+                                        For k As Integer = i To _mainList.Count - 1
+                                            arr.Add(_mainList(k))
+                                        Next
+                                        Exit Do
+                                    End If
+                                    Dim ex As OrmBase = CType(col(i), OrmBase)
+                                    Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
+                                    If c.Compare(ex, ad) < 0 Then
+                                        arr.Add(ex.Identifier)
+                                        i += 1
+                                    Else
+                                        arr.Add(ad.Identifier)
+                                        j += 1
+                                    End If
+                                Loop While True
                             End If
-
-                            Dim i, j As Integer
-                            Do
-                                If i = _mainList.Count Then
-                                    For k As Integer = j To _addedList.Count - 1
-                                        arr.Add(_addedList(k))
-                                    Next
-                                    Exit Do
-                                End If
-                                If j = _addedList.Count Then
-                                    For k As Integer = i To _mainList.Count - 1
-                                        arr.Add(_mainList(k))
-                                    Next
-                                    Exit Do
-                                End If
-                                Dim ex As OrmBase = CType(col(i), OrmBase)
-                                Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
-                                If c.Compare(ex, ad) < 0 Then
-                                    arr.Add(ex.Identifier)
-                                    i += 1
-                                Else
-                                    arr.Add(ad.Identifier)
-                                    j += 1
-                                End If
-                            Loop While True
+                        Else
+                            arr.AddRange(_mainList)
+                            arr.AddRange(_addedList)
                         End If
-                    Else
-                        arr.AddRange(_mainList)
-                        arr.AddRange(_addedList)
-                    End If
 
-                    For Each o As Integer In _deletedList
-                        arr.Remove(o)
-                    Next
-                End If
-                Return arr
+                        For Each o As Integer In _deletedList
+                            arr.Remove(o)
+                        Next
+                    End If
+                    Return arr
+                End Using
             End Get
         End Property
 
-        Public ReadOnly Property Original() As ICollection(Of Integer)
+        Public ReadOnly Property Original() As IList(Of Integer)
             Get
                 Return _mainList
             End Get
@@ -106,106 +115,118 @@ Namespace Orm
 
         Public Function Accept(ByVal mgr As OrmDBManager) As Boolean
             _cantgetCurrent = False
-            Dim needaccept As Boolean
-            If _sort Is Nothing Then
-                CType(_mainList, List(Of Integer)).AddRange(_addedList)
-                _addedList.Clear()
-            Else
-                If _addedList.Count > 0 Then
-                    needaccept = True
-                    Dim sr As IOrmSorting = Nothing
-                    Dim c As IComparer = Nothing
-                    Dim col As ArrayList = Nothing
+            Using SyncRoot
+                Dim needaccept As Boolean = _addedList.Count > 0
+                If _sort Is Nothing Then
+                    CType(_mainList, List(Of Integer)).AddRange(_addedList)
+                    _addedList.Clear()
+                Else
+                    If _addedList.Count > 0 Then
+                        needaccept = True
+                        Dim sr As IOrmSorting = Nothing
+                        Dim c As IComparer = Nothing
+                        Dim col As ArrayList = Nothing
 
-                    If _mainList.Count > 0 Then
-                        col = New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                        If Not mgr.CanSortOnClient(_subType, col, _sort, sr) Then
-                            AcceptDual()
-                            Return False
+                        If _mainList.Count > 0 Then
+                            col = New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
+                            If Not mgr.CanSortOnClient(_subType, col, _sort, sr) Then
+                                AcceptDual()
+                                Return False
+                            End If
+                            If sr Is Nothing Then
+                                c = New OrmComparer(Of OrmBase)(_subType, _sort)
+                            Else
+                                c = sr.CreateSortComparer(_sort)
+                            End If
+                            If c Is Nothing Then
+                                AcceptDual()
+                                Return False
+                            End If
                         End If
-                        c = sr.CreateSortComparer(_sort)
-                        If c Is Nothing Then
-                            AcceptDual()
-                            Return False
-                        End If
+
+                        Dim ml As New List(Of Integer)
+                        Dim i, j As Integer
+                        Do
+                            If i = _mainList.Count Then
+                                For k As Integer = j To _addedList.Count - 1
+                                    ml.Add(_addedList(k))
+                                Next
+                                Exit Do
+                            End If
+                            If j = _addedList.Count Then
+                                For k As Integer = i To _mainList.Count - 1
+                                    ml.Add(_mainList(k))
+                                Next
+                                Exit Do
+                            End If
+                            Dim ex As OrmBase = CType(col(i), OrmBase)
+                            Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
+                            If c.Compare(ex, ad) < 0 Then
+                                ml.Add(ex.Identifier)
+                                i += 1
+                            Else
+                                ml.Add(ad.Identifier)
+                                j += 1
+                            End If
+                        Loop While True
+
+                        _mainList = ml
                     End If
 
-                    Dim ml As New List(Of Integer)
-                    Dim i, j As Integer
-                    Do
-                        If i = _mainList.Count Then
-                            For k As Integer = j To _addedList.Count - 1
-                                ml.Add(_addedList(k))
-                            Next
-                            Exit Do
-                        End If
-                        If j = _addedList.Count Then
-                            For k As Integer = i To _mainList.Count - 1
-                                ml.Add(_mainList(k))
-                            Next
-                            Exit Do
-                        End If
-                        Dim ex As OrmBase = CType(col(i), OrmBase)
-                        Dim ad As OrmBase = mgr.CreateDBObject(_addedList(j), _subType)
-                        If c.Compare(ex, ad) < 0 Then
-                            ml.Add(ex.Identifier)
-                            i += 1
-                        Else
-                            ml.Add(ad.Identifier)
-                            j += 1
-                        End If
-                    Loop While True
-
-                    _mainList = ml
+                    _addedList.Clear()
                 End If
 
-                _addedList.Clear()
-            End If
+                For Each o As Integer In _deletedList
+                    CType(_mainList, List(Of Integer)).Remove(o)
+                Next
+                needaccept = needaccept OrElse _deletedList.Count > 0
+                _deletedList.Clear()
+                _saved = False
+                RemoveNew()
 
-            For Each o As Integer In _deletedList
-                CType(_mainList, List(Of Integer)).Remove(o)
-            Next
-            needaccept = _deletedList.Count > 0
-            _deletedList.Clear()
-            _saved = False
-            RemoveNew()
-
-            If needaccept Then
-                AcceptDual()
-            End If
-
+                If needaccept Then
+                    AcceptDual()
+                End If
+            End Using
             Return True
         End Function
 
         Public Function Accept(ByVal mgr As OrmDBManager, ByVal id As Integer) As Boolean
-            If _addedList.Contains(id) Then
-                If _sort Is Nothing Then
-                    CType(_mainList, List(Of Integer)).Add(id)
+            Using SyncRoot
+                If _addedList.Contains(id) Then
+                    If _sort Is Nothing Then
+                        CType(_mainList, List(Of Integer)).Add(id)
+                        _addedList.Remove(id)
+                    Else
+                        Dim sr As IOrmSorting = Nothing
+                        Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
+                        If Not mgr.CanSortOnClient(_subType, col, _sort, sr) Then
+                            Return False
+                        End If
+                        Dim c As IComparer = Nothing
+                        If sr Is Nothing Then
+                            c = New OrmComparer(Of OrmBase)(_subType, _sort)
+                        Else
+                            c = sr.CreateSortComparer(_sort)
+                        End If
+                        If c Is Nothing Then
+                            Return False
+                        End If
+                        Dim ad As OrmBase = mgr.CreateDBObject(id, _subType)
+                        Dim pos As Integer = col.BinarySearch(ad, c)
+                        If pos < 0 Then
+                            _mainList.Insert(Not pos, id)
+                        End If
+                    End If
                     _addedList.Remove(id)
-                Else
-                    Dim sr As IOrmSorting = Nothing
-                    Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
-                    If Not mgr.CanSortOnClient(_subType, col, _sort, sr) Then
-                        Return False
+                    If _addedList.Count = 0 Then
+                        _cantgetCurrent = False
                     End If
-                    Dim c As IComparer = sr.CreateSortComparer(_sort)
-                    If c Is Nothing Then
-                        Return False
-                    End If
-                    Dim ad As OrmBase = mgr.CreateDBObject(id, _subType)
-                    Dim pos As Integer = col.BinarySearch(ad, c)
-                    If pos < 0 Then
-                        _mainList.Insert(Not pos, id)
-                    End If
+                ElseIf _deletedList.Contains(id) Then
+                    CType(_mainList, List(Of Integer)).Remove(id)
+                    _deletedList.Remove(id)
                 End If
-                _addedList.Remove(id)
-                If _addedList.Count = 0 Then
-                    _cantgetCurrent = False
-                End If
-            ElseIf _deletedList.Contains(id) Then
-                CType(_mainList, List(Of Integer)).Remove(id)
-                _deletedList.Remove(id)
-            End If
+            End Using
 
             Return True
         End Function
@@ -228,6 +249,7 @@ Namespace Orm
         Protected Sub RejectRelated(ByVal id As Integer, ByVal add As Boolean)
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
             Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
+
             Dim l As IList(Of Integer) = m.Entry.Added
             If Not add Then
                 l = m.Entry.Deleted
@@ -235,22 +257,25 @@ Namespace Orm
             If l.Contains(_mainId) Then
                 l.Remove(_mainId)
             End If
+
         End Sub
 
         Public Sub Reject(ByVal rejectDual As Boolean)
-            If rejectDual Then
-                For Each id As Integer In _addedList
-                    RejectRelated(id, True)
-                Next
-            End If
-            _addedList.Clear()
-            If rejectDual Then
-                For Each id As Integer In _deletedList
-                    RejectRelated(id, False)
-                Next
-            End If
-            _deletedList.Clear()
-            RemoveNew()
+            Using SyncRoot
+                If rejectDual Then
+                    For Each id As Integer In _addedList
+                        RejectRelated(id, True)
+                    Next
+                End If
+                _addedList.Clear()
+                If rejectDual Then
+                    For Each id As Integer In _deletedList
+                        RejectRelated(id, False)
+                    Next
+                End If
+                _deletedList.Clear()
+                RemoveNew()
+            End Using
         End Sub
 
         Public ReadOnly Property Deleted() As IList(Of Integer)
@@ -272,46 +297,57 @@ Namespace Orm
         End Sub
 
         Public Sub Add(ByVal id As Integer)
-            If _deletedList.Contains(id) Then
-                _deletedList.Remove(id)
-            Else
-                If _sort IsNot Nothing Then
-                    Dim sr As IOrmSorting = Nothing
-                    Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
-                    Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _addedList, False))
-                    If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
-                        Dim c As IComparer = sr.CreateSortComparer(_sort)
-                        If c IsNot Nothing Then
-                            Dim pos As Integer = col.BinarySearch(mgr.CreateDBObject(id, _subType), c)
-                            If pos < 0 Then
-                                _addedList.Insert(Not pos, id)
-                                Return
+            Using SyncRoot
+                If _deletedList.Contains(id) Then
+                    _deletedList.Remove(id)
+                Else
+                    If _sort IsNot Nothing Then
+                        Dim sr As IOrmSorting = Nothing
+                        Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+                        Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _addedList, False))
+                        If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
+                            Dim c As IComparer = Nothing
+                            If sr Is Nothing Then
+                                c = New OrmComparer(Of OrmBase)(_subType, _sort)
+                            Else
+                                c = sr.CreateSortComparer(_sort)
+                            End If
+                            If c IsNot Nothing Then
+                                Dim pos As Integer = col.BinarySearch(mgr.CreateDBObject(id, _subType), c)
+                                If pos < 0 Then
+                                    _addedList.Insert(Not pos, id)
+                                    Return
+                                End If
+                            Else
+                                _cantgetCurrent = True
                             End If
                         Else
                             _cantgetCurrent = True
                         End If
-                    Else
-                        _cantgetCurrent = True
                     End If
+                    _addedList.Add(id)
                 End If
-                _addedList.Add(id)
-            End If
+            End Using
         End Sub
 
         Public Sub Add(ByVal id As Integer, ByVal idx As Integer)
-            If _deletedList.Contains(id) Then
-                _deletedList.Remove(id)
-            Else
-                _addedList.Insert(idx, id)
-            End If
+            Using SyncRoot
+                If _deletedList.Contains(id) Then
+                    _deletedList.Remove(id)
+                Else
+                    _addedList.Insert(idx, id)
+                End If
+            End Using
         End Sub
 
         Public Sub Delete(ByVal id As Integer)
-            If _addedList.Contains(id) Then
-                _addedList.Remove(id)
-            Else
-                _deletedList.Add(id)
-            End If
+            Using SyncRoot
+                If _addedList.Contains(id) Then
+                    _addedList.Remove(id)
+                Else
+                    _deletedList.Add(id)
+                End If
+            End Using
         End Sub
 
         Public ReadOnly Property HasDeleted() As Boolean
@@ -488,6 +524,16 @@ Namespace Orm
         Public ReadOnly Property HasNew() As Boolean
             Get
                 Return _new IsNot Nothing AndAlso _new.Count > 0
+            End Get
+        End Property
+
+        Protected ReadOnly Property SyncRoot() As IDisposable
+            Get
+#If DebugLocks Then
+                Return New CoreFramework.Threading.CSScopeMgr_DebugWithStack(_syncRoot, "d:\temp\")
+#Else
+                Return New CoreFramework.Threading.CSScopeMgr(_syncRoot)
+#End If
             End Get
         End Property
     End Class

@@ -165,6 +165,34 @@ namespace OrmCodeGenLib
                 relationElement.AppendChild(rightElement);
                 relationsNode.AppendChild(relationElement);
             }
+			foreach (SelfRelationDescription relation in _ormObjectsDef.SelfRelations)
+			{
+				XmlElement relationElement = CreateElement("SelfRelation");
+
+				relationElement.SetAttribute("table", relation.Table.Identifier);
+				relationElement.SetAttribute("entity", relation.Entity.Identifier);
+				if (relation.Disabled)
+				{
+					relationElement.SetAttribute("disabled", XmlConvert.ToString(relation.Disabled));
+				}
+
+				XmlElement directElement = CreateElement("Direct");
+				
+				directElement.SetAttribute("fieldName", relation.Direct.FieldName);
+				directElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Direct.CascadeDelete));
+
+				XmlElement reverseElement = CreateElement("Reverse");
+				reverseElement.SetAttribute("fieldName", relation.Reverse.FieldName);
+				reverseElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Reverse.CascadeDelete));
+
+				if (relation.UnderlyingEntity != null)
+				{
+					relationElement.SetAttribute("underlyingEntity", relation.UnderlyingEntity.Identifier);
+				}
+				relationElement.AppendChild(directElement);
+				relationElement.AppendChild(reverseElement);
+				relationsNode.AppendChild(relationElement);
+			}
         }
 
         private void FillEntities()
@@ -182,7 +210,8 @@ namespace OrmCodeGenLib
                     entityElement.SetAttribute("description", entity.Description);
                 if (entity.Namespace != entity.OrmObjectsDef.Namespace)
                     entityElement.SetAttribute("namespace", entity.Namespace);
-                entityElement.SetAttribute("behaviour", entity.Behaviour.ToString());
+				if(entity.Behaviour != EntityBehaviuor.Default)
+					entityElement.SetAttribute("behaviour", entity.Behaviour.ToString());
 
                 XmlNode tablesNode = CreateElement("Tables");
                 foreach (TableDescription table in entity.Tables)
@@ -279,7 +308,7 @@ namespace OrmCodeGenLib
 
         private void FillFileDescriptions()
         {
-            _ormXmlDocumentMain.DocumentElement.SetAttribute("namespace", _ormObjectsDef.Namespace);
+            _ormXmlDocumentMain.DocumentElement.SetAttribute("defaultNamespace", _ormObjectsDef.Namespace);
             _ormXmlDocumentMain.DocumentElement.SetAttribute("schemaVersion", _ormObjectsDef.SchemaVersion);
 
             StringBuilder commentBuilder = new StringBuilder();

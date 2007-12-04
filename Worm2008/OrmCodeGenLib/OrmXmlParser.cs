@@ -217,7 +217,7 @@ namespace OrmCodeGenLib
 
         internal protected void FillFileDescriptions()
         {
-            _ormObjectsDef.Namespace = _ormXmlDocument.DocumentElement.GetAttribute("namespace");
+            _ormObjectsDef.Namespace = _ormXmlDocument.DocumentElement.GetAttribute("defaultNamespace");
             _ormObjectsDef.SchemaVersion = _ormXmlDocument.DocumentElement.GetAttribute("schemaVersion");
             string baseUriString = _ormXmlDocument.DocumentElement.GetAttribute("xml:base");
             if (!string.IsNullOrEmpty(baseUriString))
@@ -274,10 +274,11 @@ namespace OrmCodeGenLib
 
             foreach (XmlNode propertyNode in propertiesList)
             {
-                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias;
+                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled;
                 string[] attributes;
                 TableDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
+                bool disabled = false;
 
                 XmlElement propertyElement = (XmlElement) propertyNode;
                 description = propertyElement.GetAttribute("description");
@@ -289,6 +290,7 @@ namespace OrmCodeGenLib
                 fieldAccessLevelName = propertyElement.GetAttribute("classfieldAccessLevel");
                 propertyAccessLevelName = propertyElement.GetAttribute("propertyAccessLevel");
                 propertyAlias = propertyElement.GetAttribute("propertyAlias");
+                propertyDisabled = propertyElement.GetAttribute("disabled");
 
                 attributes = sAttributes.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                 if (!string.IsNullOrEmpty(propertyAccessLevelName))
@@ -303,6 +305,9 @@ namespace OrmCodeGenLib
 
                 table = entity.GetTable(tableId);
 
+                if (!String.IsNullOrEmpty(propertyDisabled))
+                    disabled = XmlConvert.ToBoolean(propertyDisabled);
+
                 if (table == null)
                     throw new OrmXmlParserException(
                         string.Format("Table '{0}' for property '{1}' of entity '{2}' not found.", tableId, name,
@@ -311,6 +316,7 @@ namespace OrmCodeGenLib
                 TypeDescription typeDesc = _ormObjectsDef.GetType(typeId, true);
                 
                 PropertyDescription property = new PropertyDescription(entity ,name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
+                property.Disabled = disabled;
 
                 entity.Properties.Add(property);
             }
@@ -319,55 +325,105 @@ namespace OrmCodeGenLib
         internal protected void FillRelations()
         {
             XmlNodeList relationNodes;
-            relationNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:EntityRelations/{0}:Relation", OrmObjectsDef.NS_PREFIX), _nsMgr);
+			#region Relations
+			relationNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:EntityRelations/{0}:Relation", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
-            foreach (XmlNode relationNode in relationNodes)
-            {
-                XmlNode leftTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Left", OrmObjectsDef.NS_PREFIX), _nsMgr);
-                XmlNode rightTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Right", OrmObjectsDef.NS_PREFIX), _nsMgr);
+			foreach (XmlNode relationNode in relationNodes)
+			{
+				XmlNode leftTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Left", OrmObjectsDef.NS_PREFIX), _nsMgr);
+				XmlNode rightTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Right", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
-                XmlElement relationElement = (XmlElement) relationNode;
-                string relationTableId = relationElement.GetAttribute("table");
-                string underlyingEntityId = relationElement.GetAttribute("underlyingEntity");
-                string disabledValue = relationElement.GetAttribute("disabled");
+				XmlElement relationElement = (XmlElement)relationNode;
+				string relationTableId = relationElement.GetAttribute("table");
+				string underlyingEntityId = relationElement.GetAttribute("underlyingEntity");
+				string disabledValue = relationElement.GetAttribute("disabled");
 
-                XmlElement leftTargetElement = (XmlElement) leftTargetNode;
-                string leftLinkTargetEntityId = leftTargetElement.GetAttribute("entity");
-                XmlElement rightTargetElement = (XmlElement) rightTargetNode;
-                string rightLinkTargetEntityId = rightTargetElement.GetAttribute("entity");
+				XmlElement leftTargetElement = (XmlElement)leftTargetNode;
+				string leftLinkTargetEntityId = leftTargetElement.GetAttribute("entity");
+				XmlElement rightTargetElement = (XmlElement)rightTargetNode;
+				string rightLinkTargetEntityId = rightTargetElement.GetAttribute("entity");
 
-                string leftFieldName = leftTargetElement.GetAttribute("fieldName");
-                string rightFieldName = rightTargetElement.GetAttribute("fieldName");
+				string leftFieldName = leftTargetElement.GetAttribute("fieldName");
+				string rightFieldName = rightTargetElement.GetAttribute("fieldName");
 
-                bool leftCascadeDelete = XmlConvert.ToBoolean(leftTargetElement.GetAttribute("cascadeDelete"));
-                bool rightCascadeDelete = XmlConvert.ToBoolean(rightTargetElement.GetAttribute("cascadeDelete"));
+				bool leftCascadeDelete = XmlConvert.ToBoolean(leftTargetElement.GetAttribute("cascadeDelete"));
+				bool rightCascadeDelete = XmlConvert.ToBoolean(rightTargetElement.GetAttribute("cascadeDelete"));
 
-                TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
+				TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
 
-                EntityDescription underlyingEntity;
-                if (string.IsNullOrEmpty(underlyingEntityId))
-                    underlyingEntity = null;
-                else
-                    underlyingEntity = _ormObjectsDef.GetEntity(underlyingEntityId);
+				EntityDescription underlyingEntity;
+				if (string.IsNullOrEmpty(underlyingEntityId))
+					underlyingEntity = null;
+				else
+					underlyingEntity = _ormObjectsDef.GetEntity(underlyingEntityId);
 
-                bool disabled;
-                if (string.IsNullOrEmpty(disabledValue))
-                    disabled = false;
-                else
-                    disabled = XmlConvert.ToBoolean(disabledValue);
+				bool disabled;
+				if (string.IsNullOrEmpty(disabledValue))
+					disabled = false;
+				else
+					disabled = XmlConvert.ToBoolean(disabledValue);
 
 
 
-                EntityDescription leftLinkTargetEntity = _ormObjectsDef.GetEntity(leftLinkTargetEntityId);
+				EntityDescription leftLinkTargetEntity = _ormObjectsDef.GetEntity(leftLinkTargetEntityId);
 
-                EntityDescription rightLinkTargetEntity = _ormObjectsDef.GetEntity(rightLinkTargetEntityId);
+				EntityDescription rightLinkTargetEntity = _ormObjectsDef.GetEntity(rightLinkTargetEntityId);
 
-                LinkTarget leftLinkTarget = new LinkTarget(leftLinkTargetEntity, leftFieldName, leftCascadeDelete);
-                LinkTarget rightLinkTarget = new LinkTarget(rightLinkTargetEntity, rightFieldName, rightCascadeDelete);
+				LinkTarget leftLinkTarget = new LinkTarget(leftLinkTargetEntity, leftFieldName, leftCascadeDelete);
+				LinkTarget rightLinkTarget = new LinkTarget(rightLinkTargetEntity, rightFieldName, rightCascadeDelete);
 
-                RelationDescription relation = new RelationDescription(leftLinkTarget, rightLinkTarget, relationTable, underlyingEntity, disabled);
-                _ormObjectsDef.Relations.Add(relation);
-            }
+				RelationDescription relation = new RelationDescription(leftLinkTarget, rightLinkTarget, relationTable, underlyingEntity, disabled);
+				_ormObjectsDef.Relations.Add(relation);
+			} 
+			#endregion
+			#region Relations
+			relationNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:EntityRelations/{0}:SelfRelation", OrmObjectsDef.NS_PREFIX), _nsMgr);
+
+			foreach (XmlNode relationNode in relationNodes)
+			{
+				XmlNode directTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Direct", OrmObjectsDef.NS_PREFIX), _nsMgr);
+				XmlNode reverseTargetNode = relationNode.SelectSingleNode(string.Format("{0}:Reverse", OrmObjectsDef.NS_PREFIX), _nsMgr);
+
+				XmlElement relationElement = (XmlElement)relationNode;
+				string relationTableId = relationElement.GetAttribute("table");
+				string underlyingEntityId = relationElement.GetAttribute("underlyingEntity");
+				string disabledValue = relationElement.GetAttribute("disabled");
+				string entityId = relationElement.GetAttribute("entity");
+
+				XmlElement directTargetElement = (XmlElement)directTargetNode;
+				XmlElement reverseTargetElement = (XmlElement)reverseTargetNode;
+
+				string directFieldName = directTargetElement.GetAttribute("fieldName");
+				string reverseFieldName = reverseTargetElement.GetAttribute("fieldName");
+
+				bool directCascadeDelete = XmlConvert.ToBoolean(directTargetElement.GetAttribute("cascadeDelete"));
+				bool reverseCascadeDelete = XmlConvert.ToBoolean(reverseTargetElement.GetAttribute("cascadeDelete"));
+
+				TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
+
+				EntityDescription underlyingEntity;
+				if (string.IsNullOrEmpty(underlyingEntityId))
+					underlyingEntity = null;
+				else
+					underlyingEntity = _ormObjectsDef.GetEntity(underlyingEntityId);
+
+				bool disabled;
+				if (string.IsNullOrEmpty(disabledValue))
+					disabled = false;
+				else
+					disabled = XmlConvert.ToBoolean(disabledValue);
+
+
+
+				EntityDescription entity = _ormObjectsDef.GetEntity(entityId);
+
+				SelfRelationTarget directTarget = new SelfRelationTarget(directFieldName, directCascadeDelete);
+				SelfRelationTarget reverseTarget = new SelfRelationTarget(reverseFieldName, reverseCascadeDelete);
+
+				SelfRelationDescription relation = new SelfRelationDescription(entity, directTarget, reverseTarget, relationTable, underlyingEntity, disabled);
+				_ormObjectsDef.SelfRelations.Add(relation);
+			}
+			#endregion
         }
 
         internal protected void FillTables()

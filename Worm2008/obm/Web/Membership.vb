@@ -12,6 +12,7 @@ Namespace Web
         Private _invalidAttemtWindow As Integer
         Private _invalidAttemtCount As Integer
         Private _treatUsernameAsEmail As Boolean
+        Private _throwExceptionInValidate As Boolean
 
         Public Overrides Property ApplicationName() As String
             Get
@@ -45,6 +46,12 @@ Namespace Web
                 _treatUsernameAsEmail = False
             Else
                 _treatUsernameAsEmail = CBool(config("treatUsernameAsEmail"))
+            End If
+
+            If config("throwExceptionInValidate") Is Nothing Then
+                _throwExceptionInValidate = False
+            Else
+                _throwExceptionInValidate = CBool(config("throwExceptionInValidate"))
             End If
 
             If HttpContext.Current IsNot Nothing Then
@@ -338,21 +345,42 @@ Namespace Web
 
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
                 Dim lf As String = GetField("IsLockedOut")
-                If schema.HasField(u.GetType, lf) AndAlso CBool(u.GetValue(lf)) Then
+                Dim tt As System.Type = u.GetType
+
+                If schema.HasField(tt, lf) AndAlso CBool(u.GetValue(lf)) Then
                     Return False
                 End If
 
                 If Not ComparePasswords(CType(u.GetValue(GetField("Password")), Byte()), HashPassword(password)) Then
-                    UpdateFailureCount(mgr, u)
+                    If _throwExceptionInValidate Then
+                        UpdateFailureCount(mgr, u)
+                    Else
+                        Try
+                            UpdateFailureCount(mgr, u)
+                        Catch ex As Exception
+
+                        End Try
+                    End If
                     Return False
                 End If
 
                 Dim ret As Boolean = CanLogin(mgr, u)
                 If ret Then
                     Dim llf As String = GetField("LastLoginDate")
-                    If schema.HasField(u.GetType, llf) Then
+                    If schema.HasField(tt, llf) Then
                         schema.SetFieldValue(u, llf, ProfileProvider.GetNow)
+                    End If
+                    If schema.HasField(tt, GetField("FailedPasswordAttemtCount")) Then
+                        schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), 0)
+                    End If
+                    If _throwExceptionInValidate Then
                         u.Save(True)
+                    Else
+                        Try
+                            u.Save(True)
+                        Catch ex As Exception
+
+                        End Try
                     End If
                 End If
                 Return ret
@@ -422,8 +450,10 @@ Namespace Web
                     Return Nothing
                 End If
                 Dim u As OrmBase = CType(users(0), OrmBase)
-                If IsUserOnline(schema, u) <> userIsOnline Then
-                    Return Nothing
+                If userIsOnline Then
+                    If Not IsUserOnline(schema, u) Then
+                        Return Nothing
+                    End If
                 End If
                 Return CreateMembershipUser(schema, u)
             End Using
@@ -544,9 +574,12 @@ Namespace Web
 
         Protected Function CreateUserCollection(ByVal users As IList, ByVal schema As OrmSchemaBase, ByVal pageIndex As Integer, ByVal pageSize As Integer) As MembershipUserCollection
             Dim uc As New MembershipUserCollection
-            Dim start As Integer = pageIndex * pageSize
+            Dim start As Integer = Math.Max(0, (pageIndex - 1) * pageSize)
             If start < users.Count Then
-                Dim [end] As Integer = Math.Min((pageIndex + 1) * pageSize, users.Count)
+                Dim [end] As Integer = users.Count
+                If pageIndex <> 0 Then
+                    [end] = Math.Min(pageIndex * pageSize, users.Count)
+                End If
                 For i As Integer = start To [end] - 1
                     Dim u As OrmBase = CType(users(i), OrmBase)
                     uc.Add(CreateMembershipUser(schema, u))
@@ -608,6 +641,10 @@ Namespace Web
         End Function
 
         Protected Sub UpdateLastActivity(ByVal sender As Object, ByVal e As EventArgs)
+            UpdateLastActivity()
+        End Sub
+
+        Protected Overridable Sub UpdateLastActivity()
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim u As OrmBase = Nothing
                 If _treatUsernameAsEmail Then

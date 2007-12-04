@@ -41,6 +41,18 @@
     <OutputPath>bin\</OutputPath>
     <DocumentationFile>TestProject1.xml</DocumentationFile>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_Trace|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Debug_Trace\</OutputPath>
+    <DocumentationFile>TestProject1.xml</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisRuleAssemblies>C:\Program Files\Microsoft Visual Studio 8\Team Tools\Static Analysis Tools\FxCop\\rules</CodeAnalysisRuleAssemblies>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CoreFramework.dll">
       <SpecificVersion>False</SpecificVersion>
@@ -72,6 +84,8 @@
     </Compile>
     <Compile Include="Settings.vb" />
     <Compile Include="TestCriteria.vb" />
+    <Compile Include="TestRealSchema\Composite.vb" />
+    <Compile Include="TestRealSchema\Table1to1.vb" />
     <Compile Include="TestRealSchema\TestExFilter.vb" />
     <Compile Include="TestRealSchema\MultiTable.vb" />
     <Compile Include="TestRealSchema\SimpleObj.vb" />
