@@ -37,6 +37,17 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug_Trace|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug_Trace\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <CodeAnalysisRuleAssemblies>C:\Program Files\Microsoft Visual Studio 8\Team Tools\Static Analysis Tools\FxCop\\rules</CodeAnalysisRuleAssemblies>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.cs</CodeAnalysisModuleSuppressionsFile>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="CoreFramework, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -51,14 +62,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CodeDomPatterns\LanguageDependent\CodeUsingStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\CodeCSUsingStatement.cs" />
-    <Compile Include="CodeDomPatterns\LanguageDependent\CodeVBUsingStatement.cs" />
+    <Compile Include="CodeDomPatterns.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeAsExpressionBase.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeCsAsExpression.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeVbAsExpression.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeCsIsExpression.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeIsExpressionBase.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeVbIsExpression.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\LockStatement\CodeCsLockStatement.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\LockStatement\CodeLockStatement.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\LockStatement\CodeVbLockStatement.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeCSUsingStatement.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeUsingStatement.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeVBUsingStatement.cs" />
     <Compile Include="CodeGenHelper.cs" />
+    <Compile Include="Descriptors\SelfRelationDescription.cs" />
+    <Compile Include="Descriptors\SelfRelationTarget.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="OrmCodeGenHelper.cs" />
     <Compile Include="OrmCodeGenNameHelper.cs" />
-    <Compile Include="CodeGenPatterns.cs" />
     <Compile Include="Descriptors\TypeDescription.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="OrmCodeDomGenerator.cs" />
@@ -75,6 +97,7 @@
     <Compile Include="Parser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceManager.cs" />
+    <Compile Include="SettingsManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\obm\Orm.vbproj">

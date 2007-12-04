@@ -28,6 +28,7 @@ Namespace Orm
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
             Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
             Dim upd As IList(Of EntityFilter) = Nothing
+            Dim inv As Boolean
             Using obj.GetSyncRoot()
                 Dim cmdtext As String = DbSchema.Update(obj, params, cols, upd)
                 If cmdtext.Length > 0 Then
@@ -45,7 +46,7 @@ Namespace Orm
 
                                 LoadSingleObject(cmd, cols, obj, False, False, False)
 
-                                InvalidateCache(obj, upd)
+                                inv = True
                             Finally
                                 CloseConn(b)
                             End Try
@@ -102,7 +103,7 @@ Namespace Orm
                                 End Using
                             Next
 
-                            InvalidateCache(obj, upd)
+                            inv = True
                         Finally
                             If tran Is Nothing Then
                                 Commit()
@@ -111,6 +112,10 @@ Namespace Orm
                     End If
                 End If
             End Using
+
+            If inv Then
+                InvalidateCache(obj, upd)
+            End If
         End Sub
 
         Protected Overridable Sub InsertObject(ByVal obj As OrmBase)
@@ -421,7 +426,11 @@ Namespace Orm
             Dim old_state As ObjectState = state
             Dim hasNew As Boolean = False
             Try
-                Using obj.GetSyncRoot()
+#If DebugLocks Then
+                Using SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
+#Else
+                Using SyncHelper.AcquireDynamicLock("4098jwefpv345mfds-" & t.ToString & obj.Identifier)
+#End If
                     Dim processedType As New List(Of Type)
                     If sa = SaveAction.Delete Then
                         For Each r As M2MRelation In DbSchema.GetM2MRelations(t)
@@ -502,7 +511,7 @@ Namespace Orm
                                 processedType.Add(acp.el.SubType)
                             Next
                         End If
-                        For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEtries(obj, Nothing)
+                        For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
                             'Dim m As M2MCache = o.First
                             'If Not Schema.IsMany2ManyReadonly(t, m.Entry.SubType) AndAlso Not processedType.Contains(m.Entry.SubType) Then
                             '    'Dim r As M2MRelation = Schema.GetM2MRelation(t, m.Entry.SubType, m.Entry.Direct)
@@ -567,8 +576,8 @@ Namespace Orm
         Friend Class M2MEnum
             Public ReadOnly o As IRelation
             'Public ReadOnly obj As OrmBase
-            Dim p1 As Pair(Of String, Type)
-            Dim p2 As Pair(Of String, Type)
+            Dim p1 As IRelation.RelationDesc 'Pair(Of String, Type)
+            Dim p2 As IRelation.RelationDesc 'Pair(Of String, Type)
             Dim o1 As OrmBase
             Dim o2 As OrmBase
 
@@ -579,8 +588,8 @@ Namespace Orm
                 p2 = o.GetSecondType
                 'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
                 'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
-                o1 = CType(obj.GetValue(p1.First), OrmBase)
-                o2 = CType(obj.GetValue(p2.First), OrmBase)
+                o1 = CType(obj.GetValue(p1.PropertyName), OrmBase)
+                o2 = CType(obj.GetValue(p2.PropertyName), OrmBase)
             End Sub
 
             Public Function Add(ByVal e As M2MCache) As Boolean
@@ -608,7 +617,12 @@ Namespace Orm
                         If Not mgr.CanSortOnClient(el.SubType, col, e.Sort, s) Then
                             Return False
                         End If
-                        Dim c As IComparer = s.CreateSortComparer(e.Sort)
+                        Dim c As IComparer = Nothing
+                        If s Is Nothing Then
+                            c = New OrmComparer(Of OrmBase)(el.SubType, e.Sort)
+                        Else
+                            c = s.CreateSortComparer(e.Sort)
+                        End If
                         If c Is Nothing Then
                             Return False
                         End If

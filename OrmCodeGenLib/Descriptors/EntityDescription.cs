@@ -126,6 +126,18 @@ namespace OrmCodeGenLib.Descriptors
                 );
         }
 
+		public List<SelfRelationDescription> GetSelfRelations(bool withDisabled)
+		{
+			return _ormObjectsDef.SelfRelations.FindAll(
+				delegate(SelfRelationDescription match)
+				{
+					return
+						(match.Entity == this) &&
+						(!match.Disabled || withDisabled);
+				}
+				);
+		}
+
         public string Namespace
         {
             get { return string.IsNullOrEmpty(_namespace) ? _ormObjectsDef.Namespace : _namespace; }

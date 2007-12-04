@@ -67,24 +67,33 @@ Namespace Orm
         Private Class TemplateHashs
             Inherits Dictionary(Of String, Pair(Of HashIds, IOrmFilterTemplate))
 
-            Public Function GetIds(ByVal key As String, ByVal filter As IEntityFilter) As List(Of String)
+            Public Function GetIds(ByVal key As String, ByVal filter As IFilter) As List(Of String)
                 Dim p As Pair(Of HashIds, IOrmFilterTemplate) = Nothing
+                Dim f As IEntityFilter = TryCast(filter, IEntityFilter)
                 If Not TryGetValue(key, p) Then
-                    p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, filter.GetFilterTemplate)
+                    If f IsNot Nothing Then
+                        p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, f.GetFilterTemplate)
+                    Else
+                        p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, Nothing)
+                    End If
                     Me(key) = p
                 End If
-                Return p.First.GetIds(filter.MakeHash)
+                If f IsNot Nothing Then
+                    Return p.First.GetIds(f.MakeHash)
+                Else
+                    Return p.First.GetIds(EntityFilter.EmptyHash)
+                End If
             End Function
         End Class
 
         Private Class TypeDepends
-            Inherits Dictionary(Of Type, TemplateHashs)
+            Inherits Dictionary(Of Object, TemplateHashs)
 
-            Public Function GetFilters(ByVal t As Type) As TemplateHashs
+            Public Function GetFilters(ByVal type As Object) As TemplateHashs
                 Dim r As TemplateHashs = Nothing
-                If Not TryGetValue(t, r) Then
+                If Not TryGetValue(type, r) Then
                     r = New TemplateHashs
-                    Me(t) = r
+                    Me(type) = r
                 End If
                 Return r
             End Function
@@ -164,24 +173,28 @@ Namespace Orm
         End Property
 
         Protected Friend Function Modified(ByVal obj As OrmBase) As ModifiedObject
-            SyncLock SyncRoot
+            Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
                 Dim name As String = obj.GetType().Name & ":" & obj.Identifier
                 Return CType(_modifiedobjects(name), ModifiedObject)
-            End SyncLock
+            End Using
         End Function
 
-        Public ReadOnly Property SyncRoot() As Object
+        Public ReadOnly Property SyncRoot() As IDisposable
             Get
-                Return Me
+#If DebugLocks Then
+                Return New CSScopeMgr_DebugWithStack(Me, "d:\temp\")
+#Else
+                Return New CSScopeMgr(Me)
+#End If
             End Get
         End Property
 
         Protected Friend Function RegisterModification(ByVal obj As OrmBase) As ModifiedObject
-            SyncLock SyncRoot
+            Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
@@ -194,7 +207,7 @@ Namespace Orm
                     RaiseEvent CacheHasModification(Me, EventArgs.Empty)
                 End If
                 Return mo
-            End SyncLock
+            End Using
         End Function
 
         Public Function GetModifiedObject(Of T As {OrmBase, New})() As ICollection(Of T)
@@ -218,7 +231,7 @@ Namespace Orm
         End Sub
 
         Protected Friend Function RegisterModification(ByVal obj As OrmBase, ByVal id As Integer) As ModifiedObject
-            SyncLock SyncRoot
+            Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
@@ -231,11 +244,11 @@ Namespace Orm
                     RaiseEvent CacheHasModification(Me, EventArgs.Empty)
                 End If
                 Return mo
-            End SyncLock
+            End Using
         End Function
 
         Protected Friend Sub RegisterExistingModification(ByVal obj As OrmBase, ByVal id As Integer)
-            SyncLock SyncRoot
+            Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
@@ -245,11 +258,11 @@ Namespace Orm
                 If _modifiedobjects.Count = 1 Then
                     RaiseEvent CacheHasModification(Me, EventArgs.Empty)
                 End If
-            End SyncLock
+            End Using
         End Sub
 
         Protected Friend Sub UnregisterModification(ByVal obj As OrmBase)
-            SyncLock SyncRoot
+            Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
@@ -261,14 +274,14 @@ Namespace Orm
                         RaiseEvent CacheHasnotModification(Me, EventArgs.Empty)
                     End If
                 End If
-            End SyncLock
+            End Using
         End Sub
 
         Public ReadOnly Property IsModified() As Boolean
             Get
-                SyncLock SyncRoot
+                Using SyncRoot
                     Return _modifiedobjects.Count <> 0
-                End SyncLock
+                End Using
             End Get
         End Property
 
@@ -308,7 +321,12 @@ Namespace Orm
 
         Protected Friend Sub LogLoadTime(ByVal obj As OrmBase, ByVal time As TimeSpan)
             Dim t As Type = obj.GetType
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("q89rbvadfk" & t.ToString,"d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("q89rbvadfk" & t.ToString)
+#End If
+
                 Dim p As Pair(Of Integer, TimeSpan) = Nothing
                 If _loadTimes.TryGetValue(t, p) Then
                     _loadTimes(t) = New Pair(Of Integer, TimeSpan)(p.First + 1, p.Second.Add(time))
@@ -319,7 +337,12 @@ Namespace Orm
         End Sub
 
         Protected Friend Sub AddFieldDepend(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("9nhervg-jrgfl;jg94gt","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("9nhervg-jrgfl;jg94gt")
+#End If
+
                 Dim d As Dictionary(Of String, List(Of String)) = Nothing
                 Dim ef As New EntityField(p.First, p.Second)
                 If Not _field_depends.TryGetValue(ef, d) Then
@@ -338,7 +361,11 @@ Namespace Orm
         End Sub
 
         Protected Friend Sub ResetFieldDepends(ByVal p As Pair(Of String, Type))
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("9nhervg-jrgfl;jg94gt","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("9nhervg-jrgfl;jg94gt")
+#End If
                 Dim d As Dictionary(Of String, List(Of String)) = Nothing
                 Dim ef As New EntityField(p.First, p.Second)
                 If _field_depends.TryGetValue(ef, d) Then
@@ -391,7 +418,12 @@ Namespace Orm
         'End Sub
 
         Protected Friend Function GetUpdatedFields(ByVal t As Type, ByRef l As List(Of String)) As Boolean
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("913bh5g9nh04nvgtr0924ng")
+#End If
+
                 Return _invalidate.TryGetValue(t, l)
             End Using
         End Function
@@ -402,7 +434,12 @@ Namespace Orm
             End If
 
             Dim t As Type = obj.GetType
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("913bh5g9nh04nvgtr0924ng")
+#End If
+
                 Dim l As List(Of String) = Nothing
                 If Not _invalidate.TryGetValue(t, l) Then
                     l = New List(Of String)
@@ -419,7 +456,12 @@ Namespace Orm
         End Sub
 
         Protected Friend Sub RemoveUpdatedFields(ByVal t As Type, ByVal field As String)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("913bh5g9nh04nvgtr0924ng")
+#End If
+
                 Dim l As List(Of String) = Nothing
                 If _invalidate.TryGetValue(t, l) Then
                     l.Remove(field)
@@ -431,8 +473,11 @@ Namespace Orm
             If t Is Nothing Then
                 Throw New ArgumentNullException("t")
             End If
-
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("8907h13fkonhasdgft7","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("8907h13fkonhasdgft7")
+#End If
                 Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
 
                 If _ct_depends.TryGetValue(t, l) Then
@@ -461,7 +506,11 @@ Namespace Orm
                 Throw New ArgumentNullException("obj")
             End If
 
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("bhiasdbvgklbg135t","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("bhiasdbvgklbg135t")
+#End If
                 Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
 
                 If _m2m_dep.TryGetValue(obj.GetName, l) Then
@@ -485,7 +534,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Friend Function GetM2MEtries(ByVal obj As OrmBase, ByVal name As String) As ICollection(Of Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)))
+        Protected Friend Function GetM2MEntries(ByVal obj As OrmBase, ByVal name As String) As ICollection(Of Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)))
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -494,7 +543,11 @@ Namespace Orm
                 name = obj.GetName
             End If
 
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("bhiasdbvgklbg135t", "d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("bhiasdbvgklbg135t")
+#End If
                 Dim etrs As New List(Of Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)))
                 Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
 
@@ -511,7 +564,7 @@ Namespace Orm
             End Using
         End Function
 
-        Protected Friend Sub UpdateM2MEtries(ByVal obj As OrmBase, ByVal oldId As Integer, ByVal name As String)
+        Protected Friend Sub UpdateM2MEntries(ByVal obj As OrmBase, ByVal oldId As Integer, ByVal name As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -520,9 +573,12 @@ Namespace Orm
                 Throw New ArgumentNullException("name")
             End If
 
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("bhiasdbvgklbg135t", "d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("bhiasdbvgklbg135t")
+#End If
                 Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
-
                 If _m2m_dep.TryGetValue(name, l) Then
                     _m2m_dep.Remove(name)
                     _m2m_dep.Add(obj.GetName, l)
@@ -541,7 +597,11 @@ Namespace Orm
                 Throw New ArgumentNullException("ct")
             End If
 
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("8907h13fkonhasdgft7","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("8907h13fkonhasdgft7")
+#End If
                 Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
 
                 If _ct_depends.TryGetValue(ct, l) Then
@@ -582,9 +642,18 @@ Namespace Orm
             Next
 
             Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(tt)
+            Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
+            Dim k As Object = tt
+            If c IsNot Nothing Then
+                k = c.GetEntityTypeKey
+            End If
 
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("j13rvnopqefv9-n24bth","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
-                Dim l As TemplateHashs = _tp.GetFilters(tt)
+#End If
+                Dim l As TemplateHashs = _tp.GetFilters(k)
                 If l.Count > 0 Then
                     For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In l
                         Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
@@ -601,28 +670,34 @@ Namespace Orm
                                     Throw New ArgumentException("Collection contains different types")
                                 End If
 
-                                Dim ids As List(Of String) = p.Value.First.GetIds(p.Value.Second.MakeHash(schema, oschema, obj))
+                                Dim h As String = EntityFilter.EmptyHash
+                                If p.Value.Second IsNot Nothing Then
+                                    h = p.Value.Second.MakeHash(schema, oschema, obj)
+                                End If
+                                Dim ids As List(Of String) = p.Value.First.GetIds(h)
                                 Dim rm As New List(Of String)
                                 For Each id As String In ids
                                     Dim ce As OrmManagerBase.CachedItem = TryCast(dic(id), OrmManagerBase.CachedItem)
                                     Dim f As IEntityFilter = Nothing
                                     If ce IsNot Nothing Then
+                                        f = TryCast(ce.Filter, IEntityFilter)
+                                    End If
+                                    If ce IsNot Nothing AndAlso f IsNot Nothing Then
                                         If callbacks IsNot Nothing Then
                                             callbacks.BeginUpdateList(p.Key, id)
                                         End If
 
                                         If obj._needAdd OrElse obj._needDelete OrElse forseEval Then
-                                            f = ce.Filter
                                             Dim r As Boolean = False
-                                            Dim er As IEntityFilter.EvalResult = IEntityFilter.EvalResult.Found
+                                            Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
                                             If f IsNot Nothing Then
                                                 er = f.Eval(schema, obj, oschema)
-                                                r = er = IEntityFilter.EvalResult.Unknown
+                                                r = er = IEvaluableValue.EvalResult.Unknown
                                             End If
 
                                             If r Then
                                                 dic.Remove(id)
-                                            ElseIf er = IEntityFilter.EvalResult.Found Then
+                                            ElseIf er = IEvaluableValue.EvalResult.Found Then
                                                 Dim sync As String = id & mgr.GetStaticKey
                                                 Using SyncHelper.AcquireDynamicLock(sync)
                                                     If obj._needAdd Then
@@ -689,7 +764,11 @@ Namespace Orm
                 callbacks.EndUpdateProcs()
             End If
 
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("9-134g9ngpadfbgp")
+#End If
                 Dim ts As List(Of Type) = Nothing
                 If _jt.TryGetValue(tt, ts) Then
                     For Each t As Type In ts
@@ -720,10 +799,14 @@ Namespace Orm
         ''' <param name="key"></param>
         ''' <param name="id"></param>
         ''' <remarks></remarks>
-        Protected Friend Sub AddDependType(ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IEntityFilter)
+        Protected Friend Sub AddDependType(ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter, ByVal schema As OrmSchemaBase)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("j13rvnopqefv9-n24bth","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
-                Dim l As TemplateHashs = _tp.GetFilters(t)
+#End If
+                Dim l As TemplateHashs = _tp.GetFilters(schema.GetEntityTypeKey(t))
                 Dim h As List(Of String) = l.GetIds(key, f)
                 If Not h.Contains(id) Then
                     h.Add(id)
@@ -732,7 +815,11 @@ Namespace Orm
         End Sub
 
         Protected Friend Sub AddJoinDepend(ByVal joinType As Type, ByVal selectType As Type)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("9-134g9ngpadfbgp")
+#End If
                 Dim l As List(Of Type) = Nothing
                 If Not _jt.TryGetValue(joinType, l) Then
                     l = New List(Of Type)
@@ -752,7 +839,11 @@ Namespace Orm
         ''' <param name="id"></param>
         ''' <remarks></remarks>
         Protected Friend Sub AddDepend(ByVal obj As OrmBase, ByVal key As String, ByVal id As String)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("1380fbhj145g90h2evgrqervg","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("1380fbhj145g90h2evgrqervg")
+#End If
                 Dim l As Dictionary(Of String, List(Of String)) = Nothing
                 Dim op As New EntityProxy(obj)
                 If _object_depends.TryGetValue(op, l) Then
@@ -785,7 +876,11 @@ Namespace Orm
         Protected Friend Sub RemoveDepends(ByVal obj As OrmBase)
             Dim op As New EntityProxy(obj)
             If _object_depends.ContainsKey(op) Then
+#If DebugLocks Then
+                Using SyncHelper.AcquireDynamicLock_Debug("1380fbhj145g90h2evgrqervg","d:\temp\")
+#Else
                 Using SyncHelper.AcquireDynamicLock("1380fbhj145g90h2evgrqervg")
+#End If
                     Dim l As Dictionary(Of String, List(Of String)) = Nothing
                     If _object_depends.TryGetValue(op, l) Then
                         For Each p As KeyValuePair(Of String, List(Of String)) In l
@@ -820,7 +915,11 @@ Namespace Orm
         End Sub
 
         Protected Friend Sub AddStoredProc(ByVal key As String, ByVal sp As StoredProcBase)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
+#End If
                 If sp.Cached Then
                     _procs(key) = sp
                     Dim types As ICollection(Of Type) = sp.GetTypesToValidate
@@ -858,14 +957,22 @@ Namespace Orm
         End Sub
 
         Protected Sub ValidateSPOnInsertDelete(ByVal obj As OrmBase)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
+#End If
                 ValidateSPByType(obj.GetType, obj)
                 ValidateSPByType(GetType(Object), obj)
             End Using
         End Sub
 
         Protected Sub ValidateSPOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
+#Else
             Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
+#End If
                 ValidateUpdateSPByType(obj.GetType, obj, fields)
                 ValidateUpdateSPByType(GetType(Object), obj, fields)
             End Using
@@ -903,13 +1010,13 @@ Namespace Orm
 
             Dim dic As IDictionary = CType(_dics(k), IDictionary)
             If dic Is Nothing Then
-                SyncLock SyncRoot
+                Using SyncRoot
                     dic = CType(_dics(k), IDictionary)
                     If dic Is Nothing Then
                         dic = CreateDictionary(t)
                         _dics(k) = dic
                     End If
-                End SyncLock
+                End Using
             End If
             Return dic
         End Function
@@ -961,7 +1068,7 @@ Namespace Orm
 
         '    Dim td As IDictionary = CType(_dics(t), System.Collections.IDictionary)
         '    If td Is Nothing Then
-        '        SyncLock _dics.SyncRoot
+        '        using _dics.SyncRoot
         '            td = CType(_dics(t), System.Collections.IDictionary)
         '            If td Is Nothing Then
         '                Dim pol As DictionatyCachePolicy = GetPolicy(t)
@@ -971,7 +1078,7 @@ Namespace Orm
         '                td = CType(dt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
         '                    args), System.Collections.IDictionary)
         '            End If
-        '        End SyncLock
+        '        End using
         '    End If
 
         '    Return td

@@ -270,7 +270,7 @@ Namespace Orm
                 End Get
             End Property
 
-            Public Sub AddRange(ByVal objs As ICollection(Of OrmBase))
+            Public Overridable Sub AddRange(ByVal objs As ICollection(Of OrmBase))
                 If objs Is Nothing Then
                     Throw New ArgumentNullException("objects")
                 End If
@@ -283,7 +283,7 @@ Namespace Orm
                 _saver.AddRange(objs)
             End Sub
 
-            Public Sub Add(ByVal obj As OrmBase)
+            Public Overridable Sub Add(ByVal obj As OrmBase)
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("object")
                 End If
@@ -319,15 +319,16 @@ Namespace Orm
                 Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetIdentity)
             End Function
 
-            Public Function CreateNewObject(Of T As {OrmBase, New})(ByVal id As Integer) As T
+            Public Overridable Function CreateNewObject(Of T As {OrmBase, New})(ByVal id As Integer) As T
                 If _mgr.NewObjectManager Is Nothing Then
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
                 Dim o As New T
                 o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
-                _objs.Add(o)
                 _mgr.NewObjectManager.AddNew(o)
-                _saver.Add(o)
+                '_objs.Add(o)
+                '_saver.Add(o)
+                Add(o)
                 Return o
             End Function
 
@@ -380,6 +381,8 @@ Namespace Orm
                                 End If
                             End Try
                         End If
+                    Else
+                        _Rollback()
                     End If
                     RemoveHandler _mgr.BeginDelete, AddressOf Delete
                     RemoveHandler _mgr.BeginUpdate, AddressOf Add
@@ -544,22 +547,22 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IEntityFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IEntityFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IEntityFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IEntityFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManagerBase.ICustDelegate(Of T)
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
@@ -588,7 +591,7 @@ Namespace Orm
         'End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
-            ByVal obj As OrmBase, ByVal filter As IEntityFilter, ByVal sort As Sort, _
+            ByVal obj As OrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, filter, sort, id, key, direct)
         End Function
@@ -601,8 +604,8 @@ Namespace Orm
         'End Function
 
         Protected Function FindConnected(ByVal ct As Type, ByVal selectedType As Type, _
-            ByVal filterType As Type, ByVal connectedFilter As IEntityFilter, _
-            ByVal filter As IEntityFilter, ByVal withLoad As Boolean, _
+            ByVal filterType As Type, ByVal connectedFilter As IFilter, _
+            ByVal filter As IFilter, ByVal withLoad As Boolean, _
             ByVal sort As Sort) As IList
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim arr As Generic.List(Of ColumnAttribute) = Nothing
@@ -884,7 +887,7 @@ Namespace Orm
 
         'End Function
 
-        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IEntityFilter, _
+        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IFilter, _
             ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Integer, EditableList)
             Invariant()
 
@@ -911,14 +914,14 @@ Namespace Orm
             Dim edic As New Dictionary(Of Integer, EditableList)
 
             If ct IsNot Nothing Then
-                If Not direct Then
-                    Throw New NotSupportedException("Tag is not supported with connected type")
-                End If
+                'If Not direct Then
+                '    Throw New NotSupportedException("Tag is not supported with connected type")
+                'End If
 
                 'Dim oschema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(type2load)
                 'Dim r2 As M2MRelation = DbSchema.GetM2MRelation(type2load, type, direct)
-                Dim f1 As String = DbSchema.GetConnectedTypeField(ct, type)
-                Dim f2 As String = DbSchema.GetConnectedTypeField(ct, type2load)
+                Dim f1 As String = DbSchema.GetConnectedTypeField(ct, type, Not direct)
+                Dim f2 As String = DbSchema.GetConnectedTypeField(ct, type2load, direct)
                 'Dim col1 As String = type.Name & "ID"
                 'Dim col2 As String = orig_type.Name & "ID"
                 'dt.Columns.Add(col1, GetType(Integer))
@@ -1024,7 +1027,8 @@ Namespace Orm
             Return edic
         End Function
 
-        Protected Overloads Function GetObjects(ByVal ct As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IEntityFilter, ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As IList
+        Protected Overloads Function GetObjects(ByVal ct As Type, ByVal ids As Generic.IList(Of Integer), _
+            ByVal f As IFilter, ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As IList
             If ids Is Nothing Then
                 Throw New ArgumentNullException("ids")
             End If
@@ -1083,7 +1087,7 @@ Namespace Orm
             Return objs
         End Function
 
-        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal ids As Generic.IList(Of Integer), ByVal f As IEntityFilter, ByVal objs As IList(Of T), _
+        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal ids As Generic.IList(Of Integer), ByVal f As IFilter, ByVal objs As IList(Of T), _
             ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As Generic.IList(Of T)
             Invariant()
 
@@ -1146,10 +1150,6 @@ Namespace Orm
 
         Protected Friend Overrides Function GetStaticKey() As String
             Return String.Empty
-        End Function
-
-        Protected Overridable Function GetFilterInfo() As Object
-            Return Nothing
         End Function
 
         'Protected Overridable Function GetNewObject(ByVal type As Type, ByVal id As Integer) As OrmBase
@@ -1491,7 +1491,7 @@ Namespace Orm
                                     If TypeOf (value) Is String Then
                                         Dim svalue As String = CStr(value).Trim
                                         If svalue = String.Empty Then
-                                            v = 0
+                                            v = [Enum].ToObject(t, 0)
                                         Else
                                             v = [Enum].Parse(t, svalue, True)
                                         End If
@@ -1761,9 +1761,9 @@ Namespace Orm
 
                 For Each p As Pair(Of Integer) In mr.Pairs
                     Dim con As New Orm.Condition.ConditionConstructor
-                    con.AddFilter(New EntityFilter(original_type, fieldName, New SimpleValue(p.First), FilterOperation.GreaterEqualThan))
-                    con.AddFilter(New EntityFilter(original_type, fieldName, New SimpleValue(p.Second), FilterOperation.LessEqualThan))
-                    sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                    con.AddFilter(New EntityFilter(original_type, fieldName, New ScalarValue(p.First), FilterOperation.GreaterEqualThan))
+                    con.AddFilter(New EntityFilter(original_type, fieldName, New ScalarValue(p.Second), FilterOperation.LessEqualThan))
+                    sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr, params))
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
                         sb.Length = 0
@@ -1783,7 +1783,7 @@ Namespace Orm
                             sb2.Append(")")
                             Dim f As New EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), FilterOperation.In)
 
-                            sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                            sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1796,7 +1796,7 @@ Namespace Orm
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), FilterOperation.In)
-                        sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                        sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1828,9 +1828,9 @@ Namespace Orm
 
                 For Each p As Pair(Of Integer) In mr.Pairs
                     Dim con As New Orm.Condition.ConditionConstructor
-                    con.AddFilter(New TableFilter(table, column, New SimpleValue(p.First), FilterOperation.GreaterEqualThan))
-                    con.AddFilter(New TableFilter(table, column, New SimpleValue(p.Second), FilterOperation.LessEqualThan))
-                    sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                    con.AddFilter(New TableFilter(table, column, New ScalarValue(p.First), FilterOperation.GreaterEqualThan))
+                    con.AddFilter(New TableFilter(table, column, New ScalarValue(p.Second), FilterOperation.LessEqualThan))
+                    sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr, params))
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
                         sb.Length = 0
@@ -1850,7 +1850,7 @@ Namespace Orm
                             sb2.Append(")")
                             Dim f As New TableFilter(table, column, New LiteralValue(sb2.ToString), FilterOperation.In)
 
-                            sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                            sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1863,7 +1863,7 @@ Namespace Orm
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New TableFilter(table, column, New LiteralValue(sb2.ToString), FilterOperation.In)
-                        sb.Append(f.MakeSQLStmt(DbSchema, almgr.Aliases, params))
+                        sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1883,21 +1883,8 @@ Namespace Orm
             Return l
         End Function
 
-        Private Class FProxy
-
-            Private _t As Type
-
-            Public Sub New(ByVal t As Type)
-                _t = t
-            End Sub
-
-            Public Function GetValue(ByVal tokens() As String, ByVal sectionName As String, ByVal f As IOrmFullTextSupport) As String
-                Return Configuration.SearchSection.GetValueForFreeText(_t, tokens, sectionName)
-            End Function
-        End Class
-
-        Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal type2search As Type, ByVal tokens() As String, _
-            ByVal join As OrmJoin, ByVal contextKey As Object) As System.Collections.Generic.ICollection(Of T)
+        Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal type2search As Type, _
+            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal frmt As IFtsStringFormater) As System.Collections.Generic.ICollection(Of T)
 
             Dim fields As New List(Of Pair(Of String, Type))
             Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
@@ -1907,62 +1894,22 @@ Namespace Orm
             Dim queryFields As String() = Nothing
             Dim selCols, searchCols As New List(Of ColumnAttribute)
             Dim ssearch As IOrmFullTextSupport = TryCast(selSchema, IOrmFullTextSupport)
-            'If ssearch IsNot Nothing Then
-            '    Dim ss() As String = fsearch.GetIndexedFields
-            '    If ss IsNot Nothing Then
-            '        For Each s As String In ss
-            '            fields.Add(New Pair(Of String, Type)(s, selectType))
-            '            selCols.Add(New ColumnAttribute(s))
-            '        Next
-            '    End If
-            '    If selCols.Count > 0 Then
-            '        selCols.Insert(0, New ColumnAttribute("ID"))
-            '        fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
-            '    End If
-            'End If
-            If selectType IsNot type2search Then
-                selCols.Insert(0, New ColumnAttribute("ID"))
-                fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
-            End If
 
-            If fsearch IsNot Nothing Then
-                Dim ss() As String = fsearch.GetIndexedFields
-                If ss IsNot Nothing Then
-                    For Each s As String In ss
-                        fields.Add(New Pair(Of String, Type)(s, type2search))
-                        searchCols.Add(New ColumnAttribute(s))
-                    Next
-                End If
-
-                If searchCols.Count > 0 Then
-                    searchCols.Insert(0, New ColumnAttribute("ID"))
-                    fields.Insert(0, New Pair(Of String, Type)("ID", type2search))
-                End If
-
-                If contextKey IsNot Nothing Then
-                    queryFields = fsearch.GetQueryFields(contextKey)
-                End If
-            End If
+            Dim joins As New List(Of OrmJoin)
+            Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
+                joins, selCols, searchCols, queryFields, searchSchema, selSchema)
 
             Dim col As ICollection(Of T) = Nothing
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
-                'Dim cols As Generic.List(Of ColumnAttribute) = Nothing
-
-                'If fields.Count > 0 Then
-                '    cols = New List(Of ColumnAttribute)
-                '    cols.Add(DbSchema.GetColumnByFieldName(selectType, "ID"))
-                '    For Each f As Pair(Of String, Type) In fields
-                '        cols.Add(DbSchema.GetColumnByFieldName(f.Second, f.First))
-                '    Next
-                'End If
 
                 With cmd
                     .CommandType = System.Data.CommandType.Text
 
                     Dim params As New ParamMgr(DbSchema, "p")
-                    .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
-                        GetSearchSection, join, SortType.Desc, params, GetFilterInfo, queryFields, _
-                        Integer.MinValue, AddressOf Configuration.SearchSection.GetValueForContains, "containstable")
+                    .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, frmt, fields, _
+                        GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
+                        Integer.MinValue, _
+                        "containstable", sort, appendMain, filter, contextKey, searchSchema, selSchema)
                     params.AppendParams(.Parameters)
                 End With
 
@@ -1974,15 +1921,18 @@ Namespace Orm
             End Using
 
             Dim col2 As ICollection(Of T) = Nothing
-            If tokens.Length > 1 Then
+            Dim f2 As IOrmFullTextSupport2 = TryCast(searchSchema, IOrmFullTextSupport2)
+            Dim tokens() As String = frmt.GetTokens
+            If tokens.Length > 1 AndAlso (f2 Is Nothing OrElse f2.UseFreeText) Then
                 Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                     With cmd
                         .CommandType = System.Data.CommandType.Text
 
                         Dim params As New ParamMgr(DbSchema, "p")
-                        .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, tokens, fields, _
-                            GetSearchSection, join, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
-                            AddressOf New FProxy(type2search).GetValue, "freetexttable")
+                        .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, frmt, fields, _
+                            GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
+                            "freetexttable", sort, appendMain, filter, _
+                            contextKey, searchSchema, selSchema)
                         params.AppendParams(.Parameters)
                     End With
 
@@ -1995,7 +1945,7 @@ Namespace Orm
             End If
 
             Dim res As List(Of T) = Nothing
-            If fields IsNot Nothing AndAlso selectType Is type2search Then
+            If fields IsNot Nothing AndAlso selectType Is type2search AndAlso sort Is Nothing Then
                 Dim query As String, sb As New StringBuilder
                 For Each tk As String In tokens
                     sb.Append(tk).Append(" ")
@@ -2032,7 +1982,6 @@ Namespace Orm
                                         Else
                                             full_part.Add(o)
                                         End If
-
                                         GoTo l1
                                     ElseIf ps.Replace(".", "").Equals(query, StringComparison.InvariantCultureIgnoreCase) Then
                                         If i = 0 Then
@@ -2058,31 +2007,300 @@ Namespace Orm
                     End If
 l1:
                 Next
-                full.AddRange(full_part1)
-                full.AddRange(full_part)
-                full.AddRange(starts)
-                full.AddRange(other)
+                Dim cnt As Integer = full.Count
+                _er = New ExecutionResult(cnt + full_part1.Count + full_part.Count + starts.Count + other.Count, Nothing, Nothing, False, 0)
+                Dim rf As Integer = Math.Max(0, _start - cnt)
+                full.RemoveRange(0, Math.Min(_start, cnt))
+                cnt = full.Count
+                If cnt < _length Then
+                    'If full_part1.Count + cnt < _length Then
+                    '    full.AddRange(full_part1)
+                    'Else
+                    '    full_part1.RemoveRange(0, _length - cnt)
+                    '    full.AddRange(full_part1)
+                    '    GoTo l2
+                    'End If
+                    If AddPart(full, full_part1, cnt, rf) Then
+                        If AddPart(full, full_part, cnt, rf) Then
+                            If AddPart(full, starts, cnt, rf) Then
+                                AddPart(full, other, cnt, rf)
+                            End If
+                        End If
+                    End If
+                    'full.AddRange(full_part)
+                    'full.AddRange(starts)
+                    'full.AddRange(other)
+                Else
+                    full.RemoveRange(0, _length)
+                End If
+l2:
                 res = full
             Else
-                res = New List(Of T)(col)
+                _er = New ExecutionResult(col.Count, Nothing, Nothing, False, 0)
+                If _length = Integer.MaxValue AndAlso _start = 0 Then
+                    res = New List(Of T)(col)
+                Else
+                    Dim l As IList(Of T) = CType(col, Global.System.Collections.Generic.IList(Of T))
+                    res = New List(Of T)
+                    For i As Integer = _start To Math.Min(_start + _length, col.Count) - 1
+                        res.Add(l(i))
+                    Next
+                End If
             End If
 
-            If col2 IsNot Nothing Then
+            If col2 IsNot Nothing AndAlso res.Count < _length Then
                 Dim dic As New Dictionary(Of Integer, T)
                 For Each o As T In res
                     dic.Add(o.Identifier, o)
                 Next
+                Dim i As Integer = res.Count
                 For Each o As T In col2
                     If Not dic.ContainsKey(o.Identifier) Then
                         res.Add(o)
+                        i += 1
+                        If i = _start + _length Then
+                            Exit For
+                        End If
                     End If
                 Next
+                _er = New ExecutionResult(_er.Count + col2.Count, Nothing, Nothing, False, 0)
             End If
 
             Return res
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IEntityFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+        Protected Overrides Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, _
+            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
+            ByVal limit As Integer, ByVal fts As IFtsStringFormater) As ICollection(Of T)
+
+            Dim selectType As System.Type = GetType(T)
+            Dim fields As New List(Of Pair(Of String, Type))
+            Dim joins As New List(Of OrmJoin)
+            Dim selCols, searchCols As New List(Of ColumnAttribute)
+            Dim queryFields As String() = Nothing
+
+            Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
+            Dim selSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(selectType)
+
+            Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
+                joins, selCols, searchCols, queryFields, searchSchema, selSchema)
+
+            Return MakeSqlStmtSearch(Of T)(type2search, selectType, fields, queryFields, joins.ToArray, sort, appendMain, _
+                filter, selCols, searchCols, ftsText, limit, fts, contextKey)
+        End Function
+
+        Public Function PrepareSearch(ByVal selectType As Type, ByVal type2search As Type, ByVal filter As IFilter, _
+            ByVal sort As Sort, ByVal contextKey As Object, ByVal fields As IList(Of Pair(Of String, Type)), _
+            ByVal joins As IList(Of OrmJoin), ByVal selCols As IList(Of ColumnAttribute), _
+            ByVal searchCols As IList(Of ColumnAttribute), ByRef queryFields As String(), _
+            ByVal searchSchema As IOrmObjectSchema, ByVal selSchema As IOrmObjectSchema) As Boolean
+
+            'Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
+            'Dim selSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(selectType)
+            Dim fsearch As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
+            'Dim queryFields As String() = Nothing
+            Dim ssearch As IOrmFullTextSupport = TryCast(selSchema, IOrmFullTextSupport)
+            'If ssearch IsNot Nothing Then
+            '    Dim ss() As String = fsearch.GetIndexedFields
+            '    If ss IsNot Nothing Then
+            '        For Each s As String In ss
+            '            fields.Add(New Pair(Of String, Type)(s, selectType))
+            '            selCols.Add(New ColumnAttribute(s))
+            '        Next
+            '    End If
+            '    If selCols.Count > 0 Then
+            '        selCols.Insert(0, New ColumnAttribute("ID"))
+            '        fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
+            '    End If
+            'End If
+            If selectType IsNot type2search Then
+                selCols.Insert(0, New ColumnAttribute("ID"))
+                fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
+            End If
+
+            Dim types As New List(Of Type)
+
+            If selectType IsNot type2search Then
+                Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2search, selSchema)
+
+                If String.IsNullOrEmpty(field) Then
+                    field = _schema.GetJoinFieldNameByType(type2search, selectType, searchSchema)
+
+                    If String.IsNullOrEmpty(field) Then
+                        Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
+                    End If
+
+                    joins.Add(MakeJoin(selectType, type2search, field, FilterOperation.Equal, JoinType.Join))
+                Else
+                    joins.Add(MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True))
+                End If
+
+                types.Add(selectType)
+            End If
+
+            Dim appendMain As Boolean = False
+            If sort IsNot Nothing Then
+                Dim ns As Sort = sort
+                Do
+                    Dim sortType As System.Type = ns.Type
+                    ns = ns.Previous
+                    If sortType Is Nothing Then
+                        sortType = selectType
+                    End If
+                    appendMain = type2search Is sortType OrElse appendMain
+                    If Not types.Contains(sortType) Then
+                        If type2search IsNot sortType Then
+                            Dim srtschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
+                            Dim field As String = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
+                            If Not String.IsNullOrEmpty(field) Then
+                                joins.Add(MakeJoin(sortType, type2search, field, FilterOperation.Equal, JoinType.Join))
+                                types.Add(sortType)
+                                Continue Do
+                            End If
+
+                            'field = _schema.GetJoinFieldNameByType(sortType, type2search, srtschema)
+                            'If Not String.IsNullOrEmpty(field) Then
+                            '    joins.Add(MakeJoin(type2search, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                            '    Continue Do
+                            'End If
+
+                            If selectType IsNot type2search Then
+                                'field = _schema.GetJoinFieldNameByType(sortType, selectType, srtschema)
+                                'If Not String.IsNullOrEmpty(field) Then
+                                '    joins.Add(MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
+                                '    Continue Do
+                                'End If
+
+                                field = _schema.GetJoinFieldNameByType(selectType, sortType, selSchema)
+                                If Not String.IsNullOrEmpty(field) Then
+                                    joins.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                                    types.Add(sortType)
+                                    Continue Do
+                                End If
+                            End If
+
+                            If String.IsNullOrEmpty(field) Then
+                                Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
+                            End If
+                        End If
+                    End If
+                Loop While ns IsNot Nothing
+            End If
+
+            If filter IsNot Nothing Then
+                For Each f As IFilter In filter.GetAllFilters
+                    Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
+                    If ef IsNot Nothing Then
+                        Dim type2join As System.Type = CType(ef.GetFilterTemplate, OrmFilterTemplate).Type
+                        appendMain = type2search Is type2join OrElse appendMain
+                        If type2search IsNot type2join Then
+                            If Not types.Contains(type2join) Then
+                                Dim field As String = _schema.GetJoinFieldNameByType(type2search, type2join, searchSchema)
+
+                                If Not String.IsNullOrEmpty(field) Then
+                                    joins.Add(MakeJoin(type2join, type2search, field, FilterOperation.Equal, JoinType.Join))
+                                    types.Add(type2join)
+                                Else
+                                    If selectType IsNot type2search Then
+                                        field = _schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
+                                        If Not String.IsNullOrEmpty(field) Then
+                                            joins.Add(MakeJoin(selectType, type2join, field, FilterOperation.Equal, JoinType.Join, True))
+                                            types.Add(type2join)
+                                            Continue For
+                                        End If
+                                    End If
+
+                                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+                                End If
+                            End If
+                        End If
+                    Else
+                        Dim tf As TableFilter = TryCast(f, TableFilter)
+                        If tf IsNot Nothing Then
+                            If tf.Template.Table IsNot selSchema.GetTables(0) Then
+                                Throw New NotImplementedException
+                            Else
+                                appendMain = True
+                            End If
+                        Else
+                            appendMain = True
+                            'Throw New NotImplementedException
+                        End If
+                    End If
+                Next
+            End If
+
+            If fsearch IsNot Nothing Then
+                Dim ss() As String = fsearch.GetIndexedFields
+                If ss IsNot Nothing Then
+                    For Each s As String In ss
+                        fields.Add(New Pair(Of String, Type)(s, type2search))
+                        searchCols.Add(New ColumnAttribute(s))
+                    Next
+                End If
+
+                If searchCols.Count > 0 Then
+                    searchCols.Insert(0, New ColumnAttribute("ID"))
+                    fields.Insert(0, New Pair(Of String, Type)("ID", type2search))
+                End If
+
+                If contextKey IsNot Nothing Then
+                    queryFields = fsearch.GetQueryFields(contextKey)
+                End If
+            End If
+
+            Return appendMain
+        End Function
+
+        Public Function MakeSqlStmtSearch(Of T As {OrmBase, New})(ByVal type2search As Type, _
+            ByVal selectType As Type, ByVal fields As ICollection(Of Pair(Of String, Type)), ByVal queryFields() As String, _
+            ByVal joins() As OrmJoin, ByVal sort As Sort, ByVal appendMain As Boolean, ByVal filter As IFilter, _
+            ByVal selCols As List(Of ColumnAttribute), ByVal searchCols As List(Of ColumnAttribute), _
+            ByVal ftsText As String, ByVal limit As Integer, ByVal fts As IFtsStringFormater, ByVal contextkey As Object) As ICollection(Of T)
+            Dim col As ICollection(Of T) = Nothing
+
+            Dim selSchema As IOrmObjectSchema = CType(_schema.GetObjectSchema(selectType), IOrmObjectSchema)
+            Dim searchSchema As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2search), IOrmObjectSchema)
+
+            Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+
+                With cmd
+                    .CommandType = System.Data.CommandType.Text
+
+                    Dim params As New ParamMgr(DbSchema, "p")
+                    .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, fts, fields, _
+                        GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
+                        limit, ftsText, sort, appendMain, filter, contextkey, selSchema, searchSchema)
+                    params.AppendParams(.Parameters)
+                End With
+
+                If type2search Is selectType OrElse searchCols.Count = 0 Then
+                    col = CType(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols), List(Of T))
+                Else
+                    col = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T))
+                End If
+            End Using
+            Return col
+        End Function
+
+        Private Function AddPart(Of T)(ByVal full As List(Of T), ByVal part As List(Of T), ByRef cnt As Integer, ByRef rf As Integer) As Boolean
+            Dim r As Integer = rf
+            Dim pcnt As Integer = part.Count
+            rf = Math.Max(0, rf - pcnt)
+            part.RemoveRange(0, Math.Min(r, pcnt))
+            pcnt = part.Count
+            If pcnt + cnt <= _length Then
+                full.AddRange(part)
+                cnt = full.Count
+            Else
+                part.RemoveRange(_length - cnt, pcnt - (_length - cnt))
+                full.AddRange(part)
+                Return False
+            End If
+            Return cnt < _length
+        End Function
+
+        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
             Invariant()
             Dim params As New Orm.ParamMgr(DbSchema, "p")
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand

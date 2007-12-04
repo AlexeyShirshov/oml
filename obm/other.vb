@@ -5,29 +5,29 @@ Imports CoreFramework.Structures
 
 'Namespace Threading
 
-Class CSScopeMgr
-    Implements IDisposable
+'Class CSScopeMgr
+'    Implements IDisposable
 
-    Private disposedValue As Boolean
-    Protected _obj As Object
+'    Private disposedValue As Boolean
+'    Protected _obj As Object
 
-    Public Sub New(ByVal obj As Object)
-        _obj = obj
-        System.Threading.Monitor.Enter(_obj)
-    End Sub
+'    Public Sub New(ByVal obj As Object)
+'        _obj = obj
+'        System.Threading.Monitor.Enter(_obj)
+'    End Sub
 
-    Protected Overridable Sub _Dispose()
-        If Not Me.disposedValue Then
-            System.Threading.Monitor.Exit(_obj)
-        End If
-        Me.disposedValue = True
-    End Sub
+'    Protected Overridable Sub _Dispose()
+'        If Not Me.disposedValue Then
+'            System.Threading.Monitor.Exit(_obj)
+'        End If
+'        Me.disposedValue = True
+'    End Sub
 
-    Public Sub Dispose() Implements IDisposable.Dispose
-        _Dispose()
-        GC.SuppressFinalize(Me)
-    End Sub
-End Class
+'    Public Sub Dispose() Implements IDisposable.Dispose
+'        _Dispose()
+'        GC.SuppressFinalize(Me)
+'    End Sub
+'End Class
 
 '    Public Class RWScopeMgr
 '        Implements IDisposable

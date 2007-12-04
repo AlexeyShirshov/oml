@@ -139,7 +139,7 @@ Public Class TestSchema
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(ArgumentException))> _
+    <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
     Public Sub TestOrderWrong()
         Dim schema As New Orm.DbSchema("1")
 

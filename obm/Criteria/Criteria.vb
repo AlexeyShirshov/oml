@@ -38,6 +38,22 @@ Namespace Orm
 
             Return New CriteriaField(Nothing, fieldName)
         End Function
+
+        Public Shared Function Exists(ByVal t As Type, ByVal filter As IFilter) As CriteriaLink
+            Return New CriteriaLink(New Condition.ConditionConstructor).AndExists(t, filter)
+        End Function
+
+        Public Shared Function NotExists(ByVal t As Type, ByVal filter As IFilter) As CriteriaLink
+            Return New CriteriaLink(New Condition.ConditionConstructor).AndNotExists(t, filter)
+        End Function
+
+        Public Shared Function Custom(ByVal t As Type, ByVal field As String) As CriteriaField
+            Return New CustomCF(t, field)
+        End Function
+
+        Public Shared Function Custom(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField
+            Return New CustomCF(t, field, format)
+        End Function
     End Class
 
     Public Class CriteriaField
@@ -67,7 +83,7 @@ Namespace Orm
             _ct = ct
         End Sub
 
-        Protected Function GetLink(ByVal fl As Orm.IEntityFilter) As CriteriaLink
+        Protected Function GetLink(ByVal fl As Orm.IFilter) As CriteriaLink
             If _con Is Nothing Then
                 _con = New Orm.Condition.ConditionConstructor
             End If
@@ -75,48 +91,221 @@ Namespace Orm
             Return New CriteriaLink(_t, _con)
         End Function
 
+        Protected Overridable Function CreateFilter(ByVal v As IFilterValue, ByVal oper As FilterOperation) As IFilter
+            Return New EntityFilter(_t, _f, v, oper)
+        End Function
+
+        Protected ReadOnly Property Type() As Type
+            Get
+                Return _t
+            End Get
+        End Property
+
+        Protected ReadOnly Property Field() As String
+            Get
+                Return _f
+            End Get
+        End Property
+
         Public Function Eq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.Equal))
+            If value Is Nothing OrElse value Is DBNull.Value Then
+                Return IsNull()
+            Else
+                Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.Equal))
+            End If
         End Function
 
         Public Function NotEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.NotEqual))
+            If value Is Nothing OrElse value Is DBNull.Value Then
+                Return IsNotNull()
+            Else
+                Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.NotEqual))
+            End If
         End Function
 
         Public Function Eq(ByVal value As OrmBase) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New EntityValue(value), FilterOperation.Equal))
+            If value Is Nothing Then
+                Return IsNull()
+            Else
+                Return GetLink(CreateFilter(New EntityValue(value), FilterOperation.Equal))
+            End If
         End Function
 
         Public Function NotEq(ByVal value As OrmBase) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New EntityValue(value), FilterOperation.NotEqual))
+            If value Is Nothing Then
+                Return IsNotNull()
+            Else
+                Return GetLink(CreateFilter(New EntityValue(value), FilterOperation.NotEqual))
+            End If
         End Function
 
         Public Function GreaterThanEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.GreaterEqualThan))
+            Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.GreaterEqualThan))
         End Function
 
         Public Function LessThanEq(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.LessEqualThan))
+            Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.LessEqualThan))
         End Function
 
         Public Function GreaterThan(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.GreaterThan))
+            Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.GreaterThan))
         End Function
 
         Public Function LessThan(ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.LessThan))
+            Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.LessThan))
         End Function
 
         Public Function [Like](ByVal value As String) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), FilterOperation.Like))
+            If String.IsNullOrEmpty(value) Then
+                Throw New ArgumentNullException("value")
+            End If
+            Return GetLink(CreateFilter(New ScalarValue(value), FilterOperation.Like))
         End Function
 
-        Public Function Op(ByVal oper As FilterOperation, ByVal value As Object) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SimpleValue(value), oper))
+        Public Function IsNull() As CriteriaLink
+            Return GetLink(CreateFilter(New DBNullValue(), FilterOperation.Is))
+        End Function
+
+        Public Function IsNotNull() As CriteriaLink
+            Return GetLink(CreateFilter(New DBNullValue(), FilterOperation.IsNot))
+        End Function
+
+        Public Function [In](ByVal arr As ICollection) As CriteriaLink
+            Return GetLink(CreateFilter(New InValue(arr), FilterOperation.In))
+        End Function
+
+        Public Function NotIn(ByVal arr As ICollection) As CriteriaLink
+            Return GetLink(CreateFilter(New InValue(arr), FilterOperation.NotIn))
+        End Function
+
+        Public Function [In](ByVal t As Type) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing), FilterOperation.In))
+        End Function
+
+        Public Function NotIn(ByVal t As Type) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing), FilterOperation.NotIn))
+        End Function
+
+        Public Function [In](ByVal t As Type, ByVal fieldName As String) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing, fieldName), FilterOperation.In))
+        End Function
+
+        Public Function NotIn(ByVal t As Type, ByVal fieldName As String) As CriteriaLink
+            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing, fieldName), FilterOperation.NotIn))
+        End Function
+
+        Public Function Exists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
+            Dim j As New JoinFilter(_t, _f, t, joinField, FilterOperation.Equal)
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, j), FilterOperation.Exists))
+        End Function
+
+        Public Function NotExists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
+            Dim j As New JoinFilter(_t, _f, t, joinField, FilterOperation.Equal)
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, j), FilterOperation.NotExists))
+        End Function
+
+        Public Function Exists(ByVal t As Type) As CriteriaLink
+            Return Exists(t, "ID")
+        End Function
+
+        Public Function NotExists(ByVal t As Type) As CriteriaLink
+            Return NotExists(t, "ID")
+        End Function
+
+        Public Function Exists(ByVal t As Type, ByVal f As IFilter) As CriteriaLink
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.Exists))
+        End Function
+
+        Public Function NotExists(ByVal t As Type, ByVal f As IFilter) As CriteriaLink
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.NotExists))
+        End Function
+
+        Public Function Between(ByVal left As Object, ByVal right As Object) As CriteriaLink
+            Return GetLink(CreateFilter(New BetweenValue(left, right), FilterOperation.Between))
+        End Function
+
+        Public Function Op(ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
+            Return GetLink(CreateFilter(value, oper))
+        End Function
+
+    End Class
+
+    Public Class CustomCF
+        Inherits CriteriaField
+
+        Private _format As String
+
+        Protected Friend Sub New(ByVal t As Type, ByVal field As String, ByVal format As String)
+            MyBase.New(t, field)
+            _format = format
+        End Sub
+
+        Protected Friend Sub New(ByVal t As Type, ByVal field As String)
+            MyBase.New(t, field)
+        End Sub
+
+        Protected Friend Sub New(ByVal t As Type, ByVal field As String, ByVal format As String, _
+            ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
+            MyBase.New(t, field, con, ct)
+            _format = format
+        End Sub
+
+        Protected Friend Sub New(ByVal t As Type, ByVal field As String, _
+            ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
+            MyBase.New(t, field, con, ct)
+        End Sub
+
+        Protected Overrides Function CreateFilter(ByVal v As IFilterValue, ByVal oper As FilterOperation) As IFilter
+            If String.IsNullOrEmpty(_format) Then
+                Return New CustomFilter(Type, Field, v, oper)
+            Else
+                Return New CustomFilter(Type, Field, _format, v, oper)
+            End If
         End Function
     End Class
 
+    Public Class CriteriaNonField
+        Private _con As Orm.Condition.ConditionConstructor
+        Private _ct As ConditionOperator
+
+        Protected Friend Sub New(ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
+            _con = con
+            _ct = ct
+        End Sub
+
+        Protected Function GetLink(ByVal fl As Orm.IFilter) As CriteriaLink
+            If _con Is Nothing Then
+                _con = New Orm.Condition.ConditionConstructor
+            End If
+            _con.AddFilter(fl, _ct)
+            Return New CriteriaLink(_con)
+        End Function
+
+        Public Function Exists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.Exists))
+        End Function
+
+        Public Function NotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.NotExists))
+        End Function
+
+        'Public Function Custom(ByVal t As Type, ByVal field As String, ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
+        '    Return GetLink(New CustomFilter(t, field, value, oper))
+        'End Function
+
+        'Public Function Custom(ByVal t As Type, ByVal field As String, ByVal format As String, ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
+        '    Return GetLink(New CustomFilter(t, field, format, value, oper))
+        'End Function
+    End Class
+
+    Public Interface IGetFilter
+        ReadOnly Property Filter() As IFilter
+        ReadOnly Property Filter(ByVal t As Type) As IFilter
+    End Interface
+
     Public Class CriteriaLink
+        Implements IGetFilter
+
         Private _con As Orm.Condition.ConditionConstructor
         Private _t As Type
 
@@ -193,18 +382,57 @@ Namespace Orm
             Return Me
         End Function
 
-        Public ReadOnly Property Filter() As IEntityFilter
+        Public Function AndExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return New CriteriaNonField(_con, ConditionOperator.And).Exists(t, joinFilter)
+        End Function
+
+        Public Function AndNotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return New CriteriaNonField(_con, ConditionOperator.And).NotExists(t, joinFilter)
+        End Function
+
+        Public Function OrExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return New CriteriaNonField(_con, ConditionOperator.Or).Exists(t, joinFilter)
+        End Function
+
+        Public Function OrNotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Return New CriteriaNonField(_con, ConditionOperator.Or).NotExists(t, joinFilter)
+        End Function
+
+        Public Function CustomAnd(ByVal t As Type, ByVal field As String) As CriteriaField
+            Return New CustomCF(t, field, _con, ConditionOperator.And)
+        End Function
+
+        Public Function CustomOr(ByVal t As Type, ByVal field As String) As CriteriaField
+            Return New CustomCF(t, field, _con, ConditionOperator.Or)
+        End Function
+
+        Public Function CustomAnd(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField
+            Return New CustomCF(t, field, format, _con, ConditionOperator.And)
+        End Function
+
+        Public Function CustomOr(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField
+            Return New CustomCF(t, field, format, _con, ConditionOperator.Or)
+        End Function
+
+        Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter
             Get
-                Return Filter(Nothing)
+                If _con IsNot Nothing Then
+                    Return _con.Condition
+                Else
+                    Return Nothing
+                End If
             End Get
         End Property
 
-        Public Overridable ReadOnly Property Filter(ByVal t As Type) As IEntityFilter
+        Public Overridable ReadOnly Property Filter(ByVal t As Type) As IFilter Implements IGetFilter.Filter
             Get
                 If _con IsNot Nothing Then
-                    Dim ef As IEntityFilter = CType(_con.Condition, IEntityFilter)
-                    ef.GetFilterTemplate.SetType(t)
-                    Return ef
+                    Dim f As IFilter = _con.Condition
+                    Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
+                    If ef IsNot Nothing Then
+                        ef.GetFilterTemplate.SetType(t)
+                    End If
+                    Return f
                 Else
                     Return Nothing
                 End If
@@ -228,323 +456,4 @@ Namespace Orm
     '    End Property
     'End Class
 
-    Public Class Sorting
-        Private _t As Type
-        Private _prev As SortOrder
-
-        Protected Friend Sub New(ByVal t As Type, ByVal prev As SortOrder)
-            _t = t
-            _prev = prev
-        End Sub
-
-        Public Function NextField(ByVal fieldName As String) As SortOrder
-            Return New SortOrder(_t, fieldName, _prev)
-        End Function
-
-        Public Function NextExternal(ByVal fieldName As String) As SortOrder
-            Return New SortOrder(_t, fieldName, True, _prev)
-        End Function
-
-        Public Shared Function Field(ByVal fieldName As String) As SortOrder
-            Return New SortOrder(Nothing, fieldName)
-        End Function
-
-        Public Shared Function Custom(ByVal sortExpression As String) As SortOrder
-            Return SortOrder.CreateCustom(Nothing, sortExpression, Nothing)
-        End Function
-
-        Public Shared Function Custom(ByVal t As Type, ByVal sortExpression As String) As SortOrder
-            Return SortOrder.CreateCustom(t, sortExpression, Nothing)
-        End Function
-
-        Public Shared Function External(ByVal fieldName As String) As SortOrder
-            Return New SortOrder(Nothing, fieldName, True)
-        End Function
-
-        Public Shared Function Field(ByVal t As Type, ByVal fieldName As String) As SortOrder
-            Return New SortOrder(t, fieldName)
-        End Function
-
-        Public Shared Function External(ByVal t As Type, ByVal fieldName As String) As SortOrder
-            Return New SortOrder(t, fieldName, True)
-        End Function
-
-        Public Shared Widening Operator CType(ByVal so As Sorting) As Sort
-            Return so._prev
-        End Operator
-    End Class
-
-    Public Class SortOrder
-        Private _f As String
-        Private _ext As Boolean
-        Private _prev As SortOrder
-        Private _order As SortType
-        Private _t As Type
-        Private _custom As String
-
-        Protected Friend Sub New(ByVal t As Type, ByVal prev As SortOrder)
-            _prev = prev
-            _t = t
-        End Sub
-
-        Protected Friend Shared Function CreateCustom(ByVal t As Type, ByVal sortExpression As String, ByVal prev As SortOrder) As SortOrder
-            Dim s As New SortOrder(t, prev)
-            s._custom = sortExpression
-            Return s
-        End Function
-
-        Protected Friend Sub New(ByVal t As Type, ByVal f As String, Optional ByVal prev As SortOrder = Nothing)
-            _f = f
-            _prev = prev
-            _t = t
-        End Sub
-
-        Protected Friend Sub New(ByVal t As Type, ByVal f As String, ByVal ext As Boolean, Optional ByVal prev As SortOrder = Nothing)
-            _f = f
-            _ext = ext
-            _prev = prev
-            _t = t
-        End Sub
-
-        'Public Function NextSort(ByVal field As String) As SortOrder
-        '    _f = field
-        '    Return Me
-        'End Function
-
-        'Public Function NextSort(ByVal t As Type, ByVal field As String) As SortOrder
-        '    _f = field
-        '    _t = t
-        '    Return Me
-        'End Function
-
-        Public Function NextField(ByVal fieldName As String) As SortOrder
-            Return New SortOrder(_t, fieldName, Me)
-        End Function
-
-        Public Function NextExternal(ByVal fieldName As String) As SortOrder
-            Return New SortOrder(_t, fieldName, True, Me)
-        End Function
-
-        Public Function NextCustom(ByVal sortexpression As String) As SortOrder
-            Return CreateCustom(_t, sortexpression, Me)
-        End Function
-
-        Public ReadOnly Property Asc() As Sorting
-            Get
-                If IsCustom Then
-                    Throw New InvalidOperationException("Sort is custom")
-                End If
-                _order = SortType.Asc
-                Return New Sorting(_t, Me)
-                'Return New Sort(_f, SortType.Asc, _ext)
-            End Get
-        End Property
-
-        Public ReadOnly Property Desc() As Sorting
-            Get
-                If IsCustom Then
-                    Throw New InvalidOperationException("Sort is custom")
-                End If
-                _order = SortType.Desc
-                Return New Sorting(_t, Me)
-                'Return New Sort(_f, SortType.Desc, _ext)
-            End Get
-        End Property
-
-        Public Function Order(ByVal orderParam As Boolean) As Sorting
-            If IsCustom Then
-                Throw New InvalidOperationException("Sort is custom")
-            End If
-
-            If orderParam Then
-                Return Asc 'New Sort(_f, SortType.Asc, _ext)
-            Else
-                Return Desc 'New Sort(_f, SortType.Desc, _ext)
-            End If
-        End Function
-
-        Public Function Order(ByVal orderParam As String) As Sorting
-            If IsCustom Then
-                Throw New InvalidOperationException("Sort is custom")
-            End If
-
-            _order = CType([Enum].Parse(GetType(SortType), orderParam, True), SortType)
-            Return New Sorting(_t, Me) 'New Sort(_f, _, _ext)
-        End Function
-
-        Public Shared Widening Operator CType(ByVal so As SortOrder) As Sort
-            If Not String.IsNullOrEmpty(so._f) OrElse Not String.IsNullOrEmpty(so._custom) Then
-                If so._prev Is Nothing Then
-                    If so.IsCustom Then
-                        Return New Sort(so._t, so._custom)
-                    Else
-                        Return New Sort(so._t, so._f, so._order, so._ext)
-                    End If
-                Else
-                    If so.IsCustom Then
-                        Return New Sort(so._prev, so._t, so._custom)
-                    Else
-                        Return New Sort(so._prev, so._t, so._f, so._order, so._ext)
-                    End If
-                End If
-            Else
-                Return so._prev
-            End If
-        End Operator
-
-        Public ReadOnly Property IsCustom() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_custom)
-            End Get
-        End Property
-
-    End Class
-
-    Public Class Sort
-        Private _f As String
-        Private _order As SortType
-
-        Private _custom As String
-
-        Private _ext As Boolean
-
-        Private _prev As Sort
-        Private _t As Type
-
-        Protected Friend Sub New(ByVal prev As Sort, ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
-            _f = fieldName
-            _order = order
-            _ext = external
-            _t = t
-            _prev = prev
-        End Sub
-
-        Public Sub New(ByVal t As Type, ByVal sortExpression As String)
-            _t = t
-            _custom = sortExpression
-        End Sub
-
-        Public Sub New(ByVal prev As Sort, ByVal t As Type, ByVal sortExpression As String)
-            _prev = prev
-            _t = t
-            _custom = sortExpression
-        End Sub
-
-        Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
-            _f = fieldName
-            _order = order
-            _ext = external
-            _t = t
-        End Sub
-
-        Public Sub New(ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
-            _f = fieldName
-            _order = order
-            _ext = external
-        End Sub
-
-        Public Property CustomSortExpression() As String
-            Get
-                Return _custom
-            End Get
-            Set(ByVal value As String)
-                _custom = value
-            End Set
-        End Property
-
-        Public Property Type() As Type
-            Get
-                Return _t
-            End Get
-            Set(ByVal value As Type)
-                _t = value
-            End Set
-        End Property
-
-        Public Property FieldName() As String
-            Get
-                Return _f
-            End Get
-            Set(ByVal value As String)
-                _f = value
-            End Set
-        End Property
-
-        Public Property Order() As SortType
-            Get
-                Return _order
-            End Get
-            Set(ByVal value As SortType)
-                _order = value
-            End Set
-        End Property
-
-        Public Property IsExternal() As Boolean
-            Get
-                Return _ext
-            End Get
-            Set(ByVal value As Boolean)
-                _ext = value
-            End Set
-        End Property
-
-        Public ReadOnly Property IsCustom() As Boolean
-            Get
-                Return Not String.IsNullOrEmpty(_custom)
-            End Get
-        End Property
-
-        Public Overrides Function ToString() As String
-            Dim s As String = Nothing
-            If Not String.IsNullOrEmpty(_custom) Then
-                s = _custom
-            Else
-                s = _f & _order.ToString & _ext.ToString
-            End If
-
-            If _t IsNot Nothing Then
-                s &= _t.ToString
-            End If
-
-            Return s
-        End Function
-
-        Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, Sort))
-        End Function
-
-        Public Overloads Function Equals(ByVal s As Sort) As Boolean
-            If s Is Nothing Then
-                Return False
-            Else
-                Dim b As Boolean
-                If Not String.IsNullOrEmpty(_custom) Then
-                    b = _custom = s._custom AndAlso _t Is s._t
-                Else
-                    b = _f = s._f AndAlso _order = s._order AndAlso _ext = s._ext AndAlso _t Is s._t
-                End If
-
-                If b Then
-                    If Not _prev Is s._prev Then
-                        If _prev IsNot Nothing Then
-                            b = _prev.Equals(s._prev)
-                        Else
-                            b = False
-                        End If
-                    End If
-                End If
-                Return b
-            End If
-        End Function
-
-        Public Overrides Function GetHashCode() As Integer
-            Return ToString.GetHashCode
-        End Function
-
-        Protected Friend ReadOnly Property Previous() As Sort
-            Get
-                Return _prev
-            End Get
-        End Property
-    End Class
 End Namespace

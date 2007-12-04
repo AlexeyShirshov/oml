@@ -549,4 +549,24 @@ Namespace Orm
             Next
         End Sub
     End Class
+
+    Public MustInherit Class ScalarStoredProc(Of T As Structure)
+        Inherits QueryStoredProcBase
+
+        Protected Overrides Function InitResult() As Object
+            Return New TypeWrap(Of T)(Nothing)
+        End Function
+
+        Protected Overloads Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+            CType(result, TypeWrap(Of T)).Value = CType(Convert.ChangeType(dr.GetValue(0), GetType(T)), T)
+        End Sub
+
+        Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As T
+            Return CType(MyBase.GetResult(mgr), TypeWrap(Of T)).Value
+        End Function
+
+        Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Object))
+            Return New List(Of Pair(Of String, Object))
+        End Function
+    End Class
 End Namespace

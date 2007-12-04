@@ -8,12 +8,34 @@ Namespace Orm
 
 #Region " Interfaces "
     Public Interface IRelation
-        Function GetFirstType() As Pair(Of String, Type)
-        Function GetSecondType() As Pair(Of String, Type)
+        Structure RelationDesc
+            Public PropertyName As String
+            Public EntityType As Type
+            Public Direction As Boolean
+
+            Public Sub New(ByVal propertyName As String, ByVal entityType As Type)
+                Me.PropertyName = propertyName
+                Me.EntityType = entityType
+            End Sub
+
+            Public Sub New(ByVal propertyName As String, ByVal entityType As Type, ByVal direction As Boolean)
+                Me.PropertyName = propertyName
+                Me.EntityType = entityType
+                Me.Direction = direction
+            End Sub
+        End Structure
+
+        Function GetFirstType() As RelationDesc
+        Function GetSecondType() As RelationDesc
+    End Interface
+
+    Public Interface IOrmPropertyMap
+        Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
     End Interface
 
     Public Interface IOrmObjectSchemaBase
-        Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
+        Inherits IOrmPropertyMap
+        'Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
         'Function MapSort2FieldName(ByVal sort As String) As String
         Function GetM2MRelations() As M2MRelation()
         Function GetFilter(ByVal filter_info As Object) As IFilter
@@ -36,10 +58,21 @@ Namespace Orm
         ReadOnly Property SortExpiration(ByVal s As Sort) As TimeSpan
     End Interface
 
-    Public Interface IOrmObjectSchema
-        Inherits IOrmObjectSchemaBase
+    Public Interface IOrmRelationalSchema
         Function GetTables() As OrmTable()
         Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
+    End Interface
+
+    Public Interface IOrmObjectSchema
+        Inherits IOrmObjectSchemaBase, IRelMapObjectSchema
+    End Interface
+
+    Public Interface IRelMapObjectSchema
+        Inherits IOrmRelationalSchema, IOrmPropertyMap
+    End Interface
+
+    Public Interface IReadonlyObjectSchema
+        Function GetEditableSchema() As IRelMapObjectSchema
     End Interface
 
     'Public Interface IOrmTableFunction
@@ -50,6 +83,13 @@ Namespace Orm
         Function GetQueryFields(ByVal contextKey As Object) As String()
         Function GetIndexedFields() As String()
         ReadOnly Property ApplayAsterisk() As Boolean
+    End Interface
+
+    Public Interface IOrmFullTextSupport2
+        Inherits IOrmFullTextSupport
+
+        ReadOnly Property UseFreeText() As Boolean
+        Sub MakeSearchString(ByVal contextKey As Object, ByVal tokens() As String, ByVal sb As StringBuilder)
     End Interface
 
     Public Interface IOrmDictionary
@@ -82,6 +122,11 @@ Namespace Orm
         ReadOnly Property AlwaysJoinMainTable() As Boolean
         Function GetJoinField(ByVal t As Type) As String
     End Interface
+
+    Public Interface IFtsStringFormater
+        Function GetFtsString(ByVal section As String, ByVal contextKey As Object, ByVal f As IOrmFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String
+        Function GetTokens() As String()
+    End Interface
 #End Region
 
 #Region " Classes "
@@ -111,7 +156,7 @@ Namespace Orm
             Return _table
         End Function
 
-        Public Overridable Function OnTableAdd(ByVal pmgr As ParamMgr) As OrmTable
+        Public Overridable Function OnTableAdd(ByVal pmgr As ICreateParam) As OrmTable
             Return Nothing
         End Function
     End Class
@@ -173,6 +218,13 @@ Namespace Orm
         Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
             MyClass.New(type, table, column, delete, mapping)
+            Me.ConnectedType = connectedType
+        End Sub
+
+        Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
+            ByVal connectedType As Type, ByVal direct As Boolean)
+            MyClass.New(type, table, column, delete, mapping, direct)
             Me.ConnectedType = connectedType
         End Sub
     End Class
@@ -289,10 +341,10 @@ Namespace Orm
         End Function
 
         Public Function AddTable(ByRef table As OrmTable) As String
-            Return AddTable(table, Nothing, Nothing)
+            Return AddTable(table, CType(Nothing, ParamMgr))
         End Function
 
-        Public Function AddTable(ByRef table As OrmTable, ByVal schema As IOrmObjectSchema, ByVal pmgr As ParamMgr) As String
+        Public Function AddTable(ByRef table As OrmTable, ByVal pmgr As ICreateParam) As String
             'Dim tf As IOrmTableFunction = TryCast(schema, IOrmTableFunction)
             Dim t As OrmTable = table
             Dim tt As OrmTable = table.OnTableAdd(pmgr)
@@ -346,6 +398,11 @@ Namespace Orm
         [In]
         NotIn
         [Like]
+        [Is]
+        [IsNot]
+        Exists
+        NotExists
+        Between
     End Enum
 
     Public Enum ConditionOperator

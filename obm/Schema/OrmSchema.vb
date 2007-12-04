@@ -67,14 +67,14 @@ Namespace Orm
 #Region " reflection "
 
         Protected Friend Function GetProperties(ByVal t As Type) As IDictionary
-            Return GetProperties(t, GetObjectSchema(t))
+            Return GetProperties(t, GetObjectSchema(t, False))
         End Function
 
         'Protected Friend Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchema) As IDictionary
         '    Return GetProperties(t, schema)
         'End Function
 
-        Protected Friend Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As IDictionary
+        Public Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As IDictionary
             If t Is Nothing Then Throw New ArgumentNullException("original_type")
 
             Dim key As String = "properties" & t.ToString
@@ -268,16 +268,26 @@ Namespace Orm
             End If
         End Function
 
-        Public Function GetConnectedTypeField(ByVal ct As Type, ByVal t As Type) As String
+        Public Function GetConnectedTypeField(ByVal ct As Type, ByVal t As Type, ByVal direction As Boolean) As String
             Dim rel As IRelation = GetConnectedTypeRelation(ct)
             If rel Is Nothing Then
                 Throw New ArgumentException("Type is not implement IRelation")
             End If
-            Dim p As Pair(Of String, Type) = rel.GetFirstType
-            If p.Second Is t Then
-                p = rel.GetSecondType
+            Dim p As IRelation.RelationDesc = rel.GetFirstType
+            Dim p2 As IRelation.RelationDesc = rel.GetSecondType
+            If p.EntityType Is p2.EntityType Then
+                If p.Direction = direction Then
+                    Return p.PropertyName
+                Else
+                    Return p2.PropertyName
+                End If
+            Else
+                If p.EntityType IsNot t Then
+                    Return p.PropertyName
+                Else
+                    Return p2.PropertyName
+                End If
             End If
-            Return p.First
         End Function
 
         Public Function GetConnectedTypeRelation(ByVal ct As Type) As IRelation
@@ -362,7 +372,7 @@ Namespace Orm
         'End Function
 
         <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
-        Protected Function GetFieldTable(ByVal schema As IOrmObjectSchemaBase, ByVal field As String) As OrmTable
+        Protected Function GetFieldTable(ByVal schema As IOrmPropertyMap, ByVal field As String) As OrmTable
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -482,7 +492,7 @@ Namespace Orm
             Return GetProperty(t, schema, New ColumnAttribute(field))
         End Function
 
-        Protected Friend Function GetSortedFieldList(ByVal original_type As Type) As Generic.List(Of ColumnAttribute)
+        Public Function GetSortedFieldList(ByVal original_type As Type) As Generic.List(Of ColumnAttribute)
             'Dim cl_type As String = New StringBuilder().Append("columnlist").Append(type.ToString).ToString
             Dim cl_type As String = "columnlist" & original_type.ToString
 
@@ -676,9 +686,14 @@ Namespace Orm
             Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, oschema)
             Dim r As OrmBase = Nothing
             If Not String.IsNullOrEmpty(c) Then
-                Dim o As Object = GetFieldValue(obj, c, oschema)
+                Dim o As Object = Nothing
+                If obj.IsFieldLoaded(c) Then
+                    o = obj.GetValue(c)
+                Else
+                    o = GetFieldValue(obj, c, oschema)
+                End If
                 r = TryCast(o, OrmBase)
-                If r Is Nothing Then
+                If r Is Nothing AndAlso o IsNot Nothing Then
                     Try
                         Dim id As Integer = Convert.ToInt32(o)
                         r = OrmManagerBase.CurrentManager.Find(id, subType)
@@ -1104,6 +1119,10 @@ Namespace Orm
         End Function
 
         Public Function GetObjectSchema(ByVal t As Type) As IOrmObjectSchemaBase
+            Return GetObjectSchema(t, True)
+        End Function
+
+        Protected Function GetObjectSchema(ByVal t As Type, ByVal check As Boolean) As IOrmObjectSchemaBase
             If t Is Nothing Then Throw New ArgumentNullException("t")
 
             Dim idic As IDictionary = CType(map("GetObjectSchema"), System.Collections.IDictionary)
@@ -1120,7 +1139,7 @@ Namespace Orm
             End If
             Dim schema As IOrmObjectSchemaBase = CType(idic(t), IOrmObjectSchemaBase)
 
-            If schema Is Nothing Then
+            If schema Is Nothing AndAlso check Then
                 Throw New ArgumentException(String.Format("Cannot find schema for type {0}", t))
             End If
 

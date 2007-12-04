@@ -106,7 +106,12 @@ Namespace Orm
                 l.Add(obj)
                 Return True
             ElseIf mc.CanSortOnClient(obj.GetType, l, sort, st) Then
-                Dim c As IComparer = st.CreateSortComparer(sort)
+                Dim c As IComparer = Nothing
+                If st IsNot Nothing Then
+                    c = st.CreateSortComparer(sort)
+                Else
+                    c = New OrmComparer(Of OrmBase)(obj.GetType, sort)
+                End If
                 If c IsNot Nothing Then
                     Dim pos As Integer = ArrayList.Adapter(l).BinarySearch(obj, c)
                     If pos < 0 Then
@@ -305,15 +310,18 @@ Namespace Orm
                 If lo.CanSort(mc, arr, sort) Then
                     Dim schema As IOrmObjectSchemaBase = mc.ObjectSchema.GetObjectSchema(obj.GetType)
                     Dim st As IOrmSorting = TryCast(schema, IOrmSorting)
+                    Dim c As IComparer = Nothing
                     If st IsNot Nothing Then
-                        Dim c As IComparer = st.CreateSortComparer(sort)
-                        If c IsNot Nothing Then
-                            Dim pos As Integer = ArrayList.Adapter(arr).BinarySearch(obj, c)
-                            If pos < 0 Then
-                                l.Insert(Not pos, New ListObjectEntry(obj))
-                            End If
-                            Return True
+                        c = st.createsortcomparer(sort)
+                    Else
+                        c = New OrmComparer(Of OrmBase)(obj.GetType, sort)
+                    End If
+                    If c IsNot Nothing Then
+                        Dim pos As Integer = ArrayList.Adapter(arr).BinarySearch(obj, c)
+                        If pos < 0 Then
+                            l.Insert(Not pos, New ListObjectEntry(obj))
                         End If
+                        Return True
                     End If
                 End If
             End If

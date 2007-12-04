@@ -8,29 +8,28 @@ namespace OrmCodeGenLib
 {
     static class OrmCodeGenHelper
     {
-        public static CodeExpression GetFieldNameReferenceExpression(PropertyDescription propertyDesc, OrmCodeDomGeneratorSettings settings)
+        public static CodeExpression GetFieldNameReferenceExpression(PropertyDescription propertyDesc)
         {
-            string className = OrmCodeGenNameHelper.GetEntityClassName(propertyDesc.Entity, settings) + ".Properties";
+            string className = OrmCodeGenNameHelper.GetEntityClassName(propertyDesc.Entity) + ".Properties";
             return new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(className),
                                              propertyDesc.Name);
         }
 
-        public static CodeExpression GetEntityNameReferenceExpression(EntityDescription entityDescription, OrmCodeDomGeneratorSettings settings)
+        public static CodeExpression GetEntityNameReferenceExpression(EntityDescription entityDescription)
         {
-            string className = OrmCodeGenNameHelper.GetEntityClassName(entityDescription, settings) + ".Descriptor";
+            string className = OrmCodeGenNameHelper.GetQualifiedEntityName(entityDescription) + ".Descriptor";
             return new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(className), "EntityName");
         }
 
-        public static CodeExpression GetEntityClassReferenceExpression(EntityDescription entityDesc, OrmCodeDomGeneratorSettings settings)
+        public static CodeExpression GetEntityClassReferenceExpression(EntityDescription entityDesc)
         {
-            string className = OrmCodeGenNameHelper.GetEntityClassName(entityDesc, settings);
+            string className = OrmCodeGenNameHelper.GetEntityClassName(entityDesc);
             return new CodeTypeReferenceExpression(className);
         }
 
         public static CodeExpression GetPropertyReferenceExpression(PropertyDescription propertyDesc, OrmCodeDomGeneratorSettings settings)
         {
-            return new CodePropertyReferenceExpression(GetEntityClassReferenceExpression(propertyDesc.Entity, settings),
-                                                propertyDesc.Name);
+            return new CodePropertyReferenceExpression(GetEntityClassReferenceExpression(propertyDesc.Entity), propertyDesc.Name);
         }
     }
 }

@@ -62,7 +62,7 @@ Namespace Orm
             Return schema.GetTables
         End Function
 
-        Public Function GetTables(ByVal schema As IOrmObjectSchema) As OrmTable()
+        Public Function GetTables(ByVal schema As IOrmRelationalSchema) As OrmTable()
             If schema Is Nothing Then
                 Throw New ArgumentNullException("type")
             End If
@@ -80,7 +80,7 @@ Namespace Orm
             Return schema.GetJoins(left, right)
         End Function
 
-        Protected Function GetJoins(ByVal schema As IOrmObjectSchema, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
+        Protected Function GetJoins(ByVal schema As IOrmRelationalSchema, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
             If schema Is Nothing Then
                 Throw New ArgumentNullException("type")
             End If
@@ -230,6 +230,12 @@ Namespace Orm
                         'uniontype = GetUnionType(obj)
                     End If
 
+                    Dim rs As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
+                    Dim es As IRelMapObjectSchema = oschema
+                    If rs IsNot Nothing Then
+                        es = rs.GetEditableSchema
+                    End If
+
                     For Each de As DictionaryEntry In GetProperties(real_t)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
@@ -238,7 +244,7 @@ Namespace Orm
                             Dim att As Field2DbRelations = GetAttributes(real_t, c)
                             If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse _
                                 (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
-                                Dim tb As OrmTable = GetFieldTable(oschema, c.FieldName)
+                                Dim tb As OrmTable = GetFieldTable(es, c.FieldName)
                                 If unions IsNot Nothing Then
                                     Throw New NotImplementedException
                                     'tb = MapUnionType2Table(real_t, uniontype)
@@ -251,7 +257,7 @@ Namespace Orm
                                         f = New EntityFilter(real_t, c.FieldName, New LiteralValue(DefaultValue), FilterOperation.Equal)
                                     End If
                                 Else
-                                    f = New EntityFilter(real_t, c.FieldName, New SimpleValue(v), FilterOperation.Equal)
+                                    f = New EntityFilter(real_t, c.FieldName, New ScalarValue(v), FilterOperation.Equal)
                                 End If
                                 If Not inserted_tables.ContainsKey(tb) Then
                                     inserted_tables.Add(tb, New List(Of ITemplateFilter))
@@ -271,7 +277,7 @@ Namespace Orm
                         End If
                     Next
 
-                    Dim tbls() As OrmTable = GetTables(oschema)
+                    Dim tbls() As OrmTable = GetTables(es)
 
                     Dim pkt As OrmTable = tbls(0)
 
@@ -283,7 +289,7 @@ Namespace Orm
 
                     For j As Integer = 1 To inserted_tables.Count - 1
                         Dim join_table As OrmTable = tbls(j)
-                        Dim jn As OrmJoin = GetJoins(oschema, pkt, join_table)
+                        Dim jn As OrmJoin = GetJoins(es, pkt, join_table)
                         If Not jn.IsEmpty Then
                             Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(jn.Condition, real_t, prim_key.FieldName, "@id")
 
@@ -297,7 +303,7 @@ Namespace Orm
                             CType(inserted_tables(join_table), List(Of ITemplateFilter)).AddRange(CType(f.GetAllFilters, IEnumerable(Of ITemplateFilter)))
                         End If
                     Next
-                    dbparams = FormInsert(inserted_tables, ins_cmd, real_t, oschema, sel_columns, _
+                    dbparams = FormInsert(inserted_tables, ins_cmd, real_t, es, sel_columns, _
                          unions, Nothing)
 
                     select_columns = sel_columns
@@ -308,7 +314,7 @@ Namespace Orm
         End Function
 
         Protected Overridable Function FormInsert(ByVal inserted_tables As Dictionary(Of OrmTable, IList(Of ITemplateFilter)), _
-            ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IOrmObjectSchema, _
+            ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IRelMapObjectSchema, _
             ByVal sel_columns As Generic.List(Of ColumnAttribute), _
             ByVal unions() As String, ByVal params As ICreateParam) As ICollection(Of System.Data.Common.DbParameter)
 
@@ -447,12 +453,13 @@ Namespace Orm
 
         End Structure
 
-        Protected Sub GetChangedFields(ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchema, ByVal tables As IDictionary(Of OrmTable, TableUpdate), _
+        Protected Sub GetChangedFields(ByVal obj As OrmBase, ByVal oschema As IOrmPropertyMap, ByVal tables As IDictionary(Of OrmTable, TableUpdate), _
             ByVal sel_columns As Generic.List(Of ColumnAttribute), ByVal unions As String())
 
             Dim rt As Type = obj.GetType
+            Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
-            For Each de As DictionaryEntry In GetProperties(rt)
+            For Each de As DictionaryEntry In GetProperties(rt, TryCast(oschema, IOrmObjectSchemaBase))
                 'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
@@ -461,74 +468,77 @@ Namespace Orm
 
                     'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) <> Field2DbRelations.PrimaryKey AndAlso _
                     '    (c.SyncBehavior And Field2DbRelations.RowVersion) <> Field2DbRelations.RowVersion Then
-                    Dim att As Field2DbRelations = GetAttributes(rt, c)
-                    If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
+                    Dim map As MapField2Column = Nothing
+                    If col.TryGetValue(c.FieldName, map) Then
+                        Dim att As Field2DbRelations = map.GetAttributes(c)
+                        If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
 
-                        Dim current As Object = pi.GetValue(obj, Nothing)
-                        If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
-                            (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse obj.ForseUpdate(c) Then
-                            Dim fieldTable As OrmTable = GetFieldTable(oschema, c.FieldName)
+                            Dim current As Object = pi.GetValue(obj, Nothing)
+                            If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
+                                (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse obj.ForseUpdate(c) Then
+                                Dim fieldTable As OrmTable = GetFieldTable(oschema, c.FieldName)
 
-                            If unions IsNot Nothing Then
-                                Throw New NotImplementedException
-                                'fieldTable = MapUnionType2Table(rt, uniontype)
+                                If unions IsNot Nothing Then
+                                    Throw New NotImplementedException
+                                    'fieldTable = MapUnionType2Table(rt, uniontype)
+                                End If
+
+                                If Not tables.ContainsKey(fieldTable) Then
+                                    tables.Add(fieldTable, New TableUpdate(fieldTable))
+                                    'param_vals.Add(fieldTable, New ArrayList)
+                                End If
+
+                                Dim updates As IList(Of EntityFilter) = tables(fieldTable)._updates
+
+                                updates.Add(New EntityFilter(rt, c.FieldName, New ScalarValue(current), FilterOperation.Equal))
+
+                                'Dim tb_sb As StringBuilder = CType(tables(fieldTable), StringBuilder)
+                                'Dim _params As ArrayList = CType(param_vals(fieldTable), ArrayList)
+                                'If tb_sb.Length <> 0 Then
+                                '    tb_sb.Append(", ")
+                                'End If
+                                'If unions IsNot Nothing Then
+                                '    Throw New NotSupportedException
+                                '    'tb_sb.Append(GetColumnNameByFieldName(type, c.FieldName, tb))
+                                'Else
+                                '    tb_sb.Append(GetColumnNameByFieldNameInternal(type, c.FieldName, False))
+                                'End If
+                                'tb_sb.Append(" = ").Append(ParamName("p", i))
+                                '_params.Add(CreateDBParameter(ParamName("p", i), ChangeValueType(type, c, current)))
+                                'i += 1
                             End If
-
-                            If Not tables.ContainsKey(fieldTable) Then
-                                tables.Add(fieldTable, New TableUpdate(fieldTable))
-                                'param_vals.Add(fieldTable, New ArrayList)
-                            End If
-
-                            Dim updates As IList(Of EntityFilter) = tables(fieldTable)._updates
-
-                            updates.Add(New EntityFilter(rt, c.FieldName, New SimpleValue(current), FilterOperation.Equal))
-
-                            'Dim tb_sb As StringBuilder = CType(tables(fieldTable), StringBuilder)
-                            'Dim _params As ArrayList = CType(param_vals(fieldTable), ArrayList)
-                            'If tb_sb.Length <> 0 Then
-                            '    tb_sb.Append(", ")
-                            'End If
-                            'If unions IsNot Nothing Then
-                            '    Throw New NotSupportedException
-                            '    'tb_sb.Append(GetColumnNameByFieldName(type, c.FieldName, tb))
                             'Else
-                            '    tb_sb.Append(GetColumnNameByFieldNameInternal(type, c.FieldName, False))
-                            'End If
-                            'tb_sb.Append(" = ").Append(ParamName("p", i))
-                            '_params.Add(CreateDBParameter(ParamName("p", i), ChangeValueType(type, c, current)))
-                            'i += 1
+                            '    If sbwhere.Length > 0 Then sbwhere.Append(" and ")
+                            '    sbwhere.Append(GetColumnNameByFieldName(type, c.FieldName))
+                            '    Dim pname As String = "pk"
+                            '    If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
+                            '        pname = "rv"
+                            '    Else
+                            '        If sbsel_where.Length = 0 Then
+                            '            'sbsel_where.Append(" from ").Append(GetTables(type)(0))
+                            '            sbsel_where.Append(" where ")
+                            '        Else
+                            '            sbsel_where.Append(" and ")
+                            '        End If
+
+                            '        sbsel_where.Append(GetColumnNameByFieldName(type, c.FieldName))
+                            '        sbsel_where.Append(" = ").Append(ParamName(pname, i))
+                            '    End If
+                            '    sbwhere.Append(" = ").Append(ParamName(pname, i))
+                            '    _params.Add(CreateDBParameter(ParamName(pname, i), original))
+                            '    i += 1
                         End If
-                        'Else
-                        '    If sbwhere.Length > 0 Then sbwhere.Append(" and ")
-                        '    sbwhere.Append(GetColumnNameByFieldName(type, c.FieldName))
-                        '    Dim pname As String = "pk"
-                        '    If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
-                        '        pname = "rv"
-                        '    Else
-                        '        If sbsel_where.Length = 0 Then
-                        '            'sbsel_where.Append(" from ").Append(GetTables(type)(0))
-                        '            sbsel_where.Append(" where ")
-                        '        Else
-                        '            sbsel_where.Append(" and ")
-                        '        End If
 
-                        '        sbsel_where.Append(GetColumnNameByFieldName(type, c.FieldName))
-                        '        sbsel_where.Append(" = ").Append(ParamName(pname, i))
-                        '    End If
-                        '    sbwhere.Append(" = ").Append(ParamName(pname, i))
-                        '    _params.Add(CreateDBParameter(ParamName(pname, i), original))
-                        '    i += 1
-                    End If
+                        If (att And Field2DbRelations.SyncUpdate) = Field2DbRelations.SyncUpdate Then
+                            'If sbselect.Length = 0 Then
+                            '    sbselect.Append("if @@rowcount > 0 select ")
+                            'Else
+                            '    sbselect.Append(", ")
+                            'End If
 
-                    If (att And Field2DbRelations.SyncUpdate) = Field2DbRelations.SyncUpdate Then
-                        'If sbselect.Length = 0 Then
-                        '    sbselect.Append("if @@rowcount > 0 select ")
-                        'Else
-                        '    sbselect.Append(", ")
-                        'End If
-
-                        'sbselect.Append(GetColumnNameByFieldName(type, c.FieldName))
-                        sel_columns.Add(c)
+                            'sbselect.Append(GetColumnNameByFieldName(type, c.FieldName))
+                            sel_columns.Add(c)
+                        End If
                     End If
                 End If
             Next
@@ -539,7 +549,7 @@ Namespace Orm
 
             Dim rt As Type = obj.GetType
 
-            For Each de As DictionaryEntry In GetProperties(rt)
+            For Each de As DictionaryEntry In GetProperties(rt, oschema)
                 'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
@@ -575,7 +585,7 @@ Namespace Orm
                             'Dim de_table As TableUpdate = updated_tables(tb)
                             If de_table.Key.Equals(tb) Then
                                 'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
-                                de_table.Value._where4update.AddFilter(New EntityFilter(rt, c.FieldName, New SimpleValue(original), FilterOperation.Equal))
+                                de_table.Value._where4update.AddFilter(New EntityFilter(rt, c.FieldName, New ScalarValue(original), FilterOperation.Equal))
                             Else
                                 Dim join As OrmJoin = GetJoins(oschema, tb, de_table.Key)
                                 If Not join.IsEmpty Then
@@ -622,8 +632,13 @@ Namespace Orm
 
                     'Dim sb_updates As New StringBuilder
                     Dim oschema As IOrmObjectSchema = GetObjectSchema(rt)
+                    Dim esch As IRelMapObjectSchema = oschema
+                    Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
+                    If ro IsNot Nothing Then
+                        esch = ro.GetEditableSchema
+                    End If
 
-                    GetChangedFields(obj, oschema, updated_tables, sel_columns, unions)
+                    GetChangedFields(obj, esch, updated_tables, sel_columns, unions)
 
                     Dim l As New List(Of EntityFilter)
                     For Each tu As TableUpdate In updated_tables.Values
@@ -636,8 +651,8 @@ Namespace Orm
                     select_columns = sel_columns
 
                     If updated_tables.Count > 0 Then
-                        Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
-                        Dim pk_table As OrmTable = sch.GetTables()(0)
+                        'Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
+                        Dim pk_table As OrmTable = esch.GetTables()(0)
                         Dim amgr As AliasMgr = AliasMgr.Create
                         Dim params As New ParamMgr(Me, "p")
 
@@ -650,15 +665,15 @@ Namespace Orm
                             End If
 
                             Dim tbl As OrmTable = item.Key
-                            Dim [alias] As String = amgr.AddTable(tbl, sch, params)
+                            Dim [alias] As String = amgr.AddTable(tbl, params)
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
                             For Each f As EntityFilter In item.Value._updates
-                                upd_cmd.Append(f.MakeSQLStmt(Me, amgr.Aliases, params)).Append(",")
+                                upd_cmd.Append(f.MakeSQLStmt(Me, amgr, params)).Append(",")
                             Next
                             upd_cmd.Length -= 1
                             upd_cmd.Append(" from ").Append(tbl).Append(" ").Append([alias])
-                            upd_cmd.Append(" where ").Append(item.Value._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
+                            upd_cmd.Append(" where ").Append(item.Value._where4update.Condition.MakeSQLStmt(Me, amgr, params))
                             If Not item.Key.Equals(pk_table) Then
                                 'Dim pcnt As Integer = 0
                                 'If Not named_params Then pcnt = XMedia.Framework.Data.DBA.ExtractParamsCount(upd_cmd.ToString)
@@ -709,7 +724,7 @@ Namespace Orm
                                 sel_sb = sel_sb.Replace(pk_table.TableName, [alias])
                                 sel_sb.Append(" from ").Append(pk_table).Append(" ").Append([alias]).Append(" where ")
                                 'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
-                                sel_sb.Append(New EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeSQLStmt(Me, amgr.Aliases, params))
+                                sel_sb.Append(New EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeSQLStmt(Me, amgr, params))
 
                                 upd_cmd.Append(sel_sb)
                             End If
@@ -742,30 +757,31 @@ Namespace Orm
             FormInsert(dic, upd_cmd, obj.GetType, oschema, Nothing, Nothing, params)
         End Sub
 
-        Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of OrmTable, IFilter), ByVal type As Type, ByVal obj As OrmBase)
-            Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
-            Dim tables() As OrmTable = GetTables(oschema)
+        Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of OrmTable, IFilter), _
+            ByVal type As Type, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchema, ByVal relSchema As IOrmRelationalSchema)
+            'Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
+            Dim tables() As OrmTable = GetTables(relSchema)
             Dim pk_table As OrmTable = tables(0)
             For j As Integer = 0 To tables.Length - 1
                 Dim table As OrmTable = tables(j)
                 deleted_tables.Add(table, Nothing)
                 Dim o As New Orm.Condition.ConditionConstructor
                 If table.Equals(pk_table) Then
-                    For Each de As DictionaryEntry In GetProperties(type)
+                    For Each de As DictionaryEntry In GetProperties(type, oschema)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         If c IsNot Nothing Then
-                            Dim att As Field2DbRelations = GetAttributes(type, c)
+                            Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.FieldName).GetAttributes(c) 'GetAttributes(type, c)
                             If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                 o.AddFilter(New EntityFilter(type, c.FieldName, New LiteralValue("@id"), FilterOperation.Equal))
                             ElseIf (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
                                 Dim v As Object = pi.GetValue(obj, Nothing)
-                                o.AddFilter((New EntityFilter(type, c.FieldName, New SimpleValue(v), FilterOperation.Equal)))
+                                o.AddFilter((New EntityFilter(type, c.FieldName, New ScalarValue(v), FilterOperation.Equal)))
                             End If
                         End If
                     Next
                 Else
-                    Dim join As OrmJoin = GetJoins(oschema, tables(0), table)
+                    Dim join As OrmJoin = GetJoins(relSchema, tables(0), table)
                     If Not join.IsEmpty Then
                         Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(join.Condition, type, "ID", "@id")
 
@@ -792,13 +808,20 @@ Namespace Orm
 
                 If obj.ObjectState = ObjectState.Deleted Then
                     Dim type As Type = obj.GetType
+                    Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
+                    Dim relSchema As IOrmRelationalSchema = oschema
+                    Dim ro As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
+                    If ro IsNot Nothing Then
+                        relSchema = ro.GetEditableSchema
+                    End If
+
                     Dim params As New ParamMgr(Me, "p")
                     Dim deleted_tables As New Generic.Dictionary(Of OrmTable, IFilter)
 
                     del_cmd.Append(DeclareVariable("@id", "int")).Append(EndLine)
                     del_cmd.Append("set @id = ").Append(params.CreateParam(obj.Identifier)).Append(EndLine)
 
-                    GetDeletedConditions(deleted_tables, type, obj)
+                    GetDeletedConditions(deleted_tables, type, obj, oschema, relSchema)
 
                     For Each de As KeyValuePair(Of OrmTable, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(de.Key)
@@ -829,8 +852,64 @@ Namespace Orm
             Return del_cmd.ToString
         End Function
 
+        Public Overridable Function SelectWithJoin(ByVal original_type As Type, ByVal tables() As OrmTable, _
+            ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As OrmJoin, _
+            ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
+            ByVal arr As Generic.IList(Of ColumnAttribute), ByVal schema As IOrmObjectSchema) As String
+
+            Dim selectcmd As New StringBuilder
+            'Dim maintable As String = tables(0)
+            selectcmd.Append("select ")
+            If aspects IsNot Nothing Then
+                For Each asp As QueryAspect In aspects
+                    If asp.AscpectType = QueryAspect.AspectType.Columns Then
+                        selectcmd.Append(asp.MakeStmt(Me))
+                    End If
+                Next
+            End If
+
+            If original_type IsNot Nothing Then
+                If wideLoad Then
+                    Dim columns As String = GetSelectColumnList(original_type, arr)
+                    selectcmd.Append(columns)
+                    If Not String.IsNullOrEmpty(additionalColumns) Then
+                        selectcmd.Append(",").Append(additionalColumns)
+                    End If
+                Else
+                    GetPKList(schema, selectcmd)
+                End If
+            Else
+                selectcmd.Append("*")
+            End If
+
+            selectcmd.Append(" from ")
+            Dim unions() As String = Nothing
+            If original_type IsNot Nothing Then
+                unions = GetUnions(original_type)
+            End If
+            'Dim pmgr As ParamMgr = params 'New ParamMgr()
+
+            If unions Is Nothing Then
+                AppendFrom(almgr, tables, selectcmd, params, schema)
+                If joins IsNot Nothing Then
+                    For i As Integer = 0 To joins.Length - 1
+                        Dim join As OrmJoin = joins(i)
+
+                        If Not join.IsEmpty Then
+                            almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
+                            selectcmd.Append(join.MakeSQLStmt(Me, almgr, params))
+                        End If
+                    Next
+                End If
+            Else
+                Throw New NotImplementedException
+            End If
+
+            Return selectcmd.ToString
+        End Function
+
         Public Overridable Function SelectWithJoin(ByVal original_type As Type, _
-            ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal joins() As OrmJoin, _
+            ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As OrmJoin, _
             ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
             Optional ByVal arr As Generic.IList(Of ColumnAttribute) = Nothing) As String
 
@@ -843,48 +922,9 @@ Namespace Orm
             End If
 
             Dim schema As IOrmObjectSchema = GetObjectSchema(original_type)
-            Dim selectcmd As New StringBuilder
-            Dim tables() As OrmTable = GetTables(schema)
-            'Dim maintable As String = tables(0)
-            selectcmd.Append("select ")
-            If aspects IsNot Nothing Then
-                For Each asp As QueryAspect In aspects
-                    If asp.AscpectType = QueryAspect.AspectType.Columns Then
-                        selectcmd.Append(asp.MakeStmt(Me))
-                    End If
-                Next
-            End If
 
-            If wideLoad Then
-                Dim columns As String = GetSelectColumnList(original_type, arr)
-                selectcmd.Append(columns)
-                If Not String.IsNullOrEmpty(additionalColumns) Then
-                    selectcmd.Append(",").Append(additionalColumns)
-                End If
-            Else
-                GetPKList(schema, selectcmd)
-            End If
-            selectcmd.Append(" from ")
-            Dim unions() As String = GetUnions(original_type)
-            Dim pmgr As ParamMgr = params 'New ParamMgr()
-
-            If unions Is Nothing Then
-                AppendFrom(original_type, almgr, tables, selectcmd, pmgr, schema)
-                If joins IsNot Nothing Then
-                    For i As Integer = 0 To joins.Length - 1
-                        Dim join As OrmJoin = joins(i)
-
-                        If Not join.IsEmpty Then
-                            almgr.AddTable(join.Table, Nothing, Nothing)
-                            selectcmd.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
-                        End If
-                    Next
-                End If
-            Else
-                Throw New NotImplementedException
-            End If
-
-            Return selectcmd.ToString
+            Return SelectWithJoin(original_type, GetTables(schema), almgr, params, joins, wideLoad, aspects, _
+                additionalColumns, arr, schema)
         End Function
 
         Public Overridable Function SelectDistinct(ByVal original_type As Type, _
@@ -916,7 +956,7 @@ Namespace Orm
             Dim pmgr As ParamMgr = params 'New ParamMgr()
 
             If unions Is Nothing Then
-                AppendFrom(original_type, almgr, tables, selectcmd, pmgr, schema)
+                AppendFrom(almgr, tables, selectcmd, pmgr, schema)
 
                 Dim r2 As M2MRelation = GetM2MRelation(relation.Type, original_type, True)
                 Dim tbl As OrmTable = relation.Table
@@ -924,7 +964,7 @@ Namespace Orm
                 Dim join As New OrmJoin(tbl, JoinType.Join, f)
 
                 almgr.AddTable(tbl)
-                selectcmd.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
+                selectcmd.Append(join.MakeSQLStmt(Me, almgr, params))
 
                 If appendSecondTable Then
                     AppendJoins(relation.Type, almgr, GetTables(relation.Type), selectcmd, params, tbl, relation.Column, True)
@@ -1127,7 +1167,7 @@ Namespace Orm
                     Dim join As OrmJoin = GetJoins(sch, pk_table, tables(j))
 
                     If Not join.IsEmpty Then
-                        almgr.AddTable(tables(j), Nothing, Nothing)
+                        almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
 
                         join.InjectJoinFilter(selectedType, "ID", table, id)
                         'OrmFilter.ChangeValueToLiteral(join, selectedType, "ID", table, id)
@@ -1149,7 +1189,7 @@ Namespace Orm
                         '    End If
                         'Next
 
-                        selectcmd.Append(join.MakeSQLStmt(Me, almgr.Aliases, pname))
+                        selectcmd.Append(join.MakeSQLStmt(Me, almgr, pname))
                     End If
                 Next
             Else
@@ -1163,17 +1203,17 @@ Namespace Orm
                     adal = True
                 End If
                 Dim j As New OrmJoin(tbl, JoinType.Join, New JoinFilter(table, id, selectedType, "ID", FilterOperation.Equal))
-                Dim al As String = almgr.AddTable(tbl, sch, pname)
+                Dim al As String = almgr.AddTable(tbl, pname)
                 If adal Then
                     almgr.AddTable(pk_table, al)
                 End If
-                selectcmd.Append(j.MakeSQLStmt(Me, almgr.Aliases, pname))
+                selectcmd.Append(j.MakeSQLStmt(Me, almgr, pname))
                 For i As Integer = 1 To tables.Length - 1
                     Dim join As OrmJoin = sch.GetJoins(pk_table, tables(i))
 
                     If Not join.IsEmpty Then
-                        almgr.AddTable(tables(i), Nothing, Nothing)
-                        selectcmd.Append(join.MakeSQLStmt(Me, almgr.Aliases, pname))
+                        almgr.AddTable(tables(i), CType(Nothing, ParamMgr))
+                        selectcmd.Append(join.MakeSQLStmt(Me, almgr, pname))
                     End If
                 Next
             End If
@@ -1226,22 +1266,23 @@ Namespace Orm
         ''' <summary>
         ''' Построение таблиц, включая джоины
         ''' </summary>
-        ''' <param name="original_type"></param>
         ''' <param name="almgr"></param>
         ''' <param name="tables"></param>
         ''' <param name="selectcmd"></param>
         ''' <param name="pname"></param>
+        ''' <param name="sch"></param>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Protected Function AppendFrom(ByVal original_type As Type, ByVal almgr As AliasMgr, _
-            ByVal tables As OrmTable(), ByVal selectcmd As StringBuilder, ByVal pname As ParamMgr, ByVal sch As IOrmObjectSchema) As StringBuilder
+        Protected Function AppendFrom(ByVal almgr As AliasMgr, _
+            ByVal tables As OrmTable(), ByVal selectcmd As StringBuilder, ByVal pname As ICreateParam, _
+            ByVal sch As IOrmObjectSchema) As StringBuilder
             'Dim sch As IOrmObjectSchema = GetObjectSchema(original_type)
             For i As Integer = 0 To tables.Length - 1
                 Dim tbl As OrmTable = tables(i)
                 Dim tbl_real As OrmTable = tbl
                 Dim [alias] As String = Nothing
                 If Not almgr.Aliases.TryGetValue(tbl, [alias]) Then
-                    [alias] = almgr.AddTable(tbl_real, sch, pname)
+                    [alias] = almgr.AddTable(tbl_real, pname)
                 Else
                     tbl_real = tbl.OnTableAdd(pname)
                     If tbl_real Is Nothing Then
@@ -1255,39 +1296,48 @@ Namespace Orm
                     selectcmd.Append(tbl_real.TableName).Append(" ").Append([alias])
                 End If
 
-                For j As Integer = i + 1 To tables.Length - 1
-                    Dim join As OrmJoin = GetJoins(sch, tbl, tables(j))
+                If sch IsNot Nothing Then
+                    For j As Integer = i + 1 To tables.Length - 1
+                        Dim join As OrmJoin = GetJoins(sch, tbl, tables(j))
 
-                    If Not join.IsEmpty Then
-                        If Not almgr.Aliases.ContainsKey(tables(j)) Then
-                            almgr.AddTable(tables(j), Nothing, Nothing)
+                        If Not join.IsEmpty Then
+                            If Not almgr.Aliases.ContainsKey(tables(j)) Then
+                                almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
+                            End If
+                            selectcmd.Append(join.MakeSQLStmt(Me, almgr, pname))
                         End If
-                        selectcmd.Append(join.MakeSQLStmt(Me, almgr.Aliases, pname))
-                    End If
-                Next
+                    Next
+                End If
             Next
 
             Return selectcmd
         End Function
 
         Public Overridable Function AppendWhere(ByVal t As Type, ByVal filter As IFilter, _
-            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ParamMgr) As Boolean
+            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
 
-            Dim schema As IOrmObjectSchema = GetObjectSchema(t)
             Dim con As New Orm.Condition.ConditionConstructor
-            con.AddFilter(schema.GetFilter(filter_info)).AddFilter(filter)
+            con.AddFilter(filter)
+
+            If t IsNot Nothing Then
+                Dim schema As IOrmObjectSchema = GetObjectSchema(t)
+                con.AddFilter(schema.GetFilter(filter_info))
+            End If
 
             If Not con.IsEmpty Then
-                sb.Append(" where ").Append(con.Condition.MakeSQLStmt(Me, almgr.Aliases, pmgr))
+                sb.Append(" where ").Append(con.Condition.MakeSQLStmt(Me, almgr, pmgr))
                 Return True
             End If
             Return False
         End Function
 
-        Public Sub AppendOrder(ByVal selectType As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
+        Public Sub AppendOrder(ByVal defaultType As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, _
+            ByVal sb As StringBuilder, Optional ByVal appendOrder As Boolean = True)
             If sort IsNot Nothing AndAlso Not sort.IsExternal Then
                 Dim ns As Sort = sort
-                sb.Append(" order by ")
+                If appendOrder Then
+                    sb.Append(" order by ")
+                End If
                 Dim pos As Integer = sb.Length
                 Do
                     If ns.IsExternal Then
@@ -1296,7 +1346,7 @@ Namespace Orm
 
                     Dim st As Type = ns.Type
                     If st Is Nothing Then
-                        st = selectType
+                        st = defaultType
                     End If
 
                     Dim schema As IOrmObjectSchema = GetObjectSchema(st)
@@ -1390,7 +1440,7 @@ Namespace Orm
                 Throw New ArgumentException("Invalid relation", filteredType.ToString)
             End If
 
-            Dim [alias] As String = almgr.AddTable(table, Nothing, Nothing)
+            Dim [alias] As String = almgr.AddTable(table, CType(Nothing, ParamMgr))
 
             Dim sb As New StringBuilder
             Dim id_clm As String = selected_r.Column
@@ -1484,27 +1534,30 @@ Namespace Orm
             Return sb.ToString
         End Function
 
-        Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport) As String
+        Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport, ByVal contextKey As Object) As String
 
         Public Function MakeSearchStatement(ByVal searchType As Type, ByVal selectType As Type, _
-            ByVal tokens() As String, ByVal fields As ICollection(Of Pair(Of String, Type)), _
-            ByVal sectionName As String, ByVal join As OrmJoin, ByVal sort_type As SortType, _
+            ByVal fts As IFtsStringFormater, ByVal fields As ICollection(Of Pair(Of String, Type)), _
+            ByVal sectionName As String, ByVal joins As ICollection(Of OrmJoin), ByVal sort_type As SortType, _
             ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String(), _
-            ByVal top As Integer, ByVal del As ValueForSearchDelegate, ByVal table As String) As String
+            ByVal top As Integer, ByVal table As String, _
+            ByVal sort As Sort, ByVal appendBySort As Boolean, ByVal filter As IFilter, ByVal contextKey As Object, _
+            ByVal selSchema As IOrmObjectSchema, ByVal searchSchema As IOrmObjectSchema) As String
 
-            If searchType IsNot selectType AndAlso join.IsEmpty Then
-                Throw New ArgumentException("Join is empty while type to load differs from type to search")
-            End If
+            'If searchType IsNot selectType AndAlso join.IsEmpty Then
+            '    Throw New ArgumentException("Join is empty while type to load differs from type to search")
+            'End If
 
-            If Not join.IsEmpty AndAlso searchType Is selectType Then
-                Throw New ArgumentException("Join is not empty while type to load the same as type to search")
-            End If
+            'If Not join.IsEmpty AndAlso searchType Is selectType Then
+            '    Throw New ArgumentException("Join is not empty while type to load the same as type to search")
+            'End If
 
-            Dim selSchema As IOrmObjectSchema = GetObjectSchema(selectType)
-            Dim searchSchema As IOrmObjectSchema = GetObjectSchema(searchType)
+            'Dim selSchema As IOrmObjectSchema = GetObjectSchema(selectType)
+            'Dim searchSchema As IOrmObjectSchema = GetObjectSchema(searchType)
             Dim fs As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
 
-            Dim value As String = del(tokens, sectionName, fs)
+            'Dim value As String = del(tokens, sectionName, fs, contextKey)
+            Dim value As String = fts.GetFtsString(sectionName, contextKey, fs, searchType, table)
             If String.IsNullOrEmpty(value) Then
                 Return Nothing
             End If
@@ -1517,7 +1570,7 @@ Namespace Orm
             Dim sb As New StringBuilder, columns As New StringBuilder
             'Dim tbl As OrmTable = GetTables(t)(0)
             sb.Append("select ")
-            Dim appendMain As Boolean = False
+            Dim appendMain As Boolean = appendBySort
             Dim selTable As OrmTable = GetTables(selectType)(0)
             Dim searchTable As OrmTable = GetTables(searchType)(0)
             Dim ins_idx As Integer = sb.Length
@@ -1526,8 +1579,12 @@ Namespace Orm
                     For Each field As Pair(Of String, Type) In fields
                         If field.Second Is selectType Then
                             Dim m As MapField2Column = selSchema.GetFieldColumnMap(field.First)
-                            columns.Append(m._tableName).Append(".")
-                            columns.Append(m._columnName).Append(",")
+                            If appendMain Then
+                                columns.Append(m._tableName).Append(".")
+                                columns.Append(m._columnName).Append(",")
+                            Else
+                                columns.Append([alias]).Append(".[key] ").Append(m._columnName).Append(",")
+                            End If
                         End If
                     Next
 
@@ -1588,51 +1645,44 @@ Namespace Orm
                 appendMain = selSchema.GetFilter(filter_info) IsNot Nothing
             End If
             AppendJoins(searchType, almgr, GetTables(searchType), sb, params, ct, "[key]", appendMain)
-            If fields.Count > 0 Then
-                If appendMain Then
-                    Dim mainAlias As String = almgr.Aliases(searchTable)
-                    columns = columns.Replace(searchTable.TableName & ".", mainAlias & ".")
+            'If fields.Count > 0 Then
+            If appendMain Then
+                Dim mainAlias As String = almgr.Aliases(searchTable)
+                columns = columns.Replace(searchTable.TableName & ".", mainAlias & ".")
+            End If
+            'If searchType IsNot selectType Then
+            '    almgr.AddTable(selTable)
+            '    Dim joinAlias As String = almgr.Aliases(selTable)
+            '    columns = columns.Replace(selTable.TableName & ".", joinAlias & ".")
+            'End If
+            'End If
+
+            For Each join As OrmJoin In joins
+                If Not join.IsEmpty Then
+                    'Dim tm As OrmFilterTemplate = CType(join.InjectJoinFilter(searchType, "ID", ct, "[key]"), OrmFilterTemplate)
+                    'If tm Is Nothing Then
+                    '    Throw New DBSchemaException("Invalid join")
+                    'End If
+                    join.InjectJoinFilter(searchType, "ID", ct, "[key]")
+                    Dim al As String = almgr.AddTable(join.Table)
+                    columns = columns.Replace(join.Table.TableName & ".", al & ".")
+                    sb.Append(join.MakeSQLStmt(Me, almgr, params))
+                    'Else
+                    '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
                 End If
-                If searchType IsNot selectType Then
-                    almgr.AddTable(selTable)
-                    Dim joinAlias As String = almgr.Aliases(selTable)
-                    columns = columns.Replace(selTable.TableName & ".", joinAlias & ".")
-                End If
+            Next
+            If columns.Length > 0 Then
                 sb.Insert(ins_idx, columns.ToString)
             End If
-
-            If Not join.IsEmpty Then
-                'Dim r As New EntityFilter(t, "ID", New SimpleValue(Nothing), FilterOperation.Equal)
-                'Dim tm As TemplateBase = New OrmFilterTemplate(t, "ID", FilterOperation.Equal)
-                'Dim r2 As TableFilter = Nothing
-                'For Each f As IFilter In join.Condition.GetAllFilters
-                '    Dim jf As JoinFilter = TryCast(f, JoinFilter)
-                '    If jf IsNot Nothing Then
-                '        Dim tf As ITemplateFilter = TryCast(f, ITemplateFilter)
-                '        If tf IsNot Nothing AndAlso tf.Template.Equals(tm) Then
-                '            r2 = New JoinFilter(ct, "[key]", , FilterOperation.Equal)
-                '            join.ReplaceFilter(f, r2)
-                '            Exit For
-                '        End If
-                '    End If
-                'Next
-
-                'If r2 Is Nothing Then
-                '    Throw New DBSchemaException("Invalid join")
-                'End If
-
-                Dim tm As OrmFilterTemplate = CType(join.InjectJoinFilter(searchType, "ID", ct, "[key]"), OrmFilterTemplate)
-                If tm Is Nothing Then
-                    Throw New DBSchemaException("Invalid join")
-                End If
-
-                sb.Append(join.MakeSQLStmt(Me, almgr.Aliases, params))
-                'Else
-                '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
-            End If
             'sb = sb.Replace("{XXXXXX}", almgr.Aliases(selTable) & "." & selSchema.GetFieldColumnMap("ID")._columnName)
-            AppendWhere(selectType, Nothing, almgr, sb, filter_info, params)
-            sb.Append(" order by rank ").Append(sort_type.ToString)
+            AppendWhere(selectType, filter, almgr, sb, filter_info, params)
+            'sb.Append(" order by rank ").Append(sort_type.ToString)
+            If sort IsNot Nothing Then
+                'sb.Append(",")
+                AppendOrder(selectType, sort, almgr, sb)
+            Else
+                sb.Append(" order by rank ").Append(sort_type.ToString)
+            End If
             Return sb.ToString
         End Function
 
@@ -1749,7 +1799,7 @@ Namespace Orm
             sb.Append("select left(")
             sb.Append(al).Append(".").Append(n)
             sb.Append(",").Append(level).Append(") name,count(*) cnt from ")
-            AppendFrom(t, almgr, GetTables(t), sb, params, schema)
+            AppendFrom(almgr, GetTables(t), sb, params, schema)
 
             AppendWhere(t, filter, almgr, sb, filter_info, params)
 
