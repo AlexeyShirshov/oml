@@ -2656,7 +2656,7 @@ l1:
 
             For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
                 Dim m2me As M2MCache = o.First
-                If m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso m2me.Entry.Direct = direct Then
+                If m2me.Entry.SubType Is t AndAlso m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso m2me.Entry.Direct = direct Then
                     Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
                         Dim sv As EditableList = m2me.Entry.PrepareSave(Me)
                         If sv IsNot Nothing Then
