@@ -553,6 +553,18 @@ Namespace Orm
     Public MustInherit Class ScalarStoredProc(Of T As Structure)
         Inherits QueryStoredProcBase
 
+        Protected Sub New(ByVal cache As Boolean)
+            MyBase.new(cache)
+        End Sub
+
+        Protected Sub New(ByVal timeout As TimeSpan)
+            MyBase.New(timeout)
+        End Sub
+
+        Protected Sub New()
+            MyBase.new(True)
+        End Sub
+
         Protected Overrides Function InitResult() As Object
             Return New TypeWrap(Of T)(Nothing)
         End Function

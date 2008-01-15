@@ -958,9 +958,9 @@ _callstack = environment.StackTrace
                 Throw New ArgumentNullException(fieldName)
             End If
 
-            Dim col As ICollection = TryCast(ecol, ICollection)
-            If col IsNot Nothing Then
-                If col.Count = 0 OrElse length = 0 OrElse start + length > col.Count Then
+            Dim cc As ICollection = TryCast(ecol, ICollection)
+            If cc IsNot Nothing Then
+                If cc.Count = 0 OrElse length = 0 OrElse start + length > cc.Count Then
                     Return New List(Of T)
                 End If
                 'Else
@@ -982,8 +982,14 @@ _callstack = environment.StackTrace
 
             Using SyncHelper.AcquireDynamicLock("9h13bhpqergfbjadflbq34f89h134g")
                 If Not _dont_cache_lists Then
-                    Dim i As Integer = start
+                    Dim i As Integer
                     For Each o As OrmBase In ecol
+                        If i < start Then
+                            i += 1
+                            Continue For
+                        Else
+                            i += 1
+                        End If
                         'Dim con As New OrmCondition.OrmConditionConstructor
                         'con.AddFilter(New OrmFilter(tt, fieldName, o, FilterOperation.Equal))
                         'con.AddFilter(criteria.Filter)
@@ -1006,8 +1012,7 @@ _callstack = environment.StackTrace
                         Else
                             newc.Add(o)
                         End If
-                        i += 1
-                        If i = length Then
+                        If i - start = length Then
                             Exit For
                         End If
                     Next
@@ -1035,8 +1040,14 @@ _callstack = environment.StackTrace
                 Next
 
                 Dim l As New List(Of T)
-                For Each obj As OrmBase In col
-                    'Dim k As OrmBase = obj
+                Dim j As Integer
+                For Each obj As OrmBase In ecol
+                    If j < start Then
+                        j += 1
+                        Continue For
+                    Else
+                        j += 1
+                    End If
                     Dim v As List(Of T) = Nothing
                     If lookups.TryGetValue(obj, v) Then
                         l.AddRange(v)
@@ -1054,6 +1065,9 @@ _callstack = environment.StackTrace
                         Dim dic As IDictionary = GetDic(_cache, key)
                         Dim id As String = f.ToString
                         dic(id) = New CachedItem(f, v, Me)
+                    End If
+                    If j - start = length Then
+                        Exit For
                     End If
                 Next
                 'End If
@@ -2642,7 +2656,7 @@ l1:
 
             For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
                 Dim m2me As M2MCache = o.First
-                If m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso m2me.Entry.Direct = direct Then
+                If m2me.Entry.SubType Is t AndAlso m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso m2me.Entry.Direct = direct Then
                     Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
                         Dim sv As EditableList = m2me.Entry.PrepareSave(Me)
                         If sv IsNot Nothing Then
