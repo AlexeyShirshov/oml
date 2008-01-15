@@ -3052,19 +3052,31 @@ l1:
             End Class
 
             Private _toks() As String
+            Private _del As DbSchema.ValueForSearchDelegate
+            'Private _sectionName As String
 
-            Public Sub New(ByVal s As String, ByVal sn As String)
-                _toks = Split4FullTextSearch(s, sn)
+            Public Sub New(ByVal s As String, ByVal sectionName As String)
+                _toks = Split4FullTextSearch(s, sectionName)
+                '  _sectionName = sectionName
+            End Sub
+
+            Public Sub New(ByVal s As String, ByVal sectionName As String, ByVal del As DbSchema.ValueForSearchDelegate)
+                MyClass.New(s, sectionName)
+                _del = del
             End Sub
 
             Public Function GetFtsString(ByVal section As String, ByVal contextKey As Object, _
                 ByVal f As IOrmFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String Implements IFtsStringFormater.GetFtsString
-                If ftsString = "freetexttable" Then
-                    Return New FProxy(type2search).GetValue(_toks, section, f, contextKey)
-                ElseIf ftsString = "containstable" Then
-                    Return Configuration.SearchSection.GetValueForContains(_toks, section, f, contextKey)
+                If _del Is Nothing Then
+                    If ftsString = "freetexttable" Then
+                        Return New FProxy(type2search).GetValue(_toks, section, f, contextKey)
+                    ElseIf ftsString = "containstable" Then
+                        Return Configuration.SearchSection.GetValueForContains(_toks, section, f, contextKey)
+                    Else
+                        Throw New NotSupportedException
+                    End If
                 Else
-                    Throw New NotSupportedException
+                    Return _del(_toks, section, f, contextKey)
                 End If
             End Function
 
@@ -3089,7 +3101,18 @@ l1:
             Invariant()
 
             If [string] IsNot Nothing AndAlso [string].Length > 0 Then
-                Return SearchEx(Of T)(GetType(T), contextKey, sort, filter, ftsText, limit, New FtsDef([string], GetSearchSection))
+                Return SearchEx(Of T)(GetType(T), contextKey, sort, filter, ftsText, limit, New FtsDef([string], GetSearchSection, del))
+            End If
+            Return New List(Of T)()
+        End Function
+
+        Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal sort As Sort, _
+           ByVal contextKey As Object, ByVal filter As IFilter, ByVal ftsText As String, _
+           ByVal limit As Integer, ByVal frmt As IFtsStringFormater) As ICollection(Of T)
+            Invariant()
+
+            If [string] IsNot Nothing AndAlso [string].Length > 0 Then
+                Return SearchEx(Of T)(GetType(T), contextKey, sort, filter, ftsText, limit, frmt)
             End If
             Return New List(Of T)()
         End Function
