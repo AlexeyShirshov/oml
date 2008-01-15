@@ -836,14 +836,18 @@ Namespace Orm
                         Throw New OrmObjectException(ObjName & "Object has already altered by another user")
                     End If
                 Else
+                    If _state = Orm.ObjectState.NotLoaded Then
+                        Load()
+                    End If
+
                     CreateModified(Identifier)
                     'Dim modified As OrmBase = CloneMe()
                     'modified._old_state = modified.ObjectState
                     'modified.ObjectState = ObjectState.Clone
                     'OrmCache.RegisterModification(modified)
-                End If
-                _state = ObjectState.Deleted
-                OrmManagerBase.CurrentManager.RaiseBeginDelete(Me)
+                    End If
+                    _state = ObjectState.Deleted
+                    OrmManagerBase.CurrentManager.RaiseBeginDelete(Me)
             End Using
         End Sub
 
