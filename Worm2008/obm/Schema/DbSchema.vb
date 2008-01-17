@@ -1333,7 +1333,7 @@ Namespace Orm
 
         Public Sub AppendOrder(ByVal defaultType As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, _
             ByVal sb As StringBuilder, Optional ByVal appendOrder As Boolean = True)
-            If sort IsNot Nothing AndAlso Not sort.IsExternal Then
+            If sort IsNot Nothing AndAlso Not sort.IsExternal AndAlso Not sort.IsAny Then
                 Dim ns As Sort = sort
                 If appendOrder Then
                     sb.Append(" order by ")
@@ -1342,6 +1342,10 @@ Namespace Orm
                 Do
                     If ns.IsExternal Then
                         Throw New DBSchemaException("External sort must be alone")
+                    End If
+
+                    If ns.IsAny Then
+                        Throw New DBSchemaException("Any sort must be alone")
                     End If
 
                     Dim st As Type = ns.Type

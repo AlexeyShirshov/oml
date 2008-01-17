@@ -25,9 +25,9 @@ namespace OrmCodeGenLib.Descriptors
         }
 
         public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef, EntityDescription baseEntity)
-            : this(id, name ,nameSpace, description, ormObjectsDef, baseEntity, EntityBehaviuor.Default)
+            : this(id, name, nameSpace, description, ormObjectsDef, baseEntity, EntityBehaviuor.Default)
         {
-            
+
         }
 
         public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef, EntityDescription baseEntity, EntityBehaviuor behaviour)
@@ -67,7 +67,7 @@ namespace OrmCodeGenLib.Descriptors
         public List<PropertyDescription> Properties
         {
             get { return _properties; }
-        } 
+        }
 
         public OrmObjectsDef OrmObjectsDef
         {
@@ -109,7 +109,7 @@ namespace OrmCodeGenLib.Descriptors
             {
                 return match.Identifier == tableId;
             });
-            
+
             if (table == null && throwNotFoundException)
                 throw new KeyNotFoundException(
                     string.Format("Table with id '{0}' in entity '{1}' not found.", tableId, this.Identifier));
@@ -118,25 +118,33 @@ namespace OrmCodeGenLib.Descriptors
 
         public List<RelationDescription> GetRelations(bool withDisabled)
         {
-            return _ormObjectsDef.Relations.FindAll(
-                delegate(RelationDescription match) {
-                                                        return
-                                                            (match.Left.Entity == this || match.Right.Entity == this) &&
-                                                            (!match.Disabled || withDisabled) ; }
-                );
+            List<RelationDescription> l = new List<RelationDescription>();
+            foreach (RelationDescriptionBase rel in _ormObjectsDef.Relations)
+            {
+                RelationDescription match = rel as RelationDescription;
+                if (match != null && (match.Left.Entity == this || match.Right.Entity == this) &&
+                        (!match.Disabled || withDisabled))
+                {
+                    l.Add(match);
+                }
+            }
+            return l;
         }
 
-		public List<SelfRelationDescription> GetSelfRelations(bool withDisabled)
-		{
-			return _ormObjectsDef.SelfRelations.FindAll(
-				delegate(SelfRelationDescription match)
-				{
-					return
-						(match.Entity == this) &&
-						(!match.Disabled || withDisabled);
-				}
-				);
-		}
+        public List<SelfRelationDescription> GetSelfRelations(bool withDisabled)
+        {
+            List<SelfRelationDescription> l = new List<SelfRelationDescription>();
+            foreach (RelationDescriptionBase rel in _ormObjectsDef.Relations)
+            {
+                SelfRelationDescription match = rel as SelfRelationDescription;
+                if (match != null && (match.Entity == this) &&
+                        (!match.Disabled || withDisabled))
+                {
+                    l.Add(match);
+                }
+            }
+            return l;
+        }
 
         public string Namespace
         {
@@ -187,7 +195,7 @@ namespace OrmCodeGenLib.Descriptors
                 resultOne.SuppressedProperties.Add(prop);
             }
 
-            if(oldOne != null)
+            if (oldOne != null)
             {
                 // добавляем старые таблички, если нужно
                 foreach (TableDescription oldTable in oldOne.Tables)
@@ -214,7 +222,7 @@ namespace OrmCodeGenLib.Descriptors
                             resultOne.SuppressedProperties.Exists(delegate(PropertyDescription match) { return match.Name == oldProperty.Name; });
                         bool isRefreshed = false;
                         bool fromBase = true;
-                        if(newType.IsEntityType)
+                        if (newType.IsEntityType)
                         {
                             EntityDescription newEntity =
                                 resultOne.OrmObjectsDef.Entities.Find(delegate(EntityDescription matchEntity)
@@ -227,12 +235,12 @@ namespace OrmCodeGenLib.Descriptors
                                 isRefreshed = true;
                             }
                         }
-                            resultOne.Properties.Insert(resultOne.Properties.Count - newOne.Properties.Count,
-                                                    new PropertyDescription(resultOne, oldProperty.Name, oldProperty.PropertyAlias,
-                                                                            oldProperty.Attributes,
-                                                                            oldProperty.Description,
-                                                                            newType,
-                                                                            oldProperty.FieldName, newTable, fromBase, oldProperty.FieldAccessLevel, oldProperty.PropertyAccessLevel, isSuppressed, isRefreshed));
+                        resultOne.Properties.Insert(resultOne.Properties.Count - newOne.Properties.Count,
+                                                new PropertyDescription(resultOne, oldProperty.Name, oldProperty.PropertyAlias,
+                                                                        oldProperty.Attributes,
+                                                                        oldProperty.Description,
+                                                                        newType,
+                                                                        oldProperty.FieldName, newTable, fromBase, oldProperty.FieldAccessLevel, oldProperty.PropertyAccessLevel, isSuppressed, isRefreshed));
                     }
                 }
             }
@@ -245,7 +253,7 @@ namespace OrmCodeGenLib.Descriptors
             get
             {
                 EntityDescription baseEntity;
-                if(_baseEntity == null)
+                if (_baseEntity == null)
                     baseEntity = null;
                 else
                     baseEntity = _baseEntity.CompleteEntity;

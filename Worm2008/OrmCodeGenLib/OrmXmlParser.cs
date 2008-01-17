@@ -376,7 +376,7 @@ namespace OrmCodeGenLib
 				_ormObjectsDef.Relations.Add(relation);
 			} 
 			#endregion
-			#region Relations
+			#region SelfRelations
 			relationNodes = _ormXmlDocument.DocumentElement.SelectNodes(string.Format("{0}:EntityRelations/{0}:SelfRelation", OrmObjectsDef.NS_PREFIX), _nsMgr);
 
 			foreach (XmlNode relationNode in relationNodes)
@@ -421,7 +421,7 @@ namespace OrmCodeGenLib
 				SelfRelationTarget reverseTarget = new SelfRelationTarget(reverseFieldName, reverseCascadeDelete);
 
 				SelfRelationDescription relation = new SelfRelationDescription(entity, directTarget, reverseTarget, relationTable, underlyingEntity, disabled);
-				_ormObjectsDef.SelfRelations.Add(relation);
+				_ormObjectsDef.Relations.Add(relation);
 			}
 			#endregion
         }

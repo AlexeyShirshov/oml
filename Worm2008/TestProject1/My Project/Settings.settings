@@ -6,7 +6,7 @@
       <Value Profile="(Default)">Data Source=vs2\sqlmain;Initial Catalog=wormtest;User ID=testuser;Password=testuser;</Value>
     </Setting>
     <Setting Name="WormRoot" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">E:\Work\Worm</Value>
+      <Value Profile="(Default)">D:\Work\Worm2008</Value>
     </Setting>
   </Settings>
 </SettingsFile>

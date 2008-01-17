@@ -137,61 +137,68 @@ namespace OrmCodeGenLib
                 return;
             XmlNode relationsNode = CreateElement("EntityRelations");
             _ormXmlDocumentMain.DocumentElement.AppendChild(relationsNode);
-            foreach (RelationDescription relation in _ormObjectsDef.Relations)
+            foreach (RelationDescriptionBase rel in _ormObjectsDef.Relations)
             {
-                XmlElement relationElement = CreateElement("Relation");
-
-                relationElement.SetAttribute("table", relation.Table.Identifier);
-                if(relation.Disabled)
+                if (rel is RelationDescription)
                 {
-                    relationElement.SetAttribute("disabled", XmlConvert.ToString(relation.Disabled));
+                    RelationDescription relation = rel as RelationDescription;
+
+                    XmlElement relationElement = CreateElement("Relation");
+
+                    relationElement.SetAttribute("table", relation.Table.Identifier);
+                    if (relation.Disabled)
+                    {
+                        relationElement.SetAttribute("disabled", XmlConvert.ToString(relation.Disabled));
+                    }
+
+                    XmlElement leftElement = CreateElement("Left");
+                    leftElement.SetAttribute("entity", relation.Left.Entity.Identifier);
+                    leftElement.SetAttribute("fieldName", relation.Left.FieldName);
+                    leftElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Left.CascadeDelete));
+
+                    XmlElement rightElement = CreateElement("Right");
+                    rightElement.SetAttribute("entity", relation.Right.Entity.Identifier);
+                    rightElement.SetAttribute("fieldName", relation.Right.FieldName);
+                    rightElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Right.CascadeDelete));
+
+                    if (relation.UnderlyingEntity != null)
+                    {
+                        relationElement.SetAttribute("underlyingEntity", relation.UnderlyingEntity.Identifier);
+                    }
+                    relationElement.AppendChild(leftElement);
+                    relationElement.AppendChild(rightElement);
+                    relationsNode.AppendChild(relationElement);
                 }
-
-                XmlElement leftElement = CreateElement("Left");
-                leftElement.SetAttribute("entity", relation.Left.Entity.Identifier);
-                leftElement.SetAttribute("fieldName", relation.Left.FieldName);
-                leftElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Left.CascadeDelete));              
-
-                XmlElement rightElement = CreateElement("Right");
-                rightElement.SetAttribute("entity", relation.Right.Entity.Identifier);
-                rightElement.SetAttribute("fieldName", relation.Right.FieldName);
-                rightElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Right.CascadeDelete));
-
-                if(relation.UnderlyingEntity != null)
+                else
                 {
-                    relationElement.SetAttribute("underlyingEntity", relation.UnderlyingEntity.Identifier);
+                    SelfRelationDescription relation = rel as SelfRelationDescription;
+
+                    XmlElement relationElement = CreateElement("SelfRelation");
+
+                    relationElement.SetAttribute("table", relation.Table.Identifier);
+                    relationElement.SetAttribute("entity", relation.Entity.Identifier);
+                    if (relation.Disabled)
+                    {
+                        relationElement.SetAttribute("disabled", XmlConvert.ToString(relation.Disabled));
+                    }
+
+                    XmlElement directElement = CreateElement("Direct");
+
+                    directElement.SetAttribute("fieldName", relation.Direct.FieldName);
+                    directElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Direct.CascadeDelete));
+
+                    XmlElement reverseElement = CreateElement("Reverse");
+                    reverseElement.SetAttribute("fieldName", relation.Reverse.FieldName);
+                    reverseElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Reverse.CascadeDelete));
+
+                    if (relation.UnderlyingEntity != null)
+                    {
+                        relationElement.SetAttribute("underlyingEntity", relation.UnderlyingEntity.Identifier);
+                    }
+                    relationElement.AppendChild(directElement);
+                    relationElement.AppendChild(reverseElement);
+                    relationsNode.AppendChild(relationElement);
                 }
-                relationElement.AppendChild(leftElement);
-                relationElement.AppendChild(rightElement);
-                relationsNode.AppendChild(relationElement);
-            }
-			foreach (SelfRelationDescription relation in _ormObjectsDef.SelfRelations)
-			{
-				XmlElement relationElement = CreateElement("SelfRelation");
-
-				relationElement.SetAttribute("table", relation.Table.Identifier);
-				relationElement.SetAttribute("entity", relation.Entity.Identifier);
-				if (relation.Disabled)
-				{
-					relationElement.SetAttribute("disabled", XmlConvert.ToString(relation.Disabled));
-				}
-
-				XmlElement directElement = CreateElement("Direct");
-				
-				directElement.SetAttribute("fieldName", relation.Direct.FieldName);
-				directElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Direct.CascadeDelete));
-
-				XmlElement reverseElement = CreateElement("Reverse");
-				reverseElement.SetAttribute("fieldName", relation.Reverse.FieldName);
-				reverseElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Reverse.CascadeDelete));
-
-				if (relation.UnderlyingEntity != null)
-				{
-					relationElement.SetAttribute("underlyingEntity", relation.UnderlyingEntity.Identifier);
-				}
-				relationElement.AppendChild(directElement);
-				relationElement.AppendChild(reverseElement);
-				relationsNode.AppendChild(relationElement);
 			}
         }
 

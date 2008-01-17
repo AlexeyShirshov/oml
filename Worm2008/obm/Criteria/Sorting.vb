@@ -46,6 +46,10 @@ Namespace Orm
         Public Shared Widening Operator CType(ByVal so As Sorting) As Sort
             Return so._prev
         End Operator
+
+        Public Shared Function Any() As Sort
+            Return New Sort
+        End Function
     End Class
 
     Public Class SortOrder
@@ -181,7 +185,7 @@ Namespace Orm
     Public Class Sort
         Private _f As String
         Private _order As SortType
-
+        Private _any As Boolean
         Private _custom As String
 
         Private _ext As Boolean
@@ -219,6 +223,10 @@ Namespace Orm
             _f = fieldName
             _order = order
             _ext = external
+        End Sub
+
+        Protected Friend Sub New()
+            _any = True
         End Sub
 
         Public Property CustomSortExpression() As String
@@ -269,6 +277,12 @@ Namespace Orm
         Public ReadOnly Property IsCustom() As Boolean
             Get
                 Return Not String.IsNullOrEmpty(_custom)
+            End Get
+        End Property
+
+        Public ReadOnly Property IsAny() As Boolean
+            Get
+                Return _any
             End Get
         End Property
 
@@ -379,6 +393,9 @@ Namespace Orm
         Public Function Compare(ByVal x As T, ByVal y As T) As Integer Implements System.Collections.Generic.IComparer(Of T).Compare
             Dim p As Integer = 0
             For Each s As Sort In _s
+                If s.IsAny Then
+                    Throw New NotSupportedException("Any sorting is not supported")
+                End If
                 Dim ss As IOrmObjectSchemaBase = Nothing
                 Dim xo As Object = GetValue(x, s, ss)
                 Dim yo As Object = GetValue(y, s, ss)

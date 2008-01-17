@@ -842,29 +842,33 @@ namespace OrmCodeGenLib
                 #endregion Worm.Orm.Collections.IndexedCollection<string, Worm.Orm.MapField2Column> GetFieldColumnMap()
 
                 #region сущность реализует связь
-                RelationDescription relation;
+                RelationDescriptionBase relation;
                 relation = _ormObjectsDefinition.Relations.Find(
-                            delegate(RelationDescription match)
+                            delegate(RelationDescriptionBase match)
                             {
                                 return match.UnderlyingEntity == entity && !match.Disabled;
                             }
                         );
                 if (relation != null)
                 {
-                    ImplementIRelation(relation, entity, entitySchemaDefClass);
+                    SelfRelationDescription sd = relation as SelfRelationDescription;
+                    if (sd == null)
+                        ImplementIRelation((RelationDescription)relation, entity, entitySchemaDefClass);
+                    else
+                        ImplementIRelation(sd, entity, entitySchemaDefClass);
                 }
 
-				SelfRelationDescription selfRelation;
-				selfRelation = _ormObjectsDefinition.SelfRelations.Find(
-							delegate(SelfRelationDescription match)
-							{
-								return match.UnderlyingEntity == entity && !match.Disabled;
-							}
-						);
-				if (selfRelation != null)
-				{
-					ImplementIRelation(selfRelation, entity, entitySchemaDefClass);
-				}
+                //SelfRelationDescription selfRelation;
+                //selfRelation = _ormObjectsDefinition.SelfRelations.Find(
+                //            delegate(SelfRelationDescription match)
+                //            {
+                //                return match.UnderlyingEntity == entity && !match.Disabled;
+                //            }
+                //        );
+                //if (selfRelation != null)
+                //{
+                //    ImplementIRelation(selfRelation, entity, entitySchemaDefClass);
+                //}
                 #endregion сущность реализует связь
 
                 #region public void GetSchema(OrmSchemaBase schema, Type t)
