@@ -1938,7 +1938,7 @@ l1:
                 If _externalFilter Is Nothing Then
                     Dim psort As Sort = del.Sort
 
-                    If ce.SortEquals(psort) OrElse psort Is Nothing Then
+                    If ce.SortEquals(psort) OrElse psort Is Nothing OrElse psort.IsAny Then
                         If v IsNot Nothing AndAlso Not v.Validate(ce) Then
                             del.Renew = True
                             GoTo l1

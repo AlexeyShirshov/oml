@@ -4,54 +4,106 @@ using System.Text;
 
 namespace OrmCodeGenLib.Descriptors
 {
-	public class SelfRelationDescription
-	{
-		private readonly TableDescription _table;
-		private readonly EntityDescription _underlyingEntity;
-		private readonly EntityDescription _entity;
-		private readonly bool _disabled;
+    public class RelationDescriptionBase
+    {
+        private readonly TableDescription _table;
+        private readonly EntityDescription _underlyingEntity;
+        private readonly bool _disabled;
+        private readonly SelfRelationTarget _left;
+        private readonly SelfRelationTarget _right;
 
-		private readonly SelfRelationTarget _direct;
-		private readonly SelfRelationTarget _reverse;
+        public TableDescription Table
+        {
+            get { return _table; }
+        }
+
+        public EntityDescription UnderlyingEntity
+        {
+            get { return _underlyingEntity; }
+        }
+
+        public bool Disabled
+        {
+            get { return _disabled; }
+        }
+
+        public RelationDescriptionBase(TableDescription table, EntityDescription underlyingEntity, SelfRelationTarget left, SelfRelationTarget right)
+            : this(table, underlyingEntity, left, right, false)
+        {
+        }
+
+        public RelationDescriptionBase(TableDescription table, EntityDescription underlyingEntity, SelfRelationTarget left, SelfRelationTarget right, bool disabled)
+        {
+            _table = table;
+            _underlyingEntity = underlyingEntity;
+            _disabled = disabled;
+            _left = left;
+            _right = right;
+        }
+
+        public SelfRelationTarget Left
+        {
+            get { return _left; }
+        }
+
+        public SelfRelationTarget Right
+        {
+            get { return _right; }
+        }
+
+        public virtual bool Similar(RelationDescriptionBase obj)
+        {
+            if (obj == null)
+                return false;
+
+            return (_left == obj._left && _right == obj._right) ||
+                (_left == obj._right && _right == obj._left);
+        }
+    }
+    
+	public class SelfRelationDescription : RelationDescriptionBase
+	{
+		private readonly EntityDescription _entity;
 
 		public SelfRelationDescription(EntityDescription entity, SelfRelationTarget direct, SelfRelationTarget reverse, TableDescription table, EntityDescription underlyingEntity, bool disabled)
+            : base(table, underlyingEntity, direct, reverse, disabled)
 		{
 			_entity = entity;
-			_direct = direct;
-			_reverse = reverse;
-			_table = table;
-			_underlyingEntity = underlyingEntity;
-			_disabled = disabled;
 		}
 
-		public TableDescription Table
-		{
-			get { return _table; }
-		}
-
-		public EntityDescription UnderlyingEntity
-		{
-			get { return _underlyingEntity; }
-		}
+        public SelfRelationDescription(EntityDescription entity, SelfRelationTarget direct, SelfRelationTarget reverse, TableDescription table, EntityDescription underlyingEntity)
+            : this(entity, direct, reverse, table, underlyingEntity, false)
+        {
+        }
 
 		public EntityDescription Entity
 		{
 			get { return _entity; }
-		}
-
-		public bool Disabled
-		{
-			get { return _disabled; }
-		}
+		}        		
 
 		public SelfRelationTarget Direct
 		{
-			get { return _direct; }
+			get { return Left; }
 		}
 
 		public SelfRelationTarget Reverse
 		{
-			get { return _reverse; }
+			get { return Right; }
 		}
+
+        public override bool Similar(RelationDescriptionBase obj)
+        {
+            return _Similar(obj as SelfRelationDescription);
+        }
+
+        public bool Similar(SelfRelationDescription obj)
+        {
+            return _Similar(obj);
+        }
+
+        protected bool _Similar(SelfRelationDescription obj)
+        {
+            return base.Similar((RelationDescriptionBase)obj) && _entity.Name == obj._entity.Name;
+        }
 	}
 }

@@ -17,8 +17,8 @@ namespace OrmCodeGenLib
 
         private readonly List<EntityDescription> _entities;
         private readonly List<TableDescription> _tables;
-        private readonly List<RelationDescription> _relations;
-    	private readonly List<SelfRelationDescription> _selfRelations;
+        private readonly List<RelationDescriptionBase> _relations;
+    	//private readonly List<SelfRelationDescription> _selfRelations;
         private readonly List<TypeDescription> _types;
         private readonly IncludesCollection _includes;
         private OrmObjectsDef _base;
@@ -38,8 +38,8 @@ namespace OrmCodeGenLib
         public OrmObjectsDef()
         {
             _entities = new List<EntityDescription>();
-            _relations = new List<RelationDescription>();
-        	_selfRelations = new List<SelfRelationDescription>();
+            _relations = new List<RelationDescriptionBase>();
+        	//_selfRelations = new List<SelfRelationDescription>();
             _tables = new List<TableDescription>();
             _types = new List<TypeDescription>();
             _userComments = new List<string>();
@@ -74,7 +74,7 @@ namespace OrmCodeGenLib
             }
         }
 		[XmlIgnore]
-        public List<RelationDescription> Relations
+        public List<RelationDescriptionBase> Relations
         {
             get
             {
@@ -136,11 +136,11 @@ namespace OrmCodeGenLib
             internal protected set { _base = value; }
         }
 
-		[XmlIgnore]
-    	public List<SelfRelationDescription> SelfRelations
-    	{
-    		get { return _selfRelations; }
-    	}
+        //[XmlIgnore]
+        //public List<SelfRelationDescription> SelfRelations
+        //{
+        //    get { return _selfRelations; }
+        //}
 
     	#endregion Properties
 
@@ -246,12 +246,12 @@ namespace OrmCodeGenLib
         //    return regex.Match(name);
         //}
 
-        public RelationDescription GetSimilarRelation(RelationDescription relation)
+        public RelationDescriptionBase GetSimilarRelation(RelationDescriptionBase relation)
         {
-            return _relations.Find(delegate(RelationDescription match)
+            return _relations.Find(delegate(RelationDescriptionBase match)
                                       {
                                           return
-                                              RelationDescription.IsSimilar(relation, match);
+                                              relation.Similar(match);
                                       });
         }
 

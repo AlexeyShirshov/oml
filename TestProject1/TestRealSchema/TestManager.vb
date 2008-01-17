@@ -1080,6 +1080,21 @@ Public Class TestManagerRS
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestSortAny()
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)( _
+                Orm.Criteria.AutoTypeField("Code").Between(2, 45), _
+                Orm.Sorting.Field("Code"), False)
+
+            c = mgr.Find(Of Table1)(Orm.Criteria.AutoTypeField("Code").Between(2, 45), Orm.Sorting.Any, False)
+        End Using
+
+        Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(Orm.Criteria.AutoTypeField("Code").Between(2, 45), Orm.Sorting.Any, False)
+        End Using
+    End Sub
+
     Private Function GetList(Of T As {Orm.OrmBase})(ByVal col As ICollection(Of T)) As List(Of T)
         Return CType(col, Global.System.Collections.Generic.List(Of T))
     End Function

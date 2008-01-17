@@ -191,6 +191,8 @@ namespace XmlSchemaGen
 				}
 			}
 
+            if (string.IsNullOrEmpty(name_space))
+                name_space = _db;
 			ProcessColumns(columns, file, merge, dr, name_space, proh);
 		}
 
@@ -363,14 +365,23 @@ namespace XmlSchemaGen
 								targets.Add(lt);
 							}
 						}
-						RelationDescription rd = odef.GetSimilarRelation(
-							new RelationDescription(targets[0], targets[1], null, null));
-						if (rd == null)
-						{
-							rd = new RelationDescription(targets[0], targets[1],
-								GetTable(odef, p.First, p.Second), ued);
-							odef.Relations.Add(rd);
-						}
+                        if (targets[0].Entity.Name == targets[1].Entity.Name)
+                        {
+                            LinkTarget t = targets[0];
+                            SelfRelationDescription newRel = new SelfRelationDescription(t.Entity, targets[0], targets[1], GetTable(odef, p.First, p.Second), ued);
+                            if (odef.GetSimilarRelation(newRel) == null)
+                            {
+                                odef.Relations.Add(newRel);
+                            }
+                        }
+                        else
+                        {
+                            RelationDescription newRel = new RelationDescription(targets[0], targets[1], GetTable(odef, p.First, p.Second), ued);
+                            if (odef.GetSimilarRelation(newRel) == null)
+                            {
+                                odef.Relations.Add(newRel);
+                            }
+                        }						
 					}
 				}
 			}
