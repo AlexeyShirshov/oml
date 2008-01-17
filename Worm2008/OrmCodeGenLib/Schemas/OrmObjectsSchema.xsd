@@ -133,6 +133,13 @@
         </xs:keyref>
       </xs:element>
     </xs:sequence>
+	<xs:attribute name="inheritsBase" type="xs:boolean" use="optional">
+		<xs:annotation>
+			<xs:documentation>
+				Inherits table list from base entity.
+			</xs:documentation>
+		</xs:annotation>
+	</xs:attribute>
   </xs:complexType>
   <xs:complexType name="TableRef_t">
     <xs:annotation>
@@ -208,7 +215,17 @@
             <xs:documentation>Признак отключения проперти</xs:documentation>
           </xs:annotation>
         </xs:attribute>
-      </xs:complexType>
+	<xs:attribute name="obsolete" type="ObsoleteType_t" use="optional" default="None">
+	  <xs:annotation>
+		<xs:documentation>Make property obsolete.</xs:documentation>
+	  </xs:annotation>
+	</xs:attribute>
+	<xs:attribute name="obsoleteDescription" type="xs:string" use="optional">
+	  <xs:annotation>
+		<xs:documentation>Description for obsolete property.</xs:documentation>
+	  </xs:annotation>
+	</xs:attribute>
+  </xs:complexType>
   <xs:complexType name="PropertiesCollection_t">
     <xs:annotation>
       <xs:documentation>Коллекция свойств сущности</xs:documentation>
@@ -468,6 +485,7 @@
       <xs:enumeration value="Assembly" />
       <xs:enumeration value="Private" />
       <xs:enumeration value="Public" />
+	  <xs:enumeration value="FamilyOrAssembly" />
     </xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="EntityBehaviour_t">
@@ -493,6 +511,25 @@
 				</xs:annotation>
 			</xs:enumeration>-->
     </xs:restriction>
+  </xs:simpleType>
+  <xs:simpleType name="ObsoleteType_t">
+	<xs:restriction base="xs:string">
+	  <xs:enumeration value="None">
+		<xs:annotation>
+		  <xs:documentation>None obsolete.</xs:documentation>
+		</xs:annotation>
+	  </xs:enumeration>
+	  <xs:enumeration value="Warning">
+		<xs:annotation>
+		  <xs:documentation>Make obsolete with warning.</xs:documentation>
+		</xs:annotation>
+	  </xs:enumeration>
+	  <xs:enumeration value="Error">
+		<xs:annotation>
+		  <xs:documentation>Make obsolete with error.</xs:documentation>
+		</xs:annotation>
+	  </xs:enumeration>
+	</xs:restriction>
   </xs:simpleType>
   <xs:simpleType name="Name_t">
     <xs:restriction base="xs:string">

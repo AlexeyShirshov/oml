@@ -227,6 +227,7 @@ namespace OrmCodeGenLib
                     tableElement.SetAttribute("ref", table.Identifier);
                     tablesNode.AppendChild(tableElement);
                 }
+            	(tablesNode as XmlElement).SetAttribute("inheritsBase", XmlConvert.ToString(entity.InheritsBaseTables));
                 entityElement.AppendChild(tablesNode);
 
                 XmlNode propertiesNode = CreateElement("Properties");
@@ -252,6 +253,10 @@ namespace OrmCodeGenLib
                         propertyElement.SetAttribute("propertyAlias", property.PropertyAlias);
                     if (property.Disabled)
                         propertyElement.SetAttribute("disabled", XmlConvert.ToString(true));
+					if (property.Obsolete != ObsoleteType.None)
+						propertyElement.SetAttribute("obsolete", property.Obsolete.ToString());
+					if(!string.IsNullOrEmpty(property.ObsoleteDescripton))
+						propertyElement.SetAttribute("obsoleteDescription", property.ObsoleteDescripton);
                     propertiesNode.AppendChild(propertyElement);
                 }
                 entityElement.AppendChild(propertiesNode);

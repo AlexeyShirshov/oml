@@ -274,11 +274,12 @@ namespace OrmCodeGenLib
 
             foreach (XmlNode propertyNode in propertiesList)
             {
-                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled;
+                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription;
                 string[] attributes;
                 TableDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
                 bool disabled = false;
+            	ObsoleteType obsolete;
 
                 XmlElement propertyElement = (XmlElement) propertyNode;
                 description = propertyElement.GetAttribute("description");
@@ -291,6 +292,8 @@ namespace OrmCodeGenLib
                 propertyAccessLevelName = propertyElement.GetAttribute("propertyAccessLevel");
                 propertyAlias = propertyElement.GetAttribute("propertyAlias");
                 propertyDisabled = propertyElement.GetAttribute("disabled");
+            	propertyObsolete = propertyElement.GetAttribute("obsolete");
+				propertyObsoleteDescription = propertyElement.GetAttribute("obsoleteDescription");
 
                 attributes = sAttributes.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                 if (!string.IsNullOrEmpty(propertyAccessLevelName))
@@ -315,8 +318,19 @@ namespace OrmCodeGenLib
 
                 TypeDescription typeDesc = _ormObjectsDef.GetType(typeId, true);
                 
+				if(!string.IsNullOrEmpty(propertyObsolete))
+				{
+					obsolete = (ObsoleteType) Enum.Parse(typeof (ObsoleteType), propertyObsolete);
+				}
+				else
+				{
+					obsolete = ObsoleteType.None;
+				}
+
                 PropertyDescription property = new PropertyDescription(entity ,name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
                 property.Disabled = disabled;
+            	property.Obsolete = obsolete;
+            	property.ObsoleteDescripton = propertyObsoleteDescription;
 
                 entity.Properties.Add(property);
             }
@@ -467,6 +481,10 @@ namespace OrmCodeGenLib
 
                 entity.Tables.Add(table);
             }
+
+			XmlNode tablesNode = entityNode.SelectSingleNode(string.Format("{0}:Tables", OrmObjectsDef.NS_PREFIX), _nsMgr);
+        	string inheritsTablesValue = (tablesNode as XmlElement).GetAttribute("inheritsBase");
+        	entity.InheritsBaseTables = string.IsNullOrEmpty(inheritsTablesValue) || XmlConvert.ToBoolean(inheritsTablesValue);
         }
 
         internal protected void Read()

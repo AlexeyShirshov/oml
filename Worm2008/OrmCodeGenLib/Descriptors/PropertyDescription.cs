@@ -21,6 +21,8 @@ namespace OrmCodeGenLib.Descriptors
         private EntityDescription _entity;
         private bool _disabled;
 
+		private ObsoleteType _obsolete;
+    	private string _obsoleteDescripton;
         public PropertyDescription(EntityDescription entity, string name)
             : this(entity, name, null, null, null, null, null, null, false, default(AccessLevel), default(AccessLevel), true, false)
         {
@@ -141,6 +143,17 @@ namespace OrmCodeGenLib.Descriptors
             set { _disabled = value; }
         }
 
+    	public ObsoleteType Obsolete
+    	{
+    		get { return _obsolete; }
+    		set { _obsolete = value; }
+    	}
+
+    	public string ObsoleteDescripton
+    	{
+    		get { return _obsoleteDescripton; }
+    		set { _obsoleteDescripton = value; }
+    	}
         #region ICloneable Members
 
         public object Clone()
@@ -167,4 +180,10 @@ namespace OrmCodeGenLib.Descriptors
 
         #endregion
     }
+	public enum ObsoleteType
+	{
+		None,
+		Warning,
+		Error
+	}
 }
