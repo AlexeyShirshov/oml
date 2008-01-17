@@ -17,6 +17,7 @@ namespace OrmCodeGenLib.Descriptors
         private readonly OrmObjectsDef _ormObjectsDef;
         private EntityDescription _baseEntity;
         private EntityBehaviuor _behaviour;
+    	private bool _inheritsTables;
         #endregion Private Fields
 
         public EntityDescription(string id, string name, string nameSpace, string description, OrmObjectsDef ormObjectsDef)
@@ -198,6 +199,7 @@ namespace OrmCodeGenLib.Descriptors
             if (oldOne != null)
             {
                 // добавляем старые таблички, если нужно
+				if(newOne.InheritsBaseTables)
                 foreach (TableDescription oldTable in oldOne.Tables)
                 {
                     if (!resultOne.Tables.Exists(delegate(TableDescription tableMatch) { return oldTable.Name == tableMatch.Name; }))
@@ -271,5 +273,10 @@ namespace OrmCodeGenLib.Descriptors
         {
             get { return _suppressedProperties; }
         }
+    	public bool InheritsBaseTables
+    	{
+    		get { return _inheritsTables; }
+    		set { _inheritsTables = value; }
+    	}
     }
 }

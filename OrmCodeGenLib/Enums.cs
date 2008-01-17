@@ -9,7 +9,8 @@ namespace OrmCodeGenLib
         Private,
         Family,
         Assembly,
-        Public
+        Public,
+		FamilyOrAssembly
     }
 
     public enum EntityBehaviuor

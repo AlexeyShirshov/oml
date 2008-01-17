@@ -134,7 +134,7 @@ namespace OrmCodeGenLib
                     propertiesClass.Attributes = MemberAttributes.Public;
                     propertiesClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.NestedPublic;
                     CodeConstructor propctr = new CodeConstructor();
-                    propctr.Attributes = MemberAttributes.Private;
+                    propctr.Attributes = MemberAttributes.Family;
                     propertiesClass.Members.Add(propctr);
                     propertiesClass.Comments.Add(new CodeCommentStatement("Entity properties's aliases", true));
 
@@ -1472,15 +1472,47 @@ namespace OrmCodeGenLib
 
                 if (propertyDesc.PropertyAlias == "ID" || propertyDesc.IsSuppressed)
                     continue;
+            	CodeMemberProperty property = null;
                 if (!propertyDesc.FromBase)
-                    CreateProperty(copyMethod, createobjectMethod, entityClass, propertyDesc, setvalueMethod, getvalueMethod);
+                    property = CreateProperty(copyMethod, createobjectMethod, entityClass, propertyDesc, setvalueMethod, getvalueMethod);
                 else if(propertyDesc.IsRefreshed)
                     //CreateProperty(copyMethod, createobjectMethod, entityClass, propertyDesc, settings, setvalueMethod, getvalueMethod);
-                    CreateUpdatedProperty(entityClass, propertyDesc);
+                    property = CreateUpdatedProperty(entityClass, propertyDesc);
+
+				if (property != null)
+				{
+					#region property custom attribute Worm.Orm.ColumnAttribute
+
+					CreatePropertyColumnAttribute(property, propertyDesc);
+
+					#endregion property custom attribute Worm.Orm.ColumnAttribute
+
+					#region property obsoletness
+
+					CheckPropertyObsoleteAttribute(property, propertyDesc);
+
+					#endregion
+				}
             }
         }
 
-        private static void CreateUpdatedProperty(CodeTypeDeclaration entityClass, PropertyDescription propertyDesc)
+    	private void CheckPropertyObsoleteAttribute(CodeMemberProperty property, PropertyDescription propertyDesc)
+    	{
+			if (propertyDesc.Obsolete != ObsoleteType.None)
+    		{
+    			CodeAttributeDeclaration attr =
+    				new CodeAttributeDeclaration(new CodeTypeReference(typeof (ObsoleteAttribute)),
+    				                             new CodeAttributeArgument(
+    				                             	new CodePrimitiveExpression(propertyDesc.ObsoleteDescripton)),
+    				                             new CodeAttributeArgument(
+    				                             	new CodePrimitiveExpression(propertyDesc.Obsolete == ObsoleteType.Error)));
+				if (property.CustomAttributes == null)
+					property.CustomAttributes = new CodeAttributeDeclarationCollection();
+    			property.CustomAttributes.Add(attr);
+    		}
+    	}
+
+    	private static CodeMemberProperty CreateUpdatedProperty(CodeTypeDeclaration entityClass, PropertyDescription propertyDesc)
         {
             CodeTypeReference propertyType;
             propertyType = new CodeTypeReference(propertyDesc.PropertyType.IsEntityType ? OrmCodeGenNameHelper.GetQualifiedEntityName(propertyDesc.PropertyType.Entity) : propertyDesc.PropertyType.TypeName);
@@ -1510,8 +1542,6 @@ namespace OrmCodeGenLib
                 )
                 );
 
-            CreatePropertyColumnAttribute(property, propertyDesc);
-
             #region описание проперти
             SetMemberDescription(property, propertyDesc.Description);
             #endregion описание проперти
@@ -1519,9 +1549,11 @@ namespace OrmCodeGenLib
             #region добавление членов в класс
             entityClass.Members.Add(property);
             #endregion добавление членов в класс
+
+			return property;
         }
 
-        private static void CreateProperty(CodeMemberMethod copyMethod, CodeMemberMethod createobjectMethod, CodeTypeDeclaration entityClass, PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod, CodeMemberMethod getvalueMethod)
+		private static CodeMemberProperty CreateProperty(CodeMemberMethod copyMethod, CodeMemberMethod createobjectMethod, CodeTypeDeclaration entityClass, PropertyDescription propertyDesc, CodeMemberMethod setvalueMethod, CodeMemberMethod getvalueMethod)
         {
             CodeMemberField field;
             CodeTypeReference fieldType;
@@ -1583,12 +1615,6 @@ namespace OrmCodeGenLib
 
             #endregion property SetStatements
 
-            #region property custom attribute Worm.Orm.ColumnAttribute
-
-            CreatePropertyColumnAttribute(property, propertyDesc);
-
-            #endregion property custom attribute Worm.Orm.ColumnAttribute
-
             #region описание проперти
             SetMemberDescription(property, propertyDesc.Description);
             #endregion описание проперти
@@ -1633,6 +1659,8 @@ namespace OrmCodeGenLib
             }
 
             #endregion void CreateObject(string fieldName, object value)
+
+			return property;
         }
 
         private static void UpdateGetValueMethod(CodeMemberProperty property, PropertyDescription propertyDesc, CodeMemberMethod getvalueMethod)
@@ -2018,6 +2046,8 @@ namespace OrmCodeGenLib
                     return MemberAttributes.Assembly;
                 case AccessLevel.Public:
                     return MemberAttributes.Public;
+				case AccessLevel.FamilyOrAssembly:
+            		return MemberAttributes.FamilyOrAssembly;
                 default:
                     return 0;
             }
