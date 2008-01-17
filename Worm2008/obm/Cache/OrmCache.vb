@@ -28,9 +28,21 @@ Namespace Orm
         End Sub
     End Class
 
+    ''' <summary>
+    ''' Индексированая по полю <see cref="MapField2Column._fieldName"/> колекция объектов типа <see cref="MapField2Column"/>
+    ''' </summary>
+    ''' <remarks>
+    ''' Наследник абстрактного класс <see cref="Collections.IndexedCollection(Of string, MapField2Column)"/>, реализующий метод <see cref="Collections.IndexedCollection(Of string, MapField2Column).GetKeyForItem" />
+    ''' </remarks>
     Public Class OrmObjectIndex
         Inherits Collections.IndexedCollection(Of String, MapField2Column)
 
+        ''' <summary>
+        ''' Возвращает ключ коллекции MapField2Column
+        ''' </summary>
+        ''' <param name="item">Элемент коллекции</param>
+        ''' <returns>Возвращает <see cref="MapField2Column._fieldName"/></returns>
+        ''' <remarks>Используется при индексации коллекции</remarks>
         Protected Overrides Function GetKeyForItem(ByVal item As MapField2Column) As String
             Return item._fieldName
         End Function
@@ -172,7 +184,7 @@ Namespace Orm
             End Get
         End Property
 
-        Protected Friend Function Modified(ByVal obj As OrmBase) As ModifiedObject
+        Public Function Modified(ByVal obj As OrmBase) As ModifiedObject
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
