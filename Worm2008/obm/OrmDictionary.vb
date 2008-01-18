@@ -1,5 +1,8 @@
 Imports System.Runtime.CompilerServices
 Imports Worm.Orm
+Imports Worm.Criteria.Core
+Imports Worm.Criteria.Joins
+Imports Worm.Orm.Meta
 
 Namespace Orm
 
@@ -223,33 +226,34 @@ Namespace Orm
             MyBase.new(name, parent, count)
         End Sub
 
-        Public Overloads Function FindElements(ByVal mgr As OrmReadOnlyDBManager) As Generic.ICollection(Of T)
+        Public Overloads Function FindElements(ByVal mgr As OrmManagerBase) As Generic.ICollection(Of T)
             Return FindElementsInternal(mgr, False)
         End Function
 
-        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmReadOnlyDBManager) As Generic.ICollection(Of T)
+        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmManagerBase) As Generic.ICollection(Of T)
             Return FindElementsInternal(mgr, True)
         End Function
 
-        Private Function FindObjects(ByVal mgr As OrmReadOnlyDBManager, ByVal loadName As Boolean, ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As Generic.ICollection(Of T)
+        Private Function FindObjects(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As Generic.ICollection(Of T)
             Dim col As Generic.ICollection(Of T)
+            Dim s As OrmSchemaBase = mgr.ObjectSchema
             If strong Then
                 If loadName Then
-                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Eq(Name), Nothing, New String() {field})
+                    col = mgr.Find(Of T)(s.CreateCriteria(tt).Field(field).Eq(Name), Nothing, New String() {field})
                 Else
-                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Eq(Name), Nothing, False)
+                    col = mgr.Find(Of T)(s.CreateCriteria(tt).Field(field).Eq(Name), Nothing, False)
                 End If
             Else
                 If loadName Then
-                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Like(Name & "%"), Nothing, New String() {field})
+                    col = mgr.Find(Of T)(s.CreateCriteria(tt).Field(field).Like(Name & "%"), Nothing, New String() {field})
                 Else
-                    col = mgr.Find(Of T)(New Criteria(tt).Field(field).Like(Name & "%"), Nothing, False)
+                    col = mgr.Find(Of T)(s.CreateCriteria(tt).Field(field).Like(Name & "%"), Nothing, False)
                 End If
             End If
             Return col
         End Function
 
-        Protected Function FindElementsInternal(ByVal mgr As OrmReadOnlyDBManager, ByVal loadName As Boolean) As Generic.ICollection(Of T)
+        Protected Function FindElementsInternal(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean) As Generic.ICollection(Of T)
 
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False

@@ -1,9 +1,12 @@
 Imports Worm
 Imports System.Collections.Generic
-Imports CoreFramework.Structures
-Imports CoreFramework.Threading
+Imports Worm.Cache
+Imports Worm.Orm
+Imports Worm.Database.Criteria.Core
+Imports Worm.Sorting
+Imports Worm.Orm.Meta
 
-Namespace Orm
+Namespace Database
     Public Class OrmDBManager
         Inherits OrmReadOnlyDBManager
 
@@ -114,7 +117,7 @@ Namespace Orm
             End Using
 
             If inv Then
-                InvalidateCache(obj, upd)
+                InvalidateCache(obj, CType(upd, System.Collections.ICollection))
             End If
         End Sub
 
@@ -386,12 +389,6 @@ Namespace Orm
             End Using
         End Sub
 
-        Public Enum SaveAction
-            Update
-            Delete
-            Insert
-        End Enum
-
         Public Overrides Function Add(ByVal obj As OrmBase) As OrmBase
             Invariant()
 
@@ -573,107 +570,6 @@ Namespace Orm
             Return hasNew
         End Function
 
-        Friend Class M2MEnum
-            Public ReadOnly o As IRelation
-            'Public ReadOnly obj As OrmBase
-            Dim p1 As IRelation.RelationDesc 'Pair(Of String, Type)
-            Dim p2 As IRelation.RelationDesc 'Pair(Of String, Type)
-            Dim o1 As OrmBase
-            Dim o2 As OrmBase
-
-            Public Sub New(ByVal r As IRelation, ByVal obj As OrmBase, ByVal schema As OrmSchemaBase)
-                Me.o = r
-                'Me.obj = obj
-                p1 = o.GetFirstType
-                p2 = o.GetSecondType
-                'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
-                'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
-                o1 = CType(obj.GetValue(p1.PropertyName), OrmBase)
-                o2 = CType(obj.GetValue(p2.PropertyName), OrmBase)
-            End Sub
-
-            Public Function Add(ByVal e As M2MCache) As Boolean
-                If e Is Nothing Then
-                    Throw New ArgumentNullException("e")
-                End If
-
-                Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
-                Dim el As EditableList = e.Entry
-                Dim obj As OrmBase = Nothing, subobj As OrmBase = Nothing
-                If el.Main.Equals(o1) Then
-                    obj = o1
-                    subobj = o2
-                ElseIf el.Main.Equals(o2) Then
-                    obj = o2
-                    subobj = o1
-                End If
-
-                If obj IsNot Nothing Then
-                    If e.Sort Is Nothing Then
-                        el.Add(subobj.Identifier)
-                    Else
-                        Dim s As IOrmSorting = Nothing
-                        Dim col As New ArrayList(mgr.ConvertIds2Objects(el.SubType, el.Added, False))
-                        If Not mgr.CanSortOnClient(el.SubType, col, e.Sort, s) Then
-                            Return False
-                        End If
-                        Dim c As IComparer = Nothing
-                        If s Is Nothing Then
-                            c = New OrmComparer(Of OrmBase)(el.SubType, e.Sort)
-                        Else
-                            c = s.CreateSortComparer(e.Sort)
-                        End If
-                        If c Is Nothing Then
-                            Return False
-                        End If
-                        Dim pos As Integer = col.BinarySearch(subobj, c)
-                        If pos < 0 Then
-                            el.Add(subobj.Identifier, Not pos)
-                        End If
-                    End If
-                End If
-                Return True
-            End Function
-
-            Public Function Remove(ByVal e As M2MCache) As Boolean
-                If e Is Nothing Then
-                    Throw New ArgumentNullException("e")
-                End If
-
-                Dim el As EditableList = e.Entry
-                If el.Main.Equals(o1) Then
-                    el.Delete(o2.Identifier)
-                ElseIf el.Main.Equals(o2) Then
-                    el.Delete(o1.Identifier)
-                End If
-                Return True
-            End Function
-
-            Public Function Accept(ByVal e As M2MCache) As Boolean
-                If e Is Nothing Then
-                    Throw New ArgumentNullException("e")
-                End If
-
-                Dim el As EditableList = e.Entry
-                If el.Main.Equals(o1) OrElse el.Main.Equals(o2) Then
-                    Return el.Accept(CType(OrmManagerBase.CurrentManager, OrmDBManager))
-                End If
-                Return True
-            End Function
-
-            Public Function Reject(ByVal e As M2MCache) As Boolean
-                If e Is Nothing Then
-                    Throw New ArgumentNullException("e")
-                End If
-
-                Dim el As EditableList = e.Entry
-                If el.Main.Equals(o1) OrElse el.Main.Equals(o2) Then
-                    el.Reject(False)
-                End If
-                Return True
-            End Function
-        End Class
-
         'Public Overloads Sub DeleteRelation2(ByVal obj As OrmBase, ByVal t As Type)
         'Dim dt As System.Data.DataTable = Obj2ObjRelationDeleteInternal(obj, t)
         'Dim tt1 As Type = obj.GetType
@@ -701,7 +597,7 @@ Namespace Orm
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim r As ConnAction = TestConn(cmd)
                 Try
-                    Dim params As New Orm.ParamMgr(DbSchema, "p")
+                    Dim params As New ParamMgr(DbSchema, "p")
                     With cmd
                         .CommandText = DbSchema.Delete(t, f, params)
                         .CommandType = System.Data.CommandType.Text

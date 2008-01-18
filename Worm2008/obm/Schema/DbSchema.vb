@@ -1,26 +1,177 @@
 Imports System.Data.SqlClient
 Imports System.Runtime.CompilerServices
-Imports CoreFramework.Structures
-Imports CoreFramework.Threading
 Imports System.Collections.Generic
+Imports Worm.Orm
+Imports Worm.Orm.Meta
+Imports Worm.Criteria
+Imports Worm.Criteria.Values
+Imports Worm.Database.Criteria.Joins
+Imports Worm.Database.Criteria.Core
+Imports Worm.Database.Criteria.Conditions
+Imports Worm.Orm.Query
+Imports Worm.Sorting
+Imports Worm.Cache
 
-Namespace Orm
+Namespace Database
 
-    Public Interface IDbSchema
-        Function GetSharedTable(ByVal tableName As String) As OrmTable
-        Function GetTables(ByVal type As Type) As OrmTable()
-        Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
-    End Interface
+    Public Class ParamMgr
+        Implements ICreateParam
+
+        Private _params As List(Of System.Data.Common.DbParameter)
+        Private _schema As DbSchema
+        Private _prefix As String
+        Private _named_params As Boolean
+
+        Public Sub New(ByVal schema As DbSchema, ByVal prefix As String)
+            _schema = schema
+            _params = New List(Of System.Data.Common.DbParameter)
+            _prefix = prefix
+            _named_params = schema.ParamName("p", 1) <> schema.ParamName("p", 2)
+        End Sub
+
+        Public Function AddParam(ByVal pname As String, ByVal value As Object) As String Implements ICreateParam.AddParam
+            If NamedParams Then
+                Dim p As System.Data.Common.DbParameter = GetParameter(pname)
+                If p Is Nothing Then
+                    Return CreateParam(value)
+                Else
+                    If p.Value Is Nothing OrElse p.Value.Equals(value) Then
+                        Return pname
+                    Else
+                        Return CreateParam(value)
+                    End If
+                End If
+            Else
+                Return CreateParam(value)
+            End If
+        End Function
+
+        Public Function CreateParam(ByVal value As Object) As String Implements ICreateParam.CreateParam
+            If _schema Is Nothing Then
+                Throw New InvalidOperationException("Object must be created")
+            End If
+
+            Dim pname As String = _schema.ParamName(_prefix, _params.Count + 1)
+            _params.Add(_schema.CreateDBParameter(pname, value))
+            Return pname
+        End Function
+
+        Public ReadOnly Property Params() As IList(Of System.Data.Common.DbParameter) Implements ICreateParam.Params
+            Get
+                Return _params
+            End Get
+        End Property
+
+        Public Function GetParameter(ByVal name As String) As System.Data.Common.DbParameter Implements ICreateParam.GetParameter
+            If Not String.IsNullOrEmpty(name) Then
+                For Each p As System.Data.Common.DbParameter In _params
+                    If p.ParameterName = name Then
+                        Return p
+                    End If
+                Next
+            End If
+            Return Nothing
+        End Function
+
+        Public ReadOnly Property Prefix() As String
+            Get
+                Return _prefix
+            End Get
+            'Set(ByVal value As String)
+            '    _prefix = value
+            'End Set
+        End Property
+
+        'Public ReadOnly Property IsEmpty() As Boolean Implements ICreateParam.IsEmpty
+        '    Get
+        '        Return _params Is Nothing
+        '    End Get
+        'End Property
+
+        Public ReadOnly Property NamedParams() As Boolean Implements ICreateParam.NamedParams
+            Get
+                Return _named_params
+            End Get
+        End Property
+
+        Public Sub AppendParams(ByVal collection As System.Data.Common.DbParameterCollection)
+            For Each p As System.Data.Common.DbParameter In _params
+                collection.Add(CType(p, ICloneable).Clone)
+            Next
+        End Sub
+
+        Public Sub AppendParams(ByVal collection As System.Data.Common.DbParameterCollection, ByVal start As Integer, ByVal count As Integer)
+            For i As Integer = start To Math.Min(_params.Count, start + count) - 1
+                Dim p As System.Data.Common.DbParameter = _params(i)
+                collection.Add(CType(p, ICloneable).Clone)
+            Next
+        End Sub
+
+        Public Sub Clear(ByVal preserve As Integer)
+            If preserve > 0 Then
+                _params.RemoveRange(preserve - 1, _params.Count - preserve)
+            End If
+        End Sub
+    End Class
+
+    Public Structure AliasMgr
+        Private _aliases As IDictionary(Of OrmTable, String)
+
+        Private Sub New(ByVal aliases As IDictionary(Of OrmTable, String))
+            _aliases = aliases
+        End Sub
+
+        Public Shared Function Create() As AliasMgr
+            Return New AliasMgr(New Generic.Dictionary(Of OrmTable, String))
+        End Function
+
+        Public Function AddTable(ByRef table As OrmTable) As String
+            Return AddTable(table, CType(Nothing, ParamMgr))
+        End Function
+
+        Public Function AddTable(ByRef table As OrmTable, ByVal pmgr As ICreateParam) As String
+            'Dim tf As IOrmTableFunction = TryCast(schema, IOrmTableFunction)
+            Dim t As OrmTable = table
+            Dim tt As OrmTable = table.OnTableAdd(pmgr)
+            If tt IsNot Nothing Then
+                '    Dim f As OrmTable = tf.GetFunction(table, pmgr)
+                '    If f IsNot Nothing Then
+                table = tt
+                '    End If
+            End If
+            Dim i As Integer = _aliases.Count + 1
+            Dim [alias] As String = "t" & i
+            _aliases.Add(t, [alias])
+            Return [alias]
+        End Function
+
+        Friend Sub AddTable(ByVal tbl As OrmTable, ByVal [alias] As String)
+            _aliases.Add(tbl, [alias])
+        End Sub
+
+        'Public Function GetAlias(ByVal table As String) As String
+        '    Return _aliases(table)
+        'End Function
+
+        Public ReadOnly Property Aliases() As IDictionary(Of OrmTable, String)
+            Get
+                Return _aliases
+            End Get
+        End Property
+
+        Public ReadOnly Property IsEmpty() As Boolean
+            Get
+                Return _aliases Is Nothing
+            End Get
+        End Property
+    End Structure
 
     Public Class DbSchema
         Inherits OrmSchemaBase
-        Implements IDbSchema
 
         Public Const QueryLength As Integer = 490
         'Public Const MainRelationTag As String = "main"
         'Public Const SubRelationTag As String = "sub"
-
-        Private _sharedTables As Hashtable = Hashtable.Synchronized(New Hashtable)
 
         Public Sub New(ByVal version As String)
             MyBase.New(version)
@@ -37,56 +188,6 @@ Namespace Orm
         Public Sub New(ByVal version As String, ByVal resolveEntity As ResolveEntity, ByVal resolveName As ResolveEntityName)
             MyBase.New(version, resolveEntity, resolveName)
         End Sub
-
-        Public Function GetSharedTable(ByVal tableName As String) As OrmTable Implements IDbSchema.GetSharedTable
-            Dim t As OrmTable = CType(_sharedTables(tableName), OrmTable)
-            If t Is Nothing Then
-                SyncLock Me
-                    t = CType(_sharedTables(tableName), OrmTable)
-                    If t Is Nothing Then
-                        t = New OrmTable(tableName)
-                        _sharedTables.Add(tableName, t)
-                    End If
-                End SyncLock
-            End If
-            Return t
-        End Function
-
-        Public Function GetTables(ByVal type As Type) As OrmTable() Implements IDbSchema.GetTables
-            If type Is Nothing Then
-                Throw New ArgumentNullException("type")
-            End If
-
-            Dim schema As IOrmObjectSchema = GetObjectSchema(type)
-
-            Return schema.GetTables
-        End Function
-
-        Public Function GetTables(ByVal schema As IOrmRelationalSchema) As OrmTable()
-            If schema Is Nothing Then
-                Throw New ArgumentNullException("type")
-            End If
-
-            Return schema.GetTables
-        End Function
-
-        Protected Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin Implements IDbSchema.GetJoins
-            If type Is Nothing Then
-                Throw New ArgumentNullException("type")
-            End If
-
-            Dim schema As IOrmObjectSchema = GetObjectSchema(type)
-
-            Return schema.GetJoins(left, right)
-        End Function
-
-        Protected Function GetJoins(ByVal schema As IOrmRelationalSchema, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
-            If schema Is Nothing Then
-                Throw New ArgumentNullException("type")
-            End If
-
-            Return schema.GetJoins(left, right)
-        End Function
 
         Public Overloads Function GetObjectSchema(ByVal t As Type) As IOrmObjectSchema
             Return CType(MyBase.GetObjectSchema(t), IOrmObjectSchema)
@@ -289,7 +390,7 @@ Namespace Orm
 
                     For j As Integer = 1 To inserted_tables.Count - 1
                         Dim join_table As OrmTable = tbls(j)
-                        Dim jn As OrmJoin = GetJoins(es, pkt, join_table)
+                        Dim jn As OrmJoin = CType(GetJoins(es, pkt, join_table), OrmJoin)
                         If Not jn.IsEmpty Then
                             Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(jn.Condition, real_t, prim_key.FieldName, "@id")
 
@@ -443,12 +544,12 @@ Namespace Orm
         Protected Structure TableUpdate
             Public _table As OrmTable
             Public _updates As IList(Of EntityFilter)
-            Public _where4update As Orm.Condition.ConditionConstructor
+            Public _where4update As Condition.ConditionConstructor
 
             Public Sub New(ByVal table As OrmTable)
                 _table = table
                 _updates = New List(Of EntityFilter)
-                _where4update = New Orm.Condition.ConditionConstructor
+                _where4update = New Condition.ConditionConstructor
             End Sub
 
         End Structure
@@ -587,7 +688,7 @@ Namespace Orm
                                 'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
                                 de_table.Value._where4update.AddFilter(New EntityFilter(rt, c.FieldName, New ScalarValue(original), FilterOperation.Equal))
                             Else
-                                Dim join As OrmJoin = GetJoins(oschema, tb, de_table.Key)
+                                Dim join As OrmJoin = CType(GetJoins(oschema, tb, de_table.Key), OrmJoin)
                                 If Not join.IsEmpty Then
                                     Dim f As IFilter = JoinFilter.ChangeEntityJoinToParam(join.Condition, rt, c.FieldName, New TypeWrap(Of Object)(original))
 
@@ -765,7 +866,7 @@ Namespace Orm
             For j As Integer = 0 To tables.Length - 1
                 Dim table As OrmTable = tables(j)
                 deleted_tables.Add(table, Nothing)
-                Dim o As New Orm.Condition.ConditionConstructor
+                Dim o As New Condition.ConditionConstructor
                 If table.Equals(pk_table) Then
                     For Each de As DictionaryEntry In GetProperties(type, oschema)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
@@ -781,7 +882,7 @@ Namespace Orm
                         End If
                     Next
                 Else
-                    Dim join As OrmJoin = GetJoins(relSchema, tables(0), table)
+                    Dim join As OrmJoin = CType(GetJoins(relSchema, tables(0), table), OrmJoin)
                     If Not join.IsEmpty Then
                         Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(join.Condition, type, "ID", "@id")
 
@@ -853,7 +954,7 @@ Namespace Orm
         End Function
 
         Public Overridable Function SelectWithJoin(ByVal original_type As Type, ByVal tables() As OrmTable, _
-            ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As OrmJoin, _
+            ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.OrmJoin, _
             ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
             ByVal arr As Generic.IList(Of ColumnAttribute), ByVal schema As IOrmObjectSchema) As String
 
@@ -893,7 +994,7 @@ Namespace Orm
                 AppendFrom(almgr, tables, selectcmd, params, schema)
                 If joins IsNot Nothing Then
                     For i As Integer = 0 To joins.Length - 1
-                        Dim join As OrmJoin = joins(i)
+                        Dim join As OrmJoin = CType(joins(i), OrmJoin)
 
                         If Not join.IsEmpty Then
                             almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
@@ -909,7 +1010,7 @@ Namespace Orm
         End Function
 
         Public Overridable Function SelectWithJoin(ByVal original_type As Type, _
-            ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As OrmJoin, _
+            ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.OrmJoin, _
             ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
             Optional ByVal arr As Generic.IList(Of ColumnAttribute) = Nothing) As String
 
@@ -961,7 +1062,7 @@ Namespace Orm
                 Dim r2 As M2MRelation = GetM2MRelation(relation.Type, original_type, True)
                 Dim tbl As OrmTable = relation.Table
                 Dim f As New JoinFilter(tbl, r2.Column, original_type, "ID", FilterOperation.Equal)
-                Dim join As New OrmJoin(tbl, JoinType.Join, f)
+                Dim join As New OrmJoin(tbl, Joins.JoinType.Join, f)
 
                 almgr.AddTable(tbl)
                 selectcmd.Append(join.MakeSQLStmt(Me, almgr, params))
@@ -1164,7 +1265,7 @@ Namespace Orm
             If Not appendMainTable Then
 
                 For j As Integer = 1 To tables.Length - 1
-                    Dim join As OrmJoin = GetJoins(sch, pk_table, tables(j))
+                    Dim join As OrmJoin = CType(GetJoins(sch, pk_table, tables(j)), OrmJoin)
 
                     If Not join.IsEmpty Then
                         almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
@@ -1202,14 +1303,14 @@ Namespace Orm
                     'dic.Add(pk_table, tbl)
                     adal = True
                 End If
-                Dim j As New OrmJoin(tbl, JoinType.Join, New JoinFilter(table, id, selectedType, "ID", FilterOperation.Equal))
+                Dim j As New OrmJoin(tbl, Joins.JoinType.Join, New JoinFilter(table, id, selectedType, "ID", FilterOperation.Equal))
                 Dim al As String = almgr.AddTable(tbl, pname)
                 If adal Then
                     almgr.AddTable(pk_table, al)
                 End If
                 selectcmd.Append(j.MakeSQLStmt(Me, almgr, pname))
                 For i As Integer = 1 To tables.Length - 1
-                    Dim join As OrmJoin = sch.GetJoins(pk_table, tables(i))
+                    Dim join As OrmJoin = CType(sch.GetJoins(pk_table, tables(i)), OrmJoin)
 
                     If Not join.IsEmpty Then
                         almgr.AddTable(tables(i), CType(Nothing, ParamMgr))
@@ -1298,7 +1399,7 @@ Namespace Orm
 
                 If sch IsNot Nothing Then
                     For j As Integer = i + 1 To tables.Length - 1
-                        Dim join As OrmJoin = GetJoins(sch, tbl, tables(j))
+                        Dim join As OrmJoin = CType(GetJoins(sch, tbl, tables(j)), OrmJoin)
 
                         If Not join.IsEmpty Then
                             If Not almgr.Aliases.ContainsKey(tables(j)) Then
@@ -1316,7 +1417,7 @@ Namespace Orm
         Public Overridable Function AppendWhere(ByVal t As Type, ByVal filter As IFilter, _
             ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
 
-            Dim con As New Orm.Condition.ConditionConstructor
+            Dim con As New Condition.ConditionConstructor
             con.AddFilter(filter)
 
             If t IsNot Nothing Then
@@ -1528,7 +1629,7 @@ Namespace Orm
             Dim table As OrmTable = selected_r.Table
 
             Dim f As New TableFilter(table, id_clm, New EntityValue(obj), FilterOperation.Equal)
-            Dim con As New Orm.Condition.ConditionConstructor
+            Dim con As New Condition.ConditionConstructor
             con.AddFilter(f)
             con.AddFilter(filter)
             AppendWhere(type, con.Condition, almgr, sb, filter_info, pmgr)
@@ -1538,11 +1639,9 @@ Namespace Orm
             Return sb.ToString
         End Function
 
-        Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport, ByVal contextKey As Object) As String
-
         Public Function MakeSearchStatement(ByVal searchType As Type, ByVal selectType As Type, _
             ByVal fts As IFtsStringFormater, ByVal fields As ICollection(Of Pair(Of String, Type)), _
-            ByVal sectionName As String, ByVal joins As ICollection(Of OrmJoin), ByVal sort_type As SortType, _
+            ByVal sectionName As String, ByVal joins As ICollection(Of Worm.Criteria.Joins.OrmJoin), ByVal sort_type As SortType, _
             ByVal params As ParamMgr, ByVal filter_info As Object, ByVal queryFields As String(), _
             ByVal top As Integer, ByVal table As String, _
             ByVal sort As Sort, ByVal appendBySort As Boolean, ByVal filter As IFilter, ByVal contextKey As Object, _
@@ -1930,6 +2029,30 @@ Namespace Orm
             sb.Append("}")
 
             Return New OrmManagerException(sb.ToString)
+        End Function
+
+        Public Overrides Function CreateCriteria(ByVal t As Type) As Worm.Criteria.ICtor
+            Return New Criteria.Ctor(t)
+        End Function
+
+        Public Overloads Overrides Function CreateCriteria(ByVal t As System.Type, ByVal fieldName As String) As Worm.Criteria.CriteriaField
+            Return Criteria.Ctor.Field(t, fieldName)
+        End Function
+
+        Public Overrides Function CreateConditionCtor() As Criteria.Conditions.Condition.ConditionConstructorBase
+            Return New Criteria.Conditions.Condition.ConditionConstructor
+        End Function
+
+        Public Overrides Function CreateCriteriaLink(ByVal con As Worm.Criteria.Conditions.Condition.ConditionConstructorBase) As Worm.Criteria.CriteriaLink
+            Return New Criteria.CriteriaLink(CType(con, Criteria.Conditions.Condition.ConditionConstructor))
+        End Function
+
+        Public Overrides Function CreateTopAspect(ByVal top As Integer) As Orm.Query.TopAspect
+            Return New TopAspect(top)
+        End Function
+
+        Public Overrides Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sort) As Orm.Query.TopAspect
+            Return New TopAspect(top, sort)
         End Function
     End Class
 

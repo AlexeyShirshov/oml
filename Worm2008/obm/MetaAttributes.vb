@@ -1,6 +1,6 @@
 Imports System
 
-Namespace Orm
+Namespace Orm.Meta
 
     <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
     Public NotInheritable Class ColumnAttribute

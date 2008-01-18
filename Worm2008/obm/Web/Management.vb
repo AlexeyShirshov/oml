@@ -4,6 +4,7 @@ Imports System.Web.Management
 Imports System.Collections.Generic
 Imports System.Xml
 Imports System.Security.Permissions
+Imports Worm.Cache
 
 Namespace Web
     Public Interface IRelationalEventData
@@ -272,7 +273,7 @@ Namespace Web
 
         Protected Overrides Sub CollectStat()
             _l = New List(Of Pair(Of String, Integer))
-            Dim ce As Worm.Orm.IExploreCache = TryCast(Cache, Orm.IExploreCache)
+            Dim ce As IExploreCache = TryCast(Cache, IExploreCache)
             If ce IsNot Nothing Then
                 For Each key As Object In ce.GetAllKeys
                     _l.Add(New Pair(Of String, Integer)(key.ToString, ce.GetDictionary(key).Count))
@@ -294,6 +295,6 @@ Namespace Web
             Return _l(idx).Second.ToString
         End Function
 
-        Protected MustOverride ReadOnly Property Cache() As Orm.OrmCacheBase
+        Protected MustOverride ReadOnly Property Cache() As OrmCacheBase
     End Class
 End Namespace

@@ -1,65 +1,37 @@
-Namespace Orm
+Imports Worm.Criteria.Conditions
+Imports Worm.Criteria.Core
+Imports Worm.Criteria.Values
+Imports Worm.Orm
+Imports Worm.Criteria.Joins
+Imports Worm.Criteria
 
-    Public Class Criteria
-        Private _t As Type
+Namespace Criteria
 
-        Public Sub New(ByVal t As Type)
-            If t Is Nothing Then
-                Throw New ArgumentNullException("t")
-            End If
+    Public Enum FilterOperation
+        Equal
+        NotEqual
+        GreaterThan
+        GreaterEqualThan
+        LessEqualThan
+        LessThan
+        [In]
+        NotIn
+        [Like]
+        [Is]
+        [IsNot]
+        Exists
+        NotExists
+        Between
+    End Enum
 
-            _t = t
-        End Sub
+    Public Interface ICtor
+        Function Field(ByVal fieldName As String) As CriteriaField
+    End Interface
 
-        Public Function Field(ByVal fieldName As String) As CriteriaField
-            If String.IsNullOrEmpty(fieldName) Then
-                Throw New ArgumentNullException("fieldName")
-            End If
-
-            Return New CriteriaField(_t, fieldName)
-        End Function
-
-        Public Shared Function Field(ByVal t As Type, ByVal fieldName As String) As CriteriaField
-            If t Is Nothing Then
-                Throw New ArgumentNullException("t")
-            End If
-
-            If String.IsNullOrEmpty(fieldName) Then
-                Throw New ArgumentNullException("fieldName")
-            End If
-
-            Return New CriteriaField(t, fieldName)
-        End Function
-
-        Public Shared Function AutoTypeField(ByVal fieldName As String) As CriteriaField
-            If String.IsNullOrEmpty(fieldName) Then
-                Throw New ArgumentNullException("fieldName")
-            End If
-
-            Return New CriteriaField(Nothing, fieldName)
-        End Function
-
-        Public Shared Function Exists(ByVal t As Type, ByVal filter As IFilter) As CriteriaLink
-            Return New CriteriaLink(New Condition.ConditionConstructor).AndExists(t, filter)
-        End Function
-
-        Public Shared Function NotExists(ByVal t As Type, ByVal filter As IFilter) As CriteriaLink
-            Return New CriteriaLink(New Condition.ConditionConstructor).AndNotExists(t, filter)
-        End Function
-
-        Public Shared Function Custom(ByVal t As Type, ByVal field As String) As CriteriaField
-            Return New CustomCF(t, field)
-        End Function
-
-        Public Shared Function Custom(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField
-            Return New CustomCF(t, field, format)
-        End Function
-    End Class
-
-    Public Class CriteriaField
+    Public MustInherit Class CriteriaField
         Private _t As Type
         Private _f As String
-        Private _con As Orm.Condition.ConditionConstructor
+        Private _con As Condition.ConditionConstructorBase
         Private _ct As ConditionOperator
 
         Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String)
@@ -76,24 +48,12 @@ Namespace Orm
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String, _
-            ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
+            ByVal con As Condition.ConditionConstructorBase, ByVal ct As ConditionOperator)
             _t = t
             _f = fieldName
             _con = con
             _ct = ct
         End Sub
-
-        Protected Function GetLink(ByVal fl As Orm.IFilter) As CriteriaLink
-            If _con Is Nothing Then
-                _con = New Orm.Condition.ConditionConstructor
-            End If
-            _con.AddFilter(fl, _ct)
-            Return New CriteriaLink(_t, _con)
-        End Function
-
-        Protected Overridable Function CreateFilter(ByVal v As IFilterValue, ByVal oper As FilterOperation) As IFilter
-            Return New EntityFilter(_t, _f, v, oper)
-        End Function
 
         Protected ReadOnly Property Type() As Type
             Get
@@ -106,6 +66,24 @@ Namespace Orm
                 Return _f
             End Get
         End Property
+
+        Protected Property ConditionCtor() As Condition.ConditionConstructorBase
+            Get
+                Return _con
+            End Get
+            Set(ByVal value As Condition.ConditionConstructorBase)
+                _con = value
+            End Set
+        End Property
+
+        Protected ReadOnly Property ConditionOper() As ConditionOperator
+            Get
+                Return _ct
+            End Get
+        End Property
+
+        Protected MustOverride Function GetLink(ByVal fl As IFilter) As CriteriaLink
+        Protected MustOverride Function CreateFilter(ByVal v As IParamFilterValue, ByVal oper As FilterOperation) As IFilter
 
         Public Function Eq(ByVal value As Object) As CriteriaLink
             If value Is Nothing OrElse value Is DBNull.Value Then
@@ -178,124 +156,14 @@ Namespace Orm
             Return GetLink(CreateFilter(New InValue(arr), FilterOperation.NotIn))
         End Function
 
-        Public Function [In](ByVal t As Type) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing), FilterOperation.In))
-        End Function
-
-        Public Function NotIn(ByVal t As Type) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing), FilterOperation.NotIn))
-        End Function
-
-        Public Function [In](ByVal t As Type, ByVal fieldName As String) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing, fieldName), FilterOperation.In))
-        End Function
-
-        Public Function NotIn(ByVal t As Type, ByVal fieldName As String) As CriteriaLink
-            Return GetLink(New EntityFilter(_t, _f, New SubQuery(t, Nothing, fieldName), FilterOperation.NotIn))
-        End Function
-
-        Public Function Exists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
-            Dim j As New JoinFilter(_t, _f, t, joinField, FilterOperation.Equal)
-            Return GetLink(New NonTemplateFilter(New SubQuery(t, j), FilterOperation.Exists))
-        End Function
-
-        Public Function NotExists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
-            Dim j As New JoinFilter(_t, _f, t, joinField, FilterOperation.Equal)
-            Return GetLink(New NonTemplateFilter(New SubQuery(t, j), FilterOperation.NotExists))
-        End Function
-
-        Public Function Exists(ByVal t As Type) As CriteriaLink
-            Return Exists(t, "ID")
-        End Function
-
-        Public Function NotExists(ByVal t As Type) As CriteriaLink
-            Return NotExists(t, "ID")
-        End Function
-
-        Public Function Exists(ByVal t As Type, ByVal f As IFilter) As CriteriaLink
-            Return GetLink(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.Exists))
-        End Function
-
-        Public Function NotExists(ByVal t As Type, ByVal f As IFilter) As CriteriaLink
-            Return GetLink(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.NotExists))
-        End Function
-
         Public Function Between(ByVal left As Object, ByVal right As Object) As CriteriaLink
             Return GetLink(CreateFilter(New BetweenValue(left, right), FilterOperation.Between))
         End Function
 
-        Public Function Op(ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
+        Public Function Op(ByVal oper As FilterOperation, ByVal value As IParamFilterValue) As CriteriaLink
             Return GetLink(CreateFilter(value, oper))
         End Function
 
-    End Class
-
-    Public Class CustomCF
-        Inherits CriteriaField
-
-        Private _format As String
-
-        Protected Friend Sub New(ByVal t As Type, ByVal field As String, ByVal format As String)
-            MyBase.New(t, field)
-            _format = format
-        End Sub
-
-        Protected Friend Sub New(ByVal t As Type, ByVal field As String)
-            MyBase.New(t, field)
-        End Sub
-
-        Protected Friend Sub New(ByVal t As Type, ByVal field As String, ByVal format As String, _
-            ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
-            MyBase.New(t, field, con, ct)
-            _format = format
-        End Sub
-
-        Protected Friend Sub New(ByVal t As Type, ByVal field As String, _
-            ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
-            MyBase.New(t, field, con, ct)
-        End Sub
-
-        Protected Overrides Function CreateFilter(ByVal v As IFilterValue, ByVal oper As FilterOperation) As IFilter
-            If String.IsNullOrEmpty(_format) Then
-                Return New CustomFilter(Type, Field, v, oper)
-            Else
-                Return New CustomFilter(Type, Field, _format, v, oper)
-            End If
-        End Function
-    End Class
-
-    Public Class CriteriaNonField
-        Private _con As Orm.Condition.ConditionConstructor
-        Private _ct As ConditionOperator
-
-        Protected Friend Sub New(ByVal con As Orm.Condition.ConditionConstructor, ByVal ct As ConditionOperator)
-            _con = con
-            _ct = ct
-        End Sub
-
-        Protected Function GetLink(ByVal fl As Orm.IFilter) As CriteriaLink
-            If _con Is Nothing Then
-                _con = New Orm.Condition.ConditionConstructor
-            End If
-            _con.AddFilter(fl, _ct)
-            Return New CriteriaLink(_con)
-        End Function
-
-        Public Function Exists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
-            Return GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.Exists))
-        End Function
-
-        Public Function NotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
-            Return GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.NotExists))
-        End Function
-
-        'Public Function Custom(ByVal t As Type, ByVal field As String, ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
-        '    Return GetLink(New CustomFilter(t, field, value, oper))
-        'End Function
-
-        'Public Function Custom(ByVal t As Type, ByVal field As String, ByVal format As String, ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
-        '    Return GetLink(New CustomFilter(t, field, format, value, oper))
-        'End Function
     End Class
 
     Public Interface IGetFilter
@@ -303,13 +171,13 @@ Namespace Orm
         ReadOnly Property Filter(ByVal t As Type) As IFilter
     End Interface
 
-    Public Class CriteriaLink
+    Public MustInherit Class CriteriaLink
         Implements IGetFilter
 
-        Private _con As Orm.Condition.ConditionConstructor
+        Private _con As Condition.ConditionConstructorBase
         Private _t As Type
 
-        Protected Friend Sub New(ByVal con As Condition.ConditionConstructor)
+        Protected Friend Sub New(ByVal con As Condition.ConditionConstructorBase)
             _con = con
         End Sub
 
@@ -321,10 +189,12 @@ Namespace Orm
             _t = t
         End Sub
 
-        Protected Friend Sub New(ByVal t As Type, ByVal con As Orm.Condition.ConditionConstructor)
+        Protected Friend Sub New(ByVal t As Type, ByVal con As Condition.ConditionConstructorBase)
             _con = con
             _t = t
         End Sub
+
+        Protected MustOverride Function CreateField(ByVal t As Type, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
 
         Public Function [And](ByVal t As Type, ByVal fieldName As String) As CriteriaField
             If String.IsNullOrEmpty(fieldName) Then
@@ -335,7 +205,7 @@ Namespace Orm
                 Throw New ArgumentNullException("t")
             End If
 
-            Return New CriteriaField(t, fieldName, _con, ConditionOperator.And)
+            Return CreateField(t, fieldName, _con, ConditionOperator.And)
         End Function
 
         Public Function [Or](ByVal t As Type, ByVal fieldName As String) As CriteriaField
@@ -347,7 +217,7 @@ Namespace Orm
                 Throw New ArgumentNullException("t")
             End If
 
-            Return New CriteriaField(t, fieldName, _con, ConditionOperator.Or)
+            Return CreateField(t, fieldName, _con, ConditionOperator.Or)
         End Function
 
         Public Function [And](ByVal fieldName As String) As CriteriaField
@@ -355,7 +225,7 @@ Namespace Orm
                 Throw New ArgumentNullException("fieldName")
             End If
 
-            Return New CriteriaField(_t, fieldName, _con, ConditionOperator.And)
+            Return CreateField(_t, fieldName, _con, ConditionOperator.And)
         End Function
 
         Public Function [Or](ByVal fieldName As String) As CriteriaField
@@ -363,7 +233,7 @@ Namespace Orm
                 Throw New ArgumentNullException("fieldName")
             End If
 
-            Return New CriteriaField(_t, fieldName, _con, ConditionOperator.Or)
+            Return CreateField(_t, fieldName, _con, ConditionOperator.Or)
         End Function
 
         Public Function [And](ByVal link As CriteriaLink) As CriteriaLink
@@ -380,38 +250,6 @@ Namespace Orm
             End If
 
             Return Me
-        End Function
-
-        Public Function AndExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
-            Return New CriteriaNonField(_con, ConditionOperator.And).Exists(t, joinFilter)
-        End Function
-
-        Public Function AndNotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
-            Return New CriteriaNonField(_con, ConditionOperator.And).NotExists(t, joinFilter)
-        End Function
-
-        Public Function OrExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
-            Return New CriteriaNonField(_con, ConditionOperator.Or).Exists(t, joinFilter)
-        End Function
-
-        Public Function OrNotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
-            Return New CriteriaNonField(_con, ConditionOperator.Or).NotExists(t, joinFilter)
-        End Function
-
-        Public Function CustomAnd(ByVal t As Type, ByVal field As String) As CriteriaField
-            Return New CustomCF(t, field, _con, ConditionOperator.And)
-        End Function
-
-        Public Function CustomOr(ByVal t As Type, ByVal field As String) As CriteriaField
-            Return New CustomCF(t, field, _con, ConditionOperator.Or)
-        End Function
-
-        Public Function CustomAnd(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField
-            Return New CustomCF(t, field, format, _con, ConditionOperator.And)
-        End Function
-
-        Public Function CustomOr(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField
-            Return New CustomCF(t, field, format, _con, ConditionOperator.Or)
         End Function
 
         Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter
@@ -436,6 +274,12 @@ Namespace Orm
                 Else
                     Return Nothing
                 End If
+            End Get
+        End Property
+
+        Protected ReadOnly Property ConditionCtor() As Condition.ConditionConstructorBase
+            Get
+                Return _con
             End Get
         End Property
     End Class

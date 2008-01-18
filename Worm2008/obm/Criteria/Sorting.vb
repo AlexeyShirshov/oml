@@ -1,6 +1,12 @@
-Imports CoreFramework.Structures
+Imports Worm.Orm
+Imports Worm.Sorting
+Imports Worm.Orm.Meta
 
 Namespace Orm
+    Public Enum SortType
+        Asc
+        Desc
+    End Enum
 
     Public Class Sorting
         Private _t As Type
@@ -51,6 +57,10 @@ Namespace Orm
             Return New Sort
         End Function
     End Class
+
+End Namespace
+
+Namespace Sorting
 
     Public Class SortOrder
         Private _f As String
@@ -111,29 +121,29 @@ Namespace Orm
             Return CreateCustom(_t, sortexpression, Me)
         End Function
 
-        Public ReadOnly Property Asc() As Sorting
+        Public ReadOnly Property Asc() As Orm.Sorting
             Get
                 If IsCustom Then
                     Throw New InvalidOperationException("Sort is custom")
                 End If
                 _order = SortType.Asc
-                Return New Sorting(_t, Me)
+                Return New Orm.Sorting(_t, Me)
                 'Return New Sort(_f, SortType.Asc, _ext)
             End Get
         End Property
 
-        Public ReadOnly Property Desc() As Sorting
+        Public ReadOnly Property Desc() As Orm.Sorting
             Get
                 If IsCustom Then
                     Throw New InvalidOperationException("Sort is custom")
                 End If
                 _order = SortType.Desc
-                Return New Sorting(_t, Me)
+                Return New Orm.Sorting(_t, Me)
                 'Return New Sort(_f, SortType.Desc, _ext)
             End Get
         End Property
 
-        Public Function Order(ByVal orderParam As Boolean) As Sorting
+        Public Function Order(ByVal orderParam As Boolean) As Orm.Sorting
             If IsCustom Then
                 Throw New InvalidOperationException("Sort is custom")
             End If
@@ -145,13 +155,13 @@ Namespace Orm
             End If
         End Function
 
-        Public Function Order(ByVal orderParam As String) As Sorting
+        Public Function Order(ByVal orderParam As String) As Orm.Sorting
             If IsCustom Then
                 Throw New InvalidOperationException("Sort is custom")
             End If
 
             _order = CType([Enum].Parse(GetType(SortType), orderParam, True), SortType)
-            Return New Sorting(_t, Me) 'New Sort(_f, _, _ext)
+            Return New Orm.Sorting(_t, Me) 'New Sort(_f, _, _ext)
         End Function
 
         Public Shared Widening Operator CType(ByVal so As SortOrder) As Sort

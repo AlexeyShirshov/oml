@@ -2,9 +2,11 @@ Imports System
 Imports System.Configuration.Install
 Imports System.Diagnostics
 Imports System.ComponentModel
-Imports CoreFramework.Structures
+Imports Worm.Orm
+Imports Worm.Sorting
+Imports Worm.Orm.Meta
 
-Namespace Orm
+Namespace Cache
 
     Public Interface IListObjectConverter
         Enum ExtractListResult
@@ -312,7 +314,7 @@ Namespace Orm
                     Dim st As IOrmSorting = TryCast(schema, IOrmSorting)
                     Dim c As IComparer = Nothing
                     If st IsNot Nothing Then
-                        c = st.createsortcomparer(sort)
+                        c = st.CreateSortComparer(sort)
                     Else
                         c = New OrmComparer(Of OrmBase)(obj.GetType, sort)
                     End If

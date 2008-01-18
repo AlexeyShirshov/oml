@@ -1,10 +1,11 @@
 Imports System.Data.SqlClient
 Imports System.Runtime.CompilerServices
-Imports CoreFramework.Structures
-Imports CoreFramework.Threading
 Imports System.Collections.Generic
+Imports Worm.Cache
+Imports Worm.Orm
+Imports Worm.Orm.Meta
 
-Namespace Orm
+Namespace Database.Storedprocs
     <Flags()> _
     Public Enum Dependency
         Update = 1
@@ -341,7 +342,7 @@ Namespace Orm
         End Sub
 
         Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of OutParam)
-            Return New List(Of Orm.OutParam)
+            Return New List(Of OutParam)
         End Function
 
         Public Overrides ReadOnly Property ExecutionTime() As System.TimeSpan
@@ -401,14 +402,14 @@ Namespace Orm
             Return r
         End Function
 
-        Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Worm.Orm.Dependency))
-            Dim l As New List(Of Pair(Of Type, Orm.Dependency))
-            l.Add(New Pair(Of Type, Orm.Dependency)(GetType(T), Orm.Dependency.All))
+        Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
+            Dim l As New List(Of Pair(Of Type, Dependency))
+            l.Add(New Pair(Of Type, Dependency)(GetType(T), Dependency.All))
             Return l
         End Function
 
-        Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of Worm.Orm.OutParam)
-            Return New List(Of Orm.OutParam)
+        Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of OutParam)
+            Return New List(Of OutParam)
         End Function
 
         Public Overrides ReadOnly Property ExecutionTime() As System.TimeSpan

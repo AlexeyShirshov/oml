@@ -3,6 +3,8 @@ Imports System.Web.Security
 Imports System.Web.Profile
 Imports Worm.Orm
 Imports System.Configuration
+Imports Worm.Database
+Imports Worm.Database.Criteria
 
 Namespace Web
     Public Class MembershipBase
@@ -394,7 +396,8 @@ Namespace Web
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, MapField("Email"), New TypeWrap(Of Object)(emailToMatch), FilterOperation.Like))
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
-                Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field(MapField("Email")).Like(emailToMatch))
+                Dim c As CriteriaLink = CType(New Worm.Database.Criteria.Ctor(ProfileProvider.GetUserType).Field(MapField("Email")).Like(emailToMatch), CriteriaLink)
+                Dim users As IList = ProfileProvider.FindUsers(mgr, c)
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
             End Using
@@ -406,7 +409,7 @@ Namespace Web
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(usernameToMatch), FilterOperation.Like))
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
-                Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Like(usernameToMatch))
+                Dim users As IList = ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Like(usernameToMatch))
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
             End Using
@@ -416,7 +419,7 @@ Namespace Web
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
                 'Dim f As New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(-1), FilterOperation.NotEqual)
-                Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field("ID").NotEq(-1))
+                Dim users As IList = ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field("ID").NotEq(-1))
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
             End Using
@@ -432,7 +435,7 @@ Namespace Web
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._lastActivityField, New TypeWrap(Of Object)(compareTime), FilterOperation.GreaterThan))
-                Return ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field(ProfileProvider._lastActivityField).GreaterThan(compareTime)).Count
+                Return ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field(ProfileProvider._lastActivityField).GreaterThan(compareTime)).Count
             End Using
         End Function
 
@@ -445,7 +448,7 @@ Namespace Web
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(providerUserKey), FilterOperation.Equal))
                 Dim schema As OrmSchemaBase = mgr.ObjectSchema
-                Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field("ID").Eq(providerUserKey))
+                Dim users As IList = ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field("ID").Eq(providerUserKey))
                 If users.Count <> 1 Then
                     Return Nothing
                 End If
@@ -614,7 +617,7 @@ Namespace Web
             'Dim c As New OrmCondition.OrmConditionConstructor
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, GetField("Email"), New TypeWrap(Of Object)(email), FilterOperation.Equal))
             Dim schema As OrmSchemaBase = mgr.ObjectSchema
-            Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field(GetField("Email")).Eq(email))
+            Dim users As IList = ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field(GetField("Email")).Eq(email))
             If users.Count <> 1 Then
                 Return Nothing
             End If
@@ -629,7 +632,7 @@ Namespace Web
             'Dim c As New OrmCondition.OrmConditionConstructor
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(username), FilterOperation.Equal))
             Dim schema As OrmSchemaBase = mgr.ObjectSchema
-            Dim users As IList = ProfileProvider.FindUsers(mgr, New Criteria(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Eq(username))
+            Dim users As IList = ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Eq(username))
             If users.Count <> 1 Then
                 Return Nothing
             End If

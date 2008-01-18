@@ -1,20 +1,25 @@
-Imports CoreFramework.Structures
-Imports CoreFramework.Threading
 Imports System.Collections.Generic
+Imports Worm.Orm.Meta
+Imports Worm.Criteria.Core
+Imports Worm.Orm
 
-Namespace Orm
+Namespace Criteria.Values
 
     Public Interface INonTemplateValue
         Function GetStaticString() As String
     End Interface
 
     Public Interface IFilterValue
-        Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter, ByVal almgr As AliasMgr) As String
         Function _ToString() As String
     End Interface
 
-    Public Interface IEvaluableValue
+    Public Interface IParamFilterValue
         Inherits IFilterValue
+        Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
+    End Interface
+
+    Public Interface IEvaluableValue
+        Inherits IParamFilterValue
 
         Enum EvalResult
             Found
@@ -50,7 +55,7 @@ Namespace Orm
             _case = caseSensitive
         End Sub
 
-        Public Overridable Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter, ByVal almgr As AliasMgr) As String Implements IFilterValue.GetParam
+        Public Overridable Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IEvaluableValue.GetParam
             Dim v As Object = _v
             If f IsNot Nothing Then
                 v = f.PrepareValue(schema, v)
@@ -185,7 +190,7 @@ Namespace Orm
     End Class
 
     Public Class LiteralValue
-        Implements IFilterValue
+        Implements IParamFilterValue
 
         Private _pname As String
 
@@ -193,7 +198,7 @@ Namespace Orm
             _pname = literal
         End Sub
 
-        Public Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter, ByVal almgr As AliasMgr) As String Implements IFilterValue.GetParam
+        Public Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IParamFilterValue.GetParam
             Return _pname
         End Function
 
@@ -338,7 +343,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public Overrides Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter, ByVal almgr As AliasMgr) As String
+        Public Overrides Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
             Dim sb As New StringBuilder
             Dim idx As Integer
             For Each o As Object In Value
@@ -370,86 +375,6 @@ Namespace Orm
             sb.Length -= 1
             sb.Insert(0, "(").Append(")")
             Return sb.ToString
-        End Function
-    End Class
-
-    Public Class SubQuery
-        Implements IFilterValue, INonTemplateValue
-
-        Private _t As Type
-        Private _tbl As OrmTable
-        Private _f As IFilter
-        Private _field As String
-
-        Public Sub New(ByVal t As Type, ByVal f As IFilter)
-            _t = t
-            _f = f
-        End Sub
-
-        Public Sub New(ByVal table As OrmTable, ByVal f As IFilter)
-            _tbl = table
-            _f = f
-        End Sub
-
-        Public Sub New(ByVal t As Type, ByVal f As IEntityFilter, ByVal field As String)
-            '_tbl = CType(OrmManagerBase.CurrentManager.ObjectSchema.GetObjectSchema(t), IOrmObjectSchema).GetTables(0)
-            _t = t
-            _f = f
-            _field = field
-        End Sub
-
-        Public Function _ToString() As String Implements IFilterValue._ToString
-            Dim r As String = Nothing
-            If _t IsNot Nothing Then
-                r = _t.ToString()
-            Else
-                r = _tbl.TableName
-            End If
-            If _f IsNot Nothing Then
-                r &= "$" & _f.ToString
-            End If
-            If Not String.IsNullOrEmpty(_field) Then
-                r &= "$" & _field
-            End If
-            Return r
-        End Function
-
-        Public Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter, ByVal almgr As AliasMgr) As String Implements IFilterValue.GetParam
-            Dim sb As New StringBuilder
-            Dim dbschema As DbSchema = CType(schema, DbSchema)
-            sb.Append("(")
-            If _t Is Nothing Then
-                sb.Append(dbschema.SelectWithJoin(Nothing, New OrmTable() {_tbl}, almgr, paramMgr, Nothing, False, Nothing, Nothing, Nothing, Nothing))
-            Else
-                Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
-                If Not String.IsNullOrEmpty(_field) Then
-                    arr = New Generic.List(Of ColumnAttribute)
-                    arr.Add(New ColumnAttribute(_field))
-                End If
-                sb.Append(dbschema.SelectWithJoin(_t, almgr, paramMgr, Nothing, arr IsNot Nothing, Nothing, Nothing, arr))
-            End If
-
-            dbschema.AppendWhere(_t, _f, almgr, sb, Nothing, paramMgr)
-
-            sb.Append(")")
-
-            Return sb.ToString
-        End Function
-
-        Public Function GetStaticString() As String Implements INonTemplateValue.GetStaticString
-            Dim r As String = Nothing
-            If _t IsNot Nothing Then
-                r = _t.ToString()
-            Else
-                r = _tbl.TableName
-            End If
-            If _f IsNot Nothing Then
-                r &= "$" & _f.ToStaticString
-            End If
-            If Not String.IsNullOrEmpty(_field) Then
-                r &= "$" & _field
-            End If
-            Return r
         End Function
     End Class
 
@@ -498,7 +423,7 @@ Namespace Orm
         End Function
 
         Public Overrides Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, _
-            ByVal f As IEntityFilter, ByVal almgr As AliasMgr) As String
+            ByVal f As IEntityFilter) As String
 
             If paramMgr Is Nothing Then
                 Throw New ArgumentNullException("paramMgr")
@@ -526,4 +451,94 @@ Namespace Orm
             End Get
         End Property
     End Class
+End Namespace
+
+Namespace Database
+    Namespace Criteria.Values
+        Public Interface IDatabaseFilterValue
+            Inherits Worm.Criteria.Values.IFilterValue
+            Function GetParam(ByVal schema As DbSchema, ByVal paramMgr As ICreateParam, ByVal f As Worm.Database.Criteria.Core.IEntityFilter, ByVal almgr As AliasMgr) As String
+        End Interface
+
+        Public Class SubQuery
+            Implements IDatabaseFilterValue, Worm.Criteria.Values.INonTemplateValue
+
+            Private _t As Type
+            Private _tbl As OrmTable
+            Private _f As Worm.Database.Criteria.Core.IFilter
+            Private _field As String
+
+            Public Sub New(ByVal t As Type, ByVal f As Worm.Database.Criteria.Core.IFilter)
+                _t = t
+                _f = f
+            End Sub
+
+            Public Sub New(ByVal table As OrmTable, ByVal f As Worm.Database.Criteria.Core.IFilter)
+                _tbl = table
+                _f = f
+            End Sub
+
+            Public Sub New(ByVal t As Type, ByVal f As Worm.Database.Criteria.Core.IEntityFilter, ByVal field As String)
+                '_tbl = CType(OrmManagerBase.CurrentManager.ObjectSchema.GetObjectSchema(t), IOrmObjectSchema).GetTables(0)
+                _t = t
+                _f = f
+                _field = field
+            End Sub
+
+            Public Function _ToString() As String Implements IDatabaseFilterValue._ToString
+                Dim r As String = Nothing
+                If _t IsNot Nothing Then
+                    r = _t.ToString()
+                Else
+                    r = _tbl.TableName
+                End If
+                If _f IsNot Nothing Then
+                    r &= "$" & _f.ToString
+                End If
+                If Not String.IsNullOrEmpty(_field) Then
+                    r &= "$" & _field
+                End If
+                Return r
+            End Function
+
+            Public Function GetParam(ByVal dbschema As DbSchema, ByVal paramMgr As ICreateParam, ByVal f As Worm.Database.Criteria.Core.IEntityFilter, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
+                Dim sb As New StringBuilder
+                'Dim dbschema As DbSchema = CType(schema, DbSchema)
+                sb.Append("(")
+                If _t Is Nothing Then
+                    sb.Append(dbschema.SelectWithJoin(Nothing, New OrmTable() {_tbl}, almgr, paramMgr, Nothing, False, Nothing, Nothing, Nothing, Nothing))
+                Else
+                    Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
+                    If Not String.IsNullOrEmpty(_field) Then
+                        arr = New Generic.List(Of ColumnAttribute)
+                        arr.Add(New ColumnAttribute(_field))
+                    End If
+                    sb.Append(dbschema.SelectWithJoin(_t, almgr, paramMgr, Nothing, arr IsNot Nothing, Nothing, Nothing, arr))
+                End If
+
+                dbschema.AppendWhere(_t, _f, almgr, sb, Nothing, paramMgr)
+
+                sb.Append(")")
+
+                Return sb.ToString
+            End Function
+
+            Public Function GetStaticString() As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+                Dim r As String = Nothing
+                If _t IsNot Nothing Then
+                    r = _t.ToString()
+                Else
+                    r = _tbl.TableName
+                End If
+                If _f IsNot Nothing Then
+                    r &= "$" & _f.ToStaticString
+                End If
+                If Not String.IsNullOrEmpty(_field) Then
+                    r &= "$" & _field
+                End If
+                Return r
+            End Function
+        End Class
+
+    End Namespace
 End Namespace

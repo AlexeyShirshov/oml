@@ -1,12 +1,16 @@
 Imports System.Data.SqlClient
 Imports System.Runtime.CompilerServices
-Imports CoreFramework.Structures
-Imports CoreFramework.Threading
 Imports System.Collections.Generic
+Imports Worm.Criteria.Core
+Imports Worm.Orm
+Imports Worm.Sorting
+Imports Worm.Criteria.Joins
+Imports Worm.Cache
 
-Namespace Orm
+Namespace Orm.Meta
 
 #Region " Interfaces "
+
     Public Interface IRelation
         Structure RelationDesc
             Public PropertyName As String
@@ -127,6 +131,7 @@ Namespace Orm
         Function GetFtsString(ByVal section As String, ByVal contextKey As Object, ByVal f As IOrmFullTextSupport, ByVal type2search As Type, ByVal ftsString As String) As String
         Function GetTokens() As String()
     End Interface
+
 #End Region
 
 #Region " Classes "
@@ -229,201 +234,12 @@ Namespace Orm
         End Sub
     End Class
 
-    Public Class ParamMgr
-        Implements ICreateParam
-
-        Private _params As List(Of System.Data.Common.DbParameter)
-        Private _schema As DbSchema
-        Private _prefix As String
-        Private _named_params As Boolean
-
-        Public Sub New(ByVal schema As DbSchema, ByVal prefix As String)
-            _schema = schema
-            _params = New List(Of System.Data.Common.DbParameter)
-            _prefix = prefix
-            _named_params = schema.ParamName("p", 1) <> schema.ParamName("p", 2)
-        End Sub
-
-        Public Function AddParam(ByVal pname As String, ByVal value As Object) As String Implements ICreateParam.AddParam
-            If NamedParams Then
-                Dim p As System.Data.Common.DbParameter = GetParameter(pname)
-                If p Is Nothing Then
-                    Return CreateParam(value)
-                Else
-                    If p.Value Is Nothing OrElse p.Value.Equals(value) Then
-                        Return pname
-                    Else
-                        Return CreateParam(value)
-                    End If
-                End If
-            Else
-                Return CreateParam(value)
-            End If
-        End Function
-
-        Public Function CreateParam(ByVal value As Object) As String Implements ICreateParam.CreateParam
-            If _schema Is Nothing Then
-                Throw New InvalidOperationException("Object must be created")
-            End If
-
-            Dim pname As String = _schema.ParamName(_prefix, _params.Count + 1)
-            _params.Add(_schema.CreateDBParameter(pname, value))
-            Return pname
-        End Function
-
-        Public ReadOnly Property Params() As IList(Of System.Data.Common.DbParameter) Implements ICreateParam.Params
-            Get
-                Return _params
-            End Get
-        End Property
-
-        Public Function GetParameter(ByVal name As String) As System.Data.Common.DbParameter Implements ICreateParam.GetParameter
-            If Not String.IsNullOrEmpty(name) Then
-                For Each p As System.Data.Common.DbParameter In _params
-                    If p.ParameterName = name Then
-                        Return p
-                    End If
-                Next
-            End If
-            Return Nothing
-        End Function
-
-        Public ReadOnly Property Prefix() As String
-            Get
-                Return _prefix
-            End Get
-            'Set(ByVal value As String)
-            '    _prefix = value
-            'End Set
-        End Property
-
-        'Public ReadOnly Property IsEmpty() As Boolean Implements ICreateParam.IsEmpty
-        '    Get
-        '        Return _params Is Nothing
-        '    End Get
-        'End Property
-
-        Public ReadOnly Property NamedParams() As Boolean Implements ICreateParam.NamedParams
-            Get
-                Return _named_params
-            End Get
-        End Property
-
-        Public Sub AppendParams(ByVal collection As System.Data.Common.DbParameterCollection)
-            For Each p As System.Data.Common.DbParameter In _params
-                collection.Add(CType(p, ICloneable).Clone)
-            Next
-        End Sub
-
-        Public Sub AppendParams(ByVal collection As System.Data.Common.DbParameterCollection, ByVal start As Integer, ByVal count As Integer)
-            For i As Integer = start To Math.Min(_params.Count, start + count) - 1
-                Dim p As System.Data.Common.DbParameter = _params(i)
-                collection.Add(CType(p, ICloneable).Clone)
-            Next
-        End Sub
-
-        Public Sub Clear(ByVal preserve As Integer)
-            If preserve > 0 Then
-                _params.RemoveRange(preserve - 1, _params.Count - preserve)
-            End If
-        End Sub
-    End Class
-
-    Public Structure AliasMgr
-        Private _aliases As IDictionary(Of OrmTable, String)
-
-        Private Sub New(ByVal aliases As IDictionary(Of OrmTable, String))
-            _aliases = aliases
-        End Sub
-
-        Public Shared Function Create() As AliasMgr
-            Return New AliasMgr(New Generic.Dictionary(Of OrmTable, String))
-        End Function
-
-        Public Function AddTable(ByRef table As OrmTable) As String
-            Return AddTable(table, CType(Nothing, ParamMgr))
-        End Function
-
-        Public Function AddTable(ByRef table As OrmTable, ByVal pmgr As ICreateParam) As String
-            'Dim tf As IOrmTableFunction = TryCast(schema, IOrmTableFunction)
-            Dim t As OrmTable = table
-            Dim tt As OrmTable = table.OnTableAdd(pmgr)
-            If tt IsNot Nothing Then
-                '    Dim f As OrmTable = tf.GetFunction(table, pmgr)
-                '    If f IsNot Nothing Then
-                table = tt
-                '    End If
-            End If
-            Dim i As Integer = _aliases.Count + 1
-            Dim [alias] As String = "t" & i
-            _aliases.Add(t, [alias])
-            Return [alias]
-        End Function
-
-        Friend Sub AddTable(ByVal tbl As OrmTable, ByVal [alias] As String)
-            _aliases.Add(tbl, [alias])
-        End Sub
-
-        'Public Function GetAlias(ByVal table As String) As String
-        '    Return _aliases(table)
-        'End Function
-
-        Public ReadOnly Property Aliases() As IDictionary(Of OrmTable, String)
-            Get
-                Return _aliases
-            End Get
-        End Property
-
-        Public ReadOnly Property IsEmpty() As Boolean
-            Get
-                Return _aliases Is Nothing
-            End Get
-        End Property
-    End Structure
-
-#End Region
-
-    Public Enum SortType
-        Asc
-        Desc
-    End Enum
-
-    Public Enum FilterOperation
-        Equal
-        NotEqual
-        GreaterThan
-        GreaterEqualThan
-        LessEqualThan
-        LessThan
-        [In]
-        NotIn
-        [Like]
-        [Is]
-        [IsNot]
-        Exists
-        NotExists
-        Between
-    End Enum
-
-    Public Enum ConditionOperator
-        [And]
-        [Or]
-    End Enum
-
-    Public Enum JoinType
-        Join
-        LeftOuterJoin
-        RightOuterJoin
-        FullJoin
-        CrossJoin
-    End Enum
-
     Public NotInheritable Class SimpleObjectSchema
         Implements IOrmObjectSchema
 
         'Private _tables(-1) As OrmTable
         Private _table As OrmTable
-        Private _cols As New Orm.OrmObjectIndex
+        Private _cols As New OrmObjectIndex
 
         Friend Sub New(ByVal t As Type, ByVal table As String, ByVal cols As ICollection(Of ColumnAttribute), ByVal pk As String)
             If String.IsNullOrEmpty(pk) Then
@@ -516,6 +332,12 @@ Namespace Orm
         End Function
     End Class
 
+#End Region
+
+End Namespace
+
+Namespace Orm.Query
+
     Public MustInherit Class QueryAspect
         Public Enum AspectType
             Columns
@@ -558,7 +380,7 @@ Namespace Orm
         End Function
     End Class
 
-    Public Class TopAspect
+    Public MustInherit Class TopAspect
         Inherits QueryAspect
 
         Private _top As Integer
@@ -576,7 +398,7 @@ Namespace Orm
         End Sub
 
         Public Overrides Function GetDynamicKey() As String
-            Return "-top-" & _top.ToString & "-"
+            Return "-top-" & Top.ToString & "-"
         End Function
 
         Public Overrides Function GetStaticKey() As String
@@ -586,8 +408,30 @@ Namespace Orm
             Return "-top-"
         End Function
 
+        Protected ReadOnly Property Top() As Integer
+            Get
+                Return _top
+            End Get
+        End Property
+    End Class
+
+End Namespace
+
+Namespace Database
+    Public Class TopAspect
+        Inherits Orm.Query.TopAspect
+
+        Public Sub New(ByVal top As Integer)
+            MyBase.New(top)
+        End Sub
+
+        Public Sub New(ByVal top As Integer, ByVal sort As Sort)
+            MyBase.New(top, sort)
+        End Sub
+
         Public Overrides Function MakeStmt(ByVal s As OrmSchemaBase) As String
-            Return CType(s, DbSchema).TopStatement(_top)
+            Return CType(s, DbSchema).TopStatement(Top)
         End Function
     End Class
+
 End Namespace

@@ -2,8 +2,9 @@ Imports System.Collections
 Imports System.Collections.Generic
 Imports System.Web
 Imports System.Runtime.CompilerServices
+Imports Worm.Orm
 
-Namespace Orm
+Namespace Cache
 
     Public Class HttpCacheDictionary(Of TValue)
         Implements System.Collections.Generic.IDictionary(Of String, TValue), IDictionary
