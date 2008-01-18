@@ -1,6 +1,9 @@
 Imports System.Collections.Generic
+Imports Worm.Sorting
+Imports Worm.Orm.Meta
+Imports Worm.Orm
 
-Namespace Orm
+Namespace Cache
     Public Class EditableList
         Private _mainId As Integer
         Private _mainList As IList(Of Integer)
@@ -113,7 +116,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public Function Accept(ByVal mgr As OrmDBManager) As Boolean
+        Public Function Accept(ByVal mgr As OrmManagerBase) As Boolean
             _cantgetCurrent = False
             Using SyncRoot
                 Dim needaccept As Boolean = _addedList.Count > 0
@@ -191,7 +194,7 @@ Namespace Orm
             Return True
         End Function
 
-        Public Function Accept(ByVal mgr As OrmDBManager, ByVal id As Integer) As Boolean
+        Public Function Accept(ByVal mgr As OrmManagerBase, ByVal id As Integer) As Boolean
             Using SyncRoot
                 If _addedList.Contains(id) Then
                     If _sort Is Nothing Then
@@ -237,7 +240,7 @@ Namespace Orm
                 Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
                 If m IsNot Nothing Then
                     If m.Entry.Added.Contains(_mainId) OrElse m.Entry.Deleted.Contains(_mainId) Then
-                        If Not m.Entry.Accept(CType(mgr, OrmDBManager), _mainId) Then
+                        If Not m.Entry.Accept(mgr, _mainId) Then
                             Dim obj As OrmBase = mgr.CreateDBObject(id, SubType)
                             mgr.M2MCancel(obj, MainType)
                         End If

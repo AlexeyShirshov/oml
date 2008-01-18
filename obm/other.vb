@@ -1,96 +1,7 @@
 Imports System.Collections.Generic
 Imports System.Runtime.CompilerServices
-Imports CoreFramework.Threading
-Imports CoreFramework.Structures
 
-'Namespace Threading
-
-'Class CSScopeMgr
-'    Implements IDisposable
-
-'    Private disposedValue As Boolean
-'    Protected _obj As Object
-
-'    Public Sub New(ByVal obj As Object)
-'        _obj = obj
-'        System.Threading.Monitor.Enter(_obj)
-'    End Sub
-
-'    Protected Overridable Sub _Dispose()
-'        If Not Me.disposedValue Then
-'            System.Threading.Monitor.Exit(_obj)
-'        End If
-'        Me.disposedValue = True
-'    End Sub
-
-'    Public Sub Dispose() Implements IDisposable.Dispose
-'        _Dispose()
-'        GC.SuppressFinalize(Me)
-'    End Sub
-'End Class
-
-'    Public Class RWScopeMgr
-'        Implements IDisposable
-
-'        Protected _rw As System.Threading.ReaderWriterLock
-'        Protected _reader As Boolean
-'        Private disposedValue As Boolean = False        ' To detect redundant calls
-'        Private _downgrade_cookie As System.Threading.LockCookie
-'        Private _downgrade As Boolean
-
-'        Public Sub New(ByVal reader As Boolean, ByVal rw As System.Threading.ReaderWriterLock)
-'            _reader = reader
-'            _rw = rw
-'            If reader Then
-'                rw.AcquireReaderLock(System.Threading.Timeout.Infinite)
-'            Else
-'                If rw.IsReaderLockHeld Then
-'                    _downgrade_cookie = rw.UpgradeToWriterLock(System.Threading.Timeout.Infinite)
-'                    _downgrade = True
-'                Else
-'                    rw.AcquireWriterLock(System.Threading.Timeout.Infinite)
-'                End If
-'            End If
-'        End Sub
-
-'        Public Shared Function AcquareReaderLock(ByVal rw As System.Threading.ReaderWriterLock) As RWScopeMgr
-'            Dim mgr As New RWScopeMgr(True, rw)
-'            rw.AcquireReaderLock(System.Threading.Timeout.Infinite)
-'            Return mgr
-'        End Function
-
-'        Public Shared Function AcquareWriterLock(ByVal rw As System.Threading.ReaderWriterLock) As RWScopeMgr
-'            Dim mgr As New RWScopeMgr(False, rw)
-'            rw.AcquireWriterLock(System.Threading.Timeout.Infinite)
-'            Return mgr
-'        End Function
-
-'        Protected Overridable Sub _Dispose()
-'            If Not Me.disposedValue Then
-'                If _rw IsNot Nothing Then
-'                    If _reader Then
-'                        _rw.ReleaseReaderLock()
-'                    Else
-'                        If _downgrade Then
-'                            _downgrade = False
-'                            _rw.DowngradeFromWriterLock(_downgrade_cookie)
-'                        Else
-'                            _rw.ReleaseWriterLock()
-'                        End If
-'                    End If
-'                End If
-'            End If
-'            Me.disposedValue = True
-'        End Sub
-
-'        Public Sub Dispose() Implements IDisposable.Dispose
-'            _Dispose()
-'            GC.SuppressFinalize(Me)
-'        End Sub
-'    End Class
-'End Namespace
-
-Namespace Orm.Collections
+Namespace Collections
 
     Public Class CopyDictionaryEnumerator
         Inherits CopyEnumerator(Of DictionaryEntry)
@@ -218,7 +129,7 @@ Namespace Orm.Collections
 
     Public MustInherit Class IndexedCollection(Of TItemKey, TItem)
         'Inherits ObjectModel.Collection(Of TItem)
-        Implements IDictionary(Of TItemKey, TItem), IDictionary, _
+        Implements IDictionary(Of TItemKey, TItem), IDictionary,  _
         IList(Of TItem), IList
 
         Private _dic As IDictionary(Of TItemKey, TItem)

@@ -3,6 +3,9 @@ Imports Worm.Web
 Imports Worm.Orm
 Imports System.Collections.Generic
 Imports System.Collections
+Imports Worm.Orm.Meta
+Imports Worm.Cache
+Imports Worm
 
 Public Class GetMgr
     Implements IGetDBMgr
@@ -104,7 +107,7 @@ Public Class MyProfile
     End Function
 End Class
 
-<Entity(GetType(MyUserDef), "1")> _
+<TestProject1.Entity(GetType(MyUserDef), "1")> _
 Public Class MyUser
     Inherits OrmBaseT(Of MyUser)
     Implements IOrmEditable(Of MyUser)
@@ -309,7 +312,7 @@ Public Class MyUserDef
 
     Private _tbls() As OrmTable = {New OrmTable("dbo.users")}
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Dim idx As New OrmObjectIndex
         idx.Add(New MapField2Column("LastActivity", "last_activity", GetTables()(Tables.Main)))
         idx.Add(New MapField2Column("IsAnonymous", "is_anonymous", GetTables()(Tables.Main)))
@@ -329,7 +332,7 @@ Public Class MyUserDef
         Return _tbls
     End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelation()
         Return New M2MRelation() { _
                 New M2MRelation(GetType(MyRole), _schema.GetSharedTable("dbo.UserRoles"), "role_id", False, New System.Data.Common.DataTableMapping, CType(Nothing, Type)) _
             }
@@ -337,7 +340,7 @@ Public Class MyUserDef
 
 End Class
 
-<Entity(GetType(MyRoleDef), "1")> _
+<TestProject1.Entity(GetType(MyRoleDef), "1")> _
 Public Class MyRole
     Inherits OrmBaseT(Of MyRole)
     Implements IOrmEditable(Of MyRole)

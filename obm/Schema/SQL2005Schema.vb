@@ -1,9 +1,8 @@
 Imports System.Data.SqlClient
 Imports System.Runtime.CompilerServices
-'Imports XMedia.Framework.Collections
 Imports System.Collections.Generic
 
-Namespace Orm
+Namespace Database
 
     'Public Class SQL2005Schema
     '    Inherits DbSchema

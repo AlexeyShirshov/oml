@@ -1,9 +1,15 @@
 Imports Worm
 Imports System.Collections.Generic
-Imports CoreFramework.Structures
-Imports CoreFramework.Threading
+Imports Worm.Orm
+Imports Worm.Database.Criteria.Core
+Imports Worm.Sorting
+Imports Worm.Orm.Meta
+Imports Worm.Cache
+Imports Worm.Criteria.Values
+Imports Worm.Database.Criteria.Joins
+Imports Worm.Orm.Query
 
-Namespace Orm
+Namespace Database
 
     Partial Public Class OrmReadOnlyDBManager
 
@@ -26,7 +32,7 @@ Namespace Orm
 
                 _mgr = mgr
                 _f = f
-                _sort = Sort
+                _sort = sort
                 '_st = st
                 _key = key
                 _id = id
@@ -89,7 +95,7 @@ Namespace Orm
                 End If
             End Sub
 
-            Public Overrides ReadOnly Property Filter() As IFilter
+            Public Overrides ReadOnly Property Filter() As Worm.Criteria.Core.IFilter
                 Get
                     Return _f
                 End Get
@@ -171,7 +177,7 @@ Namespace Orm
                             AppendSelectID(sb, original_type, almgr, params, arr)
                         End If
 
-                        Dim c As New Orm.Condition.ConditionConstructor
+                        Dim c As New Criteria.Conditions.Condition.ConditionConstructor
                         c.AddFilter(_f)
                         c.AddFilter(AppendWhere)
                         _mgr.DbSchema.AppendWhere(original_type, c.Condition, almgr, sb, _mgr.GetFilterInfo, params)
@@ -219,12 +225,12 @@ Namespace Orm
         Protected Class JoinCustDelegate(Of T As {New, OrmBase})
             Inherits FilterCustDelegate(Of T)
 
-            Private _join() As OrmJoin
+            Private _join() As Worm.Criteria.Joins.OrmJoin
             Private _distinct As Boolean
             Private _top As Integer = -1
             Private _asc() As QueryAspect
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal distinct As Boolean)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
@@ -233,14 +239,14 @@ Namespace Orm
                 End If
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal top As Integer)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
                 _asc = New QueryAspect() {New TopAspect(top)}
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As OrmJoin, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal aspect As QueryAspect)
                 MyBase.New(mgr, f, sort, key, id)
                 _join = join
@@ -297,7 +303,7 @@ Namespace Orm
             End Sub
 
             Protected Overrides Function AppendWhere() As IFilter
-                Return Mgr.ObjectSchema.GetObjectSchema(_rel.Type).GetFilter(Mgr.GetFilterInfo)
+                Return CType(Mgr.ObjectSchema.GetObjectSchema(_rel.Type).GetFilter(Mgr.GetFilterInfo), IFilter)
             End Function
 
         End Class
@@ -403,7 +409,7 @@ Namespace Orm
                     'End If
                     Dim f1 As String = _mgr.DbSchema.GetConnectedTypeField(ct, mt, Not _direct)
                     Dim f2 As String = _mgr.DbSchema.GetConnectedTypeField(ct, t, _direct)
-                    Dim fl As New EntityFilter(ct, f1, New EntityValue(_obj), FilterOperation.Equal)
+                    Dim fl As New EntityFilter(ct, f1, New EntityValue(_obj), Worm.Criteria.FilterOperation.Equal)
                     Dim l As New List(Of Integer)
                     'Dim external_sort As Boolean = False
 

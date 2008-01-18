@@ -1,9 +1,15 @@
 Imports Worm
+Imports Worm.Sorting
 Imports System.Collections.Generic
-Imports CoreFramework.Structures
-Imports CoreFramework.Threading
+Imports Worm.Orm
+Imports Worm.Criteria.Core
+Imports Worm.Cache
+Imports Worm.Orm.Query
+Imports Worm.Orm.Meta
+Imports Worm.Criteria.Joins
+Imports Worm.Criteria.Values
 
-Namespace Orm
+Namespace Database
     Partial Public Class OrmReadOnlyDBManager
         Inherits OrmManagerBase
 
@@ -22,7 +28,7 @@ Namespace Orm
             Private _l As New List(Of OrmBase)
             Private _mgr As OrmReadOnlyDBManager
             Private _acceptInBatch As Boolean
-            Private _callbacks As OrmCache.IUpdateCacheCallbacks
+            Private _callbacks As OrmCacheBase.IUpdateCacheCallbacks
             Private _save As Nullable(Of Boolean)
             Private _disposeMgr As Boolean
 
@@ -549,17 +555,17 @@ Namespace Orm
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, filter, sort, key, id)
+            Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, CType(filter, Criteria.Core.IFilter), sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect)
+            Return New JoinCustDelegate(Of T)(Me, join, CType(filter, Database.Criteria.Core.IFilter), sort, key, id, aspect)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
+            Return New FilterCustDelegate(Of T)(Me, CType(filter, Criteria.Core.IFilter), sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
@@ -582,7 +588,7 @@ Namespace Orm
             If Not has_id Then
                 l.Add(DbSchema.GetColumnByFieldName(GetType(T), "ID"))
             End If
-            Return New FilterCustDelegate(Of T)(Me, filter, l, sort, key, id)
+            Return New FilterCustDelegate(Of T)(Me, CType(filter, Criteria.Core.IFilter), l, sort, key, id)
         End Function
 
         'Protected Overrides Function GetCustDelegate4Top(Of T As {New, OrmBase})(ByVal top As Integer, ByVal filter As IOrmFilter, _
@@ -593,7 +599,7 @@ Namespace Orm
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
             ByVal obj As OrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
-            Return New M2MDataProvider(Of T2)(Me, obj, filter, sort, id, key, direct)
+            Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, Criteria.Core.IFilter), sort, id, key, direct)
         End Function
 
         'Protected Overrides Function GetCustDelegateTag(Of T As {New, OrmBase})( _
@@ -653,7 +659,7 @@ Namespace Orm
                             End If
                         Next
                     End If
-                    Dim con As New Orm.Condition.ConditionConstructor
+                    Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
                     con.AddFilter(connectedFilter)
                     con.AddFilter(filter)
                     con.AddFilter(schema2.GetFilter(GetFilterInfo))
@@ -958,7 +964,7 @@ Namespace Orm
                 Dim appendMainTable As Boolean = f IsNot Nothing OrElse oschema2.GetFilter(GetFilterInfo) IsNot Nothing
                 sb.Append(DbSchema.SelectM2M(type2load, type, appendMainTable, True, params, almgr, withLoad, direct))
 
-                If Not DbSchema.AppendWhere(type2load, f, almgr, sb, GetFilterInfo, params) Then
+                If Not DbSchema.AppendWhere(type2load, CType(f, Criteria.Core.IFilter), almgr, sb, GetFilterInfo, params) Then
                     sb.Append(" where 1=1 ")
                 End If
 
@@ -1052,7 +1058,7 @@ Namespace Orm
                 sb.Append(DbSchema.SelectID(original_type, almgr, params))
             End If
 
-            If Not DbSchema.AppendWhere(original_type, f, almgr, sb, GetFilterInfo, params) Then
+            If Not DbSchema.AppendWhere(original_type, CType(f, Criteria.Core.IFilter), almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
 
@@ -1113,7 +1119,7 @@ Namespace Orm
                 sb.Append(DbSchema.SelectID(original_type, almgr, params))
             End If
 
-            If Not DbSchema.AppendWhere(original_type, f, almgr, sb, GetFilterInfo, params) Then
+            If Not DbSchema.AppendWhere(original_type, CType(f, Criteria.Core.IFilter), almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
 
@@ -1169,7 +1175,8 @@ Namespace Orm
 
             Dim original_type As Type = obj.GetType
 
-            Dim filter As New EntityFilter(original_type, "ID", New EntityValue(obj), FilterOperation.Equal)
+            Dim filter As New Database.Criteria.Core.EntityFilter(original_type, "ID", _
+                New EntityValue(obj), Worm.Criteria.FilterOperation.Equal)
 
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim arr As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
@@ -1760,9 +1767,9 @@ Namespace Orm
                 Dim sb As New StringBuilder
 
                 For Each p As Pair(Of Integer) In mr.Pairs
-                    Dim con As New Orm.Condition.ConditionConstructor
-                    con.AddFilter(New EntityFilter(original_type, fieldName, New ScalarValue(p.First), FilterOperation.GreaterEqualThan))
-                    con.AddFilter(New EntityFilter(original_type, fieldName, New ScalarValue(p.Second), FilterOperation.LessEqualThan))
+                    Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
+                    con.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, fieldName, New ScalarValue(p.First), Worm.Criteria.FilterOperation.GreaterEqualThan))
+                    con.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, fieldName, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.LessEqualThan))
                     sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr, params))
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
@@ -1781,7 +1788,7 @@ Namespace Orm
                         If sb2.Length > DbSchema.QueryLength - sb.Length Then
                             sb2.Length -= 1
                             sb2.Append(")")
-                            Dim f As New EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), FilterOperation.In)
+                            Dim f As New Database.Criteria.Core.EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
                             sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
@@ -1795,7 +1802,7 @@ Namespace Orm
                     If sb2.Length <> 1 Then
                         sb2.Length -= 1
                         sb2.Append(")")
-                        Dim f As New EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), FilterOperation.In)
+                        Dim f As New Database.Criteria.Core.EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
                         sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
                         sb.Insert(0, " and (")
@@ -1827,9 +1834,9 @@ Namespace Orm
                 Dim sb As New StringBuilder
 
                 For Each p As Pair(Of Integer) In mr.Pairs
-                    Dim con As New Orm.Condition.ConditionConstructor
-                    con.AddFilter(New TableFilter(table, column, New ScalarValue(p.First), FilterOperation.GreaterEqualThan))
-                    con.AddFilter(New TableFilter(table, column, New ScalarValue(p.Second), FilterOperation.LessEqualThan))
+                    Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
+                    con.AddFilter(New Database.Criteria.Core.TableFilter(table, column, New ScalarValue(p.First), Worm.Criteria.FilterOperation.GreaterEqualThan))
+                    con.AddFilter(New Database.Criteria.Core.TableFilter(table, column, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.LessEqualThan))
                     sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr, params))
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
@@ -1848,7 +1855,7 @@ Namespace Orm
                         If sb2.Length > DbSchema.QueryLength - sb.Length Then
                             sb2.Length -= 1
                             sb2.Append(")")
-                            Dim f As New TableFilter(table, column, New LiteralValue(sb2.ToString), FilterOperation.In)
+                            Dim f As New Database.Criteria.Core.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
                             sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
@@ -1862,7 +1869,7 @@ Namespace Orm
                     If sb2.Length <> 1 Then
                         sb2.Length -= 1
                         sb2.Append(")")
-                        Dim f As New TableFilter(table, column, New LiteralValue(sb2.ToString), FilterOperation.In)
+                        Dim f As New Database.Criteria.Core.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
                         sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
 
                         sb.Insert(0, " and (")
@@ -1909,7 +1916,7 @@ Namespace Orm
                     .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, frmt, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
                         Integer.MinValue, _
-                        "containstable", sort, appendMain, filter, contextKey, searchSchema, selSchema)
+                        "containstable", sort, appendMain, CType(filter, Criteria.Core.IFilter), contextKey, searchSchema, selSchema)
                     params.AppendParams(.Parameters)
                 End With
 
@@ -1931,7 +1938,7 @@ Namespace Orm
                         Dim params As New ParamMgr(DbSchema, "p")
                         .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, frmt, fields, _
                             GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
-                            "freetexttable", sort, appendMain, filter, _
+                            "freetexttable", sort, appendMain, CType(filter, Criteria.Core.IFilter), _
                             contextKey, searchSchema, selSchema)
                         params.AppendParams(.Parameters)
                     End With
@@ -2130,9 +2137,9 @@ l2:
                         Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
                     End If
 
-                    joins.Add(MakeJoin(selectType, type2search, field, FilterOperation.Equal, JoinType.Join))
+                    joins.Add(MakeJoin(selectType, type2search, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join))
                 Else
-                    joins.Add(MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True))
+                    joins.Add(MakeJoin(type2search, selectType, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join, True))
                 End If
 
                 types.Add(selectType)
@@ -2153,7 +2160,7 @@ l2:
                             Dim srtschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
                             Dim field As String = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
                             If Not String.IsNullOrEmpty(field) Then
-                                joins.Add(MakeJoin(sortType, type2search, field, FilterOperation.Equal, JoinType.Join))
+                                joins.Add(MakeJoin(sortType, type2search, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join))
                                 types.Add(sortType)
                                 Continue Do
                             End If
@@ -2173,7 +2180,7 @@ l2:
 
                                 field = _schema.GetJoinFieldNameByType(selectType, sortType, selSchema)
                                 If Not String.IsNullOrEmpty(field) Then
-                                    joins.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                                    joins.Add(MakeJoin(selectType, sortType, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join, True))
                                     types.Add(sortType)
                                     Continue Do
                                 End If
@@ -2198,13 +2205,13 @@ l2:
                                 Dim field As String = _schema.GetJoinFieldNameByType(type2search, type2join, searchSchema)
 
                                 If Not String.IsNullOrEmpty(field) Then
-                                    joins.Add(MakeJoin(type2join, type2search, field, FilterOperation.Equal, JoinType.Join))
+                                    joins.Add(MakeJoin(type2join, type2search, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join))
                                     types.Add(type2join)
                                 Else
                                     If selectType IsNot type2search Then
                                         field = _schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
                                         If Not String.IsNullOrEmpty(field) Then
-                                            joins.Add(MakeJoin(selectType, type2join, field, FilterOperation.Equal, JoinType.Join, True))
+                                            joins.Add(MakeJoin(selectType, type2join, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join, True))
                                             types.Add(type2join)
                                             Continue For
                                         End If
@@ -2215,7 +2222,7 @@ l2:
                             End If
                         End If
                     Else
-                        Dim tf As TableFilter = TryCast(f, TableFilter)
+                        Dim tf As Database.Criteria.Core.TableFilter = TryCast(f, Database.Criteria.Core.TableFilter)
                         If tf IsNot Nothing Then
                             If tf.Template.Table IsNot selSchema.GetTables(0) Then
                                 Throw New NotImplementedException
@@ -2270,7 +2277,7 @@ l2:
                     Dim params As New ParamMgr(DbSchema, "p")
                     .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, fts, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
-                        limit, ftsText, sort, appendMain, filter, contextkey, selSchema, searchSchema)
+                        limit, ftsText, sort, appendMain, CType(filter, Criteria.Core.IFilter), contextkey, selSchema, searchSchema)
                     params.AppendParams(.Parameters)
                 End With
 
@@ -2302,9 +2309,9 @@ l2:
 
         Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
             Invariant()
-            Dim params As New Orm.ParamMgr(DbSchema, "p")
+            Dim params As New ParamMgr(DbSchema, "p")
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
-                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, filter, GetFilterInfo)
+                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, CType(filter, Criteria.Core.IFilter), GetFilterInfo)
                 cmd.CommandType = System.Data.CommandType.Text
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)
@@ -2377,16 +2384,16 @@ l2:
         End Function
 
         Protected Overrides Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
-            ByVal oper As FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
+            ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
 
             Dim tbl As OrmTable = DbSchema.GetTables(type2join)(0)
             If switchTable Then
                 tbl = DbSchema.GetTables(selectType)(0)
             End If
 
-            Dim jf As New JoinFilter(type2join, "ID", selectType, field, oper)
+            Dim jf As New Database.Criteria.Joins.JoinFilter(type2join, "ID", selectType, field, oper)
 
-            Return New OrmJoin(tbl, joinType, jf)
+            Return New Database.Criteria.Joins.OrmJoin(tbl, joinType, jf)
         End Function
 
         Protected Overrides ReadOnly Property Exec() As System.TimeSpan

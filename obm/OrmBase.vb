@@ -1,6 +1,8 @@
 Imports System.Xml
-Imports CoreFramework.Threading
-Imports CoreFramework.Structures
+Imports Worm.Sorting
+Imports Worm.Cache
+Imports Worm.Orm.Meta
+Imports Worm.Criteria
 
 Namespace Orm
 
@@ -85,7 +87,7 @@ Namespace Orm
                 _id = id
             End Sub
 
-            Public Function Accept(ByVal obj As OrmBase, ByVal mgr As OrmDBManager) As Boolean
+            Public Function Accept(ByVal obj As OrmBase, ByVal mgr As OrmManagerBase) As Boolean
                 If _e IsNot Nothing Then
                     Dim leave As Boolean = _e.Entry.Accept(mgr) AndAlso _e.Filter Is Nothing
                     If Not leave Then
@@ -112,13 +114,13 @@ Namespace Orm
         Public Class ObjectSavedArgs
             Inherits EventArgs
 
-            Private _sa As OrmDBManager.SaveAction
+            Private _sa As OrmManagerBase.SaveAction
 
-            Public Sub New(ByVal saveAction As OrmDBManager.SaveAction)
+            Public Sub New(ByVal saveAction As OrmManagerBase.SaveAction)
                 _sa = saveAction
             End Sub
 
-            Public ReadOnly Property SaveAction() As OrmDBManager.SaveAction
+            Public ReadOnly Property SaveAction() As OrmManagerBase.SaveAction
                 Get
                     Return _sa
                 End Get
@@ -530,7 +532,7 @@ Namespace Orm
                 Dim mc As OrmManagerBase = OrmManagerBase.CurrentManager
                 Dim rel As IRelation = mc.ObjectSchema.GetConnectedTypeRelation(t)
                 If rel IsNot Nothing Then
-                    Dim c As New OrmDBManager.M2MEnum(rel, Me, mc.ObjectSchema)
+                    Dim c As New OrmManagerBase.M2MEnum(rel, Me, mc.ObjectSchema)
                     mc.Cache.ConnectedEntityEnum(t, AddressOf c.Reject)
                 End If
 
@@ -609,7 +611,7 @@ Namespace Orm
                 Dim mc As OrmManagerBase = OrmManagerBase.CurrentManager
                 'Debug.Write("Accept " & t.Name)
                 For Each acs As AcceptState2 In _needAccept
-                    acs.Accept(Me, CType(mc, OrmDBManager))
+                    acs.Accept(Me, mc)
                     'If Not String.IsNullOrEmpty(acs.id) Then
                     '    mc.ResetAllM2MRelations(acs.id, acs.key)
                     'End If
@@ -621,7 +623,7 @@ Namespace Orm
 
                 Dim rel As IRelation = mc.ObjectSchema.GetConnectedTypeRelation(t)
                 If rel IsNot Nothing Then
-                    Dim c As New OrmDBManager.M2MEnum(rel, Me, mc.ObjectSchema)
+                    Dim c As New OrmManagerBase.M2MEnum(rel, Me, mc.ObjectSchema)
                     mc.Cache.ConnectedEntityEnum(t, AddressOf c.Accept)
                     'Dim f As Pair(Of String, Type) = rel.GetFirstType
                     'Dim fv As OrmBase = CType(mc.DatabaseSchema.GetFieldValue(Me, f.First), OrmBase)
@@ -845,9 +847,9 @@ Namespace Orm
                     'modified._old_state = modified.ObjectState
                     'modified.ObjectState = ObjectState.Clone
                     'OrmCache.RegisterModification(modified)
-                    End If
-                    _state = ObjectState.Deleted
-                    OrmManagerBase.CurrentManager.RaiseBeginDelete(Me)
+                End If
+                _state = ObjectState.Deleted
+                OrmManagerBase.CurrentManager.RaiseBeginDelete(Me)
             End Using
         End Sub
 
@@ -1209,7 +1211,7 @@ l1:
             Return Nothing
         End Function
 
-        Protected Friend Sub RaiseSaved(ByVal sa As OrmDBManager.SaveAction)
+        Protected Friend Sub RaiseSaved(ByVal sa As OrmManagerBase.SaveAction)
             RaiseEvent Saved(Me, New ObjectSavedArgs(sa))
         End Sub
 
@@ -1431,88 +1433,4 @@ l1:
         End Property
     End Class
 
-    <Serializable()> _
-    Public Class EntityProxy
-        Private _id As Integer
-        Private _t As Type
-
-        Public Sub New(ByVal id As Integer, ByVal type As Type)
-            _id = id
-            _t = type
-        End Sub
-
-        Public Sub New(ByVal o As OrmBase)
-            _id = o.Identifier
-            _t = o.GetType
-        End Sub
-
-        Public Function GetEntity() As OrmBase
-            Return OrmManagerBase.CurrentManager.Find(_id, _t)
-        End Function
-
-        Public ReadOnly Property OrmType() As Type
-            Get
-                Return _t
-            End Get
-        End Property
-
-        Public ReadOnly Property ID() As Integer
-            Get
-                Return _id
-            End Get
-        End Property
-
-        Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, EntityProxy))
-        End Function
-
-        Public Overloads Function Equals(ByVal obj As EntityProxy) As Boolean
-            If obj Is Nothing Then
-                Return False
-            End If
-            Return _t Is obj._t AndAlso _id = obj._id
-        End Function
-
-        Public Overrides Function GetHashCode() As Integer
-            Return _t.GetHashCode() Xor _id.GetHashCode
-        End Function
-    End Class
-
-    <Serializable()> _
-    Public Class EntityField
-        Private _field As String
-        Private _t As Type
-
-        Public Sub New(ByVal field As String, ByVal type As Type)
-            _field = field
-            _t = type
-        End Sub
-
-        Public ReadOnly Property OrmType() As Type
-            Get
-                Return _t
-            End Get
-        End Property
-
-        Public ReadOnly Property Field() As String
-            Get
-                Return _field
-            End Get
-        End Property
-
-        Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, EntityField))
-        End Function
-
-        Public Overloads Function Equals(ByVal obj As EntityField) As Boolean
-            If obj Is Nothing Then
-                Return False
-            End If
-            Return _t Is obj._t AndAlso _field = obj._field
-        End Function
-
-        Public Overrides Function GetHashCode() As Integer
-            Return _t.GetHashCode() Xor _field.GetHashCode
-        End Function
-    End Class
 End Namespace

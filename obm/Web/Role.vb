@@ -2,6 +2,8 @@ Imports System.Web
 Imports System.Web.Security
 Imports Worm
 Imports Worm.Orm
+Imports Worm.Database
+Imports Worm.Database.Criteria
 
 Namespace Web
     Public MustInherit Class RoleBase
@@ -79,7 +81,7 @@ Namespace Web
         Public Overrides Function GetAllRoles() As String()
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim roles As New Generic.List(Of String)
-                For Each r As OrmBase In FindRoles(mgr, New Criteria(GetRoleType).Field("ID").NotEq(-1))
+                For Each r As OrmBase In FindRoles(mgr, CType(New Ctor(GetRoleType).Field("ID").NotEq(-1), CriteriaLink))
                     roles.Add(CStr(r.GetValue(_rolenameField)))
                 Next
                 Return roles.ToArray
@@ -190,7 +192,7 @@ Namespace Web
             If r IsNot Nothing Then
                 Dim f As CriteriaLink = Nothing
                 If usernameToMatch IsNot Nothing Then
-                    f = New Criteria(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Like(usernameToMatch)
+                    f = CType(New Ctor(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Like(usernameToMatch), CriteriaLink)
                 End If
                 Return CType(r.Find(ProfileProvider.GetUserType, f, Nothing, WithLoad), IList)
             End If
