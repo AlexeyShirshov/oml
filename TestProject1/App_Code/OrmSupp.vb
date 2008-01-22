@@ -1,34 +1,34 @@
-Imports Worm
+Imports Worm.Orm.Meta
 
 Public MustInherit Class ObjectSchemaBaseImplementationWeb
-    Implements Orm.IOrmObjectSchema, Orm.IOrmSchemaInit
+    Implements IOrmObjectSchema, IOrmSchemaInit
 
-    Protected _schema As Orm.IDbSchema
+    Protected _schema As Worm.IDbSchema
 
-    Public Overridable Function ChangeValueType(ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements Worm.Orm.IOrmObjectSchema.ChangeValueType
+    Public Overridable Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchema.ChangeValueType
         newvalue = value
         Return False
     End Function
 
-    Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Orm.IFilter Implements Worm.Orm.IOrmObjectSchema.GetFilter
+    Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Criteria.Core.IFilter Implements IOrmObjectSchema.GetFilter
         Return Nothing
     End Function
 
-    Public Overridable Function GetJoins(ByVal left As Orm.OrmTable, ByVal right As Orm.OrmTable) As Worm.Orm.OrmJoin Implements Worm.Orm.IOrmObjectSchema.GetJoins
+    Public Overridable Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As Worm.Criteria.Joins.OrmJoin Implements IOrmObjectSchema.GetJoins
         Return Nothing
     End Function
 
-    Public Overridable Function GetSuppressedColumns() As Worm.Orm.ColumnAttribute() Implements Worm.Orm.IOrmObjectSchema.GetSuppressedColumns
-        Return New Orm.ColumnAttribute() {}
+    Public Overridable Function GetSuppressedColumns() As ColumnAttribute() Implements IOrmObjectSchema.GetSuppressedColumns
+        Return New ColumnAttribute() {}
     End Function
 
     'Public Overridable Function MapSort2FieldName(ByVal sort As String) As String Implements Worm.Orm.IOrmObjectSchema.MapSort2FieldName
     '    Return Nothing
     'End Function
 
-    Public MustOverride Function GetTables() As Orm.OrmTable() Implements Worm.Orm.IOrmObjectSchema.GetTables
+    Public MustOverride Function GetTables() As OrmTable() Implements IOrmObjectSchema.GetTables
 
-    Public MustOverride Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column) Implements Worm.Orm.IOrmObjectSchema.GetFieldColumnMap
+    Public MustOverride Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IOrmObjectSchema.GetFieldColumnMap
 
     'Public Function ExternalSort(ByVal sort As String, ByVal sortType As Orm.SortType, ByVal objs As Collections.IList) As Collections.IList Implements Worm.Orm.IOrmObjectSchema.ExternalSort
     '    Return objs
@@ -40,11 +40,11 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
     '    End Get
     'End Property
 
-    Public Overridable Function GetM2MRelations() As Worm.Orm.M2MRelation() Implements Worm.Orm.IOrmObjectSchema.GetM2MRelations
-        Return New Orm.M2MRelation() {}
+    Public Overridable Function GetM2MRelations() As M2MRelation() Implements IOrmObjectSchema.GetM2MRelations
+        Return New M2MRelation() {}
     End Function
 
-    Public Sub GetSchema(ByVal schema As Worm.Orm.OrmSchemaBase, ByVal t As System.Type) Implements Worm.Orm.IOrmSchemaInit.GetSchema
-        _schema = CType(schema, Orm.IDbSchema)
+    Public Sub GetSchema(ByVal schema As Worm.OrmSchemaBase, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
+        _schema = CType(schema, Worm.IDbSchema)
     End Sub
 End Class

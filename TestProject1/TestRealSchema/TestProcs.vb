@@ -2,16 +2,19 @@ Imports System
 Imports System.Text
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
-Imports Worm
 Imports System.Diagnostics
 Imports CoreFramework.Structures
+Imports Worm.Database
+Imports Worm.Orm
+Imports Worm.Database.Storedprocs
+Imports Worm.Orm.Meta
 
 <TestClass()> _
 Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP1()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             Dim p As New P1Proc
             Dim l As List(Of Pair(Of Table1, Integer)) = p.GetResult(mgr)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -43,7 +46,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP11()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             Dim p As New P1Proc
             Dim l As List(Of Pair(Of Table1, Integer)) = p.GetResult(mgr)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -74,7 +77,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP2()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             Dim p As New P2Proc(1)
             Dim l As List(Of Table1) = p.GetResult(mgr)
 
@@ -92,7 +95,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP3()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             Dim p As New P3Proc(1)
 
             Dim l As List(Of Pair(Of Date, Decimal)) = p.GetResult(mgr)
@@ -105,7 +108,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP4()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             Dim p As New P4Proc(1)
             Dim s As String = p.GetResult(mgr)
 
@@ -128,7 +131,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP2Orm()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             Dim p As New P2OrmProc(2)
 
             Dim c As ICollection(Of Table1) = p.GetResult(mgr)
@@ -137,7 +140,7 @@ Public Class TestProcs
             Dim t1 As Table1 = CType(c, IList(Of Table1))(0)
 
             Assert.IsNotNull(t1)
-            Assert.AreEqual(Orm.ObjectState.None, t1.ObjectState)
+            Assert.AreEqual(ObjectState.None, t1.ObjectState)
 
             Assert.AreEqual(2, t1.Identifier)
             Assert.AreEqual("second", t1.Name)
@@ -146,10 +149,10 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestMulti()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             Dim p As New MultiR
 
-            Dim l As List(Of Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor) = p.GetResult(mgr)
+            Dim l As List(Of MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor) = p.GetResult(mgr)
 
             Assert.IsNotNull(l)
             Assert.AreEqual(2, l.Count)
@@ -171,7 +174,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestScalar()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             Dim p As New ScalarProc(10)
             Assert.AreEqual(20, p.GetResult(mgr))
             Assert.AreEqual(100, p.GetResult(90, mgr))
@@ -180,7 +183,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestPartial()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             Dim p As New PartialLoadProc(1)
             Dim c As ICollection(Of Table1) = p.GetResult(mgr)
 
@@ -195,11 +198,11 @@ End Class
 #Region " procs "
 
 Public Class P1Proc
-    Inherits Orm.QueryStoredProcBase
+    Inherits QueryStoredProcBase
 
-    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Worm.Orm.Dependency))
-        Dim l As New List(Of Pair(Of Type, Orm.Dependency))
-        l.Add(New Pair(Of Type, Orm.Dependency)(GetType(Tables1to3), Orm.Dependency.All))
+    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
+        Dim l As New List(Of Pair(Of Type, Dependency))
+        l.Add(New Pair(Of Type, Dependency)(GetType(Tables1to3), Dependency.All))
         Return l
     End Function
 
@@ -211,28 +214,28 @@ Public Class P1Proc
         Return "dbo.p1"
     End Function
 
-    Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of Orm.OutParam)
-        Return New List(Of Orm.OutParam)
+    Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of OutParam)
+        Return New List(Of OutParam)
     End Function
 
     Protected Overrides Function InitResult() As Object
         Return New List(Of Pair(Of Table1, Integer))
     End Function
 
-    Protected Overrides Sub ProcessReader(ByVal mgr As Orm.OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+    Protected Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Dim l As List(Of Pair(Of Table1, Integer)) = CType(result, Global.System.Collections.Generic.List(Of Pair(Of Global.TestProject1.Table1, Integer)))
         Dim t1 As Table1 = mgr.CreateDBObject(Of Table1)(dr.GetInt32(0))
         Dim cnt As Integer = dr.GetInt32(1)
         l.Add(New Pair(Of Table1, Integer)(t1, cnt))
     End Sub
 
-    Public Shadows Function GetResult(ByVal mgr As Orm.OrmReadOnlyDBManager) As List(Of Pair(Of Table1, Integer))
+    Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As List(Of Pair(Of Table1, Integer))
         Return CType(MyBase.GetResult(mgr), Global.System.Collections.Generic.List(Of Pair(Of Global.TestProject1.Table1, Integer)))
     End Function
 End Class
 
 Public Class P2Proc
-    Inherits Orm.QueryStoredProcBase
+    Inherits QueryStoredProcBase
 
     Private _params As List(Of Pair(Of String, Object))
 
@@ -241,8 +244,8 @@ Public Class P2Proc
         _params.Add(New Pair(Of String, Object)("i", i))
     End Sub
 
-    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Worm.Orm.Dependency))
-        Dim l As New List(Of Pair(Of Type, Orm.Dependency))
+    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
+        Dim l As New List(Of Pair(Of Type, Dependency))
         Return l
     End Function
 
@@ -254,27 +257,27 @@ Public Class P2Proc
         Return "dbo.p2"
     End Function
 
-    Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of Orm.OutParam)
-        Return New List(Of Orm.OutParam)
+    Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of OutParam)
+        Return New List(Of OutParam)
     End Function
 
     Protected Overrides Function InitResult() As Object
         Return New List(Of Table1)
     End Function
 
-    Protected Overrides Sub ProcessReader(ByVal mgr As Orm.OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+    Protected Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Dim l As List(Of Table1) = CType(result, Global.System.Collections.Generic.List(Of Global.TestProject1.Table1))
         Dim t1 As Table1 = mgr.CreateDBObject(Of Table1)(dr.GetInt32(0))
         l.Add(t1)
     End Sub
 
-    Public Shadows Function GetResult(ByVal mgr As Orm.OrmReadOnlyDBManager) As List(Of Table1)
+    Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As List(Of Table1)
         Return CType(MyBase.GetResult(mgr), Global.System.Collections.Generic.List(Of Global.TestProject1.Table1))
     End Function
 End Class
 
 Public Class P2OrmProc
-    Inherits Orm.QueryOrmStoredProcBase(Of Table1)
+    Inherits QueryOrmStoredProcBase(Of Table1)
 
     Private _params As List(Of Pair(Of String, Object))
 
@@ -283,14 +286,14 @@ Public Class P2OrmProc
         _params.Add(New Pair(Of String, Object)("i", i))
     End Sub
 
-    Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Worm.Orm.ColumnAttribute)
-        Dim l As New List(Of Orm.ColumnAttribute)
-        l.Add(New Orm.ColumnAttribute("ID"))
-        l.Add(New Orm.ColumnAttribute("Title"))
-        l.Add(New Orm.ColumnAttribute("Code"))
-        l.Add(New Orm.ColumnAttribute("Enum"))
-        l.Add(New Orm.ColumnAttribute("EnumStr"))
-        l.Add(New Orm.ColumnAttribute("DT"))
+    Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of ColumnAttribute)
+        Dim l As New List(Of ColumnAttribute)
+        l.Add(New ColumnAttribute("ID"))
+        l.Add(New ColumnAttribute("Title"))
+        l.Add(New ColumnAttribute("Code"))
+        l.Add(New ColumnAttribute("Enum"))
+        l.Add(New ColumnAttribute("EnumStr"))
+        l.Add(New ColumnAttribute("DT"))
         Return l
     End Function
 
@@ -308,7 +311,7 @@ Public Class P2OrmProc
 End Class
 
 Public Class P3Proc
-    Inherits Orm.QueryStoredProcBase
+    Inherits QueryStoredProcBase
 
     Private _params As List(Of Pair(Of String, Object))
 
@@ -317,10 +320,10 @@ Public Class P3Proc
         _params.Add(New Pair(Of String, Object)("i", i))
     End Sub
 
-    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Worm.Orm.Dependency))
-        Dim l As New List(Of Pair(Of Type, Orm.Dependency))
-        l.Add(New Pair(Of Type, Orm.Dependency)(GetType(Table1), Orm.Dependency.All))
-        l.Add(New Pair(Of Type, Orm.Dependency)(GetType(Table2), Orm.Dependency.All))
+    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
+        Dim l As New List(Of Pair(Of Type, Dependency))
+        l.Add(New Pair(Of Type, Dependency)(GetType(Table1), Dependency.All))
+        l.Add(New Pair(Of Type, Dependency)(GetType(Table2), Dependency.All))
         Return l
     End Function
 
@@ -332,28 +335,28 @@ Public Class P3Proc
         Return "dbo.p3"
     End Function
 
-    Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of Orm.OutParam)
-        Return New List(Of Orm.OutParam)
+    Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of OutParam)
+        Return New List(Of OutParam)
     End Function
 
     Protected Overrides Function InitResult() As Object
         Return New List(Of Pair(Of Date, Decimal))
     End Function
 
-    Protected Overrides Sub ProcessReader(ByVal mgr As Orm.OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
+    Protected Overrides Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Dim l As List(Of Pair(Of Date, Decimal)) = CType(result, Global.System.Collections.Generic.List(Of Pair(Of Date, Decimal)))
         Dim dt As Date = dr.GetDateTime(0)
         Dim m As Decimal = dr.GetDecimal(1)
         l.Add(New Pair(Of Date, Decimal)(dt, m))
     End Sub
 
-    Public Shadows Function GetResult(ByVal mgr As Orm.OrmReadOnlyDBManager) As List(Of Pair(Of Date, Decimal))
+    Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As List(Of Pair(Of Date, Decimal))
         Return CType(MyBase.GetResult(mgr), Global.System.Collections.Generic.List(Of Pair(Of Date, Decimal)))
     End Function
 End Class
 
 Public Class P4Proc
-    Inherits Orm.NonQueryStoredProcBase
+    Inherits NonQueryStoredProcBase
 
     Private _params As List(Of Pair(Of String, Object))
 
@@ -370,8 +373,8 @@ Public Class P4Proc
         Return MyBase.ValidateOnUpdate(obj, fields)
     End Function
 
-    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Worm.Orm.Dependency))
-        Return New List(Of Pair(Of Type, Orm.Dependency))
+    Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
+        Return New List(Of Pair(Of Type, Dependency))
     End Function
 
     Protected Overrides Function GetInParams() As IEnumerable(Of Pair(Of String, Object))
@@ -382,29 +385,29 @@ Public Class P4Proc
         Return "dbo.p4"
     End Function
 
-    Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of Orm.OutParam)
-        Dim p As New List(Of Orm.OutParam)
-        p.Add(New Orm.OutParam("n", System.Data.DbType.AnsiString, 100))
+    Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of OutParam)
+        Dim p As New List(Of OutParam)
+        p.Add(New OutParam("n", System.Data.DbType.AnsiString, 100))
         Return p
     End Function
 
-    Public Shadows Function GetResult(ByVal mgr As Orm.OrmReadOnlyDBManager) As String
+    Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As String
         Dim dic As Dictionary(Of String, Object) = CType(MyBase.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
         Return CStr(dic("n"))
     End Function
 End Class
 
 Public Class MultiR
-    Inherits Orm.MultiResultsetQueryOrmStoredProcBase
+    Inherits MultiResultsetQueryOrmStoredProcBase
 
     Class r
-        Inherits Orm.MultiResultsetQueryOrmStoredProcBase.OrmDescriptor(Of Table1)
+        Inherits MultiResultsetQueryOrmStoredProcBase.OrmDescriptor(Of Table1)
 
-        Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Worm.Orm.ColumnAttribute)
-            Dim l As New List(Of Orm.ColumnAttribute)
-            Dim mgr As Orm.OrmManagerBase = Orm.OrmManagerBase.CurrentManager
-            l.Add(New Orm.ColumnAttribute("ID"))
-            l.Add(New Orm.ColumnAttribute("Custom"))
+        Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of ColumnAttribute)
+            Dim l As New List(Of ColumnAttribute)
+            Dim mgr As Worm.OrmManagerBase = Worm.OrmManagerBase.CurrentManager
+            l.Add(New ColumnAttribute("ID"))
+            l.Add(New ColumnAttribute("Custom"))
             Return l
         End Function
 
@@ -418,11 +421,11 @@ Public Class MultiR
     End Class
 
     Public Class r2
-        Implements Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor
+        Implements MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor
 
         Private _sum As Integer
 
-        Public Sub ProcessReader(ByVal mgr As Orm.OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements Worm.Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.ProcessReader
+        Public Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.ProcessReader
             _sum = dr.GetInt32(0)
         End Sub
 
@@ -432,7 +435,7 @@ Public Class MultiR
             End Get
         End Property
 
-        Public Sub EndProcess(ByVal mgr As Worm.Orm.OrmManagerBase) Implements Worm.Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.EndProcess
+        Public Sub EndProcess(ByVal mgr As Worm.OrmManagerBase) Implements MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.EndProcess
 
         End Sub
     End Class
@@ -441,7 +444,7 @@ Public Class MultiR
 
     End Sub
 
-    Protected Overrides Function createDescriptor(ByVal resultsetIdx As Integer) As Worm.Orm.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor
+    Protected Overrides Function createDescriptor(ByVal resultsetIdx As Integer) As MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor
         Select Case resultsetIdx
             Case 0
                 Return New r
@@ -462,7 +465,7 @@ Public Class MultiR
 End Class
 
 Public Class ScalarProc
-    Inherits Orm.ScalarStoredProc(Of Integer)
+    Inherits ScalarStoredProc(Of Integer)
 
     Private _i As Integer
 
@@ -480,14 +483,14 @@ Public Class ScalarProc
         Return "dbo.ScalarProc"
     End Function
 
-    Public Overloads Function GetResult(ByVal i As Integer, ByVal mgr As Orm.OrmReadOnlyDBManager) As Integer
+    Public Overloads Function GetResult(ByVal i As Integer, ByVal mgr As OrmReadOnlyDBManager) As Integer
         _i = i
         Return MyBase.GetResult(mgr)
     End Function
 End Class
 
 Public Class PartialLoadProc
-    Inherits Orm.QueryOrmStoredProcBase(Of Table1)
+    Inherits QueryOrmStoredProcBase(Of Table1)
 
     Private _params As List(Of Pair(Of String, Object))
 
@@ -496,10 +499,10 @@ Public Class PartialLoadProc
         _params.Add(New Pair(Of String, Object)("id", i))
     End Sub
 
-    Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Worm.Orm.ColumnAttribute)
-        Dim l As New List(Of Orm.ColumnAttribute)
-        l.Add(New Orm.ColumnAttribute("ID"))
-        l.Add(New Orm.ColumnAttribute("ddd"))
+    Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of ColumnAttribute)
+        Dim l As New List(Of ColumnAttribute)
+        l.Add(New ColumnAttribute("ID"))
+        l.Add(New ColumnAttribute("ddd"))
         Return l
     End Function
 

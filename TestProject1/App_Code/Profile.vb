@@ -5,22 +5,22 @@ Imports System.Collections.Generic
 Imports System.Collections
 Imports Worm.Orm.Meta
 Imports Worm.Cache
-Imports Worm
+Imports Worm.Database
 
 Public Class GetMgr
     Implements IGetDBMgr
 
-    Public Function GetMgr() As Worm.Orm.OrmDBManager Implements Worm.Web.IGetDBMgr.GetMgr
+    Public Function GetMgr() As OrmDBManager Implements Worm.Web.IGetDBMgr.GetMgr
         'Return New OrmDBManager(OrmCache, New Worm.Orm.DbSchema("1"), "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=test;")
-        Return New OrmDBManager(OrmCache, New Worm.Orm.DbSchema("1"), "Server=.\sqlexpress;AttachDBFileName='" & TestProject1.Settings.WormRoot & "\TestProject1\Databases\test.mdf';User Instance=true;Integrated security=true;")
+        Return New OrmDBManager(OrmCache, New DbSchema("1"), "Server=.\sqlexpress;AttachDBFileName='" & TestProject1.Settings.WormRoot & "\TestProject1\Databases\test.mdf';User Instance=true;Integrated security=true;")
     End Function
 
     Protected ReadOnly Property OrmCache() As OrmCache
         Get
-            Dim c As OrmCache = CType(HttpContext.Current.Application("ccc"), Worm.Orm.OrmCache)
+            Dim c As OrmCache = CType(HttpContext.Current.Application("ccc"), OrmCache)
             If c Is Nothing Then
                 'Diagnostics.Debug.WriteLine("create cache")
-                c = New Worm.Orm.OrmCache
+                c = New OrmCache
                 HttpContext.Current.Application("ccc") = c
             End If
             Return c
@@ -44,11 +44,11 @@ Public Class MyProfile
         u.Save(True)
     End Sub
 
-    Protected Overrides Sub DeleteProfile(ByVal mgr As Worm.Orm.OrmDBManager, ByVal u As Worm.Orm.OrmBase)
+    Protected Overrides Sub DeleteProfile(ByVal mgr As OrmDBManager, ByVal u As Worm.Orm.OrmBase)
         Throw New NotImplementedException
     End Sub
 
-    Protected Overrides Function FindUsers(ByVal mgr As OrmDBManager, ByVal f As Worm.Orm.CriteriaLink) As System.Collections.IList
+    Protected Overrides Function FindUsers(ByVal mgr As OrmDBManager, ByVal f As Worm.Criteria.CriteriaLink) As System.Collections.IList
         Return CType(mgr.Find(Of MyUser)(f, Nothing, False), System.Collections.IList)
     End Function
 
@@ -65,7 +65,7 @@ Public Class MyProfile
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _userNameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
         'c.AddFilter(New OrmFilter(t, "IsAnonymous", New Worm.TypeWrap(Of Object)(Not isAuthenticated), FilterOperation.Equal))
-        Dim col As IList = FindUsers(mgr, New Criteria(t).Field(_userNameField).Eq(name).And("IsAnonymous").Eq(Not isAuthenticated))
+        Dim col As IList = FindUsers(mgr, New Worm.Database.Criteria.Ctor(t).Field(_userNameField).Eq(name).And("IsAnonymous").Eq(Not isAuthenticated))
         If col.Count > 1 Then
             Throw New ArgumentException("Duplicate user name " & name)
         ElseIf col.Count = 0 Then
@@ -107,7 +107,7 @@ Public Class MyProfile
     End Function
 End Class
 
-<TestProject1.Entity(GetType(MyUserDef), "1")> _
+<Entity(GetType(MyUserDef), "1")> _
 Public Class MyUser
     Inherits OrmBaseT(Of MyUser)
     Implements IOrmEditable(Of MyUser)
@@ -127,7 +127,7 @@ Public Class MyUser
         'MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -340,7 +340,7 @@ Public Class MyUserDef
 
 End Class
 
-<TestProject1.Entity(GetType(MyRoleDef), "1")> _
+<Entity(GetType(MyRoleDef), "1")> _
 Public Class MyRole
     Inherits OrmBaseT(Of MyRole)
     Implements IOrmEditable(Of MyRole)
@@ -351,7 +351,7 @@ Public Class MyRole
 
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -402,7 +402,7 @@ Public Class MyRoleDef
 
     Private _tbls() As OrmTable = {New OrmTable("dbo.roles")}
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Dim idx As New OrmObjectIndex
         idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
         idx.Add(New MapField2Column("Name", "roleName", GetTables()(Tables.Main)))
@@ -413,7 +413,7 @@ Public Class MyRoleDef
         Return _tbls
     End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelation()
         Return New M2MRelation() { _
                 New M2MRelation(GetType(MyUser), _schema.GetSharedTable("dbo.UserRoles"), "user_id", False, New System.Data.Common.DataTableMapping, CType(Nothing, Type)) _
             }

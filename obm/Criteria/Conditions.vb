@@ -248,7 +248,7 @@ Namespace Criteria.Conditions
         Inherits Condition
         Implements IEntityFilter
 
-        Protected MustInherit Class ConditionTemplateBase2
+        Protected MustInherit Class EntityConditionTemplateBase
             Inherits Condition.ConditionTemplateBase
             Implements IOrmFilterTemplate
 

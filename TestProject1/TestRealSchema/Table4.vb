@@ -1,5 +1,6 @@
-Imports Worm
+Imports Worm.Cache
 Imports Worm.Orm
+Imports Worm.Orm.Meta
 
 <Entity(GetType(Table4Implementation), "1"), Entity(GetType(Table4Implementation2), "2")> _
 Public Class Table4
@@ -13,7 +14,7 @@ Public Class Table4
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -40,7 +41,7 @@ Public Class Table4
     '    Return New Table4(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
+    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
         Select Case c.FieldName
             Case "Col"
                 Col = CType(value, Global.System.Nullable(Of Boolean))
@@ -90,11 +91,11 @@ Public Class Table4Implementation
         Main
     End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
-        Dim idx As New Orm.OrmObjectIndex
-        idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main), Field2DbRelations.PK))
-        idx.Add(New Orm.MapField2Column("Col", "col", GetTables()(Tables.Main)))
-        idx.Add(New Orm.MapField2Column("GUID", "uq", GetTables()(Tables.Main)))
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
+        Dim idx As New OrmObjectIndex
+        idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main), Field2DbRelations.PK))
+        idx.Add(New MapField2Column("Col", "col", GetTables()(Tables.Main)))
+        idx.Add(New MapField2Column("GUID", "uq", GetTables()(Tables.Main)))
         Return idx
     End Function
 
@@ -102,11 +103,11 @@ Public Class Table4Implementation
         Return _tables
     End Function
 
-    Public Function GetEntityKey() As String Implements Worm.Orm.ICacheBehavior.GetEntityKey
+    Public Function GetEntityKey() As String Implements ICacheBehavior.GetEntityKey
         Return "kljf"
     End Function
 
-    Public Function GetEntityTypeKey() As Object Implements Worm.Orm.ICacheBehavior.GetEntityTypeKey
+    Public Function GetEntityTypeKey() As Object Implements ICacheBehavior.GetEntityTypeKey
         Return "91bn34fh    oebnfklE:"
     End Function
 End Class
@@ -114,19 +115,19 @@ End Class
 Public Class Table4Implementation2
     Inherits ObjectSchemaBaseImplementation
 
-    Private _idx As Orm.OrmObjectIndex
+    Private _idx As OrmObjectIndex
     Private _tables() As OrmTable = {New OrmTable("dbo.[Table]")}
 
     Public Enum Tables
         Main
     End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main), Field2DbRelations.PK))
-            idx.Add(New Orm.MapField2Column("Col", "col", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("GUID", "uq", GetTables()(Tables.Main), Field2DbRelations.InsertDefault))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main), Field2DbRelations.PK))
+            idx.Add(New MapField2Column("Col", "col", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("GUID", "uq", GetTables()(Tables.Main), Field2DbRelations.InsertDefault))
             _idx = idx
         End If
         Return _idx

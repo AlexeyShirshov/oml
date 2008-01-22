@@ -560,12 +560,12 @@ Namespace Database
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New JoinCustDelegate(Of T)(Me, join, CType(filter, Database.Criteria.Core.IFilter), sort, key, id, aspect)
+            Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New FilterCustDelegate(Of T)(Me, CType(filter, Criteria.Core.IFilter), sort, key, id)
+            Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
@@ -1770,7 +1770,13 @@ Namespace Database
                     Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
                     con.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, fieldName, New ScalarValue(p.First), Worm.Criteria.FilterOperation.GreaterEqualThan))
                     con.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, fieldName, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.LessEqualThan))
-                    sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr, params))
+                    Dim bf As IFilter = con.Condition
+                    Dim f As Worm.Database.Criteria.Core.IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
+                    If f IsNot Nothing Then
+                        sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
+                    Else
+                        sb.Append(bf.MakeSQLStmt(DbSchema, params))
+                    End If
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
                         sb.Length = 0
@@ -1837,7 +1843,13 @@ Namespace Database
                     Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
                     con.AddFilter(New Database.Criteria.Core.TableFilter(table, column, New ScalarValue(p.First), Worm.Criteria.FilterOperation.GreaterEqualThan))
                     con.AddFilter(New Database.Criteria.Core.TableFilter(table, column, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.LessEqualThan))
-                    sb.Append(con.Condition.MakeSQLStmt(DbSchema, almgr, params))
+                    Dim bf As IFilter = con.Condition
+                    Dim f As Worm.Database.Criteria.Core.IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
+                    If f IsNot Nothing Then
+                        sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
+                    Else
+                        sb.Append(bf.MakeSQLStmt(DbSchema, params))
+                    End If
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
                         sb.Length = 0

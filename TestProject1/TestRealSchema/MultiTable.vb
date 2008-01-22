@@ -4,8 +4,10 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
 
-Imports Worm
 Imports Worm.Orm
+Imports Worm.Orm.Meta
+Imports Worm.Cache
+Imports Worm.Database
 
 <Entity(GetType(MultiTableEn), "en")> _
 <Entity(GetType(MultiTableRu), "ru")> _
@@ -33,27 +35,27 @@ Public MustInherit Class MultiTableSchemaBase
     Inherits ObjectSchemaBaseImplementation
     Implements ICacheBehavior
 
-    Private _idx As Orm.OrmObjectIndex
+    Private _idx As OrmObjectIndex
 
     Public Enum Tables
         Main
     End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Msg", "msg", GetTables()(Tables.Main)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("Msg", "msg", GetTables()(Tables.Main)))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Function GetEntityKey() As String Implements Worm.Orm.ICacheBehavior.GetEntityKey
+    Public Function GetEntityKey() As String Implements ICacheBehavior.GetEntityKey
         Return _objectType.ToString
     End Function
 
-    Public Function GetEntityTypeKey() As Object Implements Worm.Orm.ICacheBehavior.GetEntityTypeKey
+    Public Function GetEntityTypeKey() As Object Implements ICacheBehavior.GetEntityTypeKey
         Return _objectType.ToString & _schema.Version
     End Function
 End Class
@@ -63,7 +65,7 @@ Public Class MultiTableEn
 
     Private _tables() As OrmTable = {New OrmTable("dbo.m2")}
 
-    Public Overrides Function GetTables() As Worm.Orm.OrmTable()
+    Public Overrides Function GetTables() As OrmTable()
         Return _tables
     End Function
 End Class
@@ -73,7 +75,7 @@ Public Class MultiTableRu
 
     Private _tables() As OrmTable = {New OrmTable("dbo.m1")}
 
-    Public Overrides Function GetTables() As Worm.Orm.OrmTable()
+    Public Overrides Function GetTables() As OrmTable()
         Return _tables
     End Function
 End Class
@@ -96,13 +98,13 @@ Public Class TestMultiTable
 
         Dim m2 As MultiTable = Nothing
         Dim t As Table3 = Nothing
-        Using mgr As Orm.OrmReadOnlyDBManager = tm.CreateManager(GetSchema("en"))
+        Using mgr As OrmReadOnlyDBManager = tm.CreateManager(GetSchema("en"))
             m2 = mgr.Find(Of MultiTable)(1)
             t = mgr.Find(Of Table3)(1)
         End Using
 
         Dim m1 As MultiTable = Nothing
-        Using mgr As Orm.OrmReadOnlyDBManager = tm.CreateManager(GetSchema("ru"))
+        Using mgr As OrmReadOnlyDBManager = tm.CreateManager(GetSchema("ru"))
             m1 = mgr.Find(Of MultiTable)(1)
             Assert.AreSame(t, mgr.Find(Of Table3)(1))
         End Using

@@ -13,18 +13,18 @@ Namespace Database
                 Inherits Worm.Criteria.Conditions.Condition.ConditionConstructorBase
 
                 Protected Overrides Function CreateCondition(ByVal left As Worm.Criteria.Core.IFilter, ByVal right As Worm.Criteria.Core.IFilter, ByVal [operator] As cc.ConditionOperator) As cc.Condition
-                    Return New Condition(CType(left, IFilter), CType(right, IFilter), [operator])
+                    Return New Condition(left, right, [operator])
                 End Function
 
                 Protected Overrides Function CreateEntityCondition(ByVal left As Worm.Criteria.Core.IEntityFilter, ByVal right As Worm.Criteria.Core.IEntityFilter, ByVal [operator] As cc.ConditionOperator) As cc.Condition
                     Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
                 End Function
 
-                Public Overloads ReadOnly Property Condition() As Worm.Database.Criteria.Core.IFilter
-                    Get
-                        Return CType(MyBase.Condition, Core.IFilter)
-                    End Get
-                End Property
+                'Public Overloads ReadOnly Property Condition() As Worm.Criteria.Core.IFilter
+                '    Get
+                '        Return CType(MyBase.Condition, Worm.Criteria.Core.IFilter)
+                '    End Get
+                'End Property
             End Class
 
             Private Class ConditionTemplate
@@ -41,12 +41,12 @@ Namespace Database
                 End Property
             End Class
 
-            Public Sub New(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As cc.ConditionOperator)
+            Public Sub New(ByVal left As Worm.Criteria.Core.IFilter, ByVal right As Worm.Criteria.Core.IFilter, ByVal [operator] As cc.ConditionOperator)
                 MyBase.New(left, right, [operator])
             End Sub
 
             Protected Overrides Function CreateMe(ByVal left As Worm.Criteria.Core.IFilter, ByVal right As Worm.Criteria.Core.IFilter, ByVal [operator] As cc.ConditionOperator) As cc.Condition
-                Return New Condition(CType(left, IFilter), CType(right, IFilter), [operator])
+                Return New Condition(left, right, [operator])
             End Function
 
             Public Overrides ReadOnly Property Template() As Worm.Criteria.Core.ITemplate
@@ -56,15 +56,36 @@ Namespace Database
             End Property
 
             Public Overrides Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As ICreateParam) As String
-                Throw New NotImplementedException("")
+                If _right Is Nothing Then
+                    Return _left.MakeSQLStmt(schema, pname)
+                End If
+                Return "(" & _left.MakeSQLStmt(schema, pname) & Condition2String() & _right.MakeSQLStmt(schema, pname) & ")"
             End Function
 
             Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeSQLStmt
+                Dim bf As IFilter = TryCast(_left, IFilter)
                 If _right Is Nothing Then
-                    Return CType(_left, IFilter).MakeSQLStmt(schema, almgr, pname)
+                    If bf IsNot Nothing Then
+                        Return bf.MakeSQLStmt(schema, almgr, pname)
+                    Else
+                        Return _left.MakeSQLStmt(schema, pname)
+                    End If
+                End If
+                Dim lstmt As String = Nothing
+                If bf IsNot Nothing Then
+                    lstmt = bf.MakeSQLStmt(schema, almgr, pname)
+                Else
+                    lstmt = _left.MakeSQLStmt(schema, pname)
                 End If
 
-                Return "(" & CType(_left, IFilter).MakeSQLStmt(schema, almgr, pname) & Condition2String() & CType(_right, IFilter).MakeSQLStmt(schema, almgr, pname) & ")"
+                Dim rstmt As String = Nothing
+                Dim rf As IFilter = TryCast(_right, IFilter)
+                If rf IsNot Nothing Then
+                    rstmt = rf.MakeSQLStmt(schema, almgr, pname)
+                Else
+                    rstmt = _right.MakeSQLStmt(schema, pname)
+                End If
+                Return "(" & lstmt & Condition2String() & rstmt & ")"
             End Function
         End Class
 
@@ -73,7 +94,7 @@ Namespace Database
             Implements Worm.Database.Criteria.Core.IEntityFilter
 
             Protected Class ConditionTemplate
-                Inherits Worm.Criteria.Conditions.EntityCondition.ConditionTemplateBase
+                Inherits Worm.Criteria.Conditions.EntityCondition.EntityConditionTemplateBase
 
                 Public Sub New(ByVal con As EntityCondition)
                     MyBase.New(con)
@@ -84,6 +105,10 @@ Namespace Database
                         Return Worm.Database.Criteria.Core.TemplateBase.Oper2String(Operation)
                     End Get
                 End Property
+
+                Protected Overrides Function CreateCon(ByVal left As Worm.Criteria.Core.IEntityFilter, ByVal right As Worm.Criteria.Core.IEntityFilter, ByVal [operator] As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.Conditions.EntityCondition
+                    Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
+                End Function
             End Class
 
             Public Sub New(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As cc.ConditionOperator)

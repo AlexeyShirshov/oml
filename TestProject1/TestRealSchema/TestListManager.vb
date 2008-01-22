@@ -1,15 +1,16 @@
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
-Imports Worm
 Imports System.Collections.Generic
+Imports Worm.Database
+Imports Worm.Orm
 
 <TestClass()> Public Class TestListManager
 
     <TestMethod()> _
     Public Sub TestAddWithSort()
-        Dim schema As Orm.DbSchema = New Orm.DbSchema("1")
+        Dim schema As DbSchema = New DbSchema("1")
 
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(schema)
-            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(schema)
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
 
             Assert.AreEqual(2, c.Count)
 
@@ -26,7 +27,7 @@ Imports System.Collections.Generic
 
                 n.Save(True)
 
-                c = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
+                c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(2, c.Count)
                 l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
 
@@ -40,7 +41,7 @@ Imports System.Collections.Generic
 
                 n.Save(True)
 
-                c = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
+                c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(3, c.Count)
                 l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
 
@@ -55,10 +56,10 @@ Imports System.Collections.Generic
 
     <TestMethod()> _
     Public Sub TestDelete()
-        Dim schema As Orm.DbSchema = New Orm.DbSchema("1")
+        Dim schema As DbSchema = New DbSchema("1")
 
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(schema)
-            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(schema)
+            Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
 
             Assert.AreEqual(2, c.Count)
 
@@ -76,14 +77,14 @@ Imports System.Collections.Generic
 
                 n.Save(True)
 
-                c = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
+                c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(3, c.Count)
                 l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
 
                 l(1).Delete()
                 l(1).Save(True)
 
-                c = mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Orm.Sorting.Field("Enum").Asc, True)
+                c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(2, c.Count)
 
             Finally

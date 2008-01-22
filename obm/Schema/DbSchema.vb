@@ -774,7 +774,7 @@ Namespace Database
                             Next
                             upd_cmd.Length -= 1
                             upd_cmd.Append(" from ").Append(tbl).Append(" ").Append([alias])
-                            upd_cmd.Append(" where ").Append(item.Value._where4update.Condition.MakeSQLStmt(Me, amgr, params))
+                            upd_cmd.Append(" where ").Append(CType(item.Value._where4update.Condition, IFilter).MakeSQLStmt(Me, amgr, params))
                             If Not item.Key.Equals(pk_table) Then
                                 'Dim pcnt As Integer = 0
                                 'If Not named_params Then pcnt = XMedia.Framework.Data.DBA.ExtractParamsCount(upd_cmd.ToString)
@@ -894,7 +894,7 @@ Namespace Database
                     End If
                 End If
 
-                deleted_tables(table) = o.Condition
+                deleted_tables(table) = CType(o.Condition, IFilter)
             Next
         End Sub
 
@@ -1414,7 +1414,7 @@ Namespace Database
             Return selectcmd
         End Function
 
-        Public Overridable Function AppendWhere(ByVal t As Type, ByVal filter As IFilter, _
+        Public Overridable Function AppendWhere(ByVal t As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
 
             Dim con As New Condition.ConditionConstructor
@@ -1426,7 +1426,13 @@ Namespace Database
             End If
 
             If Not con.IsEmpty Then
-                sb.Append(" where ").Append(con.Condition.MakeSQLStmt(Me, almgr, pmgr))
+                Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
+                Dim f As IFilter = TryCast(con.Condition, IFilter)
+                If f IsNot Nothing Then
+                    sb.Append(" where ").Append(f.MakeSQLStmt(Me, almgr, pmgr))
+                Else
+                    sb.Append(" where ").Append(bf.MakeSQLStmt(Me, pmgr))
+                End If
                 Return True
             End If
             Return False
@@ -1590,7 +1596,7 @@ Namespace Database
             Return r
         End Function
 
-        Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As OrmBase, ByVal type As Type, ByVal filter As IFilter, _
+        Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As OrmBase, ByVal type As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal filter_info As Object, ByVal appJoins As Boolean, ByVal withLoad As Boolean, ByVal appendMain As Boolean, _
             ByRef params As IList(Of System.Data.Common.DbParameter), ByVal direct As Boolean) As String
 

@@ -1,5 +1,6 @@
-Imports Worm
 Imports Worm.Orm
+Imports Worm.Orm.Meta
+Imports Worm.Cache
 
 <Entity(GetType(CompositeSchema), "1")> _
 Public Class Composite
@@ -13,7 +14,7 @@ Public Class Composite
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -45,7 +46,7 @@ Public Class Composite
         End Set
     End Property
 
-    Public Sub CopyBody(ByVal from As Composite, ByVal [to] As Composite) Implements Worm.Orm.IOrmEditable(Of Composite).CopyBody
+    Public Sub CopyBody(ByVal from As Composite, ByVal [to] As Composite) Implements IOrmEditable(Of Composite).CopyBody
         With [from]
             [to]._m = ._m
             [to]._m2 = ._m2
@@ -58,7 +59,7 @@ Public Class CompositeSchema
     Inherits ObjectSchemaBaseImplementation
     Implements IReadonlyObjectSchema
 
-    Private _idx As Orm.OrmObjectIndex
+    Private _idx As OrmObjectIndex
     Private _tables() As OrmTable = {New OrmTable("dbo.m1"), New OrmTable("dbo.m2")}
 
     Public Enum Tables
@@ -66,29 +67,29 @@ Public Class CompositeSchema
         Second
     End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.First)))
-            idx.Add(New Orm.MapField2Column("Title", "msg", GetTables()(Tables.First)))
-            idx.Add(New Orm.MapField2Column("Title2", "msg", GetTables()(Tables.Second)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.First)))
+            idx.Add(New MapField2Column("Title", "msg", GetTables()(Tables.First)))
+            idx.Add(New MapField2Column("Title2", "msg", GetTables()(Tables.Second)))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As Worm.Orm.OrmTable()
+    Public Overrides Function GetTables() As OrmTable()
         Return _tables
     End Function
 
-    Public Overrides Function GetJoins(ByVal left As Worm.Orm.OrmTable, ByVal right As Worm.Orm.OrmTable) As Worm.Orm.OrmJoin
+    Public Overrides Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As Worm.Criteria.Joins.OrmJoin
         If left.Equals(GetTables()(Tables.First)) AndAlso right.Equals(GetTables()(Tables.Second)) Then
-            Return New Orm.OrmJoin(right, Orm.JoinType.Join, New Orm.JoinFilter(right, "id", _objectType, "ID", Orm.FilterOperation.Equal))
+            Return New Worm.Database.Criteria.Joins.OrmJoin(right, Worm.Criteria.Joins.JoinType.Join, New Worm.Database.Criteria.Joins.JoinFilter(right, "id", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
         End If
         Return MyBase.GetJoins(left, right)
     End Function
 
-    Public Function GetEditableSchema() As Worm.Orm.IRelMapObjectSchema Implements Worm.Orm.IReadonlyObjectSchema.GetEditableSchema
+    Public Function GetEditableSchema() As IRelMapObjectSchema Implements IReadonlyObjectSchema.GetEditableSchema
         Return New CompositeEditableSchema
     End Function
 End Class
@@ -96,28 +97,28 @@ End Class
 Public Class CompositeEditableSchema
     Implements IRelMapObjectSchema
 
-    Private _idx As Orm.OrmObjectIndex
+    Private _idx As OrmObjectIndex
     Private _tables() As OrmTable = {New OrmTable("dbo.m1")}
 
     Public Enum Tables
         First
     End Enum
 
-    Public Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column) Implements Worm.Orm.IRelMapObjectSchema.GetFieldColumnMap
+    Public Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IRelMapObjectSchema.GetFieldColumnMap
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.First)))
-            idx.Add(New Orm.MapField2Column("Title", "msg", GetTables()(Tables.First)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.First)))
+            idx.Add(New MapField2Column("Title", "msg", GetTables()(Tables.First)))
             _idx = idx
         End If
         Return _idx
     End Function
 
-    Public Function GetJoins(ByVal left As Worm.Orm.OrmTable, ByVal right As Worm.Orm.OrmTable) As Worm.Orm.OrmJoin Implements Worm.Orm.IOrmRelationalSchema.GetJoins
+    Public Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As Worm.Criteria.Joins.OrmJoin Implements IOrmRelationalSchema.GetJoins
         Return Nothing
     End Function
 
-    Public Function GetTables() As Worm.Orm.OrmTable() Implements Worm.Orm.IOrmRelationalSchema.GetTables
+    Public Function GetTables() As OrmTable() Implements IOrmRelationalSchema.GetTables
         Return _tables
     End Function
 End Class

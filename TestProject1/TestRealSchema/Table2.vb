@@ -1,5 +1,6 @@
-Imports Worm
 Imports Worm.Orm
+Imports Worm.Orm.Meta
+Imports Worm.Cache
 
 <Entity(GetType(Table2Implementation), "1")> _
 Public Class Table2
@@ -15,7 +16,7 @@ Public Class Table2
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -50,7 +51,7 @@ Public Class Table2
         End With
     End Sub
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
+    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
         Select Case c.FieldName
             Case "Table1"
                 Tbl = CType(value, Table1)
@@ -123,21 +124,21 @@ End Class
 Public Class Table2Implementation
     Inherits ObjectSchemaBaseImplementation
 
-    Private _idx As Orm.OrmObjectIndex
+    Private _idx As OrmObjectIndex
     Private _tables() As OrmTable = {New OrmTable("dbo.Table2")}
 
     Public Enum Tables
         Main
     End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("Table1", "table1_id", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("Blob", "blob", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("Money", "m", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("DT", "dt2", GetTables()(tables.Main)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("Table1", "table1_id", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("Blob", "blob", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("Money", "m", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("DT", "dt2", GetTables()(Tables.Main)))
             _idx = idx
         End If
         Return _idx

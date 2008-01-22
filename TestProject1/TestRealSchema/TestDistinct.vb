@@ -4,6 +4,9 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm.Orm
 Imports System.Diagnostics
+Imports Worm.Database
+Imports Worm.Orm.Meta
+Imports Worm.Database.Criteria.Joins
 
 <TestClass()> _
 Public Class TestDistinct
@@ -13,8 +16,8 @@ Public Class TestDistinct
         Dim s As New DbSchema("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tbl As OrmTable = s.GetTables(GetType(Tables1to3))(0)
-            Dim f As New JoinFilter(tbl, "table1", GetType(Table1), "ID", FilterOperation.Equal)
-            Dim join As New OrmJoin(tbl, JoinType.Join, f)
+            Dim f As New JoinFilter(tbl, "table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal)
+            Dim join As New OrmJoin(tbl, Worm.Criteria.Joins.JoinType.Join, f)
 
             Dim joins() As OrmJoin = New OrmJoin() {join}
 
@@ -39,9 +42,9 @@ Public Class TestDistinct
                 field = fld
             Next
 
-            Dim f As New JoinFilter(tbl, "ID", t, field, FilterOperation.Equal)
+            Dim f As New JoinFilter(tbl, "ID", t, field, Worm.Criteria.FilterOperation.Equal)
 
-            Dim join As New OrmJoin(tbl, JoinType.Join, f)
+            Dim join As New OrmJoin(tbl, Worm.Criteria.Joins.JoinType.Join, f)
 
             Dim joins() As OrmJoin = New OrmJoin() {join}
 
@@ -74,7 +77,7 @@ Public Class TestDistinct
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
 
-            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(Criteria.Field(tt, "Code").NotEq(2), Nothing, True)
+            Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(Criteria.Ctor.Field(tt, "Code").NotEq(2), Nothing, True)
 
             Assert.AreEqual(0, c.Count)
         End Using
@@ -98,10 +101,10 @@ Public Class TestDistinct
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             'Dim tbl As String = "dbo.tables1to3relation"
             Dim t As Type = s.GetTypeByEntityName("Table3")
-            Dim f As CriteriaLink = New Criteria(t).Field("Code").LessThanEq(10)
+            Dim f As Worm.Criteria.CriteriaLink = New Criteria.Ctor(t).Field("Code").LessThanEq(10)
             'Dim join As New OrmJoin(tbl, JoinType.Join, f)
 
-            'Dim f2 As New OrmFilter(tbl, "table1", GetType(Table1), "ID", FilterOperation.Equal)
+            'Dim f2 As New OrmFilter(tbl, "table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal)
             'Dim join2 As New OrmJoin(tbl, JoinType.Join, f)
 
 
@@ -128,12 +131,12 @@ Public Class TestDistinct
         Dim s As New DbSchema("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tbl As OrmTable = s.GetTables(GetType(Tables1to3))(0)
-            Dim f As New JoinFilter(tbl, "table1", GetType(Table1), "ID", FilterOperation.Equal)
-            Dim join As New OrmJoin(tbl, JoinType.Join, f)
+            Dim f As New JoinFilter(tbl, "table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal)
+            Dim join As New OrmJoin(tbl, Worm.Criteria.Joins.JoinType.Join, f)
 
             Dim joins() As OrmJoin = New OrmJoin() {join}
 
-            Dim c As ICollection(Of Table1) = mgr.FindWithJoins(Of Table1)(New DistinctAspect(), joins, Nothing, Nothing, False)
+            Dim c As ICollection(Of Table1) = mgr.FindWithJoins(Of Table1)(New Query.DistinctAspect(), joins, Nothing, Nothing, False)
 
             Assert.AreEqual(1, c.Count)
             Assert.IsFalse(CType(c, IList(Of Table1))(0).IsLoaded)

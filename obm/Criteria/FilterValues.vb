@@ -457,7 +457,7 @@ Namespace Database
     Namespace Criteria.Values
         Public Interface IDatabaseFilterValue
             Inherits Worm.Criteria.Values.IFilterValue
-            Function GetParam(ByVal schema As DbSchema, ByVal paramMgr As ICreateParam, ByVal f As Worm.Database.Criteria.Core.IEntityFilter, ByVal almgr As AliasMgr) As String
+            Function GetParam(ByVal schema As DbSchema, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String
         End Interface
 
         Public Class SubQuery
@@ -501,7 +501,7 @@ Namespace Database
                 Return r
             End Function
 
-            Public Function GetParam(ByVal dbschema As DbSchema, ByVal paramMgr As ICreateParam, ByVal f As Worm.Database.Criteria.Core.IEntityFilter, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
+            Public Function GetParam(ByVal dbschema As DbSchema, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
                 Dim sb As New StringBuilder
                 'Dim dbschema As DbSchema = CType(schema, DbSchema)
                 sb.Append("(")
