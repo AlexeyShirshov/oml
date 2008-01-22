@@ -3,17 +3,20 @@ Imports Worm
 Imports Worm.Orm
 Imports System.Diagnostics
 Imports CoreFramework.Structures
+Imports Worm.Database
+Imports Worm.Sorting
+Imports Worm.Criteria.Core
 
 <TestClass()> Public Class TestCriteria
 
     <TestMethod()> _
     Public Sub TestComplexTypes()
-        Dim f As IEntityFilter = CType(Criteria.Field(GetType(Entity4), "ID").Eq(56). _
-            [And](GetType(Entity4), "Title").Eq("lsd").Filter, IEntityFilter)
+        Dim f As Database.Criteria.Core.IEntityFilter = CType(Database.Criteria.Ctor.Field(GetType(Entity4), "ID").Eq(56). _
+            [And](GetType(Entity4), "Title").Eq("lsd").Filter, Database.Criteria.Core.IEntityFilter)
 
-        Dim schema As New Orm.DbSchema("1")
-        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim schema As New DbSchema("1")
+        Dim almgr As AliasMgr = AliasMgr.Create
+        Dim pmgr As New ParamMgr(schema, "p")
 
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
@@ -28,12 +31,12 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestComplexTypeless()
-        Dim f As IEntityFilter = CType(Criteria.AutoTypeField("ID").Eq(56). _
-            [And]("Title").Eq("lsd").Filter(GetType(Entity4)), IEntityFilter)
+        Dim f As Database.Criteria.Core.IEntityFilter = CType(Database.Criteria.Ctor.AutoTypeField("ID").Eq(56). _
+            [And]("Title").Eq("lsd").Filter(GetType(Entity4)), Database.Criteria.Core.IEntityFilter)
 
-        Dim schema As New Orm.DbSchema("1")
-        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim schema As New DbSchema("1")
+        Dim almgr As AliasMgr = AliasMgr.Create
+        Dim pmgr As New ParamMgr(schema, "p")
 
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
@@ -49,12 +52,12 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestComplexTypes2()
-        Dim f As IEntityFilter = CType(Criteria.Field(GetType(Entity4), "ID").Eq(56). _
-            [And](Criteria.Field(GetType(Entity4), "Title").Eq(56).[Or](GetType(Entity), "ID").Eq(483)).Filter, IEntityFilter)
+        Dim f As Database.Criteria.Core.IEntityFilter = CType(Database.Criteria.Ctor.Field(GetType(Entity4), "ID").Eq(56). _
+            [And](Database.Criteria.Ctor.Field(GetType(Entity4), "Title").Eq(56).[Or](GetType(Entity), "ID").Eq(483)).Filter, Database.Criteria.Core.IEntityFilter)
 
-        Dim schema As New Orm.DbSchema("1")
-        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim schema As New DbSchema("1")
+        Dim almgr As AliasMgr = AliasMgr.Create
+        Dim pmgr As New ParamMgr(schema, "p")
 
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
@@ -69,12 +72,12 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSimpleTypes()
-        Dim f As IEntityFilter = CType(New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
-            [And]("Title").Eq("lsd").Filter, IEntityFilter)
+        Dim f As Database.Criteria.Core.IEntityFilter = CType(New Database.Criteria.Ctor(GetType(Entity4)).Field("ID").Eq(56). _
+            [And]("Title").Eq("lsd").Filter, Database.Criteria.Core.IEntityFilter)
 
-        Dim schema As New Orm.DbSchema("1")
-        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim schema As New DbSchema("1")
+        Dim almgr As AliasMgr = AliasMgr.Create
+        Dim pmgr As New ParamMgr(schema, "p")
 
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
@@ -89,12 +92,12 @@ Imports CoreFramework.Structures
 
     <TestMethod()> _
     Public Sub TestSimpleTypes2()
-        Dim f As IEntityFilter = CType(New Criteria(GetType(Entity4)).Field("ID").Eq(56). _
-            [And](New Criteria(GetType(Entity4)).Field("Title").Eq(56).[Or]("ID").Eq(483)).Filter, IEntityFilter)
+        Dim f As Database.Criteria.Core.IEntityFilter = CType(New Database.Criteria.Ctor(GetType(Entity4)).Field("ID").Eq(56). _
+            [And](New Database.Criteria.Ctor(GetType(Entity4)).Field("Title").Eq(56).[Or]("ID").Eq(483)).Filter, Database.Criteria.Core.IEntityFilter)
 
-        Dim schema As New Orm.DbSchema("1")
-        Dim almgr As Orm.AliasMgr = Orm.AliasMgr.Create
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim schema As New DbSchema("1")
+        Dim almgr As AliasMgr = AliasMgr.Create
+        Dim pmgr As New ParamMgr(schema, "p")
 
         'almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))

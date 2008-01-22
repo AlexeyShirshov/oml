@@ -107,6 +107,9 @@ Namespace Criteria.Core
                 'Return pmgr.CreateParam(Nothing)
                 Throw New InvalidOperationException("Param is null")
             End If
+            If Value Is Nothing Then
+                Throw New ArgumentException("Value is not IParamFilterValue")
+            End If
             Return Value.GetParam(schema, pmgr, TryCast(Me, IEntityFilter))
         End Function
 
@@ -125,6 +128,11 @@ Namespace Criteria.Core
             Return Nothing
         End Function
 
+        Protected ReadOnly Property val() As IFilterValue
+            Get
+                Return _v
+            End Get
+        End Property
     End Class
 
     Public MustInherit Class TemplatedFilterBase
@@ -352,7 +360,7 @@ Namespace Criteria.Core
 
         Public ReadOnly Property OperToString() As String Implements ITemplate.OperToString
             Get
-                Return OperToString(_oper)
+                Return OperToStringInternal(_oper)
             End Get
         End Property
 
@@ -574,6 +582,7 @@ Namespace Database
 
         Public Class NonTemplateFilter
             Inherits Worm.Criteria.Core.FilterBase
+            Implements IFilter
 
             Private _oper As Worm.Criteria.FilterOperation
             Private _str As String
@@ -585,7 +594,7 @@ Namespace Database
 
             Protected Overrides Function _ToString() As String
                 If String.IsNullOrEmpty(_str) Then
-                    _str = Value._ToString & TemplateBase.Oper2String(_oper)
+                    _str = val._ToString & TemplateBase.Oper2String(_oper)
                 End If
                 Return _str
             End Function
@@ -599,11 +608,20 @@ Namespace Database
             End Function
 
             Public Overrides Function ToStaticString() As String
-                Dim v As INonTemplateValue = TryCast(Value, INonTemplateValue)
+                Dim v As INonTemplateValue = TryCast(val, INonTemplateValue)
                 If v Is Nothing Then
                     Throw New NotImplementedException("Value is not implement INonTemplateValue")
                 End If
                 Return v.GetStaticString & "$" & TemplateBase.Oper2String(_oper)
+            End Function
+
+            Public Overloads Function MakeSQLStmt1(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeSQLStmt
+                Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
+                If id IsNot Nothing Then
+                    Return TemplateBase.Oper2String(_oper) & id.GetParam(schema, pname, almgr)
+                Else
+                    Return MakeSQLStmt(schema, pname)
+                End If
             End Function
         End Class
 
@@ -697,7 +715,7 @@ Namespace Database
 
         Public Class EntityFilter
             Inherits Worm.Criteria.Core.EntityFilter
-            Implements ITemplateFilter
+            Implements IEntityFilter
 
             Private _dbFilter As Boolean
 
@@ -748,7 +766,7 @@ Namespace Database
 
             Protected Overloads Function GetParam(ByVal schema As DbSchema, ByVal pmgr As ICreateParam, ByVal almgr As AliasMgr) As String
                 If _dbFilter Then
-                    Return CType(Value, Values.IDatabaseFilterValue).GetParam(schema, pmgr, TryCast(Me, IEntityFilter), almgr)
+                    Return CType(Value, Values.IDatabaseFilterValue).GetParam(schema, pmgr, almgr)
                 Else
                     Throw New InvalidOperationException
                 End If

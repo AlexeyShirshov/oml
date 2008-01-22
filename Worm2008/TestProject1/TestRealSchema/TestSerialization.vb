@@ -4,13 +4,14 @@ Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm
 Imports System.Diagnostics
+Imports Worm.Database
 
 <TestClass()> _
 Public Class TestSerialization
 
     <TestMethod()> _
     Public Sub TestXml()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             Dim t As Table3 = mgr.Find(Of Table3)(2)
 
             Assert.IsTrue(t.IsLoaded)

@@ -1,5 +1,6 @@
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm
+Imports Worm.Database
 
 <TestClass()> Public Class TestParamMgr
 
@@ -23,9 +24,9 @@ Imports Worm
 
     <TestMethod()> _
     Public Sub TestGetParameter()
-        Dim schema As New Orm.DbSchema("1")
+        Dim schema As New DbSchema("1")
 
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim pmgr As New ParamMgr(schema, "p")
 
         Assert.AreEqual("p", pmgr.Prefix)
 
@@ -42,9 +43,9 @@ Imports Worm
 
     <TestMethod()> _
     Public Sub TestGetParameter2()
-        Dim schema As New Orm.DbSchema("1")
+        Dim schema As New DbSchema("1")
 
-        Dim pmgr As New Orm.ParamMgr(schema, "p")
+        Dim pmgr As New ParamMgr(schema, "p")
 
         Dim pname As String = pmgr.CreateParam("ldkg")
 

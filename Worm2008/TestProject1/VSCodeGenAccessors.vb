@@ -13,9 +13,9 @@
 Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
     Inherits BaseAccessor
     
-    Protected Shared m_privateType As Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType = New Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType(GetType(Global.Worm.Orm.OrmReadOnlyDBManager))
+    Protected Shared m_privateType As Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType = New Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType(GetType(Global.Worm.Database.OrmReadOnlyDBManager))
     
-    Friend Sub New(ByVal target As Global.Worm.Orm.OrmReadOnlyDBManager)
+    Friend Sub New(ByVal target As Global.Worm.Database.OrmReadOnlyDBManager)
         MyBase.New(target, m_privateType)
     End Sub
     
@@ -108,10 +108,10 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         End Get
     End Property
     
-    Friend Shared Function CreatePrivate(ByVal schema As Global.Worm.Orm.DbSchema, ByVal connectionString As String) As Global.Worm.Orm.OrmReadOnlyDBManager
+    Friend Shared Function CreatePrivate(ByVal schema As Global.Worm.Database.DbSchema, ByVal connectionString As String) As Global.Worm.Database.OrmReadOnlyDBManager
         Dim args() As Object = New Object() {schema, connectionString}
-        Dim priv_obj As Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject = New Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject(GetType(Global.Worm.Orm.OrmReadOnlyDBManager), New System.Type() {GetType(Global.Worm.Orm.DbSchema), GetType(String)}, args)
-        Return CType(priv_obj.Target,Global.Worm.Orm.OrmReadOnlyDBManager)
+        Dim priv_obj As Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject = New Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject(GetType(Global.Worm.Database.OrmReadOnlyDBManager), New System.Type() {GetType(Global.Worm.Database.DbSchema), GetType(String)}, args)
+        Return CType(priv_obj.Target, Global.Worm.Database.OrmReadOnlyDBManager)
     End Function
     
     Friend Function CreateConn() As Global.System.Data.Common.DbConnection
@@ -125,9 +125,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         m_privateObject.Invoke("Dispose", New System.Type() {GetType(Boolean)}, args)
     End Sub
     
-    Friend Function FindConnected(ByVal ct As Global.System.Type, ByVal selectedType As Global.System.Type, ByVal filterType As Global.System.Type, ByVal connectedFilter As Global.Worm.Orm.IEntityFilter, ByVal filter As Global.Worm.Orm.IEntityFilter, ByVal withLoad As Boolean, ByVal sort As Global.Worm.Orm.Sort) As Global.System.Collections.IList
+    Friend Function FindConnected(ByVal ct As Global.System.Type, ByVal selectedType As Global.System.Type, ByVal filterType As Global.System.Type, ByVal connectedFilter As Global.Worm.Criteria.Core.IEntityFilter, ByVal filter As Global.Worm.Criteria.Core.IEntityFilter, ByVal withLoad As Boolean, ByVal sort As Worm.Sorting.Sort) As Global.System.Collections.IList
         Dim args() As Object = New Object() {ct, selectedType, filterType, connectedFilter, filter, withLoad, sort}
-        Dim ret As Global.System.Collections.IList = CType(m_privateObject.Invoke("FindConnected", New System.Type() {GetType(Global.System.Type), GetType(Global.System.Type), GetType(Global.System.Type), GetType(Global.Worm.Orm.IEntityFilter), GetType(Global.Worm.Orm.IEntityFilter), GetType(Boolean), GetType(Global.Worm.Orm.Sort)}, args),Global.System.Collections.IList)
+        Dim ret As Global.System.Collections.IList = CType(m_privateObject.Invoke("FindConnected", New System.Type() {GetType(Global.System.Type), GetType(Global.System.Type), GetType(Global.System.Type), GetType(Global.Worm.Criteria.Core.IEntityFilter), GetType(Global.Worm.Criteria.Core.IEntityFilter), GetType(Boolean), GetType(Worm.Sorting.Sort)}, args), Global.System.Collections.IList)
         Return ret
     End Function
     
@@ -137,15 +137,15 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         Return ret
     End Function
     
-    Friend Overloads Function LoadMultipleObjects(ByVal t As Global.System.Type, ByVal cmd As Global.System.Data.Common.DbCommand, ByVal withLoad As Boolean, ByVal arr As System.Collections.Generic.List(Of Worm.Orm.ColumnAttribute)) As Global.System.Collections.IList
+    Friend Overloads Function LoadMultipleObjects(ByVal t As Global.System.Type, ByVal cmd As Global.System.Data.Common.DbCommand, ByVal withLoad As Boolean, ByVal arr As System.Collections.Generic.List(Of Worm.Orm.Meta.ColumnAttribute)) As Global.System.Collections.IList
         Dim args() As Object = New Object() {t, cmd, withLoad, arr}
-        Dim ret As Global.System.Collections.IList = CType(m_privateObject.Invoke("LoadMultipleObjects", New System.Type() {GetType(Global.System.Type), GetType(Global.System.Data.Common.DbCommand), GetType(Boolean), GetType(System.Collections.Generic.List(Of Worm.Orm.ColumnAttribute))}, args),Global.System.Collections.IList)
+        Dim ret As Global.System.Collections.IList = CType(m_privateObject.Invoke("LoadMultipleObjects", New System.Type() {GetType(Global.System.Type), GetType(Global.System.Data.Common.DbCommand), GetType(Boolean), GetType(System.Collections.Generic.List(Of Worm.Orm.Meta.ColumnAttribute))}, args), Global.System.Collections.IList)
         Return ret
     End Function
     
-    Friend Function GetObjects(ByVal ct As Global.System.Type, ByVal ids As System.Collections.Generic.IList(Of Integer), ByVal f As Global.Worm.Orm.IEntityFilter, ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As Global.System.Collections.IList
+    Friend Function GetObjects(ByVal ct As Global.System.Type, ByVal ids As System.Collections.Generic.IList(Of Integer), ByVal f As Global.Worm.Criteria.Core.IEntityFilter, ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As Global.System.Collections.IList
         Dim args() As Object = New Object() {ct, ids, f, withLoad, fieldName, idsSorted}
-        Dim ret As Global.System.Collections.IList = CType(m_privateObject.Invoke("GetObjects", New System.Type() {GetType(Global.System.Type), GetType(System.Collections.Generic.IList(Of Integer)), GetType(Global.Worm.Orm.IEntityFilter), GetType(Boolean), GetType(String), GetType(Boolean)}, args),Global.System.Collections.IList)
+        Dim ret As Global.System.Collections.IList = CType(m_privateObject.Invoke("GetObjects", New System.Type() {GetType(Global.System.Type), GetType(System.Collections.Generic.IList(Of Integer)), GetType(Global.Worm.Criteria.Core.IEntityFilter), GetType(Boolean), GetType(String), GetType(Boolean)}, args), Global.System.Collections.IList)
         Return ret
     End Function
     
@@ -166,9 +166,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         m_privateObject.Invoke("LoadObject", New System.Type() {GetType(Global.Worm.Orm.OrmBase)}, args)
     End Sub
     
-    Friend Sub LoadSingleObject(ByVal cmd As Global.System.Data.Common.DbCommand, ByVal arr As System.Collections.Generic.IList(Of Worm.Orm.ColumnAttribute), ByVal obj As Global.Worm.Orm.OrmBase, ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
+    Friend Sub LoadSingleObject(ByVal cmd As Global.System.Data.Common.DbCommand, ByVal arr As System.Collections.Generic.IList(Of Worm.Orm.Meta.ColumnAttribute), ByVal obj As Global.Worm.Orm.OrmBase, ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
         Dim args() As Object = New Object() {cmd, arr, obj, check_pk, load, modifiedloaded}
-        m_privateObject.Invoke("LoadSingleObject", New System.Type() {GetType(Global.System.Data.Common.DbCommand), GetType(System.Collections.Generic.IList(Of Worm.Orm.ColumnAttribute)), GetType(Global.Worm.Orm.OrmBase), GetType(Boolean), GetType(Boolean), GetType(Boolean)}, args)
+        m_privateObject.Invoke("LoadSingleObject", New System.Type() {GetType(Global.System.Data.Common.DbCommand), GetType(System.Collections.Generic.IList(Of Worm.Orm.Meta.ColumnAttribute)), GetType(Global.Worm.Orm.OrmBase), GetType(Boolean), GetType(Boolean), GetType(Boolean)}, args)
     End Sub
     
     Friend Function GetPrimaryKeyIdx(ByVal cmdtext As String, ByVal original_type As Global.System.Type, ByVal dr As Global.System.Data.IDataReader) As Integer
@@ -177,9 +177,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         Return ret
     End Function
     
-    Friend Sub LoadFromDataReader(ByVal obj As Global.Worm.Orm.OrmBase, ByVal dr As Global.System.Data.IDataReader, ByVal arr As System.Collections.Generic.IList(Of Worm.Orm.ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer)
+    Friend Sub LoadFromDataReader(ByVal obj As Global.Worm.Orm.OrmBase, ByVal dr As Global.System.Data.IDataReader, ByVal arr As System.Collections.Generic.IList(Of Worm.Orm.Meta.ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer)
         Dim args() As Object = New Object() {obj, dr, arr, check_pk, displacement}
-        m_privateObject.Invoke("LoadFromDataReader", New System.Type() {GetType(Global.Worm.Orm.OrmBase), GetType(Global.System.Data.IDataReader), GetType(System.Collections.Generic.IList(Of Worm.Orm.ColumnAttribute)), GetType(Boolean), GetType(Integer)}, args)
+        m_privateObject.Invoke("LoadFromDataReader", New System.Type() {GetType(Global.Worm.Orm.OrmBase), GetType(Global.System.Data.IDataReader), GetType(System.Collections.Generic.IList(Of Worm.Orm.Meta.ColumnAttribute)), GetType(Boolean), GetType(Integer)}, args)
     End Sub
     
     Friend Function TestConn(ByVal cmd As Global.System.Data.Common.DbCommand) As Global.TestProject1.Worm_Orm_OrmReadOnlyDBManager_ConnActionAccessor
@@ -199,19 +199,19 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
             b_val_target = b.Target
         End If
         Dim args() As Object = New Object() {b_val_target}
-        Dim target As Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType = New Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType("Worm.Orm", "Worm.Orm.OrmReadOnlyDBManager+ConnAction")
+        Dim target As Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType = New Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType("Worm.Orm", "Worm.Database.OrmReadOnlyDBManager+ConnAction")
         m_privateObject.Invoke("CloseConn", New System.Type() {target.ReferencedType}, args)
     End Sub
     
-    Friend Overloads Function GetFilters(ByVal ids As System.Collections.Generic.List(Of Integer), ByVal fieldName As String, ByVal almgr As Global.Worm.Orm.AliasMgr, ByVal params As Global.Worm.Orm.ParamMgr, ByVal original_type As Global.System.Type, ByVal idsSorted As Boolean) As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer))
+    Friend Overloads Function GetFilters(ByVal ids As System.Collections.Generic.List(Of Integer), ByVal fieldName As String, ByVal almgr As Global.Worm.Database.AliasMgr, ByVal params As Global.Worm.Database.ParamMgr, ByVal original_type As Global.System.Type, ByVal idsSorted As Boolean) As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer))
         Dim args() As Object = New Object() {ids, fieldName, almgr, params, original_type, idsSorted}
-        Dim ret As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)) = CType(m_privateObject.Invoke("GetFilters", New System.Type() {GetType(System.Collections.Generic.List(Of Integer)), GetType(String), GetType(Global.Worm.Orm.AliasMgr), GetType(Global.Worm.Orm.ParamMgr), GetType(Global.System.Type), GetType(Boolean)}, args), System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)))
+        Dim ret As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)) = CType(m_privateObject.Invoke("GetFilters", New System.Type() {GetType(System.Collections.Generic.List(Of Integer)), GetType(String), GetType(Global.Worm.Database.AliasMgr), GetType(Global.Worm.Database.ParamMgr), GetType(Global.System.Type), GetType(Boolean)}, args), System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)))
         Return ret
     End Function
     
-    Friend Overloads Function GetFilters(ByVal ids As System.Collections.Generic.List(Of Integer), ByVal table As Global.Worm.Orm.OrmTable, ByVal column As String, ByVal almgr As Global.Worm.Orm.AliasMgr, ByVal params As Global.Worm.Orm.ParamMgr, ByVal idsSorted As Boolean) As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer))
+    Friend Overloads Function GetFilters(ByVal ids As System.Collections.Generic.List(Of Integer), ByVal table As Worm.Orm.Meta.OrmTable, ByVal column As String, ByVal almgr As Global.Worm.Database.AliasMgr, ByVal params As Global.Worm.Database.ParamMgr, ByVal idsSorted As Boolean) As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer))
         Dim args() As Object = New Object() {ids, table, column, almgr, params, idsSorted}
-        Dim ret As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)) = CType(m_privateObject.Invoke("GetFilters", New System.Type() {GetType(System.Collections.Generic.List(Of Integer)), GetType(Global.Worm.Orm.OrmTable), GetType(String), GetType(Global.Worm.Orm.AliasMgr), GetType(Global.Worm.Orm.ParamMgr), GetType(Boolean)}, args), System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)))
+        Dim ret As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)) = CType(m_privateObject.Invoke("GetFilters", New System.Type() {GetType(System.Collections.Generic.List(Of Integer)), GetType(Worm.Orm.Meta.OrmTable), GetType(String), GetType(Global.Worm.Database.AliasMgr), GetType(Global.Worm.Database.ParamMgr), GetType(Boolean)}, args), System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)))
         Return ret
     End Function
     
@@ -225,9 +225,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         m_privateObject.Invoke("DeleteObject", New System.Type() {GetType(Global.Worm.Orm.OrmBase)}, args)
     End Sub
     
-    Friend Sub M2MSave(ByVal obj As Global.Worm.Orm.OrmBase, ByVal t As Global.System.Type, ByVal direct As Boolean, ByVal el As Global.Worm.Orm.EditableList)
+    Friend Sub M2MSave(ByVal obj As Global.Worm.Orm.OrmBase, ByVal t As Global.System.Type, ByVal direct As Boolean, ByVal el As Worm.Cache.EditableList)
         Dim args() As Object = New Object() {obj, t, direct, el}
-        m_privateObject.Invoke("M2MSave", New System.Type() {GetType(Global.Worm.Orm.OrmBase), GetType(Global.System.Type), GetType(Boolean), GetType(Global.Worm.Orm.EditableList)}, args)
+        m_privateObject.Invoke("M2MSave", New System.Type() {GetType(Global.Worm.Orm.OrmBase), GetType(Global.System.Type), GetType(Boolean), GetType(Worm.Cache.EditableList)}, args)
     End Sub
     
     Friend Function GetSearchSection() As String
@@ -236,9 +236,9 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         Return ret
     End Function
     
-    Friend Function MakeJoin(ByVal t As Global.System.Type, ByVal selectType As Global.System.Type, ByVal field As String, ByVal oper As Global.Worm.Orm.FilterOperation, ByVal joinType As Global.Worm.Orm.JoinType) As Global.Worm.Orm.OrmJoin
+    Friend Function MakeJoin(ByVal t As Global.System.Type, ByVal selectType As Global.System.Type, ByVal field As String, ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Worm.Criteria.Joins.JoinType) As Worm.Criteria.Joins.OrmJoin
         Dim args() As Object = New Object() {t, selectType, field, oper, joinType}
-        Dim ret As Global.Worm.Orm.OrmJoin = CType(m_privateObject.Invoke("MakeJoin", New System.Type() {GetType(Global.System.Type), GetType(Global.System.Type), GetType(String), GetType(Global.Worm.Orm.FilterOperation), GetType(Global.Worm.Orm.JoinType)}, args),Global.Worm.Orm.OrmJoin)
+        Dim ret As Worm.Criteria.Joins.OrmJoin = CType(m_privateObject.Invoke("MakeJoin", New System.Type() {GetType(Global.System.Type), GetType(Global.System.Type), GetType(String), GetType(Worm.Criteria.FilterOperation), GetType(Worm.Criteria.Joins.JoinType)}, args), Worm.Criteria.Joins.OrmJoin)
         Return ret
     End Function
 End Class
@@ -283,7 +283,7 @@ End Class
 Friend Class Worm_Orm_OrmReadOnlyDBManager_ConnActionAccessor
     Inherits BaseAccessor
     
-    Protected Shared m_privateType As Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType = New Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType("Worm.Orm", "Worm.Orm.OrmReadOnlyDBManager+ConnAction")
+    Protected Shared m_privateType As Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType = New Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType("Worm.Orm", "Worm.Database.OrmReadOnlyDBManager+ConnAction")
     
     Friend Sub New(ByVal target As Object)
         MyBase.New(target, m_privateType)

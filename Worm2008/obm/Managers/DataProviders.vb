@@ -1,13 +1,14 @@
 Imports Worm
 Imports System.Collections.Generic
 Imports Worm.Orm
-Imports Worm.Database.Criteria.Core
+'Imports Worm.Database.Criteria.Core
 Imports Worm.Sorting
 Imports Worm.Orm.Meta
 Imports Worm.Cache
 Imports Worm.Criteria.Values
 Imports Worm.Database.Criteria.Joins
 Imports Worm.Orm.Query
+Imports Worm.Criteria.Core
 
 Namespace Database
 
@@ -17,13 +18,13 @@ Namespace Database
             Inherits CustDelegate(Of T)
             Implements ICacheValidator
 
-            Protected _f As IFilter
+            Protected _f As Worm.Criteria.Core.IFilter
             Protected _sort As Sort
             Protected _mgr As OrmReadOnlyDBManager
             Protected _key As String
             Protected _id As String
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As Worm.Criteria.Core.IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
 
                 If mgr Is Nothing Then
@@ -143,7 +144,7 @@ Namespace Database
 
             Private _cols As List(Of ColumnAttribute)
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal f As Worm.Criteria.Core.IFilter, _
                 ByVal sort As Sort, ByVal key As String, ByVal id As String)
                 MyBase.New(mgr, f, sort, key, id)
             End Sub
@@ -409,7 +410,7 @@ Namespace Database
                     'End If
                     Dim f1 As String = _mgr.DbSchema.GetConnectedTypeField(ct, mt, Not _direct)
                     Dim f2 As String = _mgr.DbSchema.GetConnectedTypeField(ct, t, _direct)
-                    Dim fl As New EntityFilter(ct, f1, New EntityValue(_obj), Worm.Criteria.FilterOperation.Equal)
+                    Dim fl As New Worm.Database.Criteria.Core.EntityFilter(ct, f1, New EntityValue(_obj), Worm.Criteria.FilterOperation.Equal)
                     Dim l As New List(Of Integer)
                     'Dim external_sort As Boolean = False
 

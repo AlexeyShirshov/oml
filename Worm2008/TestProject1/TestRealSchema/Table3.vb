@@ -1,5 +1,7 @@
-Imports Worm
+Imports Worm.Cache
+Imports Worm.Orm.Meta
 Imports Worm.Orm
+
 
 <Entity(GetType(Table3Implementation), "1", EntityName:="Table3")> _
 Public Class Table3
@@ -17,7 +19,7 @@ Public Class Table3
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -67,11 +69,11 @@ Public Class Table3
         If _code = 0 Then
             _trigger = True
         Else
-            _obj = OrmManagerBase.CurrentManager.CreateDBObject(_id, GetObjectType())
+            _obj = Worm.OrmManagerBase.CurrentManager.CreateDBObject(_id, GetObjectType())
         End If
     End Sub
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
+    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
         Select Case c.FieldName
             Case "Ref"
                 RefObject = CType(value, OrmBase)
@@ -112,7 +114,7 @@ Public Class Table3
                 _code = value
                 If _trigger Then
                     _trigger = False
-                    _obj = OrmManagerBase.CurrentManager.CreateDBObject(_id, GetObjectType())
+                    _obj = Worm.OrmManagerBase.CurrentManager.CreateDBObject(_id, GetObjectType())
                 End If
             End Using
         End Set
@@ -159,7 +161,7 @@ End Class
 Public Class Table3Implementation
     Inherits ObjectSchemaBaseImplementation
 
-    Private _idx As Orm.OrmObjectIndex
+    Private _idx As OrmObjectIndex
     Private _tables() As OrmTable = {New OrmTable("dbo.Table3")}
     Private _rels() As M2MRelation
 
@@ -167,14 +169,14 @@ Public Class Table3Implementation
         Main
     End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("Ref", "ref_id", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("Code", "code", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("Version", "v", GetTables()(tables.Main)))
-            idx.Add(New Orm.MapField2Column("XML", "x", GetTables()(tables.Main)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("Ref", "ref_id", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("Code", "code", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("Version", "v", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("XML", "x", GetTables()(Tables.Main)))
             _idx = idx
         End If
         Return _idx
@@ -184,10 +186,10 @@ Public Class Table3Implementation
         Return _tables
     End Function
 
-    Public Overrides Function GetM2MRelations() As Worm.Orm.M2MRelation()
+    Public Overrides Function GetM2MRelations() As M2MRelation()
         If _rels Is Nothing Then
-            _rels = New Orm.M2MRelation() { _
-                New Orm.M2MRelation(GetType(Table1), TablesImplementation._tables(0), "table1", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)) _
+            _rels = New M2MRelation() { _
+                New M2MRelation(GetType(Table1), TablesImplementation._tables(0), "table1", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)) _
             }
         End If
         Return _rels
@@ -201,7 +203,7 @@ Public Class Table33
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
         MyBase.New(id, cache, schema)
     End Sub
 

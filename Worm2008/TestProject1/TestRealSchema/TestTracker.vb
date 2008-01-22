@@ -2,17 +2,18 @@ Imports System
 Imports System.Text
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
-Imports Worm
 Imports System.Diagnostics
+Imports Worm.Orm
+Imports Worm.Database
 
 <TestClass()> _
 Public Class TestTracker
-    Implements Orm.OrmManagerBase.INewObjects
+    Implements Worm.OrmManagerBase.INewObjects
 
     Private _id As Integer = -100
-    Private _new_objects As New Dictionary(Of Integer, Orm.OrmBase)
+    Private _new_objects As New Dictionary(Of Integer, OrmBase)
 
-    Public Sub AddNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.Orm.OrmManagerBase.INewObjects.AddNew
+    Public Sub AddNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.OrmManagerBase.INewObjects.AddNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -20,23 +21,23 @@ Public Class TestTracker
         _new_objects.Add(obj.Identifier, obj)
     End Sub
 
-    Public Function GetIdentity() As Integer Implements Worm.Orm.OrmManagerBase.INewObjects.GetIdentity
+    Public Function GetIdentity() As Integer Implements Worm.OrmManagerBase.INewObjects.GetIdentity
         Dim i As Integer = _id
         _id += -1
         Return i
     End Function
 
-    Public Function GetNew(ByVal t As System.Type, ByVal id As Integer) As Worm.Orm.OrmBase Implements Worm.Orm.OrmManagerBase.INewObjects.GetNew
-        Dim o As Orm.OrmBase = Nothing
+    Public Function GetNew(ByVal t As System.Type, ByVal id As Integer) As Worm.Orm.OrmBase Implements Worm.OrmManagerBase.INewObjects.GetNew
+        Dim o As OrmBase = Nothing
         _new_objects.TryGetValue(id, o)
         Return o
     End Function
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Integer) Implements Worm.Orm.OrmManagerBase.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Integer) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
         _new_objects.Remove(id)
     End Sub
 
-    Public Sub RemoveNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.Orm.OrmManagerBase.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -44,14 +45,14 @@ Public Class TestTracker
         _new_objects.Remove(obj.Identifier)
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Orm.OrmManagerException))> _
+    <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestCreateObjects()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             mgr.NewObjectManager = Me
 
             mgr.BeginTransaction()
             Try
-                Using tracker As New Orm.OrmReadOnlyDBManager.OrmTransactionalScope
+                Using tracker As New OrmReadOnlyDBManager.OrmTransactionalScope
                     Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
                     t.CreatedAt = Now
 
@@ -73,15 +74,15 @@ Public Class TestTracker
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Orm.OrmManagerException))> _
+    <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestUpdate()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             mgr.NewObjectManager = Me
 
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()
             Try
-                Using tracker As New Orm.OrmReadOnlyDBManager.OrmTransactionalScope
+                Using tracker As New OrmReadOnlyDBManager.OrmTransactionalScope
                     Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
                     t.CreatedAt = Now
 
@@ -100,7 +101,7 @@ Public Class TestTracker
             Finally
                 Assert.AreEqual(0, _new_objects.Count)
                 Assert.AreNotEqual(10, tt.Code.Value)
-                Assert.AreEqual(Orm.ObjectState.None, tt.ObjectState)
+                Assert.AreEqual(ObjectState.None, tt.ObjectState)
 
                 mgr.Rollback()
             End Try
@@ -109,13 +110,13 @@ Public Class TestTracker
 
     <TestMethod()> _
     Public Sub TestNormal()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             mgr.NewObjectManager = Me
 
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()
             Try
-                Using tracker As New Orm.OrmReadOnlyDBManager.OrmTransactionalScope
+                Using tracker As New OrmReadOnlyDBManager.OrmTransactionalScope
                     Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
                     t.CreatedAt = Now
 
@@ -129,7 +130,7 @@ Public Class TestTracker
             Finally
                 Assert.AreEqual(0, _new_objects.Count)
                 Assert.AreEqual(10, tt.Code.Value)
-                Assert.AreEqual(Orm.ObjectState.None, tt.ObjectState)
+                Assert.AreEqual(ObjectState.None, tt.ObjectState)
 
                 mgr.Rollback()
             End Try
@@ -138,19 +139,19 @@ Public Class TestTracker
 
     <TestMethod()> _
     Public Sub TestBatch()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
             mgr.NewObjectManager = Me
 
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             Dim tt2 As Table1 = mgr.Find(Of Table1)(2)
 
             mgr.Find(Of Table1)(10)
-            mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("Code").Eq(100), Nothing, True)
-            mgr.Find(Of Table1)(New Orm.Criteria(GetType(Table1)).Field("DT").Eq(Now), Nothing, True)
+            mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("Code").Eq(100), Nothing, True)
+            mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("DT").Eq(Now), Nothing, True)
 
             mgr.BeginTransaction()
             Try
-                Using tracker As New Orm.OrmReadOnlyDBManager.OrmTransactionalScope
+                Using tracker As New OrmReadOnlyDBManager.OrmTransactionalScope
                     tracker.Saver.AcceptInBatch = True
 
                     tt.Code = 10
@@ -160,10 +161,10 @@ Public Class TestTracker
                 End Using
             Finally
                 Assert.AreEqual(10, tt.Code.Value)
-                Assert.AreEqual(Orm.ObjectState.None, tt.ObjectState)
+                Assert.AreEqual(ObjectState.None, tt.ObjectState)
 
                 Assert.AreEqual(100, tt2.Code.Value)
-                Assert.AreEqual(Orm.ObjectState.None, tt2.ObjectState)
+                Assert.AreEqual(ObjectState.None, tt2.ObjectState)
 
                 mgr.Rollback()
             End Try

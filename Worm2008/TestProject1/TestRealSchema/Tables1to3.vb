@@ -1,6 +1,7 @@
-Imports Worm
-Imports Worm.Orm
 Imports CoreFramework.Structures
+Imports Worm.Cache
+Imports Worm.Orm
+Imports Worm.Orm.Meta
 
 <Entity(GetType(TablesImplementation), "1")> _
 Public Class Tables1to3
@@ -15,7 +16,7 @@ Public Class Tables1to3
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As Orm.OrmCacheBase, ByVal schema As Orm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -43,7 +44,7 @@ Public Class Tables1to3
     '    Return New Tables1to3(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Worm.Orm.ColumnAttribute, ByVal value As Object)
+    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
         Select Case c.FieldName
             Case "Title"
                 Title = CStr(value)
@@ -105,20 +106,20 @@ Public Class TablesImplementation
     Inherits ObjectSchemaBaseImplementation
     Implements IRelation
 
-    Private _idx As Orm.OrmObjectIndex
+    Private _idx As OrmObjectIndex
     Public Shared _tables() As OrmTable = {New OrmTable("dbo.Tables1to3Relation")}
 
     Public Enum Tables
         Main
     End Enum
 
-    Public Overrides Function GetFieldColumnMap() As Worm.Orm.Collections.IndexedCollection(Of String, Worm.Orm.MapField2Column)
+    Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         If _idx Is Nothing Then
-            Dim idx As New Orm.OrmObjectIndex
-            idx.Add(New Orm.MapField2Column("ID", "id", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Title", "name", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Table1", "table1", GetTables()(Tables.Main)))
-            idx.Add(New Orm.MapField2Column("Table3", "table3", GetTables()(Tables.Main)))
+            Dim idx As New OrmObjectIndex
+            idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("Title", "name", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("Table1", "table1", GetTables()(Tables.Main)))
+            idx.Add(New MapField2Column("Table3", "table3", GetTables()(Tables.Main)))
             _idx = idx
         End If
         Return _idx
@@ -128,11 +129,11 @@ Public Class TablesImplementation
         Return _tables
     End Function
 
-    Public Function GetFirstType() As IRelation.RelationDesc Implements Worm.Orm.IRelation.GetFirstType
+    Public Function GetFirstType() As IRelation.RelationDesc Implements IRelation.GetFirstType
         Return New IRelation.RelationDesc("Table1", GetType(Table33))
     End Function
 
-    Public Function GetSecondType() As IRelation.RelationDesc Implements Worm.Orm.IRelation.GetSecondType
+    Public Function GetSecondType() As IRelation.RelationDesc Implements IRelation.GetSecondType
         Return New IRelation.RelationDesc("Table3", GetType(Table1))
     End Function
 

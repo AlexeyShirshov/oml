@@ -1,6 +1,6 @@
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Collections.Generic
-Imports Worm
+Imports Worm.Database
 
 <TestClass()> Public Class TestMerge
 
@@ -11,7 +11,7 @@ Imports Worm
         l.Add(1)
         l.Add(2)
 
-        Dim mr As helper.MergeResult = MergeIds(l, False)
+        Dim mr As Worm.MergeResult = Worm.helper.MergeIds(l, False)
 
         Assert.AreEqual(1, mr.Pairs.Count)
         Assert.AreEqual(0, mr.Rest.Count)
@@ -24,7 +24,7 @@ Imports Worm
         l.Add(2)
         l.Add(10)
 
-        mr = MergeIds(l, False)
+        mr = Worm.helper.MergeIds(l, False)
 
         Assert.AreEqual(1, mr.Pairs.Count)
         Assert.AreEqual(1, mr.Rest.Count)
@@ -39,7 +39,7 @@ Imports Worm
         l.Add(10)
         l.Add(11)
 
-        mr = MergeIds(l, False)
+        mr = Worm.helper.MergeIds(l, False)
 
         Assert.AreEqual(2, mr.Pairs.Count)
         Assert.AreEqual(0, mr.Rest.Count)
@@ -52,7 +52,7 @@ Imports Worm
         l.Add(10)
         l.Add(11)
 
-        mr = MergeIds(l, False)
+        mr = Worm.helper.MergeIds(l, False)
 
         Assert.AreEqual(2, mr.Pairs.Count)
         Assert.AreEqual(1, mr.Rest.Count)
@@ -75,14 +75,14 @@ Imports Worm
         l.Add(11)
         l.Add(12)
 
-        Dim mr As MergeResult = MergeIds(l, False)
+        Dim mr As Worm.MergeResult = Worm.helper.MergeIds(l, False)
 
         Assert.AreEqual(2, mr.Pairs.Count)
     End Sub
 
     <TestMethod()> _
     Public Sub RealMergeTest()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManager.CreateWriteManager(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New DbSchema("1"))
             Dim pa As New Worm_Orm_OrmReadOnlyDBManagerAccessor(mgr)
 
             Dim l As New List(Of Integer)
@@ -97,8 +97,8 @@ Imports Worm
                 i += New Random(Environment.TickCount).Next(1, 5)
                 l.Add(i)
             Loop While i < 10000
-            Dim almgr As Worm.Orm.AliasMgr = Worm.Orm.AliasMgr.Create
-            Dim params As New Worm.Orm.ParamMgr(CType(mgr.ObjectSchema, Orm.DbSchema), "p")
+            Dim almgr As AliasMgr = AliasMgr.Create
+            Dim params As New ParamMgr(CType(mgr.ObjectSchema, DbSchema), "p")
             almgr.AddTable(mgr.DbSchema.GetTables(GetType(Entity))(0))
             pa.GetFilters(l, "ID", almgr, params, GetType(Entity), False)
 
@@ -108,7 +108,7 @@ Imports Worm
 
     <TestMethod()> _
     Public Sub RealMergeTest2()
-        Using mgr As Orm.OrmReadOnlyDBManager = TestManager.CreateWriteManager(New Orm.DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New DbSchema("1"))
             Dim pa As New Worm_Orm_OrmReadOnlyDBManagerAccessor(mgr)
 
             Dim l As New List(Of Integer)
