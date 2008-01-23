@@ -15,7 +15,7 @@ Namespace Criteria.Core
     End Interface
 
     Public Interface ITemplateFilterBase
-        Function ReplaceByTemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter
+        'Function ReplaceByTemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter
         ReadOnly Property Template() As ITemplate
         Function MakeSingleStmt(ByVal schema As OrmSchemaBase, ByVal pname As ICreateParam) As Pair(Of String)
     End Interface
@@ -51,7 +51,7 @@ Namespace Criteria.Core
     Public Interface IOrmFilterTemplate
         Inherits ITemplate
         Function MakeHash(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As String
-        Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter
+        'Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter
         Sub SetType(ByVal t As Type)
     End Interface
 
@@ -92,9 +92,15 @@ Namespace Criteria.Core
             End If
         End Function
 
-        Public ReadOnly Property Value() As IParamFilterValue Implements IValuableFilter.Value
+        Public ReadOnly Property ParamValue() As IParamFilterValue Implements IValuableFilter.Value
             Get
                 Return CType(_v, IParamFilterValue)
+            End Get
+        End Property
+
+        Public ReadOnly Property Value() As IFilterValue
+            Get
+                Return CType(_v, IFilterValue)
             End Get
         End Property
 
@@ -107,10 +113,7 @@ Namespace Criteria.Core
                 'Return pmgr.CreateParam(Nothing)
                 Throw New InvalidOperationException("Param is null")
             End If
-            If Value Is Nothing Then
-                Throw New ArgumentException("Value is not IParamFilterValue")
-            End If
-            Return Value.GetParam(schema, pmgr, TryCast(Me, IEntityFilter))
+            Return ParamValue.GetParam(schema, pmgr, TryCast(Me, IEntityFilter))
         End Function
 
         Private Function Equals1(ByVal f As IFilter) As Boolean Implements IFilter.Equals
@@ -150,12 +153,12 @@ Namespace Criteria.Core
         '    Return _templ.GetStaticString
         'End Function
 
-        Public Function Replacetemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter Implements ITemplateFilter.ReplaceByTemplate
-            If Not _templ.Equals(replacement.Template) Then
-                Return Nothing
-            End If
-            Return replacer
-        End Function
+        'Public Function Replacetemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter Implements ITemplateFilter.ReplaceByTemplate
+        '    If Not _templ.Equals(replacement.Template) Then
+        '        Return Nothing
+        '    End If
+        '    Return replacer
+        'End Function
 
         Public MustOverride Function MakeSingleStmt(ByVal schema As OrmSchemaBase, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleStmt
 
@@ -186,7 +189,7 @@ Namespace Criteria.Core
 
         Protected Overrides Function _ToString() As String
             If _str Is Nothing Then
-                _str = Value._ToString & Template.GetStaticString
+                _str = val._ToString & Template.GetStaticString
             End If
             Return _str
         End Function
@@ -202,7 +205,7 @@ Namespace Criteria.Core
         End Property
 
         Public Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
-            Dim evval As IEvaluableValue = TryCast(Value, IEvaluableValue)
+            Dim evval As IEvaluableValue = TryCast(val, IEvaluableValue)
             If evval IsNot Nothing Then
                 If schema Is Nothing Then
                     Throw New ArgumentNullException("schema")
@@ -279,11 +282,11 @@ Namespace Criteria.Core
                 _oschema = schema.GetObjectSchema(Template.Type)
             End If
 
-            Dim prname As String = Value.GetParam(schema, pname, Me)
+            Dim prname As String = ParamValue.GetParam(schema, pname, Me)
 
             Dim map As MapField2Column = _oschema.GetFieldColumnMap()(Template.FieldName)
 
-            Dim v As IEvaluableValue = TryCast(Value, IEvaluableValue)
+            Dim v As IEvaluableValue = TryCast(val, IEvaluableValue)
             If v IsNot Nothing AndAlso v.Value Is DBNull.Value Then
                 If schema.GetFieldTypeByName(Template.Type, Template.FieldName) Is GetType(Byte()) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Binary
@@ -384,7 +387,7 @@ Namespace Criteria.Core
             '_appl = appl
         End Sub
 
-        Public Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter Implements IOrmFilterTemplate.MakeFilter
+        Public Overridable Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -677,7 +680,7 @@ Namespace Database
                     Throw New ArgumentNullException("pname")
                 End If
 
-                Dim prname As String = Value.GetParam(schema, pname, Nothing)
+                Dim prname As String = ParamValue.GetParam(schema, pname, Nothing)
 
                 Return New Pair(Of String)(Template.Column, prname)
             End Function
@@ -725,6 +728,7 @@ Namespace Database
 
             Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As Values.IDatabaseFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
                 MyBase.New(New OrmFilterTemplate(t, fieldName, operation), value)
+                _dbFilter = True
             End Sub
 
             Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt
@@ -766,7 +770,7 @@ Namespace Database
 
             Protected Overloads Function GetParam(ByVal schema As DbSchema, ByVal pmgr As ICreateParam, ByVal almgr As AliasMgr) As String
                 If _dbFilter Then
-                    Return CType(Value, Values.IDatabaseFilterValue).GetParam(schema, pmgr, almgr)
+                    Return CType(val, Values.IDatabaseFilterValue).GetParam(schema, pmgr, almgr)
                 Else
                     Throw New InvalidOperationException
                 End If
@@ -777,36 +781,39 @@ Namespace Database
             Inherits Worm.Criteria.Core.FilterBase
             Implements IFilter
 
-            Private _t As Type
-            Private _tbl As OrmTable
-            Private _field As String
+            'Private _t As Type
+            'Private _tbl As OrmTable
+            'Private _field As String
             Private _format As String
             Private _oper As Worm.Criteria.FilterOperation
             Private _str As String
+            Private _sstr As String
+            Private _values() As Pair(Of Object, String)
 
-            Public Sub New(ByVal table As Type, ByVal field As String, ByVal format As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
+            Public Sub New(ByVal format As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String))
                 MyBase.New(value)
-                _t = table
-                _field = field
+                '_t = table
+                '_field = field
                 _format = format
                 _oper = oper
+                _values = values
             End Sub
 
-            Public Sub New(ByVal table As Type, ByVal field As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
-                MyClass.New(table, field, "{0}.{1}", value, oper)
-            End Sub
+            'Public Sub New(ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal values() As Object)
+            '    MyClass.New("{0}.{1}", value, oper, values)
+            'End Sub
 
-            Public Sub New(ByVal table As OrmTable, ByVal field As String, ByVal format As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
-                MyBase.New(value)
-                _tbl = table
-                _field = field
-                _format = format
-                _oper = oper
-            End Sub
+            'Public Sub New(ByVal table As OrmTable, ByVal field As String, ByVal format As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
+            '    MyBase.New(value)
+            '    _tbl = table
+            '    _field = field
+            '    _format = format
+            '    _oper = oper
+            'End Sub
 
-            Public Sub New(ByVal table As OrmTable, ByVal field As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
-                MyClass.New(table, field, "{0}.{1}", value, oper)
-            End Sub
+            'Public Sub New(ByVal table As OrmTable, ByVal field As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
+            '    MyClass.New(table, field, "{0}.{1}", value, oper)
+            'End Sub
 
             Protected Overrides Function _ToString() As String
                 If String.IsNullOrEmpty(_str) Then
@@ -824,11 +831,23 @@ Namespace Database
             End Function
 
             Public Overrides Function ToStaticString() As String
-                Dim o As Object = _t
-                If o Is Nothing Then
-                    o = _tbl.TableName
+                'Dim o As Object = _t
+                'If o Is Nothing Then
+                '    o = _tbl.TableName
+                'End If
+                'Return String.Format(_format, o.ToString, _field) & TemplateBase.Oper2String(_oper)
+                If String.IsNullOrEmpty(_sstr) Then
+                    Dim values As New List(Of String)
+                    For Each p As Pair(Of Object, String) In _values
+                        If p.First Is Nothing Then
+                            values.Add(p.Second)
+                        Else
+                            values.Add(p.First.ToString & "." & p.Second)
+                        End If
+                    Next
+                    _sstr = String.Format(_format, values.ToArray) & TemplateBase.Oper2String(_oper)
                 End If
-                Return String.Format(_format, o.ToString, _field) & TemplateBase.Oper2String(_oper)
+                Return _sstr
             End Function
 
             Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeSQLStmt
@@ -839,29 +858,58 @@ Namespace Database
                 End If
 
                 Dim [alias] As String = String.Empty
-                Dim fld As String = _field
+                Dim values As New List(Of String)
+                Dim lastt As Type = Nothing
+                For Each p As Pair(Of Object, String) In _values
+                    Dim o As Object = p.First
+                    If o Is Nothing Then
+                        Throw New NullReferenceException
+                    End If
 
-                If _t IsNot Nothing Then
-                    Dim oschema As IOrmObjectSchema = CType(schema.GetObjectSchema(_t), IOrmObjectSchema)
-                    Dim tbl As OrmTable = Nothing
-                    Dim map As MapField2Column = Nothing
-                    If oschema.GetFieldColumnMap.TryGetValue(_field, map) Then
-                        fld = map._columnName
-                        tbl = map._tableName
+                    If TypeOf o Is Type Then
+                        Dim t As Type = CType(o, Type)
+                        If Not GetType(OrmBase).IsAssignableFrom(t) Then
+                            Throw New NotSupportedException(String.Format("Type {0} is not assignable from OrmBase", t))
+                        End If
+                        lastt = t
+
+                        Dim oschema As IOrmObjectSchema = CType(schema.GetObjectSchema(t), IOrmObjectSchema)
+                        Dim tbl As OrmTable = Nothing
+                        Dim map As MapField2Column = Nothing
+                        Dim fld As String = p.Second
+                        If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
+                            fld = map._columnName
+                            tbl = map._tableName
+                        Else
+                            tbl = oschema.GetTables(0)
+                        End If
+
+                        If tableAliases IsNot Nothing Then
+                            [alias] = tableAliases(tbl)
+                        End If
+                        If Not String.IsNullOrEmpty([alias]) Then
+                            values.Add([alias] & "." & fld)
+                        Else
+                            values.Add(fld)
+                        End If
+                    ElseIf TypeOf o Is OrmTable Then
+                        Dim tbl As OrmTable = CType(o, OrmTable)
+                        If tableAliases IsNot Nothing Then
+                            [alias] = tableAliases(tbl)
+                        End If
+                        If Not String.IsNullOrEmpty([alias]) Then
+                            values.Add([alias] & "." & p.Second)
+                        Else
+                            values.Add(p.Second)
+                        End If
+                    ElseIf o Is Nothing Then
+                        values.Add(p.Second)
                     Else
-                        tbl = oschema.GetTables(0)
+                        Throw New NotSupportedException(String.Format("Type {0} is not supported", o.GetType))
                     End If
+                Next
 
-                    If tableAliases IsNot Nothing Then
-                        [alias] = tableAliases(tbl)
-                    End If
-                Else
-                    If tableAliases IsNot Nothing Then
-                        [alias] = tableAliases(_tbl)
-                    End If
-                End If
-
-                Return String.Format(_format, [alias], fld) & TemplateBase.Oper2String(_oper) & GetParam(schema, pname)
+                Return String.Format(_format, values.ToArray) & TemplateBase.Oper2String(_oper) & GetParam(schema, pname)
             End Function
         End Class
 

@@ -28,44 +28,17 @@ Namespace Criteria
         Function Field(ByVal fieldName As String) As CriteriaField
     End Interface
 
-    Public MustInherit Class CriteriaField
-        Private _t As Type
-        Private _f As String
+    Public MustInherit Class CriteriaBase
         Private _con As Condition.ConditionConstructorBase
         Private _ct As ConditionOperator
 
-        Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String)
-            'If t Is Nothing Then
-            '    Throw New ArgumentNullException("t")
-            'End If
-
-            'If String.IsNullOrEmpty(fieldName) Then
-            '    Throw New ArgumentNullException("fieldName")
-            'End If
-
-            _t = t
-            _f = fieldName
+        Public Sub New()
         End Sub
 
-        Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String, _
-            ByVal con As Condition.ConditionConstructorBase, ByVal ct As ConditionOperator)
-            _t = t
-            _f = fieldName
+        Public Sub New(ByVal con As Condition.ConditionConstructorBase, ByVal ct As ConditionOperator)
             _con = con
             _ct = ct
         End Sub
-
-        Protected ReadOnly Property Type() As Type
-            Get
-                Return _t
-            End Get
-        End Property
-
-        Protected ReadOnly Property Field() As String
-            Get
-                Return _f
-            End Get
-        End Property
 
         Protected Property ConditionCtor() As Condition.ConditionConstructorBase
             Get
@@ -164,6 +137,45 @@ Namespace Criteria
             Return GetLink(CreateFilter(value, oper))
         End Function
 
+    End Class
+
+    Public MustInherit Class CriteriaField
+        Inherits CriteriaBase
+
+        Private _t As Type
+        Private _f As String
+
+        Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String)
+            'If t Is Nothing Then
+            '    Throw New ArgumentNullException("t")
+            'End If
+
+            'If String.IsNullOrEmpty(fieldName) Then
+            '    Throw New ArgumentNullException("fieldName")
+            'End If
+
+            _t = t
+            _f = fieldName
+        End Sub
+
+        Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String, _
+            ByVal con As Condition.ConditionConstructorBase, ByVal ct As ConditionOperator)
+            MyBase.New(con, ct)
+            _t = t
+            _f = fieldName
+        End Sub
+
+        Protected ReadOnly Property Type() As Type
+            Get
+                Return _t
+            End Get
+        End Property
+
+        Protected ReadOnly Property Field() As String
+            Get
+                Return _f
+            End Get
+        End Property
     End Class
 
     Public Interface IGetFilter

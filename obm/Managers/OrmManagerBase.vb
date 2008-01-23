@@ -1459,7 +1459,7 @@ _callstack = environment.StackTrace
 
         If joins IsNot Nothing Then
             For Each join As OrmJoin In joins
-                If Not join.IsEmpty Then
+                If Not OrmJoin.IsEmpty(join) Then
                     key &= join.ToString
                 End If
             Next
@@ -1483,7 +1483,7 @@ _callstack = environment.StackTrace
 
         If joins IsNot Nothing Then
             For Each join As OrmJoin In joins
-                If Not join.IsEmpty Then
+                If Not OrmJoin.IsEmpty(join) Then
                     id &= join.ToString
                 End If
             Next
@@ -2961,8 +2961,13 @@ l1:
         Dim p As Pair(Of M2MCache, Pair(Of String)) = FindM2MReturnKeysNonGeneric(mainobj, tt2, direct)
         Dim m As M2MCache = p.First
 
+#If DEBUG Then
+        Dim cnt As Integer = m.Entry.Added.Count
+#End If
         m.Entry.Add(subobj.Identifier)
-
+#If DEBUG Then
+        Debug.Assert(m.Entry.Added.Count = cnt + 1)
+#End If
         mainobj.AddAccept(New OrmBase.AcceptState2(m, p.Second.First, p.Second.Second))
     End Sub
 
@@ -3842,7 +3847,7 @@ l1:
                     For i As Integer = 1 To ts.GetTables.Length - 1
                         Dim join As OrmJoin = ts.GetJoins(pk_table, ts.GetTables(i))
 
-                        If Not join.IsEmpty Then
+                        If Not OrmJoin.IsEmpty(join) Then
                             l.Add(join)
                         End If
                     Next

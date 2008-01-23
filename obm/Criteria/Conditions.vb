@@ -134,28 +134,28 @@ Namespace Criteria.Conditions
         Protected MustOverride Function CreateMe(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
         Public MustOverride ReadOnly Property Template() As Core.ITemplate Implements Core.ITemplateFilterBase.Template
 
-        Private Function _ReplaceTemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter Implements ITemplateFilter.ReplaceByTemplate
-            Return ReplaceCondition(replacement, replacer)
-        End Function
+        'Private Function _ReplaceTemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter Implements ITemplateFilter.ReplaceByTemplate
+        '    Return ReplaceCondition(replacement, replacer)
+        'End Function
 
         Public Overridable Function ReplaceCondition(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As Condition
-            If replacement.Template.Equals(CType(_left, ITemplateFilter).Template) Then
-                Return CreateMe(replacer, _right, _oper)
-            ElseIf replacement.Template.Equals(CType(_right, ITemplateFilter).Template) Then
-                Return CreateMe(_left, replacer, _oper)
-            Else
-                Dim r As ITemplateFilter = CType(_left, ITemplateFilter).ReplaceByTemplate(replacement, replacer)
+            'If replacement.Template.Equals(CType(_left, ITemplateFilter).Template) Then
+            '    Return CreateMe(replacer, _right, _oper)
+            'ElseIf replacement.Template.Equals(CType(_right, ITemplateFilter).Template) Then
+            '    Return CreateMe(_left, replacer, _oper)
+            'Else
+            '    Dim r As ITemplateFilter = CType(_left, ITemplateFilter).ReplaceByTemplate(replacement, replacer)
 
-                If r IsNot Nothing Then
-                    Return CreateMe(r, _right, _oper)
-                Else
-                    r = CType(_right, ITemplateFilter).ReplaceByTemplate(replacement, replacer)
+            '    If r IsNot Nothing Then
+            '        Return CreateMe(r, _right, _oper)
+            '    Else
+            '        r = CType(_right, ITemplateFilter).ReplaceByTemplate(replacement, replacer)
 
-                    If r IsNot Nothing Then
-                        Return CreateMe(_left, r, _oper)
-                    End If
-                End If
-            End If
+            '        If r IsNot Nothing Then
+            '            Return CreateMe(_left, r, _oper)
+            '        End If
+            '    End If
+            'End If
 
             Return Nothing
         End Function
@@ -256,14 +256,14 @@ Namespace Criteria.Conditions
                 MyBase.New(con)
             End Sub
 
-            Public Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter Implements IOrmFilterTemplate.MakeFilter
-                Dim r As IEntityFilter = Nothing
-                If Con._right IsNot Nothing Then
-                    r = Con.Right.GetFilterTemplate.MakeFilter(schema, oschema, obj)
-                End If
-                Dim e As EntityCondition = CreateCon(Con.Left.GetFilterTemplate.MakeFilter(schema, oschema, obj), r, Con._oper)
-                Return e
-            End Function
+            'Public Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter Implements IOrmFilterTemplate.MakeFilter
+            '    Dim r As IEntityFilter = Nothing
+            '    If Con._right IsNot Nothing Then
+            '        r = Con.Right.GetFilterTemplate.MakeFilter(schema, oschema, obj)
+            '    End If
+            '    Dim e As EntityCondition = CreateCon(Con.Left.GetFilterTemplate.MakeFilter(schema, oschema, obj), r, Con._oper)
+            '    Return e
+            'End Function
 
             Public Sub SetType(ByVal t As System.Type) Implements IOrmFilterTemplate.SetType
                 Con.Left.GetFilterTemplate.SetType(t)
@@ -303,7 +303,7 @@ Namespace Criteria.Conditions
                 Return l
             End Function
 
-            Protected MustOverride Function CreateCon(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As EntityCondition
+            'Protected MustOverride Function CreateCon(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As EntityCondition
         End Class
 
         Public Sub New(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator)
@@ -322,7 +322,7 @@ Namespace Criteria.Conditions
             End Get
         End Property
 
-        Protected MustOverride Function CreateMeE(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As Condition
+        'Protected MustOverride Function CreateMeE(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As Condition
 
         Public Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             If schema Is Nothing Then
@@ -363,35 +363,35 @@ Namespace Criteria.Conditions
             Throw New NotSupportedException
         End Function
 
-        Public Overrides Function ReplaceCondition(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As Condition
-            If replacement.Equals(_left) Then
-                If GetType(IEntityFilter).IsAssignableFrom(CObj(replacer).GetType) Then
-                    Return CreateMeE(CType(replacer, IEntityFilter), CType(_right, IEntityFilter), _oper)
-                Else
-                    Return CreateMe(replacer, _right, _oper)
-                End If
-            ElseIf replacement.Equals(_right) Then
-                If GetType(IEntityFilter).IsAssignableFrom(CObj(replacer).GetType) Then
-                    Return CreateMeE(CType(_left, IEntityFilter), CType(replacer, IEntityFilter), _oper)
-                Else
-                    Return CreateMe(_left, replacer, _oper)
-                End If
-            Else
-                Dim r As IFilter = _left.ReplaceFilter(replacement, replacer)
+        'Public Overrides Function ReplaceCondition(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As Condition
+        '    If replacement.Equals(_left) Then
+        '        If GetType(IEntityFilter).IsAssignableFrom(CObj(replacer).GetType) Then
+        '            Return CreateMeE(CType(replacer, IEntityFilter), CType(_right, IEntityFilter), _oper)
+        '        Else
+        '            Return CreateMe(replacer, _right, _oper)
+        '        End If
+        '    ElseIf replacement.Equals(_right) Then
+        '        If GetType(IEntityFilter).IsAssignableFrom(CObj(replacer).GetType) Then
+        '            Return CreateMeE(CType(_left, IEntityFilter), CType(replacer, IEntityFilter), _oper)
+        '        Else
+        '            Return CreateMe(_left, replacer, _oper)
+        '        End If
+        '    Else
+        '        Dim r As IFilter = _left.ReplaceFilter(replacement, replacer)
 
-                If r IsNot Nothing Then
-                    Return CreateMeE(CType(r, IEntityFilter), CType(_right, IEntityFilter), _oper)
-                Else
-                    r = _right.ReplaceFilter(replacement, replacer)
+        '        If r IsNot Nothing Then
+        '            Return CreateMeE(CType(r, IEntityFilter), CType(_right, IEntityFilter), _oper)
+        '        Else
+        '            r = _right.ReplaceFilter(replacement, replacer)
 
-                    If r IsNot Nothing Then
-                        Return CreateMeE(CType(_left, IEntityFilter), CType(r, IEntityFilter), _oper)
-                    End If
-                End If
-            End If
+        '            If r IsNot Nothing Then
+        '                Return CreateMeE(CType(_left, IEntityFilter), CType(r, IEntityFilter), _oper)
+        '            End If
+        '        End If
+        '    End If
 
-            Return Nothing
-        End Function
+        '    Return Nothing
+        'End Function
 
         Public Function MakeHash() As String Implements IEntityFilter.MakeHash
             Dim l As String = Left.MakeHash

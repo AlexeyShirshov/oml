@@ -137,6 +137,10 @@ Public Class TestJoinsRS
             Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first"), Nothing, False)
             Assert.AreEqual(2, c.Count)
 
+            c = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first"). _
+                And("Code").Eq(2), Nothing, False)
+            Assert.AreEqual(2, c.Count)
+
             Dim t2 As New Table2(1, mgr.Cache, mgr.ObjectSchema)
             t2.Tbl = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()

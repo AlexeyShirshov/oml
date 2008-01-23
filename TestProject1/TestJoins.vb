@@ -10,14 +10,14 @@ Imports Worm.Criteria.Conditions
 
 <TestClass()> Public Class TestJoins
 
-    <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
-    Public Sub TestCreation()
-        Dim j As OrmJoin = Nothing
+    '<TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
+    'Public Sub TestCreation()
+    '    Dim j As OrmJoin = Nothing
 
-        Assert.IsTrue(j.IsEmpty)
+    '    Assert.IsTrue(j.IsEmpty)
 
-        j.MakeSQLStmt(Nothing, Nothing, Nothing)
-    End Sub
+    '    j.MakeSQLStmt(Nothing, Nothing, Nothing)
+    'End Sub
 
     <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
     Public Sub TestMakeSQLStmt()
@@ -337,6 +337,22 @@ End Class
         Dim j2 As New OrmJoin(schema.GetTables(GetType(Entity))(0), Worm.Criteria.Joins.JoinType.Join, f)
         j2.InjectJoinFilter(GetType(Entity2), "oqwef", tbl, "onadg")
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestReplace3()
+        Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
+        Dim f2 As New EntityFilter(GetType(Entity4), "Title", New ScalarValue("alex"), Worm.Criteria.FilterOperation.Equal)
+        Dim c As New Criteria.Conditions.Condition(f, f2, ConditionOperator.Or)
+
+        Dim schema As New DbSchema("1")
+        Dim almgr As AliasMgr = AliasMgr.Create
+        almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).GetTables(0))
+        almgr.AddTable(schema.GetObjectSchema(GetType(Entity4)).GetTables(0))
+        Dim pmgr As New ParamMgr(schema, "p")
+
+        Assert.AreEqual("(t1.id = @p1 or t2.name = @p2)", c.MakeSQLStmt(schema, almgr, pmgr))
+    End Sub
+
 End Class
 
 <TestClass()> Public Class TestFilters
@@ -401,7 +417,7 @@ End Class
     Public Sub TestMakeSQLStmt4()
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.GreaterEqualThan)
 
-        Assert.AreEqual("TestProject1.EntityID >= ", f.Template.GetStaticString)
+        Assert.AreEqual("TestProject1.EntityIDGreaterEqualThan", f.Template.GetStaticString)
 
         Assert.AreEqual(1, f.GetAllFilters.Count)
 

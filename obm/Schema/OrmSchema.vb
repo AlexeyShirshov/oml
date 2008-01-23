@@ -730,6 +730,14 @@ Public MustInherit Class OrmSchemaBase
     End Function
 
     Public Function GetFieldNameByType(ByVal type As Type, ByVal fieldType As Type) As ICollection(Of String)
+        If type Is Nothing Then
+            Throw New ArgumentNullException("type")
+        End If
+
+        If fieldType Is Nothing Then
+            Throw New ArgumentNullException("fieldType")
+        End If
+
         Dim key As String = type.ToString & fieldType.ToString
         Dim l As List(Of String) = CType(_joins(key), List(Of String))
         If l Is Nothing Then

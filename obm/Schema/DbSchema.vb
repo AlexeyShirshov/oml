@@ -391,7 +391,7 @@ Namespace Database
                     For j As Integer = 1 To inserted_tables.Count - 1
                         Dim join_table As OrmTable = tbls(j)
                         Dim jn As OrmJoin = CType(GetJoins(es, pkt, join_table), OrmJoin)
-                        If Not jn.IsEmpty Then
+                        If Not OrmJoin.IsEmpty(jn) Then
                             Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(jn.Condition, real_t, prim_key.FieldName, "@id")
 
                             If f Is Nothing Then
@@ -689,7 +689,7 @@ Namespace Database
                                 de_table.Value._where4update.AddFilter(New EntityFilter(rt, c.FieldName, New ScalarValue(original), FilterOperation.Equal))
                             Else
                                 Dim join As OrmJoin = CType(GetJoins(oschema, tb, de_table.Key), OrmJoin)
-                                If Not join.IsEmpty Then
+                                If Not OrmJoin.IsEmpty(join) Then
                                     Dim f As IFilter = JoinFilter.ChangeEntityJoinToParam(join.Condition, rt, c.FieldName, New TypeWrap(Of Object)(original))
 
                                     If f Is Nothing Then
@@ -883,7 +883,7 @@ Namespace Database
                     Next
                 Else
                     Dim join As OrmJoin = CType(GetJoins(relSchema, tables(0), table), OrmJoin)
-                    If Not join.IsEmpty Then
+                    If Not OrmJoin.IsEmpty(join) Then
                         Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(join.Condition, type, "ID", "@id")
 
                         If f Is Nothing Then
@@ -996,7 +996,7 @@ Namespace Database
                     For i As Integer = 0 To joins.Length - 1
                         Dim join As OrmJoin = CType(joins(i), OrmJoin)
 
-                        If Not join.IsEmpty Then
+                        If Not OrmJoin.IsEmpty(join) Then
                             almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
                             selectcmd.Append(join.MakeSQLStmt(Me, almgr, params))
                         End If
@@ -1267,7 +1267,7 @@ Namespace Database
                 For j As Integer = 1 To tables.Length - 1
                     Dim join As OrmJoin = CType(GetJoins(sch, pk_table, tables(j)), OrmJoin)
 
-                    If Not join.IsEmpty Then
+                    If Not OrmJoin.IsEmpty(join) Then
                         almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
 
                         join.InjectJoinFilter(selectedType, "ID", table, id)
@@ -1312,7 +1312,7 @@ Namespace Database
                 For i As Integer = 1 To tables.Length - 1
                     Dim join As OrmJoin = CType(sch.GetJoins(pk_table, tables(i)), OrmJoin)
 
-                    If Not join.IsEmpty Then
+                    If Not OrmJoin.IsEmpty(join) Then
                         almgr.AddTable(tables(i), CType(Nothing, ParamMgr))
                         selectcmd.Append(join.MakeSQLStmt(Me, almgr, pname))
                     End If
@@ -1401,7 +1401,7 @@ Namespace Database
                     For j As Integer = i + 1 To tables.Length - 1
                         Dim join As OrmJoin = CType(GetJoins(sch, tbl, tables(j)), OrmJoin)
 
-                        If Not join.IsEmpty Then
+                        If Not OrmJoin.IsEmpty(join) Then
                             If Not almgr.Aliases.ContainsKey(tables(j)) Then
                                 almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
                             End If
@@ -1767,7 +1767,7 @@ Namespace Database
             'End If
 
             For Each join As OrmJoin In joins
-                If Not join.IsEmpty Then
+                If Not OrmJoin.IsEmpty(join) Then
                     'Dim tm As OrmFilterTemplate = CType(join.InjectJoinFilter(searchType, "ID", ct, "[key]"), OrmFilterTemplate)
                     'If tm Is Nothing Then
                     '    Throw New DBSchemaException("Invalid join")
