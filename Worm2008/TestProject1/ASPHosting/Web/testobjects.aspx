@@ -1,4 +1,6 @@
 <%@ Assembly Name="Worm.Orm" %>
+<%@ Import Namespace="Worm.Database" %>
+<%@ Import Namespace="Worm.Cache" %>
 <%@ Assembly Name="TestProject1" %>
 <%@ Import Namespace="Worm.Orm" %>
 

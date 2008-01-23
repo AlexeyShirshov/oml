@@ -106,9 +106,9 @@ Namespace Database
                     End Get
                 End Property
 
-                Protected Overrides Function CreateCon(ByVal left As Worm.Criteria.Core.IEntityFilter, ByVal right As Worm.Criteria.Core.IEntityFilter, ByVal [operator] As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.Conditions.EntityCondition
-                    Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
-                End Function
+                'Protected Overrides Function CreateCon(ByVal left As Worm.Criteria.Core.IEntityFilter, ByVal right As Worm.Criteria.Core.IEntityFilter, ByVal [operator] As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.Conditions.EntityCondition
+                '    Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
+                'End Function
             End Class
 
             Public Sub New(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As cc.ConditionOperator)
@@ -119,9 +119,9 @@ Namespace Database
                 Return New Condition(CType(left, IFilter), CType(right, IFilter), [operator])
             End Function
 
-            Protected Overrides Function CreateMeE(ByVal left As Worm.Criteria.Core.IEntityFilter, ByVal right As Worm.Criteria.Core.IEntityFilter, ByVal [operator] As cc.ConditionOperator) As cc.Condition
-                Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
-            End Function
+            'Protected Overrides Function CreateMeE(ByVal left As Worm.Criteria.Core.IEntityFilter, ByVal right As Worm.Criteria.Core.IEntityFilter, ByVal [operator] As cc.ConditionOperator) As cc.Condition
+            '    Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
+            'End Function
 
             Public Overrides ReadOnly Property Template() As Worm.Criteria.Core.ITemplate
                 Get

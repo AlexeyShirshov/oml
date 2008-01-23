@@ -136,11 +136,15 @@ Namespace Criteria.Joins
             _condition = condition
         End Sub
 
-        Public ReadOnly Property IsEmpty() As Boolean
-            Get
-                Return _table Is Nothing
-            End Get
-        End Property
+        Public Shared Function IsEmpty(ByVal j As OrmJoin) As Boolean
+            Return j Is Nothing
+        End Function
+
+        'Public ReadOnly Property IsEmpty() As Boolean
+        '    Get
+        '        Return _table Is Nothing
+        '    End Get
+        'End Property
 
         Protected Function JoinTypeString() As String
             Select Case _joinType
@@ -324,9 +328,9 @@ Namespace Database
             End Sub
 
             Public Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String
-                If IsEmpty Then
-                    Throw New InvalidOperationException("Object must be created")
-                End If
+                'If IsEmpty Then
+                '    Throw New InvalidOperationException("Object must be created")
+                'End If
 
                 If Condition Is Nothing Then
                     Throw New InvalidOperationException("Join condition must be specified")

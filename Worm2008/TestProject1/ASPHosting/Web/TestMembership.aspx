@@ -1,4 +1,6 @@
 <%@ Assembly Name="Worm.Orm" %>
+<%@ Import Namespace="Worm.Cache" %>
+<%@ Import Namespace="Worm.Database" %>
 <%@ Import Namespace="Worm.Orm" %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -13,7 +15,7 @@
         End Function
         
         Public Function CreateDBManager() As OrmReadOnlyDBManager
-            Return New OrmReadOnlyDBManager(New Worm.Orm.OrmCache, New Worm.Orm.DbSchema("1"), "Server=.\sqlexpress;AttachDBFileName='" & TestProject1.Settings.WormRoot & "\TestProject1\Databases\test.mdf';User Instance=true;Integrated security=true;")
+            Return New OrmReadOnlyDBManager(New OrmCache, New DbSchema("1"), "Server=.\sqlexpress;AttachDBFileName='" & TestProject1.Settings.WormRoot & "\TestProject1\Databases\test.mdf';User Instance=true;Integrated security=true;")
         End Function
     
         Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)
@@ -73,6 +75,7 @@
             End Try
         End Sub
 </script>
+    <title>adkljfvadfklv</title>
 </head>
 <body>
     <%=GetTime() & "  test membership ok"%>
