@@ -6,7 +6,9 @@ using System.Reflection;
 using System.Text;
 using OrmCodeGenLib.Descriptors;
 using Worm.Orm;
-using Worm.Orm.Collections;
+using Worm.Collections;
+using Worm.Orm.Meta;
+using Worm.Cache;
 
 namespace OrmCodeGenLib
 {
@@ -204,7 +206,7 @@ namespace OrmCodeGenLib
                 // параметры конструктора
                 ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(int), "id"));
                 ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmCacheBase), "cache"));
-                ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmSchemaBase), "schema"));
+                ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Worm.OrmSchemaBase), "schema"));
                 // передача параметров базовому конструктору
                 ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("id"));
                 ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("cache"));
@@ -445,7 +447,7 @@ namespace OrmCodeGenLib
                     entitySchemaDefClass.Members.Add(method);
                     method.Name = "GetJoins";
                     // тип возвращаемого значения
-                    method.ReturnType = new CodeTypeReference(typeof(OrmJoin));
+                    method.ReturnType = new CodeTypeReference(typeof(Worm.Criteria.Joins.OrmJoin));
                     // модификаторы доступа
                     method.Attributes = MemberAttributes.Public;
                     // реализует метод базового класса
@@ -483,7 +485,7 @@ namespace OrmCodeGenLib
                     {
                         method.Statements.Add(
                             new CodeMethodReturnStatement(
-                                new CodeDefaultValueExpression(new CodeTypeReference(typeof(OrmJoin)))
+                                new CodeDefaultValueExpression(new CodeTypeReference(typeof(Worm.Database.Criteria.Joins.OrmJoin)))
                             )
                         );
                     }
@@ -522,7 +524,7 @@ namespace OrmCodeGenLib
                     entitySchemaDefClass.Members.Add(method);
                     method.Name = "GetFilter";
                     // тип возвращаемого значения
-                    method.ReturnType = new CodeTypeReference(typeof(IFilter));
+                    method.ReturnType = new CodeTypeReference(typeof(Worm.Criteria.Core.IFilter));
                     // модификаторы доступа
                     method.Attributes = MemberAttributes.Public;
                     method.Parameters.Add(
@@ -876,7 +878,7 @@ namespace OrmCodeGenLib
                 if (entity.BaseEntity == null)
                 {
                     CodeMemberField schemaField = new CodeMemberField(
-                        new CodeTypeReference(typeof(OrmSchemaBase)),
+                        new CodeTypeReference(typeof(Worm.OrmSchemaBase)),
                         "_schema"
                         );
                     CodeMemberField typeField = new CodeMemberField(
@@ -900,7 +902,7 @@ namespace OrmCodeGenLib
                     }
                     method.Parameters.Add(
                         new CodeParameterDeclarationExpression(
-                            new CodeTypeReference(typeof(OrmSchemaBase)),
+                            new CodeTypeReference(typeof(Worm.OrmSchemaBase)),
                             "schema"
                             )
                         );
@@ -998,7 +1000,7 @@ namespace OrmCodeGenLib
     		entitySchemaDefClass.Members.Add(method);
     		method.Name = "GetFirstType";
     		// тип возвращаемого значения
-    		method.ReturnType = new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc));
+    		method.ReturnType = new CodeTypeReference(typeof(IRelation.RelationDesc));
     		// модификаторы доступа
     		method.Attributes = MemberAttributes.Public;
     		// реализует метод базового класса
@@ -1006,7 +1008,7 @@ namespace OrmCodeGenLib
     		method.Statements.Add(
     			new CodeMethodReturnStatement(
     				new CodeObjectCreateExpression(
-    					new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc)),
+    					new CodeTypeReference(typeof(IRelation.RelationDesc)),
     					OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Left.FieldName; })),
     					new CodeMethodInvokeExpression(
     						new CodeMethodReferenceExpression(
@@ -1031,7 +1033,7 @@ namespace OrmCodeGenLib
     		entitySchemaDefClass.Members.Add(method);
     		method.Name = "GetSecondType";
     		// тип возвращаемого значения
-    		method.ReturnType = new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc));
+    		method.ReturnType = new CodeTypeReference(typeof(IRelation.RelationDesc));
     		// модификаторы доступа
     		method.Attributes = MemberAttributes.Public;
     		// реализует метод базового класса
@@ -1039,7 +1041,7 @@ namespace OrmCodeGenLib
     		method.Statements.Add(
     			new CodeMethodReturnStatement(
     				new CodeObjectCreateExpression(
-    					new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc)),
+    					new CodeTypeReference(typeof(IRelation.RelationDesc)),
 						OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.CompleteEntity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Right.FieldName; })),
     					new CodeMethodInvokeExpression(
     						new CodeMethodReferenceExpression(
@@ -1070,7 +1072,7 @@ namespace OrmCodeGenLib
 			entitySchemaDefClass.Members.Add(method);
 			method.Name = "GetFirstType";
 			// тип возвращаемого значения
-			method.ReturnType = new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc));
+			method.ReturnType = new CodeTypeReference(typeof(IRelation.RelationDesc));
 			// модификаторы доступа
 			method.Attributes = MemberAttributes.Public;
 			// реализует метод базового класса
@@ -1078,7 +1080,7 @@ namespace OrmCodeGenLib
 			method.Statements.Add(
 				new CodeMethodReturnStatement(
 					new CodeObjectCreateExpression(
-						new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc)),
+						new CodeTypeReference(typeof(IRelation.RelationDesc)),
 						OrmCodeGenHelper.GetFieldNameReferenceExpression(
 							entity.Properties.Find(
 								delegate(PropertyDescription match) { return match.FieldName == relation.Direct.FieldName; })),
@@ -1106,7 +1108,7 @@ namespace OrmCodeGenLib
 			entitySchemaDefClass.Members.Add(method);
 			method.Name = "GetSecondType";
 			// тип возвращаемого значения
-			method.ReturnType = new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc));
+			method.ReturnType = new CodeTypeReference(typeof(IRelation.RelationDesc));
 			// модификаторы доступа
 			method.Attributes = MemberAttributes.Public;
 			// реализует метод базового класса
@@ -1114,7 +1116,7 @@ namespace OrmCodeGenLib
 			method.Statements.Add(
 				new CodeMethodReturnStatement(
 					new CodeObjectCreateExpression(
-						new CodeTypeReference(typeof(Worm.Orm.IRelation.RelationDesc)),
+						new CodeTypeReference(typeof(IRelation.RelationDesc)),
 						OrmCodeGenHelper.GetFieldNameReferenceExpression(entity.CompleteEntity.Properties.Find(delegate(PropertyDescription match) { return match.FieldName == relation.Reverse.FieldName; })),
 						new CodeMethodInvokeExpression(
 							new CodeMethodReferenceExpression(
@@ -1286,7 +1288,7 @@ namespace OrmCodeGenLib
             if (underlyingEntity == null)
                 tableExpression = new CodeMethodInvokeExpression(
                     new CodeCastExpression(
-                        new CodeTypeReference(typeof(IDbSchema)),
+                        new CodeTypeReference(typeof(Worm.IDbSchema)),
                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema")
                         ),
                     "GetSharedTable",
@@ -1918,7 +1920,7 @@ namespace OrmCodeGenLib
                 new CodeAssignStatement(
                     new CodeVariableReferenceExpression("tables"),
                     new CodeMethodInvokeExpression(
-                        new CodeCastExpression(new CodeTypeReference(typeof(IDbSchema)), new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema")),
+                        new CodeCastExpression(new CodeTypeReference(typeof(Worm.IDbSchema)), new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema")),
                         "GetTables",
                         new CodeArgumentReferenceExpression("type")
                         )
