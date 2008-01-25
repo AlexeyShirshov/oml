@@ -1,0 +1,109 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<oos:OrmObjects defaultNamespace="XMedia.Framework.Media.Objects" schemaVersion="1" xmlns:oos="http://www.xmedia.ru/OrmObjectsSchema.xsd">
+	<oos:Tables>
+		<oos:Table id="tblAlbums">dbo.albums</oos:Table>
+		<oos:Table id="tblArtists">dbo.artists</oos:Table>
+		<oos:Table id="tblAl2Ar">dbo.al2ar</oos:Table>
+		<oos:Table id="tblSiteAccess">dbo.sites_access</oos:Table>
+	  <oos:Table id="tbla2b">[dbo].[a2b]</oos:Table>
+	  <oos:Table id="tblal2al">[dbo].[al2al]</oos:Table>
+	</oos:Tables>
+	<oos:Types>
+		<oos:Type id="tAlbum">
+			<oos:Entity ref="eAlbum"/>
+		</oos:Type>
+		<oos:Type id="tArtist">
+			<oos:Entity ref="eArtist"/>
+		</oos:Type>
+		<oos:Type id="tInt32">
+			<oos:ClrType name="System.Int32"/>
+		</oos:Type>
+		<oos:Type id="tString">
+			<oos:ClrType name="System.String"/>
+		</oos:Type>
+		<oos:Type id="tInt32Nullable">
+			<oos:ClrType name="System.Nullable`1[[System.Int32, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"/>
+		</oos:Type>
+		<oos:Type id="tTestUT1">
+			<oos:UserType name="TestUT1" hint="Enum"/>
+		</oos:Type>
+		<oos:Type id="tTestUT2">
+      <oos:UserType name="TestUT2" hint="ValueType"/>
+		</oos:Type>
+		<oos:Type id="tTestUT3">
+      <oos:UserType name="TestUT3" hint="Nullable"/>
+		</oos:Type>
+		<oos:Type id="tTestUT4">
+      <oos:UserType name="TestUT4" hint="Enum Nullable"/>
+		</oos:Type>
+		<oos:Type id="tTestUT5">
+      <oos:UserType name="TestUT5" hint="ValueType Nullable"/>
+		</oos:Type>
+	</oos:Types>
+	<oos:Entities>
+		<oos:Entity id="eArtist" name="Artist" description="Artist Description"  >
+			<oos:Tables>
+				<oos:Table ref="tblArtists"/>
+				<oos:Table ref="tblSiteAccess"/>
+			</oos:Tables>
+			<oos:Properties>
+				<oos:Property propertyName="ID" attributes="PK" table="tblArtists" fieldName="id" typeRef="tInt32" description="Property ID Description"/>
+				<oos:Property propertyName="Title" table="tblArtists" fieldName="name" typeRef="tString" description="Property Title Description" propertyAccessLevel="Assembly"/>
+				<oos:Property propertyName="DisplayTitle" table="tblArtists" fieldName="display_name" typeRef="tString" description="Property Title Description" classfieldAccessLevel="Family" propertyAccessLevel="Family" propertyAlias="DisplayName" />
+				<oos:Property propertyName="Fact" attributes="Factory" table="tblArtists" fieldName="obj" typeRef="tString" />
+				<oos:Property propertyName="Test" table="tblArtists" fieldName="[test]" typeRef="tString" />
+				<oos:Property propertyName="TestInsDef" attributes="InsertDefault" table="tblArtists" fieldName="[TestInsDef]" typeRef="tString" />
+				<oos:Property propertyName="TestNullabe" table="tblArtists" fieldName="nulableint" typeRef="tInt32Nullable" description="Property Title Description" propertyAccessLevel="Assembly"/>
+				<oos:Property propertyName="TestDisabled" table="tblArtists" fieldName="disabled" typeRef="tInt32Nullable" description="Property Title Description" propertyAccessLevel="Assembly" disabled="true"/>
+			</oos:Properties>
+		</oos:Entity>
+		<oos:Entity id="eAlbum" name="Album" description="Album Description" namespace="AlbumNS" behaviour="ForcePartial">
+			<oos:Tables>
+				<oos:Table ref="tblAlbums"/>
+				<oos:Table ref="tblSiteAccess"/>
+			</oos:Tables>
+			<oos:Properties>
+				<oos:Property propertyName="ID" attributes="PK" table="tblAlbums" fieldName="id" typeRef="tInt32" description="Property ID Description"/>
+				<oos:Property propertyName="Title" table="tblAlbums" fieldName="title" typeRef="tString" description="Property Title Description" propertyAccessLevel="Assembly"/>
+			</oos:Properties>
+		</oos:Entity>
+		<oos:Entity id="Album2ArtistRelation" name="Album2ArtistRelation" description="Album2ArtistRelation Description" namespace="Relations">
+			<oos:Tables>
+				<oos:Table ref="tblAl2Ar"/>
+			</oos:Tables>
+			<oos:Properties>
+				<oos:Property propertyName="ID" attributes="PK" table="tblAl2Ar" fieldName="id" typeRef="tInt32" description="relation id" />
+				<oos:Property propertyName="Album" table="tblAl2Ar" fieldName="album_id" typeRef="tAlbum" description="album" classfieldAccessLevel="Family" />
+				<oos:Property propertyName="Artist" table="tblAl2Ar" fieldName="artist_id" typeRef="tArtist" description="artist" classfieldAccessLevel="Family"/>
+			</oos:Properties>
+		</oos:Entity>
+	  <oos:Entity id="eA2B" name="Artist2Band" description="Artist2Band description">
+		<oos:Tables>
+		  <oos:Table ref="tbla2b"/>
+		</oos:Tables>
+		<oos:Properties>
+		  <oos:Property propertyName="ID" attributes="PK" table="tbla2b" fieldName="id" typeRef="tInt32" description="relation id"/>
+		  <oos:Property propertyName="Band" table="tbla2b" fieldName="band_id" typeRef="tArtist" description="band"  />
+		  <oos:Property propertyName="Artist" table="tbla2b" fieldName="artist_id" typeRef="tArtist" description="band"  />
+		</oos:Properties>
+	  </oos:Entity>
+	</oos:Entities>
+	<oos:EntityRelations>
+		<oos:Relation table="tblAl2Ar" underlyingEntity="Album2ArtistRelation">
+			<oos:Left entity="eArtist" fieldName="artist_id" cascadeDelete="false"/>
+			<oos:Right entity="eAlbum" fieldName="album_id" cascadeDelete="true"/>
+		</oos:Relation>
+		<oos:Relation table="tblSiteAccess" disabled="true">
+			<oos:Left entity="eArtist" fieldName="artist_id1" cascadeDelete="false"/>
+			<oos:Right entity="eArtist" fieldName="artist_id2" cascadeDelete="true"/>
+		</oos:Relation>
+	  <oos:SelfRelation  table="tblal2al" entity="eAlbum" >
+		<oos:Direct fieldName="a1_id" cascadeDelete="false"/>
+		<oos:Reverse fieldName="a2_id" cascadeDelete="false"/>
+	  </oos:SelfRelation>
+	  <oos:SelfRelation  table="tbla2b" entity="eArtist" underlyingEntity="eA2B" >
+		<oos:Direct fieldName="band_id" cascadeDelete="false"/>
+		<oos:Reverse fieldName="artist_id" cascadeDelete="false"/>
+	  </oos:SelfRelation>
+	</oos:EntityRelations>
+</oos:OrmObjects>
