@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<root>
+  <objects>
+    <object id="234" name="first"/>
+    <object id="23" name="second"/>
+    <object id="645" name="third"/>
+  </objects>
+</root>

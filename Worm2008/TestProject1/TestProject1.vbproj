@@ -116,6 +116,7 @@
     <Compile Include="TestRealSchema\TestSerialization.vb" />
     <Compile Include="TestRealSchema\TestTracker.vb" />
     <Compile Include="VSCodeGenAccessors.vb" />
+    <Compile Include="XML\Criteria.vb" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ASPNETHosting\ASPNETHosting.vbproj">
@@ -146,6 +147,7 @@
     <Content Include="ASPHosting\Web\testobjects.aspx">
       <SubType>ASPXCodeBehind</SubType>
     </Content>
+    <EmbeddedResource Include="XML\data.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

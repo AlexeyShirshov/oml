@@ -115,6 +115,8 @@ Namespace Database
     End Class
 
     Public Structure AliasMgr
+        Implements IPrepareTable
+
         Private _aliases As IDictionary(Of OrmTable, String)
 
         Private Sub New(ByVal aliases As IDictionary(Of OrmTable, String))
@@ -125,7 +127,7 @@ Namespace Database
             Return New AliasMgr(New Generic.Dictionary(Of OrmTable, String))
         End Function
 
-        Public Function AddTable(ByRef table As OrmTable) As String
+        Public Function AddTable(ByRef table As OrmTable) As String Implements IPrepareTable.AddTable
             Return AddTable(table, CType(Nothing, ParamMgr))
         End Function
 
@@ -153,7 +155,7 @@ Namespace Database
         '    Return _aliases(table)
         'End Function
 
-        Public ReadOnly Property Aliases() As IDictionary(Of OrmTable, String)
+        Public ReadOnly Property Aliases() As IDictionary(Of OrmTable, String) Implements IPrepareTable.Aliases
             Get
                 Return _aliases
             End Get
@@ -164,6 +166,10 @@ Namespace Database
                 Return _aliases Is Nothing
             End Get
         End Property
+
+        Public Sub Replace(ByVal schema As OrmSchemaBase, ByVal table As Orm.Meta.OrmTable, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
+            sb.Replace(schema.GetTableName(table) & ".", _aliases(table) & ".")
+        End Sub
     End Structure
 
     Public Class DbSchema
@@ -450,9 +456,9 @@ Namespace Database
                     Dim pk_id As String = String.Empty
 
                     If item.Value Is Nothing OrElse item.Value.Count = 0 Then
-                        ins_cmd.Append("insert into ").Append(item.Key).Append(" ").Append(DefaultValues)
+                        ins_cmd.Append("insert into ").Append(GetTableName(item.Key)).Append(" ").Append(DefaultValues)
                     Else
-                        ins_cmd.Append("insert into ").Append(item.Key).Append(" (")
+                        ins_cmd.Append("insert into ").Append(GetTableName(item.Key)).Append(" (")
                         Dim values_sb As New StringBuilder
                         values_sb.Append(") values(")
                         For Each f As ITemplateFilter In item.Value
@@ -527,7 +533,7 @@ Namespace Database
                             End If
                         Next
 
-                        ins_cmd.Append(" from ").Append(pk_table).Append(" where ")
+                        ins_cmd.Append(" from ").Append(GetTableName(pk_table)).Append(" where ")
                         If unions IsNot Nothing Then
                             Throw New NotImplementedException
                             'ins_cmd.Append(GetColumnNameByFieldName(type, "ID", pk_table)).Append(" = @id")
@@ -773,7 +779,7 @@ Namespace Database
                                 upd_cmd.Append(f.MakeSQLStmt(Me, amgr, params)).Append(",")
                             Next
                             upd_cmd.Length -= 1
-                            upd_cmd.Append(" from ").Append(tbl).Append(" ").Append([alias])
+                            upd_cmd.Append(" from ").Append(GetTableName(tbl)).Append(" ").Append([alias])
                             upd_cmd.Append(" where ").Append(CType(item.Value._where4update.Condition, IFilter).MakeSQLStmt(Me, amgr, params))
                             If Not item.Key.Equals(pk_table) Then
                                 'Dim pcnt As Integer = 0
@@ -822,8 +828,9 @@ Namespace Database
                                 Next
 
                                 Dim [alias] As String = amgr.Aliases(pk_table)
-                                sel_sb = sel_sb.Replace(pk_table.TableName, [alias])
-                                sel_sb.Append(" from ").Append(pk_table).Append(" ").Append([alias]).Append(" where ")
+                                'sel_sb = sel_sb.Replace(pk_table.TableName, [alias])
+                                amgr.Replace(Me, pk_table, sel_sb)
+                                sel_sb.Append(" from ").Append(GetTableName(pk_table)).Append(" ").Append([alias]).Append(" where ")
                                 'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
                                 sel_sb.Append(New EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeSQLStmt(Me, amgr, params))
 
@@ -925,7 +932,7 @@ Namespace Database
                     GetDeletedConditions(deleted_tables, type, obj, oschema, relSchema)
 
                     For Each de As KeyValuePair(Of OrmTable, IFilter) In deleted_tables
-                        del_cmd.Append("delete from ").Append(de.Key)
+                        del_cmd.Append("delete from ").Append(GetTableName(de.Key))
                         del_cmd.Append(" where ").Append(de.Value.MakeSQLStmt(Me, Nothing, params))
                         del_cmd.Append(EndLine)
                     Next
@@ -947,7 +954,7 @@ Namespace Database
             End If
 
             Dim del_cmd As New StringBuilder
-            del_cmd.Append("delete from ").Append(GetTables(t)(0))
+            del_cmd.Append("delete from ").Append(GetTableName(GetTables(t)(0)))
             del_cmd.Append(" where ").Append(filter.MakeSQLStmt(Me, Nothing, params))
 
             Return del_cmd.ToString
@@ -1342,7 +1349,7 @@ Namespace Database
 
             'Dim schema As IOrmObjectSchema = GetObjectSchema(original_type)
 
-            selectcmd.Append(table).Append(" ").Append(almgr.Aliases(table))
+            selectcmd.Append(GetTableName(table)).Append(" ").Append(almgr.Aliases(table))
 
             'Dim f As IOrmFilter = schema.GetFilter(filter_info)
             'Dim dic As New Generic.Dictionary(Of OrmTable, OrmTable)
@@ -1357,8 +1364,9 @@ Namespace Database
                 '    End If
                 'Else
                 If almgr.Aliases.ContainsKey(tbl) Then
-                    Dim [alias] As String = almgr.Aliases(tbl)
-                    selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
+                    'Dim [alias] As String = almgr.Aliases(tbl)
+                    'selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
+                    almgr.Replace(Me, tbl, selectcmd)
                 End If
                 'End If
             Next
@@ -1391,10 +1399,11 @@ Namespace Database
                     End If
                 End If
 
-                selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
+                'selectcmd = selectcmd.Replace(tbl.TableName & ".", [alias] & ".")
+                almgr.Replace(Me, tbl, selectcmd)
 
                 If i = 0 Then
-                    selectcmd.Append(tbl_real.TableName).Append(" ").Append([alias])
+                    selectcmd.Append(GetTableName(tbl_real)).Append(" ").Append([alias])
                 End If
 
                 If sch IsNot Nothing Then
@@ -1708,7 +1717,7 @@ Namespace Database
                     For Each field As Pair(Of String, Type) In fields
                         appendMain = True
                         Dim m As MapField2Column = searchSchema.GetFieldColumnMap(field.First)
-                        columns.Append(m._tableName).Append(".")
+                        columns.Append(GetTableName(m._tableName)).Append(".")
                         columns.Append(m._columnName).Append(",")
                     Next
                 End If
@@ -1732,7 +1741,7 @@ Namespace Database
                 sb.Append("[key] ").Append(m._columnName)
             End If
             sb.Append(" from ").Append(table).Append("(")
-            sb.Append(searchTable.TableName).Append(",")
+            sb.Append(GetTableName(searchTable)).Append(",")
             If queryFields Is Nothing OrElse queryFields.Length = 0 Then
                 sb.Append("*")
             Else
@@ -1756,8 +1765,9 @@ Namespace Database
             AppendJoins(searchType, almgr, GetTables(searchType), sb, params, ct, "[key]", appendMain)
             'If fields.Count > 0 Then
             If appendMain Then
-                Dim mainAlias As String = almgr.Aliases(searchTable)
-                columns = columns.Replace(searchTable.TableName & ".", mainAlias & ".")
+                'Dim mainAlias As String = almgr.Aliases(searchTable)
+                'columns = columns.Replace(searchTable.TableName & ".", mainAlias & ".")
+                almgr.Replace(Me, searchTable, columns)
             End If
             'If searchType IsNot selectType Then
             '    almgr.AddTable(selTable)
@@ -1773,8 +1783,10 @@ Namespace Database
                     '    Throw New DBSchemaException("Invalid join")
                     'End If
                     join.InjectJoinFilter(searchType, "ID", ct, "[key]")
-                    Dim al As String = almgr.AddTable(join.Table)
-                    columns = columns.Replace(join.Table.TableName & ".", al & ".")
+                    'Dim al As String = almgr.AddTable(join.Table)
+                    'columns = columns.Replace(join.Table.TableName & ".", al & ".")
+                    almgr.AddTable(join.Table)
+                    almgr.Replace(Me, join.Table, columns)
                     sb.Append(join.MakeSQLStmt(Me, almgr, params))
                     'Else
                     '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
@@ -1952,7 +1964,7 @@ Namespace Database
 
             Dim pk As String = Nothing
             If entry.HasDeleted Then
-                sb.Append("delete from ").Append(tbl.TableName)
+                sb.Append("delete from ").Append(GetTableName(tbl))
                 sb.Append(" where ").Append(param_relation.Column).Append(" = ")
                 pk = pmgr.AddParam(pk, obj.Identifier)
                 sb.Append(pk).Append(" and ").Append(relation.Column).Append(" in(")
@@ -1972,7 +1984,7 @@ Namespace Database
                         sb.Append(vbTab)
                     End If
                     sb.Append("if ").Append(LastError).Append(" = 0 ")
-                    sb.Append("insert into ").Append(tbl.TableName).Append("(")
+                    sb.Append("insert into ").Append(GetTableName(tbl)).Append("(")
                     sb.Append(param_relation.Column).Append(",").Append(relation.Column).Append(") values(")
                     pk = pmgr.AddParam(pk, obj.Identifier)
                     sb.Append(pk).Append(",").Append(id).AppendLine(")")
@@ -2059,6 +2071,14 @@ Namespace Database
 
         Public Overrides Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sort) As Orm.Query.TopAspect
             Return New TopAspect(top, sort)
+        End Function
+
+        Public Overrides Function GetTableName(ByVal t As Orm.Meta.OrmTable) As String
+            If Not String.IsNullOrEmpty(t.Schema) Then
+                Return t.Schema & "." & t.Table
+            Else
+                Return t.Table
+            End If
         End Function
     End Class
 

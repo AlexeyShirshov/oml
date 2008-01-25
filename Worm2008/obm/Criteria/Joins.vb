@@ -100,12 +100,12 @@ Namespace Criteria.Joins
             If _e1 IsNot Nothing Then
                 sb.Append(_e1.First.ToString).Append(_e1.Second).Append(" - ")
             Else
-                sb.Append(_t1.First.TableName).Append(_t1.Second).Append(" - ")
+                sb.Append(_t1.First.RawName).Append(_t1.Second).Append(" - ")
             End If
             If _e2 IsNot Nothing Then
                 sb.Append(_e2.First.ToString).Append(_e2.Second).Append(" - ")
             Else
-                sb.Append(_t2.First.TableName).Append(_t2.Second).Append(" - ")
+                sb.Append(_t2.First.RawName).Append(_t2.Second).Append(" - ")
             End If
             Return sb.ToString
         End Function
@@ -178,7 +178,7 @@ Namespace Criteria.Joins
         'End Function
 
         Public Overrides Function ToString() As String
-            Return _table.TableName & JoinTypeString() & _condition.ToString
+            Return _table.RawName & JoinTypeString() & _condition.ToString
         End Function
 
         Public Property Table() As OrmTable
@@ -343,7 +343,7 @@ Namespace Database
                 Dim tableAliases As IDictionary(Of OrmTable, String) = almgr.Aliases
                 'Dim table As String = _table
                 'Dim sch as IOrmObjectSchema = schema.GetObjectSchema(
-                Return JoinTypeString() & _table.TableName & " " & tableAliases(_table) & " on " & Condition.MakeSQLStmt(schema, almgr, pname)
+                Return JoinTypeString() & schema.GetTableName(_table) & " " & tableAliases(_table) & " on " & Condition.MakeSQLStmt(schema, almgr, pname)
             End Function
 
             Protected Overrides Function CreateOrmFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase

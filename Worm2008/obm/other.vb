@@ -1286,3 +1286,22 @@ Public Class TypeWrap(Of T)
         End If
     End Function
 End Class
+
+Public Class PerfCounter
+    Private _start As Long
+    Private _end As Long
+
+    Declare Function QueryPerformanceCounter Lib "Kernel32" (ByRef X As Long) As Short
+    Declare Function QueryPerformanceFrequency Lib "Kernel32" (ByRef X As Long) As Short
+
+    Public Sub New()
+        QueryPerformanceCounter(_start)
+    End Sub
+
+    Public Function GetTime() As TimeSpan
+        QueryPerformanceCounter(_end)
+        Dim f As Long
+        QueryPerformanceFrequency(f)
+        Return TimeSpan.FromSeconds((_end - _start) / f)
+    End Function
+End Class
