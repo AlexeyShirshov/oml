@@ -490,7 +490,7 @@ Namespace Database
                 If _t IsNot Nothing Then
                     r = _t.ToString()
                 Else
-                    r = _tbl.TableName
+                    r = _tbl.RawName
                 End If
                 If _f IsNot Nothing Then
                     r &= "$" & _f.ToString
@@ -528,7 +528,7 @@ Namespace Database
                 If _t IsNot Nothing Then
                     r = _t.ToString()
                 Else
-                    r = _tbl.TableName
+                    r = _tbl.RawName
                 End If
                 If _f IsNot Nothing Then
                     r &= "$" & _f.ToStaticString

@@ -254,7 +254,7 @@ Namespace Database.Storedprocs
         End Sub
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
-            Dim et As New OrmReadOnlyDBManager.PerfCounter
+            Dim et As New PerfCounter
             Dim r As Integer = cmd.ExecuteNonQuery()
             _exec = et.GetTime
             Dim out As New Dictionary(Of String, Object)
@@ -310,11 +310,11 @@ Namespace Database.Storedprocs
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
             Dim result As Object = InitResult()
-            Dim et As New OrmReadOnlyDBManager.PerfCounter
+            Dim et As New PerfCounter
             Using dr As System.Data.Common.DbDataReader = cmd.ExecuteReader
                 _exec = et.GetTime
                 Dim i As Integer = 0
-                Dim ft As New OrmReadOnlyDBManager.PerfCounter
+                Dim ft As New PerfCounter
                 Do While dr.Read
                     ProcessReader(mgr, i, dr, result)
                 Loop

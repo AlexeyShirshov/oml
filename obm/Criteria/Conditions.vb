@@ -186,7 +186,7 @@ Namespace Criteria.Conditions
             Return _left.Equals(con._left) AndAlso r AndAlso _oper = con._oper
         End Function
 
-        Protected Function Condition2String() As String
+        Protected Overridable Function Condition2String() As String
             If _oper = ConditionOperator.And Then
                 Return " and "
             Else

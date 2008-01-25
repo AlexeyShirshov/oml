@@ -412,31 +412,12 @@ Namespace Database
 
 #End Region
 
-        Declare Function QueryPerformanceCounter Lib "Kernel32" (ByRef X As Long) As Short
-        Declare Function QueryPerformanceFrequency Lib "Kernel32" (ByRef X As Long) As Short
-
         Private _connStr As String
         Private _tran As System.Data.Common.DbTransaction
         Private _closeConnOnCommit As ConnAction
         Private _conn As System.Data.Common.DbConnection
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
-
-        Class PerfCounter
-            Private _start As Long
-            Private _end As Long
-
-            Public Sub New()
-                QueryPerformanceCounter(_start)
-            End Sub
-
-            Public Function GetTime() As TimeSpan
-                QueryPerformanceCounter(_end)
-                Dim f As Long
-                QueryPerformanceFrequency(f)
-                Return TimeSpan.FromSeconds((_end - _start) / f)
-            End Function
-        End Class
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
 
@@ -654,8 +635,9 @@ Namespace Database
                     If withLoad Then
                         For Each tbl As OrmTable In schema2.GetTables
                             If almgr.Aliases.ContainsKey(tbl) Then
-                                Dim [alias] As String = almgr.Aliases(tbl)
-                                sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
+                                'Dim [alias] As String = almgr.Aliases(tbl)
+                                'sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
+                                almgr.Replace(DbSchema, tbl, sb)
                             End If
                         Next
                     End If
@@ -1568,7 +1550,7 @@ Namespace Database
                     End If
                 Next
                 obj._loading = False
-                obj.CheckIsAllLoaded()
+                obj.CheckIsAllLoaded(ObjectSchema)
             End Using
         End Sub
 

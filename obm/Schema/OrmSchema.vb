@@ -39,6 +39,12 @@ Public Interface IDbSchema
     Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
 End Interface
 
+Public Interface IPrepareTable
+    ReadOnly Property Aliases() As IDictionary(Of OrmTable, String)
+    Function AddTable(ByRef table As OrmTable) As String
+    Sub Replace(ByVal schema As OrmSchemaBase, ByVal table As OrmTable, ByVal sb As StringBuilder)
+End Interface
+
 Public MustInherit Class OrmSchemaBase
     Implements IDbSchema
 
@@ -188,7 +194,7 @@ Public MustInherit Class OrmSchemaBase
         Throw New DBSchemaException("Cannot find column: " & columnName)
     End Function
 
-    Protected Function GetColumnNameByFieldNameInternal(ByVal type As Type, ByVal field As String, Optional ByVal add_alias As Boolean = True) As String
+    Protected Friend Function GetColumnNameByFieldNameInternal(ByVal type As Type, ByVal field As String, Optional ByVal add_alias As Boolean = True) As String
         If String.IsNullOrEmpty(field) Then Throw New ArgumentNullException("field")
 
         Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
@@ -198,7 +204,7 @@ Public MustInherit Class OrmSchemaBase
         Dim p As MapField2Column = Nothing
         If coll.TryGetValue(field, p) Then
             If add_alias AndAlso ShouldPrefix(p._columnName) Then
-                Return p._tableName.TableName & "." & p._columnName
+                Return GetTableName(p._tableName) & "." & p._columnName
             Else
                 Return p._columnName
             End If
@@ -450,7 +456,7 @@ Public MustInherit Class OrmSchemaBase
         'Next
         'ids.Length -= 1            
         Dim p As MapField2Column = schema.GetFieldColumnMap("ID")
-        ids.Append(p._tableName.TableName).Append(".").Append(p._columnName)
+        ids.Append(GetTableName(p._tableName)).Append(".").Append(p._columnName)
     End Sub
 
     Public Function HasField(ByVal t As Type, ByVal field As String) As Boolean
@@ -1228,6 +1234,7 @@ Public MustInherit Class OrmSchemaBase
     Public MustOverride Function CreateCriteriaLink(ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase) As Criteria.CriteriaLink
     Public MustOverride Function CreateTopAspect(ByVal top As Integer) As Worm.Orm.Query.TopAspect
     Public MustOverride Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sorting.Sort) As Worm.Orm.Query.TopAspect
+    Public MustOverride Function GetTableName(ByVal t As OrmTable) As String
 
 End Class
 

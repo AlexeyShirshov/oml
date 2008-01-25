@@ -207,6 +207,7 @@ Namespace Orm
             Init()
         End Sub
 
+        <Obsolete()> _
         Friend Sub Init(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
             Me._id = id
 
@@ -216,6 +217,18 @@ Namespace Orm
             End If
 
             If cache IsNot Nothing Then cache.RegisterCreation(Me.GetType, id)
+        End Sub
+
+        Friend Sub Init(ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
+
+            If schema IsNot Nothing Then
+                Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
+                _loaded_members = New BitArray(arr.Count)
+            End If
+
+            If cache IsNot Nothing Then cache.RegisterCreation(Me.GetType, Identifier)
+
+            _state = Orm.ObjectState.NotLoaded
         End Sub
 
         Protected Sub Init()
@@ -296,15 +309,18 @@ Namespace Orm
             End If
         End Function
 
-        Public Function CheckIsAllLoaded() As Boolean
+        Public Function CheckIsAllLoaded(ByVal schema As OrmSchemaBase) As Boolean
             Using SyncHelper(False)
                 Dim allloaded As Boolean = True
                 If Not _loaded Then
-                    Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
+                    Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
                     For i As Integer = 0 To arr.Count - 1
                         If Not _members_load_state(i) Then
+                            'Dim at As Field2DbRelations = schema.GetAttributes(Me.GetType, arr(i))
+                            'If (at And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                             allloaded = False
                             Exit For
+                            'End If
                         End If
                     Next
                     _loaded = allloaded
@@ -853,6 +869,16 @@ Namespace Orm
             End Using
         End Sub
 
+        Protected Friend Sub RaiseBeginModification()
+            Dim modified As OrmBase = GetSoftClone()
+            _state = Orm.ObjectState.Modified
+            OrmCache.RegisterModification(modified, Identifier)
+            If Not _loading Then
+                OrmManagerBase.CurrentManager.RaiseBeginUpdate(Me)
+            End If
+        End Sub
+
+        <Obsolete()> _
         Protected Friend Sub CreateModified(ByVal id As Integer)
             Dim modified As OrmBase = GetSoftClone()
             _state = Orm.ObjectState.Modified
@@ -999,7 +1025,8 @@ l1:
             End With
 
             _loading = False
-            CheckIsAllLoaded()
+            Dim schema As OrmSchemaBase = OrmManagerBase.CurrentManager.ObjectSchema
+            If schema IsNot Nothing Then CheckIsAllLoaded(schema)
 
         End Sub
 
@@ -1146,6 +1173,10 @@ l1:
             End If
 
             pi.SetValue(Me, value, Nothing)
+        End Sub
+
+        Protected Friend Sub SetPK(ByVal fieldName As String, ByVal value As Object)
+            _id = CInt(value)
         End Sub
 
         Public Overridable Function GetValue(ByVal propAlias As String) As Object

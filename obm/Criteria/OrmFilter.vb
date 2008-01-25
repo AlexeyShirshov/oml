@@ -564,7 +564,7 @@ Namespace Database
             End Property
 
             Public Overrides Function GetStaticString() As String
-                Return _tbl.TableName() & _col & OperToStmt()
+                Return _tbl.RawName() & _col & OperToStmt()
             End Function
 
             Public Overrides Function Equals(ByVal obj As Object) As Boolean

@@ -1659,7 +1659,7 @@ l1:
         End If
 
         If relation IsNot Nothing Then
-            key &= relation.Table.TableName & relation.Column
+            key &= relation.Table.RawName & relation.Column
         End If
 
         key &= GetStaticKey()
@@ -1672,7 +1672,7 @@ l1:
         End If
 
         If relation IsNot Nothing Then
-            id &= relation.Table.TableName & relation.Column
+            id &= relation.Table.RawName & relation.Column
         End If
 
         Dim sync As String = id & GetStaticKey()
@@ -1725,6 +1725,10 @@ l1:
 
     Protected Function FindGetKey(Of T As {OrmBase, New})(ByVal filter As IFilter) As String
         Return filter.ToStaticString & GetStaticKey() & _schema.GetEntityKey(GetType(T))
+    End Function
+
+    Public Function Find(Of T As {OrmBase, New})(ByVal criteria As IGetFilter) As ICollection(Of T)
+        Return Find(Of T)(criteria, Nothing, False)
     End Function
 
     Public Function Find(Of T As {OrmBase, New})(ByVal criteria As IGetFilter, _
@@ -2283,6 +2287,77 @@ l1:
                     Else
                         a = New T
                         a.Init(id, _cache, _schema)
+                    End If
+
+                    If load Then
+                        a.Load()
+                        If Not a.IsLoaded Then
+                            a = Nothing
+                        End If
+                    End If
+                    If a IsNot Nothing AndAlso checkOnCreate Then
+                        'checked = True
+                        If Not a.IsLoaded Then
+                            a.Load()
+                            If a.ObjectState = ObjectState.NotFoundInDB Then
+                                a = Nothing
+                            End If
+                        End If
+                    End If
+                    created = True
+                End If
+            End Using
+        End If
+
+        If a IsNot Nothing Then
+            If created AndAlso addOnCreate Then
+                AddObjectInternal(a, CType(dic, System.Collections.IDictionary))
+            End If
+            If Not created AndAlso load AndAlso Not a.IsLoaded Then
+                a.Load()
+            End If
+        End If
+
+        Return a
+    End Function
+
+    Protected Function GetObjectFromCache(Of T As {OrmBase, New})(ByVal obj As T, ByVal dic As IDictionary(Of Integer, T), _
+        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal addOnCreate As Boolean) As T
+
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
+
+        '    Return GetObjectFromCache(obj.Identifier, dic)
+        'End Function
+
+        'Protected Function GetObjectFromCache(Of T As {OrmBase, New})(ByVal id As Integer, _
+        '    ByVal dic As IDictionary(Of Integer, T)) As T
+
+        Dim type As Type = GetType(T)
+
+#If DEBUG Then
+        If dic Is Nothing Then
+            Dim name As String = GetType(T).Name
+            Throw New OrmManagerException("Collection for " & name & " not exists")
+        End If
+#End If
+        Dim created As Boolean = False ', checked As Boolean = False
+        Dim a As T = Nothing
+        Dim id As Integer = obj.Identifier
+        If Not dic.TryGetValue(id, a) AndAlso _newMgr IsNot Nothing Then
+            a = CType(_newMgr.GetNew(type, id), T)
+            If a IsNot Nothing Then Return a
+        End If
+        Dim sync_key As String = "LoadType" & id & type.ToString
+        If a Is Nothing Then
+            Using SyncHelper.AcquireDynamicLock(sync_key)
+                If Not dic.TryGetValue(id, a) Then
+                    If OrmSchemaBase.GetUnions(type) IsNot Nothing Then
+                        Throw New NotSupportedException
+                    Else
+                        a = obj
+                        a.Init(_cache, _schema)
                     End If
 
                     If load Then
