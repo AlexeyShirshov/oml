@@ -182,8 +182,8 @@ namespace XmlSchemaGen
 											}
 										}
 									}
-									else
-										throw new InvalidOperationException("Column " + c.ToString() + " already in collection.", ex);
+									else if(c.ConstraintType != "CHECK")
+										throw new InvalidOperationException(string.Format("Column {0} already in collection. Constraint {1}.",c.ToString(),c.ConstraintType), ex);
 								}
 							}
 						}
