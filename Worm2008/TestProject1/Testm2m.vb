@@ -21,7 +21,7 @@ Imports Worm.Orm.Meta
 
         Dim e As New Entity(10, Nothing, schema)
 
-        Dim params As IList(Of Data.Common.DbParameter) = Nothing
+        Dim params As IList(Of System.Data.Common.DbParameter) = Nothing
         almgr = AliasMgr.Create
         Assert.AreEqual("select t1.ent1_id EntityID,t1.ent2_id Entity4ID from dbo.[1to2] t1 where t1.ent1_id = @p1", schema.SelectM2M(almgr, e, t2, Nothing, Nothing, True, False, False, params, True))
 
@@ -42,7 +42,7 @@ Imports Worm.Orm.Meta
 
         Dim e As New Entity(10, Nothing, schema)
 
-        Dim params As IList(Of Data.Common.DbParameter) = Nothing
+        Dim params As IList(Of System.Data.Common.DbParameter) = Nothing
         almgr = AliasMgr.Create
         Assert.AreEqual("select t1.ent1_id EntityID,t1.ent2_id Entity4ID from dbo.[1to2] t1 join dbo.t1 t2 on t1.ent2_id = t2.i where t1.ent1_id = @p1", schema.SelectM2M(almgr, e, t2, Nothing, Nothing, True, False, False, params, True))
 
@@ -83,7 +83,7 @@ Imports Worm.Orm.Meta
 
         Dim e As New Entity4(10, Nothing, schema)
 
-        Dim params As IList(Of Data.Common.DbParameter) = Nothing
+        Dim params As IList(Of System.Data.Common.DbParameter) = Nothing
         almgr = AliasMgr.Create
         Assert.AreEqual("select t1.ent2_id Entity4ID,t1.ent1_id EntityID from dbo.[1to2] t1 join dbo.t1 t2 on t1.ent1_id = t2.i where t1.ent2_id = @p1", schema.SelectM2M(almgr, e, t2, Nothing, "a", True, False, False, params, True))
 

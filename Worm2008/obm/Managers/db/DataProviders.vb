@@ -263,6 +263,15 @@ Namespace Database
             Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
                 sb.Append(Schema.SelectWithJoin(t, almgr, pmgr, _join, False, _asc, Nothing))
             End Sub
+
+            Public Overrides Sub CreateDepends()
+                MyBase.CreateDepends()
+                If _asc IsNot Nothing AndAlso _asc.Length > 0 Then
+                    Dim tt As System.Type = GetType(T)
+                    Dim cache As OrmCacheBase = _mgr.Cache
+                    cache.AddDependType(tt, _key, _id, _asc, _mgr.ObjectSchema)
+                End If
+            End Sub
         End Class
 
         Protected Class DistinctRelationFilterCustDelegate(Of T As {New, OrmBase})

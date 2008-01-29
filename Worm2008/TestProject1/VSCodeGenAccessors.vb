@@ -203,15 +203,15 @@ Friend Class Worm_Orm_OrmReadOnlyDBManagerAccessor
         m_privateObject.Invoke("CloseConn", New System.Type() {target.ReferencedType}, args)
     End Sub
     
-    Friend Overloads Function GetFilters(ByVal ids As System.Collections.Generic.List(Of Integer), ByVal fieldName As String, ByVal almgr As Global.Worm.Database.AliasMgr, ByVal params As Global.Worm.Database.ParamMgr, ByVal original_type As Global.System.Type, ByVal idsSorted As Boolean) As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer))
+    Friend Overloads Function GetFilters(ByVal ids As System.Collections.Generic.List(Of Integer), ByVal fieldName As String, ByVal almgr As Global.Worm.Database.AliasMgr, ByVal params As Global.Worm.Database.ParamMgr, ByVal original_type As Global.System.Type, ByVal idsSorted As Boolean) As System.Collections.Generic.IEnumerable(Of Pair(Of String, Integer))
         Dim args() As Object = New Object() {ids, fieldName, almgr, params, original_type, idsSorted}
-        Dim ret As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)) = CType(m_privateObject.Invoke("GetFilters", New System.Type() {GetType(System.Collections.Generic.List(Of Integer)), GetType(String), GetType(Global.Worm.Database.AliasMgr), GetType(Global.Worm.Database.ParamMgr), GetType(Global.System.Type), GetType(Boolean)}, args), System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)))
+        Dim ret As System.Collections.Generic.IEnumerable(Of Pair(Of String, Integer)) = CType(m_privateObject.Invoke("GetFilters", New System.Type() {GetType(System.Collections.Generic.List(Of Integer)), GetType(String), GetType(Global.Worm.Database.AliasMgr), GetType(Global.Worm.Database.ParamMgr), GetType(Global.System.Type), GetType(Boolean)}, args), System.Collections.Generic.IEnumerable(Of Pair(Of String, Integer)))
         Return ret
     End Function
     
-    Friend Overloads Function GetFilters(ByVal ids As System.Collections.Generic.List(Of Integer), ByVal table As Worm.Orm.Meta.OrmTable, ByVal column As String, ByVal almgr As Global.Worm.Database.AliasMgr, ByVal params As Global.Worm.Database.ParamMgr, ByVal idsSorted As Boolean) As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer))
+    Friend Overloads Function GetFilters(ByVal ids As System.Collections.Generic.List(Of Integer), ByVal table As Worm.Orm.Meta.OrmTable, ByVal column As String, ByVal almgr As Global.Worm.Database.AliasMgr, ByVal params As Global.Worm.Database.ParamMgr, ByVal idsSorted As Boolean) As System.Collections.Generic.IEnumerable(Of Pair(Of String, Integer))
         Dim args() As Object = New Object() {ids, table, column, almgr, params, idsSorted}
-        Dim ret As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)) = CType(m_privateObject.Invoke("GetFilters", New System.Type() {GetType(System.Collections.Generic.List(Of Integer)), GetType(Worm.Orm.Meta.OrmTable), GetType(String), GetType(Global.Worm.Database.AliasMgr), GetType(Global.Worm.Database.ParamMgr), GetType(Boolean)}, args), System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Integer)))
+        Dim ret As System.Collections.Generic.IEnumerable(Of Pair(Of String, Integer)) = CType(m_privateObject.Invoke("GetFilters", New System.Type() {GetType(System.Collections.Generic.List(Of Integer)), GetType(Worm.Orm.Meta.OrmTable), GetType(String), GetType(Global.Worm.Database.AliasMgr), GetType(Global.Worm.Database.ParamMgr), GetType(Boolean)}, args), System.Collections.Generic.IEnumerable(Of Pair(Of String, Integer)))
         Return ret
     End Function
     

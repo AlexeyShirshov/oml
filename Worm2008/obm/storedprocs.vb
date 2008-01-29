@@ -578,7 +578,7 @@ Namespace Database.Storedprocs
             Return CType(MyBase.GetResult(mgr), TypeWrap(Of T)).Value
         End Function
 
-        Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Object))
+        Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
             Return New List(Of Pair(Of String, Object))
         End Function
     End Class

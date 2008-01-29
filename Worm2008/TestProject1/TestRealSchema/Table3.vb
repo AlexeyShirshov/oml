@@ -13,7 +13,7 @@ Public Class Table3
     Private _trigger As Boolean
     Private _id As Integer
     Private _v As Byte()
-    Private _x As Xml.XmlDocument
+    Private _x As System.Xml.XmlDocument
 
     Public Sub New()
         MyBase.New()
@@ -135,13 +135,13 @@ Public Class Table3
     End Property
 
     <Column("XML")> _
-    Public Property Xml() As Xml.XmlDocument
+    Public Property Xml() As System.Xml.XmlDocument
         Get
             Using SyncHelper(True, "XML")
                 Return _x
             End Using
         End Get
-        Set(ByVal value As Xml.XmlDocument)
+        Set(ByVal value As System.Xml.XmlDocument)
             Using SyncHelper(False, "XML")
                 _x = value
                 If value IsNot Nothing Then
@@ -153,7 +153,7 @@ Public Class Table3
         End Set
     End Property
 
-    Protected Sub NodeChanged(ByVal sender As Object, ByVal e As Xml.XmlNodeChangedEventArgs)
+    Protected Sub NodeChanged(ByVal sender As Object, ByVal e As System.Xml.XmlNodeChangedEventArgs)
         PrepareUpdate()
     End Sub
 End Class
