@@ -5,6 +5,7 @@ Imports Worm.Database.Storedprocs
 Imports Worm.Orm.Meta
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Values
+Imports Worm.Orm.Query
 
 Namespace Cache
 
@@ -912,6 +913,11 @@ Namespace Cache
                     h.Add(id)
                 End If
             End Using
+        End Sub
+
+        Protected Friend Sub AddDependType(ByVal t As Type, ByVal key As String, ByVal id As String, _
+            ByVal asc() As QueryAspect, ByVal schema As OrmSchemaBase)
+
         End Sub
 
         Protected Friend Sub AddJoinDepend(ByVal joinType As Type, ByVal selectType As Type)

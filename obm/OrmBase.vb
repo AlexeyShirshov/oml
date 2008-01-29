@@ -402,7 +402,7 @@ Namespace Orm
 
         Protected Friend Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable
             Dim err As Boolean = True
-            Dim d As IDisposable = New CoreFramework.Threading.BlankSyncHelper(Nothing)
+            Dim d As IDisposable = New BlankSyncHelper(Nothing)
             Try
                 If reader Then
                     d = PrepareRead(fieldName, d)
@@ -434,7 +434,7 @@ Namespace Orm
         ''' <summary>
         ''' Модифицированная версия объекта
         ''' </summary>
-        Protected Friend ReadOnly Property GetModifiedObject() As OrmBase
+        Public ReadOnly Property GetModifiedObject() As OrmBase
             Get
                 'If _mo Is Nothing Then
                 CheckCash()

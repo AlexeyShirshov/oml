@@ -473,7 +473,7 @@ Public Class ScalarProc
         _i = i
     End Sub
 
-    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Object))
+    Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
         Dim l As New List(Of Pair(Of String, Object))
         l.Add(New Pair(Of String, Object)("i", _i))
         Return l

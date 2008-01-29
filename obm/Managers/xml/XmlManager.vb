@@ -146,23 +146,23 @@ Namespace Xml
         End Function
 
         Protected Friend Overrides Function GetStaticKey() As String
-
+            Throw New NotImplementedException
         End Function
 
         Protected Friend Overrides Sub LoadObject(ByVal obj As Orm.OrmBase)
-
+            Throw New NotImplementedException
         End Sub
 
         Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, Orm.OrmBase})( _
             ByVal objs As System.Collections.Generic.ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean) As System.Collections.Generic.ICollection(Of T)
-
+            Throw New NotImplementedException
         End Function
 
         Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, Orm.OrmBase})( _
             ByVal objs As System.Collections.Generic.ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute)) As System.Collections.Generic.ICollection(Of T)
-
+            Throw New NotImplementedException
         End Function
 
         Protected Overrides Function MakeJoin(ByVal type2join As System.Type, ByVal selectType As System.Type, ByVal field As String, ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Worm.Criteria.Joins.JoinType, Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.OrmJoin

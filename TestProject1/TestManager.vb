@@ -7,7 +7,8 @@ Imports Worm.Orm
 <TestClass()> Public Class TestManager
     Implements Worm.OrmManagerBase.INewObjects
 
-    Private _schemas As New Collections.Hashtable
+    Private _schemas As New System.Collections.Hashtable
+
     Protected Function GetSchema(ByVal v As String) As DbSchema
         Dim s As DbSchema = CType(_schemas(v), DbSchema)
         If s Is Nothing Then
@@ -608,7 +609,7 @@ Imports Worm.Orm
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
+    <TestMethod(), ExpectedException(GetType(System.Data.SqlClient.SqlException))> _
     Public Sub TestDelete()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e2 As TestProject1.Entity4 = mgr.Find(Of Entity4)(10)
@@ -649,7 +650,7 @@ Imports Worm.Orm
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
+    <TestMethod(), ExpectedException(GetType(System.Data.SqlClient.SqlException))> _
     Public Sub TestDelete3()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("2"))
             Dim e2 As TestProject1.Entity4 = mgr.Find(Of Entity4)(11)
@@ -672,7 +673,7 @@ Imports Worm.Orm
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
+    <TestMethod(), ExpectedException(GetType(System.Data.SqlClient.SqlException))> _
     Public Sub TestDelete4()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("2"))
             Dim e2 As TestProject1.Entity4 = mgr.Find(Of Entity4)(11)
@@ -1011,8 +1012,8 @@ Imports Worm.Orm
 
             Dim rel As Meta.M2MRelation = mgr.ObjectSchema.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
 
-            mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, Collections.ICollection), Nothing)
-            mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, Collections.ICollection), Nothing)
+            mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), Nothing)
+            mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), Nothing)
 
             Dim e1 As Entity = mgr.Find(Of Entity)(1)
             Dim e2 As Entity = mgr.Find(Of Entity)(2)
@@ -1021,7 +1022,7 @@ Imports Worm.Orm
             e1.Find(Of Entity4)(Nothing, Nothing, True)
             e2.Find(Of Entity4)(Nothing, Nothing, False)
 
-            mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, Collections.ICollection), Nothing)
+            mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), Nothing)
 
         End Using
     End Sub
@@ -1031,7 +1032,7 @@ Imports Worm.Orm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim col As ICollection(Of Entity) = mgr.ConvertIds2Objects(Of Entity)(New Integer() {1, 2}, False)
             Dim col4 As New List(Of Entity4)
-            mgr.LoadObjects(Of Entity4)(mgr.ObjectSchema.GetM2MRelation(GetType(Entity), GetType(Entity4), True), Nothing, CType(col, Collections.ICollection), col4)
+            mgr.LoadObjects(Of Entity4)(mgr.ObjectSchema.GetM2MRelation(GetType(Entity), GetType(Entity4), True), Nothing, CType(col, System.Collections.ICollection), col4)
             Assert.AreEqual(15, col4.Count)
 
             Dim e1 As Entity = mgr.Find(Of Entity)(1)
@@ -1069,10 +1070,36 @@ Imports Worm.Orm
             Using New Worm.OrmManagerBase.CacheListBehavior(mgr, TimeSpan.FromMilliseconds(10))
                 c1 = e1.Find(Of Entity4)(Nothing, Nothing, True)
             End Using
-            Threading.Thread.Sleep(100)
+            System.Threading.Thread.Sleep(100)
 
             c1 = e1.Find(Of Entity4)(Nothing, Nothing, True)
 
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestTopValidate()
+        Using mgr As OrmDBManager = CreateWriteManager(GetSchema("1"))
+            Dim c As ICollection(Of Entity) = mgr.FindTop(Of Entity)( _
+                10, Nothing, Nothing, False)
+
+            Assert.AreEqual(10, c.Count)
+
+            mgr.BeginTransaction()
+            Try
+                For Each t As Entity In c
+                    Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                        t.Delete()
+                        st.Commit()
+                    End Using
+                    Exit For
+                Next
+                c = mgr.FindTop(Of Entity)(10, Nothing, Nothing, False)
+
+                Assert.AreEqual(9, c.Count)
+            Finally
+                mgr.Rollback()
+            End Try
         End Using
     End Sub
 

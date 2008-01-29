@@ -432,6 +432,12 @@ Namespace Database
             _connStr = connectionString
         End Sub
 
+        Public Overridable ReadOnly Property AlwaysAdd2Cache() As Boolean
+            Get
+                Return True
+            End Get
+        End Property
+
         Public ReadOnly Property DbSchema() As DbSchema
             Get
                 Return CType(_schema, DbSchema)
@@ -1307,7 +1313,7 @@ Namespace Database
             ByVal dic As IDictionary(Of Integer, T), ByRef loaded As Integer)
 
             Dim id As Integer = CInt(dr.GetValue(idx))
-            Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse Not ListConverter.IsWeak)
+            Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse Not ListConverter.IsWeak OrElse AlwaysAdd2Cache)
             If obj IsNot Nothing Then
                 If withLoad AndAlso obj.ObjectState <> ObjectState.Modified Then
                     Using obj.GetSyncRoot()
