@@ -702,6 +702,10 @@ Public MustInherit Class OrmManagerBase
         Sub RemoveNew(ByVal t As Type, ByVal id As Integer)
     End Interface
 
+    Public Interface INewObjectsEx
+        Function GetNew(ByVal t As Type) As ICollection(Of OrmBase)
+    End Interface
+
     Public MustInherit Class CustDelegate(Of T As {OrmBase, New})
         Implements ICustDelegate(Of T)
 
