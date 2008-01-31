@@ -1693,34 +1693,34 @@ Namespace Database
             Dim searchTable As OrmTable = GetTables(searchType)(0)
             Dim ins_idx As Integer = sb.Length
             If fields IsNot Nothing AndAlso fields.Count > 0 Then
-                If searchType IsNot selectType Then
-                    For Each field As Pair(Of String, Type) In fields
-                        If field.Second Is selectType Then
-                            Dim m As MapField2Column = selSchema.GetFieldColumnMap(field.First)
-                            If appendMain Then
-                                columns.Append(m._tableName).Append(".")
-                                columns.Append(m._columnName).Append(",")
-                            Else
-                                columns.Append([alias]).Append(".[key] ").Append(m._columnName).Append(",")
-                            End If
-                        End If
-                    Next
-
-                    For Each field As Pair(Of String, Type) In fields
-                        If field.Second Is searchType Then
-                            Dim m As MapField2Column = searchSchema.GetFieldColumnMap(field.First)
-                            columns.Append(m._tableName).Append(".")
-                            columns.Append(m._columnName).Append(",")
-                        End If
-                    Next
-                Else
-                    For Each field As Pair(Of String, Type) In fields
-                        appendMain = True
-                        Dim m As MapField2Column = searchSchema.GetFieldColumnMap(field.First)
-                        columns.Append(GetTableName(m._tableName)).Append(".")
-                        columns.Append(m._columnName).Append(",")
-                    Next
-                End If
+                'If searchType IsNot selectType Then
+                '    For Each field As Pair(Of String, Type) In fields
+                '        If field.Second Is selectType Then
+                '            Dim m As MapField2Column = selSchema.GetFieldColumnMap(field.First)
+                '            If appendMain Then
+                '                columns.Append(m._tableName).Append(".")
+                '                columns.Append(m._columnName).Append(",")
+                '            Else
+                '                columns.Append([alias]).Append(".[key] ").Append(m._columnName).Append(",")
+                '            End If
+                '        End If
+                '    Next
+                For Each field As Pair(Of String, Type) In fields                    Dim m As MapField2Column = Nothing                    If field.Second Is searchType Then                        m = searchSchema.GetFieldColumnMap(field.First)                        appendMain = True                    ElseIf field.Second Is selectType Then                        m = selSchema.GetFieldColumnMap(field.First)                    Else                        Throw New InvalidOperationException("Type " & field.Second.ToString & " is not select type or search type")                    End If                    columns.Append(GetTableName(m._tableName)).Append(".")                    columns.Append(m._columnName).Append(",")                Next
+                '    For Each field As Pair(Of String, Type) In fields
+                '        If field.Second Is searchType Then
+                '            Dim m As MapField2Column = searchSchema.GetFieldColumnMap(field.First)
+                '            columns.Append(m._tableName).Append(".")
+                '            columns.Append(m._columnName).Append(",")
+                '        End If
+                '    Next
+                'Else
+                '    For Each field As Pair(Of String, Type) In fields
+                '        appendMain = True
+                '        Dim m As MapField2Column = searchSchema.GetFieldColumnMap(field.First)
+                '        columns.Append(GetTableName(m._tableName)).Append(".")
+                '        columns.Append(m._columnName).Append(",")
+                '    Next
+                'End If
                 'For Each field As Pair(Of String, Type) In fields
                 '    If field.Second Is searchType Then
                 '        appendMain = True

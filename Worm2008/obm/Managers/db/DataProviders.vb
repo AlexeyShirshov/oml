@@ -266,10 +266,10 @@ Namespace Database
 
             Public Overrides Sub CreateDepends()
                 MyBase.CreateDepends()
-                If _asc IsNot Nothing AndAlso _asc.Length > 0 Then
+                If _asc IsNot Nothing AndAlso _asc.Length > 0 AndAlso _f Is Nothing Then
                     Dim tt As System.Type = GetType(T)
                     Dim cache As OrmCacheBase = _mgr.Cache
-                    cache.AddDependQueryType(tt, _key, _id, _mgr.ObjectSchema)
+                    cache.AddFilterlessDependType(tt, _key, _id, _mgr.ObjectSchema)
                 End If
             End Sub
         End Class
@@ -473,20 +473,24 @@ Namespace Database
                         Dim cache As OrmCacheBase = _mgr.Cache
                         'cache.AddDependType(tt, _key, _id, _f)
 
-                        For Each f As EntityFilter In _f.GetAllFilters
-                            Dim v As EntityValue = TryCast(f.Value, EntityValue)
-                            If v IsNot Nothing Then
-                                'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
-                                'If GetType(OrmBase).IsAssignableFrom(tp) Then
-                                cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
+                        For Each bf As IFilter In _f.GetAllFilters
+                            Dim f As IEntityFilter = TryCast(bf, IEntityFilter)
+                            If f IsNot Nothing Then
+                                Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
+                                Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                                If v IsNot Nothing Then
+                                    'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
+                                    'If GetType(OrmBase).IsAssignableFrom(tp) Then
+                                    cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
+                                    'End If
+                                Else
+                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                    cache.AddFieldDepend(p, _key, _id)
+                                End If
+                                'If tt IsNot f.Template.Type Then
+                                '    cache.AddJoinDepend(f.Template.Type, tt)
                                 'End If
-                            Else
-                                Dim p As New Pair(Of String, Type)(f.Template.FieldName, f.Template.Type)
-                                cache.AddFieldDepend(p, _key, _id)
                             End If
-                            'If tt IsNot f.Template.Type Then
-                            '    cache.AddJoinDepend(f.Template.Type, tt)
-                            'End If
                         Next
                     End If
 

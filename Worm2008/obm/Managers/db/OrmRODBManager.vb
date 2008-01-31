@@ -33,6 +33,7 @@ Namespace Database
             Private _disposeMgr As Boolean
 
             Public Event BeginSave(ByVal count As Integer)
+            Public Event EndSave()
             Public Event ObjectSaved(ByVal o As OrmBase)
             Public Event ObjectAccepted(ByVal o As OrmBase)
             Public Event ObjectRejected(ByVal o As OrmBase)
@@ -141,6 +142,7 @@ Namespace Database
                         RaiseEvent ObjectSaved(o)
                     Next
 
+                    RaiseEvent EndSave()
                     [error] = False
                 Finally
                     If [error] Then
@@ -239,7 +241,7 @@ Namespace Database
             Private _mgr As OrmManagerBase
             Private _saver As BatchSaver
 
-            Public Event SaveComplete()
+            Public Event SaveComplete(ByVal commited As Boolean)
 
             Public Sub New()
                 MyClass.New(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
@@ -393,9 +395,8 @@ Namespace Database
                     RemoveHandler _mgr.BeginDelete, AddressOf Delete
                     RemoveHandler _mgr.BeginUpdate, AddressOf Add
 
-                    If _saver.IsCommit Then
-                        RaiseEvent SaveComplete()
-                    End If
+                    RaiseEvent SaveComplete(_saver.IsCommit)
+
                 End If
                 Me.disposedValue = True
             End Sub
@@ -1313,7 +1314,7 @@ Namespace Database
             ByVal dic As IDictionary(Of Integer, T), ByRef loaded As Integer)
 
             Dim id As Integer = CInt(dr.GetValue(idx))
-            Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse Not ListConverter.IsWeak OrElse AlwaysAdd2Cache)
+            Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
             If obj IsNot Nothing Then
                 If withLoad AndAlso obj.ObjectState <> ObjectState.Modified Then
                     Using obj.GetSyncRoot()
@@ -1916,7 +1917,8 @@ Namespace Database
                     .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, frmt, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
                         Integer.MinValue, _
-                        "containstable", sort, appendMain, CType(filter, Criteria.Core.IFilter), contextKey, searchSchema, selSchema)
+                        "containstable", sort, appendMain, CType(filter, Criteria.Core.IFilter), contextKey, _
+                         selSchema, searchSchema)
                     params.AppendParams(.Parameters)
                 End With
 
@@ -1939,7 +1941,7 @@ Namespace Database
                         .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, frmt, fields, _
                             GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
                             "freetexttable", sort, appendMain, CType(filter, Criteria.Core.IFilter), _
-                            contextKey, searchSchema, selSchema)
+                            contextKey, selSchema, searchSchema)
                         params.AppendParams(.Parameters)
                     End With
 

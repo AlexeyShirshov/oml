@@ -47,22 +47,22 @@ Module Module1
         End Property
     End Class
 
-    Sub main()
+    Sub main1()
         Using mgr As OrmReadOnlyDBManager = New OrmDBManager(New OrmCache, New DbSchema("1"), "Data Source=vs2\sqlmain;Initial catalog=Wormtest;Integrated security=true;")
             For i As Integer = 0 To 10000
                 mgr.Find(Of TestProject1.Table1)(Criteria.Ctor.Field(GetType(TestProject1.Table1), "ID").Eq(i + 1000), Nothing, False)
                 If i Mod 1000 = 0 Then
                     Console.WriteLine(i / 1000)
                 End If
-            Next
-            Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.DbSchema)
-            t.CreatedAt = Now
-            mgr.BeginTransaction()
-            Try
-                t.Save(True)
-            Finally
-                mgr.Rollback()
-            End Try
+                Next2()
+                Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.DbSchema)
+                t.CreatedAt = Now
+                mgr.BeginTransaction()
+                Try
+                    t.Save(True)
+                Finally
+                    mgr.Rollback()
+                End Try
         End Using
     End Sub
 
