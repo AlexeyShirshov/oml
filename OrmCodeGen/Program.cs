@@ -148,11 +148,11 @@ namespace OrmCodeGen
                 return;
             }
 
-            if (!System.IO.Directory.Exists(outputFolder))
-            {
-                Console.WriteLine("Error: output folder not found.");
-                return;
-            }
+            //if (!System.IO.Directory.Exists(outputFolder))
+            //{
+            //    Console.WriteLine("Error: output folder not found.");
+            //    return;
+            //}
             if(string.IsNullOrEmpty(System.IO.Path.GetDirectoryName(outputFolder)))
                 outputFolder = System.IO.Path.GetPathRoot(outputFolder + System.IO.Path.DirectorySeparatorChar.ToString());
             else

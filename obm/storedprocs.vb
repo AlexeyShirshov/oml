@@ -35,9 +35,15 @@ Namespace Database.Storedprocs
         Public MustOverride ReadOnly Property FetchTime() As TimeSpan
 
         Private _cache As Boolean
-        Private _reseted As Boolean
+        Private _reseted As New Dictionary(Of String, Boolean)
         Private _expireDate As Date
         Private _cacheHit As Boolean
+
+        Public Enum ValidateResult
+            DontReset
+            ResetCache
+            ResetAll
+        End Enum
 
         Protected Sub New(ByVal cache As Boolean)
             _cache = cache
@@ -65,7 +71,9 @@ Namespace Database.Storedprocs
 
         Public ReadOnly Property IsReseted() As Boolean
             Get
-                Return _reseted
+                Dim r As Boolean
+                _reseted.TryGetValue(GetKey, r)
+                Return r
             End Get
         End Property
 
@@ -82,7 +90,7 @@ Namespace Database.Storedprocs
         End Function
 
         Protected Function Execute(ByVal mgr As OrmReadOnlyDBManager) As Object
-            _reseted = False
+            _reseted(GetKey) = False
             Dim schema As DbSchema = CType(mgr.ObjectSchema, DbSchema)
             Using cmd As System.Data.Common.DbCommand = schema.CreateDBCommand
                 cmd.CommandType = System.Data.CommandType.StoredProcedure
@@ -162,15 +170,22 @@ Namespace Database.Storedprocs
             Return mgr.GetDic(mgr.Cache, key)
         End Function
 
-        Public Sub ResetCache(ByVal c As OrmCacheBase)
+        Public Sub ResetCache(ByVal c As OrmCacheBase, ByVal r As ValidateResult)
             Dim key As String = "StroredProcedure:" & GetName()
 
             Dim id As String = GetKey()
             If String.IsNullOrEmpty(id) Then id = "empty"
             Dim dic As IDictionary = OrmReadOnlyDBManager._GetDic(c, key)
             If dic IsNot Nothing Then
-                _reseted = True
-                dic.Remove(id)
+                If r = ValidateResult.ResetAll Then
+                    For Each kv As KeyValuePair(Of String, Boolean) In dic
+                        _reseted(kv.Key) = True
+                    Next
+                    dic.Clear()
+                Else
+                    dic.Remove(id)
+                    _reseted(id) = True
+                End If
             End If
         End Sub
 
@@ -179,7 +194,7 @@ Namespace Database.Storedprocs
             Return l
         End Function
 
-        Public Overridable Function ValidateOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String)) As Boolean
+        Public Overridable Function ValidateOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String)) As ValidateResult
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -189,14 +204,16 @@ Namespace Database.Storedprocs
             If en IsNot Nothing Then
                 For Each p As Pair(Of Type, Dependency) In en
                     If t Is p.First Then
-                        Return (p.Second And Dependency.Update) = Dependency.Update
+                        If (p.Second And Dependency.Update) = Dependency.Update Then
+                            Return ValidateResult.ResetCache
+                        End If
                     End If
                 Next
             End If
-            Return False
+            Return ValidateResult.DontReset
         End Function
 
-        Public Overridable Function ValidateOnInsertDelete(ByVal obj As OrmBase) As Boolean
+        Public Overridable Function ValidateOnInsertDelete(ByVal obj As OrmBase) As ValidateResult
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -206,11 +223,13 @@ Namespace Database.Storedprocs
             If en IsNot Nothing Then
                 For Each p As Pair(Of Type, Dependency) In GetDepends()
                     If t Is p.First Then
-                        Return (p.Second And Dependency.InsertDelete) = Dependency.InsertDelete
+                        If (p.Second And Dependency.InsertDelete) = Dependency.InsertDelete Then
+                            Return ValidateResult.ResetCache
+                        End If
                     End If
                 Next
             End If
-            Return False
+            Return ValidateResult.DontReset
         End Function
 
         Protected Friend Overridable Function GetTypesToValidate() As ICollection(Of Type)

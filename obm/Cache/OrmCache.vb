@@ -936,7 +936,7 @@ l1:
             End Using
         End Sub
 
-        Protected Friend Sub AddDependQueryType(ByVal t As Type, ByVal key As String, ByVal id As String, _
+        Protected Friend Sub AddFilterlessDependType(ByVal t As Type, ByVal key As String, ByVal id As String, _
             ByVal schema As OrmSchemaBase)
             Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
             Dim o As Object = schema.GetEntityTypeKey(t)
@@ -1080,8 +1080,11 @@ l1:
             Dim l As List(Of StoredProcBase) = Nothing
             If _procTypes.TryGetValue(t, l) Then
                 For Each sp As StoredProcBase In l
-                    If Not sp.IsReseted AndAlso sp.ValidateOnInsertDelete(obj) Then
-                        sp.ResetCache(Me)
+                    If Not sp.IsReseted Then
+                        Dim r As StoredProcBase.ValidateResult = sp.ValidateOnInsertDelete(obj)
+                        If r <> StoredProcBase.ValidateResult.DontReset Then
+                            sp.ResetCache(Me, r)
+                        End If
                     End If
                 Next
             End If
@@ -1091,8 +1094,11 @@ l1:
             Dim l As List(Of StoredProcBase) = Nothing
             If _procTypes.TryGetValue(t, l) Then
                 For Each sp As StoredProcBase In l
-                    If Not sp.IsReseted AndAlso sp.ValidateOnUpdate(obj, fields) Then
-                        sp.ResetCache(Me)
+                    If Not sp.IsReseted Then
+                        Dim r As StoredProcBase.ValidateResult = sp.ValidateOnUpdate(obj, fields)
+                        If r <> StoredProcBase.ValidateResult.DontReset Then
+                            sp.ResetCache(Me, r)
+                        End If
                     End If
                 Next
             End If

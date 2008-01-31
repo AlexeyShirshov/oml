@@ -226,6 +226,9 @@ namespace XmlSchemaGen
 				odef = new OrmObjectsDef();
 				odef.Namespace = name_space;
 				odef.SchemaVersion="1";
+                if (!Path.IsPathRooted(file))
+                    file = Path.Combine(Directory.GetCurrentDirectory, file);
+                File.Create(file);
 			}
 
 			foreach (Column c in columns.Keys)

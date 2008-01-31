@@ -284,7 +284,9 @@ Public MustInherit Class OrmManagerBase
         Public Sub New(ByVal sort As Sort, ByVal sortExpire As Date, ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
             _sort = sort
             '_st = sortType
+            'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
             _obj = mgr.ListConverter.ToWeakList(obj)
+            'End Using
             _cache = mgr.Cache
             If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
             _f = filter
@@ -297,7 +299,9 @@ Public MustInherit Class OrmManagerBase
         Public Sub New(ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
             _sort = Nothing
             '_st = sortType
+            'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
             _obj = mgr.ListConverter.ToWeakList(obj)
+            'End Using
             _cache = mgr.Cache
             If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
             _f = filter
@@ -398,7 +402,9 @@ Public MustInherit Class OrmManagerBase
 
         Public Overridable Function GetObjectList(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, _
             ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ICollection(Of T)
+            'Using p As New CoreFramework.Debuging.OutputTimer("From week list")
             Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr, mgr.GetStart, mgr.GetLength, withLoad, created, successed)
+            'End Using
         End Function
 
         Public Overridable Function GetObjectList(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase) As ICollection(Of T)
