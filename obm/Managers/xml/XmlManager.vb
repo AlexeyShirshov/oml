@@ -146,7 +146,7 @@ Namespace Xml
         End Function
 
         Protected Friend Overrides Function GetStaticKey() As String
-            Throw New NotImplementedException
+            Return Nothing
         End Function
 
         Protected Friend Overrides Sub LoadObject(ByVal obj As Orm.OrmBase)

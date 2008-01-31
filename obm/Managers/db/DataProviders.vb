@@ -269,7 +269,7 @@ Namespace Database
                 If _asc IsNot Nothing AndAlso _asc.Length > 0 Then
                     Dim tt As System.Type = GetType(T)
                     Dim cache As OrmCacheBase = _mgr.Cache
-                    cache.AddDependType(tt, _key, _id, _asc, _mgr.ObjectSchema)
+                    cache.AddDependQueryType(tt, _key, _id, _mgr.ObjectSchema)
                 End If
             End Sub
         End Class

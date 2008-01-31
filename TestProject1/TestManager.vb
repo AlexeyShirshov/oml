@@ -1081,9 +1081,9 @@ Imports Worm.Orm
     Public Sub TestTopValidate()
         Using mgr As OrmDBManager = CreateWriteManager(GetSchema("1"))
             Dim c As ICollection(Of Entity) = mgr.FindTop(Of Entity)( _
-                10, Nothing, Nothing, False)
+                100, Nothing, Nothing, False)
 
-            Assert.AreEqual(10, c.Count)
+            Assert.AreEqual(13, c.Count)
 
             mgr.BeginTransaction()
             Try
@@ -1094,9 +1094,9 @@ Imports Worm.Orm
                     End Using
                     Exit For
                 Next
-                c = mgr.FindTop(Of Entity)(10, Nothing, Nothing, False)
+                c = mgr.FindTop(Of Entity)(100, Nothing, Nothing, False)
 
-                Assert.AreEqual(9, c.Count)
+                Assert.AreEqual(12, c.Count)
             Finally
                 mgr.Rollback()
             End Try

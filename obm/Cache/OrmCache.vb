@@ -226,7 +226,7 @@ Namespace Cache
         Private _field_depends As New Dictionary(Of EntityField, Dictionary(Of String, List(Of String)))
 
         Private _tp As New TypeDepends
-
+        Private _qt As New Dictionary(Of Object, Dictionary(Of String, Pair(Of String)))
         Private _ct_depends As New Dictionary(Of Type, Dictionary(Of String, Dictionary(Of String, Object)))
 
         Private _m2m_dep As New Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Object)))
@@ -750,18 +750,150 @@ Namespace Cache
             End If
 
 #If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("1340f89njqodfgn1","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("1340f89njqodfgn1")
+#End If
+                Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
+                If _qt.TryGetValue(k, l) Then
+                    Dim rm As Boolean
+                    For Each kv As KeyValuePair(Of String, Pair(Of String)) In l
+                        Dim dic As IDictionary = CType(_filters(kv.Value.First), IDictionary)
+                        If dic IsNot Nothing Then
+                            dic.Remove(kv.Value.Second)
+                            rm = True
+                        End If
+                    Next
+                    If rm Then
+                        GoTo l1
+                    End If
+                End If
+            End Using
+
+#If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("j13rvnopqefv9-n24bth","d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
+                Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
 #End If
-                Dim l As TemplateHashs = _tp.GetFilters(k)
-                If l.Count > 0 Then
-                    For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In l
-                        Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
-                        If dic IsNot Nothing Then
-                            If callbacks IsNot Nothing Then
-                                callbacks.BeginUpdate(0)
+                    Dim l As TemplateHashs = _tp.GetFilters(k)
+                    If l.Count > 0 Then
+                        For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In l
+                            Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
+                            If dic IsNot Nothing Then
+                                If callbacks IsNot Nothing Then
+                                    callbacks.BeginUpdate(0)
+                                End If
+                                For Each obj As OrmBase In objs
+                                    If obj Is Nothing Then
+                                        Throw New ArgumentException("At least one element in objs is nothing")
+                                    End If
+
+                                    If tt IsNot obj.GetType Then
+                                        Throw New ArgumentException("Collection contains different types")
+                                    End If
+
+                                    Dim h As String = EntityFilter.EmptyHash
+                                    If p.Value.Second IsNot Nothing Then
+                                        h = p.Value.Second.MakeHash(schema, oschema, obj)
+                                    End If
+                                    Dim ids As List(Of String) = p.Value.First.GetIds(h)
+                                    Dim rm As New List(Of String)
+                                    For Each id As String In ids
+                                        Dim ce As OrmManagerBase.CachedItem = TryCast(dic(id), OrmManagerBase.CachedItem)
+                                        Dim f As IEntityFilter = Nothing
+                                        If ce IsNot Nothing Then
+                                            f = TryCast(ce.Filter, IEntityFilter)
+                                        End If
+                                        If ce IsNot Nothing AndAlso f IsNot Nothing Then
+                                            If callbacks IsNot Nothing Then
+                                                callbacks.BeginUpdateList(p.Key, id)
+                                            End If
+
+                                            If obj._needAdd OrElse obj._needDelete OrElse forseEval Then
+                                                Dim r As Boolean = False
+                                                Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
+                                                If f IsNot Nothing Then
+                                                    er = f.Eval(schema, obj, oschema)
+                                                    r = er = IEvaluableValue.EvalResult.Unknown
+                                                End If
+
+                                                If r Then
+                                                    dic.Remove(id)
+                                                ElseIf er = IEvaluableValue.EvalResult.Found Then
+                                                    Dim sync As String = id & mgr.GetStaticKey
+                                                    Using SyncHelper.AcquireDynamicLock(sync)
+                                                        If obj._needAdd Then
+                                                            If Not ce.Add(mgr, obj) Then
+                                                                dic.Remove(id)
+                                                            End If
+                                                        ElseIf obj._needDelete Then
+                                                            ce.Delete(mgr, obj)
+                                                            'Else
+                                                            '    Throw New InvalidOperationException
+                                                        End If
+                                                    End Using
+                                                    If callbacks IsNot Nothing Then
+                                                        callbacks.ObjectDependsUpdated(obj)
+                                                    End If
+                                                End If
+                                                'Else
+                                                '    Assert(False, "Object must be in appropriate state")
+                                            End If
+                                        Else
+                                            rm.Add(id)
+                                        End If
+
+                                        If callbacks IsNot Nothing Then
+                                            callbacks.EndUpdateList(p.Key, id)
+                                        End If
+                                    Next
+
+                                    For Each id As String In rm
+                                        ids.Remove(id)
+                                        dic.Remove(id)
+                                    Next
+                                Next
+                                If callbacks IsNot Nothing Then
+                                    callbacks.EndUpdate()
+                                End If
+                                '_filters.Remove(p.Key)
                             End If
+                        Next
+                    End If
+                End Using
+l1:
+                If callbacks IsNot Nothing Then
+                    callbacks.BeginUpdateProcs()
+                End If
+                For Each obj As OrmBase In objs
+                    If obj Is Nothing Then
+                        Throw New ArgumentNullException("obj")
+                    End If
+
+                    If obj._needAdd Then
+                        ValidateSPOnInsertDelete(obj)
+                    ElseIf obj._needDelete Then
+                        ValidateSPOnInsertDelete(obj)
+                        'Else
+                        '    Throw New InvalidOperationException
+                    End If
+
+                    If afterDelegate IsNot Nothing Then
+                        afterDelegate(obj, mgr, contextKey)
+                    End If
+                Next
+                If callbacks IsNot Nothing Then
+                    callbacks.EndUpdateProcs()
+                End If
+
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
+#Else
+                Using SyncHelper.AcquireDynamicLock("9-134g9ngpadfbgp")
+#End If
+                    Dim ts As List(Of Type) = Nothing
+                    If _jt.TryGetValue(tt, ts) Then
+                        For Each t As Type In ts
                             For Each obj As OrmBase In objs
                                 If obj Is Nothing Then
                                     Throw New ArgumentException("At least one element in objs is nothing")
@@ -771,126 +903,15 @@ Namespace Cache
                                     Throw New ArgumentException("Collection contains different types")
                                 End If
 
-                                Dim h As String = EntityFilter.EmptyHash
-                                If p.Value.Second IsNot Nothing Then
-                                    h = p.Value.Second.MakeHash(schema, oschema, obj)
+                                Dim o As OrmBase = schema.GetJoinObj(oschema, obj, t)
+
+                                If o IsNot Nothing Then
+                                    UpdateCache(schema, New OrmBase() {o}, mgr, afterDelegate, contextKey, callbacks, True)
                                 End If
-                                Dim ids As List(Of String) = p.Value.First.GetIds(h)
-                                Dim rm As New List(Of String)
-                                For Each id As String In ids
-                                    Dim ce As OrmManagerBase.CachedItem = TryCast(dic(id), OrmManagerBase.CachedItem)
-                                    Dim f As IEntityFilter = Nothing
-                                    If ce IsNot Nothing Then
-                                        f = TryCast(ce.Filter, IEntityFilter)
-                                    End If
-                                    If ce IsNot Nothing AndAlso f IsNot Nothing Then
-                                        If callbacks IsNot Nothing Then
-                                            callbacks.BeginUpdateList(p.Key, id)
-                                        End If
-
-                                        If obj._needAdd OrElse obj._needDelete OrElse forseEval Then
-                                            Dim r As Boolean = False
-                                            Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
-                                            If f IsNot Nothing Then
-                                                er = f.Eval(schema, obj, oschema)
-                                                r = er = IEvaluableValue.EvalResult.Unknown
-                                            End If
-
-                                            If r Then
-                                                dic.Remove(id)
-                                            ElseIf er = IEvaluableValue.EvalResult.Found Then
-                                                Dim sync As String = id & mgr.GetStaticKey
-                                                Using SyncHelper.AcquireDynamicLock(sync)
-                                                    If obj._needAdd Then
-                                                        If Not ce.Add(mgr, obj) Then
-                                                            dic.Remove(id)
-                                                        End If
-                                                    ElseIf obj._needDelete Then
-                                                        ce.Delete(mgr, obj)
-                                                        'Else
-                                                        '    Throw New InvalidOperationException
-                                                    End If
-                                                End Using
-                                                If callbacks IsNot Nothing Then
-                                                    callbacks.ObjectDependsUpdated(obj)
-                                                End If
-                                            End If
-                                            'Else
-                                            '    Assert(False, "Object must be in appropriate state")
-                                        End If
-                                    Else
-                                        rm.Add(id)
-                                    End If
-
-                                    If callbacks IsNot Nothing Then
-                                        callbacks.EndUpdateList(p.Key, id)
-                                    End If
-                                Next
-
-                                For Each id As String In rm
-                                    ids.Remove(id)
-                                    dic.Remove(id)
-                                Next
                             Next
-                            If callbacks IsNot Nothing Then
-                                callbacks.EndUpdate()
-                            End If
-                            '_filters.Remove(p.Key)
-                        End If
-                    Next
-                End If
-            End Using
-
-            If callbacks IsNot Nothing Then
-                callbacks.BeginUpdateProcs()
-            End If
-            For Each obj As OrmBase In objs
-                If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj")
-                End If
-
-                If obj._needAdd Then
-                    ValidateSPOnInsertDelete(obj)
-                ElseIf obj._needDelete Then
-                    ValidateSPOnInsertDelete(obj)
-                    'Else
-                    '    Throw New InvalidOperationException
-                End If
-
-                If afterDelegate IsNot Nothing Then
-                    afterDelegate(obj, mgr, contextKey)
-                End If
-            Next
-            If callbacks IsNot Nothing Then
-                callbacks.EndUpdateProcs()
-            End If
-
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("9-134g9ngpadfbgp")
-#End If
-                Dim ts As List(Of Type) = Nothing
-                If _jt.TryGetValue(tt, ts) Then
-                    For Each t As Type In ts
-                        For Each obj As OrmBase In objs
-                            If obj Is Nothing Then
-                                Throw New ArgumentException("At least one element in objs is nothing")
-                            End If
-
-                            If tt IsNot obj.GetType Then
-                                Throw New ArgumentException("Collection contains different types")
-                            End If
-
-                            Dim o As OrmBase = schema.GetJoinObj(oschema, obj, t)
-
-                            If o IsNot Nothing Then
-                                UpdateCache(schema, New OrmBase() {o}, mgr, afterDelegate, contextKey, callbacks, True)
-                            End If
                         Next
-                    Next
-                End If
-            End Using
+                    End If
+                End Using
         End Sub
 
         ''' <summary>
@@ -915,9 +936,24 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Sub AddDependType(ByVal t As Type, ByVal key As String, ByVal id As String, _
-            ByVal asc() As QueryAspect, ByVal schema As OrmSchemaBase)
-
+        Protected Friend Sub AddDependQueryType(ByVal t As Type, ByVal key As String, ByVal id As String, _
+            ByVal schema As OrmSchemaBase)
+            Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
+            Dim o As Object = schema.GetEntityTypeKey(t)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("1340f89njqodfgn1","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("1340f89njqodfgn1")
+#End If
+                If Not _qt.TryGetValue(o, l) Then
+                    l = New Dictionary(Of String, Pair(Of String))
+                    _qt.Add(o, l)
+                End If
+                Dim k As String = key & "-" & id
+                If Not l.ContainsKey(k) Then
+                    l.Add(k, New Pair(Of String)(key, id))
+                End If
+            End Using
         End Sub
 
         Protected Friend Sub AddJoinDepend(ByVal joinType As Type, ByVal selectType As Type)
