@@ -877,11 +877,12 @@ Public MustInherit Class OrmManagerBase
         Return New FakeListConverter
     End Function
 
+
     Protected Sub CreateInternal()
         _prev = CurrentManager
 #If DEBUG Then
         If _prev IsNot Nothing Then
-            If _prev._schema.Version <> _schema.Version Then
+            If _prev._schema.Version <> _schema.Version AndAlso Not IsIdentical(_prev) Then
                 Throw New OrmManagerException("Cannot create nested managers with different schema versions")
             End If
         End If
