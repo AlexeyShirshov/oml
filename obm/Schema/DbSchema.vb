@@ -1705,7 +1705,19 @@ Namespace Database
                 '            End If
                 '        End If
                 '    Next
-                For Each field As Pair(Of String, Type) In fields                    Dim m As MapField2Column = Nothing                    If field.Second Is searchType Then                        m = searchSchema.GetFieldColumnMap(field.First)                        appendMain = True                    ElseIf field.Second Is selectType Then                        m = selSchema.GetFieldColumnMap(field.First)                    Else                        Throw New InvalidOperationException("Type " & field.Second.ToString & " is not select type or search type")                    End If                    columns.Append(GetTableName(m._tableName)).Append(".")                    columns.Append(m._columnName).Append(",")                Next
+                For Each field As Pair(Of String, Type) In fields
+                    Dim m As MapField2Column = Nothing
+                    If field.Second Is searchType Then
+                        m = searchSchema.GetFieldColumnMap(field.First)
+                        appendMain = True
+                    ElseIf field.Second Is selectType Then
+                        m = selSchema.GetFieldColumnMap(field.First)
+                    Else
+                        Throw New InvalidOperationException("Type " & field.Second.ToString & " is not select type or search type")
+                    End If
+                    columns.Append(GetTableName(m._tableName)).Append(".")
+                    columns.Append(m._columnName).Append(",")
+                Next
                 '    For Each field As Pair(Of String, Type) In fields
                 '        If field.Second Is searchType Then
                 '            Dim m As MapField2Column = searchSchema.GetFieldColumnMap(field.First)
@@ -1741,7 +1753,14 @@ Namespace Database
                 sb.Append("[key] ").Append(m._columnName)
             End If
             sb.Append(" from ").Append(table).Append("(")
-            sb.Append(GetTableName(searchTable)).Append(",")
+            Dim tf As ITableFunction = TryCast(searchTable, ITableFunction)
+            If tf Is Nothing Then
+                sb.Append(GetTableName(searchTable))
+            Else
+                sb.Append(tf.GetRealTable)
+                appendMain = True
+            End If
+            sb.Append(",")
             If queryFields Is Nothing OrElse queryFields.Length = 0 Then
                 sb.Append("*")
             Else

@@ -132,6 +132,9 @@ Namespace Orm.Meta
         Function GetTokens() As String()
     End Interface
 
+    Public Interface ITableFunction
+        ReadOnly Property GetRealTable() As String
+    End Interface
 #End Region
 
 #Region " Classes "

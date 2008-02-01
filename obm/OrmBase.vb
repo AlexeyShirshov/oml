@@ -33,8 +33,15 @@ Namespace Orm
     End Class
 
     ''' <summary>
-    ''' Базовый класс для Orm
+    ''' Базовый класс для всех типов
     ''' </summary>
+    ''' <remarks>
+    ''' <h1>Класс</h1> является потокобезопасным как на <i>чтение так и на запись</i>.
+    ''' Предоставляет следующий <b>функционал</b>:<br />
+    ''' XML сериализация/десериализация.Реализована с некоторыми ограничениями. Для изменения поведения необходимо переопределить <see cref="OrmBase.ReadXml" /> и <see cref="OrmBase.WriteXml"/>.
+    ''' <code>Это код</code>
+    ''' <example>Это пример</example>
+    ''' </remarks>
     <Serializable()> _
     Public MustInherit Class OrmBase
         Implements icomparable, Serialization.IXmlSerializable
