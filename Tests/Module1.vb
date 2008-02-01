@@ -47,7 +47,7 @@ Module Module1
         End Property
     End Class
 
-    Sub main1()
+    Sub main()
         Using mgr As OrmReadOnlyDBManager = New OrmDBManager(New OrmCache, New DbSchema("1"), "Data Source=vs2\sqlmain;Initial catalog=Wormtest;Integrated security=true;")
             For i As Integer = 0 To 10000
                 mgr.Find(Of TestProject1.Table1)(Criteria.Ctor.Field(GetType(TestProject1.Table1), "ID").Eq(i + 1000), Nothing, False)
