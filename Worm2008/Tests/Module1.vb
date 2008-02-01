@@ -54,15 +54,15 @@ Module Module1
                 If i Mod 1000 = 0 Then
                     Console.WriteLine(i / 1000)
                 End If
-                Next2()
-                Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.DbSchema)
-                t.CreatedAt = Now
-                mgr.BeginTransaction()
-                Try
-                    t.Save(True)
-                Finally
-                    mgr.Rollback()
-                End Try
+            Next
+            Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.DbSchema)
+            t.CreatedAt = Now
+            mgr.BeginTransaction()
+            Try
+                t.Save(True)
+            Finally
+                mgr.Rollback()
+            End Try
         End Using
     End Sub
 

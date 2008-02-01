@@ -773,7 +773,7 @@ Public MustInherit Class OrmManagerBase
 
     Protected _cache As OrmCacheBase
     'Private _dispose_cash As Boolean
-    Private _prev As OrmManagerBase = Nothing
+    Friend _prev As OrmManagerBase = Nothing
     'Protected hide_deleted As Boolean = True
     'Protected _check_status As Boolean = True
     Protected _schema As OrmSchemaBase
@@ -877,26 +877,37 @@ Public MustInherit Class OrmManagerBase
         Return New FakeListConverter
     End Function
 
+    Protected Friend Overridable ReadOnly Property IdentityString() As String
+        Get
+            Return Me.GetType.ToString
+        End Get
+    End Property
+
+    Protected Function IsIdentical(ByVal mgr As OrmManagerBase) As Boolean
+        Return IdentityString = mgr.IdentityString
+    End Function
 
     Protected Sub CreateInternal()
         _prev = CurrentManager
+        Dim p As OrmManagerBase = _prev
 #If DEBUG Then
-        If _prev IsNot Nothing Then
-            If _prev._schema.Version <> _schema.Version AndAlso Not IsIdentical(_prev) Then
+        Do While p IsNot Nothing
+            If p._schema.Version <> _schema.Version AndAlso IsIdentical(p) Then
                 Throw New OrmManagerException("Cannot create nested managers with different schema versions")
             End If
-        End If
+            p = p._prev
+        Loop
 #End If
 #If TraceManagerCreation Then
 _callstack = environment.StackTrace
 #End If
-        'Thread.SetData(LocalStorage, Me)
+            'Thread.SetData(LocalStorage, Me)
 
-        CurrentManager = Me
-        '_cs = Environment.StackTrace.ToString
-        'If prev IsNot Nothing Then
-        '    _prevs = prev._s
-        'End If
+            CurrentManager = Me
+            '_cs = Environment.StackTrace.ToString
+            'If prev IsNot Nothing Then
+            '    _prevs = prev._s
+            'End If
     End Sub
 
     'Public Property CheckOnFind() As Boolean
