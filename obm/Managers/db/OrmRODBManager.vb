@@ -541,6 +541,12 @@ Namespace Database
             End If
         End Sub
 
+        Protected Friend Overrides ReadOnly Property IdentityString() As String
+            Get
+                Return MyBase.IdentityString & _connStr
+            End Get
+        End Property
+
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, CType(filter, Criteria.Core.IFilter), sort, key, id)

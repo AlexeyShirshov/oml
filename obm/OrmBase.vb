@@ -195,6 +195,8 @@ Namespace Orm
         Protected Friend _needDelete As Boolean
         <NonSerialized()> _
         Protected Friend _needAccept As New Generic.List(Of AcceptState2)
+        <NonSerialized()> _
+        Protected Friend _mgrStr As String
 
         Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
         Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
@@ -239,7 +241,9 @@ Namespace Orm
         End Sub
 
         Protected Sub Init()
-            '_rw = New System.Threading.ReaderWriterLock
+            If OrmManagerBase.CurrentManager IsNot Nothing Then
+                _mgrStr = OrmManagerBase.CurrentManager.IdentityString
+            End If
         End Sub
 
         <Runtime.Serialization.OnDeserialized()> _
@@ -252,21 +256,21 @@ Namespace Orm
 
         Protected ReadOnly Property OrmSchema() As OrmSchemaBase
             Get
-                Return OrmManagerBase.CurrentManager.ObjectSchema
+                Return GetMgr.ObjectSchema
             End Get
         End Property
 
         Protected Property _members_load_state(ByVal idx As Integer) As Boolean
             Get
                 If _loaded_members Is Nothing Then
-                    Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
+                    Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
                     _loaded_members = New BitArray(arr.Count)
                 End If
                 Return _loaded_members(idx)
             End Get
             Set(ByVal value As Boolean)
                 If _loaded_members Is Nothing Then
-                    Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
+                    Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
                     _loaded_members = New BitArray(arr.Count)
                 End If
                 _loaded_members(idx) = value
@@ -280,12 +284,12 @@ Namespace Orm
             Protected Friend Set(ByVal value As Boolean)
                 Using SyncHelper(False)
                     If value AndAlso Not _loaded Then
-                        Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
+                        Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
                         For i As Integer = 0 To arr.Count - 1
                             _members_load_state(i) = True
                         Next
                     ElseIf Not value AndAlso _loaded Then
-                        Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
+                        Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
                         For i As Integer = 0 To arr.Count - 1
                             _members_load_state(i) = False
                         Next
@@ -300,7 +304,7 @@ Namespace Orm
 
             Dim idx As Integer = c.Index
             If idx = -1 Then
-                Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
+                Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
                 idx = arr.BinarySearch(c)
                 c.Index = idx
             End If
@@ -338,7 +342,7 @@ Namespace Orm
 
         Public ReadOnly Property OrmCache() As OrmCacheBase
             Get
-                Return OrmManagerBase.CurrentManager.Cache
+                Return GetMgr.Cache
             End Get
         End Property
 
@@ -433,7 +437,7 @@ Namespace Orm
             If OrmCache Is Nothing Then
                 Throw New OrmObjectException(ObjName & "The object is floating and has not cashe that is needed to perform this operation")
             End If
-            If OrmManagerBase.CurrentManager Is Nothing Then
+            If GetMgr() Is Nothing Then
                 Throw New OrmObjectException(ObjName & "You have to create MediaContent object to perform this operation")
             End If
         End Sub
@@ -465,7 +469,7 @@ Namespace Orm
             'If mo Is Nothing Then mo = _mo
             If mo IsNot Nothing Then
                 If mo.User IsNot Nothing Then
-                    If Not mo.User.Equals(OrmManagerBase.CurrentManager.CurrentUser) Then
+                    If Not mo.User.Equals(GetMgr.CurrentUser) Then
                         Throw New OrmObjectException(ObjName & "Object in readonly state")
                     Else
                         'If HasChanges Then
@@ -478,7 +482,7 @@ Namespace Orm
                 End If
             End If
             Dim olds As ObjectState = _state
-            OrmManagerBase.CurrentManager.LoadObject(Me)
+            GetMgr.LoadObject(Me)
             If olds = Orm.ObjectState.Created AndAlso _state = Orm.ObjectState.Modified Then
                 AcceptChanges(True)
             End If
@@ -506,8 +510,18 @@ Namespace Orm
             End If
         End Sub
 
+        Protected Function GetMgr() As OrmManagerBase
+            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+            If Not String.IsNullOrEmpty(_mgrStr) Then
+                Do While mgr IsNot Nothing AndAlso mgr.IdentityString <> _mgrStr
+                    mgr = mgr._prev
+                Loop
+            End If
+            Return mgr
+        End Function
+
         Public Function Save(ByVal AcceptChanges As Boolean) As Boolean
-            Return OrmManagerBase.CurrentManager.SaveAll(Me, AcceptChanges)
+            Return GetMgr.SaveAll(Me, AcceptChanges)
         End Function
 
         ''' <param name="obj">The System.Object to compare with the current System.Object.</param>
@@ -552,7 +566,7 @@ Namespace Orm
         Public Sub RejectRelationChanges()
             Using SyncHelper(False)
                 Dim t As Type = Me.GetType
-                Dim mc As OrmManagerBase = OrmManagerBase.CurrentManager
+                Dim mc As OrmManagerBase = GetMgr()
                 Dim rel As IRelation = mc.ObjectSchema.GetConnectedTypeRelation(t)
                 If rel IsNot Nothing Then
                     Dim c As New OrmManagerBase.M2MEnum(rel, Me, mc.ObjectSchema)
@@ -598,7 +612,7 @@ Namespace Orm
                     _state = olds
                     If _state = Orm.ObjectState.Created Then
                         Dim name As String = Me.GetType.Name
-                        Dim mc As OrmManagerBase = OrmManagerBase.CurrentManager
+                        Dim mc As OrmManagerBase = GetMgr()
                         Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
                         If dic Is Nothing Then
                             Throw New OrmObjectException("Collection for " & name & " not exists")
@@ -631,7 +645,7 @@ Namespace Orm
             Dim mo As OrmBase = Nothing
             Using SyncHelper(False)
                 Dim t As Type = Me.GetType
-                Dim mc As OrmManagerBase = OrmManagerBase.CurrentManager
+                Dim mc As OrmManagerBase = GetMgr()
                 'Debug.Write("Accept " & t.Name)
                 For Each acs As AcceptState2 In _needAccept
                     acs.Accept(Me, mc)
@@ -774,7 +788,7 @@ Namespace Orm
 
                 Dim mo As ModifiedObject = OrmCache.Modified(Me)
                 If mo IsNot Nothing Then
-                    If mo.User IsNot Nothing AndAlso Not mo.User.Equals(OrmManagerBase.CurrentManager.CurrentUser) Then
+                    If mo.User IsNot Nothing AndAlso Not mo.User.Equals(GetMgr.CurrentUser) Then
                         Throw New OrmObjectException(ObjName & "Object has already altered by another user")
                     End If
                     If _state = Orm.ObjectState.Deleted Then _state = ObjectState.Modified
@@ -804,7 +818,7 @@ Namespace Orm
                         Dim mo As ModifiedObject = OrmCache.Modified(Me)
                         'If mo Is Nothing Then mo = _mo
                         If mo IsNot Nothing Then
-                            If mo.User IsNot Nothing AndAlso Not mo.User.Equals(OrmManagerBase.CurrentManager.CurrentUser) Then
+                            If mo.User IsNot Nothing AndAlso Not mo.User.Equals(GetMgr.CurrentUser) Then
                                 Return True
                             End If
                         End If
@@ -828,7 +842,7 @@ Namespace Orm
 
         Public Function IsFieldLoaded(ByVal fieldName As String) As Boolean
             Dim c As New ColumnAttribute(fieldName)
-            Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentManager.ObjectSchema.GetSortedFieldList(Me.GetType)
+            Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
             Dim idx As Integer = arr.BinarySearch(c)
             If idx < 0 Then Throw New OrmObjectException("There is no such field " & fieldName)
             Return _members_load_state(idx)
@@ -857,7 +871,7 @@ Namespace Orm
                 Dim mo As ModifiedObject = OrmCache.Modified(Me)
                 'If mo Is Nothing Then mo = _mo
                 If mo IsNot Nothing Then
-                    If mo.User IsNot Nothing AndAlso Not mo.User.Equals(OrmManagerBase.CurrentManager.CurrentUser) Then
+                    If mo.User IsNot Nothing AndAlso Not mo.User.Equals(GetMgr.CurrentUser) Then
                         Throw New OrmObjectException(ObjName & "Object has already altered by another user")
                     End If
                 Else
@@ -872,7 +886,7 @@ Namespace Orm
                     'OrmCache.RegisterModification(modified)
                 End If
                 _state = ObjectState.Deleted
-                OrmManagerBase.CurrentManager.RaiseBeginDelete(Me)
+                GetMgr.RaiseBeginDelete(Me)
             End Using
         End Sub
 
@@ -881,7 +895,7 @@ Namespace Orm
             _state = Orm.ObjectState.Modified
             OrmCache.RegisterModification(modified, Identifier)
             If Not _loading Then
-                OrmManagerBase.CurrentManager.RaiseBeginUpdate(Me)
+                GetMgr.RaiseBeginUpdate(Me)
             End If
         End Sub
 
@@ -891,7 +905,7 @@ Namespace Orm
             _state = Orm.ObjectState.Modified
             OrmCache.RegisterModification(modified, id)
             If Not _loading Then
-                OrmManagerBase.CurrentManager.RaiseBeginUpdate(Me)
+                GetMgr.RaiseBeginUpdate(Me)
             End If
         End Sub
 
@@ -900,7 +914,7 @@ Namespace Orm
             _state = Orm.ObjectState.Modified
             OrmCache.RegisterModification(modified)
             If Not _loading Then
-                OrmManagerBase.CurrentManager.RaiseBeginUpdate(Me)
+                GetMgr.RaiseBeginUpdate(Me)
             End If
         End Sub
 
@@ -1032,7 +1046,7 @@ l1:
             End With
 
             _loading = False
-            Dim schema As OrmSchemaBase = OrmManagerBase.CurrentManager.ObjectSchema
+            Dim schema As OrmSchemaBase = GetMgr.ObjectSchema
             If schema IsNot Nothing Then CheckIsAllLoaded(schema)
 
         End Sub
@@ -1081,7 +1095,7 @@ l1:
                             CreateObject(.Name, .Value)
                             SetLoaded(c, True)
                         Else
-                            Dim v As OrmBase = OrmManagerBase.CurrentManager.CreateDBObject(CInt(.Value), pi.PropertyType)
+                            Dim v As OrmBase = GetMgr.CreateDBObject(CInt(.Value), pi.PropertyType)
                             If pi IsNot Nothing Then
                                 pi.SetValue(Me, v, Nothing)
                                 SetLoaded(c, True)
@@ -1171,7 +1185,7 @@ l1:
 
         Public Function EnsureLoaded() As OrmBase
             'OrmManagerBase.CurrentMediaContent.LoadObject(Me)
-            Return OrmManagerBase.CurrentManager.LoadType(_id, Me.GetType, True, True)
+            Return GetMgr.LoadType(_id, Me.GetType, True, True)
         End Function
 
         Public Overridable Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
@@ -1264,39 +1278,39 @@ l1:
         End Function
 
         Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
-            Return OrmManagerBase.CurrentManager.FindMany2Many2(Of T)(Me, criteria, sort, True, withLoad)
+            Return GetMgr.FindMany2Many2(Of T)(Me, criteria, sort, True, withLoad)
         End Function
 
         Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
-            Return OrmManagerBase.CurrentManager.FindMany2Many2(Of T)(Me, criteria, sort, direct, withLoad)
+            Return GetMgr.FindMany2Many2(Of T)(Me, criteria, sort, direct, withLoad)
         End Function
 
         Public Sub Add(ByVal obj As OrmBase)
-            OrmManagerBase.CurrentManager.M2MAdd(Me, obj, True)
+            GetMgr.M2MAdd(Me, obj, True)
         End Sub
 
         Public Sub Add(ByVal obj As OrmBase, ByVal direct As Boolean)
-            OrmManagerBase.CurrentManager.M2MAdd(Me, obj, direct)
+            GetMgr.M2MAdd(Me, obj, direct)
         End Sub
 
         Public Sub Delete(ByVal t As Type)
-            OrmManagerBase.CurrentManager.M2MDelete(Me, t, True)
+            GetMgr.M2MDelete(Me, t, True)
         End Sub
 
         Public Sub Delete(ByVal t As Type, ByVal direct As Boolean)
-            OrmManagerBase.CurrentManager.M2MDelete(Me, t, direct)
+            GetMgr.M2MDelete(Me, t, direct)
         End Sub
 
         Public Sub Delete(ByVal obj As OrmBase)
-            OrmManagerBase.CurrentManager.M2MDelete(Me, obj, True)
+            GetMgr.M2MDelete(Me, obj, True)
         End Sub
 
         Public Sub Delete(ByVal obj As OrmBase, ByVal direct As Boolean)
-            OrmManagerBase.CurrentManager.M2MDelete(Me, obj, direct)
+            GetMgr.M2MDelete(Me, obj, direct)
         End Sub
 
         Public Sub Cancel(ByVal t As Type)
-            OrmManagerBase.CurrentManager.M2MCancel(Me, t)
+            GetMgr.M2MCancel(Me, t)
         End Sub
 
 #End Region
