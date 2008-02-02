@@ -776,7 +776,7 @@ Namespace Orm
 
                 If Not IsLoaded Then
                     If _state = Orm.ObjectState.None Then
-                        Throw New InvalidOperationException
+                        Throw New InvalidOperationException(String.Format("Object {0} is not loaded while the state is None", ObjName))
                     End If
 
                     If _state = Orm.ObjectState.NotLoaded Then

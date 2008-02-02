@@ -128,63 +128,65 @@ Namespace Criteria.Values
             Else
                 r = IEvaluableValue.EvalResult.NotFound
             End If
-
-            Select Case template.Operation
-                Case FilterOperation.Equal
-                    If Equals(v, val) Then
-                        r = IEvaluableValue.EvalResult.Found
-                    End If
-                Case FilterOperation.GreaterEqualThan
-                    Dim i As Integer = CType(v, IComparable).CompareTo(val)
-                    If i >= 0 Then
-                        r = IEvaluableValue.EvalResult.Found
-                    End If
-                Case FilterOperation.GreaterThan
-                    Dim i As Integer = CType(v, IComparable).CompareTo(val)
-                    If i > 0 Then
-                        r = IEvaluableValue.EvalResult.Found
-                    End If
-                Case FilterOperation.LessEqualThan
-                    Dim i As Integer = CType(v, IComparable).CompareTo(val)
-                    If i <= 0 Then
-                        r = IEvaluableValue.EvalResult.Found
-                    End If
-                Case FilterOperation.LessThan
-                    Dim i As Integer = CType(v, IComparable).CompareTo(val)
-                    If i < 0 Then
-                        r = IEvaluableValue.EvalResult.Found
-                    End If
-                Case FilterOperation.NotEqual
-                    If Not Equals(v, val) Then
-                        r = IEvaluableValue.EvalResult.Found
-                    End If
-                Case FilterOperation.Like
-                    Dim par As String = CStr(val)
-                    Dim str As String = CStr(v)
-                    r = IEvaluableValue.EvalResult.NotFound
-                    Dim [case] As StringComparison = StringComparison.InvariantCulture
-                    If Not _case Then
-                        [case] = StringComparison.InvariantCultureIgnoreCase
-                    End If
-                    If par.StartsWith("%") Then
-                        If par.EndsWith("%") Then
-                            If str.IndexOf(par.Trim("%"c), [case]) >= 0 Then
-                                r = IEvaluableValue.EvalResult.Found
-                            End If
-                        Else
-                            If str.EndsWith(par.TrimStart("%"c), [case]) Then
-                                r = IEvaluableValue.EvalResult.Found
-                            End If
-                        End If
-                    ElseIf par.EndsWith("%") Then
-                        If str.StartsWith(par.TrimEnd("%"c), [case]) Then
+            Try
+                Select Case template.Operation
+                    Case FilterOperation.Equal
+                        If Equals(v, val) Then
                             r = IEvaluableValue.EvalResult.Found
                         End If
-                    End If
-                Case Else
-                    r = IEvaluableValue.EvalResult.Unknown
-            End Select
-
+                    Case FilterOperation.GreaterEqualThan
+                        Dim i As Integer = CType(v, IComparable).CompareTo(val)
+                        If i >= 0 Then
+                            r = IEvaluableValue.EvalResult.Found
+                        End If
+                    Case FilterOperation.GreaterThan
+                        Dim i As Integer = CType(v, IComparable).CompareTo(val)
+                        If i > 0 Then
+                            r = IEvaluableValue.EvalResult.Found
+                        End If
+                    Case FilterOperation.LessEqualThan
+                        Dim i As Integer = CType(v, IComparable).CompareTo(val)
+                        If i <= 0 Then
+                            r = IEvaluableValue.EvalResult.Found
+                        End If
+                    Case FilterOperation.LessThan
+                        Dim i As Integer = CType(v, IComparable).CompareTo(val)
+                        If i < 0 Then
+                            r = IEvaluableValue.EvalResult.Found
+                        End If
+                    Case FilterOperation.NotEqual
+                        If Not Equals(v, val) Then
+                            r = IEvaluableValue.EvalResult.Found
+                        End If
+                    Case FilterOperation.Like
+                        Dim par As String = CStr(val)
+                        Dim str As String = CStr(v)
+                        r = IEvaluableValue.EvalResult.NotFound
+                        Dim [case] As StringComparison = StringComparison.InvariantCulture
+                        If Not _case Then
+                            [case] = StringComparison.InvariantCultureIgnoreCase
+                        End If
+                        If par.StartsWith("%") Then
+                            If par.EndsWith("%") Then
+                                If str.IndexOf(par.Trim("%"c), [case]) >= 0 Then
+                                    r = IEvaluableValue.EvalResult.Found
+                                End If
+                            Else
+                                If str.EndsWith(par.TrimStart("%"c), [case]) Then
+                                    r = IEvaluableValue.EvalResult.Found
+                                End If
+                            End If
+                        ElseIf par.EndsWith("%") Then
+                            If str.StartsWith(par.TrimEnd("%"c), [case]) Then
+                                r = IEvaluableValue.EvalResult.Found
+                            End If
+                        End If
+                    Case Else
+                        r = IEvaluableValue.EvalResult.Unknown
+                End Select
+            Catch ex As ArgumentException
+                Throw New InvalidOperationException(String.Format("Cannot eval field {0} of type {1} through value {2} of type {3}", template.FieldName, template.Type, v, v.GetType), ex)
+            End Try
             Return r
         End Function
     End Class
