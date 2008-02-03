@@ -131,7 +131,7 @@ Namespace Database
             Assert(obj.ObjectState = ObjectState.Created, "Object " & obj.Identifier & " should be in Created state")
 
             Dim oldl As Boolean = obj.IsLoaded
-
+            Dim err As Boolean = True
             Try
                 obj.IsLoaded = True
 
@@ -199,9 +199,9 @@ Namespace Database
                         End Try
                     End If
                 End Using
-            Catch
-                obj.IsLoaded = oldl
-                Throw
+                err = False
+            Finally
+                If err Then obj.IsLoaded = oldl
             End Try
         End Sub
 

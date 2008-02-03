@@ -485,6 +485,8 @@ Namespace Orm
             GetMgr.LoadObject(Me)
             If olds = Orm.ObjectState.Created AndAlso _state = Orm.ObjectState.Modified Then
                 AcceptChanges(True)
+            ElseIf IsLoaded Then
+                _state = Orm.ObjectState.None
             End If
         End Sub
 
