@@ -1189,13 +1189,13 @@ Namespace Database
                     .CommandText = sb.ToString
                 End With
 
-                Dim olds As ObjectState = obj.ObjectState
+                'Dim olds As ObjectState = obj.ObjectState
                 LoadSingleObject(cmd, arr, obj, True, True, False)
                 'If olds = obj.ObjectState OrElse obj.ObjectState = ObjectState.Created Then obj.ObjectState = ObjectState.None
                 '(olds = ObjectState.Created AndAlso obj.ObjectState = ObjectState.Modified) OrElse
-                If olds = obj.ObjectState Then
-                    obj.ObjectState = ObjectState.None
-                End If
+                'If olds = obj.ObjectState Then
+                '    obj.ObjectState = ObjectState.None
+                'End If
             End Using
         End Sub
 
@@ -1243,8 +1243,6 @@ Namespace Database
                     End Using
                     _cache.LogLoadTime(obj, et.GetTime)
                 End Using
-            Catch
-                Throw
             Finally
                 CloseConn(b)
             End Try
@@ -1330,7 +1328,7 @@ Namespace Database
                         '    obj.ObjectState = ObjectState.NotFoundInDB
                         '    RemoveObjectFromCache(obj)
                         'Else
-                        If obj.ObjectState = ObjectState.NotLoaded Then obj.ObjectState = ObjectState.None
+                        If obj.ObjectState = ObjectState.NotLoaded AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
                         values.Add(obj)
                         loaded += 1
                         'End If
@@ -1356,38 +1354,57 @@ Namespace Database
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Using obj.GetSyncRoot()
                 obj._loading = True
-                Dim has_pk As Boolean = False
-                Dim pi_cache(arr.Count - 1) As Reflection.PropertyInfo
-                Dim idic As IDictionary = _schema.GetProperties(original_type)
-                For idx As Integer = 0 To arr.Count - 1
-                    Dim c As ColumnAttribute = arr(idx)
-                    Dim pi As Reflection.PropertyInfo = CType(idic(c), Reflection.PropertyInfo)
-                    pi_cache(idx) = pi
-                    If pi IsNot Nothing Then
-                        If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            Assert(idx + displacement < dr.FieldCount, c.FieldName)
-                            If dr.FieldCount <= idx + displacement Then
-                                If _mcSwitch.TraceError Then
-                                    Dim dt As System.Data.DataTable = dr.GetSchemaTable
-                                    Dim sb As New StringBuilder
-                                    For Each drow As System.Data.DataRow In dt.Rows
-                                        If sb.Length > 0 Then
-                                            sb.Append(", ")
-                                        End If
-                                        sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
-                                    Next
-                                    WriteLine(sb.ToString)
+                Try
+                    Dim has_pk As Boolean = False
+                    Dim pi_cache(arr.Count - 1) As Reflection.PropertyInfo
+                    Dim idic As IDictionary = _schema.GetProperties(original_type)
+                    For idx As Integer = 0 To arr.Count - 1
+                        Dim c As ColumnAttribute = arr(idx)
+                        Dim pi As Reflection.PropertyInfo = CType(idic(c), Reflection.PropertyInfo)
+                        pi_cache(idx) = pi
+                        If pi IsNot Nothing Then
+                            If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                Assert(idx + displacement < dr.FieldCount, c.FieldName)
+                                If dr.FieldCount <= idx + displacement Then
+                                    If _mcSwitch.TraceError Then
+                                        Dim dt As System.Data.DataTable = dr.GetSchemaTable
+                                        Dim sb As New StringBuilder
+                                        For Each drow As System.Data.DataRow In dt.Rows
+                                            If sb.Length > 0 Then
+                                                sb.Append(", ")
+                                            End If
+                                            sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
+                                        Next
+                                        WriteLine(sb.ToString)
+                                    End If
                                 End If
-                            End If
-                            has_pk = True
-                            Dim value As Object = dr.GetValue(idx + displacement)
-                            If Not dr.IsDBNull(idx + displacement) Then
-                                Try
-                                    If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
-                                        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                        obj.SetValue(pi, c, v)
-                                        obj.SetLoaded(c, True)
-                                    ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                                has_pk = True
+                                Dim value As Object = dr.GetValue(idx + displacement)
+                                If Not dr.IsDBNull(idx + displacement) Then
+                                    Try
+                                        If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
+                                            Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                            obj.SetValue(pi, c, v)
+                                            obj.SetLoaded(c, True)
+                                        ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                                            Dim dt As DateTime = CDate(value)
+                                            Dim l As Long = dt.ToBinary
+                                            Using ms As New IO.MemoryStream
+                                                Dim sw As New IO.StreamWriter(ms)
+                                                sw.Write(l)
+                                                sw.Flush()
+                                                obj.SetValue(pi, c, ms.ToArray)
+                                                obj.SetLoaded(c, True)
+                                            End Using
+                                        Else
+                                            If c.FieldName = "ID" Then
+                                                obj.Identifier = CInt(value)
+                                            Else
+                                                obj.SetValue(pi, c, value)
+                                            End If
+                                            obj.SetLoaded(c, True)
+                                        End If
+                                    Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
                                         Dim dt As DateTime = CDate(value)
                                         Dim l As Long = dt.ToBinary
                                         Using ms As New IO.MemoryStream
@@ -1397,172 +1414,156 @@ Namespace Database
                                             obj.SetValue(pi, c, ms.ToArray)
                                             obj.SetLoaded(c, True)
                                         End Using
-                                    Else
-                                        If c.FieldName = "ID" Then
-                                            obj.Identifier = CInt(value)
-                                        Else
-                                            obj.SetValue(pi, c, value)
-                                        End If
+                                    Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
+                                        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                        obj.SetValue(pi, c, v)
                                         obj.SetLoaded(c, True)
-                                    End If
-                                Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-                                    Dim dt As DateTime = CDate(value)
-                                    Dim l As Long = dt.ToBinary
-                                    Using ms As New IO.MemoryStream
-                                        Dim sw As New IO.StreamWriter(ms)
-                                        sw.Write(l)
-                                        sw.Flush()
-                                        obj.SetValue(pi, c, ms.ToArray)
-                                        obj.SetLoaded(c, True)
-                                    End Using
-                                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-                                    Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                    obj.SetValue(pi, c, v)
-                                    obj.SetLoaded(c, True)
-                                End Try
-                            End If
-                        End If
-                    End If
-                Next
-
-                If obj.ObjectState = ObjectState.Created Then
-                    If has_pk Then
-                        Throw New OrmManagerException("PK is not loaded")
-                    Else
-                        obj.CreateModified(obj.Identifier)
-                    End If
-                End If
-
-                For idx As Integer = 0 To arr.Count - 1
-                    Dim c As ColumnAttribute = arr(idx)
-                    Dim pi As Reflection.PropertyInfo = pi_cache(idx) '_schema.GetProperty(original_type, c)
-
-                    Dim value As Object = dr.GetValue(idx + displacement)
-
-                    If pi Is Nothing Then
-                        obj.SetValue(pi, c, value)
-                        obj.SetLoaded(c, True, False)
-                    Else
-                        Dim att As Field2DbRelations = fields_idx(c.FieldName).GetAttributes(c)
-                        If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            Dim v As Object = pi.GetValue(obj, Nothing)
-                            If Not value.GetType Is pi.PropertyType Then
-                                value = Convert.ChangeType(value, pi.PropertyType)
-                            End If
-                            If Not v.Equals(value) Then
-                                Throw New OrmManagerException("PK values is not equals (" & dr.GetName(idx + displacement) & "): value from db: " & value.ToString & "; value from object: " & v.ToString)
-                            End If
-                        ElseIf Not dr.IsDBNull(idx + displacement) AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                            If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
-                                obj.CreateObject(c.FieldName, value)
-                                obj.SetLoaded(c, True)
-                                'If GetType(OrmBase) Is pi.PropertyType Then
-                                '    obj.CreateObject(CInt(value))
-                                '    obj.SetLoaded(c, True)
-                                'Else
-                                '    Dim type_created As Type = pi.PropertyType
-                                '    Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
-                                '    obj.SetValue(pi, c, o)
-                                '    obj.SetLoaded(c, True)
-                                'End If
-                            ElseIf GetType(OrmBase).IsAssignableFrom(pi.PropertyType) Then
-                                Dim type_created As Type = pi.PropertyType
-                                Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
-                                obj.SetValue(pi, c, o)
-                                obj.SetLoaded(c, True)
-                            ElseIf GetType(System.Xml.XmlDocument) Is pi.PropertyType AndAlso TypeOf (value) Is String Then
-                                Dim o As New System.Xml.XmlDocument
-                                o.LoadXml(CStr(value))
-                                obj.SetValue(pi, c, o)
-                                obj.SetLoaded(c, True)
-                            ElseIf pi.PropertyType.IsEnum AndAlso TypeOf (value) Is String Then
-                                Dim svalue As String = CStr(value).Trim
-                                If svalue = String.Empty Then
-                                    obj.SetValue(pi, c, 0)
-                                    obj.SetLoaded(c, True)
-                                Else
-                                    obj.SetValue(pi, c, [Enum].Parse(pi.PropertyType, svalue, True))
-                                    obj.SetLoaded(c, True)
-                                End If
-                            ElseIf pi.PropertyType.IsGenericType AndAlso GetType(Nullable(Of )).Name = pi.PropertyType.Name Then
-                                Dim t As Type = pi.PropertyType.GetGenericArguments()(0)
-                                Dim v As Object = Nothing
-                                If t.IsPrimitive Then
-                                    v = Convert.ChangeType(value, t)
-                                ElseIf t.IsEnum Then
-                                    If TypeOf (value) Is String Then
-                                        Dim svalue As String = CStr(value).Trim
-                                        If svalue = String.Empty Then
-                                            v = [Enum].ToObject(t, 0)
-                                        Else
-                                            v = [Enum].Parse(t, svalue, True)
-                                        End If
-                                    Else
-                                        v = [Enum].ToObject(t, value)
-                                    End If
-                                ElseIf t Is value.GetType Then
-                                    v = value
-                                Else
-                                    Try
-                                        v = t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
-                                            Nothing, Nothing, New Object() {value})
-                                    Catch ex As MissingMethodException
-                                        'Debug.WriteLine(c.FieldName & ": " & original_type.Name)
-                                        'v = Convert.ChangeType(value, t)
                                     End Try
                                 End If
-                                Dim v2 As Object = pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
-                                    Nothing, Nothing, New Object() {v})
-                                obj.SetValue(pi, c, v2)
-                                obj.SetLoaded(c, True)
-                            Else
-                                Try
-                                    If (pi.PropertyType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (pi.PropertyType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
+                            End If
+                        End If
+                    Next
+
+                    If obj.ObjectState = ObjectState.Created Then
+                        If has_pk Then
+                            Throw New OrmManagerException("PK is not loaded")
+                        Else
+                            obj.CreateModified(obj.Identifier)
+                        End If
+                    End If
+
+                    For idx As Integer = 0 To arr.Count - 1
+                        Dim c As ColumnAttribute = arr(idx)
+                        Dim pi As Reflection.PropertyInfo = pi_cache(idx) '_schema.GetProperty(original_type, c)
+
+                        Dim value As Object = dr.GetValue(idx + displacement)
+
+                        If pi Is Nothing Then
+                            obj.SetValue(pi, c, value)
+                            obj.SetLoaded(c, True, False)
+                        Else
+                            Dim att As Field2DbRelations = fields_idx(c.FieldName).GetAttributes(c)
+                            If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                Dim v As Object = pi.GetValue(obj, Nothing)
+                                If Not value.GetType Is pi.PropertyType Then
+                                    value = Convert.ChangeType(value, pi.PropertyType)
+                                End If
+                                If Not v.Equals(value) Then
+                                    Throw New OrmManagerException("PK values is not equals (" & dr.GetName(idx + displacement) & "): value from db: " & value.ToString & "; value from object: " & v.ToString)
+                                End If
+                            ElseIf Not dr.IsDBNull(idx + displacement) AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                                If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
+                                    obj.CreateObject(c.FieldName, value)
+                                    obj.SetLoaded(c, True)
+                                    'If GetType(OrmBase) Is pi.PropertyType Then
+                                    '    obj.CreateObject(CInt(value))
+                                    '    obj.SetLoaded(c, True)
+                                    'Else
+                                    '    Dim type_created As Type = pi.PropertyType
+                                    '    Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
+                                    '    obj.SetValue(pi, c, o)
+                                    '    obj.SetLoaded(c, True)
+                                    'End If
+                                ElseIf GetType(OrmBase).IsAssignableFrom(pi.PropertyType) Then
+                                    Dim type_created As Type = pi.PropertyType
+                                    Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
+                                    obj.SetValue(pi, c, o)
+                                    obj.SetLoaded(c, True)
+                                ElseIf GetType(System.Xml.XmlDocument) Is pi.PropertyType AndAlso TypeOf (value) Is String Then
+                                    Dim o As New System.Xml.XmlDocument
+                                    o.LoadXml(CStr(value))
+                                    obj.SetValue(pi, c, o)
+                                    obj.SetLoaded(c, True)
+                                ElseIf pi.PropertyType.IsEnum AndAlso TypeOf (value) Is String Then
+                                    Dim svalue As String = CStr(value).Trim
+                                    If svalue = String.Empty Then
+                                        obj.SetValue(pi, c, 0)
+                                        obj.SetLoaded(c, True)
+                                    Else
+                                        obj.SetValue(pi, c, [Enum].Parse(pi.PropertyType, svalue, True))
+                                        obj.SetLoaded(c, True)
+                                    End If
+                                ElseIf pi.PropertyType.IsGenericType AndAlso GetType(Nullable(Of )).Name = pi.PropertyType.Name Then
+                                    Dim t As Type = pi.PropertyType.GetGenericArguments()(0)
+                                    Dim v As Object = Nothing
+                                    If t.IsPrimitive Then
+                                        v = Convert.ChangeType(value, t)
+                                    ElseIf t.IsEnum Then
+                                        If TypeOf (value) Is String Then
+                                            Dim svalue As String = CStr(value).Trim
+                                            If svalue = String.Empty Then
+                                                v = [Enum].ToObject(t, 0)
+                                            Else
+                                                v = [Enum].Parse(t, svalue, True)
+                                            End If
+                                        Else
+                                            v = [Enum].ToObject(t, value)
+                                        End If
+                                    ElseIf t Is value.GetType Then
+                                        v = value
+                                    Else
+                                        Try
+                                            v = t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
+                                                Nothing, Nothing, New Object() {value})
+                                        Catch ex As MissingMethodException
+                                            'Debug.WriteLine(c.FieldName & ": " & original_type.Name)
+                                            'v = Convert.ChangeType(value, t)
+                                        End Try
+                                    End If
+                                    Dim v2 As Object = pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
+                                        Nothing, Nothing, New Object() {v})
+                                    obj.SetValue(pi, c, v2)
+                                    obj.SetLoaded(c, True)
+                                Else
+                                    Try
+                                        If (pi.PropertyType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (pi.PropertyType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
+                                            Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                            obj.SetValue(pi, c, v)
+                                            obj.SetLoaded(c, True)
+                                        ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                                            Dim dt As DateTime = CDate(value)
+                                            Dim l As Long = dt.ToBinary
+                                            Using ms As New IO.MemoryStream
+                                                Dim sw As New IO.StreamWriter(ms)
+                                                sw.Write(l)
+                                                sw.Flush()
+                                                'pi.SetValue(obj, ms.ToArray, Nothing)
+                                                obj.SetValue(pi, c, ms.ToArray)
+                                                obj.SetLoaded(c, True)
+                                            End Using
+                                            'ElseIf pi.PropertyType Is GetType(ReleaseDate) AndAlso value.GetType Is GetType(Integer) Then
+                                            '    obj.SetValue(pi, c, pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, _
+                                            '        Nothing, New Object() {value}))
+                                            '    obj.SetLoaded(c, True)
+                                        Else
+                                            obj.SetValue(pi, c, value)
+                                            obj.SetLoaded(c, True)
+                                        End If
+                                        'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
+                                        '    Dim dt As DateTime = CDate(value)
+                                        '    Dim l As Long = dt.ToBinary
+                                        '    Using ms As New IO.MemoryStream
+                                        '        Dim sw As New IO.StreamWriter(ms)
+                                        '        sw.Write(l)
+                                        '        sw.Flush()
+                                        '        obj.SetValue(pi, c, ms.ToArray)
+                                        '        obj.SetLoaded(c, True)
+                                        '    End Using
+                                    Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
                                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                         obj.SetValue(pi, c, v)
                                         obj.SetLoaded(c, True)
-                                    ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
-                                        Dim dt As DateTime = CDate(value)
-                                        Dim l As Long = dt.ToBinary
-                                        Using ms As New IO.MemoryStream
-                                            Dim sw As New IO.StreamWriter(ms)
-                                            sw.Write(l)
-                                            sw.Flush()
-                                            'pi.SetValue(obj, ms.ToArray, Nothing)
-                                            obj.SetValue(pi, c, ms.ToArray)
-                                            obj.SetLoaded(c, True)
-                                        End Using
-                                        'ElseIf pi.PropertyType Is GetType(ReleaseDate) AndAlso value.GetType Is GetType(Integer) Then
-                                        '    obj.SetValue(pi, c, pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, _
-                                        '        Nothing, New Object() {value}))
-                                        '    obj.SetLoaded(c, True)
-                                    Else
-                                        obj.SetValue(pi, c, value)
-                                        obj.SetLoaded(c, True)
-                                    End If
-                                    'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-                                    '    Dim dt As DateTime = CDate(value)
-                                    '    Dim l As Long = dt.ToBinary
-                                    '    Using ms As New IO.MemoryStream
-                                    '        Dim sw As New IO.StreamWriter(ms)
-                                    '        sw.Write(l)
-                                    '        sw.Flush()
-                                    '        obj.SetValue(pi, c, ms.ToArray)
-                                    '        obj.SetLoaded(c, True)
-                                    '    End Using
-                                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-                                    Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                    obj.SetValue(pi, c, v)
-                                    obj.SetLoaded(c, True)
-                                End Try
+                                    End Try
+                                End If
+                            ElseIf dr.IsDBNull(idx + displacement) Then
+                                obj.SetValue(pi, c, Nothing)
+                                obj.SetLoaded(c, True)
                             End If
-                        ElseIf dr.IsDBNull(idx + displacement) Then
-                            obj.SetValue(pi, c, Nothing)
-                            obj.SetLoaded(c, True)
                         End If
-                    End If
-                Next
-                obj._loading = False
+                    Next
+                Finally
+                    obj._loading = False
+                End Try
                 obj.CheckIsAllLoaded(ObjectSchema)
             End Using
         End Sub
