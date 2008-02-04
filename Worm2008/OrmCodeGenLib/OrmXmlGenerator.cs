@@ -322,6 +322,8 @@ namespace OrmCodeGenLib
         {
             _ormXmlDocumentMain.DocumentElement.SetAttribute("defaultNamespace", _ormObjectsDef.Namespace);
             _ormXmlDocumentMain.DocumentElement.SetAttribute("schemaVersion", _ormObjectsDef.SchemaVersion);
+			if (!string.IsNullOrEmpty(_ormObjectsDef.EntityBaseTypeName))
+				_ormXmlDocumentMain.DocumentElement.SetAttribute("entityBaseType", _ormObjectsDef.EntityBaseTypeName);
 
             StringBuilder commentBuilder = new StringBuilder();
             foreach (string comment in _ormObjectsDef.SystemComments)

@@ -219,6 +219,7 @@ namespace OrmCodeGenLib
         {
             _ormObjectsDef.Namespace = _ormXmlDocument.DocumentElement.GetAttribute("defaultNamespace");
             _ormObjectsDef.SchemaVersion = _ormXmlDocument.DocumentElement.GetAttribute("schemaVersion");
+        	_ormObjectsDef.EntityBaseTypeName = _ormXmlDocument.DocumentElement.GetAttribute("entityBaseType");
             string baseUriString = _ormXmlDocument.DocumentElement.GetAttribute("xml:base");
             if (!string.IsNullOrEmpty(baseUriString))
             {

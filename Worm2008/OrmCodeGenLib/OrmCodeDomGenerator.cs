@@ -102,7 +102,16 @@ namespace OrmCodeGenLib
                 if (entity.BaseEntity == null)
                 {
                     //entityClass.BaseTypes.Add(new CodeTypeReference(typeof(OrmBaseT)));
-                    CodeTypeReference entityType = new CodeTypeReference(typeof(OrmBaseT<>));
+                    CodeTypeReference entityType;
+					if(_ormObjectsDefinition.EntityBaseType == null)
+						entityType= new CodeTypeReference(typeof(OrmBaseT<>));
+					else
+					{
+						entityType =
+							new CodeTypeReference(_ormObjectsDefinition.EntityBaseType.IsEntityType
+							                      	? OrmCodeGenNameHelper.GetQualifiedEntityName(_ormObjectsDefinition.EntityBaseType.Entity)
+							                      	: _ormObjectsDefinition.EntityBaseType.TypeName);
+					}
                     entityType.TypeArguments.Add(
                         new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(entity)));
                     entityClass.BaseTypes.Add(entityType);
