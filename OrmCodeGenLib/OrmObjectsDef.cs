@@ -33,6 +33,9 @@ namespace OrmCodeGenLib
 
         private string _fileName;
 
+		private string _entityBaseTypeName;
+		private TypeDescription _entityBaseType;
+
         #endregion Private Fields
 
         public OrmObjectsDef()
@@ -56,7 +59,7 @@ namespace OrmCodeGenLib
         }
 
         #region Properties
-		[XmlElement("Entities", Order=1)]
+		
         public List<EntityDescription> Entities
         {
             get
@@ -65,7 +68,7 @@ namespace OrmCodeGenLib
             }
         }
 
-		[XmlElement("Tables", Order = 3)]
+		
         public List<TableDescription> Tables
         {
             get
@@ -73,7 +76,7 @@ namespace OrmCodeGenLib
                 return _tables;
             }
         }
-		[XmlIgnore]
+		
         public List<RelationDescriptionBase> Relations
         {
             get
@@ -136,7 +139,38 @@ namespace OrmCodeGenLib
             internal protected set { _base = value; }
         }
 
-        //[XmlIgnore]
+		public TypeDescription EntityBaseType
+		{
+			get
+			{
+				if (_entityBaseType == null && !string.IsNullOrEmpty(_entityBaseTypeName))
+					_entityBaseType = GetType(_entityBaseTypeName, false);
+				return _entityBaseType;
+			}
+			set 
+			{
+				_entityBaseType = value;
+				if (_entityBaseType != null)
+					_entityBaseTypeName = _entityBaseType.Identifier;
+			}
+		}
+
+		protected internal string EntityBaseTypeName
+		{
+			get
+			{
+				if (!string.IsNullOrEmpty(_entityBaseTypeName))
+					_entityBaseType = GetType(_entityBaseTypeName, false);
+				return _entityBaseTypeName;
+			}
+			set
+			{
+				_entityBaseTypeName = value;
+				_entityBaseType = GetType(_entityBaseTypeName, false);
+			}
+		}
+
+		//[XmlIgnore]
         //public List<SelfRelationDescription> SelfRelations
         //{
         //    get { return _selfRelations; }

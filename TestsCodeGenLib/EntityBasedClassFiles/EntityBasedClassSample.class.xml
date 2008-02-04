@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<oos:OrmObjects xmlns:oos="http://www.xmedia.ru/OrmObjectsSchema.xsd" defaultNamespace="OrmCodeGenTests" entityBaseType="tBase">
+	<oos:Types>
+		<oos:Type id="tBase">
+			<oos:UserType  name="OrmCodeGenTests.TestOrmBase"/>
+		</oos:Type>
+		<oos:Type id="tInt32">
+			<oos:ClrType name="System.Int32"/>
+		</oos:Type>
+	</oos:Types>
+	<oos:Tables>
+		<oos:Table id="tblEntity1">dbo.entity1</oos:Table>
+	</oos:Tables>
+	<oos:Entities>
+		<oos:Entity id="eEntity1" name="Entity1">
+			<oos:Tables>
+				<oos:Table ref="tblEntity1"/>
+			</oos:Tables>
+			<oos:Properties>
+				<oos:Property attributes="PrimaryKey" fieldName="id" propertyName="Identifier" table="tblEntity1" typeRef="tInt32" />
+			</oos:Properties>
+		</oos:Entity>
+	</oos:Entities>
+</oos:OrmObjects>

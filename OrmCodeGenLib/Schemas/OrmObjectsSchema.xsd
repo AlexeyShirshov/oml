@@ -574,5 +574,12 @@
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="schemaVersion" type="xs:string" use="optional" />
+	  <xs:attribute name="entityBaseType" type="xs:Name" use="optional">
+		  <xs:annotation>
+			  <xs:documentation>
+				Ссылка на тип, описанный в елементе &lt;types/&gt;, который будет использоваться как базовый для классов сущностей.
+			  </xs:documentation>
+		  </xs:annotation>
+	  </xs:attribute>
   </xs:complexType>
 </xs:schema>

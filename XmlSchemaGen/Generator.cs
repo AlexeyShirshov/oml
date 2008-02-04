@@ -227,7 +227,7 @@ namespace XmlSchemaGen
 				odef.Namespace = name_space;
 				odef.SchemaVersion="1";
                 if (!Path.IsPathRooted(file))
-                    file = Path.Combine(Directory.GetCurrentDirectory, file);
+                    file = Path.Combine(Directory.GetCurrentDirectory(), file);
                 File.Create(file);
 			}
 
