@@ -256,7 +256,11 @@ Namespace Orm
 
         Protected ReadOnly Property OrmSchema() As OrmSchemaBase
             Get
-                Return GetMgr.ObjectSchema
+                If GetMgr() Is Nothing Then
+                    Return Nothing
+                Else
+                    Return GetMgr.ObjectSchema
+                End If
             End Get
         End Property
 
@@ -342,7 +346,11 @@ Namespace Orm
 
         Public ReadOnly Property OrmCache() As OrmCacheBase
             Get
-                Return GetMgr.Cache
+                If GetMgr() IsNot Nothing Then
+                    Return GetMgr.Cache
+                Else
+                    Return Nothing
+                End If
             End Get
         End Property
 
@@ -1207,7 +1215,12 @@ l1:
                 'Throw New OrmObjectException("Use Identifier property to get ID")
                 Return Identifier
             Else
-                Return OrmSchema.GetFieldValue(Me, propAlias, Nothing)
+                Dim s As OrmSchemaBase = OrmSchema
+                If s Is Nothing Then
+                    Return OrmSchemaBase.GetFieldValueSchemaless(Me, propAlias)
+                Else
+                    Return s.GetFieldValue(Me, propAlias, Nothing)
+                End If
             End If
         End Function
 
@@ -1216,7 +1229,12 @@ l1:
                 'Throw New OrmObjectException("Use Identifier property to get ID")
                 Return Identifier
             Else
-                Return OrmSchema.GetFieldValue(Me, propAlias, schema)
+                Dim s As OrmSchemaBase = OrmSchema
+                If s Is Nothing Then
+                    Return OrmSchemaBase.GetFieldValueSchemaless(Me, propAlias, schema)
+                Else
+                    Return s.GetFieldValue(Me, propAlias, schema)
+                End If
             End If
         End Function
 

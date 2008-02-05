@@ -89,6 +89,39 @@ Public MustInherit Class OrmSchemaBase
     '    Return GetProperties(t, schema)
     'End Function
 
+    Public Shared Function GetColumnProperties(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As IDictionary
+        Dim h As New Hashtable
+
+        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
+            Dim cl As ColumnAttribute = Nothing
+            Dim cls() As Attribute = CType(pi.GetCustomAttributes(GetType(ColumnAttribute), True), Attribute())
+            If cls.Length > 0 Then cl = CType(cls(0), ColumnAttribute)
+            If cl IsNot Nothing Then
+                If String.IsNullOrEmpty(cl.FieldName) Then
+                    cl.FieldName = pi.Name
+                End If
+                If schema Is Nothing OrElse Array.IndexOf(schema.GetSuppressedColumns(), cl) < 0 Then
+                    h.Add(cl, pi)
+                End If
+            End If
+        Next
+
+        For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
+            Dim cl As ColumnAttribute = Nothing
+            Dim cls() As Attribute = CType(pi.GetCustomAttributes(GetType(ColumnAttribute), True), Attribute())
+            If cls.Length > 0 Then cl = CType(cls(0), ColumnAttribute)
+            If cl IsNot Nothing Then
+                If String.IsNullOrEmpty(cl.FieldName) Then
+                    cl.FieldName = pi.Name
+                End If
+                If Not h.Contains(cl) AndAlso (schema Is Nothing OrElse Array.IndexOf(schema.GetSuppressedColumns(), cl) < 0) Then
+                    h.Add(cl, pi)
+                End If
+            End If
+        Next
+        Return h
+    End Function
+
     Public Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As IDictionary
         If t Is Nothing Then Throw New ArgumentNullException("original_type")
 
@@ -98,35 +131,7 @@ Public MustInherit Class OrmSchemaBase
             SyncLock String.Intern(key)
                 h = CType(map(key), IDictionary)
                 If h Is Nothing Then
-                    h = New Hashtable
-
-                    For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
-                        Dim cl As ColumnAttribute = Nothing
-                        Dim cls() As Attribute = CType(pi.GetCustomAttributes(GetType(ColumnAttribute), True), Attribute())
-                        If cls.Length > 0 Then cl = CType(cls(0), ColumnAttribute)
-                        If cl IsNot Nothing Then
-                            If String.IsNullOrEmpty(cl.FieldName) Then
-                                cl.FieldName = pi.Name
-                            End If
-                            If schema Is Nothing OrElse Array.IndexOf(schema.GetSuppressedColumns(), cl) < 0 Then
-                                h.Add(cl, pi)
-                            End If
-                        End If
-                    Next
-
-                    For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
-                        Dim cl As ColumnAttribute = Nothing
-                        Dim cls() As Attribute = CType(pi.GetCustomAttributes(GetType(ColumnAttribute), True), Attribute())
-                        If cls.Length > 0 Then cl = CType(cls(0), ColumnAttribute)
-                        If cl IsNot Nothing Then
-                            If String.IsNullOrEmpty(cl.FieldName) Then
-                                cl.FieldName = pi.Name
-                            End If
-                            If Not h.Contains(cl) AndAlso (schema Is Nothing OrElse Array.IndexOf(schema.GetSuppressedColumns(), cl) < 0) Then
-                                h.Add(cl, pi)
-                            End If
-                        End If
-                    Next
+                    h = GetColumnProperties(t, schema)
 
                     map(key) = h
                 End If
@@ -507,6 +512,23 @@ Public MustInherit Class OrmSchemaBase
         Return GetProperty(t, schema, New ColumnAttribute(field))
     End Function
 
+    Protected Friend Shared Function GetPropertyInt(ByVal original_type As Type, ByVal field As String) As Reflection.PropertyInfo
+        If String.IsNullOrEmpty(field) Then
+            Throw New ArgumentNullException("field")
+        End If
+
+        Return CType(GetColumnProperties(original_type, Nothing)(New ColumnAttribute(field)), Reflection.PropertyInfo)
+    End Function
+
+    Protected Friend Shared Function GetPropertyInt(ByVal t As Type, ByVal oschema As IOrmObjectSchemaBase, ByVal field As String) As Reflection.PropertyInfo
+        If String.IsNullOrEmpty(field) Then
+            Throw New ArgumentNullException("field")
+        End If
+
+        Return CType(GetColumnProperties(t, oschema)(New ColumnAttribute(field)), Reflection.PropertyInfo)
+    End Function
+
+
     Public Function GetSortedFieldList(ByVal original_type As Type) As Generic.List(Of ColumnAttribute)
         'Dim cl_type As String = New StringBuilder().Append("columnlist").Append(type.ToString).ToString
         Dim cl_type As String = "columnlist" & original_type.ToString
@@ -578,6 +600,24 @@ Public MustInherit Class OrmSchemaBase
     '    'End SyncLock
     '    Return arr.ToArray
     'End Function
+
+    Public Shared Function GetFieldValueSchemaless(ByVal obj As OrmBase, ByVal fieldName As String, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Object
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
+
+        Dim pi As Reflection.PropertyInfo = Nothing
+
+        pi = GetPropertyInt(obj.GetType, schema, fieldName)
+
+        If pi Is Nothing Then
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", obj.ObjName, fieldName))
+        End If
+
+        Using obj.SyncHelper(True, fieldName)
+            Return pi.GetValue(obj, Nothing)
+        End Using
+    End Function
 
     Public Function GetFieldValue(ByVal obj As OrmBase, ByVal fieldName As String, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Object
         If obj Is Nothing Then
@@ -1226,6 +1266,31 @@ Public MustInherit Class OrmSchemaBase
         End If
 
         Return schema.GetTables
+    End Function
+
+    Public Function ApplyFilter(Of T As OrmBase)(ByVal col As ICollection(Of T), ByVal filter As Criteria.Core.IFilter, ByRef r As Boolean) As ICollection(Of T)
+        r = True
+        Dim f As Criteria.Core.IEntityFilter = TryCast(filter, Criteria.Core.IEntityFilter)
+        If f Is Nothing Then
+            Return col
+        Else
+            Dim l As New List(Of T)
+            Dim oschema As IOrmObjectSchemaBase = Nothing
+            For Each o As T In col
+                If oschema Is Nothing Then
+                    oschema = Me.GetObjectSchema(o.GetType)
+                End If
+                Dim er As Criteria.Values.IEvaluableValue.EvalResult = f.Eval(Me, o, oschema)
+                Select Case er
+                    Case Criteria.Values.IEvaluableValue.EvalResult.Found
+                        l.Add(o)
+                    Case Criteria.Values.IEvaluableValue.EvalResult.Unknown
+                        r = False
+                        Exit For
+                End Select
+            Next
+            Return l
+        End If
     End Function
 
     Public MustOverride Function CreateCriteria(ByVal t As Type) As Criteria.ICtor
