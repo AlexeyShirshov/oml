@@ -25,7 +25,7 @@ Namespace Database
             Implements IDisposable
 
             Private _disposedValue As Boolean
-            Private _l As New List(Of OrmBase)
+            Private _objects As New List(Of OrmBase)
             Private _mgr As OrmReadOnlyDBManager
             Private _acceptInBatch As Boolean
             Private _callbacks As OrmCacheBase.IUpdateCacheCallbacks
@@ -55,6 +55,12 @@ Namespace Database
             Public Sub New()
                 _mgr = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
             End Sub
+
+            Public ReadOnly Property AffectedObjects() As ICollection(Of OrmBase)
+                Get
+                    Return _objects
+                End Get
+            End Property
 
             Public ReadOnly Property Manager() As OrmReadOnlyDBManager
                 Get
@@ -101,11 +107,13 @@ Namespace Database
             End Property
 
             Public Sub Add(ByVal o As OrmBase)
-                _l.Add(o)
+                If Not _objects.Contains(o) Then
+                    _objects.Add(o)
+                End If
             End Sub
 
             Public Sub AddRange(ByVal col As ICollection(Of OrmBase))
-                _l.AddRange(col)
+                _objects.AddRange(col)
             End Sub
 
             Protected Sub Save()
@@ -116,8 +124,8 @@ Namespace Database
 
                 _mgr.BeginTransaction()
                 Try
-                    RaiseEvent BeginSave(_l.Count)
-                    For Each o As OrmBase In _l
+                    RaiseEvent BeginSave(_objects.Count)
+                    For Each o As OrmBase In _objects
                         If o.ObjectState = ObjectState.Created Then
                             rejectList.Add(o)
                         ElseIf o.ObjectState = ObjectState.Modified Then
@@ -237,7 +245,7 @@ Namespace Database
 
             Private disposedValue As Boolean
             Private _disposing As Boolean
-            Private _objs As New List(Of OrmBase)
+            'Private _objs As New List(Of OrmBase)
             Private _mgr As OrmManagerBase
             Private _saver As BatchSaver
 
@@ -287,7 +295,7 @@ Namespace Database
                     Throw New InvalidOperationException("Cannot add object during save")
                 End If
 
-                _objs.AddRange(objs)
+                '_objs.AddRange(objs)
                 _saver.AddRange(objs)
             End Sub
 
@@ -300,7 +308,7 @@ Namespace Database
                     Throw New InvalidOperationException("Cannot add object during save")
                 End If
 
-                _objs.Add(obj)
+                '_objs.Add(obj)
                 _saver.Add(obj)
             End Sub
 
@@ -313,10 +321,10 @@ Namespace Database
                     Throw New InvalidOperationException("Cannot add object during save")
                 End If
 
-                If Not _objs.Contains(obj) Then
-                    _objs.Add(obj)
-                    _saver.Add(obj)
-                End If
+                'If Not _objs.Contains(obj) Then
+                '    _objs.Add(obj)
+                _saver.Add(obj)
+                'End If
             End Sub
 
             Public Function CreateNewObject(Of T As {OrmBase, New})() As T
@@ -360,7 +368,7 @@ Namespace Database
             End Function
 
             Protected Sub _Rollback()
-                For Each o As OrmBase In _objs
+                For Each o As OrmBase In _saver.AffectedObjects
                     If o.ObjectState = ObjectState.Created Then
                         If _mgr.NewObjectManager IsNot Nothing Then
                             _mgr.NewObjectManager.RemoveNew(o)
