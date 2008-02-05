@@ -709,7 +709,9 @@ Public MustInherit Class OrmManagerBase
     End Interface
 
     Public Interface INewObjectsEx
-        Function GetNew(ByVal t As Type) As ICollection(Of OrmBase)
+        Inherits INewObjects
+        Overloads Function GetNew(ByVal t As Type) As ICollection(Of OrmBase)
+        Overloads Function GetNew(Of T As OrmBase)() As ICollection(Of T)
     End Interface
 
     Public MustInherit Class CustDelegate(Of T As {OrmBase, New})
@@ -3101,9 +3103,12 @@ l1:
             Return col
         Else
             Dim l As New List(Of T)
-            Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(GetType(T))
+            Dim oschema As IOrmObjectSchemaBase = Nothing
             Dim i As Integer = 0
             For Each o As T In col
+                If oschema Is Nothing Then
+                    oschema = _schema.GetObjectSchema(o.GetType)
+                End If
                 Dim er As IEvaluableValue.EvalResult = f.Eval(_schema, o, oschema)
                 Select Case er
                     Case IEvaluableValue.EvalResult.Found
