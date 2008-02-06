@@ -119,7 +119,7 @@ Namespace Database
             Protected Sub Save()
                 Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
                 Dim [error] As Boolean = True
-                Dim saved As New List(Of OrmBase), copies As New List(Of Pair(Of OrmBase))
+                Dim saved As New List(Of Pair(Of ObjectState, OrmBase)), copies As New List(Of Pair(Of OrmBase))
                 Dim rejectList As New List(Of OrmBase), need2save As New List(Of OrmBase)
 
                 _mgr.BeginTransaction()
@@ -132,12 +132,13 @@ Namespace Database
                             copies.Add(New Pair(Of OrmBase)(o, o.GetFullClone))
                         End If
                         Try
+                            Dim os As ObjectState = o.ObjectState
                             If o.Save(False) Then
                                 need2save.Add(o)
                             Else
                                 RaiseEvent ObjectSaved(o)
                             End If
-                            saved.Add(o)
+                            saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
                         Catch ex As Exception
                             Throw New OrmManagerException("Error during save " & o.ObjName, ex)
                         End Try
@@ -170,8 +171,9 @@ Namespace Database
                         If _acceptInBatch Then
                             Dim l As New Dictionary(Of OrmBase, OrmBase)
                             Dim l2 As New Dictionary(Of Type, List(Of OrmBase))
-                            For Each o As OrmBase In saved
-                                Dim mo As OrmBase = o.AcceptChanges(False)
+                            For Each p As Pair(Of ObjectState, OrmBase) In saved
+                                Dim o As OrmBase = p.Second
+                                Dim mo As OrmBase = o.AcceptChanges(False, OrmBase.IsGoogState(p.First))
                                 l.Add(o, mo)
                                 Dim ls As List(Of OrmBase) = Nothing
                                 If Not l2.TryGetValue(o.GetType, ls) Then
@@ -187,8 +189,9 @@ Namespace Database
                                     AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
                             Next
                         Else
-                            For Each o As OrmBase In saved
-                                o.AcceptChanges(True)
+                            For Each p As Pair(Of ObjectState, OrmBase) In saved
+                                Dim o As OrmBase = p.Second
+                                o.AcceptChanges(True, OrmBase.IsGoogState(p.First))
                                 RaiseEvent ObjectAccepted(o)
                             Next
                         End If
@@ -198,7 +201,7 @@ Namespace Database
                 End Try
             End Sub
 
-            Private Sub Rollback(ByVal saved As List(Of OrmBase), ByVal rejectList As List(Of OrmBase), ByVal copies As List(Of Pair(Of OrmBase)))
+            Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, OrmBase)), ByVal rejectList As List(Of OrmBase), ByVal copies As List(Of Pair(Of OrmBase)))
                 For Each o As OrmBase In rejectList
                     o.RejectChanges()
                     RaiseEvent ObjectRejected(o)
@@ -208,7 +211,8 @@ Namespace Database
                     o.First.ObjectState = o.Second._old_state
                     RaiseEvent ObjectRestored(o.First)
                 Next
-                For Each o As OrmBase In saved
+                For Each p As Pair(Of ObjectState, OrmBase) In saved
+                    Dim o As OrmBase = p.Second
                     If Not rejectList.Contains(o) Then
                         o.RejectRelationChanges()
                         RaiseEvent ObjectRejected(o)

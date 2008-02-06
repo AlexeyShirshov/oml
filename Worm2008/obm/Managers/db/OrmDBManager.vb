@@ -555,7 +555,7 @@ Namespace Database
                         If hasNew Then
                             Throw New OrmObjectException("Cannot accept changes. Some of relation has new objects")
                         End If
-                        obj.AcceptChanges(True)
+                        obj.AcceptChanges(True, OrmBase.IsGoogState(state))
                     End If
 
                 End Using
