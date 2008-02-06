@@ -393,9 +393,14 @@ Namespace Orm
                 Using SyncHelper(False)
                     _state = value
                     Debug.Assert(_state = value)
+                    Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
                 End Using
             End Set
         End Property
+
+        Friend Sub SetObjectState(ByVal state As ObjectState)
+            _state = state
+        End Sub
 
 #Region " Synchronization "
 
@@ -492,7 +497,7 @@ Namespace Orm
             Dim olds As ObjectState = _state
             GetMgr.LoadObject(Me)
             If olds = Orm.ObjectState.Created AndAlso _state = Orm.ObjectState.Modified Then
-                AcceptChanges(True)
+                AcceptChanges(True, True)
             ElseIf IsLoaded Then
                 _state = Orm.ObjectState.None
             End If
@@ -519,6 +524,10 @@ Namespace Orm
                 _needDelete = True
             End If
         End Sub
+
+        Public Shared Function IsGoogState(ByVal state As ObjectState) As Boolean
+            Return state = ObjectState.Modified OrElse state = ObjectState.Created OrElse state = ObjectState.Deleted
+        End Function
 
         Protected Function GetMgr() As OrmManagerBase
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
@@ -617,7 +626,7 @@ Namespace Orm
                     If olds <> Orm.ObjectState.Created Then RejectChangesInternal()
                     _state = Orm.ObjectState.Modified
                     Dim newid As Integer = GetModifiedObject.Identifier
-                    AcceptChanges(True)
+                    AcceptChanges(True, True)
                     Identifier = newid
                     _state = olds
                     If _state = Orm.ObjectState.Created Then
@@ -647,10 +656,10 @@ Namespace Orm
         End Sub
 
         Public Sub AcceptChanges()
-            AcceptChanges(True)
+            AcceptChanges(True, True)
         End Sub
 
-        Protected Friend Function AcceptChanges(ByVal updateCache As Boolean) As OrmBase
+        Protected Friend Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As OrmBase
             CheckCash()
             Dim mo As OrmBase = Nothing
             Using SyncHelper(False)
@@ -694,7 +703,10 @@ Namespace Orm
                     'End If
 
                     Dim unreg As Boolean = _state <> Orm.ObjectState.Created
-                    _state = Orm.ObjectState.None
+                    If setState Then
+                        _state = Orm.ObjectState.None
+                        Debug.Assert(IsLoaded)
+                    End If
                     If unreg Then
                         mo = GetModifiedObject
                         OrmCache.UnregisterModification(Me)
@@ -1443,7 +1455,7 @@ l1:
             Dim o As OrmBase = CType(Activator.CreateInstance(Me.GetType), OrmBase)
             o.Init(Identifier, OrmCache, OrmSchema)
             Using SyncHelper(True)
-                o.ObjectState = ObjectState
+                o.SetObjectState(ObjectState)
                 Dim editable As IOrmEditable(Of T) = TryCast(Me, IOrmEditable(Of T))
                 If editable Is Nothing Then
                     Throw New OrmObjectException(String.Format("Object {0} must implement IOrmEditable to perform this operation", ObjName))
