@@ -871,7 +871,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                Using saver As New OrmReadOnlyDBManager.BatchSaver
+                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()
@@ -908,7 +908,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                Using saver As New OrmReadOnlyDBManager.BatchSaver
+                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()
@@ -949,7 +949,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                Using saver As New OrmReadOnlyDBManager.BatchSaver
+                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()

@@ -30,7 +30,8 @@ Namespace Database
             Private _acceptInBatch As Boolean
             Private _callbacks As OrmCacheBase.IUpdateCacheCallbacks
             Private _save As Nullable(Of Boolean)
-            Private _disposeMgr As Boolean
+            'Private _disposeMgr As Boolean
+            Private _commited As Boolean
 
             Public Event BeginSave(ByVal count As Integer)
             Public Event EndSave()
@@ -43,18 +44,18 @@ Namespace Database
             Public Event BeginRejecting()
             Public Event BeginAccepting()
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal dispose As Boolean)
+            'Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal dispose As Boolean)
+            '    _mgr = mgr
+            '    _disposeMgr = dispose
+            'End Sub
+
+            Friend Sub New(ByVal mgr As OrmReadOnlyDBManager)
                 _mgr = mgr
-                _disposeMgr = dispose
             End Sub
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager)
-                _mgr = mgr
-            End Sub
-
-            Public Sub New()
-                _mgr = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
-            End Sub
+            'Public Sub New()
+            '    _mgr = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
+            'End Sub
 
             Public ReadOnly Property AffectedObjects() As ICollection(Of OrmBase)
                 Get
@@ -87,6 +88,12 @@ Namespace Database
             Public Sub Rollback()
                 _save = False
             End Sub
+
+            Public ReadOnly Property Commited() As Boolean
+                Get
+                    Return _commited
+                End Get
+            End Property
 
             Public Property AcceptInBatch() As Boolean
                 Get
@@ -165,6 +172,7 @@ Namespace Database
                     Else
                         If Not hasTransaction Then
                             _mgr.Commit()
+                            _commited = True
                         End If
 
                         RaiseEvent BeginAccepting()
@@ -221,6 +229,10 @@ Namespace Database
             End Sub
 
 #Region " IDisposable Support "
+            Protected Overrides Sub Finalize()
+                Dispose(False)
+            End Sub
+
             Protected Overridable Sub Dispose(ByVal disposing As Boolean)
                 If Not Me._disposedValue Then
                     If Not _save.HasValue Then
@@ -229,9 +241,10 @@ Namespace Database
                     If disposing AndAlso _save.Value Then
                         Save()
                     End If
-                    If _disposeMgr Then
-                        _mgr.Dispose()
-                    End If
+                    'If _disposeMgr Then
+                    '    _mgr.Dispose()
+                    'End If
+                    _mgr._batchSaver = Nothing
                 End If
                 Me._disposedValue = True
             End Sub
@@ -252,8 +265,9 @@ Namespace Database
             'Private _objs As New List(Of OrmBase)
             Private _mgr As OrmManagerBase
             Private _saver As BatchSaver
+            Private _rollbackChanges As Boolean = True
 
-            Public Event SaveComplete(ByVal commited As Boolean)
+            Public Event SaveComplete(ByVal logicalCommited As Boolean, ByVal dbCommit As Boolean)
 
             Public Sub New()
                 MyClass.New(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
@@ -266,7 +280,7 @@ Namespace Database
 
                 AddHandler mgr.BeginUpdate, AddressOf Add
                 AddHandler mgr.BeginDelete, AddressOf Delete
-                _saver = New BatchSaver(mgr)
+                _saver = mgr.CreateBatchSaver
                 _mgr = mgr
             End Sub
 
@@ -283,6 +297,15 @@ Namespace Database
             Public Sub Rollback()
                 _saver.Rollback()
             End Sub
+
+            Public Property RollbackChanges() As Boolean
+                Get
+                    Return _rollbackChanges
+                End Get
+                Set(ByVal value As Boolean)
+                    _rollbackChanges = value
+                End Set
+            End Property
 
             Public ReadOnly Property Saver() As BatchSaver
                 Get
@@ -372,42 +395,40 @@ Namespace Database
             End Function
 
             Protected Sub _Rollback()
-                For Each o As OrmBase In _saver.AffectedObjects
-                    If o.ObjectState = ObjectState.Created Then
-                        If _mgr.NewObjectManager IsNot Nothing Then
-                            _mgr.NewObjectManager.RemoveNew(o)
+                If _rollbackChanges Then
+                    For Each o As OrmBase In _saver.AffectedObjects
+                        If o.ObjectState = ObjectState.Created Then
+                            If _mgr.NewObjectManager IsNot Nothing Then
+                                _mgr.NewObjectManager.RemoveNew(o)
+                            End If
+                        Else
+                            o.RejectChanges()
                         End If
-                    Else
-                        o.RejectChanges()
-                    End If
-                Next
+                    Next
+                End If
             End Sub
 
 #Region " IDisposable Support "
             ' IDisposable
             Protected Overridable Sub Dispose(ByVal disposing As Boolean)
                 If Not Me.disposedValue Then
-                    If _saver.IsCommit Then
-                        If disposing Then
-                            Dim err As Boolean = True
-                            Try
-                                _disposing = True
-                                _saver.Dispose()
-                                err = False
-                            Finally
-                                _disposing = False
-                                If err Then
-                                    _Rollback()
-                                End If
-                            End Try
+                    Dim err As Boolean = True
+                    Try
+                        _disposing = True
+                        _saver.Dispose()
+                        err = False
+                    Finally
+                        _disposing = False
+                        If err Then
+                            _Rollback()
                         End If
-                    Else
-                        _Rollback()
-                    End If
+                    End Try
+                    If Not err AndAlso Not _saver.IsCommit Then _Rollback()
+
                     RemoveHandler _mgr.BeginDelete, AddressOf Delete
                     RemoveHandler _mgr.BeginUpdate, AddressOf Add
 
-                    RaiseEvent SaveComplete(_saver.IsCommit)
+                    RaiseEvent SaveComplete(_saver.IsCommit, _saver.Commited)
 
                 End If
                 Me.disposedValue = True
@@ -431,6 +452,7 @@ Namespace Database
         Private _conn As System.Data.Common.DbConnection
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
+        Private _batchSaver As BatchSaver
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
 
@@ -444,6 +466,13 @@ Namespace Database
 
             _connStr = connectionString
         End Sub
+
+        Public Function CreateBatchSaver() As BatchSaver
+            If _batchSaver Is Nothing Then
+                _batchSaver = New BatchSaver(Me)
+            End If
+            Return _batchSaver
+        End Function
 
         Public Overridable ReadOnly Property AlwaysAdd2Cache() As Boolean
             Get
