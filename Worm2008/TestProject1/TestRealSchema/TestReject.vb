@@ -110,7 +110,7 @@ Public Class TestReject
             mgr.BeginTransaction()
             Try
                 t2.Delete()
-                Using s As New OrmReadOnlyDBManager.BatchSaver(mgr)
+                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver
                     s.Add(t1)
                     s.Add(t2)
                     s.Commit()
@@ -135,7 +135,7 @@ Public Class TestReject
             mgr.BeginTransaction()
             Try
                 t2.Money = 1000
-                Using s As New OrmReadOnlyDBManager.BatchSaver(mgr)
+                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver
                     s.Add(t1)
                     s.Add(t2)
                     s.Commit()
@@ -164,7 +164,7 @@ Public Class TestReject
                 t1.Xml = xdoc
                 t2.Money = 1000
                 a = t1.Version
-                Using s As New OrmReadOnlyDBManager.BatchSaver(mgr)
+                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver
                     s.Add(t1)
                     s.Add(t2)
                     s.Commit()
@@ -195,7 +195,7 @@ Public Class TestReject
                 t1.Xml = xdoc
                 t2.Money = 10
                 a = t1.Version
-                Using s As New OrmReadOnlyDBManager.BatchSaver(mgr)
+                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver
                     s.Add(t1)
                     s.Add(t2)
                     s.Commit()
