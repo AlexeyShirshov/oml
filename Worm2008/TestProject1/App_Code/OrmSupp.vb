@@ -3,7 +3,7 @@ Imports Worm.Orm.Meta
 Public MustInherit Class ObjectSchemaBaseImplementationWeb
     Implements IOrmObjectSchema, IOrmSchemaInit
 
-    Protected _schema As Worm.IDbSchema
+    Protected _schema As Worm.OrmSchemaBase
 
     Public Overridable Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchema.ChangeValueType
         newvalue = value
@@ -45,6 +45,6 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
     End Function
 
     Public Sub GetSchema(ByVal schema As Worm.OrmSchemaBase, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
-        _schema = CType(schema, Worm.IDbSchema)
+        _schema = schema
     End Sub
 End Class

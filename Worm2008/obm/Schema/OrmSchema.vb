@@ -34,9 +34,9 @@ Public NotInheritable Class DBSchemaException
 End Class
 
 Public Interface IDbSchema
-    Function GetSharedTable(ByVal tableName As String) As OrmTable
-    Function GetTables(ByVal type As Type) As OrmTable()
-    Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
+    'Function GetSharedTable(ByVal tableName As String) As OrmTable
+    'Function GetTables(ByVal type As Type) As OrmTable()
+    Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin
 End Interface
 
 Public Interface IPrepareTable
@@ -245,9 +245,12 @@ Public MustInherit Class OrmSchemaBase
             Throw New ArgumentNullException("maintype")
         End If
 
-        Dim schema As IOrmObjectSchemaBase = GetObjectSchema(maintype)
-
-        Return schema.GetM2MRelations
+        Dim schema As IOrmRelationalSchemaWithM2M = TryCast(GetObjectSchema(maintype), IOrmRelationalSchemaWithM2M)
+        If schema IsNot Nothing Then
+            Return schema.GetM2MRelations
+        Else
+            Return Nothing
+        End If
     End Function
 
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As Boolean) As M2MRelation
@@ -1218,25 +1221,30 @@ Public MustInherit Class OrmSchemaBase
     End Property
 #End Region
 
-    Protected Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin Implements IDbSchema.GetJoins
+    Protected Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin Implements IDbSchema.GetJoins
         If type Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
 
         Dim schema As IOrmObjectSchema = CType(GetObjectSchema(type), IOrmObjectSchema)
 
-        Return schema.GetJoins(left, right)
+        Return GetJoins(schema, left, right, filterInfo)
     End Function
 
-    Protected Function GetJoins(ByVal schema As IOrmRelationalSchema, ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
+    Protected Function GetJoins(ByVal schema As IOrmRelationalSchema, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin
         If schema Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
 
-        Return schema.GetJoins(left, right)
+        Dim adj As IGetJoinsWithContext = TryCast(schema, IGetJoinsWithContext)
+        If adj IsNot Nothing Then
+            Return adj.GetJoins(left, right, filterInfo)
+        Else
+            Return schema.GetJoins(left, right)
+        End If
     End Function
 
-    Public Function GetSharedTable(ByVal tableName As String) As OrmTable Implements IDbSchema.GetSharedTable
+    Public Function GetSharedTable(ByVal tableName As String) As OrmTable 'Implements IDbSchema.GetSharedTable
         Dim t As OrmTable = CType(_sharedTables(tableName), OrmTable)
         If t Is Nothing Then
             SyncLock Me
@@ -1250,7 +1258,7 @@ Public MustInherit Class OrmSchemaBase
         Return t
     End Function
 
-    Public Function GetTables(ByVal type As Type) As OrmTable() Implements IDbSchema.GetTables
+    Public Function GetTables(ByVal type As Type) As OrmTable() 'Implements IDbSchema.GetTables
         If type Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -1260,7 +1268,7 @@ Public MustInherit Class OrmSchemaBase
         Return schema.GetTables
     End Function
 
-    Public Function GetTables(ByVal schema As IOrmRelationalSchema) As OrmTable()
+    Public Function GetTables(ByVal schema As IObjectSchemaBase) As OrmTable()
         If schema Is Nothing Then
             Throw New ArgumentNullException("type")
         End If

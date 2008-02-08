@@ -95,7 +95,7 @@ Imports Worm.Database.Criteria.Core
             "select @rcount = @@rowcount, @id = scope_identity()" & vbCrLf & _
             "if @rcount > 0 select dbo.ent1.id from dbo.ent1 where dbo.ent1.id = @id"
 
-        Assert.AreEqual(expected, schemaV1.Insert(o, params, sel))
+        Assert.AreEqual(expected, schemaV1.Insert(o, Nothing, params, sel))
 
         Assert.IsNotNull(params)
         Assert.IsNotNull(sel)
@@ -121,7 +121,7 @@ Imports Worm.Database.Criteria.Core
             "if @err = 0 insert into dbo.t1 (s,i) values(@p1,@id)" & vbCrLf & _
             "if @rcount > 0 select dbo.ent1.id from dbo.ent1 where dbo.ent1.id = @id"
 
-        Assert.AreEqual(expected, schemaV1.Insert(o, params, sel))
+        Assert.AreEqual(expected, schemaV1.Insert(o, Nothing, params, sel))
 
         Assert.IsNotNull(params)
         Assert.IsNotNull(sel)
@@ -197,7 +197,7 @@ Imports Worm.Database.Criteria.Core
                 "set @id = @p1" & vbCrLf & _
                 "delete from dbo.ent1 where id = @id"
 
-            Assert.AreEqual(expected, schemaV1.Delete(o, params))
+            Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
 
             Assert.IsNotNull(params)
 
@@ -227,7 +227,7 @@ Imports Worm.Database.Criteria.Core
                 "delete from dbo.ent1 where id = @id" & vbCrLf & _
                 "delete from dbo.t1 where i = @id"
 
-            Assert.AreEqual(expected, schemaV1.Delete(o, params))
+            Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
 
             Assert.IsNotNull(params)
 
@@ -260,7 +260,7 @@ Imports Worm.Database.Criteria.Core
                 "delete from dbo.ent1 where id = @id" & vbCrLf & _
                 "delete from dbo.t1 where i = @id"
 
-            Assert.AreEqual(expected, schemaV1.Delete(o, params))
+            Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
 
             Assert.IsNotNull(params)
 
@@ -292,7 +292,7 @@ Imports Worm.Database.Criteria.Core
                 "set @id = @p1" & vbCrLf & _
                 "delete from dbo.ent3 where (id = @id and version = @p2)"
 
-            Assert.AreEqual(expected, schemaV1.Delete(o, params))
+            Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
 
             Assert.IsNotNull(params)
 
@@ -320,7 +320,7 @@ Imports Worm.Database.Criteria.Core
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
             Dim sel As IList(Of ColumnAttribute) = Nothing
             Dim upd As IList(Of EntityFilter) = Nothing
-            Assert.AreEqual(String.Empty, schemaV1.Update(o, params, sel, upd))
+            Assert.AreEqual(String.Empty, schemaV1.Update(o, Nothing, params, sel, upd))
 
             Dim o2 As New Entity2(2, mgr.Cache, schemaV1)
 
@@ -336,7 +336,7 @@ Imports Worm.Database.Criteria.Core
             Dim expected As String = "update t1 set t1.s = @p1 from dbo.t1 t1 where t1.i = @p2" & vbCrLf & _
                 "if @@rowcount = 0 insert into dbo.t1 (s,i) values(@p1,@p2)"
 
-            Assert.AreEqual(expected, schemaV1.Update(o2, params, sel, upd))
+            Assert.AreEqual(expected, schemaV1.Update(o2, Nothing, params, sel, upd))
 
             Dim i As Integer = 0
             For Each p As Data.Common.DbParameter In params
@@ -375,7 +375,7 @@ Imports Worm.Database.Criteria.Core
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
             Dim sel As IList(Of ColumnAttribute) = Nothing
             Dim upd As IList(Of EntityFilter) = Nothing
-            Assert.AreEqual(expected, schemaV1.Update(o, params, sel, upd))
+            Assert.AreEqual(expected, schemaV1.Update(o, Nothing, params, sel, upd))
 
             Dim i As Integer = 0
             For Each p As Data.Common.DbParameter In params

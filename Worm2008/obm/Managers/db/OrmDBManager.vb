@@ -33,7 +33,7 @@ Namespace Database
             Dim upd As IList(Of EntityFilter) = Nothing
             Dim inv As Boolean
             Using obj.GetSyncRoot()
-                Dim cmdtext As String = DbSchema.Update(obj, params, cols, upd)
+                Dim cmdtext As String = DbSchema.Update(obj, GetFilterInfo, params, cols, upd)
                 If cmdtext.Length > 0 Then
                     If DbSchema.SupportMultiline Then
                         Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
@@ -140,7 +140,7 @@ Namespace Database
                 Dim params As ICollection(Of System.Data.Common.DbParameter) = Nothing
                 Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
                 Using obj.GetSyncRoot()
-                    Dim cmdtext As String = DbSchema.Insert(obj, params, cols)
+                    Dim cmdtext As String = DbSchema.Insert(obj, GetFilterInfo, params, cols)
                     If cmdtext.Length > 0 Then
                         Dim tran As System.Data.IDbTransaction = Transaction
                         BeginTransaction()
@@ -323,7 +323,7 @@ Namespace Database
 
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
             Using obj.GetSyncRoot()
-                Dim cmdtext As String = DbSchema.Delete(obj, params)
+                Dim cmdtext As String = DbSchema.Delete(obj, params, GetFilterInfo)
                 If cmdtext.Length > 0 Then
                     Dim [error] As Boolean = True
                     Dim tran As System.Data.Common.DbTransaction = Transaction

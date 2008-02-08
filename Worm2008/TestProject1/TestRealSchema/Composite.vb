@@ -114,11 +114,11 @@ Public Class CompositeEditableSchema
         Return _idx
     End Function
 
-    Public Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As Worm.Criteria.Joins.OrmJoin Implements IOrmRelationalSchema.GetJoins
+    Public Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As Worm.Criteria.Joins.OrmJoin Implements IRelMapObjectSchema.GetJoins
         Return Nothing
     End Function
 
-    Public Function GetTables() As OrmTable() Implements IOrmRelationalSchema.GetTables
+    Public Function GetTables() As OrmTable() Implements IRelMapObjectSchema.GetTables
         Return _tables
     End Function
 End Class
