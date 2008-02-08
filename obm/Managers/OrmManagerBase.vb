@@ -1916,113 +1916,6 @@ l1:
     '    Return FindAdvanced(Of T)(dic, sync, id, withLoad, del).GetObjectList(Of T)(Me, withLoad, del.Created)
     'End Function
 
-    Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As Boolean) As String
-        Return tt1.Name & Const_JoinStaticString & direct & " - new version - " & tt2.Name & GetStaticKey()
-    End Function
-
-    Friend Shared Function GetSync(ByVal key As String, ByVal id As String) As String
-        Return id & Const_KeyStaticString & key
-    End Function
-
-    Protected Friend Function FindMany2Many2(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal criteria As IGetFilter, _
-        ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ICollection(Of T)
-        '    Dim p As Pair(Of M2MCache, Boolean) = FindM2M(Of T)(obj, direct, criteria, sort, withLoad)
-        '    'Return p.First.GetObjectList(Of T)(Me, withLoad, p.Second.Created)
-        '    return GetResultset(of T)(withload,dic,
-        Dim tt1 As Type = obj.GetType
-        Dim tt2 As Type = GetType(T)
-
-        Dim key As String = GetM2MKey(tt1, tt2, direct)
-        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(tt2).ToStaticString
-        End If
-
-        Dim dic As IDictionary = GetDic(_cache, key)
-
-        Dim id As String = obj.Identifier.ToString
-        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            id &= criteria.Filter(tt2).ToString
-        End If
-
-        Dim sync As String = GetSync(key, id)
-
-        'CreateM2MDepends(filter, key, id)
-
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
-        Dim s As Boolean = True
-        Dim r As ICollection(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
-        If Not s Then
-            Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
-            Using ac As New ApplyCriteria(Me, Nothing)
-                Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
-                c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
-                r = FindMany2Many2(Of T)(obj, ObjectSchema.CreateCriteriaLink(c), sort, direct, withLoad)
-            End Using
-        End If
-        Return r
-    End Function
-
-    Protected Function FindM2M(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean, ByVal criteria As IGetFilter, _
-        ByVal sort As Sort, ByVal withLoad As Boolean) As Pair(Of M2MCache, Boolean)
-        Dim tt1 As Type = obj.GetType
-        Dim tt2 As Type = GetType(T)
-
-        Dim key As String = GetM2MKey(tt1, tt2, direct)
-        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(tt2).ToStaticString
-        End If
-
-        Dim dic As IDictionary = GetDic(_cache, key)
-
-        Dim id As String = obj.Identifier.ToString
-        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            id &= criteria.Filter(tt2).ToString
-        End If
-
-        Dim sync As String = GetSync(key, id)
-
-        'CreateM2MDepends(filter, key, id)
-
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
-        Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), M2MCache)
-        Dim p As New Pair(Of M2MCache, Boolean)(m, del.Created)
-        Return p
-    End Function
-
-    Protected Function FindM2MReturnKeysNonGeneric(ByVal mainobj As OrmBase, ByVal t As Type, ByVal direct As Boolean) As Pair(Of M2MCache, Pair(Of String))
-        Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
-        'Dim pm As New Reflection.ParameterModifier(6)
-        'pm(5) = True
-        Dim types As Type() = New Type() {GetType(OrmBase), GetType(Boolean)}
-        Dim o() As Object = New Object() {mainobj, direct}
-        'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
-        '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
-        Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("FindM2MReturnKeys", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
-        Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
-        Dim p As Pair(Of M2MCache, Pair(Of String)) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Pair(Of M2MCache, Pair(Of String)))
-        Return p
-    End Function
-
-    Protected Function FindM2MReturnKeys(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean) As Pair(Of M2MCache, Pair(Of String))
-        Dim tt1 As Type = obj.GetType
-        Dim tt2 As Type = GetType(T)
-
-        Dim key As String = GetM2MKey(tt1, tt2, direct)
-
-        Dim dic As IDictionary = GetDic(_cache, key)
-
-        Dim id As String = obj.Identifier.ToString
-
-        Dim sync As String = GetSync(key, id)
-
-        'CreateM2MDepends(filter, key, id)
-        Dim criteria As CriteriaLink = Nothing
-
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt1), Nothing, id, key, direct)
-        Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, False, del), M2MCache)
-        Dim p As New Pair(Of M2MCache, Pair(Of String))(m, New Pair(Of String)(key, id))
-        Return p
-    End Function
 #End Region
 
 #Region " Cache "
@@ -2505,6 +2398,9 @@ l1:
 #End Region
 
 #Region " helpers "
+    Friend Shared Function GetSync(ByVal key As String, ByVal id As String) As String
+        Return id & Const_KeyStaticString & key
+    End Function
 
     Public Function GetDictionary(ByVal t As Type) As IDictionary
         Return _cache.GetOrmDictionary(t, _schema)
@@ -2653,169 +2549,112 @@ l1:
 #End Region
 
 #Region " Many2Many "
-    'Public Function Obj2ObjRelationHasChanges(ByVal obj As OrmBase, ByVal t As Type) As Boolean
-    '    Invariant()
+    Public Function GetM2MList(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean) As EditableList
+        Return FindM2MReturnKeys(Of T)(obj, direct).First.Entry
+    End Function
 
-    '    If obj Is Nothing Then
-    '        Throw New ArgumentNullException("obj parameter cannot be nothing")
-    '    End If
+    Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As Boolean) As String
+        Return tt1.Name & Const_JoinStaticString & direct & " - new version - " & tt2.Name & GetStaticKey()
+    End Function
 
-    '    If t Is Nothing Then
-    '        Throw New ArgumentNullException("t parameter cannot be nothing")
-    '    End If
+    Protected Friend Function FindMany2Many2(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal criteria As IGetFilter, _
+        ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ICollection(Of T)
+        '    Dim p As Pair(Of M2MCache, Boolean) = FindM2M(Of T)(obj, direct, criteria, sort, withLoad)
+        '    'Return p.First.GetObjectList(Of T)(Me, withLoad, p.Second.Created)
+        '    return GetResultset(of T)(withload,dic,
+        Dim tt1 As Type = obj.GetType
+        Dim tt2 As Type = GetType(T)
 
-    '    Dim tt1 As Type = obj.GetType
-    '    Dim tt2 As Type = t
+        Dim key As String = GetM2MKey(tt1, tt2, direct)
+        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+            key &= criteria.Filter(tt2).ToStaticString
+        End If
 
-    '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey()
+        Dim dic As IDictionary = GetDic(_cache, key)
 
-    '    'Dim dic As IDictionary = GetDic(_cache, key)
+        Dim id As String = obj.Identifier.ToString
+        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+            id &= criteria.Filter(tt2).ToString
+        End If
 
-    '    Dim id As String = obj.Identifier.ToString
+        Dim sync As String = GetSync(key, id)
 
-    '    Dim sync As String = id & Const_KeyStaticString & key & GetTablePostfix
+        'CreateM2MDepends(filter, key, id)
 
-    '    Dim dt As System.Data.DataTable = GetDataTable(id, key & GetTablePostfix, sync, tt2, obj, Nothing, False, True, False)
+        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
+        Dim s As Boolean = True
+        Dim r As ICollection(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
+        If Not s Then
+            Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
+            Using ac As New ApplyCriteria(Me, Nothing)
+                Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
+                c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
+                r = FindMany2Many2(Of T)(obj, ObjectSchema.CreateCriteriaLink(c), sort, direct, withLoad)
+            End Using
+        End If
+        Return r
+    End Function
 
-    '    Return dt.GetChanges IsNot Nothing
-    'End Function
+    Protected Function FindM2M(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean, ByVal criteria As IGetFilter, _
+        ByVal sort As Sort, ByVal withLoad As Boolean) As Pair(Of M2MCache, Boolean)
+        Dim tt1 As Type = obj.GetType
+        Dim tt2 As Type = GetType(T)
 
-    'Public Sub Obj2ObjRelationCancel(ByVal obj As OrmBase, ByVal t As Type)
-    '    Invariant()
+        Dim key As String = GetM2MKey(tt1, tt2, direct)
+        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+            key &= criteria.Filter(tt2).ToStaticString
+        End If
 
-    '    If obj Is Nothing Then
-    '        Throw New ArgumentNullException("obj parameter cannot be nothing")
-    '    End If
+        Dim dic As IDictionary = GetDic(_cache, key)
 
-    '    If t Is Nothing Then
-    '        Throw New ArgumentNullException("t parameter cannot be nothing")
-    '    End If
+        Dim id As String = obj.Identifier.ToString
+        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+            id &= criteria.Filter(tt2).ToString
+        End If
 
-    '    Dim tt1 As Type = obj.GetType
-    '    Dim tt2 As Type = t
+        Dim sync As String = GetSync(key, id)
 
-    '    If _schema.IsMany2ManyReadonly(tt1, tt2) Then
-    '        Throw New InvalidOperationException("Relation is readonly")
-    '    End If
+        'CreateM2MDepends(filter, key, id)
 
-    '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey()
+        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
+        Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), M2MCache)
+        Dim p As New Pair(Of M2MCache, Boolean)(m, del.Created)
+        Return p
+    End Function
 
-    '    'Dim dic As IDictionary = GetDic(_cache, key)
+    Protected Function FindM2MReturnKeysNonGeneric(ByVal mainobj As OrmBase, ByVal t As Type, ByVal direct As Boolean) As Pair(Of M2MCache, Pair(Of String))
+        Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
+        'Dim pm As New Reflection.ParameterModifier(6)
+        'pm(5) = True
+        Dim types As Type() = New Type() {GetType(OrmBase), GetType(Boolean)}
+        Dim o() As Object = New Object() {mainobj, direct}
+        'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
+        '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
+        Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("FindM2MReturnKeys", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
+        Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
+        Dim p As Pair(Of M2MCache, Pair(Of String)) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Pair(Of M2MCache, Pair(Of String)))
+        Return p
+    End Function
 
-    '    Dim id As String = obj.Identifier.ToString
+    Protected Function FindM2MReturnKeys(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean) As Pair(Of M2MCache, Pair(Of String))
+        Dim tt1 As Type = obj.GetType
+        Dim tt2 As Type = GetType(T)
 
-    '    Dim sync As String = id & Const_KeyStaticString & key & GetTablePostfix
+        Dim key As String = GetM2MKey(tt1, tt2, direct)
 
-    '    Dim dt As System.Data.DataTable = GetDataTable(id, key & GetTablePostfix, sync, tt2, obj, Nothing, False, True, False)
+        Dim dic As IDictionary = GetDic(_cache, key)
 
-    '    Using SyncHelper.AcquireDynamicLock(sync)
-    '        dt.RejectChanges()
-    '    End Using
-    'End Sub
+        Dim id As String = obj.Identifier.ToString
 
-    'Protected Function Obj2ObjRelationSave2(ByVal obj As OrmBase, ByVal t As Type) As OrmBase.AcceptState
-    '    Invariant()
+        Dim sync As String = GetSync(key, id)
 
-    '    If obj Is Nothing Then
-    '        Throw New ArgumentNullException("obj parameter cannot be nothing")
-    '    End If
+        'CreateM2MDepends(filter, key, id)
 
-    '    If t Is Nothing Then
-    '        Throw New ArgumentNullException("t parameter cannot be nothing")
-    '    End If
-
-    '    Dim tt1 As Type = obj.GetType
-    '    Dim tt2 As Type = t
-
-    '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey()
-
-    '    'Dim dic As IDictionary = GetDic(_cache, key)
-
-    '    Dim id As String = obj.Identifier.ToString
-
-    '    Dim sync As String = id & Const_KeyStaticString & key & GetTablePostfix
-
-    '    Dim dt As System.Data.DataTable = GetDataTable(id, key & GetTablePostfix, sync, tt2, obj, Nothing, False, True, False)
-    '    Obj2ObjRelationSave2(obj, dt, sync, t)
-    '    Return New OrmBase.AcceptState(dt, id, key, t)
-    '    'ResetAllM2MRelations(id, key)
-    'End Function
-
-    'Protected Friend Sub Obj2ObjRelationRemove(ByVal obj As OrmBase, ByVal t As Type)
-    '    Invariant()
-
-    '    If obj Is Nothing Then
-    '        Throw New ArgumentNullException("obj parameter cannot be nothing")
-    '    End If
-
-    '    If t Is Nothing Then
-    '        Throw New ArgumentNullException("t parameter cannot be nothing")
-    '    End If
-
-    '    Dim tt1 As Type = obj.GetType
-    '    Dim tt2 As Type = t
-
-    '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey()
-
-    '    Dim dic As IDictionary = GetDic(_cache, key)
-    '    Dim dic2 As IDictionary = GetDic(_cache, key & GetTablePostfix)
-
-    '    Dim id As String = obj.Identifier.ToString
-
-    '    dic.Remove(id)
-    '    dic2.Remove(id)
-
-    '    ResetAllM2MRelations(id, key)
-    'End Sub
-
-    'Public Sub Obj2ObjRelationDelete(ByVal mainobj As OrmBase, ByVal subobj As OrmBase)
-
-    '    Invariant()
-
-    '    If mainobj Is Nothing Then
-    '        Throw New ArgumentNullException("mainobj parameter cannot be nothing")
-    '    End If
-
-    '    If subobj Is Nothing Then
-    '        Throw New ArgumentNullException("subobj parameter cannot be nothing")
-    '    End If
-
-    '    Dim tt1 As Type = mainobj.GetType
-    '    Dim tt2 As Type = subobj.GetType
-
-    '    If _schema.IsMany2ManyReadonly(tt1, tt2) Then
-    '        Throw New InvalidOperationException("Relation is readonly")
-    '    End If
-
-    '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey()
-
-    '    'Dim dic As IDictionary = GetDic(_cache, key)
-
-    '    Dim id As String = mainobj.Identifier.ToString
-
-    '    Dim sync As String = id & Const_KeyStaticString & key & GetTablePostfix
-
-    '    Dim dt As System.Data.DataTable = GetDataTable(id, key & GetTablePostfix, sync, tt2, mainobj, Nothing, False, True, False)
-    '    Dim mid As String = tt1.Name & "ID"
-    '    Dim sid As String = tt2.Name & "ID"
-    '    If tt1 Is tt2 Then
-    '        sid = mid & "Rev"
-    '    End If
-    '    Using SyncHelper.AcquireDynamicLock(sync)
-    '        Dim rs() As System.Data.DataRow = dt.Select(mid & " = " & mainobj.Identifier & " and " & sid & " = " & subobj.Identifier)
-    '        If rs.Length = 1 Then
-    '            rs(0).Delete()
-
-    '            'ResetAllM2MRelations(id, key)
-    '        ElseIf rs.Length = 0 Then
-    '            If _mcSwitch.TraceVerbose Then
-    '                WriteLine("There is no relation " & mid & " = " & mainobj.Identifier & " and " & sid & " = " & subobj.Identifier)
-    '            End If
-    '        ElseIf rs.Length > 1 Then
-    '            Throw New OrmManagerException(mid & " = " & mainobj.Identifier & " and " & sid & " = " & subobj.Identifier & " is not uniquie")
-    '        End If
-    '    End Using
-    'End Sub
+        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, Nothing, Nothing, id, key, direct)
+        Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, False, del), M2MCache)
+        Dim p As New Pair(Of M2MCache, Pair(Of String))(m, New Pair(Of String)(key, id))
+        Return p
+    End Function
 
     Protected Friend Sub M2MCancel(ByVal mainobj As OrmBase, ByVal t As Type)
         For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)

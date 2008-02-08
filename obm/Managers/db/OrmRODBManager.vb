@@ -685,7 +685,7 @@ Namespace Database
                     'End If
                     Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse DbSchema.NeedJoin(schema2)
                     'Dim table As String = schema2.GetTables(0)
-                    DbSchema.AppendJoins(selectedType, almgr, schema2.GetTables, sb, params, DbSchema.GetObjectSchema(ct).GetTables(0), id_clm, appendMainTable)
+                    DbSchema.AppendJoins(selectedType, almgr, schema2.GetTables, sb, params, DbSchema.GetObjectSchema(ct).GetTables(0), id_clm, appendMainTable, GetFilterInfo)
                     If withLoad Then
                         For Each tbl As OrmTable In schema2.GetTables
                             If almgr.Aliases.ContainsKey(tbl) Then
@@ -998,7 +998,7 @@ Namespace Database
                 Dim oschema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(type2load)
                 Dim r2 As M2MRelation = DbSchema.GetM2MRelation(type2load, type, direct)
                 Dim appendMainTable As Boolean = f IsNot Nothing OrElse oschema2.GetFilter(GetFilterInfo) IsNot Nothing
-                sb.Append(DbSchema.SelectM2M(type2load, type, appendMainTable, True, params, almgr, withLoad, direct))
+                sb.Append(DbSchema.SelectM2M(type2load, type, appendMainTable, True, GetFilterInfo, params, almgr, withLoad, direct))
 
                 If Not DbSchema.AppendWhere(type2load, CType(f, Criteria.Core.IFilter), almgr, sb, GetFilterInfo, params) Then
                     sb.Append(" where 1=1 ")

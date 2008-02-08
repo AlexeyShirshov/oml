@@ -3,7 +3,6 @@ Imports System.Text
 Imports System.Collections.Generic
 Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
-Imports CoreFramework.Structures
 Imports Worm.Database
 Imports Worm.Orm
 Imports Worm.Database.Storedprocs

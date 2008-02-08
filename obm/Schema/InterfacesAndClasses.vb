@@ -37,16 +37,16 @@ Namespace Orm.Meta
         Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
     End Interface
 
-    Public Interface IOrmObjectSchemaBase
+    Public Interface IObjectSchemaBase
         Inherits IOrmPropertyMap
-        'Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column)
-        'Function MapSort2FieldName(ByVal sort As String) As String
-        Function GetM2MRelations() As M2MRelation()
+        Function GetTables() As OrmTable()
+    End Interface
+
+    Public Interface IOrmObjectSchemaBase
+        Inherits IObjectSchemaBase
         Function GetFilter(ByVal filter_info As Object) As IFilter
         Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
         Function GetSuppressedColumns() As ColumnAttribute()
-        'ReadOnly Property IsExternalSort(ByVal sort As String) As Boolean
-        'Function ExternalSort(ByVal sort As String, ByVal sortType As SortType, ByVal objs As IList) As IList
     End Interface
 
     Public Interface IOrmSorting
@@ -63,16 +63,20 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface IOrmRelationalSchema
-        Function GetTables() As OrmTable()
         Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
     End Interface
 
-    Public Interface IOrmObjectSchema
-        Inherits IOrmObjectSchemaBase, IRelMapObjectSchema
+    Public Interface IOrmRelationalSchemaWithM2M
+        Inherits IOrmRelationalSchema
+        Function GetM2MRelations() As M2MRelation()
     End Interface
 
     Public Interface IRelMapObjectSchema
-        Inherits IOrmRelationalSchema, IOrmPropertyMap
+        Inherits IOrmRelationalSchema, IObjectSchemaBase
+    End Interface
+
+    Public Interface IOrmObjectSchema
+        Inherits IOrmObjectSchemaBase, IOrmRelationalSchemaWithM2M
     End Interface
 
     Public Interface IReadonlyObjectSchema
@@ -134,6 +138,10 @@ Namespace Orm.Meta
 
     Public Interface ITableFunction
         ReadOnly Property GetRealTable() As String
+    End Interface
+
+    Public Interface IGetJoinsWithContext
+        Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin
     End Interface
 #End Region
 
@@ -349,7 +357,7 @@ Namespace Orm.Meta
             Return Nothing
         End Function
 
-        Public Function GetM2MRelations() As M2MRelation() Implements IOrmObjectSchemaBase.GetM2MRelations
+        Public Function GetM2MRelations() As M2MRelation() Implements IOrmObjectSchema.GetM2MRelations
             'Throw New NotSupportedException("Many2many relations is not supported in simple mode")
             Return New M2MRelation() {}
         End Function

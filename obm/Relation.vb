@@ -31,6 +31,8 @@ Namespace Cache
             _non_direct = Not direct
         End Sub
 
+#Region " Public properties "
+
         Public ReadOnly Property CurrentCount() As Integer
             Get
                 Using SyncRoot
@@ -115,6 +117,79 @@ Namespace Cache
                 Return _mainList
             End Get
         End Property
+
+        Public ReadOnly Property Deleted() As IList(Of Integer)
+            Get
+                Return _deletedList
+            End Get
+        End Property
+
+        Public ReadOnly Property Added() As IList(Of Integer)
+            Get
+                Return _addedList
+            End Get
+        End Property
+
+        Public ReadOnly Property HasDeleted() As Boolean
+            Get
+                Return _deletedList.Count > 0
+            End Get
+        End Property
+
+        Public ReadOnly Property HasAdded() As Boolean
+            Get
+                Return _addedList.Count > 0
+            End Get
+        End Property
+
+        Public ReadOnly Property HasChanges() As Boolean
+            Get
+                Return HasDeleted OrElse HasAdded
+            End Get
+        End Property
+
+        Public ReadOnly Property Direct() As Boolean
+            Get
+                Return Not _non_direct
+            End Get
+        End Property
+
+        Public Property MainId() As Integer
+            Get
+                Return _mainId
+            End Get
+            Protected Friend Set(ByVal value As Integer)
+                _mainId = value
+            End Set
+        End Property
+
+        Public ReadOnly Property Main() As OrmBase
+            Get
+                Return OrmManagerBase.CurrentManager.CreateDBObject(_mainId, _mainType)
+            End Get
+        End Property
+
+        Public ReadOnly Property MainType() As Type
+            Get
+                Return _mainType
+            End Get
+        End Property
+
+        Public ReadOnly Property SubType() As Type
+            Get
+                Return _subType
+            End Get
+        End Property
+
+        Public ReadOnly Property HasNew() As Boolean
+            Get
+                Return _new IsNot Nothing AndAlso _new.Count > 0
+            End Get
+        End Property
+
+#End Region
+
+#Region " Public functions "
 
         Public Function Accept(ByVal mgr As OrmManagerBase) As Boolean
             _cantgetCurrent = False
@@ -234,35 +309,6 @@ Namespace Cache
             Return True
         End Function
 
-        Protected Sub AcceptDual()
-            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
-            For Each id As Integer In _mainList
-                Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
-                If m IsNot Nothing Then
-                    If m.Entry.Added.Contains(_mainId) OrElse m.Entry.Deleted.Contains(_mainId) Then
-                        If Not m.Entry.Accept(mgr, _mainId) Then
-                            Dim obj As OrmBase = mgr.CreateDBObject(id, SubType)
-                            mgr.M2MCancel(obj, MainType)
-                        End If
-                    End If
-                End If
-            Next
-        End Sub
-
-        Protected Sub RejectRelated(ByVal id As Integer, ByVal add As Boolean)
-            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
-            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
-
-            Dim l As IList(Of Integer) = m.Entry.Added
-            If Not add Then
-                l = m.Entry.Deleted
-            End If
-            If l.Contains(_mainId) Then
-                l.Remove(_mainId)
-            End If
-
-        End Sub
-
         Public Sub Reject(ByVal rejectDual As Boolean)
             Using SyncRoot
                 If rejectDual Then
@@ -280,18 +326,6 @@ Namespace Cache
                 RemoveNew()
             End Using
         End Sub
-
-        Public ReadOnly Property Deleted() As IList(Of Integer)
-            Get
-                Return _deletedList
-            End Get
-        End Property
-
-        Public ReadOnly Property Added() As IList(Of Integer)
-            Get
-                Return _addedList
-            End Get
-        End Property
 
         Public Sub AddRange(ByVal ids As IEnumerable(Of Integer))
             For Each id As Integer In ids
@@ -353,63 +387,38 @@ Namespace Cache
             End Using
         End Sub
 
-        Public ReadOnly Property HasDeleted() As Boolean
-            Get
-                Return _deletedList.Count > 0
-            End Get
-        End Property
+#End Region
 
-        Public ReadOnly Property HasAdded() As Boolean
-            Get
-                Return _addedList.Count > 0
-            End Get
-        End Property
+#Region " Protected functions "
 
-        Public ReadOnly Property HasChanges() As Boolean
-            Get
-                Return HasDeleted OrElse HasAdded
-            End Get
-        End Property
+        Protected Sub AcceptDual()
+            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+            For Each id As Integer In _mainList
+                Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
+                If m IsNot Nothing Then
+                    If m.Entry.Added.Contains(_mainId) OrElse m.Entry.Deleted.Contains(_mainId) Then
+                        If Not m.Entry.Accept(mgr, _mainId) Then
+                            Dim obj As OrmBase = mgr.CreateDBObject(id, SubType)
+                            mgr.M2MCancel(obj, MainType)
+                        End If
+                    End If
+                End If
+            Next
+        End Sub
 
-        Public ReadOnly Property Direct() As Boolean
-            Get
-                Return Not _non_direct
-            End Get
-        End Property
+        Protected Sub RejectRelated(ByVal id As Integer, ByVal add As Boolean)
+            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
 
-        Public Property MainId() As Integer
-            Get
-                Return _mainId
-            End Get
-            Protected Friend Set(ByVal value As Integer)
-                _mainId = value
-            End Set
-        End Property
+            Dim l As IList(Of Integer) = m.Entry.Added
+            If Not add Then
+                l = m.Entry.Deleted
+            End If
+            If l.Contains(_mainId) Then
+                l.Remove(_mainId)
+            End If
 
-        Public ReadOnly Property Main() As OrmBase
-            Get
-                Return OrmManagerBase.CurrentManager.CreateDBObject(_mainId, _mainType)
-            End Get
-        End Property
-
-        'Public Function Clone(ByVal mgr As OrmManagerBase, ByVal main As Type, ByVal subType As Type, ByVal added As List(Of Integer)) As EditableList
-        '    Dim newl As EditableList = Nothing
-        '    If Not mgr.IsNewObject(main, _mainId) Then
-        '        newl = New EditableList(_mainId, _mainList, _mainType, _subType, Direct)
-        '        newl._deletedList = _deletedList
-        '        Dim ad As New List(Of Integer)
-        '        For Each id As Integer In _addedList
-        '            If Not mgr.IsNewObject(subType, id) Then
-        '                ad.Add(id)
-        '            ElseIf added IsNot Nothing Then
-        '                added.Add(id)
-        '            End If
-        '        Next
-        '        newl._addedList = ad
-        '        _saved = True
-        '    End If
-        '    Return newl
-        'End Function
+        End Sub
 
         Protected Function GetRealDirect() As Boolean
             If SubType Is MainType Then
@@ -439,7 +448,7 @@ Namespace Cache
             Return c
         End Function
 
-        Public Function PrepareSave(ByVal mgr As OrmManagerBase) As EditableList
+        Friend Function PrepareSave(ByVal mgr As OrmManagerBase) As EditableList
             Dim newl As EditableList = Nothing
             If Not mgr.IsNewObject(_mainType, _mainId) Then
                 Dim ad As New List(Of Integer)
@@ -462,34 +471,6 @@ Namespace Cache
             Return newl
         End Function
 
-        'Public Function PrepareNewSave(ByVal mgr As OrmManagerBase) As EditableList
-        '    Dim newl As EditableList = Nothing
-        '    If Not mgr.IsNewObject(_mainType, _mainId) AndAlso HasNew Then
-        '        Dim ad As New List(Of Integer)
-        '        For Each id As Integer In _new
-        '            If mgr.IsNewObject(SubType, id) Then
-        '                Throw New InvalidOperationException("List has new object " & id)
-        '            ElseIf CheckDual(mgr, id) Then
-        '                ad.Add(id)
-        '            End If
-        '        Next
-        '        If ad.Count > 0 Then
-        '            newl = New EditableList(_mainId, New List(Of Integer), _mainType, _subType, Direct, _sort)
-        '            newl.AddRange(ad)
-        '        End If
-        '    End If
-        '    Return newl
-        'End Function
-
-        Protected Friend Property Saved() As Boolean
-            Get
-                Return _saved
-            End Get
-            Set(ByVal value As Boolean)
-                _saved = value
-            End Set
-        End Property
-
         Protected Friend Sub Update(ByVal id As Integer, ByVal oldId As Integer)
             Dim idx As Integer = _addedList.IndexOf(oldId)
             If idx < 0 Then
@@ -506,29 +487,25 @@ Namespace Cache
             End If
         End Sub
 
-        Public ReadOnly Property MainType() As Type
-            Get
-                Return _mainType
-            End Get
-        End Property
-
-        Public ReadOnly Property SubType() As Type
-            Get
-                Return _subType
-            End Get
-        End Property
-
         Protected Sub RemoveNew()
             If _new IsNot Nothing Then
                 _new.Clear()
             End If
         End Sub
 
-        Public ReadOnly Property HasNew() As Boolean
+#End Region
+
+#Region " Protected properties "
+
+        Protected Friend Property Saved() As Boolean
             Get
-                Return _new IsNot Nothing AndAlso _new.Count > 0
+                Return _saved
             End Get
+            Set(ByVal value As Boolean)
+                _saved = value
+            End Set
         End Property
+
 
         Protected ReadOnly Property SyncRoot() As IDisposable
             Get
@@ -539,5 +516,8 @@ Namespace Cache
 #End If
             End Get
         End Property
+
+#End Region
+
     End Class
 End Namespace

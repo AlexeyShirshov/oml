@@ -1296,10 +1296,10 @@ namespace OrmCodeGenLib
                 );
             if (underlyingEntity == null)
                 tableExpression = new CodeMethodInvokeExpression(
-                    new CodeCastExpression(
-                        new CodeTypeReference(typeof(Worm.IDbSchema)),
+                    //new CodeCastExpression(
+                        //new CodeTypeReference(typeof(Worm.IDbSchema)),
                         new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema")
-                        ),
+                        ,
                     "GetSharedTable",
                     new CodePrimitiveExpression(relationTable.Name)
                     );
@@ -1929,7 +1929,8 @@ namespace OrmCodeGenLib
                 new CodeAssignStatement(
                     new CodeVariableReferenceExpression("tables"),
                     new CodeMethodInvokeExpression(
-                        new CodeCastExpression(new CodeTypeReference(typeof(Worm.IDbSchema)), new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema")),
+                        //new CodeCastExpression(new CodeTypeReference(typeof(Worm.IDbSchema)), 
+                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
                         "GetTables",
                         new CodeArgumentReferenceExpression("type")
                         )
