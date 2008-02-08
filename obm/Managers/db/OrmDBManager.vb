@@ -422,6 +422,7 @@ Namespace Database
             Dim t As Type = obj.GetType
             Dim old_state As ObjectState = state
             Dim hasNew As Boolean = False
+            Dim err As Boolean = True
             Try
 #If DebugLocks Then
                 Using SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
@@ -559,13 +560,15 @@ Namespace Database
                     End If
 
                 End Using
-            Catch
-                If sa = SaveAction.Insert Then
-                    obj.RejectChanges()
-                End If
+                err = False
+            Finally
+                If err Then
+                    If sa = SaveAction.Insert Then
+                        obj.RejectChanges()
+                    End If
 
-                state = old_state
-                Throw
+                    state = old_state
+                End If
             End Try
             Return hasNew
         End Function

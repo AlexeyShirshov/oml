@@ -235,9 +235,9 @@ Namespace Database
 
             Protected Overridable Sub Dispose(ByVal disposing As Boolean)
                 If Not Me._disposedValue Then
-                    If Not _save.HasValue Then
-                        Throw New InvalidOperationException("You should commit or rollback Saver")
-                    End If
+                    'If Not _save.HasValue Then
+                    '    Throw New InvalidOperationException("You should commit or rollback Saver")
+                    'End If
                     If disposing AndAlso _save.Value Then
                         Save()
                     End If

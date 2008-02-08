@@ -2706,6 +2706,9 @@ l1:
 
         For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
             Dim m2me As M2MCache = o.First
+            If m2me Is Nothing Then
+                Throw New OrmManagerException(String.Format("M2MCache entry is nothing for key:[{0}] and id:[{1}]. Quering type {2} for {3}; direct={4}", o.Second.First, o.Second.Second, t, mainobj.ObjName, direct))
+            End If
             If m2me.Entry.SubType Is t AndAlso m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso m2me.Entry.Direct = direct Then
                 Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
                     Dim sv As EditableList = m2me.Entry.PrepareSave(Me)
