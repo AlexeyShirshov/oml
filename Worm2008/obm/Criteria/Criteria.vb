@@ -178,11 +178,6 @@ Namespace Criteria
         End Property
     End Class
 
-    Public Interface IGetFilter
-        ReadOnly Property Filter() As IFilter
-        ReadOnly Property Filter(ByVal t As Type) As IFilter
-    End Interface
-
     Public MustInherit Class CriteriaLink
         Implements IGetFilter
 
