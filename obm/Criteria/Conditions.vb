@@ -242,6 +242,17 @@ Namespace Criteria.Conditions
             Return _left.ToStaticString() & Condition2String() & r
         End Function
 
+        Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
+            Get
+                Return Me
+            End Get
+        End Property
+
+        Public ReadOnly Property Filter(ByVal t As System.Type) As Core.IFilter Implements Core.IGetFilter.Filter
+            Get
+                Return Me
+            End Get
+        End Property
     End Class
 
     Public MustInherit Class EntityCondition

@@ -5,7 +5,13 @@ Imports Worm.Orm
 
 Namespace Criteria.Core
 
+    Public Interface IGetFilter
+        ReadOnly Property Filter() As IFilter
+        ReadOnly Property Filter(ByVal t As Type) As IFilter
+    End Interface
+
     Public Interface IFilter
+        Inherits IGetFilter
         Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As ICreateParam) As String
         Function GetAllFilters() As ICollection(Of IFilter)
         Function Equals(ByVal f As IFilter) As Boolean
@@ -134,6 +140,18 @@ Namespace Criteria.Core
         Protected ReadOnly Property val() As IFilterValue
             Get
                 Return _v
+            End Get
+        End Property
+
+        Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter
+            Get
+                Return Me
+            End Get
+        End Property
+
+        Public ReadOnly Property Filter(ByVal t As System.Type) As IFilter Implements IGetFilter.Filter
+            Get
+                Return Me
             End Get
         End Property
     End Class

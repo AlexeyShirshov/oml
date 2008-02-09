@@ -123,6 +123,18 @@ Namespace Criteria.Joins
         End Function
 
         Public MustOverride Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeSQLStmt
+
+        Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
+            Get
+                Return Me
+            End Get
+        End Property
+
+        Public ReadOnly Property Filter(ByVal t As System.Type) As Core.IFilter Implements Core.IGetFilter.Filter
+            Get
+                Return Me
+            End Get
+        End Property
     End Class
 
     Public MustInherit Class OrmJoin

@@ -1856,7 +1856,13 @@ l1:
 
         '    Dim del As ICustDelegate(Of T) = GetCustDelegate4Top(Of T)(top, GetFilter(criteria), sort, key, id)
         '    Return GetFromCache(Of T)(dic, sync, id, withLoad, del).GetObjectList(Of T)(Me, withLoad, del.Created)
-        Return FindWithJoins(Of T)(ObjectSchema.CreateTopAspect(top, sort), Nothing, criteria, sort, withLoad)
+        Dim filter As IFilter = Nothing
+        If criteria IsNot Nothing Then
+            filter = criteria.Filter(GetType(T))
+        End If
+        Dim joins() As OrmJoin = Nothing
+        HasJoins(GetType(T), filter, sort, joins)
+        Return FindWithJoins(Of T)(ObjectSchema.CreateTopAspect(top, sort), joins, filter, sort, withLoad)
     End Function
 
     '<Obsolete("Use OrmBase Find method")> _
@@ -3771,41 +3777,43 @@ l1:
         Dim l As New List(Of OrmJoin)
         Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(selectType)
         Dim types As New List(Of Type)
-        For Each fl As IFilter In filter.GetAllFilters
-            Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
-            If f IsNot Nothing Then
-                Dim type2join As System.Type = CType(f.Template, OrmFilterTemplate).Type
-                If type2join IsNot selectType AndAlso Not types.Contains(type2join) Then
-                    Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2join, oschema)
+        If filter IsNot Nothing Then
+            For Each fl As IFilter In filter.GetAllFilters
+                Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
+                If f IsNot Nothing Then
+                    Dim type2join As System.Type = CType(f.Template, OrmFilterTemplate).Type
+                    If type2join IsNot selectType AndAlso Not types.Contains(type2join) Then
+                        Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2join, oschema)
 
-                    If String.IsNullOrEmpty(field) Then
-                        Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
-                    End If
-
-                    types.Add(type2join)
-
-                    l.Add(MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
-
-                    Dim ts As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2join), IOrmObjectSchema)
-                    Dim pk_table As OrmTable = ts.GetTables(0)
-                    For i As Integer = 1 To ts.GetTables.Length - 1
-                        Dim join As OrmJoin = ts.GetJoins(pk_table, ts.GetTables(i))
-
-                        If Not OrmJoin.IsEmpty(join) Then
-                            l.Add(join)
+                        If String.IsNullOrEmpty(field) Then
+                            Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
                         End If
-                    Next
 
-                    Dim newfl As IFilter = ts.GetFilter(GetFilterInfo)
-                    If newfl IsNot Nothing Then
-                        Dim con As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
-                        con.AddFilter(filter)
-                        con.AddFilter(newfl)
-                        filter = con.Condition
+                        types.Add(type2join)
+
+                        l.Add(MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
+
+                        Dim ts As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2join), IOrmObjectSchema)
+                        Dim pk_table As OrmTable = ts.GetTables(0)
+                        For i As Integer = 1 To ts.GetTables.Length - 1
+                            Dim join As OrmJoin = ts.GetJoins(pk_table, ts.GetTables(i))
+
+                            If Not OrmJoin.IsEmpty(join) Then
+                                l.Add(join)
+                            End If
+                        Next
+
+                        Dim newfl As IFilter = ts.GetFilter(GetFilterInfo)
+                        If newfl IsNot Nothing Then
+                            Dim con As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
+                            con.AddFilter(filter)
+                            con.AddFilter(newfl)
+                            filter = con.Condition
+                        End If
                     End If
                 End If
-            End If
-        Next
+            Next
+        End If
 
         If s IsNot Nothing Then
             Dim ns As Sort = s
