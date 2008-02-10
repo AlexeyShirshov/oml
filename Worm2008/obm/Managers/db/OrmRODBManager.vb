@@ -238,7 +238,7 @@ Namespace Database
                     'If Not _save.HasValue Then
                     '    Throw New InvalidOperationException("You should commit or rollback Saver")
                     'End If
-                    If disposing AndAlso _save.Value Then
+                    If disposing AndAlso _save.HasValue AndAlso _save.Value Then
                         Save()
                     End If
                     'If _disposeMgr Then
