@@ -2210,6 +2210,7 @@ l1:
                     Else
                         a = New T
                         a.Init(id, _cache, _schema)
+                        a._mgrStr = IdentityString
                     End If
 
                     If load Then

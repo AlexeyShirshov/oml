@@ -25,29 +25,29 @@ Imports Worm.Database.Criteria.Core
 
         Dim almgr As AliasMgr = AliasMgr.Create
         Dim params As New ParamMgr(schemaV1, "p")
-        Assert.AreEqual("select t1.id from dbo.ent1 t1", schemaV1.Select(t, almgr, params))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1", schemaV1.Select(t, almgr, params, Nothing, Nothing, Nothing))
 
         Dim schemaV2 As New DbSchema("2")
         almgr = AliasMgr.Create
         Dim params2 As New ParamMgr(schemaV2, "p")
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV2.Select(t, almgr, params2))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV2.Select(t, almgr, params2, Nothing, Nothing, Nothing))
         Assert.AreEqual(2, schemaV2.GetTables(t).Length)
 
         t = GetType(Entity2)
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id, t2.s from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV1.Select(t, almgr, params))
+        Assert.AreEqual("select t1.id, t2.s from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV1.Select(t, almgr, params, Nothing, Nothing, Nothing))
         Assert.AreEqual(2, schemaV1.GetTables(t).Length)
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id, t2.s from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", schemaV2.Select(t, almgr, params2))
+        Assert.AreEqual("select t1.id, t2.s from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", schemaV2.Select(t, almgr, params2, Nothing, Nothing, Nothing))
         Assert.AreEqual(2, schemaV2.GetTables(t).Length)
 
         Dim schemaV3 As New DbSchema("3")
         Dim params3 As New ParamMgr(schemaV3, "p")
         almgr = AliasMgr.Create
         t = GetType(Entity)
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on (t2.i = t1.id and t2.s = @p1)", schemaV3.Select(t, almgr, params3))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on (t2.i = t1.id and t2.s = @p1)", schemaV3.Select(t, almgr, params3, Nothing, Nothing, Nothing))
         Assert.AreEqual(2, schemaV3.GetTables(t).Length)
     End Sub
 
@@ -61,22 +61,22 @@ Imports Worm.Database.Criteria.Core
 
         Dim almgr As AliasMgr = AliasMgr.Create
         Dim params As New ParamMgr(schemaV1, "p")
-        Assert.AreEqual("select t1.id from dbo.ent1 t1", schemaV1.SelectID(t, almgr, params))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1", schemaV1.SelectID(t, almgr, params, Nothing))
 
 
         Dim schemaV2 As New DbSchema("2")
         almgr = AliasMgr.Create
         Dim params2 As New ParamMgr(schemaV2, "p")
 
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV2.SelectID(t, almgr, params2))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV2.SelectID(t, almgr, params2, Nothing))
 
         t = GetType(Entity2)
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV1.SelectID(t, almgr, params))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t1 t2 on t2.i = t1.id", schemaV1.SelectID(t, almgr, params, Nothing))
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", schemaV2.SelectID(t, almgr, params2))
+        Assert.AreEqual("select t1.id from dbo.ent1 t1 join dbo.t2 t2 on t2.i = t1.id", schemaV2.SelectID(t, almgr, params2, Nothing))
 
     End Sub
 
@@ -471,28 +471,28 @@ End Class
     Public Sub TestSelect()
         Dim schema As New DbSchema("1")
 
-        schema.Select(Nothing, Nothing, Nothing)
+        schema.Select(Nothing, Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestSelect2()
         Dim schema As New DbSchema("1")
 
-        schema.Select(GetType(Entity), Nothing, Nothing)
+        schema.Select(GetType(Entity), Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod()> _
     Public Sub TestSelect3()
         Dim schema As New DbSchema("1")
 
-        schema.Select(GetType(Entity), AliasMgr.Create, Nothing)
+        schema.Select(GetType(Entity), AliasMgr.Create, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestSelect4()
         Dim schema As New DbSchema("3")
 
-        schema.Select(GetType(Entity), AliasMgr.Create, Nothing)
+        schema.Select(GetType(Entity), AliasMgr.Create, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod()> _

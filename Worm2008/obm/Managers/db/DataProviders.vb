@@ -215,11 +215,11 @@ Namespace Database
             End Function
 
             Protected Overridable Sub AppendSelect(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of ColumnAttribute))
-                sb.Append(_mgr.DbSchema.Select(t, almgr, pmgr, arr))
+                sb.Append(_mgr.DbSchema.Select(t, almgr, pmgr, arr, Nothing, _mgr.GetFilterInfo))
             End Sub
 
             Protected Overridable Sub AppendSelectID(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of ColumnAttribute))
-                sb.Append(_mgr.DbSchema.SelectID(t, almgr, pmgr))
+                sb.Append(_mgr.DbSchema.SelectID(t, almgr, pmgr, _mgr.GetFilterInfo))
             End Sub
         End Class
 
