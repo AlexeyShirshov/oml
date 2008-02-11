@@ -241,9 +241,9 @@ Namespace Orm
         End Sub
 
         Protected Sub Init()
-            If OrmManagerBase.CurrentManager IsNot Nothing Then
-                _mgrStr = OrmManagerBase.CurrentManager.IdentityString
-            End If
+            'If OrmManagerBase.CurrentManager IsNot Nothing Then
+            '    _mgrStr = OrmManagerBase.CurrentManager.IdentityString
+            'End If
         End Sub
 
         <Runtime.Serialization.OnDeserialized()> _
@@ -610,7 +610,7 @@ Namespace Orm
 
                 If _state = ObjectState.Modified OrElse _state = Orm.ObjectState.Deleted OrElse _state = Orm.ObjectState.Created Then
                     If IsReadOnly Then
-                        Throw New OrmObjectException(ObjName & "Object in readonly state")
+                        Throw New OrmObjectException(ObjName & " object in readonly state")
                     End If
                     'Debug.WriteLine(Environment.StackTrace)
                     _needAdd = False
@@ -706,6 +706,9 @@ Namespace Orm
                     If setState Then
                         _state = Orm.ObjectState.None
                         Debug.Assert(IsLoaded)
+                        If IsLoaded Then
+                            Throw New OrmObjectException("Cannot set state None while object is not loaded")
+                        End If
                     End If
                     If unreg Then
                         mo = GetModifiedObject

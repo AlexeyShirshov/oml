@@ -1090,13 +1090,13 @@ Namespace Database
 
         Public Function [Select](ByVal original_type As Type, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, _
-            Optional ByVal arr As Generic.IList(Of ColumnAttribute) = Nothing, _
-            Optional ByVal additionalColumns As String = Nothing) As String
-            Return SelectWithJoin(original_type, almgr, params, Nothing, True, Nothing, additionalColumns, Nothing, arr)
+            ByVal arr As Generic.IList(Of ColumnAttribute), _
+             ByVal additionalColumns As String, ByVal filterInfo As Object) As String
+            Return SelectWithJoin(original_type, almgr, params, Nothing, True, Nothing, additionalColumns, filterInfo, arr)
         End Function
 
-        Public Function SelectID(ByVal original_type As Type, ByVal almgr As AliasMgr, ByVal params As ParamMgr) As String
-            Return SelectWithJoin(original_type, almgr, params, Nothing, False, Nothing, Nothing, Nothing, Nothing)
+        Public Function SelectID(ByVal original_type As Type, ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filterInfo As Object) As String
+            Return SelectWithJoin(original_type, almgr, params, Nothing, False, Nothing, Nothing, filterInfo, Nothing)
         End Function
 
         'Public Overridable Function [Select](ByVal original_type As Type, _

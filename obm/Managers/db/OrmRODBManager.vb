@@ -671,9 +671,9 @@ Namespace Database
                         'js.Add(j)
                         'js.AddRange(Schema.GetAllJoins(selectedType))
                         Dim columns As String = DbSchema.GetSelectColumnList(selectedType)
-                        sb.Append(DbSchema.Select(ct, almgr, params, arr, columns))
+                        sb.Append(DbSchema.Select(ct, almgr, params, arr, columns, GetFilterInfo))
                     Else
-                        sb.Append(DbSchema.Select(ct, almgr, params, arr))
+                        sb.Append(DbSchema.Select(ct, almgr, params, arr, Nothing, GetFilterInfo))
                     End If
                     'If withLoad Then
                     '    arr = DatabaseSchema.GetSortedFieldList(ct)
@@ -1087,11 +1087,11 @@ Namespace Database
             Dim sb As New StringBuilder
             If withLoad Then
                 arr = _schema.GetSortedFieldList(original_type)
-                sb.Append(DbSchema.Select(original_type, almgr, params, arr))
+                sb.Append(DbSchema.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of ColumnAttribute)
                 arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
-                sb.Append(DbSchema.SelectID(original_type, almgr, params))
+                sb.Append(DbSchema.SelectID(original_type, almgr, params, GetFilterInfo))
             End If
 
             If Not DbSchema.AppendWhere(original_type, CType(f, Criteria.Core.IFilter), almgr, sb, GetFilterInfo, params) Then
@@ -1148,11 +1148,11 @@ Namespace Database
             Dim sb As New StringBuilder
             If withLoad Then
                 arr = _schema.GetSortedFieldList(original_type)
-                sb.Append(DbSchema.Select(original_type, almgr, params, arr))
+                sb.Append(DbSchema.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of ColumnAttribute)
                 arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
-                sb.Append(DbSchema.SelectID(original_type, almgr, params))
+                sb.Append(DbSchema.SelectID(original_type, almgr, params, GetFilterInfo))
             End If
 
             If Not DbSchema.AppendWhere(original_type, CType(f, Criteria.Core.IFilter), almgr, sb, GetFilterInfo, params) Then
@@ -1223,7 +1223,7 @@ Namespace Database
                     Dim almgr As AliasMgr = AliasMgr.Create
                     Dim params As New ParamMgr(DbSchema, "p")
                     Dim sb As New StringBuilder
-                    sb.Append(DbSchema.Select(original_type, almgr, params, Nothing))
+                    sb.Append(DbSchema.Select(original_type, almgr, params, Nothing, Nothing, GetFilterInfo))
                     DbSchema.AppendWhere(original_type, filter, almgr, sb, GetFilterInfo, params)
 
                     params.AppendParams(.Parameters)
@@ -1677,7 +1677,7 @@ Namespace Database
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim params As New ParamMgr(DbSchema, "p")
             Dim sb As New StringBuilder
-            sb.Append(DbSchema.Select(original_type, almgr, params, columns))
+            sb.Append(DbSchema.Select(original_type, almgr, params, columns, Nothing, GetFilterInfo))
             If Not DbSchema.AppendWhere(original_type, Nothing, almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
@@ -1740,7 +1740,7 @@ Namespace Database
             Dim params As New ParamMgr(DbSchema, "p")
             Dim columns As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
             Dim sb As New StringBuilder
-            sb.Append(DbSchema.Select(original_type, almgr, params, columns))
+            sb.Append(DbSchema.Select(original_type, almgr, params, columns, Nothing, GetFilterInfo))
             If Not DbSchema.AppendWhere(original_type, Nothing, almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
