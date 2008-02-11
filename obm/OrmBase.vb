@@ -706,7 +706,7 @@ Namespace Orm
                     If setState Then
                         _state = Orm.ObjectState.None
                         Debug.Assert(IsLoaded)
-                        If IsLoaded Then
+                        If Not IsLoaded Then
                             Throw New OrmObjectException("Cannot set state None while object is not loaded")
                         End If
                     End If
