@@ -6,7 +6,7 @@ Imports Worm.Orm.Meta
 
 Namespace Orm
 
-    Public Class myCultureComparer
+    Class myCultureComparer
         Implements IEqualityComparer
 
         Dim myComparer As CaseInsensitiveComparer

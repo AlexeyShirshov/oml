@@ -266,6 +266,7 @@ Namespace Database
             Private _mgr As OrmManagerBase
             Private _saver As BatchSaver
             Private _rollbackChanges As Boolean = True
+            Private _created As Boolean
 
             Public Event SaveComplete(ByVal logicalCommited As Boolean, ByVal dbCommit As Boolean)
 
@@ -280,7 +281,7 @@ Namespace Database
 
                 AddHandler mgr.BeginUpdate, AddressOf Add
                 AddHandler mgr.BeginDelete, AddressOf Delete
-                _saver = mgr.CreateBatchSaver
+                _saver = mgr.CreateBatchSaver(_created)
                 _mgr = mgr
             End Sub
 
@@ -411,7 +412,7 @@ Namespace Database
 #Region " IDisposable Support "
             ' IDisposable
             Protected Overridable Sub Dispose(ByVal disposing As Boolean)
-                If Not Me.disposedValue Then
+                If Not Me.disposedValue AndAlso _created Then
                     Dim err As Boolean = True
                     Try
                         _disposing = True
@@ -467,9 +468,11 @@ Namespace Database
             _connStr = connectionString
         End Sub
 
-        Public Function CreateBatchSaver() As BatchSaver
+        Public Function CreateBatchSaver(ByRef createdNew As Boolean) As BatchSaver
+            createdNew = False
             If _batchSaver Is Nothing Then
                 _batchSaver = New BatchSaver(Me)
+                createdNew = True
             End If
             Return _batchSaver
         End Function
@@ -657,7 +660,12 @@ Namespace Database
                     Dim almgr As AliasMgr = AliasMgr.Create
                     Dim params As New ParamMgr(DbSchema, "p")
                     Dim schema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(selectedType)
-                    'Dim schema1 As IOrmObjectSchema = Schema.GetObjectSchema(filterType)
+                    Dim cs As IOrmObjectSchema = DbSchema.GetObjectSchema(ct)
+                    Dim mms As IConnectedFilter = TryCast(cs, IConnectedFilter)
+                    Dim cfi As Object = GetFilterInfo()
+                    If mms IsNot Nothing Then
+                        cfi = mms.ModifyFilterInfo(cfi, selectedType, filterType)
+                    End If
                     'Dim r1 As M2MRelation = Schema.GetM2MRelation(selectedType, filterType)
                     Dim r2 As M2MRelation = DbSchema.GetM2MRelation(filterType, selectedType, True)
                     Dim id_clm As String = r2.Column
@@ -671,9 +679,9 @@ Namespace Database
                         'js.Add(j)
                         'js.AddRange(Schema.GetAllJoins(selectedType))
                         Dim columns As String = DbSchema.GetSelectColumnList(selectedType)
-                        sb.Append(DbSchema.Select(ct, almgr, params, arr, columns, GetFilterInfo))
+                        sb.Append(DbSchema.Select(ct, almgr, params, arr, columns, cfi))
                     Else
-                        sb.Append(DbSchema.Select(ct, almgr, params, arr, Nothing, GetFilterInfo))
+                        sb.Append(DbSchema.Select(ct, almgr, params, arr, Nothing, cfi))
                     End If
                     'If withLoad Then
                     '    arr = DatabaseSchema.GetSortedFieldList(ct)
@@ -699,7 +707,7 @@ Namespace Database
                     con.AddFilter(connectedFilter)
                     con.AddFilter(filter)
                     con.AddFilter(schema2.GetFilter(GetFilterInfo))
-                    DbSchema.AppendWhere(ct, con.Condition, almgr, sb, GetFilterInfo, params)
+                    DbSchema.AppendWhere(ct, con.Condition, almgr, sb, cfi, params)
 
                     If sort IsNot Nothing AndAlso Not sort.IsExternal Then
                         DbSchema.AppendOrder(selectedType, sort, almgr, sb)

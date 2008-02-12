@@ -2,7 +2,6 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports Worm
 Imports Worm.Orm
 Imports System.Diagnostics
-Imports CoreFramework.Structures
 Imports Worm.Database
 Imports Worm.Sorting
 Imports Worm.Criteria.Core

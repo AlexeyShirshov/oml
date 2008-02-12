@@ -143,6 +143,10 @@ Namespace Orm.Meta
     Public Interface IGetJoinsWithContext
         Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin
     End Interface
+
+    Public Interface IConnectedFilter
+        Function ModifyFilterInfo(ByVal filterInfo As Object, ByVal selectedType As Type, ByVal filterType As Type) As Object
+    End Interface
 #End Region
 
 #Region " Classes "

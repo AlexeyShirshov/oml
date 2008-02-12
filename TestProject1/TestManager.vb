@@ -871,7 +871,8 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver
+                Dim created As Boolean
+                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(created)
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()
@@ -908,7 +909,8 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver
+                Dim created As Boolean
+                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(created)
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()
@@ -949,7 +951,8 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver
+                Dim created As Boolean
+                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(created)
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()
@@ -1089,7 +1092,12 @@ Imports Worm.Orm
             Try
                 For Each t As Entity In c
                     Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
-                        t.Delete()
+                        Using st2 As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                            t.Delete()
+                            st2.Commit()
+                        End Using
+                        Assert.AreEqual(ObjectState.Deleted, t.ObjectState)
+                        Assert.IsTrue(st.Saver.AffectedObjects.Contains(t))
                         st.Commit()
                     End Using
                     Exit For
