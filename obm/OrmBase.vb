@@ -504,6 +504,7 @@ Namespace Orm
             ElseIf IsLoaded Then
                 ObjectState = Orm.ObjectState.None
             End If
+            Invariant()
         End Sub
 
         Protected Friend Sub Save(ByVal mc As OrmManagerBase)
@@ -1005,7 +1006,7 @@ Namespace Orm
         <Conditional("DEBUG")> _
         Public Sub Invariant()
             If IsLoaded AndAlso _
-                _state <> Orm.ObjectState.None AndAlso _state <> Orm.ObjectState.Modified AndAlso _state <> Orm.ObjectState.NotLoaded Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified: current state is " & _state.ToString)
+                _state <> Orm.ObjectState.None AndAlso _state <> Orm.ObjectState.Modified AndAlso _state <> Orm.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified: current state is " & _state.ToString)
         End Sub
 
         'Public MustOverride Function CreateSortComparer(ByVal sort As String, ByVal sortType As SortType) As IComparer

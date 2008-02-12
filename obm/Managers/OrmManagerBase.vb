@@ -2240,6 +2240,7 @@ l1:
             If Not created AndAlso load AndAlso Not a.IsLoaded Then
                 a.Load()
             End If
+            a.Invariant()
         End If
 
         Return a
