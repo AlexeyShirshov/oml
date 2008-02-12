@@ -36,8 +36,8 @@ Namespace Orm
     ''' Базовый класс для всех типов
     ''' </summary>
     ''' <remarks>
-    ''' <h1>Класс</h1> является потокобезопасным как на <i>чтение так и на запись</i>.
-    ''' Предоставляет следующий <b>функционал</b>:<br />
+    ''' Класс является потокобезопасным как на <i>чтение так и на запись</i>.
+    ''' Предоставляет следующий <b>функционал</b>:
     ''' XML сериализация/десериализация.Реализована с некоторыми ограничениями. Для изменения поведения необходимо переопределить <see cref="OrmBase.ReadXml" /> и <see cref="OrmBase.WriteXml"/>.
     ''' <code>Это код</code>
     ''' <example>Это пример</example>
@@ -237,7 +237,7 @@ Namespace Orm
 
             If cache IsNot Nothing Then cache.RegisterCreation(Me.GetType, Identifier)
 
-            _state = Orm.ObjectState.NotLoaded
+            ObjectState = Orm.ObjectState.NotLoaded
         End Sub
 
         Protected Sub Init()
@@ -394,6 +394,9 @@ Namespace Orm
                     _state = value
                     Debug.Assert(_state = value)
                     Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
+                    If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
+                        Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
+                    End If
                 End Using
             End Set
         End Property
@@ -499,7 +502,7 @@ Namespace Orm
             If olds = Orm.ObjectState.Created AndAlso _state = Orm.ObjectState.Modified Then
                 AcceptChanges(True, True)
             ElseIf IsLoaded Then
-                _state = Orm.ObjectState.None
+                ObjectState = Orm.ObjectState.None
             End If
         End Sub
 
@@ -624,11 +627,11 @@ Namespace Orm
                     Dim oldid As Integer = Identifier
                     Dim olds As ObjectState = GetModifiedObject._old_state
                     If olds <> Orm.ObjectState.Created Then RejectChangesInternal()
-                    _state = Orm.ObjectState.Modified
+                    ObjectState = Orm.ObjectState.Modified
                     Dim newid As Integer = GetModifiedObject.Identifier
                     AcceptChanges(True, True)
                     Identifier = newid
-                    _state = olds
+                    ObjectState = olds
                     If _state = Orm.ObjectState.Created Then
                         Dim name As String = Me.GetType.Name
                         Dim mc As OrmManagerBase = GetMgr()
@@ -704,7 +707,7 @@ Namespace Orm
 
                     Dim unreg As Boolean = _state <> Orm.ObjectState.Created
                     If setState Then
-                        _state = Orm.ObjectState.None
+                        ObjectState = Orm.ObjectState.None
                         Debug.Assert(IsLoaded)
                         If Not IsLoaded Then
                             Throw New OrmObjectException("Cannot set state None while object is not loaded")
@@ -858,7 +861,7 @@ Namespace Orm
         Protected Function PrepareRead(ByVal fieldName As String, ByVal d As IDisposable) As IDisposable
             If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) Then
                 d = SyncHelper(True)
-                If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) AndAlso Not IsFieldLoaded(FieldName) Then
+                If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) AndAlso Not IsFieldLoaded(fieldName) Then
                     Load()
                 End If
             End If
@@ -910,14 +913,14 @@ Namespace Orm
                     'modified.ObjectState = ObjectState.Clone
                     'OrmCache.RegisterModification(modified)
                 End If
-                _state = ObjectState.Deleted
+                ObjectState = ObjectState.Deleted
                 GetMgr.RaiseBeginDelete(Me)
             End Using
         End Sub
 
         Protected Friend Sub RaiseBeginModification()
             Dim modified As OrmBase = GetSoftClone()
-            _state = Orm.ObjectState.Modified
+            ObjectState = Orm.ObjectState.Modified
             OrmCache.RegisterModification(modified, Identifier)
             If Not _loading Then
                 GetMgr.RaiseBeginUpdate(Me)
@@ -927,7 +930,7 @@ Namespace Orm
         <Obsolete()> _
         Protected Friend Sub CreateModified(ByVal id As Integer)
             Dim modified As OrmBase = GetSoftClone()
-            _state = Orm.ObjectState.Modified
+            ObjectState = Orm.ObjectState.Modified
             OrmCache.RegisterModification(modified, id)
             If Not _loading Then
                 GetMgr.RaiseBeginUpdate(Me)
@@ -936,7 +939,7 @@ Namespace Orm
 
         Protected Sub CreateModified()
             Dim modified As OrmBase = GetFullClone()
-            _state = Orm.ObjectState.Modified
+            ObjectState = Orm.ObjectState.Modified
             OrmCache.RegisterModification(modified)
             If Not _loading Then
                 GetMgr.RaiseBeginUpdate(Me)

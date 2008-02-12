@@ -1321,7 +1321,7 @@ Namespace Database
                 End If
                 selectcmd.Append(j.MakeSQLStmt(Me, almgr, pname))
                 For i As Integer = 1 To tables.Length - 1
-                    Dim join As OrmJoin = CType(sch.GetJoins(pk_table, tables(i)), OrmJoin)
+                    Dim join As OrmJoin = CType(GetJoins(sch, pk_table, tables(i), filterInfo), OrmJoin)
 
                     If Not OrmJoin.IsEmpty(join) Then
                         almgr.AddTable(tables(i), CType(Nothing, ParamMgr))

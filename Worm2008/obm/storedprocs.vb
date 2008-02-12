@@ -89,15 +89,19 @@ Namespace Database.Storedprocs
             Return sb.ToString
         End Function
 
+        Protected Overridable Sub InitInParams(ByVal schema As DbSchema, ByVal cmd As System.Data.Common.DbCommand)
+            For Each p As Pair(Of String, Object) In GetInParams()
+                cmd.Parameters.Add(schema.CreateDBParameter(p.First, p.Second))
+            Next
+        End Sub
+
         Protected Function Execute(ByVal mgr As OrmReadOnlyDBManager) As Object
             _reseted(GetKey) = False
             Dim schema As DbSchema = CType(mgr.ObjectSchema, DbSchema)
             Using cmd As System.Data.Common.DbCommand = schema.CreateDBCommand
                 cmd.CommandType = System.Data.CommandType.StoredProcedure
                 cmd.CommandText = GetName()
-                For Each p As Pair(Of String, Object) In GetInParams()
-                    cmd.Parameters.Add(schema.CreateDBParameter(p.First, p.Second))
-                Next
+                InitInParams(schema, cmd)
                 For Each p As OutParam In GetOutParams()
                     Dim pr As System.Data.Common.DbParameter = schema.CreateDBParameter()
                     pr.ParameterName = p.Name
@@ -599,6 +603,45 @@ Namespace Database.Storedprocs
 
         Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
             Return New List(Of Pair(Of String, Object))
+        End Function
+
+        Class ScalarProcSimple(Of T2 As Structure)
+            Inherits ScalarStoredProc(Of T2)
+
+            Private _name As String
+            Private _obj() As Object
+            Private _names() As String
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object)
+                _name = name
+                _obj = params
+                _names = names
+            End Sub
+
+            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
+                Dim l As New List(Of Pair(Of String, Object))
+                For i As Integer = 0 To _obj.Length - 1
+                    l.Add(New Pair(Of String, Object)(_names(i), _obj(i)))
+                Next
+                Return l
+            End Function
+
+            Protected Overrides Function GetName() As String
+                Return _name
+            End Function
+
+            'Protected Overrides Sub InitInParams(ByVal schema As DbSchema, ByVal cmd As System.Data.Common.DbCommand)
+            '    For Each p As Pair(Of String, Object) In GetInParams()
+            '        Dim par As System.Data.Common.DbParameter = schema.CreateDBParameter
+            '        par.Value = p.Second
+            '        par.
+            '        cmd.Parameters.Add(par)
+            '    Next
+            'End Sub
+        End Class
+
+        Public Shared Function Exec(ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
+            Return New ScalarProcSimple(Of T)(name, paramNames.Split(), params).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
         End Function
     End Class
 End Namespace

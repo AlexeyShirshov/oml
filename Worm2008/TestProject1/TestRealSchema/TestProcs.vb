@@ -177,6 +177,8 @@ Public Class TestProcs
             Dim p As New ScalarProc(10)
             Assert.AreEqual(20, p.GetResult(mgr))
             Assert.AreEqual(100, p.GetResult(90, mgr))
+            Assert.AreEqual(20, ScalarProc.Exec("dbo.ScalarProc", "i", 10))
+            Assert.AreEqual(30, ScalarProc.Exec("dbo.ScalarProc", "i", 20))
         End Using
     End Sub
 
