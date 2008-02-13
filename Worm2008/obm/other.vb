@@ -2,141 +2,141 @@ Imports System.Collections.Generic
 Imports System.Runtime.CompilerServices
 Imports System.Runtime.InteropServices
 
-Namespace Collections
+<Serializable()> _
+Public Class ReadOnlyList(Of T)
+    Implements ICollection, ICollection(Of T), IEnumerable(Of T), IEnumerable, IList(Of T)
+    ' Methods
+    Friend Sub New(ByVal items As IList(Of T))
+        Me._items = items
+    End Sub
 
+    Public Sub CopyTo(ByVal array As T(), ByVal arrayIndex As Integer) Implements ICollection(Of T).CopyTo
+        _items.CopyTo(array, arrayIndex)
+    End Sub
+
+    Public Function _GetEnumerator() As IEnumerator Implements IEnumerable.GetEnumerator
+        Return New Enumerator(Of T)(Me._items)
+    End Function
+
+    Private Sub Add(ByVal value As T) Implements ICollection(Of T).Add
+        Throw New NotSupportedException
+    End Sub
+
+    Private Sub Clear() Implements ICollection(Of T).Clear
+        Throw New NotSupportedException
+    End Sub
+
+    Private Function Contains(ByVal value As T) As Boolean Implements ICollection(Of T).Contains
+        Return _items.Contains(value)
+    End Function
+
+    Private Function Remove(ByVal value As T) As Boolean Implements ICollection(Of T).Remove
+        Throw New NotSupportedException
+    End Function
+
+    Public Function GetEnumerator() As IEnumerator(Of T) Implements IEnumerable(Of T).GetEnumerator
+        Return New Enumerator(Of T)(Me._items)
+    End Function
+
+    Private Sub CopyTo(ByVal array As Array, ByVal arrayIndex As Integer) Implements ICollection.CopyTo
+        CopyTo(CType(array, T()), arrayIndex)
+    End Sub
+
+    ' Properties
+    Public ReadOnly Property Count() As Integer Implements ICollection(Of T).Count
+        Get
+            Return Me._items.Count
+        End Get
+    End Property
+
+    Private ReadOnly Property _Count() As Integer Implements ICollection.Count
+        Get
+            Return Me._items.Count
+        End Get
+    End Property
+
+    Private ReadOnly Property IsReadOnly() As Boolean Implements ICollection(Of T).IsReadOnly
+        Get
+            Return True
+        End Get
+    End Property
+
+    Private ReadOnly Property IsSynchronized() As Boolean Implements ICollection.IsSynchronized
+        Get
+            Return False
+        End Get
+    End Property
+
+    Private ReadOnly Property SyncRoot() As Object Implements ICollection.SyncRoot
+        Get
+            Return Me._items
+        End Get
+    End Property
+
+
+    ' Fields
+    Private _items As IList(Of T)
+
+    ' Nested Types
     <Serializable()> _
-    Public Class ReadOnlyCollection(Of T)
-        Implements ICollection, ICollection(Of T), IEnumerable(Of T), IEnumerable, IList(Of T)
-        ' Methods
-        Friend Sub New(ByVal items As IList(Of T))
+    Friend Structure Enumerator(Of K)
+        Implements IEnumerator(Of K), IDisposable, IEnumerator
+
+        Private _items As IList(Of K)
+        Private _index As Integer
+
+        Friend Sub New(ByVal items As IList(Of K))
             Me._items = items
+            Me._index = -1
         End Sub
 
-        Public Sub CopyTo(ByVal array As T(), ByVal arrayIndex As Integer) Implements ICollection(Of T).CopyTo
-            _items.CopyTo(array, arrayIndex)
+        Public Sub Dispose() Implements IDisposable.Dispose
         End Sub
 
-        Public Function _GetEnumerator() As IEnumerator Implements IEnumerable.GetEnumerator
-            Return New Enumerator(Of T)(Me._items)
+        Public Function MoveNext() As Boolean Implements IEnumerator.MoveNext
+            Return (++Me._index < Me._items.Count)
         End Function
 
-        Private Sub Add(ByVal value As T) Implements ICollection(Of T).Add
-            Throw New NotSupportedException
+        Private ReadOnly Property _Current() As Object Implements IEnumerator.Current
+            Get
+                Return _items(Me._index)
+            End Get
+        End Property
+
+        Public ReadOnly Property Current() As K Implements IEnumerator(Of K).Current
+            Get
+                Return _items(Me._index)
+            End Get
+        End Property
+
+        Private Sub Reset() Implements IEnumerator.Reset
+            Me._index = -1
         End Sub
+    End Structure
 
-        Private Sub Clear() Implements ICollection(Of T).Clear
+    Public Function IndexOf(ByVal item As T) As Integer Implements System.Collections.Generic.IList(Of T).IndexOf
+        Return _items.IndexOf(item)
+    End Function
+
+    Public Sub Insert(ByVal index As Integer, ByVal item As T) Implements System.Collections.Generic.IList(Of T).Insert
+        Throw New NotSupportedException
+    End Sub
+
+    Default Public Property Item(ByVal index As Integer) As T Implements System.Collections.Generic.IList(Of T).Item
+        Get
+            Return _items(index)
+        End Get
+        Set(ByVal value As T)
             Throw New NotSupportedException
-        End Sub
+        End Set
+    End Property
 
-        Private Function Contains(ByVal value As T) As Boolean Implements ICollection(Of T).Contains
-            Return _items.Contains(value)
-        End Function
+    Public Sub RemoveAt(ByVal index As Integer) Implements System.Collections.Generic.IList(Of T).RemoveAt
+        Throw New NotSupportedException
+    End Sub
+End Class
 
-        Private Function Remove(ByVal value As T) As Boolean Implements ICollection(Of T).Remove
-            Throw New NotSupportedException
-        End Function
-
-        Public Function GetEnumerator() As IEnumerator(Of T) Implements IEnumerable(Of T).GetEnumerator
-            Return New Enumerator(Of T)(Me._items)
-        End Function
-
-        Private Sub CopyTo(ByVal array As Array, ByVal arrayIndex As Integer) Implements ICollection.CopyTo
-            CopyTo(CType(array, T()), arrayIndex)
-        End Sub
-
-        ' Properties
-        Public ReadOnly Property Count() As Integer Implements ICollection(Of T).Count
-            Get
-                Return Me._items.Count
-            End Get
-        End Property
-
-        Private ReadOnly Property _Count() As Integer Implements ICollection.Count
-            Get
-                Return Me._items.Count
-            End Get
-        End Property
-
-        Private ReadOnly Property IsReadOnly() As Boolean Implements ICollection(Of T).IsReadOnly
-            Get
-                Return True
-            End Get
-        End Property
-
-        Private ReadOnly Property IsSynchronized() As Boolean Implements ICollection.IsSynchronized
-            Get
-                Return False
-            End Get
-        End Property
-
-        Private ReadOnly Property SyncRoot() As Object Implements ICollection.SyncRoot
-            Get
-                Return Me._items
-            End Get
-        End Property
-
-
-        ' Fields
-        Private _items As IList(Of T)
-
-        ' Nested Types
-        <Serializable()> _
-        Friend Structure Enumerator(Of K)
-            Implements IEnumerator(Of K), IDisposable, IEnumerator
-
-            Private _items As IList(Of K)
-            Private _index As Integer
-
-            Friend Sub New(ByVal items As IList(Of K))
-                Me._items = items
-                Me._index = -1
-            End Sub
-
-            Public Sub Dispose() Implements IDisposable.Dispose
-            End Sub
-
-            Public Function MoveNext() As Boolean Implements IEnumerator.MoveNext
-                Return (++Me._index < Me._items.Count)
-            End Function
-
-            Private ReadOnly Property _Current() As Object Implements IEnumerator.Current
-                Get
-                    Return _items(Me._index)
-                End Get
-            End Property
-
-            Public ReadOnly Property Current() As K Implements IEnumerator(Of K).Current
-                Get
-                    Return _items(Me._index)
-                End Get
-            End Property
-
-            Private Sub Reset() Implements IEnumerator.Reset
-                Me._index = -1
-            End Sub
-        End Structure
-
-        Public Function IndexOf(ByVal item As T) As Integer Implements System.Collections.Generic.IList(Of T).IndexOf
-            Return _items.IndexOf(item)
-        End Function
-
-        Public Sub Insert(ByVal index As Integer, ByVal item As T) Implements System.Collections.Generic.IList(Of T).Insert
-            Throw New NotSupportedException
-        End Sub
-
-        Default Public Property Item(ByVal index As Integer) As T Implements System.Collections.Generic.IList(Of T).Item
-            Get
-                Return _items(index)
-            End Get
-            Set(ByVal value As T)
-                Throw New NotSupportedException
-            End Set
-        End Property
-
-        Public Sub RemoveAt(ByVal index As Integer) Implements System.Collections.Generic.IList(Of T).RemoveAt
-            Throw New NotSupportedException
-        End Sub
-    End Class
+Namespace Collections
 
     Public Class CopyDictionaryEnumerator
         Inherits CopyEnumerator(Of DictionaryEntry)

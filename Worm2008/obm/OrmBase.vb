@@ -36,15 +36,15 @@ Namespace Orm
     ''' Базовый класс для всех типов
     ''' </summary>
     ''' <remarks>
-    ''' Класс является потокобезопасным как на <i>чтение так и на запись</i>.
-    ''' Предоставляет следующий <b>функционал</b>:
-    ''' XML сериализация/десериализация.Реализована с некоторыми ограничениями. Для изменения поведения необходимо переопределить <see cref="OrmBase.ReadXml" /> и <see cref="OrmBase.WriteXml"/>.
-    ''' <code>Это код</code>
+    ''' Класс является потокобезопасным как на чтение так и на запись.
+    ''' Предоставляет следующий функционал:
+    ''' XML сериализация/десериализация. Реализована с некоторыми ограничениями. Для изменения поведения необходимо переопределить <see cref="OrmBase.ReadXml" /> и <see cref="OrmBase.WriteXml"/>.
+    ''' <code lang="vb">Это код</code>
     ''' <example>Это пример</example>
     ''' </remarks>
     <Serializable()> _
     Public MustInherit Class OrmBase
-        Implements icomparable, Serialization.IXmlSerializable
+        Implements IComparable, Serialization.IXmlSerializable
 
         'Class AcceptState
         '    Public ReadOnly DT As System.Data.DataTable
