@@ -1040,10 +1040,12 @@ Public MustInherit Class OrmSchemaBase
                             If Not idic.Contains(tp) Then
                                 'For Each ea As EntityAttribute In entities
                                 Dim ea1 As EntityAttribute = Nothing
-                                If entities.Length > 1 AndAlso _mapv IsNot Nothing Then
-                                    ea1 = _mapv(_version, entities, tp)
-                                ElseIf entities.Length = 1 Then
-                                    ea1 = entities(0)
+                                If entities.Length > 0 Then
+                                    If _mapv IsNot Nothing Then
+                                        ea1 = _mapv(_version, entities, tp)
+                                    ElseIf entities.Length = 1 Then
+                                        ea1 = entities(0)
+                                    End If
                                 End If
                                 If ea1 IsNot Nothing Then
                                     Dim schema As IOrmObjectSchemaBase = Nothing
@@ -1098,67 +1100,69 @@ Public MustInherit Class OrmSchemaBase
 
                                 If Not idic.Contains(tp) Then
                                     Dim ea2 As EntityAttribute = Nothing
-                                    If entities2.Length > 1 AndAlso _mapv IsNot Nothing Then
-                                        ea2 = _mapv(_version, entities2, tp)
-                                    ElseIf entities2.Length = 1 Then
-                                        ea2 = entities2(0)
+                                    If entities2.Length > 0 Then
+                                        If _mapv IsNot Nothing Then
+                                            ea2 = _mapv(_version, entities2, tp)
+                                        ElseIf entities2.Length = 1 Then
+                                            ea2 = entities2(0)
+                                        End If
                                     End If
-                                    If ea2 IsNot Nothing Then
-                                        Dim schema As IOrmObjectSchemaBase = Nothing
+                                        If ea2 IsNot Nothing Then
+                                            Dim schema As IOrmObjectSchemaBase = Nothing
 
-                                        If ea2.Type Is Nothing Then
-                                            Dim l As New List(Of ColumnAttribute)
-                                            For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
-                                                l.Add(c)
-                                            Next
+                                            If ea2.Type Is Nothing Then
+                                                Dim l As New List(Of ColumnAttribute)
+                                                For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
+                                                    l.Add(c)
+                                                Next
 
-                                            schema = New SimpleObjectSchema(tp, ea2.TableName, l, ea2.PrimaryKey)
+                                                schema = New SimpleObjectSchema(tp, ea2.TableName, l, ea2.PrimaryKey)
 
-                                            If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
-                                                Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
-                                            End If
-                                        Else
-                                            Try
-                                                schema = CType(ea2.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
-                                            Catch ex As Exception
-                                                Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea2.Type.ToString), ex)
-                                            End Try
-                                        End If
-
-                                        Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
-                                        If n IsNot Nothing Then
-                                            n.GetSchema(Me, tp)
-                                        End If
-
-                                        If Not String.IsNullOrEmpty(ea2.EntityName) AndAlso entities.Length = 0 Then
-                                            If names.Contains(ea2.EntityName) Then
-                                                Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea2.EntityName), Pair(Of Type, EntityAttribute))
-                                                If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> _version AndAlso _mapn IsNot Nothing) Then
-                                                    Dim e As EntityAttribute = Nothing
-                                                    If _mapn IsNot Nothing Then
-                                                        e = _mapn(_version, New EntityAttribute() {ea2, tt.Second}, tp)
-                                                    End If
-                                                    If e IsNot tt.Second Then
-                                                        names(ea2.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea2)
-                                                    End If
+                                                If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
+                                                    Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
                                                 End If
                                             Else
-                                                names.Add(ea2.EntityName, New Pair(Of Type, EntityAttribute)(tp, ea2))
+                                                Try
+                                                    schema = CType(ea2.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
+                                                Catch ex As Exception
+                                                    Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea2.Type.ToString), ex)
+                                                End Try
                                             End If
-                                        End If
 
-                                        Try
-                                            idic.Add(tp, schema)
-                                            'Exit For
-                                        Catch ex As ArgumentException
-                                            Throw New DBSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea2.Type), ex)
-                                        End Try
+                                            Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
+                                            If n IsNot Nothing Then
+                                                n.GetSchema(Me, tp)
+                                            End If
+
+                                            If Not String.IsNullOrEmpty(ea2.EntityName) AndAlso entities.Length = 0 Then
+                                                If names.Contains(ea2.EntityName) Then
+                                                    Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea2.EntityName), Pair(Of Type, EntityAttribute))
+                                                    If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> _version AndAlso _mapn IsNot Nothing) Then
+                                                        Dim e As EntityAttribute = Nothing
+                                                        If _mapn IsNot Nothing Then
+                                                            e = _mapn(_version, New EntityAttribute() {ea2, tt.Second}, tp)
+                                                        End If
+                                                        If e IsNot tt.Second Then
+                                                            names(ea2.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea2)
+                                                        End If
+                                                    End If
+                                                Else
+                                                    names.Add(ea2.EntityName, New Pair(Of Type, EntityAttribute)(tp, ea2))
+                                                End If
+                                            End If
+
+                                            Try
+                                                idic.Add(tp, schema)
+                                                'Exit For
+                                            Catch ex As ArgumentException
+                                                Throw New DBSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea2.Type), ex)
+                                            End Try
+                                        End If
+                                        'Next
                                     End If
-                                    'Next
                                 End If
                             End If
                         End If
-                    End If
                 Next
             End If
         Next
