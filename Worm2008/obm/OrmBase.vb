@@ -901,7 +901,7 @@ Namespace Orm
                 'If mo Is Nothing Then mo = _mo
                 If mo IsNot Nothing Then
                     If mo.User IsNot Nothing AndAlso Not mo.User.Equals(GetMgr.CurrentUser) Then
-                        Throw New OrmObjectException(ObjName & "Object has already altered by another user")
+                        Throw New OrmObjectException(ObjName & "Object has already altered by user " & mo.User.ToString)
                     End If
                 Else
                     If _state = Orm.ObjectState.NotLoaded Then
