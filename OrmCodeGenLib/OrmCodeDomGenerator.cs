@@ -12,10 +12,11 @@ using Worm.Cache;
 
 namespace OrmCodeGenLib
 {
+    /// <summary>
+    /// </summary>
     public class OrmCodeDomGenerator
     {
         
-
         private readonly OrmObjectsDef _ormObjectsDefinition;
 
         public OrmCodeDomGenerator(OrmObjectsDef ormObjectsDefinition)
