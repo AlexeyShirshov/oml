@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ordesignerObjectsDiagram dslVersion="1.0.0.0" absoluteBounds="0, 0, 11, 8.5" name="Database">
+  <DataContextMoniker Name="/DatabaseDataContext" />
+  <nestedChildShapes>
+    <classShape Id="d46528ec-52b1-40ed-a39f-f50323f3f671" absoluteBounds="5.625, 2, 2, 1.26050048828125">
+      <DataClassMoniker Name="/DatabaseDataContext/tbl_phone" />
+      <nestedChildShapes>
+        <elementListCompartment Id="2df0a0b1-3a12-4445-a70f-c29c987fb616" absoluteBounds="5.64, 2.46, 1.9700000000000002, 0.70050048828125" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <classShape Id="6de9e6d8-7462-4a02-89cb-020cb857a1e6" absoluteBounds="2.5, 1.75, 2, 1.26050048828125">
+      <DataClassMoniker Name="/DatabaseDataContext/tbl_user" />
+      <nestedChildShapes>
+        <elementListCompartment Id="d786bc12-c1ca-4fa4-9e68-002cb9c060fa" absoluteBounds="2.5149999999999997, 2.21, 1.9700000000000002, 0.70050048828125" name="DataPropertiesCompartment" titleTextColor="Black" itemTextColor="Black" />
+      </nestedChildShapes>
+    </classShape>
+    <associationConnector edgePoints="[(4.5 : 2.50525024414063); (5.625 : 2.50525024414063)]" fixedFrom="Algorithm" fixedTo="Algorithm">
+      <AssociationMoniker Name="/DatabaseDataContext/tbl_user/tbl_user_tbl_phone" />
+      <nodes>
+        <classShapeMoniker Id="6de9e6d8-7462-4a02-89cb-020cb857a1e6" />
+        <classShapeMoniker Id="d46528ec-52b1-40ed-a39f-f50323f3f671" />
+      </nodes>
+    </associationConnector>
+  </nestedChildShapes>
+</ordesignerObjectsDiagram>
