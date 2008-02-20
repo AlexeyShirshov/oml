@@ -32,5 +32,15 @@ namespace DALinq.Properties {
                 return ((string)(this["TestDAConnectionString"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=MIKO\\MK5;Initial Catalog=TestDA;Integrated Security=True")]
+        public string TestDAConnectionString1 {
+            get {
+                return ((string)(this["TestDAConnectionString1"]));
+            }
+        }
     }
 }

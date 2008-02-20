@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Worm.Orm;
+using Worm.Database;
+using Worm.Database.Criteria;
 
 namespace DAWorm
 {
@@ -18,9 +20,13 @@ namespace DAWorm
         {
             DbSchema schema = new DbSchema("1");
             OrmCache cache = new OrmCache();
-            OrmReadOnlyDBManager manager = new OrmDBManager(cache, schema, _connectionString);
-            Tbl_user user = new Tbl_user(1, cache, schema);
-            user.Load();
+            using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, schema, _connectionString))
+            {
+                //Tbl_user user = new Tbl_user(1, cache, schema);
+                //user.Load();
+                Tbl_user user = manager.Find<Tbl_user>(1);
+                ICollection<Tbl_user> users = manager.FindTop<Tbl_user>(1000, null, null, false);
+            }
         }
     }
 }
