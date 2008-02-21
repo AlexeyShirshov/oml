@@ -3,6 +3,8 @@ Imports Worm.Sorting
 Imports Worm.Cache
 Imports Worm.Orm.Meta
 Imports Worm.Criteria
+Imports System.Collections.Generic
+Imports System.ComponentModel
 
 Namespace Orm
 
@@ -61,6 +63,7 @@ Namespace Orm
 
         'End Class
 
+        <EditorBrowsable(EditorBrowsableState.Never)> _
         Public Class AcceptState2
             'Public ReadOnly el As EditableList
             'Public ReadOnly sort As Sort
@@ -165,6 +168,80 @@ Namespace Orm
             End Sub
         End Class
 
+        <EditorBrowsable(EditorBrowsableState.Never)> _
+        Public Class M2MClass
+            Private _o As OrmBase
+
+            Friend Sub New(ByVal o As OrmBase)
+                _o = o
+            End Sub
+
+            Protected ReadOnly Property GetMgr() As OrmManagerBase
+                Get
+                    Return _o.GetMgr
+                End Get
+            End Property
+
+            Public Function Find(ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
+                Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
+                Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
+                    New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
+                Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
+                Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
+            End Function
+
+            Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
+                Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, True, withLoad)
+            End Function
+
+            Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
+                Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, direct, withLoad)
+            End Function
+
+            Public Sub Add(ByVal obj As OrmBase)
+                GetMgr.M2MAdd(_o, obj, True)
+            End Sub
+
+            Public Sub Add(ByVal obj As OrmBase, ByVal direct As Boolean)
+                GetMgr.M2MAdd(_o, obj, direct)
+            End Sub
+
+            Public Sub Delete(ByVal t As Type)
+                GetMgr.M2MDelete(_o, t, True)
+            End Sub
+
+            Public Sub Delete(ByVal t As Type, ByVal direct As Boolean)
+                GetMgr.M2MDelete(_o, t, direct)
+            End Sub
+
+            Public Sub Delete(ByVal obj As OrmBase)
+                GetMgr.M2MDelete(_o, obj, True)
+            End Sub
+
+            Public Sub Delete(ByVal obj As OrmBase, ByVal direct As Boolean)
+                GetMgr.M2MDelete(_o, obj, direct)
+            End Sub
+
+            Public Sub Cancel(ByVal t As Type)
+                GetMgr.M2MCancel(_o, t)
+            End Sub
+
+            Public Sub Merge(Of T As {OrmBase, New})(ByVal col As ICollection(Of T), ByVal removeNotInList As Boolean)
+                If removeNotInList Then
+                    For Each o As T In Find(Of T)(Nothing, Nothing, False)
+                        If Not col.Contains(o) Then
+                            Delete(o)
+                        End If
+                    Next
+                End If
+                For Each o As T In col
+                    If Not Find(Of T)(Nothing, Nothing, False).Contains(o) Then
+                        Add(o)
+                    End If
+                Next
+            End Sub
+        End Class
+
         ''' <summary>
         ''' Состояние объекта
         ''' </summary>
@@ -186,7 +263,7 @@ Namespace Orm
         Private _loaded_members As BitArray
         '<NonSerialized()> _
         'Private _rw As System.Threading.ReaderWriterLock
-        Public Const ObmNamespace As String = "http://www.worm.ru/orm/"
+        Public Const OrmNamespace As String = "http://www.worm.ru/orm/"
         <NonSerialized()> _
         Friend _loading As Boolean
         <NonSerialized()> _
@@ -1306,8 +1383,15 @@ l1:
             RaiseEvent Saved(Me, New ObjectSavedArgs(sa))
         End Sub
 
+        Public ReadOnly Property M2M() As M2MClass
+            Get
+                Return New M2MClass(Me)
+            End Get
+        End Property
+
 #Region " Helpers "
 
+        <Obsolete("Use M2M.Find")> _
         Public Function Find(ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
             Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
@@ -1316,38 +1400,47 @@ l1:
             Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
         End Function
 
+        <Obsolete("Use M2M.Find")> _
         Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
             Return GetMgr.FindMany2Many2(Of T)(Me, criteria, sort, True, withLoad)
         End Function
 
+        <Obsolete("Use M2M.Find")> _
         Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
             Return GetMgr.FindMany2Many2(Of T)(Me, criteria, sort, direct, withLoad)
         End Function
 
+        <Obsolete("Use M2M.Add")> _
         Public Sub Add(ByVal obj As OrmBase)
             GetMgr.M2MAdd(Me, obj, True)
         End Sub
 
+        <Obsolete("Use M2M.Add")> _
         Public Sub Add(ByVal obj As OrmBase, ByVal direct As Boolean)
             GetMgr.M2MAdd(Me, obj, direct)
         End Sub
 
+        <Obsolete("Use M2M.Delete")> _
         Public Sub Delete(ByVal t As Type)
             GetMgr.M2MDelete(Me, t, True)
         End Sub
 
+        <Obsolete("Use M2M.Delete")> _
         Public Sub Delete(ByVal t As Type, ByVal direct As Boolean)
             GetMgr.M2MDelete(Me, t, direct)
         End Sub
 
+        <Obsolete("Use M2M.Delete")> _
         Public Sub Delete(ByVal obj As OrmBase)
             GetMgr.M2MDelete(Me, obj, True)
         End Sub
 
+        <Obsolete("Use M2M.Delete")> _
         Public Sub Delete(ByVal obj As OrmBase, ByVal direct As Boolean)
             GetMgr.M2MDelete(Me, obj, direct)
         End Sub
 
+        <Obsolete("Use M2M.Cancel")> _
         Public Sub Cancel(ByVal t As Type)
             GetMgr.M2MCancel(Me, t)
         End Sub

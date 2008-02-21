@@ -43,11 +43,13 @@ Public Class TestManagerRS
     End Function
 
     Public Shared Function CreateManagerShared(ByVal schema As DbSchema) As OrmReadOnlyDBManager
-        Return New OrmDBManager(New OrmCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & My.Settings.WormRoot & "\TestProject1\Databases\wormtest.mdf';User Instance=true;Integrated security=true;")
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
+        Return New OrmDBManager(New OrmCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
     End Function
 
     Public Function CreateManager(ByVal schema As DbSchema) As OrmReadOnlyDBManager
-        Dim mgr As New OrmDBManager(GetCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & My.Settings.WormRoot & "\TestProject1\Databases\wormtest.mdf';User Instance=true;Integrated security=true;")
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
+        Dim mgr As New OrmDBManager(GetCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
         mgr.NewObjectManager = Me
         Return mgr
     End Function
@@ -347,11 +349,11 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t3 As Table33 = mgr.Find(Of Table33)(1)
-            Dim c As ICollection(Of Table33) = t1.Find(Of Table33)(Nothing, Nothing, WithLoad)
+            Dim c As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
 
             Assert.AreEqual(2, c.Count)
 
-            Dim c2 As ICollection(Of Table1) = t3.Find(Of Table1)(Nothing, Sorting.Field("Enum").Asc, WithLoad)
+            Dim c2 As ICollection(Of Table1) = t3.M2M.Find(Of Table1)(Nothing, Sorting.Field("Enum").Asc, WithLoad)
 
             Assert.AreEqual(1, c2.Count)
 
@@ -363,11 +365,11 @@ Public Class TestManagerRS
             Try
                 r1.Save(True)
 
-                c = t1.Find(Of Table33)(Nothing, Nothing, WithLoad)
+                c = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
 
                 Assert.AreEqual(2, c.Count)
 
-                c2 = t3.Find(Of Table1)(Nothing, Sorting.Field("Enum").Asc, WithLoad)
+                c2 = t3.M2M.Find(Of Table1)(Nothing, Sorting.Field("Enum").Asc, WithLoad)
 
                 Assert.AreEqual(2, c2.Count)
             Finally
@@ -383,11 +385,11 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t3 As Table33 = mgr.Find(Of Table33)(1)
-            Dim c As ICollection(Of Table33) = t1.Find(Of Table33)(Nothing, Nothing, WithLoad)
+            Dim c As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
 
             Assert.AreEqual(2, c.Count)
 
-            Dim c2 As ICollection(Of Table1) = t3.Find(Of Table1)(Nothing, Nothing, WithLoad)
+            Dim c2 As ICollection(Of Table1) = t3.M2M.Find(Of Table1)(Nothing, Nothing, WithLoad)
 
             Assert.AreEqual(1, c2.Count)
 
@@ -397,11 +399,11 @@ Public Class TestManagerRS
             Try
                 r1.Save(True)
 
-                c = t1.Find(Of Table33)(Nothing, Nothing, WithLoad)
+                c = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
 
                 Assert.AreEqual(1, c.Count)
 
-                c2 = t3.Find(Of Table1)(Nothing, Nothing, WithLoad)
+                c2 = t3.M2M.Find(Of Table1)(Nothing, Nothing, WithLoad)
 
                 Assert.AreEqual(0, c2.Count)
             Finally
@@ -419,7 +421,7 @@ Public Class TestManagerRS
             Dim t3 As Table33 = mgr.Find(Of Table33)(2)
             Dim t As Type = schema.GetTypeByEntityName("Table3")
             Dim f As CriteriaLink = CType(New Criteria.Ctor(t).Field("Code").Eq(2), CriteriaLink)
-            Dim c As ICollection(Of Table33) = t1.Find(Of Table33)(f, _
+            Dim c As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(f, _
                 Nothing, WithLoad)
 
             Assert.AreEqual(1, c.Count)
@@ -432,7 +434,7 @@ Public Class TestManagerRS
             Try
                 r1.Save(True)
 
-                Dim c2 As ICollection(Of Table33) = t1.Find(Of Table33)(f, Nothing, WithLoad)
+                Dim c2 As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(f, Nothing, WithLoad)
 
                 Assert.AreEqual(2, c2.Count)
             Finally
@@ -448,11 +450,11 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t3 As Table33 = mgr.Find(Of Table33)(1)
-            Dim c As ICollection(Of Table33) = t1.Find(Of Table33)(Nothing, Nothing, WithLoad)
+            Dim c As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
 
             Assert.AreEqual(2, c.Count)
 
-            t1.Add(t3)
+            t1.M2M.Add(t3)
 
             mgr.BeginTransaction()
             Try
@@ -470,7 +472,7 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t3 As Table33 = mgr.Find(Of Table33)(1)
-            Dim c As ICollection(Of Table33) = t1.Find(Of Table33)(Nothing, Nothing, True)
+            Dim c As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(Nothing, Nothing, True)
 
             Assert.AreEqual(2, c.Count)
 
@@ -488,12 +490,12 @@ Public Class TestManagerRS
 
                 Assert.AreNotEqual(-100, r1.Identifier)
 
-                Dim c2 As ICollection(Of Table33) = t1.Find(Of Table33)(Nothing, Nothing, WithLoad)
+                Dim c2 As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
                 Assert.AreEqual(3, c2.Count)
 
                 r1.RejectChanges()
 
-                c2 = t1.Find(Of Table33)(Nothing, Nothing, WithLoad)
+                c2 = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
                 Assert.AreEqual(2, c2.Count)
             Finally
                 mgr.Rollback()
@@ -587,7 +589,7 @@ Public Class TestManagerRS
 
             Dim tt1 As Table1 = mgr.Find(Of Table1)(1)
 
-            tt1.Find(Of Table33)(Nothing, Nothing, False)
+            tt1.M2M.Find(Of Table33)(Nothing, Nothing, False)
         End Using
     End Sub
 
@@ -598,7 +600,7 @@ Public Class TestManagerRS
             Dim t As Type = mgr.ObjectSchema.GetTypeByEntityName("Table3")
             'Dim con As New Orm.OrmCondition.OrmConditionConstructor
             'con.AddFilter(New Orm.OrmFilter(t, "Code", New TypeWrap(Of Object)(2), Orm.FilterOperation.Equal))
-            Dim c As ICollection(Of Table33) = tt1.Find(Of Table33)(New Criteria.Ctor(t).Field("Code").Eq(2), Nothing, WithLoad)
+            Dim c As ICollection(Of Table33) = tt1.M2M.Find(Of Table33)(New Criteria.Ctor(t).Field("Code").Eq(2), Nothing, WithLoad)
 
             Assert.AreEqual(1, c.Count)
             mgr.BeginTransaction()
@@ -608,7 +610,7 @@ Public Class TestManagerRS
                 tt2.Code = 2
                 tt2.Save(True)
 
-                c = tt1.Find(Of Table33)(New Criteria.Ctor(t).Field("Code").Eq(2), Nothing, WithLoad)
+                c = tt1.M2M.Find(Of Table33)(New Criteria.Ctor(t).Field("Code").Eq(2), Nothing, WithLoad)
 
                 Assert.AreEqual(2, c.Count)
             Finally
@@ -626,7 +628,7 @@ Public Class TestManagerRS
             'Dim con As New Orm.OrmCondition.OrmConditionConstructor
             'con.AddFilter(New Orm.OrmFilter(t, "Code", New TypeWrap(Of Object)(2), Orm.FilterOperation.Equal))
             Dim s As Sort = Sorting.Field("Code").Desc
-            Dim c As ICollection(Of Table33) = tt1.Find(Of Table33)(Nothing, s, WithLoad)
+            Dim c As ICollection(Of Table33) = tt1.M2M.Find(Of Table33)(Nothing, s, WithLoad)
             Assert.AreEqual(2, c.Count)
             Assert.AreEqual(Of Byte)(2, CType(c, List(Of Table33))(0).Code)
             Assert.AreEqual(Of Byte)(1, CType(c, List(Of Table33))(1).Code)
@@ -648,7 +650,7 @@ Public Class TestManagerRS
                     st.Commit()
                 End Using
 
-                c = tt1.Find(Of Table33)(Nothing, s, WithLoad)
+                c = tt1.M2M.Find(Of Table33)(Nothing, s, WithLoad)
                 Assert.AreEqual(3, c.Count)
                 Assert.AreEqual(Of Byte)(3, CType(c, List(Of Table33))(0).Code)
                 Assert.AreEqual(Of Byte)(2, CType(c, List(Of Table33))(1).Code)
@@ -839,9 +841,9 @@ Public Class TestManagerRS
             Assert.AreEqual(t1, t.Table1)
             Assert.AreEqual(t1back, t.Table1Back)
 
-            Assert.AreEqual(1, t1.Find(Of Table1)(Nothing, Nothing, True, False).Count)
+            Assert.AreEqual(1, t1.M2M.Find(Of Table1)(Nothing, Nothing, True, False).Count)
 
-            Assert.AreEqual(2, t1.Find(Of Table1)(Nothing, Nothing, False, False).Count)
+            Assert.AreEqual(2, t1.M2M.Find(Of Table1)(Nothing, Nothing, False, False).Count)
         End Using
     End Sub
 

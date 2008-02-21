@@ -62,15 +62,6 @@ Partial Friend NotInheritable Class MySettings
             Return CType(Me("FullTextEnabledConn"),String)
         End Get
     End Property
-    
-    <Global.System.Configuration.ApplicationScopedSettingAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Configuration.DefaultSettingValueAttribute("D:\Work\Worm2008")>  _
-    Public ReadOnly Property WormRoot() As String
-        Get
-            Return CType(Me("WormRoot"),String)
-        End Get
-    End Property
 End Class
 
 Namespace My

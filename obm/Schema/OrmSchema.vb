@@ -157,25 +157,25 @@ Public MustInherit Class OrmSchemaBase
     '    Return js.ToArray
     'End Function
 
-    Public Function GetEntityKey(ByVal t As Type) As String
+    Public Function GetEntityKey(ByVal filterInfo As Object, ByVal t As Type) As String
         Dim schema As IOrmObjectSchemaBase = GetObjectSchema(t)
 
         Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
 
         If c IsNot Nothing Then
-            Return c.GetEntityKey
+            Return c.GetEntityKey(filterInfo)
         Else
             Return t.ToString
         End If
     End Function
 
-    Public Function GetEntityTypeKey(ByVal t As Type) As Object
+    Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type) As Object
         Dim schema As IOrmObjectSchemaBase = GetObjectSchema(t)
 
         Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
 
         If c IsNot Nothing Then
-            Return c.GetEntityTypeKey
+            Return c.GetEntityTypeKey(filterInfo)
         Else
             Return t
         End If

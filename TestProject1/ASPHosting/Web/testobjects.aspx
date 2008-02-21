@@ -11,7 +11,8 @@
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)
         Dim sb As New StringBuilder
         Dim c As New OrmCache
-        Dim conn As String = "Server=.\sqlexpress;AttachDBFileName='" & TestProject1.Settings.WormRoot & "\TestProject1\Databases\wormtest.mdf';User Instance=true;Integrated security=true;"
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
+        Dim conn As String = "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;"
         Using mgr As New OrmReadOnlyDBManager(c, New DbSchema("1"), conn)
             Dim o As New OrmDictionary(Of TestProject1.Table1)(mgr.Cache)
             

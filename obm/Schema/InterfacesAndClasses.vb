@@ -110,8 +110,8 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface ICacheBehavior
-        Function GetEntityKey() As String
-        Function GetEntityTypeKey() As Object
+        Function GetEntityKey(ByVal filterInfo As Object) As String
+        Function GetEntityTypeKey(ByVal filterInfo As Object) As Object
     End Interface
 
     Public Interface ICreateParam
