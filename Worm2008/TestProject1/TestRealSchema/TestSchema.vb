@@ -11,7 +11,8 @@ Imports Worm.Orm
 Public Class TestSchema
 
     Public Shared Function CreateManager(ByVal schema As DbSchema) As OrmReadOnlyDBManager
-        Return New OrmReadOnlyDBManager(New OrmCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & My.Settings.WormRoot & "\TestProject1\Databases\wormtest.mdf';User Instance=true;Integrated security=true;")
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
+        Return New OrmReadOnlyDBManager(New OrmCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
     End Function
 
     <TestMethod()> _

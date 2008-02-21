@@ -65,7 +65,7 @@ Namespace Xml
                     If _f IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
                         Dim cache As OrmCacheBase = _mgr.Cache
-                        cache.AddDependType(tt, _key, _id, _f, _mgr.ObjectSchema)
+                        cache.AddDependType(_mgr.GetFilterInfo, tt, _key, _id, _f, _mgr.ObjectSchema)
 
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)

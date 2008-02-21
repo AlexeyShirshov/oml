@@ -71,7 +71,7 @@ Namespace Database
                     If _f IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
                         Dim cache As OrmCacheBase = _mgr.Cache
-                        cache.AddDependType(tt, _key, _id, _f, _mgr.ObjectSchema)
+                        cache.AddDependType(_mgr.GetFilterInfo, tt, _key, _id, _f, _mgr.ObjectSchema)
 
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
@@ -269,7 +269,7 @@ Namespace Database
                 If _asc IsNot Nothing AndAlso _asc.Length > 0 AndAlso _f Is Nothing Then
                     Dim tt As System.Type = GetType(T)
                     Dim cache As OrmCacheBase = _mgr.Cache
-                    cache.AddFilterlessDependType(tt, _key, _id, _mgr.ObjectSchema)
+                    cache.AddFilterlessDependType(_mgr.GetFilterInfo, tt, _key, _id, _mgr.ObjectSchema)
                 End If
             End Sub
         End Class

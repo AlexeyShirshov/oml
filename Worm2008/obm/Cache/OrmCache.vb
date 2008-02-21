@@ -390,9 +390,9 @@ Namespace Cache
 
         Public MustOverride Function CreateResultsetsDictionary() As IDictionary
 
-        Public MustOverride Function GetOrmDictionary(ByVal t As Type, ByVal schema As OrmSchemaBase) As System.Collections.IDictionary
+        Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As OrmSchemaBase) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T)(ByVal schema As OrmSchemaBase) As System.Collections.Generic.IDictionary(Of Integer, T)
+        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As OrmSchemaBase) As System.Collections.Generic.IDictionary(Of Integer, T)
 
         Public Overridable Sub RegisterCreation(ByVal t As Type, ByVal id As Integer)
             RaiseEvent RegisterObjectCreation(t, id)
@@ -746,7 +746,7 @@ Namespace Cache
             Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
             Dim k As Object = tt
             If c IsNot Nothing Then
-                k = c.GetEntityTypeKey
+                k = c.GetEntityTypeKey(mgr.GetFilterInfo)
             End If
 
 #If DebugLocks Then
@@ -921,14 +921,14 @@ l1:
         ''' <param name="key"></param>
         ''' <param name="id"></param>
         ''' <remarks></remarks>
-        Protected Friend Sub AddDependType(ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter, ByVal schema As OrmSchemaBase)
+        Protected Friend Sub AddDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter, ByVal schema As OrmSchemaBase)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("j13rvnopqefv9-n24bth","d:\temp\")
 #Else
             Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
 #End If
-                Dim l As TemplateHashs = _tp.GetFilters(schema.GetEntityTypeKey(t))
+                Dim l As TemplateHashs = _tp.GetFilters(schema.GetEntityTypeKey(filterInfo, t))
                 Dim h As List(Of String) = l.GetIds(key, f)
                 If Not h.Contains(id) Then
                     h.Add(id)
@@ -936,10 +936,10 @@ l1:
             End Using
         End Sub
 
-        Protected Friend Sub AddFilterlessDependType(ByVal t As Type, ByVal key As String, ByVal id As String, _
+        Protected Friend Sub AddFilterlessDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, _
             ByVal schema As OrmSchemaBase)
             Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
-            Dim o As Object = schema.GetEntityTypeKey(t)
+            Dim o As Object = schema.GetEntityTypeKey(filterInfo, t)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("1340f89njqodfgn1","d:\temp\")
 #Else
@@ -1150,10 +1150,10 @@ l1:
 
         'Public Overrides ReadOnly Property OrmDictionaryT(of T)() As System.Collections.Generic.IDictionary(Of Integer, T)
 
-        Public Overrides Function GetOrmDictionary(ByVal t As System.Type, ByVal schema As OrmSchemaBase) As System.Collections.IDictionary
+        Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, ByVal schema As OrmSchemaBase) As System.Collections.IDictionary
             Dim k As Object = t
             If schema IsNot Nothing Then
-                k = schema.GetEntityTypeKey(t)
+                k = schema.GetEntityTypeKey(filterInfo, t)
             End If
 
             Dim dic As IDictionary = CType(_dics(k), IDictionary)
@@ -1169,8 +1169,8 @@ l1:
             Return dic
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T)(ByVal schema As OrmSchemaBase) As System.Collections.Generic.IDictionary(Of Integer, T)
-            Return CType(GetOrmDictionary(GetType(T), schema), IDictionary(Of Integer, T))
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As OrmSchemaBase) As System.Collections.Generic.IDictionary(Of Integer, T)
+            Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Integer, T))
         End Function
 
         Public Sub New()

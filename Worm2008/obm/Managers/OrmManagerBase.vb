@@ -1493,7 +1493,7 @@ _callstack = environment.StackTrace
             key &= aspect.GetStaticKey
         End If
 
-        key &= _schema.GetEntityKey(GetType(T))
+        key &= _schema.GetEntityKey(GetFilterInfo, GetType(T))
 
         Return key & GetStaticKey()
     End Function
@@ -1676,7 +1676,7 @@ l1:
         ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ICollection(Of T)
 
-        Dim key As String = "distinct" & _schema.GetEntityKey(GetType(T))
+        Dim key As String = "distinct" & _schema.GetEntityKey(GetFilterInfo, GetType(T))
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             key &= criteria.Filter(GetType(T)).ToStaticString
@@ -1748,7 +1748,7 @@ l1:
     End Function
 
     Protected Function FindGetKey(Of T As {OrmBase, New})(ByVal filter As IFilter) As String
-        Return filter.ToStaticString & GetStaticKey() & _schema.GetEntityKey(GetType(T))
+        Return filter.ToStaticString & GetStaticKey() & _schema.GetEntityKey(GetFilterInfo, GetType(T))
     End Function
 
     Public Function Find(Of T As {OrmBase, New})(ByVal criteria As IGetFilter) As ICollection(Of T)
@@ -2411,11 +2411,11 @@ l1:
     End Function
 
     Public Function GetDictionary(ByVal t As Type) As IDictionary
-        Return _cache.GetOrmDictionary(t, _schema)
+        Return _cache.GetOrmDictionary(GetFilterInfo, t, _schema)
     End Function
 
     Public Function GetDictionary(Of T)() As Generic.IDictionary(Of Integer, T)
-        Return _cache.GetOrmDictionary(Of T)(_schema)
+        Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema)
     End Function
 
     <Conditional("DEBUG")> _
@@ -3538,7 +3538,7 @@ l1:
         Return Nothing
     End Function
 
-    Protected Overridable Function GetFilterInfo() As Object
+    Protected Friend Overridable Function GetFilterInfo() As Object
         Return Nothing
     End Function
 
@@ -3645,9 +3645,9 @@ l1:
 
         Dim tt As System.Type = GetType(T)
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key = criteria.Filter(tt).ToStaticString & _schema.GetEntityKey(tt) & GetStaticKey() & "Dics"
+            key = criteria.Filter(tt).ToStaticString & _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
         Else
-            key = _schema.GetEntityKey(tt) & GetStaticKey() & "Dics"
+            key = _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
         End If
 
         Dim dic As IDictionary = GetDic(_cache, key)
