@@ -17,9 +17,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LocalTestRun.testrunconfig = LocalTestRun.testrunconfig
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaAdoEF", "DaAdoEF\DaAdoEF.csproj", "{79801517-34F7-4847-984A-13336BDB1BE2}"
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 6
+		SccNumberOfProjects = 7
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs03.codeplex.com/
 		SccLocalPath0 = .
@@ -38,6 +40,9 @@ Global
 		SccProjectUniqueName5 = TestProject\\TestProject.csproj
 		SccProjectName5 = TestProject
 		SccLocalPath5 = TestProject
+		SccProjectUniqueName6 = DaAdoEF\\DaAdoEF.csproj
+		SccProjectName6 = DaAdoEF
+		SccLocalPath6 = DaAdoEF
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = DAPerformance2.vsmdi
@@ -67,6 +72,10 @@ Global
 		{6D087B87-48A2-43B6-A092-AB6D8E29FF97}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6D087B87-48A2-43B6-A092-AB6D8E29FF97}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6D087B87-48A2-43B6-A092-AB6D8E29FF97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{79801517-34F7-4847-984A-13336BDB1BE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{79801517-34F7-4847-984A-13336BDB1BE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{79801517-34F7-4847-984A-13336BDB1BE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{79801517-34F7-4847-984A-13336BDB1BE2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

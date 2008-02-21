@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Worm.Orm;
-using Worm.Database;
-using Worm.Database.Criteria;
 
 namespace DAWorm
 {

@@ -12,8 +12,12 @@ namespace Tests
     [TestClass]
     public class TestLinq
     {
-        LinqProvider linqProvider = new LinqProvider();
+        
 
+        public TestLinq()
+        {
+            Utils.SetDataDirectory();
+        }
 
         #region Additional test attributes
         //
@@ -40,6 +44,7 @@ namespace Tests
         [TestMethod]
         public void TestSelect()
         {
+            LinqProvider linqProvider = new LinqProvider();
             linqProvider.Select();
         }
     }

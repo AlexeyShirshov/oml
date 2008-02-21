@@ -40,6 +40,10 @@ namespace Tests
         //
         #endregion
 
+        public TestNHibernate()
+        {
+            Utils.SetDataDirectory();
+        }
 
         [TestInitialize]
         public void TestInit()

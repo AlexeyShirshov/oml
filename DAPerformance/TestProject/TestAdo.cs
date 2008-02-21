@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
+using System.Reflection;
 using System.Text;
-using System.Collections.Generic;
+
 using DAAdo;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -15,6 +17,10 @@ namespace Tests
     public class TestAdo
     {
         AdoProvider adoProvider = new AdoProvider(ConfigurationSettings.AppSettings["connectionString"]);
+        public TestAdo()
+        {
+            Utils.SetDataDirectory();
+        }
 
         #region Additional test attributes
         //

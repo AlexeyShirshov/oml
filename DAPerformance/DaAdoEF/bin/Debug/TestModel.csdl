@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="TestDAModel" Alias="Self" xmlns="http://schemas.microsoft.com/ado/2006/04/edm">
+  <EntityContainer Name="TestDAEntities">
+    <EntitySet Name="tbl_phone" EntityType="TestDAModel.tbl_phone" />
+    <EntitySet Name="tbl_user" EntityType="TestDAModel.tbl_user" />
+    <AssociationSet Name="FK_tbl_phone_tbl_user" Association="TestDAModel.FK_tbl_phone_tbl_user">
+      <End Role="tbl_user" EntitySet="tbl_user" />
+      <End Role="tbl_phone" EntitySet="tbl_phone" />
+    </AssociationSet>
+  </EntityContainer>
+  <EntityType Name="tbl_phone">
+    <Key>
+      <PropertyRef Name="phone_id" />
+      <PropertyRef Name="user_id" />
+    </Key>
+    <Property Name="phone_id" Type="Int32" Nullable="false" />
+    <Property Name="user_id" Type="Int32" Nullable="false" />
+    <Property Name="phone_number" Type="String" MaxLength="50" Unicode="false" />
+    <NavigationProperty Name="tbl_user" Relationship="TestDAModel.FK_tbl_phone_tbl_user" FromRole="tbl_phone" ToRole="tbl_user" />
+  </EntityType>
+  <EntityType Name="tbl_user">
+    <Key>
+      <PropertyRef Name="user_id" />
+    </Key>
+    <Property Name="user_id" Type="Int32" Nullable="false" />
+    <Property Name="first_name" Type="String" MaxLength="50" Unicode="false" />
+    <Property Name="last_name" Type="String" MaxLength="50" Unicode="false" />
+    <NavigationProperty Name="tbl_phone" Relationship="TestDAModel.FK_tbl_phone_tbl_user" FromRole="tbl_user" ToRole="tbl_phone" />
+  </EntityType>
+  <Association Name="FK_tbl_phone_tbl_user">
+    <End Role="tbl_user" Type="TestDAModel.tbl_user" Multiplicity="1" />
+    <End Role="tbl_phone" Type="TestDAModel.tbl_phone" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="tbl_user">
+        <PropertyRef Name="user_id" />
+      </Principal>
+      <Dependent Role="tbl_phone">
+        <PropertyRef Name="user_id" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+</Schema>

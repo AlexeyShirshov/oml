@@ -1,0 +1,139 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx">
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2007/06/edmx">
+    <edmx:Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </edmx:Connection>
+    <edmx:Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+      </DesignerInfoPropertySet>
+    </edmx:Options>
+    <edmx:ReverseEngineer />
+    <edmx:Diagrams ><Diagram Name="TestModel"><EntityTypeShape EntityType="TestDAModel.tbl_phone" PointX="3" PointY="0.875" Width="1.5" Height="1.5923063151041672" IsExpanded="true" /><EntityTypeShape EntityType="TestDAModel.tbl_user" PointX="0.75" PointY="0.875" Width="1.5" Height="1.5923063151041672" IsExpanded="true" /><AssociationConnector Association="TestDAModel.FK_tbl_phone_tbl_user" ManuallyRouted="false"><ConnectorPoint PointX="2.25" PointY="1.6711531575520837" /><ConnectorPoint PointX="3" PointY="1.6711531575520837" /></AssociationConnector></Diagram></edmx:Diagrams>
+  </edmx:Designer>
+  <edmx:Runtime>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="TestDAModel" Alias="Self" xmlns="http://schemas.microsoft.com/ado/2006/04/edm">
+        <EntityContainer Name="TestDAEntities">
+          <EntitySet Name="tbl_phone" EntityType="TestDAModel.tbl_phone" />
+          <EntitySet Name="tbl_user" EntityType="TestDAModel.tbl_user" />
+          <AssociationSet Name="FK_tbl_phone_tbl_user" Association="TestDAModel.FK_tbl_phone_tbl_user">
+            <End Role="tbl_user" EntitySet="tbl_user" />
+            <End Role="tbl_phone" EntitySet="tbl_phone" />
+          </AssociationSet>
+        </EntityContainer>
+        <EntityType Name="tbl_phone">
+          <Key>
+            <PropertyRef Name="phone_id" />
+            <PropertyRef Name="user_id" />
+          </Key>
+          <Property Name="phone_id" Type="Int32" Nullable="false" />
+          <Property Name="user_id" Type="Int32" Nullable="false" />
+          <Property Name="phone_number" Type="String" MaxLength="50" Unicode="false" />
+          <NavigationProperty Name="tbl_user" Relationship="TestDAModel.FK_tbl_phone_tbl_user" FromRole="tbl_phone" ToRole="tbl_user" />
+        </EntityType>
+        <EntityType Name="tbl_user">
+          <Key>
+            <PropertyRef Name="user_id" />
+          </Key>
+          <Property Name="user_id" Type="Int32" Nullable="false" />
+          <Property Name="first_name" Type="String" MaxLength="50" Unicode="false" />
+          <Property Name="last_name" Type="String" MaxLength="50" Unicode="false" />
+          <NavigationProperty Name="tbl_phone" Relationship="TestDAModel.FK_tbl_phone_tbl_user" FromRole="tbl_user" ToRole="tbl_phone" />
+        </EntityType>
+        <Association Name="FK_tbl_phone_tbl_user">
+          <End Role="tbl_user" Type="TestDAModel.tbl_user" Multiplicity="1" />
+          <End Role="tbl_phone" Type="TestDAModel.tbl_phone" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="tbl_user">
+              <PropertyRef Name="user_id" />
+            </Principal>
+            <Dependent Role="tbl_phone">
+              <PropertyRef Name="user_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="TestDAModel.Store" Alias="Self" ProviderManifestToken="09.00.3042" xmlns="http://schemas.microsoft.com/ado/2006/04/edm/ssdl">
+        <EntityContainer Name="dbo">
+          <EntitySet Name="tbl_phone" EntityType="TestDAModel.Store.tbl_phone" />
+          <EntitySet Name="tbl_user" EntityType="TestDAModel.Store.tbl_user" />
+          <AssociationSet Name="FK_tbl_phone_tbl_user" Association="TestDAModel.Store.FK_tbl_phone_tbl_user">
+            <End Role="tbl_user" EntitySet="tbl_user" />
+            <End Role="tbl_phone" EntitySet="tbl_phone" />
+          </AssociationSet>
+        </EntityContainer>
+        <EntityType Name="tbl_phone">
+          <Key>
+            <PropertyRef Name="phone_id" />
+            <PropertyRef Name="user_id" />
+          </Key>
+          <Property Name="phone_id" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="user_id" Type="int" Nullable="false" />
+          <Property Name="phone_number" Type="varchar" MaxLength="50" />
+        </EntityType>
+        <EntityType Name="tbl_user">
+          <Key>
+            <PropertyRef Name="user_id" />
+          </Key>
+          <Property Name="user_id" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+          <Property Name="first_name" Type="varchar" MaxLength="50" />
+          <Property Name="last_name" Type="varchar" MaxLength="50" />
+        </EntityType>
+        <Association Name="FK_tbl_phone_tbl_user">
+          <End Role="tbl_user" Type="TestDAModel.Store.tbl_user" Multiplicity="1" />
+          <End Role="tbl_phone" Type="TestDAModel.Store.tbl_phone" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="tbl_user">
+              <PropertyRef Name="user_id" />
+            </Principal>
+            <Dependent Role="tbl_phone">
+              <PropertyRef Name="user_id" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="urn:schemas-microsoft-com:windows:storage:mapping:CS">
+        <EntityContainerMapping StorageEntityContainer="dbo" CdmEntityContainer="TestDAEntities">
+          <EntitySetMapping Name="tbl_phone">
+            <EntityTypeMapping TypeName="IsTypeOf(TestDAModel.tbl_phone)">
+              <MappingFragment StoreEntitySet="tbl_phone">
+                <ScalarProperty Name="phone_id" ColumnName="phone_id" />
+                <ScalarProperty Name="user_id" ColumnName="user_id" />
+                <ScalarProperty Name="phone_number" ColumnName="phone_number" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="tbl_user">
+            <EntityTypeMapping TypeName="IsTypeOf(TestDAModel.tbl_user)">
+              <MappingFragment StoreEntitySet="tbl_user">
+                <ScalarProperty Name="user_id" ColumnName="user_id" />
+                <ScalarProperty Name="first_name" ColumnName="first_name" />
+                <ScalarProperty Name="last_name" ColumnName="last_name" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <AssociationSetMapping Name="FK_tbl_phone_tbl_user" TypeName="TestDAModel.FK_tbl_phone_tbl_user" StoreEntitySet="tbl_phone">
+            <EndProperty Name="tbl_user">
+              <ScalarProperty Name="user_id" ColumnName="user_id" />
+            </EndProperty>
+            <EndProperty Name="tbl_phone">
+              <ScalarProperty Name="phone_id" ColumnName="phone_id" />
+              <ScalarProperty Name="user_id" ColumnName="user_id" />
+            </EndProperty>
+          </AssociationSetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+</edmx:Edmx>

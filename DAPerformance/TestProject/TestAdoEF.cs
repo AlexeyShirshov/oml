@@ -1,8 +1,9 @@
 using System;
 using System.Configuration;
+using System.Data;
 using System.Text;
 using System.Collections.Generic;
-using DAWorm;
+using DaAdoEF;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
@@ -11,11 +12,9 @@ namespace Tests
     /// Summary description for UnitTest1
     /// </summary>
     [TestClass]
-    public class TestWorm
+    public class TestAdoEF
     {
-        WormProvider wormProvider = new WormProvider(ConfigurationSettings.AppSettings["connectionString"]);
-
-        public TestWorm()
+        public TestAdoEF()
         {
             Utils.SetDataDirectory();
         }
@@ -45,7 +44,8 @@ namespace Tests
         [TestMethod]
         public void TestSelect()
         {
-            wormProvider.Select();
+            AdoEFProvider adoEFProvider = new AdoEFProvider();
+            adoEFProvider.Select();
         }
     }
 }

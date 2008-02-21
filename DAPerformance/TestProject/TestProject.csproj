@@ -70,14 +70,20 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestAdo.cs" />
+    <Compile Include="TestAdoEF.cs" />
     <Compile Include="TestLinq.cs" />
     <Compile Include="TestNHibernate.cs" />
     <Compile Include="TestWorm.cs" />
+    <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="AuthoringTests.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DaAdoEF\DaAdoEF.csproj">
+      <Project>{79801517-34F7-4847-984A-13336BDB1BE2}</Project>
+      <Name>DaAdoEF</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DAAdo\DAAdo.csproj">
       <Project>{D8A65D50-C7D3-49D4-BC3B-BC753EF5E96A}</Project>
       <Name>DAAdo</Name>
