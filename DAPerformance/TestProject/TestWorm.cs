@@ -18,6 +18,7 @@ namespace Tests
         public TestWorm()
         {
             Utils.SetDataDirectory();
+            wormProvider.OpenConn();
         }
 
         #region Additional test attributes
@@ -45,7 +46,13 @@ namespace Tests
         [TestMethod]
         public void TestSelect()
         {
-            wormProvider.Select();
+            wormProvider.SelectWithoutLoad();
+        }
+
+        [TestMethod]
+        public void TestSelectWithLoad()
+        {
+            wormProvider.SelectWithLoad();
         }
     }
 }

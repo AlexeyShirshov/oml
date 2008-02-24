@@ -14,8 +14,8 @@ namespace Tests
         {
             string _executingPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
             // Remove file:\\
+            //AppDomain.CurrentDomain.SetData("DataDirectory", Path.GetFullPath(_executingPath.Substring(6) + @"..\..\..\..\DB"));
             AppDomain.CurrentDomain.SetData("DataDirectory", _executingPath.Substring(6));
-       
         }
     }
 }

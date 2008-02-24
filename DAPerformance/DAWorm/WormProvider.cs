@@ -17,7 +17,16 @@ namespace DAWorm
             _connectionString = connectionString;
         }
 
-        public void Select()
+        public void OpenConn()
+        {
+            using (OrmReadOnlyDBManager manager = new OrmDBManager(new OrmCache(), new DbSchema("1"), _connectionString))
+            {
+                ICollection<Tbl_user> users = manager.FindTop<Tbl_user>(10000, null, null, false);
+                //ICollection<Tbl_user> users = manager.FindTop<Tbl_p>(10000, null, null, false);
+            }
+        }
+
+        public void SelectWithoutLoad()
         {
             DbSchema schema = new DbSchema("1");
             OrmCache cache = new OrmCache();
@@ -27,6 +36,14 @@ namespace DAWorm
                 //user.Load();
                 Tbl_user user = manager.Find<Tbl_user>(1);
                 ICollection<Tbl_user> users = manager.FindTop<Tbl_user>(1000, null, null, false);
+            }
+        }
+
+        public void SelectWithLoad()
+        {
+            using (OrmReadOnlyDBManager manager = new OrmDBManager(new OrmCache(), new DbSchema("1"), _connectionString))
+            {
+                ICollection<Tbl_user> users = manager.FindTop<Tbl_user>(1000, null, null, true);
             }
         }
     }
