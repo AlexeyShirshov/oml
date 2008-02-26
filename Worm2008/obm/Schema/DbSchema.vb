@@ -575,7 +575,7 @@ Namespace Database
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If c IsNot Nothing Then
-                    Dim original As Object = pi.GetValue(obj.GetModifiedObject, Nothing)
+                    Dim original As Object = pi.GetValue(obj.OriginalCopy, Nothing)
 
                     'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) <> Field2DbRelations.PrimaryKey AndAlso _
                     '    (c.SyncBehavior And Field2DbRelations.RowVersion) <> Field2DbRelations.RowVersion Then
@@ -1453,7 +1453,7 @@ Namespace Database
 
         Public Sub AppendOrder(ByVal defaultType As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, _
             ByVal sb As StringBuilder, Optional ByVal appendOrder As Boolean = True)
-            If sort IsNot Nothing AndAlso Not sort.IsExternal AndAlso Not sort.IsAny Then
+            If sort IsNot Nothing AndAlso Not sort.IsExternal Then 'AndAlso Not sort.IsAny
                 Dim ns As Sort = sort
                 If appendOrder Then
                     sb.Append(" order by ")
@@ -1464,9 +1464,9 @@ Namespace Database
                         Throw New DBSchemaException("External sort must be alone")
                     End If
 
-                    If ns.IsAny Then
-                        Throw New DBSchemaException("Any sort must be alone")
-                    End If
+                    'If ns.IsAny Then
+                    '    Throw New DBSchemaException("Any sort must be alone")
+                    'End If
 
                     Dim st As Type = ns.Type
                     If st Is Nothing Then
@@ -1487,14 +1487,14 @@ Namespace Database
                     Dim sb2 As New StringBuilder
                     Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
                     If ns.IsCustom Then
-                        Dim s As String = ns.CustomSortExpression
-                        For Each map In cm
-                            Dim pos2 As Integer = s.IndexOf("{" & map._fieldName & "}", StringComparison.InvariantCultureIgnoreCase)
-                            If pos2 <> -1 Then
-                                s = s.Replace("{" & map._fieldName & "}", almgr.Aliases(map._tableName) & "." & map._columnName)
-                            End If
-                        Next
-                        sb2.Append(s)
+                        'Dim s As String = ns.CustomSortExpression
+                        'For Each map In cm
+                        '    Dim pos2 As Integer = s.IndexOf("{" & map._fieldName & "}", StringComparison.InvariantCultureIgnoreCase)
+                        '    If pos2 <> -1 Then
+                        '        s = s.Replace("{" & map._fieldName & "}", almgr.Aliases(map._tableName) & "." & map._columnName)
+                        '    End If
+                        'Next
+                        sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(Me, almgr.Aliases)))
                     Else
                         If cm.TryGetValue(ns.FieldName, map) Then
                             sb2.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)

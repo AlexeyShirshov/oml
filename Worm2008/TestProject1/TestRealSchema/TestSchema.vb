@@ -246,7 +246,7 @@ Public Class TestSchema
             Dim t1 As IList(Of Table1) = CType( _
                 mgr.Find(Of Table1)( _
                     Criteria.Ctor.Field(GetType(Table1), "EnumStr").Eq("sec"), _
-                    Sorting.Custom("{EnumStr} asc"), False), IList(Of Table1))
+                    Sorting.Custom("{0} asc", New Pair(Of Object, String)() {New Pair(Of Object, String)(GetType(Table1), "EnumStr")}), False), IList(Of Table1))
 
             Assert.AreEqual(2, t1(0).Identifier)
             Assert.AreEqual(3, t1(1).Identifier)
@@ -254,7 +254,8 @@ Public Class TestSchema
             Dim t2 As IList(Of Table1) = CType( _
                 mgr.Find(Of Table1)( _
                     Criteria.Ctor.Field(GetType(Table1), "EnumStr").Eq("sec"), _
-                    Sorting.Custom("{EnumStr}").NextCustom("{Enum} desc"), False), IList(Of Table1))
+                    Sorting.Custom("{0}", New Pair(Of Object, String)() {New Pair(Of Object, String)(GetType(Table1), "EnumStr")}). _
+                    NextCustom("{0} desc", New Pair(Of Object, String)() {New Pair(Of Object, String)(GetType(Table1), "Enum")}), False), IList(Of Table1))
 
             Assert.AreEqual(3, t2(0).Identifier)
             Assert.AreEqual(2, t2(1).Identifier)

@@ -2044,6 +2044,10 @@ l1:
         '    Return False
         'End If
 
+        If sort.IsCustom Then
+            Return False
+        End If
+
         Dim schema As IOrmObjectSchemaBase = _schema.GetObjectSchema(t)
         sorting = TryCast(schema, IOrmSorting)
         'If sorting Is Nothing Then
@@ -3633,7 +3637,7 @@ l1:
     Protected Friend Sub RegisterInCashe(ByVal obj As OrmBase)
         If Not IsInCache(obj) Then
             AddObject(obj)
-            If obj.GetModifiedObject IsNot Nothing Then
+            If obj.OriginalCopy IsNot Nothing Then
                 Me.Cache.RegisterExistingModification(obj, obj.Identifier)
             End If
         End If

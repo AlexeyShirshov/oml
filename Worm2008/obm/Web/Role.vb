@@ -145,7 +145,7 @@ Namespace Web
                         For Each role As String In roleNames
                             Dim r As OrmBase = GetRoleByName(mgr, role, False)
                             If r IsNot Nothing Then
-                                u.Add(r)
+                                u.M2M.Add(r)
                             End If
                         Next
                         u.Save(True)
@@ -175,7 +175,7 @@ Namespace Web
                         For Each role As String In roleNames
                             Dim r As OrmBase = GetRoleByName(mgr, role, False)
                             If r IsNot Nothing Then
-                                u.Delete(r)
+                                u.M2M.Delete(r)
                             End If
                         Next
                     End If
@@ -194,7 +194,7 @@ Namespace Web
                 If usernameToMatch IsNot Nothing Then
                     f = CType(New Ctor(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Like(usernameToMatch), CriteriaLink)
                 End If
-                Return CType(r.Find(ProfileProvider.GetUserType, f, Nothing, WithLoad), IList)
+                Return CType(r.M2M.Find(ProfileProvider.GetUserType, f, Nothing, WithLoad), IList)
             End If
             Return New OrmBase() {}
         End Function
@@ -202,7 +202,7 @@ Namespace Web
         Protected Friend Function GetRolesForUserInternal(ByVal mgr As OrmDBManager, ByVal username As String) As IList
             Dim u As OrmBase = MembershipProvider.FindUserByName(mgr, username, Nothing)
             If u IsNot Nothing Then
-                Return CType(u.Find(GetRoleType, Nothing, Nothing, WithLoad), IList)
+                Return CType(u.M2M.Find(GetRoleType, Nothing, Nothing, WithLoad), IList)
             End If
             Return New OrmBase() {}
         End Function

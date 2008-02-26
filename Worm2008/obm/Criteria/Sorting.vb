@@ -1,6 +1,7 @@
 Imports Worm.Orm
 Imports Worm.Sorting
 Imports Worm.Orm.Meta
+Imports System.Collections.Generic
 
 Namespace Orm
     Public Enum SortType
@@ -29,12 +30,12 @@ Namespace Orm
             Return New SortOrder(Nothing, fieldName)
         End Function
 
-        Public Shared Function Custom(ByVal sortExpression As String) As SortOrder
-            Return SortOrder.CreateCustom(Nothing, sortExpression, Nothing)
+        Public Shared Function Custom(ByVal sortExpression As String, ByVal values() As Pair(Of Object, String)) As SortOrder
+            Return SortOrder.CreateCustom(Nothing, sortExpression, Nothing, values)
         End Function
 
-        Public Shared Function Custom(ByVal t As Type, ByVal sortExpression As String) As SortOrder
-            Return SortOrder.CreateCustom(t, sortExpression, Nothing)
+        Public Shared Function Custom(ByVal t As Type, ByVal sortExpression As String, ByVal values() As Pair(Of Object, String)) As SortOrder
+            Return SortOrder.CreateCustom(t, sortExpression, Nothing, values)
         End Function
 
         Public Shared Function External(ByVal fieldName As String) As SortOrder
@@ -53,9 +54,9 @@ Namespace Orm
             Return so._prev
         End Operator
 
-        Public Shared Function Any() As Sort
-            Return New Sort
-        End Function
+        'Public Shared Function Any() As Sort
+        '    Return New Sort
+        'End Function
     End Class
 
 End Namespace
@@ -69,15 +70,18 @@ Namespace Sorting
         Private _order As SortType
         Private _t As Type
         Private _custom As String
+        Private _values() As Pair(Of Object, String)
 
         Protected Friend Sub New(ByVal t As Type, ByVal prev As SortOrder)
             _prev = prev
             _t = t
         End Sub
 
-        Protected Friend Shared Function CreateCustom(ByVal t As Type, ByVal sortExpression As String, ByVal prev As SortOrder) As SortOrder
+        Protected Friend Shared Function CreateCustom(ByVal t As Type, ByVal sortExpression As String, _
+           ByVal prev As SortOrder, ByVal values() As Pair(Of Object, String)) As SortOrder
             Dim s As New SortOrder(t, prev)
             s._custom = sortExpression
+            s._values = values
             Return s
         End Function
 
@@ -117,8 +121,8 @@ Namespace Sorting
             Return New SortOrder(_t, fieldName, True, Me)
         End Function
 
-        Public Function NextCustom(ByVal sortexpression As String) As SortOrder
-            Return CreateCustom(_t, sortexpression, Me)
+        Public Function NextCustom(ByVal sortexpression As String, ByVal values() As Pair(Of Object, String)) As SortOrder
+            Return CreateCustom(_t, sortexpression, Me, values)
         End Function
 
         Public ReadOnly Property Asc() As Orm.Sorting
@@ -168,13 +172,13 @@ Namespace Sorting
             If Not String.IsNullOrEmpty(so._f) OrElse Not String.IsNullOrEmpty(so._custom) Then
                 If so._prev Is Nothing Then
                     If so.IsCustom Then
-                        Return New Sort(so._t, so._custom)
+                        Return New Sort(so._t, so._custom, so._values)
                     Else
                         Return New Sort(so._t, so._f, so._order, so._ext)
                     End If
                 Else
                     If so.IsCustom Then
-                        Return New Sort(so._prev, so._t, so._custom)
+                        Return New Sort(so._prev, so._t, so._custom, so._values)
                     Else
                         Return New Sort(so._prev, so._t, so._f, so._order, so._ext)
                     End If
@@ -195,9 +199,9 @@ Namespace Sorting
     Public Class Sort
         Private _f As String
         Private _order As SortType
-        Private _any As Boolean
+        'Private _any As Boolean
         Private _custom As String
-
+        Private _values() As Pair(Of Object, String)
         Private _ext As Boolean
 
         Private _prev As Sort
@@ -211,15 +215,17 @@ Namespace Sorting
             _prev = prev
         End Sub
 
-        Public Sub New(ByVal t As Type, ByVal sortExpression As String)
+        Public Sub New(ByVal t As Type, ByVal sortExpression As String, ByVal values() As Pair(Of Object, String))
             _t = t
             _custom = sortExpression
+            _values = values
         End Sub
 
-        Public Sub New(ByVal prev As Sort, ByVal t As Type, ByVal sortExpression As String)
+        Public Sub New(ByVal prev As Sort, ByVal t As Type, ByVal sortExpression As String, ByVal values() As Pair(Of Object, String))
             _prev = prev
             _t = t
             _custom = sortExpression
+            _values = values
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
@@ -235,9 +241,9 @@ Namespace Sorting
             _ext = external
         End Sub
 
-        Protected Friend Sub New()
-            _any = True
-        End Sub
+        'Protected Friend Sub New()
+        '    _any = True
+        'End Sub
 
         Public Property CustomSortExpression() As String
             Get
@@ -247,6 +253,10 @@ Namespace Sorting
                 _custom = value
             End Set
         End Property
+
+        Public Function GetCustomExpressionValues(ByVal schema As OrmSchemaBase, ByVal aliases As IDictionary(Of OrmTable, String)) As String()
+            Return ExtractValues(schema, aliases, _values).ToArray
+        End Function
 
         Public Property Type() As Type
             Get
@@ -290,11 +300,11 @@ Namespace Sorting
             End Get
         End Property
 
-        Public ReadOnly Property IsAny() As Boolean
-            Get
-                Return _any
-            End Get
-        End Property
+        'Public ReadOnly Property IsAny() As Boolean
+        '    Get
+        '        Return _any
+        '    End Get
+        'End Property
 
         Public Overrides Function ToString() As String
             Dim s As String = Nothing
@@ -348,6 +358,62 @@ Namespace Sorting
                 Return _prev
             End Get
         End Property
+
+        Public Shared Function ExtractValues(ByVal schema As OrmSchemaBase, ByVal tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String), _
+                ByVal _values() As Pair(Of Object, String)) As List(Of String)
+            Dim [alias] As String = String.Empty
+            Dim values As New List(Of String)
+            Dim lastt As Type = Nothing
+            For Each p As Pair(Of Object, String) In _values
+                Dim o As Object = p.First
+                If o Is Nothing Then
+                    Throw New NullReferenceException
+                End If
+
+                If TypeOf o Is Type Then
+                    Dim t As Type = CType(o, Type)
+                    If Not GetType(OrmBase).IsAssignableFrom(t) Then
+                        Throw New NotSupportedException(String.Format("Type {0} is not assignable from OrmBase", t))
+                    End If
+                    lastt = t
+
+                    Dim oschema As IOrmObjectSchema = CType(schema.GetObjectSchema(t), IOrmObjectSchema)
+                    Dim tbl As OrmTable = Nothing
+                    Dim map As MapField2Column = Nothing
+                    Dim fld As String = p.Second
+                    If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
+                        fld = map._columnName
+                        tbl = map._tableName
+                    Else
+                        tbl = oschema.GetTables(0)
+                    End If
+
+                    If tableAliases IsNot Nothing Then
+                        [alias] = tableAliases(tbl)
+                    End If
+                    If Not String.IsNullOrEmpty([alias]) Then
+                        values.Add([alias] & "." & fld)
+                    Else
+                        values.Add(fld)
+                    End If
+                ElseIf TypeOf o Is OrmTable Then
+                    Dim tbl As OrmTable = CType(o, OrmTable)
+                    If tableAliases IsNot Nothing Then
+                        [alias] = tableAliases(tbl)
+                    End If
+                    If Not String.IsNullOrEmpty([alias]) Then
+                        values.Add([alias] & "." & p.Second)
+                    Else
+                        values.Add(p.Second)
+                    End If
+                ElseIf o Is Nothing Then
+                    values.Add(p.Second)
+                Else
+                    Throw New NotSupportedException(String.Format("Type {0} is not supported", o.GetType))
+                End If
+            Next
+            Return values
+        End Function
     End Class
 
     Public Class OrmComparer(Of T As {OrmBase})
@@ -403,9 +469,9 @@ Namespace Sorting
         Public Function Compare(ByVal x As T, ByVal y As T) As Integer Implements System.Collections.Generic.IComparer(Of T).Compare
             Dim p As Integer = 0
             For Each s As Sort In _s
-                If s.IsAny Then
-                    Throw New NotSupportedException("Any sorting is not supported")
-                End If
+                'If s.IsAny Then
+                '    Throw New NotSupportedException("Any sorting is not supported")
+                'End If
                 Dim ss As IOrmObjectSchemaBase = Nothing
                 Dim xo As Object = GetValue(x, s, ss)
                 Dim yo As Object = GetValue(y, s, ss)
