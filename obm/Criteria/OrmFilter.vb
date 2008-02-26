@@ -875,60 +875,11 @@ Namespace Database
                     Throw New ArgumentNullException("schema")
                 End If
 
-                Dim [alias] As String = String.Empty
-                Dim values As New List(Of String)
-                Dim lastt As Type = Nothing
-                For Each p As Pair(Of Object, String) In _values
-                    Dim o As Object = p.First
-                    If o Is Nothing Then
-                        Throw New NullReferenceException
-                    End If
-
-                    If TypeOf o Is Type Then
-                        Dim t As Type = CType(o, Type)
-                        If Not GetType(OrmBase).IsAssignableFrom(t) Then
-                            Throw New NotSupportedException(String.Format("Type {0} is not assignable from OrmBase", t))
-                        End If
-                        lastt = t
-
-                        Dim oschema As IOrmObjectSchema = CType(schema.GetObjectSchema(t), IOrmObjectSchema)
-                        Dim tbl As OrmTable = Nothing
-                        Dim map As MapField2Column = Nothing
-                        Dim fld As String = p.Second
-                        If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
-                            fld = map._columnName
-                            tbl = map._tableName
-                        Else
-                            tbl = oschema.GetTables(0)
-                        End If
-
-                        If tableAliases IsNot Nothing Then
-                            [alias] = tableAliases(tbl)
-                        End If
-                        If Not String.IsNullOrEmpty([alias]) Then
-                            values.Add([alias] & "." & fld)
-                        Else
-                            values.Add(fld)
-                        End If
-                    ElseIf TypeOf o Is OrmTable Then
-                        Dim tbl As OrmTable = CType(o, OrmTable)
-                        If tableAliases IsNot Nothing Then
-                            [alias] = tableAliases(tbl)
-                        End If
-                        If Not String.IsNullOrEmpty([alias]) Then
-                            values.Add([alias] & "." & p.Second)
-                        Else
-                            values.Add(p.Second)
-                        End If
-                    ElseIf o Is Nothing Then
-                        values.Add(p.Second)
-                    Else
-                        Throw New NotSupportedException(String.Format("Type {0} is not supported", o.GetType))
-                    End If
-                Next
+                Dim values As List(Of String) = Worm.Sorting.Sort.ExtractValues(schema, tableAliases, _values)
 
                 Return String.Format(_format, values.ToArray) & TemplateBase.Oper2String(_oper) & GetParam(schema, pname)
             End Function
+
         End Class
 
     End Namespace

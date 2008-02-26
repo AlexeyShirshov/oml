@@ -355,7 +355,7 @@ Namespace Cache
                 End If
 
                 Dim name As String = obj.GetType().Name & ":" & id
-                _modifiedobjects.Add(name, obj.GetModifiedObject)
+                _modifiedobjects.Add(name, obj.OriginalCopy)
                 If _modifiedobjects.Count = 1 Then
                     RaiseEvent CacheHasModification(Me, EventArgs.Empty)
                 End If
