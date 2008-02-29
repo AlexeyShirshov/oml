@@ -24,7 +24,7 @@ Public Class TestDistinct
             Dim c As ICollection(Of Table1) = mgr.FindWithJoins(Of Table1)(Nothing, joins, Nothing, Nothing, True)
 
             Assert.AreEqual(2, c.Count)
-            Assert.IsTrue(CType(c, IList(Of Table1))(0).IsLoaded)
+            Assert.IsTrue(CType(c, IList(Of Table1))(0).InternalProperties.IsLoaded)
         End Using
     End Sub
 
@@ -51,7 +51,7 @@ Public Class TestDistinct
             Dim c As ICollection(Of Table2) = mgr.FindWithJoins(Of Table2)(Nothing, joins, Nothing, Nothing, True)
 
             Assert.AreEqual(2, c.Count)
-            Assert.IsTrue(CType(c, IList(Of Table2))(0).IsLoaded)
+            Assert.IsTrue(CType(c, IList(Of Table2))(0).InternalProperties.IsLoaded)
 
             c = mgr.FindWithJoins(Of Table2)(New TopAspect(1), joins, Nothing, Nothing, True)
             Assert.AreEqual(1, c.Count)
@@ -67,7 +67,7 @@ Public Class TestDistinct
             Dim c As ICollection(Of Table2) = mgr.FindJoin(Of Table2)(tt, "Table1", Nothing, Nothing, True)
 
             Assert.AreEqual(2, c.Count)
-            Assert.IsTrue(CType(c, IList(Of Table2))(0).IsLoaded)
+            Assert.IsTrue(CType(c, IList(Of Table2))(0).InternalProperties.IsLoaded)
         End Using
     End Sub
 
@@ -139,7 +139,7 @@ Public Class TestDistinct
             Dim c As ICollection(Of Table1) = mgr.FindWithJoins(Of Table1)(New Query.DistinctAspect(), joins, Nothing, Nothing, False)
 
             Assert.AreEqual(1, c.Count)
-            Assert.IsFalse(CType(c, IList(Of Table1))(0).IsLoaded)
+            Assert.IsFalse(CType(c, IList(Of Table1))(0).InternalProperties.IsLoaded)
         End Using
     End Sub
 End Class

@@ -217,7 +217,7 @@ Imports Worm.Database.Criteria.Core
 
             o.Load()
 
-            Assert.AreEqual(ObjectState.NotFoundInDB, o.ObjectState)
+            Assert.AreEqual(ObjectState.NotFoundInDB, o.InternalProperties.ObjectState)
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
 
             o.Delete()
@@ -249,11 +249,11 @@ Imports Worm.Database.Criteria.Core
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
 
-            Assert.AreEqual(ObjectState.None, o.ObjectState)
+            Assert.AreEqual(ObjectState.None, o.InternalProperties.ObjectState)
 
             o.Delete()
 
-            Assert.AreEqual(ObjectState.Deleted, o.ObjectState)
+            Assert.AreEqual(ObjectState.Deleted, o.InternalProperties.ObjectState)
 
             Dim expected As String = "declare @id int" & vbCrLf & _
                 "set @id = @p1" & vbCrLf & _
@@ -282,11 +282,11 @@ Imports Worm.Database.Criteria.Core
 
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
 
-            Assert.AreEqual(ObjectState.None, o.ObjectState)
+            Assert.AreEqual(ObjectState.None, o.InternalProperties.ObjectState)
 
             o.Delete()
 
-            Assert.AreEqual(ObjectState.Deleted, o.ObjectState)
+            Assert.AreEqual(ObjectState.Deleted, o.InternalProperties.ObjectState)
 
             Dim expected As String = "declare @id int" & vbCrLf & _
                 "set @id = @p1" & vbCrLf & _
@@ -326,12 +326,12 @@ Imports Worm.Database.Criteria.Core
 
             o2.Load()
 
-            Assert.IsTrue(o2.IsLoaded)
-            Assert.AreEqual(ObjectState.None, o2.ObjectState)
+            Assert.IsTrue(o2.InternalProperties.IsLoaded)
+            Assert.AreEqual(ObjectState.None, o2.InternalProperties.ObjectState)
 
             o2.Str = "oadfn"
 
-            Assert.AreEqual(ObjectState.Modified, o2.ObjectState)
+            Assert.AreEqual(ObjectState.Modified, o2.InternalProperties.ObjectState)
 
             Dim expected As String = "update t1 set t1.s = @p1 from dbo.t1 t1 where t1.i = @p2" & vbCrLf & _
                 "if @@rowcount = 0 insert into dbo.t1 (s,i) values(@p1,@p2)"
@@ -362,12 +362,12 @@ Imports Worm.Database.Criteria.Core
 
             o.Load()
 
-            Assert.IsTrue(o.IsLoaded)
-            Assert.AreEqual(ObjectState.None, o.ObjectState)
+            Assert.IsTrue(o.InternalProperties.IsLoaded)
+            Assert.AreEqual(ObjectState.None, o.InternalProperties.ObjectState)
 
             o.Title = "oadfn"
 
-            Assert.AreEqual(ObjectState.Modified, o.ObjectState)
+            Assert.AreEqual(ObjectState.Modified, o.InternalProperties.ObjectState)
 
             Dim expected As String = "update t1 set t1.name = @p1 from dbo.ent3 t1 where (t1.id = @p2 and t1.version = @p3)" & vbCrLf & _
                 "if @@rowcount > 0 select t1.version from dbo.ent3 t1 where t1.id = @p4"
@@ -500,10 +500,10 @@ End Class
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New DbSchema("1"))
             Dim c As IList(Of Entity4) = CType(mgr.ConvertIds2Objects(Of Entity4)(New Integer() {2}, False), Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
             Dim e As Entity4 = c(0)
-            Assert.AreEqual(ObjectState.NotLoaded, e.ObjectState)
+            Assert.AreEqual(ObjectState.NotLoaded, e.InternalProperties.ObjectState)
             Dim expected As String = "wrtbg"
             e.Title = "345"
-            Assert.AreEqual(ObjectState.Modified, e.ObjectState)
+            Assert.AreEqual(ObjectState.Modified, e.InternalProperties.ObjectState)
             e.RejectChanges()
 
             Assert.AreEqual(expected, e.Title)

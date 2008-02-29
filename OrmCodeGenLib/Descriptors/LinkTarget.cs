@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace OrmCodeGenLib.Descriptors
 {
     public class LinkTarget : SelfRelationTarget
@@ -10,8 +6,14 @@ namespace OrmCodeGenLib.Descriptors
         //private string _fieldName;
         //private bool _cascadeDelete;
 
-        public LinkTarget(EntityDescription entity, string fieldName, bool cascadeDelete)
-            : base(fieldName, cascadeDelete)
+    	public LinkTarget(EntityDescription entity, string fieldName, bool cascadeDelete)
+    		: base(fieldName, cascadeDelete)
+    	{
+			_entity = entity;
+    	}
+
+    	public LinkTarget(EntityDescription entity, string fieldName, bool cascadeDelete, string accessorName)
+            : base(fieldName, cascadeDelete, accessorName)
         {
             _entity = entity;
             //_fieldName = fieldName;

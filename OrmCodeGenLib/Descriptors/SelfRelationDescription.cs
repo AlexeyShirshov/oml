@@ -4,7 +4,7 @@ using System.Text;
 
 namespace OrmCodeGenLib.Descriptors
 {
-    public class RelationDescriptionBase
+    public abstract class RelationDescriptionBase
     {
         private readonly TableDescription _table;
         private readonly EntityDescription _underlyingEntity;
@@ -59,6 +59,16 @@ namespace OrmCodeGenLib.Descriptors
             return (_left == obj._left && _right == obj._right) ||
                 (_left == obj._right && _right == obj._left);
         }
+
+    	public abstract bool IsEntityTakePart(EntityDescription entity);
+
+    	public virtual bool HasAccessors
+    	{
+			get
+			{
+				return !string.IsNullOrEmpty(Left.AccessorName) && !string.IsNullOrEmpty(Right.AccessorName);
+			}
+    	}
     }
     
 	public class SelfRelationDescription : RelationDescriptionBase
@@ -105,5 +115,10 @@ namespace OrmCodeGenLib.Descriptors
         {
             return base.Similar((RelationDescriptionBase)obj) && _entity.Name == obj._entity.Name;
         }
+
+		public override bool IsEntityTakePart(EntityDescription entity)
+		{
+			return Entity == entity;
+		}
 	}
 }

@@ -57,7 +57,7 @@ Imports Worm.Orm.Meta
 
             Dim e As Entity4 = CType(col, IList(Of Entity4))(0)
             Assert.AreEqual("first", e.Title)
-            Assert.AreEqual(ObjectState.None, e.ObjectState)
+            Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
 
         End Using
     End Sub

@@ -27,7 +27,7 @@ namespace TestsCodeGenLib
         [Ignore]
         public void TestIncludeCodeGen()
         {
-            using (Stream stream = System.IO.File.Open(@"C:\Projects\Framework\Worm\Worm-XMediaDependent\TestsCodeGenLib\doc.xml", FileMode.Open, FileAccess.Read, FileShare.Read))
+            using (Stream stream = System.IO.File.Open(@"doc.xml", FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 TestCodeGen(stream);
             }

@@ -23,7 +23,7 @@ Public Class TestReject
 
                 t1.AcceptChanges()
                 Assert.IsTrue(mgr.IsInCache(t1))
-                Assert.AreEqual(ObjectState.None, t1.ObjectState)
+                Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
             Finally
                 mgr.Rollback()
             End Try
@@ -39,16 +39,16 @@ Public Class TestReject
             Try
                 t1.Tbl = mgr.Find(Of Table1)(1)
                 t1.Money = 10
-                Assert.AreEqual(ObjectState.Created, t1.ObjectState)
+                Assert.AreEqual(ObjectState.Created, t1.InternalProperties.ObjectState)
                 t1.Save(False)
                 Assert.IsFalse(mgr.IsInCache(t1))
-                Assert.AreEqual(ObjectState.Modified, t1.ObjectState)
+                Assert.AreEqual(ObjectState.Modified, t1.InternalProperties.ObjectState)
 
                 Assert.AreNotEqual(-100, t1.Identifier)
                 t1.RejectChanges()
                 Assert.AreEqual(-100, t1.Identifier)
                 Assert.IsFalse(mgr.IsInCache(t1))
-                Assert.AreEqual(ObjectState.Created, t1.ObjectState)
+                Assert.AreEqual(ObjectState.Created, t1.InternalProperties.ObjectState)
             Finally
                 mgr.Rollback()
             End Try
@@ -84,17 +84,17 @@ Public Class TestReject
             mgr.BeginTransaction()
             Try
                 Assert.IsTrue(mgr.IsInCache(t1))
-                Assert.AreEqual(ObjectState.None, t1.ObjectState)
+                Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
                 t1.Delete()
                 Assert.IsTrue(mgr.IsInCache(t1))
-                Assert.AreEqual(ObjectState.Deleted, t1.ObjectState)
+                Assert.AreEqual(ObjectState.Deleted, t1.InternalProperties.ObjectState)
                 t1.Save(False)
                 Assert.IsTrue(mgr.IsInCache(t1))
-                Assert.AreEqual(ObjectState.Deleted, t1.ObjectState)
+                Assert.AreEqual(ObjectState.Deleted, t1.InternalProperties.ObjectState)
 
                 t1.RejectChanges()
                 Assert.IsTrue(mgr.IsInCache(t1))
-                Assert.AreEqual(ObjectState.None, t1.ObjectState)
+                Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
             Finally
                 mgr.Rollback()
             End Try
@@ -121,10 +121,10 @@ Public Class TestReject
                 mgr.Rollback()
                 Assert.AreEqual(-100, t1.Identifier)
                 Assert.IsFalse(mgr.IsInCache(t1))
-                Assert.AreEqual(ObjectState.Deleted, t2.ObjectState)
+                Assert.AreEqual(ObjectState.Deleted, t2.InternalProperties.ObjectState)
                 Assert.IsTrue(mgr.IsInCache(t2))
                 t2.RejectChanges()
-                Assert.AreEqual(ObjectState.None, t2.ObjectState)
+                Assert.AreEqual(ObjectState.None, t2.InternalProperties.ObjectState)
             End Try
         End Using
     End Sub
@@ -148,7 +148,7 @@ Public Class TestReject
                 mgr.Rollback()
                 Assert.AreEqual(-100, t1.Identifier)
                 Assert.IsFalse(mgr.IsInCache(t1))
-                Assert.AreEqual(ObjectState.Modified, t2.ObjectState)
+                Assert.AreEqual(ObjectState.Modified, t2.InternalProperties.ObjectState)
                 Assert.IsTrue(mgr.IsInCache(t2))
                 Assert.AreEqual(Of Decimal)(1000, t2.Money)
             End Try
@@ -179,11 +179,11 @@ Public Class TestReject
                 mgr.Rollback()
                 Assert.IsTrue(mgr.IsInCache(t1))
                 Assert.AreEqual(a, t1.Version)
-                Assert.AreEqual(ObjectState.Modified, t1.ObjectState)
+                Assert.AreEqual(ObjectState.Modified, t1.InternalProperties.ObjectState)
 
                 Assert.IsTrue(mgr.IsInCache(t2))
                 Assert.AreEqual(Of Decimal)(1000, t2.Money)
-                Assert.AreEqual(ObjectState.Modified, t2.ObjectState)
+                Assert.AreEqual(ObjectState.Modified, t2.InternalProperties.ObjectState)
             End Try
         End Using
     End Sub
@@ -212,11 +212,11 @@ Public Class TestReject
                 mgr.Rollback()
                 Assert.IsTrue(mgr.IsInCache(t1))
                 Assert.AreNotEqual(a, t1.Version)
-                Assert.AreEqual(ObjectState.None, t1.ObjectState)
+                Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
 
                 Assert.IsTrue(mgr.IsInCache(t2))
                 Assert.AreEqual(Of Decimal)(10, t2.Money)
-                Assert.AreEqual(ObjectState.None, t2.ObjectState)
+                Assert.AreEqual(ObjectState.None, t2.InternalProperties.ObjectState)
             End Try
         End Using
     End Sub

@@ -1,31 +1,41 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace OrmCodeGenLib.Descriptors
+﻿namespace OrmCodeGenLib.Descriptors
 {
 	public class SelfRelationTarget
 	{
-		private readonly string _fieldName;
-		private readonly bool _cascadeDelete;
+		private string _fieldName;
+		private bool _cascadeDelete;
+		private string _accessorName;
 
-		public SelfRelationTarget(string fieldName, bool cascadeDelete)
+		public SelfRelationTarget(string fieldName, bool cascadeDelete) : this(fieldName, cascadeDelete, null)
+		{
+		}
+
+		public SelfRelationTarget(string fieldName, bool cascadeDelete, string accessorName)
         {
             _fieldName = fieldName;
             _cascadeDelete = cascadeDelete;
+			_accessorName = accessorName;
         }
         
         public string FieldName
         {
             get { return _fieldName; }
+			set { _fieldName = value; }
         }   
 
         public bool CascadeDelete
         {
             get { return _cascadeDelete; }
+			set { _cascadeDelete = value; }
         }
 
-        public override bool Equals(object obj)
+		public string AccessorName
+		{
+			get { return _accessorName; }
+			set { _accessorName = value; }
+		}
+
+		public override bool Equals(object obj)
         {
             return base.Equals(obj as SelfRelationTarget);
         }

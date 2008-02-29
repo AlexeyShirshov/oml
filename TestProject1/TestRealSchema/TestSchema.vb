@@ -33,7 +33,7 @@ Public Class TestSchema
 
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
 
-            Assert.IsTrue(t1.IsLoaded)
+            Assert.IsTrue(t1.InternalProperties.IsLoaded)
 
             Assert.AreEqual("first", t1.Name)
             Assert.AreEqual(Enum1.first, t1.EnumStr)
@@ -48,11 +48,11 @@ Public Class TestSchema
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
-            Assert.IsTrue(t2.IsLoaded)
-            Assert.IsFalse(t2.Tbl.IsLoaded)
+            Assert.IsTrue(t2.InternalProperties.IsLoaded)
+            Assert.IsFalse(t2.Tbl.InternalProperties.IsLoaded)
 
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
-            Assert.IsFalse(t1.IsLoaded)
+            Assert.IsFalse(t1.InternalProperties.IsLoaded)
             Assert.AreEqual(t1, t2.Tbl)
 
             Dim t3 As ICollection(Of Table2) = Nothing
@@ -84,7 +84,7 @@ Public Class TestSchema
             Assert.AreEqual(2, t3.Count)
 
             For Each t2 As Table2 In t3
-                Assert.IsTrue(t2.IsLoaded)
+                Assert.IsTrue(t2.InternalProperties.IsLoaded)
             Next
         End Using
     End Sub
@@ -101,11 +101,11 @@ Public Class TestSchema
             Assert.AreEqual(2, t3.Count)
 
             For Each t2 As Table2 In t3
-                Assert.IsFalse(t2.IsLoaded)
+                Assert.IsFalse(t2.InternalProperties.IsLoaded)
             Next
 
             For Each t2 As Table2 In mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Nothing, True)
-                Assert.IsTrue(t2.IsLoaded)
+                Assert.IsTrue(t2.InternalProperties.IsLoaded)
             Next
         End Using
     End Sub
@@ -167,16 +167,16 @@ Public Class TestSchema
             Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field("DT").Asc, False), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
-            Assert.IsFalse(t2(0).IsLoaded)
+            Assert.IsFalse(t2(0).InternalProperties.IsLoaded)
             Assert.AreEqual(2, t2(1).Identifier)
-            Assert.IsFalse(t2(1).IsLoaded)
+            Assert.IsFalse(t2(1).InternalProperties.IsLoaded)
 
             t2 = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field("DT").Desc, False), IList(Of Table1))
 
             Assert.AreEqual(3, t2(0).Identifier)
-            Assert.IsFalse(t2(0).IsLoaded)
+            Assert.IsFalse(t2(0).InternalProperties.IsLoaded)
             Assert.AreEqual(2, t2(1).Identifier)
-            Assert.IsFalse(t2(1).IsLoaded)
+            Assert.IsFalse(t2(1).InternalProperties.IsLoaded)
         End Using
     End Sub
 
@@ -188,9 +188,9 @@ Public Class TestSchema
             Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field("DT").Asc, True), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
-            Assert.IsTrue(t2(0).IsLoaded)
+            Assert.IsTrue(t2(0).InternalProperties.IsLoaded)
             Assert.AreEqual(2, t2(1).Identifier)
-            Assert.IsTrue(t2(1).IsLoaded)
+            Assert.IsTrue(t2(1).InternalProperties.IsLoaded)
         End Using
     End Sub
 
@@ -203,15 +203,15 @@ Public Class TestSchema
             Dim t1 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, Sorting.Field("Title").Asc, True), IList(Of Table1))
 
             Assert.AreEqual(1, t2(0).Identifier)
-            Assert.IsTrue(t2(0).IsLoaded)
+            Assert.IsTrue(t2(0).InternalProperties.IsLoaded)
             Assert.AreEqual(2, t2(1).Identifier)
-            Assert.IsTrue(t2(1).IsLoaded)
+            Assert.IsTrue(t2(1).InternalProperties.IsLoaded)
 
 
             Assert.AreEqual(1, t1(0).Identifier)
-            Assert.IsTrue(t1(0).IsLoaded)
+            Assert.IsTrue(t1(0).InternalProperties.IsLoaded)
             Assert.AreEqual(3, t1(1).Identifier)
-            Assert.IsTrue(t1(1).IsLoaded)
+            Assert.IsTrue(t1(1).InternalProperties.IsLoaded)
         End Using
     End Sub
 

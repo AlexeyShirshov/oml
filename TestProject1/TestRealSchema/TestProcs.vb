@@ -139,7 +139,7 @@ Public Class TestProcs
             Dim t1 As Table1 = CType(c, IList(Of Table1))(0)
 
             Assert.IsNotNull(t1)
-            Assert.AreEqual(ObjectState.None, t1.ObjectState)
+            Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
 
             Assert.AreEqual(2, t1.Identifier)
             Assert.AreEqual("second", t1.Name)

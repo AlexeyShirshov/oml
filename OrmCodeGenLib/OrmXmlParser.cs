@@ -249,12 +249,21 @@ namespace OrmCodeGenLib
                 nameSpace = entityElement.GetAttribute("namespace");
                 behaviourName = entityElement.GetAttribute("behaviour");
 
+            	string useGenericsAttribute = entityElement.GetAttribute("useGenerics");
+            	string makeInterfaceAttribute = entityElement.GetAttribute("makeInterface");
+
+				bool useGenerics = !string.IsNullOrEmpty(useGenericsAttribute) && XmlConvert.ToBoolean(useGenericsAttribute);
+            	bool makeInterface = !string.IsNullOrEmpty(makeInterfaceAttribute) &&
+            	                     XmlConvert.ToBoolean(makeInterfaceAttribute);
+
                 if (!string.IsNullOrEmpty(behaviourName))
                     behaviour = (EntityBehaviuor) Enum.Parse(typeof (EntityBehaviuor), behaviourName);
 
 
                 entity = new EntityDescription(id, name, nameSpace, description, _ormObjectsDef);
                 entity.Behaviour = behaviour;
+            	entity.UseGenerics = useGenerics;
+            	entity.MakeInterface = makeInterface;
 
                 _ormObjectsDef.Entities.Add(entity);
 
@@ -364,6 +373,9 @@ namespace OrmCodeGenLib
 				bool leftCascadeDelete = XmlConvert.ToBoolean(leftTargetElement.GetAttribute("cascadeDelete"));
 				bool rightCascadeDelete = XmlConvert.ToBoolean(rightTargetElement.GetAttribute("cascadeDelete"));
 
+				string leftAccessorName = leftTargetElement.GetAttribute("accessorName");
+				string rightAccessorName = rightTargetElement.GetAttribute("accessorName");
+
 				TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
 
 				EntityDescription underlyingEntity;
@@ -384,8 +396,8 @@ namespace OrmCodeGenLib
 
 				EntityDescription rightLinkTargetEntity = _ormObjectsDef.GetEntity(rightLinkTargetEntityId);
 
-				LinkTarget leftLinkTarget = new LinkTarget(leftLinkTargetEntity, leftFieldName, leftCascadeDelete);
-				LinkTarget rightLinkTarget = new LinkTarget(rightLinkTargetEntity, rightFieldName, rightCascadeDelete);
+				LinkTarget leftLinkTarget = new LinkTarget(leftLinkTargetEntity, leftFieldName, leftCascadeDelete, leftAccessorName);
+				LinkTarget rightLinkTarget = new LinkTarget(rightLinkTargetEntity, rightFieldName, rightCascadeDelete, rightAccessorName);
 
 				RelationDescription relation = new RelationDescription(leftLinkTarget, rightLinkTarget, relationTable, underlyingEntity, disabled);
 				_ormObjectsDef.Relations.Add(relation);
@@ -414,6 +426,9 @@ namespace OrmCodeGenLib
 				bool directCascadeDelete = XmlConvert.ToBoolean(directTargetElement.GetAttribute("cascadeDelete"));
 				bool reverseCascadeDelete = XmlConvert.ToBoolean(reverseTargetElement.GetAttribute("cascadeDelete"));
 
+				string directAccessorName = directTargetElement.GetAttribute("accessorName");
+				string reverseAccessorName = reverseTargetElement.GetAttribute("accessorName");
+
 				TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
 
 				EntityDescription underlyingEntity;
@@ -432,8 +447,8 @@ namespace OrmCodeGenLib
 
 				EntityDescription entity = _ormObjectsDef.GetEntity(entityId);
 
-				SelfRelationTarget directTarget = new SelfRelationTarget(directFieldName, directCascadeDelete);
-				SelfRelationTarget reverseTarget = new SelfRelationTarget(reverseFieldName, reverseCascadeDelete);
+				SelfRelationTarget directTarget = new SelfRelationTarget(directFieldName, directCascadeDelete, directAccessorName);
+				SelfRelationTarget reverseTarget = new SelfRelationTarget(reverseFieldName, reverseCascadeDelete, reverseAccessorName);
 
 				SelfRelationDescription relation = new SelfRelationDescription(entity, directTarget, reverseTarget, relationTable, underlyingEntity, disabled);
 				_ormObjectsDef.Relations.Add(relation);
@@ -484,7 +499,7 @@ namespace OrmCodeGenLib
             }
 
 			XmlNode tablesNode = entityNode.SelectSingleNode(string.Format("{0}:Tables", OrmObjectsDef.NS_PREFIX), _nsMgr);
-        	string inheritsTablesValue = (tablesNode as XmlElement).GetAttribute("inheritsBase");
+        	string inheritsTablesValue = ((XmlElement) tablesNode).GetAttribute("inheritsBase");
         	entity.InheritsBaseTables = string.IsNullOrEmpty(inheritsTablesValue) || XmlConvert.ToBoolean(inheritsTablesValue);
         }
 
@@ -544,7 +559,7 @@ namespace OrmCodeGenLib
         {
             if(e.Severity == XmlSeverityType.Warning)
                 return;
-            throw new OrmXmlParserException(string.Format("Xml document format error{1}: {0}", e.Message, (e.Exception != null) ? string.Format("({0},{1})", e.Exception.LineNumber, (e.Exception as XmlSchemaException).LinePosition) : string.Empty));
+            throw new OrmXmlParserException(string.Format("Xml document format error{1}: {0}", e.Message, (e.Exception != null) ? string.Format("({0},{1})", e.Exception.LineNumber, e.Exception.LinePosition) : string.Empty));
         }
 
         internal protected XmlDocument SourceXmlDocument
