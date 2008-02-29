@@ -325,7 +325,7 @@ Public Class TestManagerRS
             Assert.AreEqual(2, t3.Count)
 
             For Each t2 As Table2 In t3
-                Assert.IsTrue(t2.IsLoaded)
+                Assert.IsTrue(t2.InternalProperties.IsLoaded)
             Next
 
             mgr.BeginTransaction()
@@ -477,7 +477,7 @@ Public Class TestManagerRS
             Assert.AreEqual(2, c.Count)
 
             For Each o As Table33 In c
-                Assert.IsTrue(o.IsLoaded)
+                Assert.IsTrue(o.InternalProperties.IsLoaded)
             Next
 
             Dim r1 As New Tables1to3(-100, mgr.Cache, mgr.ObjectSchema)
@@ -576,7 +576,7 @@ Public Class TestManagerRS
             Assert.AreEqual(1, t.Count)
 
             Assert.AreEqual(1, CType(t, IList(Of Table2))(0).Tbl.Identifier)
-            Assert.IsTrue(CType(t, IList(Of Table2))(0).Tbl.IsLoaded)
+            Assert.IsTrue(CType(t, IList(Of Table2))(0).Tbl.InternalProperties.IsLoaded)
         End Using
     End Sub
 
@@ -695,9 +695,9 @@ Public Class TestManagerRS
     Public Sub TestDeleteNotLoaded()
         Using mgr As OrmDBManager = CType(CreateManager(GetSchema("1")), OrmDBManager)
             Dim t As Table1 = mgr.CreateDBObject(Of Table1)(1)
-            Assert.AreEqual(ObjectState.NotLoaded, t.ObjectState)
+            Assert.AreEqual(ObjectState.NotLoaded, t.InternalProperties.ObjectState)
             t.Delete()
-            Assert.AreEqual(ObjectState.Deleted, t.ObjectState)
+            Assert.AreEqual(ObjectState.Deleted, t.InternalProperties.ObjectState)
         End Using
     End Sub
 

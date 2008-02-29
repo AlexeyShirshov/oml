@@ -32,11 +32,11 @@ Imports Worm.Orm
     Public Sub TestLoad()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim o As New Entity(1, mgr.Cache, mgr.ObjectSchema)
-            Assert.IsFalse(o.IsLoaded)
+            Assert.IsFalse(o.InternalProperties.IsLoaded)
 
             o.Load()
 
-            Assert.IsTrue(o.IsLoaded)
+            Assert.IsTrue(o.InternalProperties.IsLoaded)
         End Using
     End Sub
 
@@ -44,11 +44,11 @@ Imports Worm.Orm
     Public Sub TestLoad2()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim o As New Entity5(1, mgr.Cache, mgr.ObjectSchema)
-            Assert.IsFalse(o.IsLoaded)
+            Assert.IsFalse(o.InternalProperties.IsLoaded)
 
             o.Load()
 
-            Assert.IsTrue(o.IsLoaded)
+            Assert.IsTrue(o.InternalProperties.IsLoaded)
 
             Assert.AreEqual("n", o.Title)
         End Using
@@ -64,17 +64,17 @@ Imports Worm.Orm
             Assert.AreEqual(4, mgr.GetLastExecitionResult.Count)
 
             For Each e4 As Entity4 In c
-                Assert.IsFalse(e4.IsLoaded)
+                Assert.IsFalse(e4.InternalProperties.IsLoaded)
             Next
 
             c = e.M2M.Find(Of Entity4)(Nothing, Nothing, True)
             For Each e4 As Entity4 In c
-                Assert.IsTrue(e4.IsLoaded)
+                Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
 
             c = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field("Title").Asc, False)
             For Each e4 As Entity4 In c
-                Assert.IsTrue(e4.IsLoaded)
+                Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
             Dim l As IList(Of Entity4) = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
             Assert.AreEqual(10, l(0).Identifier)
@@ -92,7 +92,7 @@ Imports Worm.Orm
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field("Title").Asc, False)
             Assert.AreEqual(4, c.Count)
             For Each e4 As Entity4 In c
-                Assert.IsFalse(e4.IsLoaded)
+                Assert.IsFalse(e4.InternalProperties.IsLoaded)
             Next
             Dim l As IList(Of Entity4) = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
             Assert.AreEqual(10, l(0).Identifier)
@@ -103,7 +103,7 @@ Imports Worm.Orm
             c = mgr.Find(Of Entity)(2).M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field("Title").Asc, True)
             Assert.AreEqual(11, c.Count)
             For Each e4 As Entity4 In c
-                Assert.IsTrue(e4.IsLoaded)
+                Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
             l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
             Assert.AreEqual(10, l(0).Identifier)
@@ -120,7 +120,7 @@ Imports Worm.Orm
 
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Worm.Orm.Sorting.Field("Title").Asc, False)
             For Each e4 As Entity4 In c
-                Assert.IsFalse(e4.IsLoaded)
+                Assert.IsFalse(e4.InternalProperties.IsLoaded)
             Next
 
         End Using
@@ -134,7 +134,7 @@ Imports Worm.Orm
             Dim c As ICollection(Of Entity) = e.M2M.Find(Of Entity)(Nothing, Nothing, False)
             Assert.AreEqual(4, c.Count)
             For Each e4 As Entity In c
-                Assert.IsFalse(e4.IsLoaded)
+                Assert.IsFalse(e4.InternalProperties.IsLoaded)
             Next
 
             c = e.M2M.Find(Of Entity)(Nothing, Nothing, False)
@@ -150,13 +150,13 @@ Imports Worm.Orm
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").Eq("bt"), Sorting.Field("Title").Asc, True)
             Assert.AreEqual(1, c.Count)
             For Each e4 As Entity4 In c
-                Assert.IsTrue(e4.IsLoaded)
+                Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
 
             c = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Worm.Orm.Sorting.Field("Title").Asc, False)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
-                Assert.IsFalse(e4.IsLoaded)
+                Assert.IsFalse(e4.InternalProperties.IsLoaded)
             Next
 
         End Using
@@ -173,9 +173,9 @@ Imports Worm.Orm
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
                 If e4.Identifier = 12 Then
-                    Assert.IsTrue(e4.IsLoaded)
+                    Assert.IsTrue(e4.InternalProperties.IsLoaded)
                 Else
-                    Assert.IsFalse(e4.IsLoaded)
+                    Assert.IsFalse(e4.InternalProperties.IsLoaded)
                 End If
 
             Next
@@ -193,7 +193,7 @@ Imports Worm.Orm
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Nothing, True)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
-                Assert.IsTrue(e4.IsLoaded)
+                Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
 
         End Using
@@ -211,7 +211,7 @@ Imports Worm.Orm
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
-                Assert.IsTrue(e4.IsLoaded)
+                Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
 
         End Using
@@ -884,8 +884,8 @@ Imports Worm.Orm
                 Assert.AreEqual(4, c.Count)
 
                 Assert.AreEqual(id, e4.Identifier)
-                Assert.AreEqual(ObjectState.None, e.ObjectState)
-                Assert.AreEqual(ObjectState.Created, e4.ObjectState)
+                Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
+                Assert.AreEqual(ObjectState.Created, e4.InternalProperties.ObjectState)
                 mgr.Rollback()
             End Try
         End Using
@@ -922,8 +922,8 @@ Imports Worm.Orm
                 Assert.AreEqual(5, c.Count)
 
                 Assert.AreNotEqual(id, e4.Identifier)
-                Assert.AreEqual(ObjectState.None, e.ObjectState)
-                Assert.AreEqual(ObjectState.None, e4.ObjectState)
+                Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
+                Assert.AreEqual(ObjectState.None, e4.InternalProperties.ObjectState)
 
             Finally
                 mgr.Rollback()
@@ -966,8 +966,8 @@ Imports Worm.Orm
                 Assert.AreNotEqual(id, e.Identifier)
                 Assert.AreNotEqual(id4, e4.Identifier)
 
-                Assert.AreEqual(ObjectState.None, e.ObjectState)
-                Assert.AreEqual(ObjectState.None, e4.ObjectState)
+                Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
+                Assert.AreEqual(ObjectState.None, e4.InternalProperties.ObjectState)
 
             Finally
                 mgr.Rollback()
@@ -987,16 +987,16 @@ Imports Worm.Orm
 
             Dim e As Entity2 = l(0)
 
-            Assert.AreEqual(ObjectState.None, e.ObjectState)
+            Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
             Dim oldv As String = e.Str
             e.Str = "ioquv"
-            Assert.AreEqual(ObjectState.Modified, e.ObjectState)
+            Assert.AreEqual(ObjectState.Modified, e.InternalProperties.ObjectState)
 
             'Using New Orm.OrmManagerBase.CacheListSwitcher(mgr, False)
             c = mgr.FindTop(Of Entity2)(100, Nothing, Nothing, True)
             'End Using
 
-            Assert.AreEqual(ObjectState.Modified, e.ObjectState)
+            Assert.AreEqual(ObjectState.Modified, e.InternalProperties.ObjectState)
             Assert.AreEqual("ioquv", e.Str)
 
             e.Load()
@@ -1047,16 +1047,16 @@ Imports Worm.Orm
             Dim c1 As ICollection(Of Entity4) = e1.M2M.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(4, c1.Count)
             For Each o As Entity4 In c1
-                Assert.IsTrue(o.IsLoaded)
+                Assert.IsTrue(o.InternalProperties.IsLoaded)
             Next
             Dim c2 As ICollection(Of Entity4) = e2.M2M.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(11, c2.Count)
             'Dim l As IList(Of Entity4) = CType(c1, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
             'For Each o As Entity4 In c2
             '    If l.Contains(o) Then
-            '        Assert.IsTrue(o.IsLoaded)
+            '        Assert.IsTrue(o.InternalProperties.IsLoaded)
             '    Else
-            '        Assert.IsFalse(o.IsLoaded)
+            '        Assert.IsFalse(o.InternalProperties.IsLoaded)
             '    End If
             'Next
 
@@ -1098,7 +1098,7 @@ Imports Worm.Orm
                             t.Delete()
                             st2.Commit()
                         End Using
-                        Assert.AreEqual(ObjectState.Deleted, t.ObjectState)
+                        Assert.AreEqual(ObjectState.Deleted, t.InternalProperties.ObjectState)
                         Assert.IsTrue(st.Saver.AffectedObjects.Contains(t))
                         st.Commit()
                     End Using
@@ -1112,6 +1112,43 @@ Imports Worm.Orm
             End Try
         End Using
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestPropertyChangedEvent()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim e As Entity2 = mgr.Find(Of Entity2)(2)
+            Dim c As New cls(e.Str)
+            AddHandler e.PropertyChanged, AddressOf c.changed
+            e.Str = "34f0asdofmasdf"
+            Assert.IsTrue(c.Invoked)
+
+            c = New cls(e.Str)
+            e.Str = e.Str
+            Assert.IsFalse(c.Invoked)
+        End Using
+    End Sub
+
+    Public Class cls
+        Private _prev As String
+        Private _inv As Boolean
+
+        Public Sub New(ByVal s As String)
+            _prev = s
+        End Sub
+
+        Public Sub changed(ByVal sender As OrmBase, ByVal args As OrmBase.PropertyChangedEventArgs)
+            Assert.AreEqual("34f0asdofmasdf", args.CurrentValue)
+            Assert.AreEqual(_prev, args.PreviousValue)
+            Assert.AreEqual("Str", args.FieldName)
+            _inv = True
+        End Sub
+
+        Public ReadOnly Property Invoked() As Boolean
+            Get
+                Return _inv
+            End Get
+        End Property
+    End Class
 
     Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Integer) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
 

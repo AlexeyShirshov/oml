@@ -6,7 +6,7 @@
 		xmlns="http://www.xmedia.ru/OrmObjectsSchema.xsd"
 		xmlns:xs="http://www.w3.org/2001/XMLSchema"
 		xmlns:NS="http://www.xmedia.ru/OrmObjectsSchema.xsd"
-		xmlns:xi="http://www.w3.org/2001/XInclude"
+
 		version="1.0">
   <xs:complexType name="Entity_t">
     <xs:annotation>
@@ -95,6 +95,16 @@
         <xs:documentation>Entity generator behaviour</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+	  <xs:attribute name="useGenerics" type="xs:boolean" use="optional" default="false">
+		  <xs:annotation>
+			  <xs:documentation>Определяет генерировать generic или строго типизированные методы.</xs:documentation>
+		  </xs:annotation>
+	  </xs:attribute>
+	  <xs:attribute name="makeInterface" type="xs:boolean" use="optional" default="false">
+		  <xs:annotation>
+			  <xs:documentation>Определяет генерировать интерфейс для сущности</xs:documentation>
+		  </xs:annotation>
+	  </xs:attribute>
   </xs:complexType>
   <xs:complexType name="SupperessedPropertiesCollection_t">
     <xs:annotation>
@@ -363,6 +373,11 @@
 		<xs:documentation>Каскадное удаление</xs:documentation>
 	  </xs:annotation>
 	</xs:attribute>
+	  <xs:attribute name="accessorName" type="xs:Name" use="optional">
+		  <xs:annotation>
+			  <xs:documentation>Имя связанной сущности для генерации методов.</xs:documentation>
+		  </xs:annotation>
+	  </xs:attribute>
   </xs:complexType>
   <xs:complexType name="LinkTarget_t">
     <xs:annotation>
@@ -383,6 +398,11 @@
         <xs:documentation>Каскадное удаление</xs:documentation>
       </xs:annotation>
     </xs:attribute>
+	  <xs:attribute name="accessorName" type="xs:Name" use="optional">
+		  <xs:annotation>
+			  <xs:documentation>Имя связанной сущности для генерации методов.</xs:documentation>
+		  </xs:annotation>
+	  </xs:attribute>
   </xs:complexType>
   <xs:complexType name="TypesCollection_t">
     <xs:annotation>
@@ -576,7 +596,7 @@
     <xs:attribute name="schemaVersion" type="xs:string" use="optional" />
 	  <xs:attribute name="entityBaseType" type="xs:Name" use="optional">
 		  <xs:annotation>
-			  <xs:documentation>
+			  <xs:documentation xml:lang="ru">
 				Ссылка на тип, описанный в елементе &lt;types/&gt;, который будет использоваться как базовый для классов сущностей.
 			  </xs:documentation>
 		  </xs:annotation>

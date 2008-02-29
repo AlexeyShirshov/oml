@@ -47,7 +47,6 @@
     <Compile Include="TestEntityBasedClass.cs" />
     <Compile Include="TestOrmXmlGenerator.cs" />
     <Compile Include="TestOrmXmlParse.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="VSCodeGenAccessors.cs" />
   </ItemGroup>

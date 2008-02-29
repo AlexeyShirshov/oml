@@ -101,7 +101,7 @@ Public Class TestTracker
             Finally
                 Assert.AreEqual(0, _new_objects.Count)
                 Assert.AreNotEqual(10, tt.Code.Value)
-                Assert.AreEqual(ObjectState.None, tt.ObjectState)
+                Assert.AreEqual(ObjectState.None, tt.InternalProperties.ObjectState)
 
                 mgr.Rollback()
             End Try
@@ -130,7 +130,7 @@ Public Class TestTracker
             Finally
                 Assert.AreEqual(0, _new_objects.Count)
                 Assert.AreEqual(10, tt.Code.Value)
-                Assert.AreEqual(ObjectState.None, tt.ObjectState)
+                Assert.AreEqual(ObjectState.None, tt.InternalProperties.ObjectState)
 
                 mgr.Rollback()
             End Try
@@ -161,10 +161,10 @@ Public Class TestTracker
                 End Using
             Finally
                 Assert.AreEqual(10, tt.Code.Value)
-                Assert.AreEqual(ObjectState.None, tt.ObjectState)
+                Assert.AreEqual(ObjectState.None, tt.InternalProperties.ObjectState)
 
                 Assert.AreEqual(100, tt2.Code.Value)
-                Assert.AreEqual(ObjectState.None, tt2.ObjectState)
+                Assert.AreEqual(ObjectState.None, tt2.InternalProperties.ObjectState)
 
                 mgr.Rollback()
             End Try

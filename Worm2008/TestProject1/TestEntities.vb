@@ -193,7 +193,7 @@ Public Class Entity2
     End Sub
 
     Public Overrides Function Clone() As Object
-        Dim e As New Entity2(Identifier, OrmCache, OrmSchema)
+        Dim e As New Entity2(Identifier, InternalProperties.OrmCache, OrmSchema)
         Return e
     End Function
 

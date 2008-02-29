@@ -20,20 +20,6 @@ namespace OrmCodeGenLib
             return regex.Replace(p, "_");
         }
 
-        /// <summary>
-        /// Gets the qualified class name of the entity.
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <returns></returns>
-        public static string GetQualifiedEntityName(EntityDescription entity)
-        {
-            OrmCodeDomGeneratorSettings settings = SettingsManager.CurrentManager.OrmCodeDomGeneratorSettings;
-            string result = string.Empty;
-            if (!string.IsNullOrEmpty(entity.Namespace))
-                result += entity.Namespace;
-            result += ((string.IsNullOrEmpty(result) ? string.Empty : ".") + GetEntityClassName(entity));
-            return result;
-        }
 
         public static string GetEntityFileName(EntityDescription entity)
         {
@@ -58,21 +44,41 @@ namespace OrmCodeGenLib
             return baseName;
         }
 
-        /// <summary>
-        /// Gets class name of the entity using settings
-        /// </summary>
-        /// <param name="entity">The entity.</param>
-        /// <returns></returns>
-        public static string GetEntityClassName(EntityDescription entity)
+    	/// <summary>
+    	/// Gets class name of the entity using settings
+    	/// </summary>
+    	/// <param name="entity">The entity.</param>
+    	/// <returns></returns>
+    	public static string GetEntityClassName(EntityDescription entity)
+    	{
+    		return GetEntityClassName(entity, false);
+    	}
+
+    	/// <summary>
+		/// Gets class name of the entity using settings
+		/// </summary>
+		/// <param name="entity">The entity.</param>
+		/// <param name="qualified">if set to <c>true</c> return qualified name.</param>
+		/// <returns></returns>
+        public static string GetEntityClassName(EntityDescription entity, bool qualified)
         {
-            OrmCodeDomGeneratorSettings settings = SettingsManager.CurrentManager.OrmCodeDomGeneratorSettings;
-            return 
-                // prefix from settings for class name
-                settings.ClassNamePrefix + 
-                // entity's class name
-                entity.Name +
-                // suffix from settings for class name
-                settings.ClassNameSuffix;
+			OrmCodeDomGeneratorSettings settings = SettingsManager.CurrentManager.OrmCodeDomGeneratorSettings;
+
+			string className =
+				// prefix from settings for class name
+				settings.ClassNamePrefix +
+				// entity's class name
+				entity.Name +
+				// suffix from settings for class name
+				settings.ClassNameSuffix;
+
+			string ns = string.Empty;
+			if (qualified && !string.IsNullOrEmpty(entity.Namespace))
+				ns += entity.Namespace + ".";
+			return ns + className;
+
+             
+               
         }
 
         /// <summary>
@@ -92,10 +98,27 @@ namespace OrmCodeGenLib
 
         public static string GetEntitySchemaDefClassQualifiedName(EntityDescription entity)
         {
-            return string.Format("{0}.{1}", GetQualifiedEntityName(entity), GetEntitySchemaDefClassName(entity));
+            return string.Format("{0}.{1}", GetEntityClassName(entity, true), GetEntitySchemaDefClassName(entity));
         }
 
-        public static string GetMultipleForm(string name)
+    	public static string GetEntityInterfaceName(EntityDescription entity)
+    	{
+    		return GetEntityInterfaceName(entity, false);
+    	}
+
+    	public static string GetEntityInterfaceName(EntityDescription entity, bool qualified)
+    	{
+    		string interfaceName = "I" + GetEntityClassName(entity, false);
+
+    		string ns = string.Empty;
+    		if (qualified && !string.IsNullOrEmpty(entity.Namespace))
+    		{
+				ns += entity.Namespace + ".";
+    		}
+    		return ns + interfaceName;
+    	}
+
+    	public static string GetMultipleForm(string name)
         {
             if (name.EndsWith("s"))
                 return name + "es";

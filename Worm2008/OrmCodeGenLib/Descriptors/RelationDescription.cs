@@ -57,5 +57,10 @@ namespace OrmCodeGenLib.Descriptors
         //    yep |= LinkTarget.IsSimilar(first.Left, second.Right) && LinkTarget.IsSimilar(first.Right, second.Left);
         //    return yep;
         //}
-    }
+
+		public override bool IsEntityTakePart(EntityDescription entity)
+		{
+			return Left.Entity == entity || Right.Entity == entity;
+		}
+	}
 }

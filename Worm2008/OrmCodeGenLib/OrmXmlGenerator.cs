@@ -8,14 +8,14 @@ namespace OrmCodeGenLib
 {
     internal class OrmXmlGenerator
     {
-        private OrmXmlDocumentSet _ormXmlDocumentSet;
+        private readonly OrmXmlDocumentSet _ormXmlDocumentSet;
         private XmlDocument _ormXmlDocumentMain;
-        private OrmObjectsDef _ormObjectsDef;
+        private readonly OrmObjectsDef _ormObjectsDef;
 
-        private XmlNamespaceManager _nsMgr;
-        private XmlNameTable _nametable;
+        private readonly XmlNamespaceManager _nsMgr;
+        private readonly XmlNameTable _nametable;
 
-        private OrmXmlGeneratorSettings _settings;
+        private readonly OrmXmlGeneratorSettings _settings;
 
         internal OrmXmlGenerator(OrmObjectsDef ormObjectsDef, OrmXmlGeneratorSettings settings)
         {
@@ -141,7 +141,7 @@ namespace OrmCodeGenLib
             {
                 if (rel is RelationDescription)
                 {
-                    RelationDescription relation = rel as RelationDescription;
+					RelationDescription relation = (RelationDescription)rel;
 
                     XmlElement relationElement = CreateElement("Relation");
 
@@ -155,11 +155,15 @@ namespace OrmCodeGenLib
                     leftElement.SetAttribute("entity", relation.Left.Entity.Identifier);
                     leftElement.SetAttribute("fieldName", relation.Left.FieldName);
                     leftElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Left.CascadeDelete));
+					if (!string.IsNullOrEmpty(relation.Left.AccessorName))
+						leftElement.SetAttribute("accessorName", relation.Left.AccessorName);
 
                     XmlElement rightElement = CreateElement("Right");
                     rightElement.SetAttribute("entity", relation.Right.Entity.Identifier);
                     rightElement.SetAttribute("fieldName", relation.Right.FieldName);
                     rightElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Right.CascadeDelete));
+					if (!string.IsNullOrEmpty(relation.Right.AccessorName))
+						rightElement.SetAttribute("accessorName", relation.Right.AccessorName);
 
                     if (relation.UnderlyingEntity != null)
                     {
@@ -171,7 +175,7 @@ namespace OrmCodeGenLib
                 }
                 else
                 {
-                    SelfRelationDescription relation = rel as SelfRelationDescription;
+					SelfRelationDescription relation = (SelfRelationDescription)rel;
 
                     XmlElement relationElement = CreateElement("SelfRelation");
 
@@ -186,10 +190,14 @@ namespace OrmCodeGenLib
 
                     directElement.SetAttribute("fieldName", relation.Direct.FieldName);
                     directElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Direct.CascadeDelete));
+					if (!string.IsNullOrEmpty(relation.Direct.AccessorName))
+						directElement.SetAttribute("accessorName", relation.Direct.AccessorName);
 
                     XmlElement reverseElement = CreateElement("Reverse");
                     reverseElement.SetAttribute("fieldName", relation.Reverse.FieldName);
                     reverseElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Reverse.CascadeDelete));
+					if (!string.IsNullOrEmpty(relation.Reverse.AccessorName))
+						reverseElement.SetAttribute("accessorName", relation.Reverse.AccessorName);
 
                     if (relation.UnderlyingEntity != null)
                     {
@@ -219,6 +227,10 @@ namespace OrmCodeGenLib
                     entityElement.SetAttribute("namespace", entity.Namespace);
 				if(entity.Behaviour != EntityBehaviuor.Default)
 					entityElement.SetAttribute("behaviour", entity.Behaviour.ToString());
+				if (entity.UseGenerics)
+					entityElement.SetAttribute("useGenerics", XmlConvert.ToString(entity.UseGenerics));
+				if (entity.MakeInterface)
+					entityElement.SetAttribute("makeInterface", XmlConvert.ToString(entity.MakeInterface));
 
                 XmlNode tablesNode = CreateElement("Tables");
                 foreach (TableDescription table in entity.Tables)
@@ -227,7 +239,7 @@ namespace OrmCodeGenLib
                     tableElement.SetAttribute("ref", table.Identifier);
                     tablesNode.AppendChild(tableElement);
                 }
-            	(tablesNode as XmlElement).SetAttribute("inheritsBase", XmlConvert.ToString(entity.InheritsBaseTables));
+            	((XmlElement) tablesNode).SetAttribute("inheritsBase", XmlConvert.ToString(entity.InheritsBaseTables));
                 entityElement.AppendChild(tablesNode);
 
                 XmlNode propertiesNode = CreateElement("Properties");

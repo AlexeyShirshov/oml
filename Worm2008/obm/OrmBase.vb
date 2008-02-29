@@ -240,6 +240,21 @@ Namespace Orm
                     End If
                 Next
             End Sub
+
+			Public Sub Merge(Of T As {OrmBase, New})(ByVal col As ICollection(Of T), ByVal removeNotInList As Boolean, ByVal direct As Boolean)
+				If removeNotInList Then
+					For Each o As T In Find(Of T)(Nothing, Nothing, False)
+						If Not col.Contains(o) Then
+							Delete(o, direct)
+						End If
+					Next
+				End If
+				For Each o As T In col
+					If Not Find(Of T)(Nothing, Nothing, False).Contains(o) Then
+						Add(o, direct)
+					End If
+				Next
+			End Sub
         End Class
 
         <EditorBrowsable(EditorBrowsableState.Never)> _
@@ -256,8 +271,202 @@ Namespace Orm
                 End Get
             End Property
 
+            Public Property IsLoaded() As Boolean
+                Get
+                    Return _o._loaded
+                End Get
+                Protected Friend Set(ByVal value As Boolean)
+                    Using _o.SyncHelper(False)
+                        If value AndAlso Not _o._loaded Then
+                            Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
+                            For i As Integer = 0 To arr.Count - 1
+                                _o._members_load_state(i) = True
+                            Next
+                        ElseIf Not value AndAlso _o._loaded Then
+                            Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
+                            For i As Integer = 0 To arr.Count - 1
+                                _o._members_load_state(i) = False
+                            Next
+                        End If
+                        _o._loaded = value
+                        Debug.Assert(_o._loaded = value)
+                    End Using
+                End Set
+            End Property
 
+            Public ReadOnly Property OrmCache() As OrmCacheBase
+                Get
+                    If GetMgr() IsNot Nothing Then
+                        Return GetMgr.Cache
+                    Else
+                        Return Nothing
+                    End If
+                End Get
+            End Property
+
+            '''' <summary>
+            '''' Объект, на котором можно синхронизировать загрузку
+            '''' </summary>
+            'Public ReadOnly Property SyncLoad() As Object
+            '    Get
+            '        Return Me
+            '    End Get
+            'End Property
+
+            Public Property ObjectState() As ObjectState
+                Get
+                    Return _o._state
+                End Get
+                Protected Friend Set(ByVal value As ObjectState)
+                    Using _o.SyncHelper(False)
+                        _o._state = value
+                        Debug.Assert(_o._state = value)
+                        Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
+                        If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
+                            Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
+                        End If
+                    End Using
+                End Set
+            End Property
+
+            ''' <summary>
+            ''' Модифицированная версия объекта
+            ''' </summary>
+            Public ReadOnly Property OriginalCopy() As OrmBase
+                Get
+                    'If _mo Is Nothing Then
+                    _o.CheckCash()
+                    If OrmCache.Modified(_o) Is Nothing Then Return Nothing
+                    Return OrmCache.Modified(_o).Obj
+                    'Else
+                    'Return _mo.Obj
+                    'End If
+                End Get
+            End Property
+
+            Public ReadOnly Property IsReadOnly() As Boolean
+                Get
+                    Using _o.SyncHelper(True)
+                        If _o._state = Orm.ObjectState.Modified Then
+                            _o.CheckCash()
+                            Dim mo As ModifiedObject = OrmCache.Modified(_o)
+                            'If mo Is Nothing Then mo = _mo
+                            If mo IsNot Nothing Then
+                                If mo.User IsNot Nothing AndAlso Not mo.User.Equals(GetMgr.CurrentUser) Then
+                                    Return True
+                                End If
+                            End If
+                            'ElseIf state = Obm.ObjectState.Deleted Then
+                            'Return True
+                        End If
+                        Return False
+                    End Using
+                End Get
+            End Property
+
+            Public ReadOnly Property Changes(ByVal obj As OrmBase) As ColumnAttribute()
+                Get
+                    Dim columns As New Generic.List(Of ColumnAttribute)
+                    Dim t As Type = obj.GetType
+                    For Each pi As Reflection.PropertyInfo In Me.GetType.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
+                        Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
+                        If c IsNot Nothing Then
+                            Dim original As Object = pi.GetValue(obj, Nothing)
+                            If (_o.OrmSchema.GetAttributes(t, c) And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
+                                Dim current As Object = pi.GetValue(Me, Nothing)
+                                If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
+                                    (current IsNot Nothing AndAlso Not current.Equals(original)) Then
+                                    columns.Add(c)
+                                End If
+                            End If
+                        End If
+                    Next
+                    Return columns.ToArray
+                End Get
+            End Property
+
+            Public ReadOnly Property ObjName() As String
+                Get
+                    Return Me.GetType.Name & " - " & ObjectState.ToString & " (" & _o._id & "): "
+                End Get
+            End Property
+
+            Public Overridable ReadOnly Property ChangeDescription() As String
+                Get
+                    Dim sb As New StringBuilder
+                    sb.Append("Аттрибуты:").Append(vbCrLf)
+                    If ObjectState = Orm.ObjectState.Modified Then
+                        For Each c As ColumnAttribute In Changes(OriginalCopy)
+                            sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
+                        Next
+                    Else
+                        Dim t As Type = Me.GetType
+                        'Dim o As OrmBase = CType(t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
+                        '    New Object() {Identifier, OrmCache, _schema}), OrmBase)
+                        'Dim o As OrmBase = GetNew()
+                        Dim o As OrmBase = CType(Activator.CreateInstance(t), OrmBase)
+                        o.Init(_o.Identifier, _o.OrmCache, _o.OrmSchema)
+                        For Each c As ColumnAttribute In Changes(o)
+                            sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
+                        Next
+                    End If
+                    Return sb.ToString
+                End Get
+            End Property
         End Class
+
+        Public Class PropertyChangedEventArgs
+            Inherits EventArgs
+
+            Private _prev As Object
+            Public ReadOnly Property PreviousValue() As Object
+                Get
+                    Return _prev
+                End Get
+            End Property
+
+            Private _current As Object
+            Public ReadOnly Property CurrentValue() As Object
+                Get
+                    Return _current
+                End Get
+            End Property
+
+            Private _fieldName As String
+            Public ReadOnly Property FieldName() As String
+                Get
+                    Return _fieldName
+                End Get
+            End Property
+
+            Public Sub New(ByVal fieldName As String, ByVal prevValue As Object, ByVal currentValue As Object)
+                _fieldName = fieldName
+                _prev = prevValue
+                _current = currentValue
+            End Sub
+        End Class
+
+        Private Class ChangedEventHelper
+            Implements IDisposable
+
+            Private _value As Object
+            Private _fieldName As String
+            Private _obj As OrmBase
+            Private _d As IDisposable
+
+            Public Sub New(ByVal obj As OrmBase, ByVal fieldName As String, ByVal d As IDisposable)
+                _fieldName = fieldName
+                _obj = obj
+                _value = obj.GetValue(fieldName)
+                _d = d
+            End Sub
+
+            Public Sub Dispose() Implements IDisposable.Dispose
+                _d.Dispose()
+                _obj.RaisePropertyChanged(_fieldName, _value)
+            End Sub
+        End Class
+
         ''' <summary>
         ''' Состояние объекта
         ''' </summary>
@@ -290,11 +499,14 @@ Namespace Orm
         Protected Friend _needAccept As New Generic.List(Of AcceptState2)
         <NonSerialized()> _
         Protected Friend _mgrStr As String
+        <NonSerialized()> _
+        Protected _dontRaisePropertyChange As Boolean
 
         Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
         Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
         Public Event Deleted(ByVal sender As OrmBase, ByVal args As EventArgs)
         Public Event Updated(ByVal sender As OrmBase, ByVal args As EventArgs)
+        Public Event PropertyChanged(ByVal sender As OrmBase, ByVal args As PropertyChangedEventArgs)
 
         'for xml serialization
         Public Sub New()
@@ -305,6 +517,155 @@ Namespace Orm
         End Sub
 
 #Region " Protected functions "
+        Friend Overridable ReadOnly Property ChangeDescription() As String
+            Get
+                Dim sb As New StringBuilder
+                sb.Append("Аттрибуты:").Append(vbCrLf)
+                If ObjectState = Orm.ObjectState.Modified Then
+                    For Each c As ColumnAttribute In Changes(OriginalCopy)
+                        sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
+                    Next
+                Else
+                    Dim t As Type = Me.GetType
+                    'Dim o As OrmBase = CType(t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
+                    '    New Object() {Identifier, OrmCache, _schema}), OrmBase)
+                    'Dim o As OrmBase = GetNew()
+                    Dim o As OrmBase = CType(Activator.CreateInstance(t), OrmBase)
+                    o.Init(Identifier, OrmCache, OrmSchema)
+                    For Each c As ColumnAttribute In Changes(o)
+                        sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
+                    Next
+                End If
+                Return sb.ToString
+            End Get
+        End Property
+
+        Friend Property IsLoaded() As Boolean
+            Get
+                Return _loaded
+            End Get
+            Set(ByVal value As Boolean)
+                Using SyncHelper(False)
+                    If value AndAlso Not _loaded Then
+                        Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
+                        For i As Integer = 0 To arr.Count - 1
+                            _members_load_state(i) = True
+                        Next
+                    ElseIf Not value AndAlso _loaded Then
+                        Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
+                        For i As Integer = 0 To arr.Count - 1
+                            _members_load_state(i) = False
+                        Next
+                    End If
+                    _loaded = value
+                    Debug.Assert(_loaded = value)
+                End Using
+            End Set
+        End Property
+
+        Friend ReadOnly Property OrmCache() As OrmCacheBase
+            Get
+                If GetMgr() IsNot Nothing Then
+                    Return GetMgr.Cache
+                Else
+                    Return Nothing
+                End If
+            End Get
+        End Property
+
+        '''' <summary>
+        '''' Объект, на котором можно синхронизировать загрузку
+        '''' </summary>
+        'Public ReadOnly Property SyncLoad() As Object
+        '    Get
+        '        Return Me
+        '    End Get
+        'End Property
+
+        Protected Friend Property ObjectState() As ObjectState
+            Get
+                Return _state
+            End Get
+            Set(ByVal value As ObjectState)
+                Using SyncHelper(False)
+                    _state = value
+                    Debug.Assert(_state = value)
+                    Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
+                    If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
+                        Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
+                    End If
+                End Using
+            End Set
+        End Property
+
+        ''' <summary>
+        ''' Модифицированная версия объекта
+        ''' </summary>
+        Friend ReadOnly Property OriginalCopy() As OrmBase
+            Get
+                'If _mo Is Nothing Then
+                CheckCash()
+                If OrmCache.Modified(Me) Is Nothing Then Return Nothing
+                Return OrmCache.Modified(Me).Obj
+                'Else
+                'Return _mo.Obj
+                'End If
+            End Get
+        End Property
+
+        Friend ReadOnly Property IsReadOnly() As Boolean
+            Get
+                Using SyncHelper(True)
+                    If _state = Orm.ObjectState.Modified Then
+                        CheckCash()
+                        Dim mo As ModifiedObject = OrmCache.Modified(Me)
+                        'If mo Is Nothing Then mo = _mo
+                        If mo IsNot Nothing Then
+                            If mo.User IsNot Nothing AndAlso Not mo.User.Equals(GetMgr.CurrentUser) Then
+                                Return True
+                            End If
+                        End If
+                        'ElseIf state = Obm.ObjectState.Deleted Then
+                        'Return True
+                    End If
+                    Return False
+                End Using
+            End Get
+        End Property
+
+        Friend ReadOnly Property Changes(ByVal obj As OrmBase) As ColumnAttribute()
+            Get
+                Dim columns As New Generic.List(Of ColumnAttribute)
+                Dim t As Type = obj.GetType
+                For Each pi As Reflection.PropertyInfo In Me.GetType.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
+                    Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
+                    If c IsNot Nothing Then
+                        Dim original As Object = pi.GetValue(obj, Nothing)
+                        If (OrmSchema.GetAttributes(t, c) And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
+                            Dim current As Object = pi.GetValue(Me, Nothing)
+                            If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
+                                (current IsNot Nothing AndAlso Not current.Equals(original)) Then
+                                columns.Add(c)
+                            End If
+                        End If
+                    End If
+                Next
+                Return columns.ToArray
+            End Get
+        End Property
+
+        Friend ReadOnly Property ObjName() As String
+            Get
+                Return Me.GetType.Name & " - " & ObjectState.ToString & " (" & _id & "): "
+            End Get
+        End Property
+
+        Private Sub RaisePropertyChanged(ByVal fieldName As String, ByVal oldValue As Object)
+            Dim value As Object = GetValue(fieldName)
+            If Not value.Equals(oldValue) Then
+                RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(fieldName, oldValue, value))
+            End If
+        End Sub
 
         Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
             Init(id, cache, schema)
@@ -747,36 +1108,9 @@ Namespace Orm
             End Get
         End Property
 
-        Public Property IsLoaded() As Boolean
+        Public ReadOnly Property InternalProperties() As InternalClass
             Get
-                Return _loaded
-            End Get
-            Protected Friend Set(ByVal value As Boolean)
-                Using SyncHelper(False)
-                    If value AndAlso Not _loaded Then
-                        Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
-                        For i As Integer = 0 To arr.Count - 1
-                            _members_load_state(i) = True
-                        Next
-                    ElseIf Not value AndAlso _loaded Then
-                        Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
-                        For i As Integer = 0 To arr.Count - 1
-                            _members_load_state(i) = False
-                        Next
-                    End If
-                    _loaded = value
-                    Debug.Assert(_loaded = value)
-                End Using
-            End Set
-        End Property
-
-        Public ReadOnly Property OrmCache() As OrmCacheBase
-            Get
-                If GetMgr() IsNot Nothing Then
-                    Return GetMgr.Cache
-                Else
-                    Return Nothing
-                End If
+                Return New InternalClass(Me)
             End Get
         End Property
 
@@ -802,92 +1136,6 @@ Namespace Orm
             End Set
         End Property
 
-        '''' <summary>
-        '''' Объект, на котором можно синхронизировать загрузку
-        '''' </summary>
-        'Public ReadOnly Property SyncLoad() As Object
-        '    Get
-        '        Return Me
-        '    End Get
-        'End Property
-
-        Public Property ObjectState() As ObjectState
-            Get
-                Return _state
-            End Get
-            Protected Friend Set(ByVal value As ObjectState)
-                Using SyncHelper(False)
-                    _state = value
-                    Debug.Assert(_state = value)
-                    Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
-                    If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
-                        Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
-                    End If
-                End Using
-            End Set
-        End Property
-
-        ''' <summary>
-        ''' Модифицированная версия объекта
-        ''' </summary>
-        Public ReadOnly Property OriginalCopy() As OrmBase
-            Get
-                'If _mo Is Nothing Then
-                CheckCash()
-                If OrmCache.Modified(Me) Is Nothing Then Return Nothing
-                Return OrmCache.Modified(Me).Obj
-                'Else
-                'Return _mo.Obj
-                'End If
-            End Get
-        End Property
-
-        Public ReadOnly Property IsReadOnly() As Boolean
-            Get
-                Using SyncHelper(True)
-                    If _state = Orm.ObjectState.Modified Then
-                        CheckCash()
-                        Dim mo As ModifiedObject = OrmCache.Modified(Me)
-                        'If mo Is Nothing Then mo = _mo
-                        If mo IsNot Nothing Then
-                            If mo.User IsNot Nothing AndAlso Not mo.User.Equals(GetMgr.CurrentUser) Then
-                                Return True
-                            End If
-                        End If
-                        'ElseIf state = Obm.ObjectState.Deleted Then
-                        'Return True
-                    End If
-                    Return False
-                End Using
-            End Get
-        End Property
-
-        Public ReadOnly Property Changes(ByVal obj As OrmBase) As ColumnAttribute()
-            Get
-                Dim columns As New Generic.List(Of ColumnAttribute)
-                Dim t As Type = obj.GetType
-                For Each pi As Reflection.PropertyInfo In Me.GetType.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
-                    Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
-                    If c IsNot Nothing Then
-                        Dim original As Object = pi.GetValue(obj, Nothing)
-                        If (OrmSchema.GetAttributes(t, c) And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
-                            Dim current As Object = pi.GetValue(Me, Nothing)
-                            If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
-                                (current IsNot Nothing AndAlso Not current.Equals(original)) Then
-                                columns.Add(c)
-                            End If
-                        End If
-                    End If
-                Next
-                Return columns.ToArray
-            End Get
-        End Property
-
-        Public ReadOnly Property ObjName() As String
-            Get
-                Return Me.GetType.Name & " - " & ObjectState.ToString & " (" & _id & "): "
-            End Get
-        End Property
 #End Region
 
 #Region " Synchronization "
@@ -921,6 +1169,9 @@ Namespace Orm
                 Else
                     d = SyncHelper(True)
                     PrepareUpdate()
+                    If Not _dontRaisePropertyChange AndAlso Not _loading Then
+                        d = New ChangedEventHelper(Me, fieldName, d)
+                    End If
                 End If
                 err = False
             Finally
@@ -1140,6 +1391,7 @@ Namespace Orm
             End Using
         End Sub
 
+        <EditorBrowsable(EditorBrowsableState.Never)> _
         <Conditional("DEBUG")> _
         Public Sub Invariant()
             If IsLoaded AndAlso _
@@ -1187,6 +1439,7 @@ Namespace Orm
             End If
         End Function
 
+        <EditorBrowsable(EditorBrowsableState.Never)> _
         Public Overridable Sub CreateObject(ByVal fieldName As String, ByVal value As Object)
 
         End Sub
@@ -1194,11 +1447,11 @@ Namespace Orm
 
 #Region " Xml Serialization "
 
-        Public Function GetSchema() As System.Xml.Schema.XmlSchema Implements System.Xml.Serialization.IXmlSerializable.GetSchema
+        Protected Overridable Function GetSchema() As System.Xml.Schema.XmlSchema Implements System.Xml.Serialization.IXmlSerializable.GetSchema
             Return Nothing
         End Function
 
-        Public Overridable Sub ReadXml(ByVal reader As System.Xml.XmlReader) Implements System.Xml.Serialization.IXmlSerializable.ReadXml
+        Protected Overridable Sub ReadXml(ByVal reader As System.Xml.XmlReader) Implements System.Xml.Serialization.IXmlSerializable.ReadXml
             Dim t As Type = Me.GetType
 
             'If OrmSchema IsNot Nothing Then
@@ -1237,6 +1490,52 @@ l1:
             Dim schema As OrmSchemaBase = GetMgr.ObjectSchema
             If schema IsNot Nothing Then CheckIsAllLoaded(schema)
 
+        End Sub
+
+        Protected Overridable Sub WriteXml(ByVal writer As System.Xml.XmlWriter) Implements System.Xml.Serialization.IXmlSerializable.WriteXml
+            With writer
+                Dim t As Type = Me.GetType
+
+                Dim elems As New Generic.List(Of Pair(Of String, Object))
+                Dim xmls As New Generic.List(Of Pair(Of String, String))
+
+                For Each de As DictionaryEntry In OrmSchema.GetProperties(t)
+                    Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                    Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                    If c IsNot Nothing AndAlso (OrmSchema.GetAttributes(t, c) And Field2DbRelations.Private) = 0 Then
+                        If IsLoaded Then
+                            Dim v As Object = pi.GetValue(Me, Nothing)
+                            Dim tt As Type = pi.PropertyType
+                            If v IsNot Nothing Then
+                                If GetType(OrmBase).IsAssignableFrom(tt) Then
+                                    .WriteAttributeString(c.FieldName, CType(v, OrmBase).Identifier.ToString)
+                                ElseIf tt.IsArray Then
+                                    elems.Add(New Pair(Of String, Object)(c.FieldName, pi.GetValue(Me, Nothing)))
+                                ElseIf tt Is GetType(XmlDocument) Then
+                                    xmls.Add(New Pair(Of String, String)(c.FieldName, CType(pi.GetValue(Me, Nothing), XmlDocument).OuterXml))
+                                Else
+                                    .WriteAttributeString(c.FieldName, Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture))
+                                End If
+                            End If
+                        ElseIf (OrmSchema.GetAttributes(t, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                            .WriteAttributeString(c.FieldName, pi.GetValue(Me, Nothing).ToString)
+                        End If
+                    End If
+                Next
+
+                For Each p As Pair(Of String, Object) In elems
+                    .WriteStartElement(p.First)
+                    .WriteValue(p.Second)
+                    .WriteEndElement()
+                Next
+
+                For Each p As Pair(Of String, String) In xmls
+                    .WriteStartElement(p.First)
+                    .WriteCData(p.Second)
+                    .WriteEndElement()
+                Next
+                '.WriteEndElement() 't.Name
+            End With
         End Sub
 
         Protected Sub ReadValue(ByVal fieldName As String, ByVal reader As XmlReader)
@@ -1305,51 +1604,6 @@ l1:
             End With
         End Sub
 
-        Public Overridable Sub WriteXml(ByVal writer As System.Xml.XmlWriter) Implements System.Xml.Serialization.IXmlSerializable.WriteXml
-            With writer
-                Dim t As Type = Me.GetType
-
-                Dim elems As New Generic.List(Of Pair(Of String, Object))
-                Dim xmls As New Generic.List(Of Pair(Of String, String))
-
-                For Each de As DictionaryEntry In OrmSchema.GetProperties(t)
-                    Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-                    Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                    If c IsNot Nothing AndAlso (OrmSchema.GetAttributes(t, c) And Field2DbRelations.Private) = 0 Then
-                        If IsLoaded Then
-                            Dim v As Object = pi.GetValue(Me, Nothing)
-                            Dim tt As Type = pi.PropertyType
-                            If v IsNot Nothing Then
-                                If GetType(OrmBase).IsAssignableFrom(tt) Then
-                                    .WriteAttributeString(c.FieldName, CType(v, OrmBase).Identifier.ToString)
-                                ElseIf tt.IsArray Then
-                                    elems.Add(New Pair(Of String, Object)(c.FieldName, pi.GetValue(Me, Nothing)))
-                                ElseIf tt Is GetType(XmlDocument) Then
-                                    xmls.Add(New Pair(Of String, String)(c.FieldName, CType(pi.GetValue(Me, Nothing), XmlDocument).OuterXml))
-                                Else
-                                    .WriteAttributeString(c.FieldName, Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture))
-                                End If
-                            End If
-                        ElseIf (OrmSchema.GetAttributes(t, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            .WriteAttributeString(c.FieldName, pi.GetValue(Me, Nothing).ToString)
-                        End If
-                    End If
-                Next
-
-                For Each p As Pair(Of String, Object) In elems
-                    .WriteStartElement(p.First)
-                    .WriteValue(p.Second)
-                    .WriteEndElement()
-                Next
-
-                For Each p As Pair(Of String, String) In xmls
-                    .WriteStartElement(p.First)
-                    .WriteCData(p.Second)
-                    .WriteEndElement()
-                Next
-                '.WriteEndElement() 't.Name
-            End With
-        End Sub
 
 #End Region
 
@@ -1399,63 +1653,63 @@ l1:
 
 #End Region
 
-#Region " Obsolete "
+        '#Region " Obsolete "
 
-        <Obsolete("Use M2M.Find")> _
-        Public Function Find(ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
-            Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
-            Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
-                New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
-            Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
-            Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
-        End Function
+        '        <Obsolete("Use M2M.Find")> _
+        '        Public Function Find(ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
+        '            Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
+        '            Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
+        '                New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
+        '            Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
+        '            Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
+        '        End Function
 
-        <Obsolete("Use M2M.Find")> _
-        Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
-            Return GetMgr.FindMany2Many2(Of T)(Me, criteria, sort, True, withLoad)
-        End Function
+        '        <Obsolete("Use M2M.Find")> _
+        '        Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
+        '            Return GetMgr.FindMany2Many2(Of T)(Me, criteria, sort, True, withLoad)
+        '        End Function
 
-        <Obsolete("Use M2M.Find")> _
-        Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
-            Return GetMgr.FindMany2Many2(Of T)(Me, criteria, sort, direct, withLoad)
-        End Function
+        '        <Obsolete("Use M2M.Find")> _
+        '        Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
+        '            Return GetMgr.FindMany2Many2(Of T)(Me, criteria, sort, direct, withLoad)
+        '        End Function
 
-        <Obsolete("Use M2M.Add")> _
-        Public Sub Add(ByVal obj As OrmBase)
-            GetMgr.M2MAdd(Me, obj, True)
-        End Sub
+        '        <Obsolete("Use M2M.Add")> _
+        '        Public Sub Add(ByVal obj As OrmBase)
+        '            GetMgr.M2MAdd(Me, obj, True)
+        '        End Sub
 
-        <Obsolete("Use M2M.Add")> _
-        Public Sub Add(ByVal obj As OrmBase, ByVal direct As Boolean)
-            GetMgr.M2MAdd(Me, obj, direct)
-        End Sub
+        '        <Obsolete("Use M2M.Add")> _
+        '        Public Sub Add(ByVal obj As OrmBase, ByVal direct As Boolean)
+        '            GetMgr.M2MAdd(Me, obj, direct)
+        '        End Sub
 
-        <Obsolete("Use M2M.Delete")> _
-        Public Sub Delete(ByVal t As Type)
-            GetMgr.M2MDelete(Me, t, True)
-        End Sub
+        '        <Obsolete("Use M2M.Delete")> _
+        '        Public Sub Delete(ByVal t As Type)
+        '            GetMgr.M2MDelete(Me, t, True)
+        '        End Sub
 
-        <Obsolete("Use M2M.Delete")> _
-        Public Sub Delete(ByVal t As Type, ByVal direct As Boolean)
-            GetMgr.M2MDelete(Me, t, direct)
-        End Sub
+        '        <Obsolete("Use M2M.Delete")> _
+        '        Public Sub Delete(ByVal t As Type, ByVal direct As Boolean)
+        '            GetMgr.M2MDelete(Me, t, direct)
+        '        End Sub
 
-        <Obsolete("Use M2M.Delete")> _
-        Public Sub Delete(ByVal obj As OrmBase)
-            GetMgr.M2MDelete(Me, obj, True)
-        End Sub
+        '        <Obsolete("Use M2M.Delete")> _
+        '        Public Sub Delete(ByVal obj As OrmBase)
+        '            GetMgr.M2MDelete(Me, obj, True)
+        '        End Sub
 
-        <Obsolete("Use M2M.Delete")> _
-        Public Sub Delete(ByVal obj As OrmBase, ByVal direct As Boolean)
-            GetMgr.M2MDelete(Me, obj, direct)
-        End Sub
+        '        <Obsolete("Use M2M.Delete")> _
+        '        Public Sub Delete(ByVal obj As OrmBase, ByVal direct As Boolean)
+        '            GetMgr.M2MDelete(Me, obj, direct)
+        '        End Sub
 
-        <Obsolete("Use M2M.Cancel")> _
-        Public Sub Cancel(ByVal t As Type)
-            GetMgr.M2MCancel(Me, t)
-        End Sub
+        '        <Obsolete("Use M2M.Cancel")> _
+        '        Public Sub Cancel(ByVal t As Type)
+        '            GetMgr.M2MCancel(Me, t)
+        '        End Sub
 
-#End Region
+        '#End Region
 
         Protected Friend MustOverride Sub CopyBodyInternal(ByVal [from] As OrmBase, ByVal [to] As OrmBase)
         Protected MustOverride Function CloneMe() As OrmBase
@@ -1538,29 +1792,6 @@ l1:
             End If
             Return Math.Sign(Identifier - other.Identifier)
         End Function
-
-        Public Overridable ReadOnly Property ChangeDescription() As String
-            Get
-                Dim sb As New StringBuilder
-                sb.Append("Аттрибуты:").Append(vbCrLf)
-                If ObjectState = Orm.ObjectState.Modified Then
-                    For Each c As ColumnAttribute In Changes(OriginalCopy)
-                        sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
-                    Next
-                Else
-                    Dim t As Type = Me.GetType
-                    'Dim o As OrmBase = CType(t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
-                    '    New Object() {Identifier, OrmCache, _schema}), OrmBase)
-                    'Dim o As OrmBase = GetNew()
-                    Dim o As OrmBase = CType(Activator.CreateInstance(t), OrmBase)
-                    o.Init(Identifier, OrmCache, OrmSchema)
-                    For Each c As ColumnAttribute In Changes(o)
-                        sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
-                    Next
-                End If
-                Return sb.ToString
-            End Get
-        End Property
 
         Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
             Dim o As OrmBase = CType(Activator.CreateInstance(Me.GetType), OrmBase)

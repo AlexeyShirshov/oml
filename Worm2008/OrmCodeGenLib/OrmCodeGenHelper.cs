@@ -10,14 +10,14 @@ namespace OrmCodeGenLib
     {
         public static CodeExpression GetFieldNameReferenceExpression(PropertyDescription propertyDesc)
         {
-            string className = OrmCodeGenNameHelper.GetEntityClassName(propertyDesc.Entity) + ".Properties";
+            string className = OrmCodeGenNameHelper.GetEntityClassName(propertyDesc.Entity, true) + ".Properties";
             return new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(className),
                                              propertyDesc.Name);
         }
 
         public static CodeExpression GetEntityNameReferenceExpression(EntityDescription entityDescription)
         {
-            string className = OrmCodeGenNameHelper.GetQualifiedEntityName(entityDescription) + ".Descriptor";
+            string className = OrmCodeGenNameHelper.GetEntityClassName(entityDescription, true) + ".Descriptor";
             return new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(className), "EntityName");
         }
 
