@@ -2950,8 +2950,8 @@ l1:
 
 #End Region
 
-    Public Function ApplyFilter(Of T As OrmBase)(ByVal col As ICollection(Of T), ByVal filter As IFilter, ByRef r As Boolean) As ICollection(Of T)
-        r = True
+    Public Function ApplyFilter(Of T As OrmBase)(ByVal col As ICollection(Of T), ByVal filter As IFilter, ByRef evaluated As Boolean) As ICollection(Of T)
+        evaluated = True
         Dim f As IEntityFilter = TryCast(filter, IEntityFilter)
         If f Is Nothing Then
             Return col
@@ -2970,7 +2970,7 @@ l1:
                             l.Add(o)
                         End If
                     Case IEvaluableValue.EvalResult.Unknown
-                        r = False
+                        evaluated = False
                         Exit For
                 End Select
                 If i >= (_start + _length) Then

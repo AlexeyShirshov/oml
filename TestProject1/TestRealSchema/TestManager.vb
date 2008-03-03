@@ -929,6 +929,10 @@ Public Class TestManagerRS
             Dim t2 As ICollection(Of Table2) = mgr.Find(Of Table2)(Criteria.Ctor.AutoTypeField("Table1").IsNull, Nothing, False)
 
             Assert.AreEqual(0, t2.Count)
+
+            Dim r As Boolean
+            Assert.AreEqual(1, mgr.ApplyFilter(t, Criteria.Ctor.AutoTypeField("XML").IsNull.Filter(gettype(table3)), r).Count)
+
         End Using
     End Sub
 
