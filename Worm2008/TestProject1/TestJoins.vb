@@ -6,6 +6,7 @@ Imports Worm.Database
 Imports Worm.Database.Criteria.Core
 Imports Worm.Criteria.Values
 Imports Worm.Criteria.Conditions
+Imports Worm.Criteria.Core
 
 <TestClass()> Public Class TestJoins
 
@@ -24,7 +25,7 @@ Imports Worm.Criteria.Conditions
 
         Assert.IsNull(j.Condition)
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         j.MakeSQLStmt(schema, Nothing, Nothing)
     End Sub
@@ -34,14 +35,14 @@ Imports Worm.Criteria.Conditions
         Dim j As New OrmJoin(New OrmTable("table1"), Worm.Criteria.Joins.JoinType.Join, _
             New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         j.MakeSQLStmt(schema, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt3()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim t As OrmTable = schema.GetTables(GetType(Entity))(0)
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, _
             New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
@@ -55,7 +56,7 @@ Imports Worm.Criteria.Conditions
         Dim t As New OrmTable("table1")
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(t)
         Dim pmgr As New ParamMgr(schema, "p")
@@ -67,7 +68,7 @@ Imports Worm.Criteria.Conditions
         Dim t As New OrmTable("table1")
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(t)
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
@@ -86,7 +87,7 @@ Imports Worm.Criteria.Conditions
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, _
             New EntityFilter(GetType(Entity), "ID", New LiteralValue("1"), Worm.Criteria.FilterOperation.Equal))
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(t)
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
@@ -107,7 +108,7 @@ Imports Worm.Criteria.Conditions
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, _
             New TableFilter(t2, "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(t)
         almgr.AddTable(t2)
@@ -134,9 +135,9 @@ Imports Worm.Criteria.Conditions
         Assert.AreEqual(cc.Condition, f)
 
         cc.AddFilter(New TableFilter(tbl, "s", New ScalarValue("1"), Worm.Criteria.FilterOperation.Equal))
-        Dim j As New OrmJoin(tbl, Worm.Criteria.Joins.JoinType.Join, CType(cc.Condition, IFilter))
+        Dim j As New OrmJoin(tbl, Worm.Criteria.Joins.JoinType.Join, CType(cc.Condition, Worm.Criteria.Core.IFilter))
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetTables(t)(0))
         almgr.AddTable(tbl)
@@ -165,7 +166,7 @@ Imports Worm.Criteria.Conditions
         Dim tbl As New OrmTable("table1")
         Dim j As New OrmJoin(tbl, Worm.Criteria.Joins.JoinType.FullJoin, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(tbl)
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
@@ -225,7 +226,7 @@ End Class
 
         Assert.AreEqual(1, c.GetAllFilters.Count)
 
-        c.MakeSQLStmt(Nothing, Nothing, Nothing)
+        c.MakeQueryStmt(Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -233,9 +234,9 @@ End Class
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
         Dim c As New Criteria.Conditions.Condition(f, Nothing, ConditionOperator.Or)
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
-        c.MakeSQLStmt(schema, Nothing, Nothing)
+        c.MakeQueryStmt(schema, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -243,10 +244,10 @@ End Class
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
         Dim c As New Criteria.Conditions.Condition(f, Nothing, ConditionOperator.Or)
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).GetTables(0))
-        c.MakeSQLStmt(schema, almgr, Nothing)
+        c.MakeQueryStmt(schema, almgr, Nothing)
     End Sub
 
     <TestMethod()> _
@@ -254,11 +255,11 @@ End Class
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
         Dim c As New Criteria.Conditions.Condition(f, Nothing, ConditionOperator.Or)
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).GetTables(0))
         Dim pmgr As New ParamMgr(schema, "p")
-        Assert.AreEqual("t1.id = @p1", c.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("t1.id = @p1", c.MakeQueryStmt(schema, almgr, pmgr))
     End Sub
 
     <TestMethod()> _
@@ -274,12 +275,12 @@ End Class
         Assert.AreEqual(f.ToString & " or " & f2.ToString, c.ToString)
         Assert.AreEqual(c, New Criteria.Conditions.Condition(f, f2, ConditionOperator.Or))
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).GetTables(0))
         almgr.AddTable(tbl)
         Dim pmgr As New ParamMgr(schema, "p")
-        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, almgr, pmgr))
     End Sub
 
     <TestMethod()> _
@@ -290,13 +291,13 @@ End Class
         Dim f2 As New TableFilter(tbl, "id", New ScalarValue(1), Worm.Criteria.FilterOperation.GreaterThan)
         Dim c As New Criteria.Conditions.Condition(f, f2, ConditionOperator.Or)
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).GetTables(0))
         almgr.AddTable(tbl)
         Dim pmgr As New ParamMgr(schema, "p")
 
-        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, almgr, pmgr))
 
         Dim f3 As New TableFilter(tbl, "id", New ScalarValue(10), Worm.Criteria.FilterOperation.NotEqual)
 
@@ -304,28 +305,28 @@ End Class
 
         Assert.AreNotEqual(c, c2)
 
-        Assert.AreEqual("(t1.id = @p1 or t2.id <> @p3)", c2.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.id <> @p3)", c2.MakeQueryStmt(schema, almgr, pmgr))
 
         Dim c3 As New Criteria.Conditions.Condition(c, f3, ConditionOperator.And)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and t2.id <> @p3)", c3.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and t2.id <> @p3)", c3.MakeQueryStmt(schema, almgr, pmgr))
 
         Dim c4 As IFilter = CType(c3.ReplaceFilter(f2, f3), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3)", c4.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3)", c4.MakeQueryStmt(schema, almgr, pmgr))
 
         Dim c5 As IFilter = CType(c3.ReplaceFilter(f3, c4), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and ((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3))", c5.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and ((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3))", c5.MakeQueryStmt(schema, almgr, pmgr))
 
         Dim c6 As IFilter = CType(c5.ReplaceFilter(f3, Nothing), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and (t1.id = @p1 or t2.id <> @p3))", c6.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and (t1.id = @p1 or t2.id <> @p3))", c6.MakeQueryStmt(schema, almgr, pmgr))
     End Sub
 
     <TestMethod()> _
     Public Sub TestReplace2()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim f As New JoinFilter(GetType(Entity), "ID", GetType(Entity2), "oqwef", Worm.Criteria.FilterOperation.Equal)
         Dim tbl As New OrmTable("table1")
         Dim ct As New Criteria.Conditions.Condition.ConditionConstructor
@@ -343,13 +344,13 @@ End Class
         Dim f2 As New EntityFilter(GetType(Entity4), "Title", New ScalarValue("alex"), Worm.Criteria.FilterOperation.Equal)
         Dim c As New Criteria.Conditions.Condition(f, f2, ConditionOperator.Or)
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).GetTables(0))
         almgr.AddTable(schema.GetObjectSchema(GetType(Entity4)).GetTables(0))
         Dim pmgr As New ParamMgr(schema, "p")
 
-        Assert.AreEqual("(t1.id = @p1 or t2.name = @p2)", c.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.name = @p2)", c.MakeQueryStmt(schema, almgr, pmgr))
     End Sub
 
 End Class
@@ -378,34 +379,34 @@ End Class
     Public Sub TestMakeSQLStmt()
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
 
-        f.MakeSQLStmt(Nothing, Nothing, Nothing)
+        f.MakeQueryStmt(Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt2()
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Dim e As New Entity(1, Nothing, schema)
 
         Assert.AreEqual(IEvaluableValue.EvalResult.Found, f.Eval(schema, e, Nothing))
         Assert.AreEqual(IEvaluableValue.EvalResult.NotFound, f.Eval(schema, New Entity(2, Nothing, schema), Nothing))
 
-        f.MakeSQLStmt(schema, Nothing, Nothing)
+        f.MakeQueryStmt(schema, Nothing, Nothing)
     End Sub
 
     <TestMethod()> _
     Public Sub TestMakeSQLStmt3()
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.GreaterEqualThan)
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetTables(GetType(Entity))(0))
         Dim pmgr As New ParamMgr(schema, "p")
 
-        Assert.AreEqual("t1.id >= @p1", f.MakeSQLStmt(schema, almgr, pmgr))
+        Assert.AreEqual("t1.id >= @p1", f.MakeQueryStmt(schema, almgr, pmgr))
         Assert.AreEqual(1, pmgr.Params.Count)
 
-        Dim p As Pair(Of String) = f.MakeSingleStmt(schema, pmgr)
+        Dim p As Pair(Of String) = f.MakeSingleQueryStmt(schema, almgr, pmgr)
 
         Assert.AreEqual("id", p.First)
         Assert.AreEqual("@p1", p.Second)
@@ -420,19 +421,19 @@ End Class
 
         Assert.AreEqual(1, f.GetAllFilters.Count)
 
-        f.MakeSingleStmt(Nothing, Nothing)
+        f.MakeSingleQueryStmt(Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt5()
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.GreaterEqualThan)
-        Dim schema As New DbSchema("1")
-        f.MakeSingleStmt(schema, Nothing)
+        Dim schema As New SQLGenerator("1")
+        f.MakeSingleQueryStmt(schema, Nothing, Nothing)
     End Sub
 
     <TestMethod()> _
     Public Sub TestReplace()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim t As Type = GetType(Entity)
         Dim f As New JoinFilter(schema.GetTables(t)(0), "ID", GetType(Entity2), "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
 
@@ -448,7 +449,7 @@ End Class
 
     <TestMethod()> _
     Public Sub TestReplace2()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim t As Type = GetType(Entity)
         Dim f As New JoinFilter(schema.GetTables(t)(0), "ID", GetType(Entity2), "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
 
@@ -464,7 +465,7 @@ End Class
 
     <TestMethod()> _
     Public Sub TestReplace3()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim t As Type = GetType(Entity)
         Dim f As New JoinFilter(schema.GetTables(t)(0), "ID", GetType(Entity2), "ID", Worm.Criteria.FilterOperation.GreaterEqualThan)
 
@@ -480,7 +481,7 @@ End Class
 
     <TestMethod()> _
     Public Sub TestMakeHash()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim t As Type = GetType(Entity)
 
         Dim f As New EntityFilter(t, "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
@@ -493,7 +494,7 @@ End Class
 
     <TestMethod()> _
     Public Sub TestMakeHash2()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
         Dim t As Type = GetType(Entity2)
 
         Dim f As New EntityFilter(t, "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)

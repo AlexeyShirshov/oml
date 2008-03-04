@@ -24,7 +24,7 @@ Imports Worm.Database
 
     <TestMethod()> _
     Public Sub TestGetParameter()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Dim pmgr As New ParamMgr(schema, "p")
 
@@ -43,7 +43,7 @@ Imports Worm.Database
 
     <TestMethod()> _
     Public Sub TestGetParameter2()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Dim pmgr As New ParamMgr(schema, "p")
 

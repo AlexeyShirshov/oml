@@ -40,11 +40,11 @@ Namespace Xml
                 Return New Condition(left, right, [operator])
             End Function
 
-            Public Overrides Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 If _right Is Nothing Then
-                    Return _left.MakeSQLStmt(schema, pname)
+                    Return _left.MakeQueryStmt(schema, almgr, pname)
                 End If
-                Return "(" & _left.MakeSQLStmt(schema, pname) & Condition2String() & _right.MakeSQLStmt(schema, pname) & ")"
+                Return "(" & _left.MakeQueryStmt(schema, almgr, pname) & Condition2String() & _right.MakeQueryStmt(schema, almgr, pname) & ")"
             End Function
 
             Public Overrides ReadOnly Property Template() As Worm.Criteria.Core.ITemplate
@@ -87,12 +87,12 @@ Namespace Xml
                 Return New Condition(CType(left, IFilter), CType(right, IFilter), [operator])
             End Function
 
-            Public Overrides Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 If _right Is Nothing Then
-                    Return CType(_left, IEntityFilter).MakeSQLStmt(schema, pname)
+                    Return CType(_left, IEntityFilter).MakeQueryStmt(schema, almgr, pname)
                 End If
 
-                Return "(" & CType(_left, IEntityFilter).MakeSQLStmt(schema, pname) & Condition2String() & CType(_right, IEntityFilter).MakeSQLStmt(schema, pname) & ")"
+                Return "(" & CType(_left, IEntityFilter).MakeQueryStmt(schema, almgr, pname) & Condition2String() & CType(_right, IEntityFilter).MakeQueryStmt(schema, almgr, pname) & ")"
             End Function
 
             Public Overrides ReadOnly Property Template() As Worm.Criteria.Core.ITemplate

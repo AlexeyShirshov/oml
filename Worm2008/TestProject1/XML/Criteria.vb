@@ -63,7 +63,7 @@ Imports Worm.Orm.Meta
     End Sub
 
     Public Shared Function CreateManager() As OrmManagerBase
-        Return New wx.QueryManager(New wx.XmlSchema("xml"), GetFileFromStream("data.xml"))
+        Return New wx.QueryManager(New wx.XPathGenerator("xml"), GetFileFromStream("data.xml"))
     End Function
 
     Public Shared Function GetFileFromStream(ByVal file As String) As IO.Stream

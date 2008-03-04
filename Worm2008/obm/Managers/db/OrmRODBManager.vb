@@ -457,12 +457,12 @@ Namespace Database
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
 
-        Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As DbSchema, ByVal connectionString As String)
+        Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, schema)
             _connStr = connectionString
         End Sub
 
-        Protected Sub New(ByVal schema As DbSchema, ByVal connectionString As String)
+        Protected Sub New(ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(schema)
 
             _connStr = connectionString
@@ -483,9 +483,9 @@ Namespace Database
             End Get
         End Property
 
-        Public ReadOnly Property DbSchema() As DbSchema
+        Public ReadOnly Property DbSchema() As SQLGenerator
             Get
-                Return CType(_schema, DbSchema)
+                Return CType(_schema, SQLGenerator)
             End Get
         End Property
 
@@ -593,7 +593,7 @@ Namespace Database
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, CType(filter, Criteria.Core.IFilter), sort, key, id)
+            Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, CType(filter, IFilter), sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal filter As IFilter, _
@@ -626,7 +626,7 @@ Namespace Database
             If Not has_id Then
                 l.Add(DbSchema.GetColumnByFieldName(GetType(T), "ID"))
             End If
-            Return New FilterCustDelegate(Of T)(Me, CType(filter, Criteria.Core.IFilter), l, sort, key, id)
+            Return New FilterCustDelegate(Of T)(Me, CType(filter, IFilter), l, sort, key, id)
         End Function
 
         'Protected Overrides Function GetCustDelegate4Top(Of T As {New, OrmBase})(ByVal top As Integer, ByVal filter As IOrmFilter, _
@@ -637,7 +637,7 @@ Namespace Database
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
             ByVal obj As OrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
-            Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, Criteria.Core.IFilter), sort, id, key, direct)
+            Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, id, key, direct)
         End Function
 
         'Protected Overrides Function GetCustDelegateTag(Of T As {New, OrmBase})( _
@@ -1008,7 +1008,7 @@ Namespace Database
                 Dim appendMainTable As Boolean = f IsNot Nothing OrElse oschema2.GetFilter(GetFilterInfo) IsNot Nothing
                 sb.Append(DbSchema.SelectM2M(type2load, type, appendMainTable, True, GetFilterInfo, params, almgr, withLoad, direct))
 
-                If Not DbSchema.AppendWhere(type2load, CType(f, Criteria.Core.IFilter), almgr, sb, GetFilterInfo, params) Then
+                If Not DbSchema.AppendWhere(type2load, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
                     sb.Append(" where 1=1 ")
                 End If
 
@@ -1102,7 +1102,7 @@ Namespace Database
                 sb.Append(DbSchema.SelectID(original_type, almgr, params, GetFilterInfo))
             End If
 
-            If Not DbSchema.AppendWhere(original_type, CType(f, Criteria.Core.IFilter), almgr, sb, GetFilterInfo, params) Then
+            If Not DbSchema.AppendWhere(original_type, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
 
@@ -1163,7 +1163,7 @@ Namespace Database
                 sb.Append(DbSchema.SelectID(original_type, almgr, params, GetFilterInfo))
             End If
 
-            If Not DbSchema.AppendWhere(original_type, CType(f, Criteria.Core.IFilter), almgr, sb, GetFilterInfo, params) Then
+            If Not DbSchema.AppendWhere(original_type, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
 
@@ -1816,12 +1816,12 @@ Namespace Database
                     con.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, fieldName, New ScalarValue(p.First), Worm.Criteria.FilterOperation.GreaterEqualThan))
                     con.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, fieldName, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.LessEqualThan))
                     Dim bf As IFilter = con.Condition
-                    Dim f As Worm.Database.Criteria.Core.IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
-                    If f IsNot Nothing Then
-                        sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
-                    Else
-                        sb.Append(bf.MakeSQLStmt(DbSchema, params))
-                    End If
+                    'Dim f As IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
+                    'If f IsNot Nothing Then
+                    sb.Append(bf.MakeQueryStmt(DbSchema, almgr, params))
+                    'Else
+                    'sb.Append(bf.MakeSQLStmt(DbSchema, params))
+                    'End If
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
                         sb.Length = 0
@@ -1841,7 +1841,7 @@ Namespace Database
                             sb2.Append(")")
                             Dim f As New Database.Criteria.Core.EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
-                            sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
+                            sb.Append(f.MakeQueryStmt(DbSchema, almgr, params))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1854,7 +1854,7 @@ Namespace Database
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New Database.Criteria.Core.EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
-                        sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
+                        sb.Append(f.MakeQueryStmt(DbSchema, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1889,12 +1889,12 @@ Namespace Database
                     con.AddFilter(New Database.Criteria.Core.TableFilter(table, column, New ScalarValue(p.First), Worm.Criteria.FilterOperation.GreaterEqualThan))
                     con.AddFilter(New Database.Criteria.Core.TableFilter(table, column, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.LessEqualThan))
                     Dim bf As IFilter = con.Condition
-                    Dim f As Worm.Database.Criteria.Core.IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
-                    If f IsNot Nothing Then
-                        sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
-                    Else
-                        sb.Append(bf.MakeSQLStmt(DbSchema, params))
-                    End If
+                    'Dim f As Worm.Database.Criteria.Core.IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
+                    'If f IsNot Nothing Then
+                    sb.Append(bf.MakeQueryStmt(DbSchema, almgr, params))
+                    'Else
+                    'sb.Append(bf.MakeSQLStmt(DbSchema, params))
+                    'End If
                     If sb.Length > DbSchema.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
                         sb.Length = 0
@@ -1914,7 +1914,7 @@ Namespace Database
                             sb2.Append(")")
                             Dim f As New Database.Criteria.Core.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
-                            sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
+                            sb.Append(f.MakeQueryStmt(DbSchema, almgr, params))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1927,7 +1927,7 @@ Namespace Database
                         sb2.Length -= 1
                         sb2.Append(")")
                         Dim f As New Database.Criteria.Core.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
-                        sb.Append(f.MakeSQLStmt(DbSchema, almgr, params))
+                        sb.Append(f.MakeQueryStmt(DbSchema, almgr, params))
 
                         sb.Insert(0, " and (")
                         l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -1973,7 +1973,7 @@ Namespace Database
                     .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, frmt, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
                         Integer.MinValue, _
-                        "containstable", sort, appendMain, CType(filter, Criteria.Core.IFilter), contextKey, _
+                        "containstable", sort, appendMain, CType(filter, IFilter), contextKey, _
                          selSchema, searchSchema)
                     params.AppendParams(.Parameters)
                 End With
@@ -1996,7 +1996,7 @@ Namespace Database
                         Dim params As New ParamMgr(DbSchema, "p")
                         .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, frmt, fields, _
                             GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, 500, _
-                            "freetexttable", sort, appendMain, CType(filter, Criteria.Core.IFilter), _
+                            "freetexttable", sort, appendMain, CType(filter, IFilter), _
                             contextKey, selSchema, searchSchema)
                         params.AppendParams(.Parameters)
                     End With
@@ -2256,7 +2256,7 @@ l2:
                 For Each f As IFilter In filter.GetAllFilters
                     Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
                     If ef IsNot Nothing Then
-                        Dim type2join As System.Type = CType(ef.GetFilterTemplate, OrmFilterTemplate).Type
+                        Dim type2join As System.Type = CType(ef.GetFilterTemplate, OrmFilterTemplateBase).Type
                         If type2join Is Nothing Then
                             Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                         End If
@@ -2338,7 +2338,7 @@ l2:
                     Dim params As New ParamMgr(DbSchema, "p")
                     .CommandText = DbSchema.MakeSearchStatement(type2search, selectType, fts, fields, _
                         GetSearchSection, joins, SortType.Desc, params, GetFilterInfo, queryFields, _
-                        limit, ftsText, sort, appendMain, CType(filter, Criteria.Core.IFilter), contextkey, selSchema, searchSchema)
+                        limit, ftsText, sort, appendMain, CType(filter, IFilter), contextkey, selSchema, searchSchema)
                     params.AppendParams(.Parameters)
                 End With
 
@@ -2372,7 +2372,7 @@ l2:
             Invariant()
             Dim params As New ParamMgr(DbSchema, "p")
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
-                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, CType(filter, Criteria.Core.IFilter), GetFilterInfo)
+                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), GetFilterInfo)
                 cmd.CommandType = System.Data.CommandType.Text
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)

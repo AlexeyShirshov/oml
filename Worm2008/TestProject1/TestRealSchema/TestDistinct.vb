@@ -13,7 +13,7 @@ Public Class TestDistinct
 
     <TestMethod()> _
     Public Sub TestSelect()
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tbl As OrmTable = s.GetTables(GetType(Tables1to3))(0)
             Dim f As New JoinFilter(tbl, "table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal)
@@ -30,7 +30,7 @@ Public Class TestDistinct
 
     <TestMethod()> _
     Public Sub TestJoin()
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
             Dim t As Type = GetType(Table2)
@@ -60,7 +60,7 @@ Public Class TestDistinct
 
     <TestMethod()> _
     Public Sub TestJoin2()
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
 
@@ -73,7 +73,7 @@ Public Class TestDistinct
 
     <TestMethod()> _
     Public Sub TestJoin3()
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
 
@@ -85,7 +85,7 @@ Public Class TestDistinct
 
     <TestMethod()> _
     Public Sub TestSelect2()
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim t As Type = s.GetTypeByEntityName("Table3")
             Dim c As ICollection(Of Table1) = mgr.FindDistinct(Of Table1)(s.GetM2MRelation(GetType(Table1), _
@@ -97,7 +97,7 @@ Public Class TestDistinct
 
     <TestMethod()> _
     Public Sub TestSelect3()
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             'Dim tbl As String = "dbo.tables1to3relation"
             Dim t As Type = s.GetTypeByEntityName("Table3")
@@ -116,7 +116,7 @@ Public Class TestDistinct
 
     <TestMethod()> _
     Public Sub TestSelect4()
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim t As Type = s.GetTypeByEntityName("Table3")
             Dim c As ICollection(Of Table1) = mgr.FindDistinct(Of Table1)(s.GetM2MRelation(GetType(Table1), _
@@ -128,7 +128,7 @@ Public Class TestDistinct
 
     <TestMethod()> _
     Public Sub TestSelect5()
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tbl As OrmTable = s.GetTables(GetType(Tables1to3))(0)
             Dim f As New JoinFilter(tbl, "table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal)

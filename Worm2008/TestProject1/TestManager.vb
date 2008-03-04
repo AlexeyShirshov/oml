@@ -9,21 +9,21 @@ Imports Worm.Orm
 
     Private _schemas As New System.Collections.Hashtable
 
-    Protected Function GetSchema(ByVal v As String) As DbSchema
-        Dim s As DbSchema = CType(_schemas(v), DbSchema)
+    Protected Function GetSchema(ByVal v As String) As SQLGenerator
+        Dim s As SQLGenerator = CType(_schemas(v), SQLGenerator)
         If s Is Nothing Then
-            s = New DbSchema(v)
+            s = New SQLGenerator(v)
             _schemas.Add(v, s)
         End If
         Return s
     End Function
 
-    Public Shared Function CreateManager(ByVal schema As DbSchema) As OrmReadOnlyDBManager
+    Public Shared Function CreateManager(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
         Return New OrmReadOnlyDBManager(New OrmCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
     End Function
 
-    Public Shared Function CreateWriteManager(ByVal schema As DbSchema) As OrmDBManager
+    Public Shared Function CreateWriteManager(ByVal schema As SQLGenerator) As OrmDBManager
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
         Return New OrmDBManager(New OrmCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
     End Function

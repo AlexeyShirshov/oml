@@ -106,7 +106,7 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface IOrmSchemaInit
-        Sub GetSchema(ByVal schema As OrmSchemaBase, ByVal t As Type)
+        Sub GetSchema(ByVal schema As QueryGenerator, ByVal t As Type)
     End Interface
 
     Public Interface ICacheBehavior
@@ -282,7 +282,7 @@ Namespace Orm.Meta
 
         Friend Sub New(ByVal t As Type, ByVal table As String, ByVal cols As ICollection(Of ColumnAttribute), ByVal pk As String)
             If String.IsNullOrEmpty(pk) Then
-                Throw New DBSchemaException(String.Format("Primary key required for {0}", t))
+                Throw New OrmSchemaException(String.Format("Primary key required for {0}", t))
             End If
 
             'If tables IsNot Nothing Then
@@ -300,14 +300,14 @@ Namespace Orm.Meta
 
             For Each c As ColumnAttribute In cols
                 If String.IsNullOrEmpty(c.FieldName) Then
-                    Throw New DBSchemaException(String.Format("Cann't create schema for entity {0}", t))
+                    Throw New OrmSchemaException(String.Format("Cann't create schema for entity {0}", t))
                 End If
 
                 If String.IsNullOrEmpty(c.Column) Then
                     If c.FieldName = "ID" Then
                         c.Column = pk
                     Else
-                        Throw New DBSchemaException(String.Format("Column for property {0} entity {1} is undefined", c.FieldName, t))
+                        Throw New OrmSchemaException(String.Format("Column for property {0} entity {1} is undefined", c.FieldName, t))
                     End If
                 End If
 
@@ -392,7 +392,7 @@ Namespace Orm.Query
 
         Public MustOverride Function GetStaticKey() As String
         Public MustOverride Function GetDynamicKey() As String
-        Public MustOverride Function MakeStmt(ByVal s As OrmSchemaBase) As String
+        Public MustOverride Function MakeStmt(ByVal s As QueryGenerator) As String
 
         Public Sub New(ByVal type As AspectType)
             _type = type
@@ -414,7 +414,7 @@ Namespace Orm.Query
             Return "distinct"
         End Function
 
-        Public Overrides Function MakeStmt(ByVal s As OrmSchemaBase) As String
+        Public Overrides Function MakeStmt(ByVal s As QueryGenerator) As String
             Return "distinct "
         End Function
     End Class
@@ -468,8 +468,8 @@ Namespace Database
             MyBase.New(top, sort)
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal s As OrmSchemaBase) As String
-            Return CType(s, DbSchema).TopStatement(Top)
+        Public Overrides Function MakeStmt(ByVal s As QueryGenerator) As String
+            Return CType(s, SQLGenerator).TopStatement(Top)
         End Function
     End Class
 

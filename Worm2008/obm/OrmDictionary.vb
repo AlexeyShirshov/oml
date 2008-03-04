@@ -236,7 +236,7 @@ Namespace Orm
 
         Private Function FindObjects(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As Generic.ICollection(Of T)
             Dim col As Generic.ICollection(Of T)
-            Dim s As OrmSchemaBase = mgr.ObjectSchema
+            Dim s As QueryGenerator = mgr.ObjectSchema
             If strong Then
                 If loadName Then
                     col = mgr.Find(Of T)(s.CreateCriteria(tt).Field(field).Eq(Name), Nothing, New String() {field})

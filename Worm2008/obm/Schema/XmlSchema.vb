@@ -4,8 +4,8 @@ Imports Worm.Orm.Meta
 Imports Worm.Criteria.Core
 
 Namespace Xml
-    Public Class XmlSchema
-        Inherits OrmSchemaBase
+    Public Class XPathGenerator
+        Inherits QueryGenerator
 
         Public Sub New(ByVal version As String)
             MyBase.New(version)
@@ -65,7 +65,7 @@ Namespace Xml
             If Not con.IsEmpty Then
                 Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = con.Condition
-                sb.Append("[").Append(bf.MakeSQLStmt(Me, Nothing)).Append("]")
+                sb.Append("[").Append(bf.MakeQueryStmt(Me, Nothing, Nothing)).Append("]")
                 Return True
             End If
             Return False

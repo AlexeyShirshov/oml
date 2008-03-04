@@ -17,10 +17,10 @@ Public Class TestManagerRS
     Implements Worm.OrmManagerBase.INewObjects
 
     Private _schemas As New Collections.Hashtable
-    Public Function GetSchema(ByVal v As String) As DbSchema
-        Dim s As DbSchema = CType(_schemas(v), DbSchema)
+    Public Function GetSchema(ByVal v As String) As SQLGenerator
+        Dim s As SQLGenerator = CType(_schemas(v), SQLGenerator)
         If s Is Nothing Then
-            s = New DbSchema(v)
+            s = New SQLGenerator(v)
             _schemas.Add(v, s)
         End If
         Return s
@@ -38,16 +38,16 @@ Public Class TestManagerRS
         End If
     End Function
 
-    Public Shared Function CreateManagerSharedFullText(ByVal schema As DbSchema) As OrmReadOnlyDBManager
+    Public Shared Function CreateManagerSharedFullText(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
         Return New OrmDBManager(New OrmCache, schema, My.Settings.FullTextEnabledConn)
     End Function
 
-    Public Shared Function CreateManagerShared(ByVal schema As DbSchema) As OrmReadOnlyDBManager
+    Public Shared Function CreateManagerShared(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmDBManager(New OrmCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
     End Function
 
-    Public Function CreateManager(ByVal schema As DbSchema) As OrmReadOnlyDBManager
+    Public Function CreateManager(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
         Dim mgr As New OrmDBManager(GetCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
         mgr.NewObjectManager = Me
@@ -314,7 +314,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestDeleteFromCache()
-        Dim schema As DbSchema = GetSchema("1")
+        Dim schema As SQLGenerator = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
@@ -344,7 +344,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestComplexM2M()
-        Dim schema As DbSchema = GetSchema("1")
+        Dim schema As SQLGenerator = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -380,7 +380,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestComplexM2M2()
-        Dim schema As DbSchema = GetSchema("1")
+        Dim schema As SQLGenerator = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -414,7 +414,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestComplexM2M3()
-        Dim schema As DbSchema = GetSchema("1")
+        Dim schema As SQLGenerator = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -445,7 +445,7 @@ Public Class TestManagerRS
 
     <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
     Public Sub TestComplexM2M4()
-        Dim schema As DbSchema = GetSchema("1")
+        Dim schema As SQLGenerator = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -467,7 +467,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestComplexM2M5()
-        Dim schema As DbSchema = GetSchema("1")
+        Dim schema As SQLGenerator = GetSchema("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -1016,7 +1016,7 @@ Public Class TestManagerRS
             Dim c As New Conditions.Condition.ConditionConstructor
             c.AddFilter(New JoinFilter(tt2, "Table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal))
             c.AddFilter(New EntityFilter(GetType(Table1), "Code", New ScalarValue(45), Worm.Criteria.FilterOperation.Equal))
-            Dim f As IFilter = CType(c.Condition, IFilter)
+            Dim f As Worm.Criteria.Core.IFilter = CType(c.Condition, Worm.Criteria.Core.IFilter)
 
             t = mgr.Find(Of Table2)(Criteria.Ctor.NotExists( _
                 GetType(Table1), f), Nothing, False)

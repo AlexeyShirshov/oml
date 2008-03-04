@@ -10,7 +10,7 @@ Imports Worm.Orm
 <TestClass()> _
 Public Class TestSchema
 
-    Public Shared Function CreateManager(ByVal schema As DbSchema) As OrmReadOnlyDBManager
+    Public Shared Function CreateManager(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmReadOnlyDBManager(New OrmCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
     End Function
@@ -27,7 +27,7 @@ Public Class TestSchema
     <TestMethod()> _
     Public Sub TestLoadTable1()
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
@@ -43,7 +43,7 @@ Public Class TestSchema
     <TestMethod()> _
     Public Sub TestLoadTable2()
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
@@ -75,7 +75,7 @@ Public Class TestSchema
     <TestMethod()> _
     Public Sub TestLoadTable3()
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
@@ -92,7 +92,7 @@ Public Class TestSchema
     <TestMethod()> _
     Public Sub TestLoadTable4()
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
@@ -112,7 +112,7 @@ Public Class TestSchema
 
     <TestMethod()> _
     Public Sub TestLoadObjects()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.ObjectSchema), New Table1(11, mgr.Cache, mgr.ObjectSchema), New Table1(15, mgr.Cache, mgr.ObjectSchema)}
@@ -127,7 +127,7 @@ Public Class TestSchema
 
     <TestMethod()> _
     Public Sub TestLoadObjects2()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim l As New List(Of Integer)
@@ -144,7 +144,7 @@ Public Class TestSchema
 
     <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
     Public Sub TestOrderWrong()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t2 As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Sorting.Field("DT").Asc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
@@ -161,7 +161,7 @@ Public Class TestSchema
 
     <TestMethod()> _
     Public Sub TestOrder()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field("DT").Asc, False), IList(Of Table1))
@@ -182,7 +182,7 @@ Public Class TestSchema
 
     <TestMethod()> _
     Public Sub TestOrder2()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(10, Nothing, Sorting.Field("DT").Asc, True), IList(Of Table1))
@@ -196,7 +196,7 @@ Public Class TestSchema
 
     <TestMethod()> _
     Public Sub TestOrder3()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t2 As IList(Of Table1) = CType(mgr.FindTop(Of Table1)(2, Nothing, Sorting.Field("DT").Asc, True), IList(Of Table1))
@@ -217,7 +217,7 @@ Public Class TestSchema
 
     <TestMethod()> _
     Public Sub TestOrderComposite()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As IList(Of Table1) = CType( _
@@ -240,7 +240,7 @@ Public Class TestSchema
 
     <TestMethod()> _
     Public Sub TestOrderCustom()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim t1 As IList(Of Table1) = CType( _

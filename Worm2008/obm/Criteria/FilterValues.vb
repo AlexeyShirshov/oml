@@ -15,7 +15,7 @@ Namespace Criteria.Values
 
     Public Interface IParamFilterValue
         Inherits IFilterValue
-        Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
+        Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
     End Interface
 
     Public Interface IEvaluableValue
@@ -28,7 +28,7 @@ Namespace Criteria.Values
         End Enum
 
         ReadOnly Property Value() As Object
-        Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As EvalResult
+        Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplateBase) As EvalResult
     End Interface
 
     Public Class ScalarValue
@@ -55,7 +55,7 @@ Namespace Criteria.Values
             _case = caseSensitive
         End Sub
 
-        Public Overridable Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IEvaluableValue.GetParam
+        Public Overridable Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IEvaluableValue.GetParam
             Dim v As Object = _v
             If f IsNot Nothing Then
                 v = f.PrepareValue(schema, v)
@@ -114,12 +114,12 @@ Namespace Criteria.Values
             _v = v
         End Sub
 
-        Protected Overridable Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplate, ByRef r As IEvaluableValue.EvalResult) As Object
+        Protected Overridable Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplateBase, ByRef r As IEvaluableValue.EvalResult) As Object
             r = IEvaluableValue.EvalResult.Unknown
             Return Value
         End Function
 
-        Public Overridable Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
+        Public Overridable Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplateBase) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
             Dim r As IEvaluableValue.EvalResult
 
             Dim val As Object = GetValue(v, template, r)
@@ -212,7 +212,7 @@ Namespace Criteria.Values
             _pname = literal
         End Sub
 
-        Public Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IParamFilterValue.GetParam
+        Public Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IParamFilterValue.GetParam
             Return _pname
         End Function
 
@@ -229,7 +229,7 @@ Namespace Criteria.Values
             MyBase.New("null")
         End Sub
 
-        Public Function Eval(ByVal v As Object, ByVal template As Core.OrmFilterTemplate) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
+        Public Function Eval(ByVal v As Object, ByVal template As Core.OrmFilterTemplateBase) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
             If template.Operation = FilterOperation.Is Then
                 If v Is Nothing Then
                     Return IEvaluableValue.EvalResult.Found
@@ -284,7 +284,7 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Protected Overrides Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplate, ByRef r As IEvaluableValue.EvalResult) As Object
+        Protected Overrides Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplateBase, ByRef r As IEvaluableValue.EvalResult) As Object
             r = IEvaluableValue.EvalResult.Unknown
             Dim tt As Type = v.GetType
             Dim orm As OrmBase = TryCast(v, OrmBase)
@@ -343,7 +343,7 @@ Namespace Criteria.Values
             Return _str
         End Function
 
-        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult
+        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplateBase) As IEvaluableValue.EvalResult
             Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
 
             'Dim val As Object = GetValue(v, template, r)
@@ -381,7 +381,7 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Overrides Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
+        Public Overrides Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
             Dim sb As New StringBuilder
             Dim idx As Integer
             For Each o As Object In Value
@@ -434,7 +434,7 @@ Namespace Criteria.Values
             End If
         End Sub
 
-        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplate) As IEvaluableValue.EvalResult
+        Public Overrides Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplateBase) As IEvaluableValue.EvalResult
             Dim r As IEvaluableValue.EvalResult
 
             Dim val As Object = GetValue(v, template, r)
@@ -460,7 +460,7 @@ Namespace Criteria.Values
             Return r
         End Function
 
-        Public Overrides Function GetParam(ByVal schema As OrmSchemaBase, ByVal paramMgr As ICreateParam, _
+        Public Overrides Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, _
             ByVal f As IEntityFilter) As String
 
             If paramMgr Is Nothing Then
@@ -495,7 +495,7 @@ Namespace Database
     Namespace Criteria.Values
         Public Interface IDatabaseFilterValue
             Inherits Worm.Criteria.Values.IFilterValue
-            Function GetParam(ByVal schema As DbSchema, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String
+            Function GetParam(ByVal schema As SQLGenerator, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String
         End Interface
 
         Public Class SubQuery
@@ -503,20 +503,20 @@ Namespace Database
 
             Private _t As Type
             Private _tbl As OrmTable
-            Private _f As Worm.Database.Criteria.Core.IFilter
+            Private _f As IFilter
             Private _field As String
 
-            Public Sub New(ByVal t As Type, ByVal f As Worm.Database.Criteria.Core.IFilter)
+            Public Sub New(ByVal t As Type, ByVal f As IFilter)
                 _t = t
                 _f = f
             End Sub
 
-            Public Sub New(ByVal table As OrmTable, ByVal f As Worm.Database.Criteria.Core.IFilter)
+            Public Sub New(ByVal table As OrmTable, ByVal f As IFilter)
                 _tbl = table
                 _f = f
             End Sub
 
-            Public Sub New(ByVal t As Type, ByVal f As Worm.Database.Criteria.Core.IEntityFilter, ByVal field As String)
+            Public Sub New(ByVal t As Type, ByVal f As IEntityFilter, ByVal field As String)
                 '_tbl = CType(OrmManagerBase.CurrentManager.ObjectSchema.GetObjectSchema(t), IOrmObjectSchema).GetTables(0)
                 _t = t
                 _f = f
@@ -539,7 +539,7 @@ Namespace Database
                 Return r
             End Function
 
-            Public Function GetParam(ByVal dbschema As DbSchema, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
+            Public Function GetParam(ByVal dbschema As SQLGenerator, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
                 Dim sb As New StringBuilder
                 'Dim dbschema As DbSchema = CType(schema, DbSchema)
                 sb.Append("(")

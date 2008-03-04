@@ -11,7 +11,7 @@ Public Class TestReject
 
     <TestMethod()> _
     Public Sub TestAdd()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As New Table2(-100, mgr.Cache, mgr.ObjectSchema)
 
             mgr.BeginTransaction()
@@ -32,7 +32,7 @@ Public Class TestReject
 
     <TestMethod()> _
     Public Sub TestAdd2()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As New Table2(-100, mgr.Cache, mgr.ObjectSchema)
 
             mgr.BeginTransaction()
@@ -57,7 +57,7 @@ Public Class TestReject
 
     <TestMethod()> _
     Public Sub TestDelete()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As Table1 = mgr.Find(Of Table1)(3)
 
             mgr.BeginTransaction()
@@ -78,7 +78,7 @@ Public Class TestReject
 
     <TestMethod()> _
     Public Sub TestDelete2()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As Table1 = mgr.Find(Of Table1)(3)
 
             mgr.BeginTransaction()
@@ -103,7 +103,7 @@ Public Class TestReject
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestSaver()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t2 As Table1 = mgr.Find(Of Table1)(1)
             Dim t1 As New Table2(-100, mgr.Cache, mgr.ObjectSchema)
 
@@ -131,7 +131,7 @@ Public Class TestReject
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestUpdate()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As New Table2(-100, mgr.Cache, mgr.ObjectSchema)
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
             mgr.BeginTransaction()
@@ -157,7 +157,7 @@ Public Class TestReject
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestUpdate2()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As Table3 = mgr.Find(Of Table3)(1)
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
             mgr.BeginTransaction()
@@ -190,7 +190,7 @@ Public Class TestReject
 
     <TestMethod()> _
     Public Sub TestUpdate3()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As Table3 = mgr.Find(Of Table3)(1)
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
             mgr.BeginTransaction()

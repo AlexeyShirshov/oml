@@ -254,8 +254,8 @@ Namespace Sorting
             End Set
         End Property
 
-        Public Function GetCustomExpressionValues(ByVal schema As OrmSchemaBase, ByVal aliases As IDictionary(Of OrmTable, String)) As String()
-            Return ExtractValues(schema, aliases, _values).ToArray
+        Public Function GetCustomExpressionValues(ByVal schema As QueryGenerator, ByVal aliases As IDictionary(Of OrmTable, String)) As String()
+            Return schema.ExtractValues(schema, aliases, _values).ToArray
         End Function
 
         Public Property Type() As Type
@@ -358,62 +358,6 @@ Namespace Sorting
                 Return _prev
             End Get
         End Property
-
-        Public Shared Function ExtractValues(ByVal schema As OrmSchemaBase, ByVal tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String), _
-                ByVal _values() As Pair(Of Object, String)) As List(Of String)
-            Dim [alias] As String = String.Empty
-            Dim values As New List(Of String)
-            Dim lastt As Type = Nothing
-            For Each p As Pair(Of Object, String) In _values
-                Dim o As Object = p.First
-                If o Is Nothing Then
-                    Throw New NullReferenceException
-                End If
-
-                If TypeOf o Is Type Then
-                    Dim t As Type = CType(o, Type)
-                    If Not GetType(OrmBase).IsAssignableFrom(t) Then
-                        Throw New NotSupportedException(String.Format("Type {0} is not assignable from OrmBase", t))
-                    End If
-                    lastt = t
-
-                    Dim oschema As IOrmObjectSchema = CType(schema.GetObjectSchema(t), IOrmObjectSchema)
-                    Dim tbl As OrmTable = Nothing
-                    Dim map As MapField2Column = Nothing
-                    Dim fld As String = p.Second
-                    If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
-                        fld = map._columnName
-                        tbl = map._tableName
-                    Else
-                        tbl = oschema.GetTables(0)
-                    End If
-
-                    If tableAliases IsNot Nothing Then
-                        [alias] = tableAliases(tbl)
-                    End If
-                    If Not String.IsNullOrEmpty([alias]) Then
-                        values.Add([alias] & "." & fld)
-                    Else
-                        values.Add(fld)
-                    End If
-                ElseIf TypeOf o Is OrmTable Then
-                    Dim tbl As OrmTable = CType(o, OrmTable)
-                    If tableAliases IsNot Nothing Then
-                        [alias] = tableAliases(tbl)
-                    End If
-                    If Not String.IsNullOrEmpty([alias]) Then
-                        values.Add([alias] & "." & p.Second)
-                    Else
-                        values.Add(p.Second)
-                    End If
-                ElseIf o Is Nothing Then
-                    values.Add(p.Second)
-                Else
-                    Throw New NotSupportedException(String.Format("Type {0} is not supported", o.GetType))
-                End If
-            Next
-            Return values
-        End Function
     End Class
 
     Public Class OrmComparer(Of T As {OrmBase})
@@ -525,7 +469,7 @@ Namespace Sorting
         Private Function GetValue(ByVal x As T, ByVal s As Sort, ByRef oschema As IOrmObjectSchemaBase) As Object
             Dim xo As OrmBase = x
             If s.Type IsNot Nothing AndAlso _t IsNot s.Type Then
-                Dim schema As OrmSchemaBase = _mgr.ObjectSchema
+                Dim schema As QueryGenerator = _mgr.ObjectSchema
                 If _getobj IsNot Nothing Then
                     xo = _getobj(x, s.Type)
                 Else

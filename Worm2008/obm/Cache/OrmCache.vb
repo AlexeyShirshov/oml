@@ -152,7 +152,7 @@ Namespace Cache
             Private _default As New List(Of String)
 
             Public Function GetIds(ByVal hash As String) As List(Of String)
-                If hash = EntityFilter.EmptyHash Then
+                If hash = EntityFilterBase.EmptyHash Then
                     Return _default
                 Else
                     Dim h As List(Of String) = Nothing
@@ -182,7 +182,7 @@ Namespace Cache
                 If f IsNot Nothing Then
                     Return p.First.GetIds(f.MakeHash)
                 Else
-                    Return p.First.GetIds(EntityFilter.EmptyHash)
+                    Return p.First.GetIds(EntityFilterBase.EmptyHash)
                 End If
             End Function
         End Class
@@ -390,9 +390,9 @@ Namespace Cache
 
         Public MustOverride Function CreateResultsetsDictionary() As IDictionary
 
-        Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As OrmSchemaBase) As System.Collections.IDictionary
+        Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As QueryGenerator) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As OrmSchemaBase) As System.Collections.Generic.IDictionary(Of Integer, T)
+        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Integer, T)
 
         Public Overridable Sub RegisterCreation(ByVal t As Type, ByVal id As Integer)
             RaiseEvent RegisterObjectCreation(t, id)
@@ -736,7 +736,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Sub UpdateCache(ByVal schema As OrmSchemaBase, _
+        Protected Friend Sub UpdateCache(ByVal schema As QueryGenerator, _
             ByVal objs As IList, ByVal mgr As OrmManagerBase, ByVal afterDelegate As OnUpdated, _
             ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks, Optional ByVal forseEval As Boolean = False)
 
@@ -799,7 +799,7 @@ Namespace Cache
                                     Throw New ArgumentException("Collection contains different types")
                                 End If
 
-                                Dim h As String = EntityFilter.EmptyHash
+                                Dim h As String = EntityFilterBase.EmptyHash
                                 If p.Value.Second IsNot Nothing Then
                                     h = p.Value.Second.MakeHash(schema, oschema, obj)
                                 End If
@@ -936,7 +936,7 @@ l1:
         ''' <param name="key"></param>
         ''' <param name="id"></param>
         ''' <remarks></remarks>
-        Protected Friend Sub AddDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter, ByVal schema As OrmSchemaBase)
+        Protected Friend Sub AddDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter, ByVal schema As QueryGenerator)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("j13rvnopqefv9-n24bth","d:\temp\")
@@ -952,7 +952,7 @@ l1:
         End Sub
 
         Protected Friend Sub AddFilterlessDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, _
-            ByVal schema As OrmSchemaBase)
+            ByVal schema As QueryGenerator)
             Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
             Dim o As Object = schema.GetEntityTypeKey(filterInfo, t)
 #If DebugLocks Then
@@ -1173,7 +1173,7 @@ l1:
 
         'Public Overrides ReadOnly Property OrmDictionaryT(of T)() As System.Collections.Generic.IDictionary(Of Integer, T)
 
-        Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, ByVal schema As OrmSchemaBase) As System.Collections.IDictionary
+        Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, ByVal schema As QueryGenerator) As System.Collections.IDictionary
             Dim k As Object = t
             If schema IsNot Nothing Then
                 k = schema.GetEntityTypeKey(filterInfo, t)
@@ -1192,7 +1192,7 @@ l1:
             Return dic
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As OrmSchemaBase) As System.Collections.Generic.IDictionary(Of Integer, T)
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Integer, T)
             Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Integer, T))
         End Function
 

@@ -89,7 +89,7 @@ Namespace Database.Storedprocs
             Return sb.ToString
         End Function
 
-        Protected Overridable Sub InitInParams(ByVal schema As DbSchema, ByVal cmd As System.Data.Common.DbCommand)
+        Protected Overridable Sub InitInParams(ByVal schema As SQLGenerator, ByVal cmd As System.Data.Common.DbCommand)
             For Each p As Pair(Of String, Object) In GetInParams()
                 cmd.Parameters.Add(schema.CreateDBParameter(p.First, p.Second))
             Next
@@ -97,7 +97,7 @@ Namespace Database.Storedprocs
 
         Protected Function Execute(ByVal mgr As OrmReadOnlyDBManager) As Object
             _reseted(GetKey) = False
-            Dim schema As DbSchema = CType(mgr.ObjectSchema, DbSchema)
+            Dim schema As SQLGenerator = CType(mgr.ObjectSchema, SQLGenerator)
             Using cmd As System.Data.Common.DbCommand = schema.CreateDBCommand
                 cmd.CommandType = System.Data.CommandType.StoredProcedure
                 cmd.CommandText = GetName()

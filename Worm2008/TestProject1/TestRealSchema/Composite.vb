@@ -14,7 +14,7 @@ Public Class Composite
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
         MyBase.New(id, cache, schema)
     End Sub
 

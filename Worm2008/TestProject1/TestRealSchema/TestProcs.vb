@@ -13,7 +13,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP1()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New P1Proc
             Dim l As List(Of Pair(Of Table1, Integer)) = p.GetResult(mgr)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -45,7 +45,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP11()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New P1Proc
             Dim l As List(Of Pair(Of Table1, Integer)) = p.GetResult(mgr)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -76,7 +76,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP2()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New P2Proc(1)
             Dim l As List(Of Table1) = p.GetResult(mgr)
 
@@ -94,7 +94,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP3()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New P3Proc(1)
 
             Dim l As List(Of Pair(Of Date, Decimal)) = p.GetResult(mgr)
@@ -107,7 +107,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP4()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New P4Proc(1)
             Dim s As String = p.GetResult(mgr)
 
@@ -130,7 +130,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP2Orm()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New P2OrmProc(2)
 
             Dim c As ICollection(Of Table1) = p.GetResult(mgr)
@@ -148,7 +148,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestMulti()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New MultiR
 
             Dim l As List(Of MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor) = p.GetResult(mgr)
@@ -173,7 +173,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestScalar()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New ScalarProc(10)
             Assert.AreEqual(20, p.GetResult(mgr))
             Assert.AreEqual(100, p.GetResult(90, mgr))
@@ -184,7 +184,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestPartial()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New PartialLoadProc(1)
             Dim c As ICollection(Of Table1) = p.GetResult(mgr)
 

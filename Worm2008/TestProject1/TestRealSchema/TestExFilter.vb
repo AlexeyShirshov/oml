@@ -11,7 +11,7 @@ Public Class TestExternalFilter
 
     <TestMethod()> _
     Public Sub Test1()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(Criteria.Ctor.AutoTypeField("ID").NotEq(100), Nothing, False)
 
             Assert.AreEqual(3, c.Count)

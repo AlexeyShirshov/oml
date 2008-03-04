@@ -7,46 +7,100 @@ Imports Worm.Orm
 Imports Worm.Sorting
 'Namespace Schema
 
+''' <summary>
+''' Данное исключение выбрасывается при определеных ошибках в <see cref="QueryGenerator" />
+''' </summary>
+''' <remarks></remarks>
 <Serializable()> _
-Public NotInheritable Class DBSchemaException
+Public NotInheritable Class OrmSchemaException
     Inherits Exception
 
+    ''' <summary>
+    ''' Конструктор по умолчанию
+    ''' </summary>
+    ''' <remarks></remarks>
     Public Sub New()
-        ' Add other code for custom properties here.
     End Sub
 
+    ''' <summary>
+    ''' Конструктор для создания объекта через сообщение
+    ''' </summary>
+    ''' <param name="message">Строка сообщения</param>
+    ''' <remarks></remarks>
     Public Sub New(ByVal message As String)
         MyBase.New(message)
-        ' Add other code for custom properties here.
     End Sub
 
+    ''' <summary>
+    ''' Конструктор для создания объекта через сообщение и внутренее инсключение
+    ''' </summary>
+    ''' <param name="message">Строка сообщения</param>
+    ''' <param name="inner">Исключение</param>
+    ''' <remarks></remarks>
     Public Sub New(ByVal message As String, ByVal inner As Exception)
         MyBase.New(message, inner)
-        ' Add other code for custom properties here.
     End Sub
 
-    Private Sub New( _
-        ByVal info As System.Runtime.Serialization.SerializationInfo, _
-        ByVal context As System.Runtime.Serialization.StreamingContext)
+    Private Sub New(ByVal info As System.Runtime.Serialization.SerializationInfo, ByVal context As System.Runtime.Serialization.StreamingContext)
         MyBase.New(info, context)
-        ' Insert code here for custom properties here.
     End Sub
 End Class
 
-Public Interface IDbSchema
+''' <summary>
+''' Интерфейс расширяющий схему для работы с объдинениями (joins)
+''' </summary>
+''' <remarks></remarks>
+Public Interface ISchemaWithJoins
     'Function GetSharedTable(ByVal tableName As String) As OrmTable
     'Function GetTables(ByVal type As Type) As OrmTable()
+    ''' <summary>
+    ''' Метод используется для получения объекта типа <see cref="OrmJoin" /> для определеной таблицы определеного типа
+    ''' </summary>
+    ''' <param name="type">Тип объекта</param>
+    ''' <param name="left">Левая таблица. Какая либо из списка <see cref="IObjectSchemaBase.GetTables"/></param>
+    ''' <param name="right">Правая таблица. Какая либо из списка <see cref="IObjectSchemaBase.GetTables"/></param>
+    ''' <param name="filterInfo">Произвольный объект, используемый реализацией. Передается из <see cref="OrmManagerBase.GetFilterInfo" /></param>
+    ''' <returns>Объекта типа <see cref="OrmJoin" /></returns>
+    ''' <remarks>Используется для генерации запросов</remarks>
     Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin
 End Interface
 
+''' <summary>
+''' Интерфейс для "подготовки" таблицы перед генерацией запроса
+''' </summary>
+''' <remarks>Используется для реализации функций в качестве таблиц, разрешения схем таблицы (schema resolve)</remarks>
 Public Interface IPrepareTable
+    ''' <summary>
+    ''' Словарь псевдонимов (aliases) таблиц
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns>Словарь где каждой таблице соответствует псевдоним</returns>
+    ''' <remarks></remarks>
     ReadOnly Property Aliases() As IDictionary(Of OrmTable, String)
+    ''' <summary>
+    ''' Добавляет таблицу в словарь и создает текстовое представление таблицы (псевдоним)
+    ''' </summary>
+    ''' <param name="table">Таблица</param>
+    ''' <returns>Возвращает псевдоним таблицы</returns>
+    ''' <remarks>Если таблица уже добавлена реализация может кинуть исключение</remarks>
     Function AddTable(ByRef table As OrmTable) As String
-    Sub Replace(ByVal schema As OrmSchemaBase, ByVal table As OrmTable, ByVal sb As StringBuilder)
+    ''' <summary>
+    ''' Заменяет в <see cref="StringBuilder"/> названия таблиц на псевдонимы
+    ''' </summary>
+    ''' <param name="schema">Схема</param>
+    ''' <param name="table">Таблица</param>
+    ''' <param name="sb">StringBuilder</param>
+    ''' <remarks></remarks>
+    Sub Replace(ByVal schema As QueryGenerator, ByVal table As OrmTable, ByVal sb As StringBuilder)
 End Interface
 
-Public MustInherit Class OrmSchemaBase
-    Implements IDbSchema
+''' <summary>
+''' Класс хранения и управления схемами объектов <see cref="IObjectSchemaBase"/>
+''' </summary>
+''' <remarks>Класс управляет версиями схем объектов, предоставляет удобные обертки для методов
+''' <see cref="IObjectSchemaBase"/> через тип объекта.</remarks>
+Public MustInherit Class QueryGenerator
+    Implements ISchemaWithJoins
 
     Public Delegate Function ResolveEntity(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
     Public Delegate Function ResolveEntityName(ByVal currentVersion As String, ByVal entities() As EntityAttribute, ByVal objType As Type) As EntityAttribute
@@ -196,7 +250,7 @@ Public MustInherit Class OrmSchemaBase
             End If
         Next
 
-        Throw New DBSchemaException("Cannot find column: " & columnName)
+        Throw New OrmSchemaException("Cannot find column: " & columnName)
     End Function
 
     Protected Friend Function GetColumnNameByFieldNameInternal(ByVal type As Type, ByVal field As String, Optional ByVal add_alias As Boolean = True) As String
@@ -215,7 +269,7 @@ Public MustInherit Class OrmSchemaBase
             End If
         End If
 
-        Throw New DBSchemaException("Cannot find name: " & field)
+        Throw New OrmSchemaException("Cannot find property: " & field)
     End Function
 
     '<CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")> _
@@ -404,7 +458,7 @@ Public MustInherit Class OrmSchemaBase
         Try
             Return coll(field)._tableName
         Catch ex As Exception
-            Throw New DBSchemaException("Unknown field name: " & field, ex)
+            Throw New OrmSchemaException("Unknown field name: " & field, ex)
         End Try
     End Function
     'Public ReadOnly Property IsExternalSort(ByVal sort As String, ByVal type As Type) As Boolean
@@ -427,7 +481,7 @@ Public MustInherit Class OrmSchemaBase
         Dim schema As IOrmObjectSchemaBase = GetObjectSchema(GetType(T))
         Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
         If s Is Nothing Then
-            Throw New DBSchemaException(String.Format("Type {0} is not support sorting", GetType(T)))
+            Throw New OrmSchemaException(String.Format("Type {0} is not support sorting", GetType(T)))
         End If
         Return s.ExternalSort(Of T)(sort, objs)
     End Function
@@ -436,7 +490,7 @@ Public MustInherit Class OrmSchemaBase
         Dim r As M2MRelation = GetM2MRelation(t, subType, True)
 
         If r Is Nothing Then
-            Throw New DBSchemaException(String.Format("Type {0} has no relation to {1}", t.Name, subType.Name))
+            Throw New OrmSchemaException(String.Format("Type {0} has no relation to {1}", t.Name, subType.Name))
         End If
 
         Return r.Mapping
@@ -775,7 +829,7 @@ Public MustInherit Class OrmSchemaBase
                 Return CType(de.Value, Reflection.PropertyInfo).PropertyType
             End If
         Next
-        Throw New DBSchemaException("Type " & type.Name & " doesnot contain property " & field)
+        Throw New OrmSchemaException("Type " & type.Name & " doesnot contain property " & field)
     End Function
 
     Public Function GetFieldNameByType(ByVal type As Type, ByVal fieldType As Type) As ICollection(Of String)
@@ -953,13 +1007,13 @@ Public MustInherit Class OrmSchemaBase
                                     schema = New SimpleObjectSchema(tp, ea.TableName, l, ea.PrimaryKey)
 
                                     If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
-                                        Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                        Throw New OrmSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
                                     End If
                                 Else
                                     Try
                                         schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
                                     Catch ex As Exception
-                                        Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                        Throw New OrmSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
                                     End Try
                                 End If
 
@@ -982,7 +1036,7 @@ Public MustInherit Class OrmSchemaBase
                                 Try
                                     idic.Add(tp, schema)
                                 Catch ex As ArgumentException
-                                    Throw New DBSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
+                                    Throw New OrmSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
                                 End Try
                             End If
                         Next
@@ -1002,13 +1056,13 @@ Public MustInherit Class OrmSchemaBase
                                         schema = New SimpleObjectSchema(tp, ea.TableName, l, ea.PrimaryKey)
 
                                         If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
-                                            Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                            Throw New OrmSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
                                         End If
                                     Else
                                         Try
                                             schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
                                         Catch ex As Exception
-                                            Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                            Throw New OrmSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
                                         End Try
                                     End If
 
@@ -1032,7 +1086,7 @@ Public MustInherit Class OrmSchemaBase
                                         idic.Add(tp, schema)
                                         Exit For
                                     Catch ex As ArgumentException
-                                        Throw New DBSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
+                                        Throw New OrmSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
                                     End Try
                                 End If
                             Next
@@ -1058,13 +1112,13 @@ Public MustInherit Class OrmSchemaBase
                                         schema = New SimpleObjectSchema(tp, ea1.TableName, l, ea1.PrimaryKey)
 
                                         If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
-                                            Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                            Throw New OrmSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
                                         End If
                                     Else
                                         Try
                                             schema = CType(ea1.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
                                         Catch ex As Exception
-                                            Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea1.Type.ToString), ex)
+                                            Throw New OrmSchemaException(String.Format("Cannot create type [{0}]", ea1.Type.ToString), ex)
                                         End Try
                                     End If
 
@@ -1093,7 +1147,7 @@ Public MustInherit Class OrmSchemaBase
                                     Try
                                         idic.Add(tp, schema)
                                     Catch ex As ArgumentException
-                                        Throw New DBSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea1.Type), ex)
+                                        Throw New OrmSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea1.Type), ex)
                                     End Try
                                 End If
                                 'Next
@@ -1107,62 +1161,62 @@ Public MustInherit Class OrmSchemaBase
                                             ea2 = entities2(0)
                                         End If
                                     End If
-                                        If ea2 IsNot Nothing Then
-                                            Dim schema As IOrmObjectSchemaBase = Nothing
+                                    If ea2 IsNot Nothing Then
+                                        Dim schema As IOrmObjectSchemaBase = Nothing
 
-                                            If ea2.Type Is Nothing Then
-                                                Dim l As New List(Of ColumnAttribute)
-                                                For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
-                                                    l.Add(c)
-                                                Next
+                                        If ea2.Type Is Nothing Then
+                                            Dim l As New List(Of ColumnAttribute)
+                                            For Each c As ColumnAttribute In GetProperties(tp, Nothing).Keys
+                                                l.Add(c)
+                                            Next
 
-                                                schema = New SimpleObjectSchema(tp, ea2.TableName, l, ea2.PrimaryKey)
+                                            schema = New SimpleObjectSchema(tp, ea2.TableName, l, ea2.PrimaryKey)
 
-                                                If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
-                                                    Throw New DBSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
-                                                End If
-                                            Else
-                                                Try
-                                                    schema = CType(ea2.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
-                                                Catch ex As Exception
-                                                    Throw New DBSchemaException(String.Format("Cannot create type [{0}]", ea2.Type.ToString), ex)
-                                                End Try
+                                            If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
+                                                Throw New OrmSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
                                             End If
-
-                                            Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
-                                            If n IsNot Nothing Then
-                                                n.GetSchema(Me, tp)
-                                            End If
-
-                                            If Not String.IsNullOrEmpty(ea2.EntityName) AndAlso entities.Length = 0 Then
-                                                If names.Contains(ea2.EntityName) Then
-                                                    Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea2.EntityName), Pair(Of Type, EntityAttribute))
-                                                    If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> _version AndAlso _mapn IsNot Nothing) Then
-                                                        Dim e As EntityAttribute = Nothing
-                                                        If _mapn IsNot Nothing Then
-                                                            e = _mapn(_version, New EntityAttribute() {ea2, tt.Second}, tp)
-                                                        End If
-                                                        If e IsNot tt.Second Then
-                                                            names(ea2.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea2)
-                                                        End If
-                                                    End If
-                                                Else
-                                                    names.Add(ea2.EntityName, New Pair(Of Type, EntityAttribute)(tp, ea2))
-                                                End If
-                                            End If
-
+                                        Else
                                             Try
-                                                idic.Add(tp, schema)
-                                                'Exit For
-                                            Catch ex As ArgumentException
-                                                Throw New DBSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea2.Type), ex)
+                                                schema = CType(ea2.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
+                                            Catch ex As Exception
+                                                Throw New OrmSchemaException(String.Format("Cannot create type [{0}]", ea2.Type.ToString), ex)
                                             End Try
                                         End If
-                                        'Next
+
+                                        Dim n As IOrmSchemaInit = TryCast(schema, IOrmSchemaInit)
+                                        If n IsNot Nothing Then
+                                            n.GetSchema(Me, tp)
+                                        End If
+
+                                        If Not String.IsNullOrEmpty(ea2.EntityName) AndAlso entities.Length = 0 Then
+                                            If names.Contains(ea2.EntityName) Then
+                                                Dim tt As Pair(Of Type, EntityAttribute) = CType(names(ea2.EntityName), Pair(Of Type, EntityAttribute))
+                                                If tt.First.IsAssignableFrom(tp) OrElse (tt.Second.Version <> _version AndAlso _mapn IsNot Nothing) Then
+                                                    Dim e As EntityAttribute = Nothing
+                                                    If _mapn IsNot Nothing Then
+                                                        e = _mapn(_version, New EntityAttribute() {ea2, tt.Second}, tp)
+                                                    End If
+                                                    If e IsNot tt.Second Then
+                                                        names(ea2.EntityName) = New Pair(Of Type, EntityAttribute)(tp, ea2)
+                                                    End If
+                                                End If
+                                            Else
+                                                names.Add(ea2.EntityName, New Pair(Of Type, EntityAttribute)(tp, ea2))
+                                            End If
+                                        End If
+
+                                        Try
+                                            idic.Add(tp, schema)
+                                            'Exit For
+                                        Catch ex As ArgumentException
+                                            Throw New OrmSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea2.Type), ex)
+                                        End Try
                                     End If
+                                    'Next
                                 End If
                             End If
                         End If
+                    End If
                 Next
             End If
         Next
@@ -1225,7 +1279,7 @@ Public MustInherit Class OrmSchemaBase
     End Property
 #End Region
 
-    Protected Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin Implements IDbSchema.GetJoins
+    Protected Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin Implements ISchemaWithJoins.GetJoins
         If type Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -1303,6 +1357,62 @@ Public MustInherit Class OrmSchemaBase
             Next
             Return l
         End If
+    End Function
+
+    Public Function ExtractValues(ByVal schema As QueryGenerator, ByVal tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String), _
+        ByVal _values() As Pair(Of Object, String)) As List(Of String)
+        Dim [alias] As String = String.Empty
+        Dim values As New List(Of String)
+        Dim lastt As Type = Nothing
+        For Each p As Pair(Of Object, String) In _values
+            Dim o As Object = p.First
+            If o Is Nothing Then
+                Throw New NullReferenceException
+            End If
+
+            If TypeOf o Is Type Then
+                Dim t As Type = CType(o, Type)
+                If Not GetType(OrmBase).IsAssignableFrom(t) Then
+                    Throw New NotSupportedException(String.Format("Type {0} is not assignable from OrmBase", t))
+                End If
+                lastt = t
+
+                Dim oschema As IOrmObjectSchema = CType(schema.GetObjectSchema(t), IOrmObjectSchema)
+                Dim tbl As OrmTable = Nothing
+                Dim map As MapField2Column = Nothing
+                Dim fld As String = p.Second
+                If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
+                    fld = map._columnName
+                    tbl = map._tableName
+                Else
+                    tbl = oschema.GetTables(0)
+                End If
+
+                If tableAliases IsNot Nothing Then
+                    [alias] = tableAliases(tbl)
+                End If
+                If Not String.IsNullOrEmpty([alias]) Then
+                    values.Add([alias] & "." & fld)
+                Else
+                    values.Add(fld)
+                End If
+            ElseIf TypeOf o Is OrmTable Then
+                Dim tbl As OrmTable = CType(o, OrmTable)
+                If tableAliases IsNot Nothing Then
+                    [alias] = tableAliases(tbl)
+                End If
+                If Not String.IsNullOrEmpty([alias]) Then
+                    values.Add([alias] & "." & p.Second)
+                Else
+                    values.Add(p.Second)
+                End If
+            ElseIf o Is Nothing Then
+                values.Add(p.Second)
+            Else
+                Throw New NotSupportedException(String.Format("Type {0} is not supported", o.GetType))
+            End If
+        Next
+        Return values
     End Function
 
     Public MustOverride Function CreateCriteria(ByVal t As Type) As Criteria.ICtor

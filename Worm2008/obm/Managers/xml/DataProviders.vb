@@ -38,7 +38,7 @@ Namespace Xml
                     For Each fl As IFilter In _f.GetAllFilters
                         Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                         If f IsNot Nothing Then
-                            Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                            Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
 
                             Dim fields As List(Of String) = Nothing
                             If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
@@ -70,11 +70,11 @@ Namespace Xml
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                             If f IsNot Nothing Then
-                                Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                                Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
                                 If tmpl.Type Is Nothing Then
                                     Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                                 End If
-                                Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
+                                Dim v As EntityValue = TryCast(CType(f, EntityFilterBase).Value, EntityValue)
                                 If v IsNot Nothing Then
                                     'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
                                     'If GetType(OrmBase).IsAssignableFrom(tp) Then
@@ -191,9 +191,9 @@ Namespace Xml
                 Return r
             End Function
 
-            Protected ReadOnly Property Schema() As XmlSchema
+            Protected ReadOnly Property Schema() As XPathGenerator
                 Get
-                    Return CType(_mgr.ObjectSchema, XmlSchema)
+                    Return CType(_mgr.ObjectSchema, XPathGenerator)
                 End Get
             End Property
 

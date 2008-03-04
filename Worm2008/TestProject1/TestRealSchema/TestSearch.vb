@@ -14,7 +14,7 @@ Public Class TestSearch
 
     <TestMethod()> _
     Public Sub TestSearch()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("second")
 
             Assert.AreEqual(1, c.Count)
@@ -27,7 +27,7 @@ Public Class TestSearch
 
     <TestMethod()> _
     Public Sub TestSearch2()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New DbSchema("Search"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("Search"))
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec")
 
             Assert.AreEqual(2, c.Count)
@@ -43,7 +43,7 @@ Public Class TestSearch
 
     <TestMethod()> _
     Public Sub TestJoinSearch()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))
             Dim c As ICollection(Of Table2) = mgr.Search(Of Table2)(GetType(Table1), "first", Nothing)
 
             Assert.AreEqual(2, c.Count)
@@ -60,7 +60,7 @@ Public Class TestSearch
 
     <TestMethod()> _
     Public Sub TestSortSearch()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
                 Sorting.Field("DT"), Nothing)
 
@@ -79,7 +79,7 @@ Public Class TestSearch
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestSortSearchWrong()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New DbSchema("Search"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("Search"))
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("first", _
                 Sorting.Field(GetType(Table2), "Money"), Nothing)
         End Using
@@ -87,7 +87,7 @@ Public Class TestSearch
 
     <TestMethod()> _
     Public Sub TestPageSearch()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))
             Using New Worm.OrmManagerBase.PagerSwitcher(mgr, 0, 1)
                 Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
                     Sorting.Field("DT"), Nothing)
@@ -99,7 +99,7 @@ Public Class TestSearch
 
     <TestMethod()> _
     Public Sub TestFilterSearch()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))
 
             Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
                 Sorting.Field("DT"), Nothing, Criteria.Ctor.Field(GetType(Table1), "Code").Eq(45).Filter)
@@ -123,7 +123,7 @@ Public Class TestSearch
 
     <TestMethod()> _
     Public Sub TestSearchPaging()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New DbSchema("Search"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("Search"))
             Using New Worm.OrmManagerBase.PagerSwitcher(mgr, 0, 1)
                 Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec")
 

@@ -3,6 +3,8 @@
 Imports Worm.Orm.Meta
 Imports Worm.Criteria
 Imports Worm.Criteria.Values
+Imports Worm.Criteria.Core
+
 'Imports Worm.Database.Criteria.Core
 
 Namespace Criteria.Joins
@@ -122,7 +124,7 @@ Namespace Criteria.Joins
             Return _ToString()
         End Function
 
-        Public MustOverride Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeSQLStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
 
         Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
             Get
@@ -171,7 +173,7 @@ Namespace Criteria.Joins
                 Case Worm.Criteria.Joins.JoinType.CrossJoin
                     Return " cross join "
                 Case Else
-                    Throw New DBSchemaException("invalid join type " & _joinType.ToString)
+                    Throw New OrmSchemaException("invalid join type " & _joinType.ToString)
             End Select
         End Function
 
@@ -247,7 +249,7 @@ Namespace Database
     Namespace Criteria.Joins
         Public Class JoinFilter
             Inherits Worm.Criteria.Joins.JoinFilter
-            Implements Worm.Database.Criteria.Core.IFilter
+            'Implements Worm.Database.Criteria.Core.IFilter
 
             Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal t2 As Type, ByVal fieldName2 As String, ByVal operation As FilterOperation)
                 MyBase.New(t, fieldName, t2, fieldName2, operation)
@@ -261,11 +263,7 @@ Namespace Database
                 MyBase.New(table, column, table2, column2, operation)
             End Sub
 
-            Public Overrides Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As Orm.Meta.ICreateParam) As String
-                Throw New NotSupportedException
-            End Function
-
-            Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements Core.IFilter.MakeSQLStmt
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases
 
                 Dim map As MapField2Column = Nothing
@@ -296,11 +294,42 @@ Namespace Database
                 Return [alias] & map._columnName & Criteria.Core.TemplateBase.Oper2String(_oper) & alias2 & map2._columnName
             End Function
 
-            Protected Shared Function ChangeEntityJoinToValue(ByVal source As Criteria.Core.IFilter, ByVal t As Type, ByVal field As String, ByVal value As IParamFilterValue) As Criteria.Core.IFilter
-                For Each _fl As Criteria.Core.IFilter In source.GetAllFilters()
+            'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements Core.IFilter.MakeSQLStmt
+            '    Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases
+
+            '    Dim map As MapField2Column = Nothing
+            '    If _e1 IsNot Nothing Then
+            '        map = schema.GetObjectSchema(_e1.First).GetFieldColumnMap(_e1.Second)
+            '    Else
+            '        map = New MapField2Column(Nothing, _t1.Second, _t1.First)
+            '    End If
+
+            '    Dim map2 As MapField2Column = Nothing
+            '    If _e2 IsNot Nothing Then
+            '        map2 = schema.GetObjectSchema(_e2.First).GetFieldColumnMap(_e2.Second)
+            '    Else
+            '        map2 = New MapField2Column(Nothing, _t2.Second, _t2.First)
+            '    End If
+
+            '    Dim [alias] As String = String.Empty
+
+            '    If tableAliases IsNot Nothing Then
+            '        [alias] = tableAliases(map._tableName) & "."
+            '    End If
+
+            '    Dim alias2 As String = String.Empty
+            '    If map2._tableName IsNot Nothing AndAlso tableAliases IsNot Nothing AndAlso tableAliases.ContainsKey(map2._tableName) Then
+            '        alias2 = tableAliases(map2._tableName) & "."
+            '    End If
+
+            '    Return [alias] & map._columnName & Criteria.Core.TemplateBase.Oper2String(_oper) & alias2 & map2._columnName
+            'End Function
+
+            Protected Shared Function ChangeEntityJoinToValue(ByVal source As IFilter, ByVal t As Type, ByVal field As String, ByVal value As IParamFilterValue) As IFilter
+                For Each _fl As IFilter In source.GetAllFilters()
                     Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
                     If fl IsNot Nothing Then
-                        Dim f As Criteria.Core.IFilter = Nothing
+                        Dim f As IFilter = Nothing
                         If fl._e1 IsNot Nothing AndAlso fl._e1.First Is t AndAlso fl._e1.Second = field Then
                             If fl._e2 IsNot Nothing Then
                                 f = New Criteria.Core.EntityFilter(fl._e2.First, fl._e2.Second, value, fl._oper)
@@ -316,18 +345,18 @@ Namespace Database
                         End If
 
                         If f IsNot Nothing Then
-                            Return CType(source.ReplaceFilter(fl, f), Core.IFilter)
+                            Return CType(source.ReplaceFilter(fl, f), IFilter)
                         End If
                     End If
                 Next
                 Return Nothing
             End Function
 
-            Public Shared Function ChangeEntityJoinToLiteral(ByVal source As Core.IFilter, ByVal t As Type, ByVal field As String, ByVal literal As String) As Core.IFilter
+            Public Shared Function ChangeEntityJoinToLiteral(ByVal source As IFilter, ByVal t As Type, ByVal field As String, ByVal literal As String) As IFilter
                 Return ChangeEntityJoinToValue(source, t, field, New LiteralValue(literal))
             End Function
 
-            Public Shared Function ChangeEntityJoinToParam(ByVal source As Core.IFilter, ByVal t As Type, ByVal field As String, ByVal value As TypeWrap(Of Object)) As Core.IFilter
+            Public Shared Function ChangeEntityJoinToParam(ByVal source As IFilter, ByVal t As Type, ByVal field As String, ByVal value As TypeWrap(Of Object)) As IFilter
                 Return ChangeEntityJoinToValue(source, t, field, New ScalarValue(value.Value))
             End Function
         End Class
@@ -335,11 +364,11 @@ Namespace Database
         Public Class OrmJoin
             Inherits Worm.Criteria.Joins.OrmJoin
 
-            Public Sub New(ByVal table As OrmTable, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
+            Public Sub New(ByVal table As OrmTable, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As IFilter)
                 MyBase.New(table, joinType, condition)
             End Sub
 
-            Public Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String
+            Public Function MakeSQLStmt(ByVal schema As SQLGenerator, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String
                 'If IsEmpty Then
                 '    Throw New InvalidOperationException("Object must be created")
                 'End If
@@ -355,7 +384,7 @@ Namespace Database
                 Dim tableAliases As IDictionary(Of OrmTable, String) = almgr.Aliases
                 'Dim table As String = _table
                 'Dim sch as IOrmObjectSchema = schema.GetObjectSchema(
-                Return JoinTypeString() & schema.GetTableName(_table) & " " & tableAliases(_table) & " on " & Condition.MakeSQLStmt(schema, almgr, pname)
+                Return JoinTypeString() & schema.GetTableName(_table) & " " & tableAliases(_table) & " on " & Condition.MakeQueryStmt(schema, almgr, pname)
             End Function
 
             Protected Overrides Function CreateOrmFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase
@@ -366,9 +395,9 @@ Namespace Database
                 Return New Core.TableFilterTemplate(table, fieldName, oper)
             End Function
 
-            Public Overloads ReadOnly Property Condition() As Core.IFilter
+            Public Overloads ReadOnly Property Condition() As IFilter
                 Get
-                    Return CType(_condition, Core.IFilter)
+                    Return CType(_condition, IFilter)
                 End Get
             End Property
 

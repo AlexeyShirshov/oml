@@ -3,12 +3,13 @@ Imports Worm.Criteria.Values
 Imports cc = Worm.Criteria.Core
 
 Imports Worm.Database.Criteria.Values
-Imports Worm.Database.Criteria.Core
 Imports Worm.Database.Criteria.Joins
 Imports Worm.Database.Criteria.Conditions
+Imports Worm.Database.Criteria.Core
 
 Namespace Database
     Namespace Criteria
+
         Public Class Ctor
             Implements ICtor
             Private _t As Type
@@ -53,11 +54,11 @@ Namespace Database
                 Return New CriteriaField(Nothing, fieldName)
             End Function
 
-            Public Shared Function Exists(ByVal t As Type, ByVal filter As IFilter) As CriteriaLink
+            Public Shared Function Exists(ByVal t As Type, ByVal filter As cc.IFilter) As CriteriaLink
                 Return New CriteriaLink(New Condition.ConditionConstructor).AndExists(t, filter)
             End Function
 
-            Public Shared Function NotExists(ByVal t As Type, ByVal filter As IFilter) As CriteriaLink
+            Public Shared Function NotExists(ByVal t As Type, ByVal filter As cc.IFilter) As CriteriaLink
                 Return New CriteriaLink(New Conditions.Condition.ConditionConstructor).AndNotExists(t, filter)
             End Function
 
@@ -132,11 +133,11 @@ Namespace Database
                 Return NotExists(t, "ID")
             End Function
 
-            Public Function Exists(ByVal t As Type, ByVal f As IFilter) As CriteriaLink
+            Public Function Exists(ByVal t As Type, ByVal f As cc.IFilter) As CriteriaLink
                 Return GetLink2(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.Exists))
             End Function
 
-            Public Function NotExists(ByVal t As Type, ByVal f As IFilter) As CriteriaLink
+            Public Function NotExists(ByVal t As Type, ByVal f As cc.IFilter) As CriteriaLink
                 Return GetLink2(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.NotExists))
             End Function
         End Class
@@ -212,11 +213,11 @@ Namespace Database
 
             'End Function
 
-            Public Function Exists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Public Function Exists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
                 Return CType(GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.Exists)), CriteriaLink)
             End Function
 
-            Public Function NotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Public Function NotExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
                 Return CType(GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.NotExists)), CriteriaLink)
             End Function
 
@@ -279,19 +280,19 @@ Namespace Database
             '    Return New CustomCF(t, field, format, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or)
             'End Function
 
-            Public Function AndExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Public Function AndExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
                 Return New CriteriaNonField(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).Exists(t, joinFilter)
             End Function
 
-            Public Function AndNotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Public Function AndNotExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
                 Return New CriteriaNonField(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).NotExists(t, joinFilter)
             End Function
 
-            Public Function OrExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Public Function OrExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
                 Return New CriteriaNonField(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or).Exists(t, joinFilter)
             End Function
 
-            Public Function OrNotExists(ByVal t As Type, ByVal joinFilter As IFilter) As CriteriaLink
+            Public Function OrNotExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
                 Return New CriteriaNonField(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or).NotExists(t, joinFilter)
             End Function
 

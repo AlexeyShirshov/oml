@@ -12,7 +12,7 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestStmt()
 
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Dim p As New ParamMgr(s, "p")
         Dim stmt As String = s.GetDictionarySelect(GetType(Table1), 1, p, Nothing, Nothing)
 
@@ -23,7 +23,7 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestLike()
 
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Using mgr As Worm.OrmManagerBase = TestManagerRS.CreateManagerShared(s)
             Dim f As Worm.Criteria.CriteriaLink = New Criteria.Ctor(GetType(Table1)).Field("Title").Like("f%")
             Dim col As ICollection(Of Table1) = mgr.Find(Of Table1)(f, Nothing, False)
@@ -36,7 +36,7 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestBuild()
 
-        Dim s As New DbSchema("1")
+        Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
             Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
@@ -53,7 +53,7 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestBuildComplex()
 
-        Dim s As New DbSchema("2")
+        Dim s As New SQLGenerator("2")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
             Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
@@ -70,7 +70,7 @@ Public Class TestDic
     <TestMethod()> _
     Public Sub TestBuildComplex2()
 
-        Dim s As New DbSchema("2")
+        Dim s As New SQLGenerator("2")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
 
             Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
