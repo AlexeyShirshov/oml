@@ -519,6 +519,9 @@ Namespace Cache
         'End Sub
 
         Protected Friend Function GetUpdatedFields(ByVal t As Type, ByRef l As List(Of String)) As Boolean
+            If t Is Nothing Then
+                Throw New ArgumentNullException("t")
+            End If
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
 #Else
@@ -557,6 +560,10 @@ Namespace Cache
         End Sub
 
         Protected Friend Sub RemoveUpdatedFields(ByVal t As Type, ByVal field As String)
+            If t Is Nothing Then
+                Throw New ArgumentNullException("t")
+            End If
+
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
 #Else
@@ -862,29 +869,7 @@ Namespace Cache
                 End If
             End Using
 l1:
-            If callbacks IsNot Nothing Then
-                callbacks.BeginUpdateProcs()
-            End If
-            For Each obj As OrmBase In objs
-                If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj")
-                End If
-
-                If obj._needAdd Then
-                    ValidateSPOnInsertDelete(obj)
-                ElseIf obj._needDelete Then
-                    ValidateSPOnInsertDelete(obj)
-                    'Else
-                    '    Throw New InvalidOperationException
-                End If
-
-                If afterDelegate IsNot Nothing Then
-                    afterDelegate(obj, mgr, contextKey)
-                End If
-            Next
-            If callbacks IsNot Nothing Then
-                callbacks.EndUpdateProcs()
-            End If
+            ValidateProcs(objs, mgr, callbacks, afterDelegate, contextKey)
 
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
@@ -912,6 +897,36 @@ l1:
                     Next
                 End If
             End Using
+
+        End Sub
+
+        Public Sub ValidateProcs(ByVal objs As IList, _
+            ByVal mgr As OrmManagerBase, ByVal callbacks As IUpdateCacheCallbacks, _
+            ByVal afterDelegate As OnUpdated, ByVal contextKey As Object)
+            If callbacks IsNot Nothing Then
+                callbacks.BeginUpdateProcs()
+            End If
+            For Each obj As OrmBase In objs
+                If obj Is Nothing Then
+                    Throw New ArgumentNullException("obj")
+                End If
+
+                If obj._needAdd Then
+                    ValidateSPOnInsertDelete(obj)
+                ElseIf obj._needDelete Then
+                    ValidateSPOnInsertDelete(obj)
+                    'Else
+                    '    Throw New InvalidOperationException
+                End If
+
+                If afterDelegate IsNot Nothing Then
+                    afterDelegate(obj, mgr, contextKey)
+                End If
+            Next
+            If callbacks IsNot Nothing Then
+                callbacks.EndUpdateProcs()
+            End If
+
         End Sub
 
         ''' <summary>
@@ -957,6 +972,14 @@ l1:
         End Sub
 
         Protected Friend Sub AddJoinDepend(ByVal joinType As Type, ByVal selectType As Type)
+            If joinType Is Nothing Then
+                Throw New ArgumentNullException("joinType")
+            End If
+
+            If selectType Is Nothing Then
+                Throw New ArgumentNullException("selectType")
+            End If
+
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
 #Else

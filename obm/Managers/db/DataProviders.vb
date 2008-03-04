@@ -77,6 +77,9 @@ Namespace Database
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                             If f IsNot Nothing Then
                                 Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                                If tmpl.Type Is Nothing Then
+                                    Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                                End If
                                 Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
                                 If v IsNot Nothing Then
                                     'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
@@ -295,6 +298,9 @@ Namespace Database
                 Else
                     If f IsNot Nothing Then
                         For Each fl As EntityFilter In f.GetAllFilters
+                            If fl.Template.Type Is Nothing Then
+                                Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                            End If
                             If fl.Template.Type Is relation.Type Then
                                 _appendSecong = True
                                 Exit For
@@ -478,6 +484,9 @@ Namespace Database
                             If f IsNot Nothing Then
                                 Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
                                 Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                                If tmpl.Type Is Nothing Then
+                                    Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                                End If
                                 If v IsNot Nothing Then
                                     'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
                                     'If GetType(OrmBase).IsAssignableFrom(tp) Then
