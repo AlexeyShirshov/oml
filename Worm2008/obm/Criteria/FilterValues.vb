@@ -119,59 +119,99 @@ Namespace Criteria.Values
             Return Value
         End Function
 
-        Public Overridable Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplateBase) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
+        Public Overridable Function Eval(ByVal evaluatedValue As Object, ByVal template As OrmFilterTemplateBase) As IEvaluableValue.EvalResult Implements IEvaluableValue.Eval
             Dim r As IEvaluableValue.EvalResult
 
-            Dim val As Object = GetValue(v, template, r)
+            Dim filterValue As Object = GetValue(evaluatedValue, template, r)
             If r <> IEvaluableValue.EvalResult.Unknown Then
                 Return r
             Else
                 r = IEvaluableValue.EvalResult.NotFound
             End If
             Try
-                If val IsNot Nothing Then
-                    Dim vt As Type = v.GetType()
-                    Dim valt As Type = val.GetType
+                If filterValue IsNot Nothing AndAlso evaluatedValue IsNot Nothing Then
+                    Dim vt As Type = evaluatedValue.GetType()
+                    Dim valt As Type = filterValue.GetType
                     If Not vt.IsAssignableFrom(valt) Then
                         If vt.IsArray <> valt.IsArray Then
                             Return IEvaluableValue.EvalResult.Unknown
                         Else
-                            val = Convert.ChangeType(val, v.GetType)
+                            filterValue = Convert.ChangeType(filterValue, evaluatedValue.GetType)
                         End If
                     End If
+                End If
 
-                    Select Case template.Operation
-                        Case FilterOperation.Equal
-                            If Equals(v, val) Then
-                                r = IEvaluableValue.EvalResult.Found
+                Select Case template.Operation
+                    Case FilterOperation.Equal
+                        If Equals(evaluatedValue, filterValue) Then
+                            r = IEvaluableValue.EvalResult.Found
+                        End If
+                    Case FilterOperation.GreaterEqualThan
+                        Dim c As IComparable = CType(evaluatedValue, IComparable)
+                        If c Is Nothing Then
+                            If filterValue Is Nothing Then
+                                r = IEvaluableValue.EvalResult.Unknown
+                            Else
+                                r = IEvaluableValue.EvalResult.NotFound
                             End If
-                        Case FilterOperation.GreaterEqualThan
-                            Dim i As Integer = CType(v, IComparable).CompareTo(val)
+                        Else
+                            Dim i As Integer = c.CompareTo(filterValue)
                             If i >= 0 Then
                                 r = IEvaluableValue.EvalResult.Found
                             End If
-                        Case FilterOperation.GreaterThan
-                            Dim i As Integer = CType(v, IComparable).CompareTo(val)
+                        End If
+                    Case FilterOperation.GreaterThan
+                        Dim c As IComparable = CType(evaluatedValue, IComparable)
+                        If c Is Nothing Then
+                            If filterValue Is Nothing Then
+                                r = IEvaluableValue.EvalResult.Unknown
+                            Else
+                                r = IEvaluableValue.EvalResult.NotFound
+                            End If
+                        Else
+                            Dim i As Integer = c.CompareTo(filterValue)
                             If i > 0 Then
                                 r = IEvaluableValue.EvalResult.Found
                             End If
-                        Case FilterOperation.LessEqualThan
-                            Dim i As Integer = CType(v, IComparable).CompareTo(val)
-                            If i <= 0 Then
+                        End If
+                    Case FilterOperation.LessEqualThan
+                        Dim c As IComparable = CType(filterValue, IComparable)
+                        If c Is Nothing Then
+                            If evaluatedValue Is Nothing Then
+                                r = IEvaluableValue.EvalResult.Unknown
+                            Else
+                                r = IEvaluableValue.EvalResult.NotFound
+                            End If
+                        Else
+                            Dim i As Integer = c.CompareTo(evaluatedValue)
+                            If i >= 0 Then
                                 r = IEvaluableValue.EvalResult.Found
                             End If
-                        Case FilterOperation.LessThan
-                            Dim i As Integer = CType(v, IComparable).CompareTo(val)
-                            If i < 0 Then
+                        End If
+                    Case FilterOperation.LessThan
+                        Dim c As IComparable = CType(filterValue, IComparable)
+                        If c Is Nothing Then
+                            If evaluatedValue Is Nothing Then
+                                r = IEvaluableValue.EvalResult.Unknown
+                            Else
+                                r = IEvaluableValue.EvalResult.NotFound
+                            End If
+                        Else
+                            Dim i As Integer = c.CompareTo(evaluatedValue)
+                            If i > 0 Then
                                 r = IEvaluableValue.EvalResult.Found
                             End If
-                        Case FilterOperation.NotEqual
-                            If Not Equals(v, val) Then
-                                r = IEvaluableValue.EvalResult.Found
-                            End If
-                        Case FilterOperation.Like
-                            Dim par As String = CStr(val)
-                            Dim str As String = CStr(v)
+                        End If
+                    Case FilterOperation.NotEqual
+                        If Not Equals(evaluatedValue, filterValue) Then
+                            r = IEvaluableValue.EvalResult.Found
+                        End If
+                    Case FilterOperation.Like
+                        If filterValue Is Nothing OrElse evaluatedValue Is Nothing Then
+                            r = IEvaluableValue.EvalResult.Unknown
+                        Else
+                            Dim par As String = CStr(filterValue)
+                            Dim str As String = CStr(evaluatedValue)
                             r = IEvaluableValue.EvalResult.NotFound
                             Dim [case] As StringComparison = StringComparison.InvariantCulture
                             If Not _case Then
@@ -192,12 +232,12 @@ Namespace Criteria.Values
                                     r = IEvaluableValue.EvalResult.Found
                                 End If
                             End If
-                        Case Else
-                            r = IEvaluableValue.EvalResult.Unknown
-                    End Select
-                End If
+                        End If
+                    Case Else
+                        r = IEvaluableValue.EvalResult.Unknown
+                End Select
             Catch ex As InvalidCastException
-                Throw New InvalidOperationException(String.Format("Cannot eval field {4}.{0} of type {1} through value {2} of type {3}", template.FieldName, val.GetType, v, v.GetType, template.Type), ex)
+                Throw New InvalidOperationException(String.Format("Cannot eval field {4}.{0} of type {1} through value {2} of type {3}", template.FieldName, filterValue.GetType, evaluatedValue, evaluatedValue.GetType, template.Type), ex)
             End Try
             Return r
         End Function
@@ -286,13 +326,13 @@ Namespace Criteria.Values
 
         Protected Overrides Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplateBase, ByRef r As IEvaluableValue.EvalResult) As Object
             r = IEvaluableValue.EvalResult.Unknown
-            Dim tt As Type = v.GetType
             Dim orm As OrmBase = TryCast(v, OrmBase)
             If orm IsNot Nothing Then
                 Dim ov As EntityValue = TryCast(Me, EntityValue)
                 If ov Is Nothing Then
                     Throw New InvalidOperationException(String.Format("Field {0} is Entity but param is not", template.FieldName))
                 End If
+                Dim tt As Type = v.GetType
                 If Not tt.IsAssignableFrom(ov.OrmType) Then
                     If Value Is Nothing Then
                         r = IEvaluableValue.EvalResult.NotFound

@@ -1138,7 +1138,7 @@ l1:
             End Using
         End Sub
 
-        Protected Sub ValidateSPOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
+        Protected Friend Sub ValidateSPOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
 #Else

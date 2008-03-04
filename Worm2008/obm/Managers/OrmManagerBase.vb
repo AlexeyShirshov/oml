@@ -2782,7 +2782,12 @@ l1:
         For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
             Dim m As M2MCache = o.First
             If m.Entry.SubType Is t Then
-                m.Entry.Update(id, oldId)
+                If m.Filter Is Nothing Then
+                    m.Entry.Update(id, oldId)
+                Else
+                    Dim dic As IDictionary = GetDic(Cache, o.Second.First)
+                    dic.Remove(o.Second.Second)
+                End If
             End If
         Next
     End Sub
