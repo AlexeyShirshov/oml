@@ -901,7 +901,7 @@ Namespace Orm
                         End If
                     Else
                         If valProcs Then
-                            mc.Cache.ValidateProcs(New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
+                            mc.Cache.ValidateSPOnUpdate(Me, Nothing)
                         End If
                         RaiseEvent Updated(Me, EventArgs.Empty)
                     End If

@@ -237,13 +237,14 @@ Namespace Criteria.Core
                 If Template.Type Is t Then
                     Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
                     Dim v As Object = obj.GetValue(Template.FieldName, oschema) 'schema.GetFieldValue(obj, _fieldname)
-                    If v IsNot Nothing Then
-                        r = evval.Eval(v, Template)
-                    Else
-                        If evval.Value Is Nothing Then
-                            r = IEvaluableValue.EvalResult.Found
-                        End If
-                    End If
+                    r = evval.Eval(v, Template)
+                    'If v IsNot Nothing Then
+                    '    r = evval.Eval(v, Template)
+                    'Else
+                    '    If evval.Value Is Nothing Then
+                    '        r = IEvaluableValue.EvalResult.Found
+                    '    End If
+                    'End If
 
                     Return r
                 Else
