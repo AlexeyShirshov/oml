@@ -142,7 +142,7 @@ Namespace Web
 
         Protected Function CreateProfileCollection(ByVal pageIndex As Integer, ByVal pageSize As Integer, ByVal mgr As OrmDBManager, ByVal col As IList) As ProfileInfoCollection
             Dim profiles As New ProfileInfoCollection
-            Dim schema As OrmSchemaBase = mgr.ObjectSchema
+            Dim schema As QueryGenerator = mgr.ObjectSchema
             Dim start As Integer = pageIndex * pageSize
             If start < col.Count Then
                 Dim [end] As Integer = Math.Min((pageIndex - 1) * pageSize, col.Count)
@@ -526,7 +526,7 @@ Namespace Web
                     user = GetUserByName(mgr, HttpContext.Current.Profile.UserName, True, False) 'CreateUser(mgr, HttpContext.Current.Profile.UserName)
                 Catch ex As ArgumentException When ex.Message.Contains("not found")
                     user = CreateUser(mgr, HttpContext.Current.Profile.UserName, AnonymousId)
-                    Dim schema As OrmSchemaBase = mgr.ObjectSchema
+                    Dim schema As QueryGenerator = mgr.ObjectSchema
                     For Each p As SettingsProperty In System.Web.Profile.ProfileBase.Properties
                         If Not p.IsReadOnly Then
                             If cok IsNot Nothing Then

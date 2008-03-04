@@ -5,6 +5,7 @@ Imports Worm.Cache
 Imports Worm.Orm.Meta
 Imports Worm.Criteria.Values
 Imports Worm.Sorting
+Imports Worm.Criteria.Core
 
 <Worm.Orm.Meta.Entity(GetType(EntitySchema1v1Implementation), "1"), _
 Worm.Orm.Meta.Entity(GetType(EntitySchema1v2Implementation), "2"), _
@@ -16,7 +17,7 @@ Public Class Entity
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -46,7 +47,7 @@ End Class
 Public MustInherit Class ObjectSchemaBaseImplementation
     Implements IOrmObjectSchema, IOrmSchemaInit
 
-    Protected _schema As Worm.OrmSchemaBase
+    Protected _schema As Worm.QueryGenerator
     Protected _objectType As Type
 
     Public Overridable Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchema.ChangeValueType
@@ -88,7 +89,7 @@ Public MustInherit Class ObjectSchemaBaseImplementation
         Return New M2MRelation() {}
     End Function
 
-    Public Sub GetSchema(ByVal schema As Worm.OrmSchemaBase, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
+    Public Sub GetSchema(ByVal schema As Worm.QueryGenerator, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
         _schema = schema
         _objectType = t
     End Sub
@@ -171,7 +172,7 @@ Public Class EntitySchema1v3Implementation
             Dim orc As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
             orc.AddFilter(New Criteria.Joins.JoinFilter(right, "i", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
             orc.AddFilter(New Criteria.Core.TableFilter(right, "s", New ScalarValue("a"), Worm.Criteria.FilterOperation.Equal))
-            Return New Criteria.Joins.OrmJoin(right, Worm.Criteria.Joins.JoinType.Join, CType(orc.Condition, Criteria.Core.IFilter))
+            Return New Criteria.Joins.OrmJoin(right, Worm.Criteria.Joins.JoinType.Join, CType(orc.Condition, IFilter))
         End If
         Return MyBase.GetJoins(left, right)
     End Function
@@ -188,7 +189,7 @@ Public Class Entity2
 
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -276,7 +277,7 @@ End Class
 Public Class Entity3
     Inherits Entity
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As DbSchema)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator)
         MyBase.New(id, cache, schema)
     End Sub
 End Class
@@ -292,7 +293,7 @@ Public Class Entity4
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -505,7 +506,7 @@ Public Class Entity5
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.OrmSchemaBase)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
         MyBase.New(id, cache, schema)
     End Sub
 

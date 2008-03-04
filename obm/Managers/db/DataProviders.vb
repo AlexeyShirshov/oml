@@ -44,7 +44,7 @@ Namespace Database
                     For Each fl As IFilter In _f.GetAllFilters
                         Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                         If f IsNot Nothing Then
-                            Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                            Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
 
                             Dim fields As List(Of String) = Nothing
                             If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
@@ -76,11 +76,11 @@ Namespace Database
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                             If f IsNot Nothing Then
-                                Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                                Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
                                 If tmpl.Type Is Nothing Then
                                     Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                                 End If
-                                Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
+                                Dim v As EntityValue = TryCast(CType(f, EntityFilterBase).Value, EntityValue)
                                 If v IsNot Nothing Then
                                     'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
                                     'If GetType(OrmBase).IsAssignableFrom(tp) Then
@@ -201,7 +201,7 @@ Namespace Database
                 End Using
             End Function
 
-            Protected ReadOnly Property Schema() As DbSchema
+            Protected ReadOnly Property Schema() As SQLGenerator
                 Get
                     Return _mgr.DbSchema
                 End Get
@@ -297,7 +297,7 @@ Namespace Database
                     _appendSecong = True
                 Else
                     If f IsNot Nothing Then
-                        For Each fl As EntityFilter In f.GetAllFilters
+                        For Each fl As EntityFilterBase In f.GetAllFilters
                             If fl.Template.Type Is Nothing Then
                                 Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                             End If
@@ -482,8 +482,8 @@ Namespace Database
                         For Each bf As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(bf, IEntityFilter)
                             If f IsNot Nothing Then
-                                Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
-                                Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                                Dim v As EntityValue = TryCast(CType(f, EntityFilterBase).Value, EntityValue)
+                                Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
                                 If tmpl.Type Is Nothing Then
                                     Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                                 End If

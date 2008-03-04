@@ -10,7 +10,7 @@ Imports Worm.Orm.Meta
     <TestMethod()> _
     Public Sub TestSelectm2m()
 
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Dim t As Type = GetType(Entity)
         Dim t2 As Type = GetType(Entity4)
@@ -31,7 +31,7 @@ Imports Worm.Orm.Meta
     <TestMethod()> _
     Public Sub TestSelectm2m2()
 
-        Dim schema As New DbSchema("2")
+        Dim schema As New SQLGenerator("2")
 
         Dim t As Type = GetType(Entity)
         Dim t2 As Type = GetType(Entity4)
@@ -53,7 +53,7 @@ Imports Worm.Orm.Meta
     <TestMethod()> _
     Public Sub TestSelectm2m3()
 
-        Dim schema As New DbSchema("2")
+        Dim schema As New SQLGenerator("2")
 
         Dim t As Type = GetType(Entity4)
         Dim t2 As Type = GetType(Entity)
@@ -94,7 +94,7 @@ Imports Worm.Orm.Meta
 
     <TestMethod()> _
     Public Sub TestSelectm2m4()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Dim t As Type = GetType(Entity)
         Dim t2 As Type = GetType(Entity4)
@@ -117,7 +117,7 @@ Imports Worm.Orm.Meta
 
     <TestMethod()> _
     Public Sub TestSelectm2m5()
-        Dim schema As New DbSchema("1")
+        Dim schema As New SQLGenerator("1")
 
         Dim t As Type = GetType(Entity5)
         Dim t2 As Type = GetType(Entity5)

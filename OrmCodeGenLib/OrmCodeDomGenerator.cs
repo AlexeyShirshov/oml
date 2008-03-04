@@ -298,7 +298,7 @@ namespace OrmCodeGenLib
                 // параметры конструктора
                 ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(int), "id"));
                 ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmCacheBase), "cache"));
-                ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Worm.OrmSchemaBase), "schema"));
+                ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Worm.QueryGenerator), "schema"));
                 // передача параметров базовому конструктору
                 ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("id"));
                 ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("cache"));
@@ -971,12 +971,12 @@ namespace OrmCodeGenLib
                 //}
                 #endregion сущность реализует связь
 
-                #region public void GetSchema(OrmSchemaBase schema, Type t)
+                #region public void GetSchema(QueryGenerator schema, Type t)
 
                 if (entity.BaseEntity == null)
                 {
                     CodeMemberField schemaField = new CodeMemberField(
-                        new CodeTypeReference(typeof(Worm.OrmSchemaBase)),
+                        new CodeTypeReference(typeof(Worm.QueryGenerator)),
                         "_schema"
                         );
                     CodeMemberField typeField = new CodeMemberField(
@@ -1000,7 +1000,7 @@ namespace OrmCodeGenLib
                     }
                     method.Parameters.Add(
                         new CodeParameterDeclarationExpression(
-                            new CodeTypeReference(typeof(Worm.OrmSchemaBase)),
+                            new CodeTypeReference(typeof(Worm.QueryGenerator)),
                             "schema"
                             )
                         );
@@ -1040,7 +1040,7 @@ namespace OrmCodeGenLib
                 //            new CodeArgumentReferenceExpression("t")
                 //        )
                 //    );
-                #endregion public void GetSchema(OrmSchemaBase schema, Type t)
+                #endregion public void GetSchema(QueryGenerator schema, Type t)
 
                 if ((createobjectMethod.Statements.Count == 0 || entity.Behaviour == EntityBehaviuor.PartialObjects) && entityClass.Members.Contains(createobjectMethod))
                     entityClass.Members.Remove(createobjectMethod);

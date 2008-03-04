@@ -7,6 +7,7 @@ Imports System.Diagnostics
 Imports Worm.Database.Criteria.Core
 Imports Worm.Criteria.Values
 Imports Worm.Database
+Imports Worm.Criteria.Core
 
 <TestClass()> _
 Public Class TestJoinsRS

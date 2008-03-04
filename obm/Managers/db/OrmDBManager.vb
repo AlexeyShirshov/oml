@@ -5,16 +5,17 @@ Imports Worm.Orm
 Imports Worm.Database.Criteria.Core
 Imports Worm.Sorting
 Imports Worm.Orm.Meta
+Imports cc = Worm.Criteria.Core
 
 Namespace Database
     Public Class OrmDBManager
         Inherits OrmReadOnlyDBManager
 
-        Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As DbSchema, ByVal connectionString As String)
+        Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, schema, connectionString)
         End Sub
 
-        Protected Sub New(ByVal schema As DbSchema, ByVal connectionString As String)
+        Protected Sub New(ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(schema, connectionString)
         End Sub
 
@@ -30,7 +31,7 @@ Namespace Database
 
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
             Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
-            Dim upd As IList(Of EntityFilter) = Nothing
+            Dim upd As IList(Of Worm.Criteria.Core.EntityFilterBase) = Nothing
             Dim inv As Boolean
             Using obj.GetSyncRoot()
                 Dim cmdtext As String = DbSchema.Update(obj, GetFilterInfo, params, cols, upd)
@@ -586,7 +587,7 @@ Namespace Database
         'ResetAllM2MRelations(id, key)
         'End Sub
 
-        Public Function Delete(ByVal f As IEntityFilter) As Integer
+        Public Function Delete(ByVal f As cc.IEntityFilter) As Integer
             Dim t As Type = Nothing
 #If DEBUG Then
             For Each fl As EntityFilter In f.GetAllFilters

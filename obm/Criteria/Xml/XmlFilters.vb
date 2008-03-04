@@ -4,13 +4,13 @@ Imports Worm.Orm.Meta
 Namespace Xml
     Namespace Criteria.Core
         Public Class XmlEntityTemplate
-            Inherits Worm.Criteria.Core.OrmFilterTemplate
+            Inherits Worm.Criteria.Core.OrmFilterTemplateBase
 
             Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal oper As Worm.Criteria.FilterOperation)
                 MyBase.New(t, fieldName, oper)
             End Sub
 
-            Protected Overrides Function CreateEntityFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilter
+            Protected Overrides Function CreateEntityFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilterBase
                 Return New XmlEntityFilter(t, fieldName, value, operation)
             End Function
 
@@ -35,19 +35,19 @@ Namespace Xml
                     Case Worm.Criteria.FilterOperation.LessThan
                         Return " < "
                     Case Else
-                        Throw New DBSchemaException("invalid opration " & oper.ToString)
+                        Throw New OrmSchemaException("invalid opration " & oper.ToString)
                 End Select
             End Function
         End Class
 
         Public Class XmlEntityFilter
-            Inherits Worm.Criteria.Core.EntityFilter
+            Inherits Worm.Criteria.Core.EntityFilterBase
 
             Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
                 MyBase.New(New XmlEntityTemplate(t, fieldName, operation), value)
             End Sub
 
-            Public Overrides Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 If schema Is Nothing Then
                     Throw New ArgumentNullException("schema")
                 End If

@@ -87,8 +87,8 @@ Public Class TestMultiTable
         Return entities(0)
     End Function
 
-    Protected Function GetSchema(ByVal version As String) As DbSchema
-        Return New DbSchema(version, AddressOf ResolveVersion, Nothing)
+    Protected Function GetSchema(ByVal version As String) As SQLGenerator
+        Return New SQLGenerator(version, AddressOf ResolveVersion, Nothing)
     End Function
 
     <TestMethod()> _

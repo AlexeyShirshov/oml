@@ -53,7 +53,7 @@ Public MustInherit Class OrmManagerBase
         Dim o1 As OrmBase
         Dim o2 As OrmBase
 
-        Public Sub New(ByVal r As IRelation, ByVal obj As OrmBase, ByVal schema As OrmSchemaBase)
+        Public Sub New(ByVal r As IRelation, ByVal obj As OrmBase, ByVal schema As QueryGenerator)
             Me.o = r
             'Me.obj = obj
             p1 = o.GetFirstType
@@ -156,9 +156,9 @@ Public MustInherit Class OrmManagerBase
         Implements IDisposable
 
         Private _disposedValue As Boolean = False        ' To detect redundant calls
-        Private _oldSchema As OrmSchemaBase
+        Private _oldSchema As QueryGenerator
 
-        Public Sub New(ByVal schema As OrmSchemaBase)
+        Public Sub New(ByVal schema As QueryGenerator)
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
             _oldSchema = mgr.ObjectSchema
             mgr._schema = schema
@@ -778,7 +778,7 @@ Public MustInherit Class OrmManagerBase
     Friend _prev As OrmManagerBase = Nothing
     'Protected hide_deleted As Boolean = True
     'Protected _check_status As Boolean = True
-    Protected _schema As OrmSchemaBase
+    Protected _schema As QueryGenerator
     'Private _findnew As FindNew
     'Private _remnew As RemoveNew
     Protected Friend _disposed As Boolean = False
@@ -847,7 +847,7 @@ Public MustInherit Class OrmManagerBase
     Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport, ByVal contextKey As Object) As String
 
     <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")> _
-    Protected Sub New(ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
+    Protected Sub New(ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
 
         If cache Is Nothing Then
             Throw New ArgumentNullException("cache")
@@ -866,7 +866,7 @@ Public MustInherit Class OrmManagerBase
     End Sub
 
     <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")> _
-    Protected Sub New(ByVal schema As OrmSchemaBase)
+    Protected Sub New(ByVal schema As QueryGenerator)
         '_dispose_cash = True
         _cache = New OrmCache
         _schema = schema
@@ -903,13 +903,13 @@ Public MustInherit Class OrmManagerBase
 #If TraceManagerCreation Then
 _callstack = environment.StackTrace
 #End If
-            'Thread.SetData(LocalStorage, Me)
+        'Thread.SetData(LocalStorage, Me)
 
-            CurrentManager = Me
-            '_cs = Environment.StackTrace.ToString
-            'If prev IsNot Nothing Then
-            '    _prevs = prev._s
-            'End If
+        CurrentManager = Me
+        '_cs = Environment.StackTrace.ToString
+        'If prev IsNot Nothing Then
+        '    _prevs = prev._s
+        'End If
     End Sub
 
     'Public Property CheckOnFind() As Boolean
@@ -921,7 +921,7 @@ _callstack = environment.StackTrace
     '    End Set
     'End Property
 
-    Public ReadOnly Property ObjectSchema() As OrmSchemaBase
+    Public ReadOnly Property ObjectSchema() As QueryGenerator
         Get
             Return _schema
         End Get
@@ -2066,7 +2066,7 @@ l1:
     Protected Sub InvalidateCache(ByVal obj As OrmBase, ByVal upd As ICollection) '(Of EntityFilter)
         Dim t As Type = obj.GetType
         Dim l As New List(Of String)
-        For Each f As EntityFilter In upd
+        For Each f As EntityFilterBase In upd
             '    Assert(f.Type Is t, "")
 
             '    Cache.AddUpdatedFields(obj, f.FieldName)
@@ -2209,7 +2209,7 @@ l1:
         If a Is Nothing Then
             Using SyncHelper.AcquireDynamicLock(sync_key)
                 If Not dic.TryGetValue(id, a) Then
-                    If OrmSchemaBase.GetUnions(type) IsNot Nothing Then
+                    If QueryGenerator.GetUnions(type) IsNot Nothing Then
                         Throw New NotSupportedException
                     Else
                         a = New T
@@ -2282,7 +2282,7 @@ l1:
         If a Is Nothing Then
             Using SyncHelper.AcquireDynamicLock(sync_key)
                 If Not dic.TryGetValue(id, a) Then
-                    If OrmSchemaBase.GetUnions(type) IsNot Nothing Then
+                    If QueryGenerator.GetUnions(type) IsNot Nothing Then
                         Throw New NotSupportedException
                     Else
                         a = obj
@@ -2989,10 +2989,10 @@ l1:
             Dim ns As Sort = s
             Do
                 If ns.IsExternal Then
-                    Throw New DBSchemaException("External sort must be alone")
+                    Throw New OrmSchemaException("External sort must be alone")
                 End If
                 If ns.IsCustom Then
-                    Throw New DBSchemaException("Custom sort is not supported")
+                    Throw New OrmSchemaException("Custom sort is not supported")
                 End If
                 q.Push(ns)
                 ns = ns.Previous
@@ -3015,10 +3015,10 @@ l1:
             Dim ns As Sort = s
             Do
                 If ns.IsExternal Then
-                    Throw New DBSchemaException("External sort must be alone")
+                    Throw New OrmSchemaException("External sort must be alone")
                 End If
                 If ns.IsCustom Then
-                    Throw New DBSchemaException("Custom sort is not supported")
+                    Throw New OrmSchemaException("Custom sort is not supported")
                 End If
                 q.Push(ns)
                 ns = ns.Previous
@@ -3788,7 +3788,7 @@ l1:
             For Each fl As IFilter In filter.GetAllFilters
                 Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                 If f IsNot Nothing Then
-                    Dim type2join As System.Type = CType(f.Template, OrmFilterTemplate).Type
+                    Dim type2join As System.Type = CType(f.Template, OrmFilterTemplateBase).Type
                     If type2join Is Nothing Then
                         Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                     End If

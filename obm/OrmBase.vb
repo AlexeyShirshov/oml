@@ -667,13 +667,13 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
+        Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
             Init(id, cache, schema)
             Init()
         End Sub
 
         <Obsolete()> _
-        Friend Sub Init(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
+        Friend Sub Init(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
             Me._id = id
 
             If schema IsNot Nothing Then
@@ -684,7 +684,7 @@ Namespace Orm
             If cache IsNot Nothing Then cache.RegisterCreation(Me.GetType, id)
         End Sub
 
-        Friend Sub Init(ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
+        Friend Sub Init(ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
 
             If schema IsNot Nothing Then
                 Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
@@ -710,7 +710,7 @@ Namespace Orm
             End If
         End Sub
 
-        Protected ReadOnly Property OrmSchema() As OrmSchemaBase
+        Protected ReadOnly Property OrmSchema() As QueryGenerator
             Get
                 If GetMgr() Is Nothing Then
                     Return Nothing
@@ -757,7 +757,7 @@ Namespace Orm
             End If
         End Function
 
-        Friend Function CheckIsAllLoaded(ByVal schema As OrmSchemaBase) As Boolean
+        Friend Function CheckIsAllLoaded(ByVal schema As QueryGenerator) As Boolean
             Using SyncHelper(False)
                 Dim allloaded As Boolean = True
                 If Not _loaded Then
@@ -1420,9 +1420,9 @@ Namespace Orm
                 'Throw New OrmObjectException("Use Identifier property to get ID")
                 Return Identifier
             Else
-                Dim s As OrmSchemaBase = OrmSchema
+                Dim s As QueryGenerator = OrmSchema
                 If s Is Nothing Then
-                    Return OrmSchemaBase.GetFieldValueSchemaless(Me, propAlias)
+                    Return QueryGenerator.GetFieldValueSchemaless(Me, propAlias)
                 Else
                     Return s.GetFieldValue(Me, propAlias, Nothing)
                 End If
@@ -1434,9 +1434,9 @@ Namespace Orm
                 'Throw New OrmObjectException("Use Identifier property to get ID")
                 Return Identifier
             Else
-                Dim s As OrmSchemaBase = OrmSchema
+                Dim s As QueryGenerator = OrmSchema
                 If s Is Nothing Then
-                    Return OrmSchemaBase.GetFieldValueSchemaless(Me, propAlias, schema)
+                    Return QueryGenerator.GetFieldValueSchemaless(Me, propAlias, schema)
                 Else
                     Return s.GetFieldValue(Me, propAlias, schema)
                 End If
@@ -1491,7 +1491,7 @@ l1:
             End With
 
             _loading = False
-            Dim schema As OrmSchemaBase = GetMgr.ObjectSchema
+            Dim schema As QueryGenerator = GetMgr.ObjectSchema
             If schema IsNot Nothing Then CheckIsAllLoaded(schema)
 
         End Sub
@@ -1781,7 +1781,7 @@ l1:
 
         End Sub
 
-        Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As OrmSchemaBase)
+        Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
             MyBase.New(id, cache, schema)
         End Sub
 

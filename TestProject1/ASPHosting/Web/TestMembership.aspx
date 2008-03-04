@@ -16,7 +16,7 @@
         
         Public Function CreateDBManager() As OrmReadOnlyDBManager
             Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
-            Return New OrmReadOnlyDBManager(New OrmCache, New DbSchema("1"), "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+            Return New OrmReadOnlyDBManager(New OrmCache, New SQLGenerator("1"), "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
         End Function
     
         Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)

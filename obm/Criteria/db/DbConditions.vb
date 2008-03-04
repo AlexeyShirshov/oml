@@ -1,13 +1,13 @@
 ﻿Imports System.Collections.Generic
 Imports cc = Worm.Criteria.Conditions
-Imports Worm.Database.Criteria.Core
+Imports Worm.Criteria.Core
 Imports Worm.Orm.Meta
 
 Namespace Database
     Namespace Criteria.Conditions
         Public Class Condition
             Inherits Worm.Criteria.Conditions.Condition
-            Implements Worm.Database.Criteria.Core.ITemplateFilter
+            'Implements Worm.Database.Criteria.Core.ITemplateFilter
 
             Public Class ConditionConstructor
                 Inherits Worm.Criteria.Conditions.Condition.ConditionConstructorBase
@@ -55,43 +55,43 @@ Namespace Database
                 End Get
             End Property
 
-            Public Overrides Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
                 If _right Is Nothing Then
-                    Return _left.MakeSQLStmt(schema, pname)
+                    Return _left.MakeQueryStmt(schema, almgr, pname)
                 End If
-                Return "(" & _left.MakeSQLStmt(schema, pname) & Condition2String() & _right.MakeSQLStmt(schema, pname) & ")"
+                Return "(" & _left.MakeQueryStmt(schema, almgr, pname) & Condition2String() & _right.MakeQueryStmt(schema, almgr, pname) & ")"
             End Function
 
-            Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeSQLStmt
-                Dim bf As IFilter = TryCast(_left, IFilter)
-                If _right Is Nothing Then
-                    If bf IsNot Nothing Then
-                        Return bf.MakeSQLStmt(schema, almgr, pname)
-                    Else
-                        Return _left.MakeSQLStmt(schema, pname)
-                    End If
-                End If
-                Dim lstmt As String = Nothing
-                If bf IsNot Nothing Then
-                    lstmt = bf.MakeSQLStmt(schema, almgr, pname)
-                Else
-                    lstmt = _left.MakeSQLStmt(schema, pname)
-                End If
+            'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeSQLStmt
+            '    Dim bf As IFilter = TryCast(_left, IFilter)
+            '    If _right Is Nothing Then
+            '        If bf IsNot Nothing Then
+            '            Return bf.MakeSQLStmt(schema, almgr, pname)
+            '        Else
+            '            Return _left.MakeSQLStmt(schema, pname)
+            '        End If
+            '    End If
+            '    Dim lstmt As String = Nothing
+            '    If bf IsNot Nothing Then
+            '        lstmt = bf.MakeSQLStmt(schema, almgr, pname)
+            '    Else
+            '        lstmt = _left.MakeSQLStmt(schema, pname)
+            '    End If
 
-                Dim rstmt As String = Nothing
-                Dim rf As IFilter = TryCast(_right, IFilter)
-                If rf IsNot Nothing Then
-                    rstmt = rf.MakeSQLStmt(schema, almgr, pname)
-                Else
-                    rstmt = _right.MakeSQLStmt(schema, pname)
-                End If
-                Return "(" & lstmt & Condition2String() & rstmt & ")"
-            End Function
+            '    Dim rstmt As String = Nothing
+            '    Dim rf As IFilter = TryCast(_right, IFilter)
+            '    If rf IsNot Nothing Then
+            '        rstmt = rf.MakeSQLStmt(schema, almgr, pname)
+            '    Else
+            '        rstmt = _right.MakeSQLStmt(schema, pname)
+            '    End If
+            '    Return "(" & lstmt & Condition2String() & rstmt & ")"
+            'End Function
         End Class
 
         Friend Class EntityCondition
             Inherits Worm.Criteria.Conditions.EntityCondition
-            Implements Worm.Database.Criteria.Core.IEntityFilter
+            'Implements Worm.Database.Criteria.Core.IEntityFilter
 
             Protected Class ConditionTemplate
                 Inherits Worm.Criteria.Conditions.EntityCondition.EntityConditionTemplateBase
@@ -129,17 +129,21 @@ Namespace Database
                 End Get
             End Property
 
-            Public Overrides Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As ICreateParam) As String
-                Throw New NotImplementedException("")
-            End Function
-
-            Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements Worm.Database.Criteria.Core.ITemplateFilter.MakeSQLStmt
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
                 If _right Is Nothing Then
-                    Return CType(_left, IEntityFilter).MakeSQLStmt(schema, almgr, pname)
+                    Return CType(_left, IEntityFilter).MakeQueryStmt(schema, almgr, pname)
                 End If
 
-                Return "(" & CType(_left, IEntityFilter).MakeSQLStmt(schema, almgr, pname) & Condition2String() & CType(_right, IEntityFilter).MakeSQLStmt(schema, almgr, pname) & ")"
+                Return "(" & CType(_left, IEntityFilter).MakeQueryStmt(schema, almgr, pname) & Condition2String() & CType(_right, IEntityFilter).MakeQueryStmt(schema, almgr, pname) & ")"
             End Function
+
+            'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements Worm.Database.Criteria.Core.ITemplateFilter.MakeSQLStmt
+            '    If _right Is Nothing Then
+            '        Return CType(_left, IEntityFilter).MakeSQLStmt(schema, almgr, pname)
+            '    End If
+
+            '    Return "(" & CType(_left, IEntityFilter).MakeSQLStmt(schema, almgr, pname) & Condition2String() & CType(_right, IEntityFilter).MakeSQLStmt(schema, almgr, pname) & ")"
+            'End Function
         End Class
     End Namespace
 End Namespace

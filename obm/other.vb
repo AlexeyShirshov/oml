@@ -2,138 +2,154 @@ Imports System.Collections.Generic
 Imports System.Runtime.CompilerServices
 Imports System.Runtime.InteropServices
 
-<Serializable()> _
-Public Class ReadOnlyList(Of T)
-    Implements ICollection, ICollection(Of T), IEnumerable(Of T), IEnumerable, IList(Of T)
-    ' Methods
-    Friend Sub New(ByVal items As IList(Of T))
-        Me._items = items
-    End Sub
+'<Serializable()> _
+'Public Class ReadOnlyList(Of T)
+'    Implements ICollection, ICollection(Of T), IEnumerable(Of T), IEnumerable, IList(Of T)
+'    ' Methods
+'    Friend Sub New(ByVal items As IList(Of T))
+'        Me._items = items
+'    End Sub
 
-    Public Sub CopyTo(ByVal array As T(), ByVal arrayIndex As Integer) Implements ICollection(Of T).CopyTo
-        _items.CopyTo(array, arrayIndex)
-    End Sub
+'    Public Sub CopyTo(ByVal array As T(), ByVal arrayIndex As Integer) Implements ICollection(Of T).CopyTo
+'        _items.CopyTo(array, arrayIndex)
+'    End Sub
 
-    Public Function _GetEnumerator() As IEnumerator Implements IEnumerable.GetEnumerator
-        Return New Enumerator(Of T)(Me._items)
-    End Function
+'    Public Function _GetEnumerator() As IEnumerator Implements IEnumerable.GetEnumerator
+'        Return New Enumerator(Of T)(Me._items)
+'    End Function
 
-    Private Sub Add(ByVal value As T) Implements ICollection(Of T).Add
-        Throw New NotSupportedException
-    End Sub
+'    Private Sub Add(ByVal value As T) Implements ICollection(Of T).Add
+'        Throw New NotSupportedException
+'    End Sub
 
-    Private Sub Clear() Implements ICollection(Of T).Clear
-        Throw New NotSupportedException
-    End Sub
+'    Private Sub Clear() Implements ICollection(Of T).Clear
+'        Throw New NotSupportedException
+'    End Sub
 
-    Private Function Contains(ByVal value As T) As Boolean Implements ICollection(Of T).Contains
-        Return _items.Contains(value)
-    End Function
+'    Private Function Contains(ByVal value As T) As Boolean Implements ICollection(Of T).Contains
+'        Return _items.Contains(value)
+'    End Function
 
-    Private Function Remove(ByVal value As T) As Boolean Implements ICollection(Of T).Remove
-        Throw New NotSupportedException
-    End Function
+'    Private Function Remove(ByVal value As T) As Boolean Implements ICollection(Of T).Remove
+'        Throw New NotSupportedException
+'    End Function
 
-    Public Function GetEnumerator() As IEnumerator(Of T) Implements IEnumerable(Of T).GetEnumerator
-        Return New Enumerator(Of T)(Me._items)
-    End Function
+'    Public Function GetEnumerator() As IEnumerator(Of T) Implements IEnumerable(Of T).GetEnumerator
+'        Return New Enumerator(Of T)(Me._items)
+'    End Function
 
-    Private Sub CopyTo(ByVal array As Array, ByVal arrayIndex As Integer) Implements ICollection.CopyTo
-        CopyTo(CType(array, T()), arrayIndex)
-    End Sub
+'    Private Sub CopyTo(ByVal array As Array, ByVal arrayIndex As Integer) Implements ICollection.CopyTo
+'        CopyTo(CType(array, T()), arrayIndex)
+'    End Sub
 
-    ' Properties
-    Public ReadOnly Property Count() As Integer Implements ICollection(Of T).Count
-        Get
-            Return Me._items.Count
-        End Get
-    End Property
+'    ' Properties
+'    Public ReadOnly Property Count() As Integer Implements ICollection(Of T).Count
+'        Get
+'            Return Me._items.Count
+'        End Get
+'    End Property
 
-    Private ReadOnly Property _Count() As Integer Implements ICollection.Count
-        Get
-            Return Me._items.Count
-        End Get
-    End Property
+'    Private ReadOnly Property _Count() As Integer Implements ICollection.Count
+'        Get
+'            Return Me._items.Count
+'        End Get
+'    End Property
 
-    Private ReadOnly Property IsReadOnly() As Boolean Implements ICollection(Of T).IsReadOnly
-        Get
-            Return True
-        End Get
-    End Property
+'    Private ReadOnly Property IsReadOnly() As Boolean Implements ICollection(Of T).IsReadOnly
+'        Get
+'            Return True
+'        End Get
+'    End Property
 
-    Private ReadOnly Property IsSynchronized() As Boolean Implements ICollection.IsSynchronized
-        Get
-            Return False
-        End Get
-    End Property
+'    Private ReadOnly Property IsSynchronized() As Boolean Implements ICollection.IsSynchronized
+'        Get
+'            Return False
+'        End Get
+'    End Property
 
-    Private ReadOnly Property SyncRoot() As Object Implements ICollection.SyncRoot
-        Get
-            Return Me._items
-        End Get
-    End Property
+'    Private ReadOnly Property SyncRoot() As Object Implements ICollection.SyncRoot
+'        Get
+'            Return Me._items
+'        End Get
+'    End Property
 
 
-    ' Fields
-    Private _items As IList(Of T)
+'    ' Fields
+'    Private _items As IList(Of T)
 
-    ' Nested Types
-    <Serializable()> _
-    Friend Structure Enumerator(Of K)
-        Implements IEnumerator(Of K), IDisposable, IEnumerator
+'    ' Nested Types
+'    <Serializable()> _
+'    Friend Structure Enumerator(Of K)
+'        Implements IEnumerator(Of K), IDisposable, IEnumerator
 
-        Private _items As IList(Of K)
-        Private _index As Integer
+'        Private _items As IList(Of K)
+'        Private _index As Integer
 
-        Friend Sub New(ByVal items As IList(Of K))
-            Me._items = items
-            Me._index = -1
-        End Sub
+'        Friend Sub New(ByVal items As IList(Of K))
+'            Me._items = items
+'            Me._index = -1
+'        End Sub
 
-        Public Sub Dispose() Implements IDisposable.Dispose
-        End Sub
+'        Public Sub Dispose() Implements IDisposable.Dispose
+'        End Sub
 
-        Public Function MoveNext() As Boolean Implements IEnumerator.MoveNext
-            Return (++Me._index < Me._items.Count)
-        End Function
+'        Public Function MoveNext() As Boolean Implements IEnumerator.MoveNext
+'            Return (++Me._index < Me._items.Count)
+'        End Function
 
-        Private ReadOnly Property _Current() As Object Implements IEnumerator.Current
-            Get
-                Return _items(Me._index)
-            End Get
-        End Property
+'        Private ReadOnly Property _Current() As Object Implements IEnumerator.Current
+'            Get
+'                Return _items(Me._index)
+'            End Get
+'        End Property
 
-        Public ReadOnly Property Current() As K Implements IEnumerator(Of K).Current
-            Get
-                Return _items(Me._index)
-            End Get
-        End Property
+'        Public ReadOnly Property Current() As K Implements IEnumerator(Of K).Current
+'            Get
+'                Return _items(Me._index)
+'            End Get
+'        End Property
 
-        Private Sub Reset() Implements IEnumerator.Reset
-            Me._index = -1
-        End Sub
-    End Structure
+'        Private Sub Reset() Implements IEnumerator.Reset
+'            Me._index = -1
+'        End Sub
+'    End Structure
 
-    Public Function IndexOf(ByVal item As T) As Integer Implements System.Collections.Generic.IList(Of T).IndexOf
-        Return _items.IndexOf(item)
-    End Function
+'    Public Function IndexOf(ByVal item As T) As Integer Implements System.Collections.Generic.IList(Of T).IndexOf
+'        Return _items.IndexOf(item)
+'    End Function
 
-    Public Sub Insert(ByVal index As Integer, ByVal item As T) Implements System.Collections.Generic.IList(Of T).Insert
-        Throw New NotSupportedException
-    End Sub
+'    Public Sub Insert(ByVal index As Integer, ByVal item As T) Implements System.Collections.Generic.IList(Of T).Insert
+'        Throw New NotSupportedException
+'    End Sub
 
-    Default Public Property Item(ByVal index As Integer) As T Implements System.Collections.Generic.IList(Of T).Item
-        Get
-            Return _items(index)
-        End Get
-        Set(ByVal value As T)
-            Throw New NotSupportedException
-        End Set
-    End Property
+'    Default Public Property Item(ByVal index As Integer) As T Implements System.Collections.Generic.IList(Of T).Item
+'        Get
+'            Return _items(index)
+'        End Get
+'        Set(ByVal value As T)
+'            Throw New NotSupportedException
+'        End Set
+'    End Property
 
-    Public Sub RemoveAt(ByVal index As Integer) Implements System.Collections.Generic.IList(Of T).RemoveAt
-        Throw New NotSupportedException
-    End Sub
+'    Public Sub RemoveAt(ByVal index As Integer) Implements System.Collections.Generic.IList(Of T).RemoveAt
+'        Throw New NotSupportedException
+'    End Sub
+'End Class
+
+Public Class ReadOnlyList(Of T As Orm.OrmBase)
+    'Inherits ObjectModel.ReadOnlyCollection(Of T)
+
+    'Private _l As IList(Of T)
+    'Protected Friend ReadOnly Property List() As IList(Of T)
+    '    Get
+    '        Return _l
+    '    End Get
+    'End Property
+
+    'Public Sub New(ByVal list As IList(Of T))
+    '    MyBase.New(list)
+    'End Sub
+
 End Class
 
 Namespace Collections
@@ -1228,7 +1244,18 @@ Namespace Collections
 
 End Namespace
 
+''' <summary>
+''' Модуль небольших функций для внутреннего использования по всему солюшену
+''' </summary>
+''' <remarks></remarks>
 Public Module helper
+
+    ''' <summary>
+    ''' Метод определяет нужно ли добавлять псевдоним таблицы для поля в БД
+    ''' </summary>
+    ''' <param name="str">Название поля в БД</param>
+    ''' <returns><b>true</b> если псевдоним необходим. В противном случае <b>false</b></returns>
+    ''' <remarks>Для вычисляемых полей или скалярных подзапросов префикс (псевдоним) таблицы не нужен.</remarks>
     Public Function ShouldPrefix(ByVal str As String) As Boolean
         If str IsNot Nothing Then
             Dim pos As Integer = str.IndexOf("select ")
@@ -1239,6 +1266,12 @@ Public Module helper
         End If
     End Function
 
+    ''' <summary>
+    ''' Метод используется для подсчета кол-ва безымяных параметров в выражении
+    ''' </summary>
+    ''' <param name="stmt">Вырежение</param>
+    ''' <returns>Кол-во безымянных параметров</returns>
+    ''' <remarks></remarks>
     Public Function ExtractParamsCount(ByVal stmt As String) As Integer
         Dim pos As Integer = 0
         Dim cnt As Integer = 0
@@ -1260,14 +1293,23 @@ Public Module helper
         Return cnt
     End Function
 
-    Public Function Sort(Of TKey, TValue)(ByVal dic As IDictionary(Of TKey, TValue), ByVal s() As TKey) As Dictionary(Of TKey, TValue)
-        Dim l As New Dictionary(Of TKey, TValue)
+    ''' <summary>
+    ''' Сортирует словарь в соответствии с порядком ключей в коллекции
+    ''' </summary>
+    ''' <typeparam name="TKey">Ключ словаря</typeparam>
+    ''' <typeparam name="TValue">Значение словаря</typeparam>
+    ''' <param name="dic">Словарь</param>
+    ''' <param name="model">Упорядоченная коллекция ключей</param>
+    ''' <returns>Список пар ключ/значение из словаря, упорядоченный по коллекции <b>model</b></returns>
+    ''' <exception cref="InvalidOperationException">Если ключ из словаря не найден в коллекции <b>model</b></exception>
+    Public Function Sort(Of TKey, TValue)(ByVal dic As IDictionary(Of TKey, TValue), ByVal model() As TKey) As List(Of Pair(Of TKey, TValue))
+        Dim l As New List(Of Pair(Of TKey, TValue))
 
         If dic IsNot Nothing Then
-            Dim arr(s.Length - 1) As TValue
+            Dim arr(model.Length - 1) As TValue
             For Each de As KeyValuePair(Of TKey, TValue) In dic
 
-                Dim idx As Integer = Array.IndexOf(s, de.Key)
+                Dim idx As Integer = Array.IndexOf(model, de.Key)
 
                 If idx < 0 Then
                     Throw New InvalidOperationException("Unknown key " + Convert.ToString(de.Key))
@@ -1277,13 +1319,20 @@ Public Module helper
             Next
 
             For i As Integer = 0 To arr.Length - 1
-                l.Add(s(i), arr(i))
+                l.Add(New Pair(Of TKey, TValue)(model(i), arr(i)))
             Next
         End If
 
         Return l
     End Function
 
+    ''' <summary>
+    ''' Сравнение массива байт
+    ''' </summary>
+    ''' <param name="arr1">Первый массив</param>
+    ''' <param name="arr2">Второй массив</param>
+    ''' <returns><b>true</b> если массивы идентичны</returns>
+    ''' <remarks></remarks>
     Public Function IsEqualByteArray(ByVal arr1() As Byte, ByVal arr2() As Byte) As Boolean
         If arr1 Is Nothing AndAlso arr2 Is Nothing Then
             Return True
@@ -1295,7 +1344,7 @@ Public Module helper
         End If
 
         If arr1.Length <> arr2.Length Then
-            Return Nothing
+            Return False
         End If
 
         For i As Integer = 0 To arr1.Length - 1
@@ -1309,21 +1358,41 @@ Public Module helper
         Return True
     End Function
 
+    ''' <summary>
+    ''' Класс представляет собой результат склейки коллекции чисел
+    ''' </summary>
+    ''' <remarks></remarks>
     Public Class MergeResult
         Private _pairs As ICollection(Of Pair(Of Integer))
         Private _rest As ICollection(Of Integer)
 
+        ''' <summary>
+        ''' Конструктор класса
+        ''' </summary>
+        ''' <param name="pairs">Коллекция диапазонов чисел (от <see cref="Pair(Of Integer).First"/> до <see cref="Pair(Of Integer).Second"/>)</param>
+        ''' <param name="rest">Остаток (числа сами по себе)</param>
+        ''' <remarks></remarks>
         Public Sub New(ByVal pairs As ICollection(Of Pair(Of Integer)), ByVal rest As ICollection(Of Integer))
             _pairs = pairs
             _rest = rest
         End Sub
 
+        ''' <summary>
+        ''' Диапазон чисел
+        ''' </summary>
+        ''' <returns>Коллекция диапазонов чисел (от <see cref="Pair(Of Integer).First"/> до <see cref="Pair(Of Integer).Second"/>)</returns>
+        ''' <remarks></remarks>
         Public ReadOnly Property Pairs() As ICollection(Of Pair(Of Integer))
             Get
                 Return _pairs
             End Get
         End Property
 
+        ''' <summary>
+        ''' Остаток
+        ''' </summary>
+        ''' <returns>Коллекция чисел</returns>
+        ''' <remarks></remarks>
         Public ReadOnly Property Rest() As ICollection(Of Integer)
             Get
                 Return _rest
@@ -1331,6 +1400,16 @@ Public Module helper
         End Property
     End Class
 
+    ''' <summary>
+    ''' Cклейка коллекции чисел для оптимизации запросов
+    ''' </summary>
+    ''' <param name="ids">Коллекция чисел</param>
+    ''' <param name="sort"><b>true</b> если коллекция <b>ids</b> уже упорядочена</param>
+    ''' <returns>Экземпляр типа <see cref="MergeResult"/></returns>
+    ''' <remarks>Метод выполняет оптимизацию коллекции чисел для уменьшения размер строки.
+    ''' Используется для оптимизации условий в условии in (...). Например, вместо
+    ''' in (1,2,3,4,5,6,7) получается between 1 and 7
+    ''' </remarks>
     Public Function MergeIds(ByVal ids As Generic.List(Of Integer), ByVal sort As Boolean) As MergeResult
         If ids Is Nothing OrElse ids.Count = 0 Then
             Return Nothing
@@ -1376,13 +1455,29 @@ Public Module helper
 
 End Module
 
+''' <summary>
+''' Обертка над типом
+''' </summary>
+''' <typeparam name="T">Тип</typeparam>
+''' <remarks>Необходима для устранения операций неявного приведения типов</remarks>
 Public Class TypeWrap(Of T)
     Private _o As T
 
+    ''' <summary>
+    ''' Конструктор
+    ''' </summary>
+    ''' <param name="o">Экземпляр типа</param>
+    ''' <remarks></remarks>
     Public Sub New(ByVal o As T)
         _o = o
     End Sub
 
+    ''' <summary>
+    ''' Экземпляр типа
+    ''' </summary>
+    ''' <value>Устанавливаемое значение</value>
+    ''' <returns>Установленое значение</returns>
+    ''' <remarks></remarks>
     Public Property Value() As T
         Get
             Return _o
@@ -1392,11 +1487,23 @@ Public Class TypeWrap(Of T)
         End Set
     End Property
 
+    ''' <summary>
+    ''' Определение равенства объектов
+    ''' </summary>
+    ''' <param name="obj">Объект</param>
+    ''' <returns><b>true</b> если объекты равны</returns>
+    ''' <remarks></remarks>
     Public Overrides Function Equals(ByVal obj As Object) As Boolean
         Dim tw As TypeWrap(Of T) = TryCast(obj, TypeWrap(Of T))
         Return Equals(tw)
     End Function
 
+    ''' <summary>
+    ''' Типизированое определение равенства объектов
+    ''' </summary>
+    ''' <param name="obj">Объект</param>
+    ''' <returns><b>true</b> если объекты равны</returns>
+    ''' <remarks>Операция сравнение с типом Т дает <b>false</b></remarks>
     Public Overloads Function Equals(ByVal obj As TypeWrap(Of T)) As Boolean
         If obj IsNot Nothing Then
             Return Object.Equals(_o, obj._o)
@@ -1405,6 +1512,11 @@ Public Class TypeWrap(Of T)
         End If
     End Function
 
+    ''' <summary>
+    ''' Преобразование типа в строку
+    ''' </summary>
+    ''' <returns>Строка</returns>
+    ''' <remarks>Делегирует вызов внутренему объекту</remarks>
     Public Overrides Function ToString() As String
         If _o IsNot Nothing Then
             Return _o.ToString
@@ -1413,6 +1525,11 @@ Public Class TypeWrap(Of T)
         End If
     End Function
 
+    ''' <summary>
+    ''' Преобразование в число
+    ''' </summary>
+    ''' <returns>Число</returns>
+    ''' <remarks>Делегирует вызов внутренему объекту</remarks>
     Public Overrides Function GetHashCode() As Integer
         If _o IsNot Nothing Then
             Return _o.GetHashCode
@@ -1422,22 +1539,47 @@ Public Class TypeWrap(Of T)
     End Function
 End Class
 
+''' <summary>
+''' Класс, повзволяющий точно замерять промежутки времени
+''' </summary>
+''' <remarks></remarks>
 Public Class PerfCounter
     Private _start As Long
-    Private _end As Long
 
-    Declare Function QueryPerformanceCounter Lib "Kernel32" (ByRef X As Long) As Short
-    Declare Function QueryPerformanceFrequency Lib "Kernel32" (ByRef X As Long) As Short
+    ''' <summary>
+    ''' The QueryPerformanceCounter function retrieves the current value of the high-resolution performance counter
+    ''' </summary>
+    ''' <param name="X">Variable that receives the current performance-counter value, in counts</param>
+    ''' <returns>If the function succeeds, the return value is <b>true</b></returns>
+    ''' <remarks>Делегация системному вызову</remarks>
+    Declare Function QueryPerformanceCounter Lib "Kernel32" (ByRef X As Long) As Boolean
+    ''' <summary>
+    ''' The QueryPerformanceFrequency function retrieves the frequency of the high-resolution performance counter, if one exists. The frequency cannot change while the system is running
+    ''' </summary>
+    ''' <param name="X">variable that receives the current performance-counter frequency, in counts per second. If the installed hardware does not support a high-resolution performance counter, this parameter can be zero.</param>
+    ''' <returns>If the function succeeds, the return value is <b>true</b></returns>
+    ''' <remarks>Делегация системному вызову</remarks>
+    Declare Function QueryPerformanceFrequency Lib "Kernel32" (ByRef X As Long) As Boolean
 
+    ''' <summary>
+    ''' Констуктор
+    ''' </summary>
+    ''' <remarks>Начала отсчета</remarks>
     Public Sub New()
         QueryPerformanceCounter(_start)
     End Sub
 
+    ''' <summary>
+    ''' Функция окончания отсчета времени
+    ''' </summary>
+    ''' <returns>Временой промежуток прошедщий с момента создания данного экземпляра</returns>
+    ''' <remarks></remarks>
     Public Function GetTime() As TimeSpan
-        QueryPerformanceCounter(_end)
+        Dim [end] As Long
+        QueryPerformanceCounter([end])
         Dim f As Long
         QueryPerformanceFrequency(f)
-        Return TimeSpan.FromSeconds((_end - _start) / f)
+        Return TimeSpan.FromSeconds(([end] - _start) / f)
     End Function
 End Class
 

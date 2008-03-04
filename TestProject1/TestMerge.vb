@@ -82,7 +82,7 @@ Imports Worm.Database
 
     <TestMethod()> _
     Public Sub RealMergeTest()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
             Dim pa As New Worm_Orm_OrmReadOnlyDBManagerAccessor(mgr)
 
             Dim l As New List(Of Integer)
@@ -98,7 +98,7 @@ Imports Worm.Database
                 l.Add(i)
             Loop While i < 10000
             Dim almgr As AliasMgr = AliasMgr.Create
-            Dim params As New ParamMgr(CType(mgr.ObjectSchema, DbSchema), "p")
+            Dim params As New ParamMgr(CType(mgr.ObjectSchema, SQLGenerator), "p")
             almgr.AddTable(mgr.DbSchema.GetTables(GetType(Entity))(0))
             pa.GetFilters(l, "ID", almgr, params, GetType(Entity), False)
 
@@ -108,7 +108,7 @@ Imports Worm.Database
 
     <TestMethod()> _
     Public Sub RealMergeTest2()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New DbSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
             Dim pa As New Worm_Orm_OrmReadOnlyDBManagerAccessor(mgr)
 
             Dim l As New List(Of Integer)

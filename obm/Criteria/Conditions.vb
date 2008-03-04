@@ -130,7 +130,7 @@ Namespace Criteria.Conditions
         '    Return lt.GetStaticString & Condition2String() & r
         'End Function
 
-        Public MustOverride Function MakeSQLStmt(ByVal schema As OrmSchemaBase, ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
         Protected MustOverride Function CreateMe(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
         Public MustOverride ReadOnly Property Template() As Core.ITemplate Implements Core.ITemplateFilterBase.Template
 
@@ -220,7 +220,7 @@ Namespace Criteria.Conditions
             Return Nothing
         End Function
 
-        Public Function MakeSingleStmt(ByVal schema As OrmSchemaBase, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleStmt
+        Public Function MakeSingleStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
             Throw New NotSupportedException
         End Function
 
@@ -299,11 +299,11 @@ Namespace Criteria.Conditions
             '    Return s.ToString
             'End Function
 
-            Public Function MakeHash(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As String Implements IOrmFilterTemplate.MakeHash
+            Public Function MakeHash(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As String Implements IOrmFilterTemplate.MakeHash
                 Dim l As String = Con.Left.GetFilterTemplate.MakeHash(schema, oschema, obj)
                 If Con._right IsNot Nothing Then
                     Dim r As String = Con.Right.GetFilterTemplate.MakeHash(schema, oschema, obj)
-                    If r = EntityFilter.EmptyHash Then
+                    If r = EntityFilterBase.EmptyHash Then
                         If Con._oper <> ConditionOperator.And Then
                             l = r
                         End If
@@ -335,7 +335,7 @@ Namespace Criteria.Conditions
 
         'Protected MustOverride Function CreateMeE(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As Condition
 
-        Public Function Eval(ByVal schema As OrmSchemaBase, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        Public Function Eval(ByVal schema As QueryGenerator, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -370,7 +370,7 @@ Namespace Criteria.Conditions
             Return CType(Template, IOrmFilterTemplate)
         End Function
 
-        Public Function PrepareValue(ByVal schema As OrmSchemaBase, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue
+        Public Function PrepareValue(ByVal schema As QueryGenerator, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue
             Throw New NotSupportedException
         End Function
 
@@ -408,7 +408,7 @@ Namespace Criteria.Conditions
             Dim l As String = Left.MakeHash
             If _right IsNot Nothing Then
                 Dim r As String = Right.MakeHash
-                If r = EntityFilter.EmptyHash Then
+                If r = EntityFilterBase.EmptyHash Then
                     If _oper <> ConditionOperator.And Then
                         l = r
                     End If
