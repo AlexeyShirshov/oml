@@ -2257,6 +2257,9 @@ l2:
                     Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
                     If ef IsNot Nothing Then
                         Dim type2join As System.Type = CType(ef.GetFilterTemplate, OrmFilterTemplate).Type
+                        If type2join Is Nothing Then
+                            Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                        End If
                         appendMain = type2search Is type2join OrElse appendMain
                         If type2search IsNot type2join Then
                             If Not types.Contains(type2join) Then

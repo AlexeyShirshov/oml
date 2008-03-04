@@ -99,7 +99,7 @@ Namespace Orm
 
             Public Function Accept(ByVal obj As OrmBase, ByVal mgr As OrmManagerBase) As Boolean
                 If _e IsNot Nothing Then
-                    Dim leave As Boolean = _e.Entry.Accept(mgr) AndAlso _e.Filter Is Nothing
+                    Dim leave As Boolean = _e.Filter Is Nothing AndAlso _e.Entry.Accept(mgr)
                     If Not leave Then
                         Dim dic As IDictionary = mgr.GetDic(mgr.Cache, _key)
                         dic.Remove(_id)
@@ -828,9 +828,10 @@ Namespace Orm
             Using SyncHelper(False)
                 Dim t As Type = Me.GetType
                 Dim mc As OrmManagerBase = GetMgr()
-                'Debug.Write("Accept " & t.Name)
+                Dim valProcs As Boolean
                 For Each acs As AcceptState2 In _needAccept
                     acs.Accept(Me, mc)
+                    valProcs = True
                     'If Not String.IsNullOrEmpty(acs.id) Then
                     '    mc.ResetAllM2MRelations(acs.id, acs.key)
                     'End If
@@ -899,6 +900,9 @@ Namespace Orm
                             Accept_AfterUpdateCacheAdd(Me, mc, mo)
                         End If
                     Else
+                        If valProcs Then
+                            mc.Cache.ValidateProcs(New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
+                        End If
                         RaiseEvent Updated(Me, EventArgs.Empty)
                     End If
                 End If

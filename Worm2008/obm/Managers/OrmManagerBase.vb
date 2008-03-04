@@ -2916,10 +2916,11 @@ l1:
 
 #If DEBUG Then
         Dim cnt As Integer = m.Entry.Added.Count
+        Dim check As Boolean = m.Entry.Original.Contains(subobj.Identifier)
 #End If
         m.Entry.Add(subobj.Identifier)
 #If DEBUG Then
-        Debug.Assert(m.Entry.Added.Count = cnt + 1)
+        Debug.Assert(Not check OrElse m.Entry.Added.Count = cnt + 1)
 #End If
         mainobj.AddAccept(New OrmBase.AcceptState2(m, p.Second.First, p.Second.Second))
     End Sub
@@ -3788,6 +3789,9 @@ l1:
                 Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                 If f IsNot Nothing Then
                     Dim type2join As System.Type = CType(f.Template, OrmFilterTemplate).Type
+                    If type2join Is Nothing Then
+                        Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                    End If
                     If type2join IsNot selectType AndAlso Not types.Contains(type2join) Then
                         Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2join, oschema)
 

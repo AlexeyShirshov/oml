@@ -71,6 +71,9 @@ Namespace Xml
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                             If f IsNot Nothing Then
                                 Dim tmpl As OrmFilterTemplate = CType(f.Template, OrmFilterTemplate)
+                                If tmpl.Type Is Nothing Then
+                                    Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                                End If
                                 Dim v As EntityValue = TryCast(CType(f, EntityFilter).Value, EntityValue)
                                 If v IsNot Nothing Then
                                     'Dim tp As Type = f.Value.GetType 'Schema.GetFieldTypeByName(f.Type, f.FieldName)
