@@ -14,6 +14,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EFCB67BA-1D42-40DD-A184-23C539F387B8}"
 	ProjectSection(SolutionItems) = preProject
 		DAPerformance2.vsmdi = DAPerformance2.vsmdi
+		DAPerformance4.vsmdi = DAPerformance4.vsmdi
+		DAPerformance5.vsmdi = DAPerformance5.vsmdi
 		LocalTestRun.testrunconfig = LocalTestRun.testrunconfig
 	EndProjectSection
 EndProject
@@ -45,7 +47,7 @@ Global
 		SccLocalPath6 = DaAdoEF
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = DAPerformance2.vsmdi
+		CategoryFile = DAPerformance5.vsmdi
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
