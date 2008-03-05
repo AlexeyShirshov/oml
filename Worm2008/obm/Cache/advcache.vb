@@ -16,9 +16,9 @@ Namespace Cache
         End Enum
 
         Function ToWeakList(ByVal objects As IEnumerable) As Object
-        Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As Generic.ICollection(Of T)
+        Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
         Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase, _
-            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As ExtractListResult) As Generic.ICollection(Of T)
+            ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As ExtractListResult) As ReadOnlyList(Of T)
         Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, ByVal sort As Sort) As Boolean
         Function GetCount(ByVal weak_list As Object) As Integer
         Sub Delete(ByVal weak_list As Object, ByVal obj As OrmBase)
@@ -30,8 +30,8 @@ Namespace Cache
 
         Public Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
-            ByRef successed As IListObjectConverter.ExtractListResult) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
-            Dim c As Generic.ICollection(Of T) = CType(weak_list, Generic.ICollection(Of T))
+            ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyList(Of T) Implements IListObjectConverter.FromWeakList
+            Dim c As ReadOnlyList(Of T) = CType(weak_list, ReadOnlyList(Of T))
             successed = IListObjectConverter.ExtractListResult.Successed
             If withLoad AndAlso Not created Then
                 mc.LoadObjects(c, start, length)
@@ -90,7 +90,7 @@ Namespace Cache
                             End If
                         Next
                     End If
-                    c = l
+                    c = New ReadOnlyList(Of T)(l)
                 End If
             End If
             Return c
@@ -102,7 +102,7 @@ Namespace Cache
 
         Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As OrmBase, _
             ByVal sort As Sort) As Boolean Implements IListObjectConverter.Add
-            Dim l As IList = CType(weak_list, IList)
+            Dim l As IListEdit = CType(weak_list, IListEdit)
             Dim st As IOrmSorting = Nothing
             If sort Is Nothing Then
                 l.Add(obj)
@@ -127,7 +127,7 @@ Namespace Cache
         End Function
 
         Public Sub Delete(ByVal weak_list As Object, ByVal obj As OrmBase) Implements IListObjectConverter.Delete
-            Dim l As IList = CType(weak_list, IList)
+            Dim l As IListEdit = CType(weak_list, IListEdit)
             l.Remove(obj)
         End Sub
 
@@ -142,8 +142,8 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function FromWeakList(Of T As {New, OrmBase})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As System.Collections.Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
-            Dim c As Generic.ICollection(Of T) = CType(weak_list, Generic.ICollection(Of T))
+        Public Function FromWeakList(Of T As {New, OrmBase})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T) Implements IListObjectConverter.FromWeakList
+            Dim c As ReadOnlyList(Of T) = CType(weak_list, ReadOnlyList(Of T))
             Return c
         End Function
     End Class
@@ -236,12 +236,12 @@ Namespace Cache
 
         Public Function FromWeakList(Of T As {OrmBase, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
-            ByRef successed As IListObjectConverter.ExtractListResult) As Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
+            ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyList(Of T) Implements IListObjectConverter.FromWeakList
             successed = IListObjectConverter.ExtractListResult.Successed
             If weak_list Is Nothing Then Return Nothing
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
-            Dim objects As New Generic.List(Of T)
+            Dim c As New ReadOnlyList(Of T)()
             If mc._externalFilter Is Nothing Then
                 If start < l.Count Then
                     length = Math.Min(start + length, l.Count)
@@ -249,13 +249,13 @@ Namespace Cache
                         Dim loe As ListObjectEntry = l(i)
                         Dim o As T = loe.GetObject(Of T)(mc)
                         If o IsNot Nothing Then
-                            objects.Add(o)
+                            c.List.Add(o)
                         Else
                             OrmManagerBase.WriteWarning("Unable to create " & loe.ObjName)
                         End If
                     Next
                     If withLoad AndAlso Not created Then
-                        mc.LoadObjects(objects)
+                        mc.LoadObjects(c)
                     End If
                 End If
             Else
@@ -264,16 +264,21 @@ Namespace Cache
                     If loe.IsLoaded Then
                         loaded += 1
                     End If
+                    Dim o As T = loe.GetObject(Of T)(mc)
+                    If o IsNot Nothing Then
+                        c.List.Add(o)
+                    Else
+                        OrmManagerBase.WriteWarning("Unable to create " & loe.ObjName)
+                    End If
                 Next
-                Dim c As Generic.ICollection(Of T) = Nothing
                 If loaded < l.Count Then
                     Dim er As OrmManagerBase.ExecutionResult = mc.GetLastExecitionResult
                     If OrmManagerBase.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, loaded) Then
-                        c = FromWeakList(Of T)(weak_list, mc)
+                        'c = FromWeakList(Of T)(weak_list, mc)
                         mc.LoadObjects(c)
                     Else
                         successed = IListObjectConverter.ExtractListResult.NeedLoad
-                        Return objects
+                        Return New ReadOnlyList(Of T)()
                     End If
                 End If
                 Dim s As Boolean = True
@@ -281,9 +286,8 @@ Namespace Cache
                 If Not s Then
                     successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                 End If
-                Return c
             End If
-            Return objects
+            Return c
         End Function
 
         Public Function ToWeakList(ByVal objects As IEnumerable) As Object Implements IListObjectConverter.ToWeakList
@@ -348,7 +352,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function FromWeakList(Of T As {New, OrmBase})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As System.Collections.Generic.ICollection(Of T) Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(Of T As {New, OrmBase})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T) Implements IListObjectConverter.FromWeakList
             If weak_list Is Nothing Then Return Nothing
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
@@ -361,7 +365,7 @@ Namespace Cache
                     OrmManagerBase.WriteWarning("Unable to create " & loe.ObjName)
                 End If
             Next
-            Return objects
+            Return New ReadOnlyList(Of T)(objects)
         End Function
     End Class
 

@@ -226,16 +226,16 @@ Namespace Orm
             MyBase.new(name, parent, count)
         End Sub
 
-        Public Overloads Function FindElements(ByVal mgr As OrmManagerBase) As Generic.ICollection(Of T)
+        Public Overloads Function FindElements(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
             Return FindElementsInternal(mgr, False)
         End Function
 
-        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmManagerBase) As Generic.ICollection(Of T)
+        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
             Return FindElementsInternal(mgr, True)
         End Function
 
-        Private Function FindObjects(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As Generic.ICollection(Of T)
-            Dim col As Generic.ICollection(Of T)
+        Private Function FindObjects(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As ReadOnlyList(Of T)
+            Dim col As ReadOnlyList(Of T)
             Dim s As QueryGenerator = mgr.ObjectSchema
             If strong Then
                 If loadName Then
@@ -253,7 +253,7 @@ Namespace Orm
             Return col
         End Function
 
-        Protected Function FindElementsInternal(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean) As Generic.ICollection(Of T)
+        Protected Function FindElementsInternal(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean) As ReadOnlyList(Of T)
 
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False
@@ -265,10 +265,10 @@ Namespace Orm
                 b = True
             End If
 
-            Dim col As Generic.ICollection(Of T) = FindObjects(mgr, loadName, strong, tt, odic.GetFirstDicField)
+            Dim col As ReadOnlyList(Of T) = FindObjects(mgr, loadName, strong, tt, odic.GetFirstDicField)
 
             If b Then
-                Dim col2 As Generic.ICollection(Of T) = FindObjects(mgr, loadName, strong, tt, odic.GetSecondDicField)
+                Dim col2 As ReadOnlyList(Of T) = FindObjects(mgr, loadName, strong, tt, odic.GetSecondDicField)
                 If col.Count = 0 Then
                     col = col2
                 Else
@@ -316,7 +316,7 @@ Namespace Orm
                         End If
                         c.Add(fv, ar)
                     Next
-                    Dim result As New Generic.List(Of T)
+                    Dim result As New ReadOnlyList(Of T)
                     For Each ar As T In c.Values
                         result.Add(ar)
                         'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))

@@ -123,7 +123,7 @@ Namespace Xml
                 Return New CachedItem(_sort, s, _f, GetValues(withLoad), _mgr)
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As System.Collections.Generic.ICollection(Of T)) As OrmManagerBase.CachedItem
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of T)) As OrmManagerBase.CachedItem
                 Dim sortex As IOrmSortingEx = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSortingEx)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
@@ -153,7 +153,7 @@ Namespace Xml
                 _cols = cols
             End Sub
 
-            Public Overrides Function GetValues(ByVal withLoad As Boolean) As Generic.ICollection(Of T)
+            Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Dim original_type As Type = GetType(T)
 
                 'hardcoded
@@ -183,7 +183,7 @@ Namespace Xml
                     Schema.AppendOrder(original_type, _sort, sb)
                 End If
 
-                Dim r As ICollection(Of T) = _mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, Nothing)
+                Dim r As ReadOnlyList(Of T) = _mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, Nothing)
 
                 If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                     r = Schema.ExternalSort(Of T)(_sort, r)

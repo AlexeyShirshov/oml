@@ -691,7 +691,7 @@ Namespace Database
                     '    arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
                     '    sb.Append(Schema.SelectID(ct, almgr, params))
                     'End If
-                    Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse DbSchema.NeedJoin(schema2)
+                    Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse SQLGenerator.NeedJoin(schema2)
                     'Dim table As String = schema2.GetTables(0)
                     DbSchema.AppendJoins(selectedType, almgr, schema2.GetTables, sb, params, DbSchema.GetObjectSchema(ct).GetTables(0), id_clm, appendMainTable, GetFilterInfo)
                     If withLoad Then
@@ -1137,7 +1137,7 @@ Namespace Database
             Return objs
         End Function
 
-        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal ids As Generic.IList(Of Integer), ByVal f As IFilter, ByVal objs As IList(Of T), _
+        Protected Overrides Function GetObjects(Of T As {OrmBase, New})(ByVal ids As Generic.IList(Of Integer), ByVal f As IFilter, ByVal objs As List(Of T), _
             ByVal withLoad As Boolean, ByVal fieldName As String, ByVal idsSorted As Boolean) As Generic.IList(Of T)
             Invariant()
 
@@ -1300,8 +1300,8 @@ Namespace Database
 
         Protected Friend Function LoadMultipleObjects(Of T As {OrmBase, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal withLoad As Boolean, ByVal values As Generic.IList(Of T), _
-            ByVal arr As Generic.List(Of ColumnAttribute)) As Generic.IList(Of T)
+            ByVal withLoad As Boolean, ByVal values As Generic.List(Of T), _
+            ByVal arr As Generic.List(Of ColumnAttribute)) As Generic.List(Of T)
             Invariant()
 
             'Dim idx As Integer = -1
@@ -1661,8 +1661,8 @@ Namespace Database
         End Sub
 
         Protected Friend Overrides Function LoadObjectsInternal(Of T As {OrmBase, New})( _
-            ByVal objs As Generic.ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute)) As Generic.ICollection(Of T)
+            ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+            ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute)) As ReadOnlyList(Of T)
 
             Invariant()
 
@@ -1714,13 +1714,13 @@ Namespace Database
                     values.Add(o)
                 End If
             Next
-            Return values
+            Return New ReadOnlyList(Of T)(values)
 
         End Function
 
         Protected Friend Overrides Function LoadObjectsInternal(Of T As {OrmBase, New})( _
-            ByVal objs As Generic.ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean) As Generic.ICollection(Of T)
+            ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+            ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
             Invariant()
 
             If objs.Count < 1 Then
@@ -1798,7 +1798,7 @@ Namespace Database
                     Return objs
                 End If
             End If
-            Return values
+            Return New ReadOnlyList(Of T)(values)
         End Function
 
         Protected Function GetFilters(ByVal ids As Generic.List(Of Integer), ByVal fieldName As String, _
@@ -1822,7 +1822,7 @@ Namespace Database
                     'Else
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
-                    If sb.Length > DbSchema.QueryLength Then
+                    If sb.Length > SQLGenerator.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
                         sb.Length = 0
                     Else
@@ -1836,7 +1836,7 @@ Namespace Database
                     For Each id As Integer In mr.Rest
                         sb2.Append(id).Append(",")
 
-                        If sb2.Length > DbSchema.QueryLength - sb.Length Then
+                        If sb2.Length > SQLGenerator.QueryLength - sb.Length Then
                             sb2.Length -= 1
                             sb2.Append(")")
                             Dim f As New Database.Criteria.Core.EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
@@ -1895,7 +1895,7 @@ Namespace Database
                     'Else
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
-                    If sb.Length > DbSchema.QueryLength Then
+                    If sb.Length > SQLGenerator.QueryLength Then
                         l.Add(New Pair(Of String, Integer)(" and (" & sb.ToString & ")", params.Params.Count))
                         sb.Length = 0
                     Else
@@ -1909,7 +1909,7 @@ Namespace Database
                     For Each id As Integer In mr.Rest
                         sb2.Append(id).Append(",")
 
-                        If sb2.Length > DbSchema.QueryLength - sb.Length Then
+                        If sb2.Length > SQLGenerator.QueryLength - sb.Length Then
                             sb2.Length -= 1
                             sb2.Append(")")
                             Dim f As New Database.Criteria.Core.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
@@ -1948,7 +1948,7 @@ Namespace Database
         End Function
 
         Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal type2search As Type, _
-            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal frmt As IFtsStringFormater) As System.Collections.Generic.ICollection(Of T)
+            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal frmt As IFtsStringFormater) As ReadOnlyList(Of T)
 
             Dim fields As New List(Of Pair(Of String, Type))
             Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
@@ -2131,12 +2131,12 @@ l2:
                 _er = New ExecutionResult(_er.Count + col2.Count, Nothing, Nothing, False, 0)
             End If
 
-            Return res
+            Return New ReadOnlyList(Of T)(res)
         End Function
 
         Protected Overrides Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, _
             ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
-            ByVal limit As Integer, ByVal fts As IFtsStringFormater) As ICollection(Of T)
+            ByVal limit As Integer, ByVal fts As IFtsStringFormater) As ReadOnlyList(Of T)
 
             Dim selectType As System.Type = GetType(T)
             Dim fields As New List(Of Pair(Of String, Type))
@@ -2150,8 +2150,8 @@ l2:
             Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
                 joins, selCols, searchCols, queryFields, searchSchema, selSchema)
 
-            Return MakeSqlStmtSearch(Of T)(type2search, selectType, fields, queryFields, joins.ToArray, sort, appendMain, _
-                filter, selCols, searchCols, ftsText, limit, fts, contextKey)
+            Return New ReadOnlyList(Of T)(MakeSqlStmtSearch(Of T)(type2search, selectType, fields, queryFields, joins.ToArray, sort, appendMain, _
+                filter, selCols, searchCols, ftsText, limit, fts, contextKey))
         End Function
 
         Public Function PrepareSearch(ByVal selectType As Type, ByVal type2search As Type, ByVal filter As IFilter, _
@@ -2324,8 +2324,7 @@ l2:
             ByVal selectType As Type, ByVal fields As ICollection(Of Pair(Of String, Type)), ByVal queryFields() As String, _
             ByVal joins() As OrmJoin, ByVal sort As Sort, ByVal appendMain As Boolean, ByVal filter As IFilter, _
             ByVal selCols As List(Of ColumnAttribute), ByVal searchCols As List(Of ColumnAttribute), _
-            ByVal ftsText As String, ByVal limit As Integer, ByVal fts As IFtsStringFormater, ByVal contextkey As Object) As ICollection(Of T)
-            Dim col As ICollection(Of T) = Nothing
+            ByVal ftsText As String, ByVal limit As Integer, ByVal fts As IFtsStringFormater, ByVal contextkey As Object) As ReadOnlyList(Of T)
 
             Dim selSchema As IOrmObjectSchema = CType(_schema.GetObjectSchema(selectType), IOrmObjectSchema)
             Dim searchSchema As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2search), IOrmObjectSchema)
@@ -2343,12 +2342,12 @@ l2:
                 End With
 
                 If type2search Is selectType OrElse searchCols.Count = 0 Then
-                    col = CType(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols), List(Of T))
+                    Return New ReadOnlyList(Of T)(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols))
                 Else
-                    col = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T))
+                    Return New ReadOnlyList(Of T)(CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T)))
                 End If
             End Using
-            Return col
+
         End Function
 
         Private Function AddPart(Of T)(ByVal full As List(Of T), ByVal part As List(Of T), ByRef cnt As Integer, ByRef rf As Integer) As Boolean

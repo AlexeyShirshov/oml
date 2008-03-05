@@ -120,6 +120,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cache\advcache.vb" />
+    <Compile Include="Cache\ReadonlyCache.vb" />
     <Compile Include="Criteria\Criteria.vb" />
     <Compile Include="Criteria\db\DbConditions.vb" />
     <Compile Include="Criteria\db\DbCriteria.vb" />

@@ -127,7 +127,7 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetObjects(Of T As {New, Orm.OrmBase})( _
             ByVal ids As System.Collections.Generic.IList(Of Integer), ByVal f As Worm.Criteria.Core.IFilter, _
-            ByVal objs As System.Collections.Generic.IList(Of T), ByVal withLoad As Boolean, _
+            ByVal objs As System.Collections.Generic.List(Of T), ByVal withLoad As Boolean, _
             ByVal fieldName As String, ByVal idsSorted As Boolean) As System.Collections.Generic.IList(Of T)
 
             Throw New NotImplementedException
@@ -154,14 +154,14 @@ Namespace Xml
         End Sub
 
         Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, Orm.OrmBase})( _
-            ByVal objs As System.Collections.Generic.ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean) As System.Collections.Generic.ICollection(Of T)
+            ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+            ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 
         Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, Orm.OrmBase})( _
-            ByVal objs As System.Collections.Generic.ICollection(Of T), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute)) As System.Collections.Generic.ICollection(Of T)
+            ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute)) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 
@@ -169,21 +169,21 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
-        Protected Overloads Overrides Function Search(Of T As {New, Orm.OrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Orm.Meta.IFtsStringFormater) As System.Collections.Generic.ICollection(Of T)
+        Protected Overloads Overrides Function Search(Of T As {New, Orm.OrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Orm.Meta.IFtsStringFormater) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 
-        Protected Overrides Function SearchEx(Of T As {New, Orm.OrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Orm.Meta.IFtsStringFormater) As System.Collections.Generic.ICollection(Of T)
+        Protected Overrides Function SearchEx(Of T As {New, Orm.OrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Orm.Meta.IFtsStringFormater) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 
 #End Region
 
         Protected Friend Function LoadMultipleObjects(Of T As {New, Orm.OrmBase})(ByVal xpath As String, ByVal withLoad As Boolean, _
-            ByRef values As Generic.IList(Of T)) As ICollection(Of T)
+            ByRef values As Generic.IList(Of T)) As ReadOnlyList(Of T)
 
             Dim original_type As Type = GetType(T)
-            Dim nav As XPathNavigator = GetNavigator
+            Dim nav As XPathNavigator = GetNavigator()
             Dim et As New PerfCounter
             Dim nodes As XPathNodeIterator = nav.Select(xpath)
             _exec = et.GetTime
@@ -200,7 +200,7 @@ Namespace Xml
             Loop
             _fetch = ft.GetTime
 
-            Return values
+            Return New ReadOnlyList(Of T)(CType(values, List(Of T)))
         End Function
 
         Protected Function GetNavigator() As XPathNavigator

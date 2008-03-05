@@ -129,7 +129,7 @@ Namespace Database
                 Return New CachedItem(_sort, s, _f, GetValues(withLoad), _mgr)
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As System.Collections.Generic.ICollection(Of T)) As OrmManagerBase.CachedItem
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of T)) As OrmManagerBase.CachedItem
                 Dim sortex As IOrmSortingEx = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSortingEx)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
@@ -158,7 +158,7 @@ Namespace Database
                 _cols = cols
             End Sub
 
-            Public Overrides Function GetValues(ByVal withLoad As Boolean) As Generic.ICollection(Of T)
+            Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Dim original_type As Type = GetType(T)
 
                 Using cmd As System.Data.Common.DbCommand = _mgr.DbSchema.CreateDBCommand
@@ -193,7 +193,7 @@ Namespace Database
                         .CommandText = sb.ToString
                     End With
 
-                    Dim r As ICollection(Of T) = _mgr.LoadMultipleObjects(Of T)(cmd, withLoad, Nothing, arr)
+                    Dim r As New ReadOnlyList(Of T)(_mgr.LoadMultipleObjects(Of T)(cmd, withLoad, Nothing, arr))
                     If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                         r = _mgr.DbSchema.ExternalSort(Of T)(_sort, r)
                     End If
@@ -343,7 +343,7 @@ Namespace Database
                 '_rev = rev
             End Sub
 
-            Public Overrides Function GetValues(ByVal withLoad As Boolean) As System.Collections.Generic.ICollection(Of T)
+            Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Throw New NotSupportedException
             End Function
 
@@ -464,7 +464,7 @@ Namespace Database
                 End If
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As System.Collections.Generic.ICollection(Of T)) As OrmManagerBase.CachedItem
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of T)) As OrmManagerBase.CachedItem
                 Dim ids As New List(Of Integer)
                 For Each o As T In col
                     ids.Add(o.Identifier)

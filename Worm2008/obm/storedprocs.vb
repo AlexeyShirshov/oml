@@ -408,17 +408,17 @@ Namespace Database.Storedprocs
             If mgr._externalFilter IsNot Nothing Then
                 Throw New InvalidOperationException("External filter is not applicable for store procedures")
             End If
-            Dim ce As New OrmManagerBase.CachedItem(Nothing, mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns), mgr)
+            Dim ce As New OrmManagerBase.CachedItem(Nothing, New ReadOnlyList(Of T)(mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
             _exec = ce.ExecutionTime
             _fecth = ce.FetchTime
             Return ce
         End Function
 
-        Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ICollection(Of T)
+        Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ReadOnlyList(Of T)
             Dim ce As OrmManagerBase.CachedItem = CType(MyBase.GetResult(mgr), OrmManagerBase.CachedItem)
             _count = ce.GetCount(mgr)
             Dim s As IListObjectConverter.ExtractListResult
-            Dim r As ICollection(Of T) = ce.GetObjectList(Of T)(mgr, GetWithLoad, Not CacheHit, s)
+            Dim r As ReadOnlyList(Of T) = ce.GetObjectList(Of T)(mgr, GetWithLoad, Not CacheHit, s)
             If s <> IListObjectConverter.ExtractListResult.Successed Then
                 Throw New InvalidOperationException("External filter is not applicable for store procedures")
             End If
@@ -452,6 +452,74 @@ Namespace Database.Storedprocs
                 Return _count
             End Get
         End Property
+
+        Protected Class QueryOrmStoredProcSimple(Of T2 As {OrmBase, New})
+            Inherits QueryOrmStoredProcBase(Of T2)
+
+            Private _name As String
+            Private _obj() As Object
+            Private _names() As String
+            Private _cols() As String
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object)
+                MyClass.New(name, names, params, New String() {})
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal columns() As String)
+                _name = name
+                _obj = params
+                _names = names
+                _cols = columns
+            End Sub
+
+            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
+                Dim l As New List(Of Pair(Of String, Object))
+                For i As Integer = 0 To _obj.Length - 1
+                    l.Add(New Pair(Of String, Object)(_names(i), _obj(i)))
+                Next
+                Return l
+            End Function
+
+            Protected Overrides Function GetName() As String
+                Return _name
+            End Function
+
+            Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute)
+                Dim l As New List(Of ColumnAttribute)
+                For Each c As String In _cols
+                    l.Add(New ColumnAttribute(c))
+                Next
+                Return l
+            End Function
+
+            Protected Overrides Function GetWithLoad() As Boolean
+                Return _cols.Length > 0
+            End Function
+        End Class
+
+        Public Shared Function Exec(ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return New QueryOrmStoredProcSimple(Of T)(name, ss, params).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        End Function
+
+        Public Shared Function Exec(ByVal name As String, ByVal columns() As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, columns).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        End Function
+
+        Public Shared Function Exec(ByVal name As String) As ReadOnlyList(Of T)
+            Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        End Function
+
+        Public Shared Function Exec(ByVal name As String, ByVal columns() As String) As ReadOnlyList(Of T)
+            Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, columns).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        End Function
     End Class
 
     Public MustInherit Class MultiResultsetQueryOrmStoredProcBase
@@ -491,13 +559,13 @@ Namespace Database.Storedprocs
             Protected MustOverride Function GetWithLoad() As Boolean
             Protected MustOverride Function GetPrimaryKeyIndex() As Integer
 
-            Public Function GetObjects(ByVal mgr As OrmManagerBase) As ICollection(Of T)
+            Public Function GetObjects(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
                 If _ce Is Nothing Then
                     Throw New InvalidOperationException("Stored procedure is not executed")
                 End If
                 _count = _ce.GetCount(mgr)
                 Dim s As IListObjectConverter.ExtractListResult
-                Dim r As ICollection(Of T) = _ce.GetObjectList(Of T)(mgr, GetWithLoad, _created, s)
+                Dim r As ReadOnlyList(Of T) = _ce.GetObjectList(Of T)(mgr, GetWithLoad, _created, s)
                 If s <> IListObjectConverter.ExtractListResult.Successed Then
                     Throw New InvalidOperationException("External filter is not applicable for store procedures")
                 End If
@@ -517,7 +585,7 @@ Namespace Database.Storedprocs
             End Property
 
             Public Sub EndProcess(ByVal mgr As OrmManagerBase) Implements IResultSetDescriptor.EndProcess
-                _ce = New OrmManagerBase.CachedItem(Nothing, _l, mgr)
+                _ce = New OrmManagerBase.CachedItem(Nothing, New ReadOnlyList(Of T)(_l), mgr)
                 _l = Nothing
             End Sub
         End Class
@@ -605,7 +673,7 @@ Namespace Database.Storedprocs
             Return New List(Of Pair(Of String, Object))
         End Function
 
-        Class ScalarProcSimple(Of T2 As Structure)
+        Protected Class ScalarProcSimple(Of T2 As Structure)
             Inherits ScalarStoredProc(Of T2)
 
             Private _name As String
@@ -640,8 +708,16 @@ Namespace Database.Storedprocs
             'End Sub
         End Class
 
+        Public Shared Function Exec(ByVal name As String) As T
+            Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        End Function
+
         Public Shared Function Exec(ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
-            Return New ScalarProcSimple(Of T)(name, paramNames.Split(), params).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return New ScalarProcSimple(Of T)(name, ss, params).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
         End Function
     End Class
 End Namespace

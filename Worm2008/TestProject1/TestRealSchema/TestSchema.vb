@@ -116,10 +116,10 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
             Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.ObjectSchema), New Table1(11, mgr.Cache, mgr.ObjectSchema), New Table1(15, mgr.Cache, mgr.ObjectSchema)}
+            Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
+            mgr.LoadObjects(col)
 
-            mgr.LoadObjects(tt)
-
-            Dim col As ICollection(Of Table1) = mgr.LoadObjectsIds(Of Table1)(New Integer() {1, 2, 10, 11, 34, 45, 20})
+            col = mgr.LoadObjectsIds(Of Table1)(New Integer() {1, 2, 10, 11, 34, 45, 20})
 
             Assert.AreEqual(2, col.Count)
         End Using

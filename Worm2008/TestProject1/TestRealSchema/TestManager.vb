@@ -320,7 +320,7 @@ Public Class TestManagerRS
 
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
 
-            Dim t3 As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad)
+            Dim t3 As Worm.ReadOnlyList(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad)
             mgr.LoadObjects(t3)
             Assert.AreEqual(2, t3.Count)
 
@@ -562,7 +562,7 @@ Public Class TestManagerRS
             Dim tt1 As Table1 = mgr.CreateObject(Of Table1)(1)
             Dim tt2 As Table1 = mgr.CreateObject(Of Table1)(1)
 
-            mgr.LoadObjects(New List(Of Table1)(New Table1() {tt1, tt2}))
+            mgr.LoadObjects(New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(New Table1() {tt1, tt2})))
         End Using
     End Sub
 
@@ -571,7 +571,8 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim tt1 As Table2 = mgr.CreateObject(Of Table2)(1)
 
-            Dim t As ICollection(Of Table2) = mgr.LoadObjects(Of Table2)(New Table2() {tt1}, New String() {"Table1"}, 0, 1)
+            Dim t As ICollection(Of Table2) = mgr.LoadObjects(Of Table2)( _
+                New Worm.ReadOnlyList(Of Table2)(New List(Of Table2)(New Table2() {tt1})), New String() {"Table1"}, 0, 1)
 
             Assert.AreEqual(1, t.Count)
 
@@ -628,10 +629,10 @@ Public Class TestManagerRS
             'Dim con As New Orm.OrmCondition.OrmConditionConstructor
             'con.AddFilter(New Orm.OrmFilter(t, "Code", New TypeWrap(Of Object)(2), Orm.FilterOperation.Equal))
             Dim s As Sort = Sorting.Field("Code").Desc
-            Dim c As ICollection(Of Table33) = tt1.M2M.Find(Of Table33)(Nothing, s, WithLoad)
+            Dim c As Worm.ReadOnlyList(Of Table33) = tt1.M2M.Find(Of Table33)(Nothing, s, WithLoad)
             Assert.AreEqual(2, c.Count)
-            Assert.AreEqual(Of Byte)(2, CType(c, List(Of Table33))(0).Code)
-            Assert.AreEqual(Of Byte)(1, CType(c, List(Of Table33))(1).Code)
+            Assert.AreEqual(Of Byte)(2, c(0).Code)
+            Assert.AreEqual(Of Byte)(1, c(1).Code)
 
             mgr.BeginTransaction()
             Try
@@ -652,8 +653,8 @@ Public Class TestManagerRS
 
                 c = tt1.M2M.Find(Of Table33)(Nothing, s, WithLoad)
                 Assert.AreEqual(3, c.Count)
-                Assert.AreEqual(Of Byte)(3, CType(c, List(Of Table33))(0).Code)
-                Assert.AreEqual(Of Byte)(2, CType(c, List(Of Table33))(1).Code)
+                Assert.AreEqual(Of Byte)(3, c(0).Code)
+                Assert.AreEqual(Of Byte)(2, c(1).Code)
             Finally
                 mgr.Rollback()
             End Try
@@ -922,7 +923,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestIsNull()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t As ICollection(Of Table3) = mgr.Find(Of Table3)(Criteria.Ctor.AutoTypeField("XML").IsNull, Nothing, False)
+            Dim t As Worm.ReadOnlyList(Of Table3) = mgr.Find(Of Table3)(Criteria.Ctor.AutoTypeField("XML").IsNull, Nothing, False)
 
             Assert.AreEqual(1, t.Count)
 
@@ -931,7 +932,8 @@ Public Class TestManagerRS
             Assert.AreEqual(0, t2.Count)
 
             Dim r As Boolean
-            Assert.AreEqual(1, mgr.ApplyFilter(t, Criteria.Ctor.AutoTypeField("XML").IsNull.Filter(gettype(table3)), r).Count)
+            Dim f As Worm.Criteria.Core.IFilter = Criteria.Ctor.AutoTypeField("XML").IsNull.Filter(GetType(Table3))
+            Assert.AreEqual(1, mgr.ApplyFilter(t, f, r).Count)
 
         End Using
     End Sub
@@ -939,7 +941,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestIn()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t As ICollection(Of Table1) = mgr.Find(Of Table1)(Criteria.Ctor.AutoTypeField("EnumStr").In( _
+            Dim t As Worm.ReadOnlyList(Of Table1) = mgr.Find(Of Table1)(Criteria.Ctor.AutoTypeField("EnumStr").In( _
                 New String() {"first", "sec"}), Nothing, False)
 
             Assert.AreEqual(3, t.Count)
@@ -1113,8 +1115,8 @@ Public Class TestManagerRS
     '    End Using
     'End Sub
 
-    Private Function GetList(Of T As {OrmBase})(ByVal col As ICollection(Of T)) As List(Of T)
-        Return CType(col, Global.System.Collections.Generic.List(Of T))
+    Private Function GetList(Of T As {OrmBase})(ByVal col As ICollection(Of T)) As IList(Of T)
+        Return CType(col, Global.System.Collections.Generic.IList(Of T))
     End Function
 
     Private _id As Integer = -100

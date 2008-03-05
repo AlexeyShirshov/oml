@@ -133,14 +133,32 @@ Public Class TestProcs
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New P2OrmProc(2)
 
-            Dim c As ICollection(Of Table1) = p.GetResult(mgr)
+            Dim c As Worm.ReadOnlyList(Of Table1) = p.GetResult(mgr)
 
             Assert.AreEqual(1, c.Count)
-            Dim t1 As Table1 = CType(c, IList(Of Table1))(0)
+            Dim t1 As Table1 = c(0)
 
             Assert.IsNotNull(t1)
             Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
 
+            Assert.AreEqual(2, t1.Identifier)
+            Assert.AreEqual("second", t1.Name)
+        End Using
+
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestP2OrmSimple()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+            Dim c As Worm.ReadOnlyList(Of Table1) = Worm.Database.Storedprocs.QueryOrmStoredProcBase(Of Table1).Exec("dbo.p2", _
+                New String() {"ID", "Title", "Code", "Enum", "EnumStr", "DT"}, "i", 2)
+
+            Assert.AreEqual(1, c.Count)
+            Dim t1 As Table1 = c(0)
+
+            Assert.IsNotNull(t1)
+            Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
+            Assert.IsTrue(t1.InternalProperties.IsLoaded)
             Assert.AreEqual(2, t1.Identifier)
             Assert.AreEqual("second", t1.Name)
         End Using
@@ -162,7 +180,7 @@ Public Class TestProcs
             Assert.IsNotNull(r0.GetObjects(mgr))
             Assert.AreEqual(1, r0.GetObjects(mgr).Count)
 
-            Dim t As Table1 = CType(r0.GetObjects(mgr), List(Of Table1))(0)
+            Dim t As Table1 = r0.GetObjects(mgr)(0)
             Assert.IsNotNull(t)
             Assert.AreEqual(1, t.Identifier)
             Assert.AreEqual(2, t.Custom)
