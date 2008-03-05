@@ -10,13 +10,19 @@ namespace Tests
     /// Summary description for UnitTest1
     /// </summary>
     [TestClass]
-    public class TestLinq
+    public class TestLinq : TestBase
     {
-        
+        static LinqProvider linqProvider = new LinqProvider();
 
-        public TestLinq()
+        public TestContext TestContext
         {
-            Utils.SetDataDirectory();
+            get { return context; }
+            set { context = value; }
+        }
+
+        static TestLinq()
+        {
+            TestBase.classType = typeof(TestLinq);
         }
 
         #region Additional test attributes
@@ -42,10 +48,117 @@ namespace Tests
         #endregion
 
         [TestMethod]
-        public void TestSelect()
+        public void SelectWithLoad()
         {
-            LinqProvider linqProvider = new LinqProvider();
-            linqProvider.Select();
+            linqProvider.SelectWithLoad();
         }
+
+        [TestMethod]
+        public void SelectWithoutLoad()
+        {
+            linqProvider.SelectWithoutLoad();
+        }
+
+        [TestMethod]
+        public void SelectWithListLoad()
+        {
+            linqProvider.SelectWithListLoad();
+        }
+
+         [TestMethod]
+        public void SelectShortWithoutLoad()
+        {
+            linqProvider.SelectShortWithoutLoad();
+        }
+
+         [TestMethod]
+         public void SelectShortWithLoad()
+        {
+            linqProvider.SelectShortWithLoad();
+        }
+
+         [TestMethod]
+         public void SelectShortWithListLoad()
+        {
+            linqProvider.SelectShortWithListLoad();
+        }
+
+        
+
+        [TestMethod]
+        public void SelectCollectionWithoutLoad()
+        {
+            linqProvider.SelectCollectionWithoutLoad();
+        }
+
+        [TestMethod]
+        public void SelectCollectionWithLoad()
+        {
+            linqProvider.SelectCollectionWithLoad();
+        }      
+      
+
+        [TestMethod]
+        public void SelectCollectionWithListLoad()
+        {
+            linqProvider.SelectCollectionWithListLoad();
+        }
+
+
+
+        [TestMethod]
+        public void SelectSmallWithLoad()
+        {
+            linqProvider.SelectSmallWithLoad();
+        }
+
+        [TestMethod]
+        public void SelectSmallWithoutLoad()
+        {
+            linqProvider.SelectSmallWithoutLoad();
+        }
+
+        [TestMethod]
+        public void SelectSmallWithListLoad()
+        {
+            linqProvider.SelectSmallWithListLoad();
+        }
+
+        [TestMethod]
+        public void SelectSmallCollectionWithoutLoad()
+        {
+            linqProvider.SelectSmallCollectionWithoutLoad();
+        }
+
+        [TestMethod]
+        public void SelectSmallCollectionWithLoad()
+        {
+            linqProvider.SelectSmallCollectionWithLoad();
+        }
+
+        [TestMethod]
+        public void SelectSmallCollectionWithListLoad()
+        {
+            linqProvider.SelectSmallCollectionWithListLoad();
+        }
+
+        [TestMethod]
+        public void SelectCollectionShortWithoutLoad()
+        {
+            linqProvider.SelectShortWithoutLoad();
+        }
+
+        [TestMethod]
+        public void SelectCollectionShortWithLoad()
+        {
+            linqProvider.SelectShortWithLoad();
+        }
+
+        [TestMethod]
+        public void SelectCollectionShortWithListLoad()
+        {
+            linqProvider.SelectShortWithListLoad();
+        }
+   
     }
 }

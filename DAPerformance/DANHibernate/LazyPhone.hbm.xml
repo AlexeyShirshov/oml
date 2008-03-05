@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2">
+  <class name="DANHibernate.LazyPhone, DANHibernate" table="tbl_phone" lazy="true">
+    <id name="PhoneId" column="phone_id" type="integer">
+      <generator class="assigned" />
+    </id>
+    <property name="UserId" column= "user_id" type="integer"/>
+    <property name="PhoneNumber" column= "phone_number" type="String" length="50"/>
+  </class>
+</hibernate-mapping>

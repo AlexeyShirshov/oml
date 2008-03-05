@@ -12,7 +12,7 @@ namespace Tests
     /// Summary description for UnitTest1
     /// </summary>
     [TestClass]
-    public class TestNHibernate
+    public class TestNHibernate : TestBase
     {
         Configuration cfg = new Configuration();
         ISessionFactory factory;
@@ -40,9 +40,15 @@ namespace Tests
         //
         #endregion
 
-        public TestNHibernate()
+        public TestContext TestContext
         {
-            Utils.SetDataDirectory();
+            get { return context; }
+            set { context = value; }
+        }
+
+        static TestNHibernate()
+        {
+            TestBase.classType = typeof(TestNHibernate);
         }
 
         [TestInitialize]
@@ -65,7 +71,83 @@ namespace Tests
 		public void TestSelect() 
         {
 		    User user  = (User)session.Load(typeof(User), 1);
-            object recentUsers = session.CreateCriteria(typeof(User)).List();
 		}
+
+        [TestMethod]
+        public void TestSelectCollection()
+        {
+            object recentUsers = session.CreateCriteria(typeof(User)).List();
+        }
+
+        [TestMethod]
+        public void TestSelectSmall()
+        {
+            Phone phone = (Phone)session.Load(typeof(Phone), 1);
+        }
+
+        [TestMethod]
+        public void TestSelectCollectionSmall()
+        {
+            object recentPhones = session.CreateCriteria(typeof(Phone)).List();
+        }
+
+        [TestMethod]
+        public void TestLazySelectWithoutLoad()
+        {
+            LazyUser user = (LazyUser)session.Load(typeof(LazyUser), 1);
+        }
+
+        [TestMethod]
+        public void TestLazySelectWithLoad()
+        {
+            LazyUser user = (LazyUser)session.Load(typeof(LazyUser), 1);
+            string result = string.Format("{0} {1} {2}", user.UserId, user.FirstName, user.LastName);
+        }
+
+        [TestMethod]
+        public void TestLazySelectCollectionWithoutLoad()
+        {
+            object recentUsers = session.CreateCriteria(typeof(LazyUser)).List();
+        }
+
+        [TestMethod]
+        public void TestLazySelectCollectionWithLoad()
+        {
+            System.Collections.IList recentUsers = session.CreateCriteria(typeof(LazyUser)).List();
+            foreach (LazyUser user in recentUsers)
+            {
+                string result = string.Format("{0} {1} {2}", user.UserId, user.FirstName, user.LastName);
+            }
+        }
+
+        [TestMethod]
+        public void TestLazySelectSmallWithoutLoad()
+        {
+            LazyPhone phone = (LazyPhone)session.Load(typeof(LazyPhone), 1);
+        }
+
+        [TestMethod]
+        public void TestLazySelectSmallWithLoad()
+        {
+            LazyPhone phone = (LazyPhone)session.Load(typeof(LazyPhone), 1);
+            string result = string.Format("{0} {1} {2}", phone.PhoneId, phone.UserId, phone.PhoneNumber);
+        }
+
+        [TestMethod]
+        public void TestLazySelectCollectionSmallWithoutLoad()
+        {
+            System.Collections.IList recentPhones = session.CreateCriteria(typeof(LazyPhone)).List();
+        }
+
+        [TestMethod]
+        public void TestLazySelectCollectionSmallWithLoad()
+        {
+            System.Collections.IList recentPhones = session.CreateCriteria(typeof(LazyPhone)).List();
+            foreach (LazyPhone phone in recentPhones)
+            {
+                string result = string.Format("{0} {1} {2}", phone.PhoneId, phone.UserId, phone.PhoneNumber);
+            }
+        }
+
     }
 }

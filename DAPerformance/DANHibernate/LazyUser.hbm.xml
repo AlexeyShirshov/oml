@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<hibernate-mapping xmlns="urn:nhibernate-mapping-2.2">
+  <class name="DANHibernate.LazyUser, DANHibernate" table="tbl_user" lazy="true">
+    <id name="UserId" column="user_id" type="integer">
+      <generator class="assigned" />
+    </id>
+    <property name="FirstName" column= "first_name" type="String" length="50"/>
+    <property name="LastName" column= "last_name" type="String" length="50"/>
+  </class>
+</hibernate-mapping>

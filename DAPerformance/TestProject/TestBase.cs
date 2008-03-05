@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
+using Microsoft.VisualStudio.TestTools.LoadTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TestProject;
 
@@ -10,16 +12,17 @@ namespace Tests
     public abstract class TestBase
     {
         static DSTime dsTime = new DSTime();
-        static ReportCreator reporter = new ReportCreator();
+        static ReportCreator reporter;
         static HiPerfTimer performer = new HiPerfTimer();
         protected static TestContext context;
-        DSTime.ClassRow currentRow;
+        protected static Type classType;
+        static DSTime.ClassRow currentRow;
 
-        protected abstract Type ClassType { get; }
-
-        public TestBase()
+        [ClassInitialize()]
+        public static void ClassInit()
         {
-            currentRow = dsTime.Class.AddClassRow(ClassType.Name);
+            Utils.SetDataDirectory();
+            currentRow = dsTime.Class.AddClassRow(classType.Name);
         }
 
         [TestInitialize()]
@@ -32,8 +35,14 @@ namespace Tests
         public void TestTimeCleaning()
         {
             performer.Stop();
-            dsTime.Test.AddTestRow(currentRow, context.TestName, performer.Duration);
+            string group = Regex.Replace(context.TestName, "(Select)(Collection)?.+(With)(out)?(Load)", "$1 $2 $3$4 $5");
+            dsTime.Test.AddTestRow(currentRow, context.TestName, performer.Duration, group);
         }
 
+        [AssemblyCleanup()]
+        public static void Clean()
+        {
+            ReportCreator.Write(dsTime);
+        }
     }
 }

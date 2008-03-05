@@ -11,30 +11,65 @@ namespace Tests
     public class TestWorm : TestBase
     {
         static WormProvider wormProvider = new WormProvider(ConfigurationSettings.AppSettings["connectionString"]);
-
-        [ClassInitialize()]
-        public static void Init(TestContext testContext)
+        public TestContext TestContext
         {
-            context = testContext;
-            Utils.SetDataDirectory();
-            wormProvider.OpenConn();
+            get { return context; }
+            set { context = value; }
         }
 
-        protected override Type ClassType
+        static TestWorm()
         {
-            get { return this.GetType(); }
+            TestBase.classType = typeof(TestWorm);
         }
 
         [TestMethod]
-        public void TestSelect()
+        public void SelectWithoutLoad()
         {
             wormProvider.SelectWithoutLoad();
         }
 
         [TestMethod]
-        public void TestSelectWithLoad()
+        public void SelectWithLoad()
         {
             wormProvider.SelectWithLoad();
         }
+
+        [TestMethod]
+        public void SelectCollectionWithLoad()
+        {
+            wormProvider.SelectCollectionWithLoad();
+        }
+
+        [TestMethod]
+        public void SelectCollectionWithoutLoad()
+        {
+            wormProvider.SelectCollectionWithoutLoad();
+        }
+
+        [TestMethod]
+        public void SelectSmallWithoutLoad()
+        {
+            wormProvider.SelectSmallWithoutLoad();
+        }
+
+        [TestMethod]
+        public void SelectSmallWithLoad()
+        {
+            wormProvider.SelectSmallWithLoad();
+        }
+
+        [TestMethod]
+        public void SelectSmallCollectionWithLoad()
+        {
+            wormProvider.SelectSmallCollectionWithLoad();
+        }
+
+        [TestMethod]
+        public void SelectSmallCollectionWithoutLoad()
+        {
+            wormProvider.SelectSmallCollectionWithoutLoad();
+        }
+
+   
     }
 }

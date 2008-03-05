@@ -14,12 +14,19 @@ namespace Tests
     /// Summary description for UnitTest1
     /// </summary>
     [TestClass]
-    public class TestAdo
+    public class TestAdo : TestBase
     {
-        AdoProvider adoProvider = new AdoProvider(ConfigurationSettings.AppSettings["connectionString"]);
-        public TestAdo()
+        static AdoProvider adoProvider = new AdoProvider(ConfigurationSettings.AppSettings["connectionString"]);
+
+        public TestContext TestContext
         {
-            Utils.SetDataDirectory();
+            get { return context; }
+            set { context = value; }
+        }
+
+        static TestAdo()
+        {
+            TestBase.classType = typeof(TestAdo);
         }
 
         #region Additional test attributes
@@ -45,10 +52,62 @@ namespace Tests
         #endregion
 
         [TestMethod]
-        public void TestSelect()
+        public void SelectWithLoad()
         {
             DataSet ds = adoProvider.Select();
             Assert.AreEqual(1, ds.Tables.Count);
+        }
+
+        [TestMethod]
+        public void SelectCollectionWithLoad()
+        {
+           adoProvider.SelectCollection();
+        }
+
+        [TestMethod]
+        public void SelectWithReaderWithLoad()
+        {
+            adoProvider.SelectWithReader();
+        }
+
+        [TestMethod]
+        public void SelectCollectionWithReaderWithLoad()
+        {
+            adoProvider.SelectCollectionWithReader();
+        }
+
+        [TestMethod]
+        public void TestSelectSmallWithLoad()
+        {
+            DataSet ds = adoProvider.SelectSmall();
+            Assert.AreEqual(1, ds.Tables.Count);
+        }
+
+        [TestMethod]
+        public void SelectCollectionSmallWithLoad()
+        {
+            DataSet ds = adoProvider.SelectCollectionSmall();
+            Assert.AreEqual(1, ds.Tables.Count);
+        }
+
+       
+
+        [TestMethod]
+        public void TestSelectSmallWithReaderWithLoad()
+        {
+            adoProvider.SelectSmallWithReader();
+        }
+
+        [TestMethod]
+        public void SelectCollectionSmallWithReaderWithLoad()
+        {
+            adoProvider.SelectCollectionSmallWithReader();
+        }
+
+        [AssemblyCleanup()]
+        public static void AssemblyCleanup()
+        {
+           TestBase.Clean();
         }
     }
 }

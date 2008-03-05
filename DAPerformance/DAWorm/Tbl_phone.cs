@@ -17,85 +17,85 @@ namespace DAWorm
 {
 	
 	
-	[Worm.Orm.Meta.EntityAttribute(typeof(DAWorm.Tbl_user.Tbl_userSchemaDef), "1", EntityName=DAWorm.Tbl_user.Descriptor.EntityName)]
+	[Worm.Orm.Meta.EntityAttribute(typeof(DAWorm.Tbl_phone.Tbl_phoneSchemaDef), "1", EntityName=DAWorm.Tbl_phone.Descriptor.EntityName)]
 	[System.SerializableAttribute()]
-	public class Tbl_user : Worm.Orm.OrmBaseT<Tbl_user>, Worm.Orm.Meta.IOrmEditable<Tbl_user>
+	public class Tbl_phone : Worm.Orm.OrmBaseT<Tbl_phone>, Worm.Orm.Meta.IOrmEditable<Tbl_phone>
 	{
 		
 		#region Private Fields
-		private string _first_name;
+		private DAWorm.Tbl_user _user_id;
 		
-		private string _last_name;
+		private string _phone_number;
 		#endregion
 		
 		#region Constructors
-		public Tbl_user()
+		public Tbl_phone()
 		{
 		}
 		
-		public Tbl_user(int id, Worm.Cache.OrmCacheBase cache, Worm.OrmSchemaBase schema) : 
+		public Tbl_phone(int id, Worm.Cache.OrmCacheBase cache, Worm.OrmSchemaBase schema) : 
 				base(id, cache, schema)
 		{
 		}
 		#endregion
 		
 		#region Properties
-		[Worm.Orm.Meta.ColumnAttribute(Tbl_user.Properties.First_name)]
-		public virtual string First_name
+		[Worm.Orm.Meta.ColumnAttribute(Tbl_phone.Properties.User_id)]
+		public virtual DAWorm.Tbl_user User_id
 		{
 			get
 			{
-using (this.SyncHelper(true, "First_name"))
+using (this.SyncHelper(true, "User_id"))
 {
-    return this._first_name;
+    return this._user_id;
 }
 			}
 			set
 			{
-using (this.SyncHelper(false, "First_name"))
+using (this.SyncHelper(false, "User_id"))
 {
-    this._first_name = value;
+    this._user_id = value;
 }
 			}
 		}
 		
-		[Worm.Orm.Meta.ColumnAttribute(Tbl_user.Properties.Last_name)]
-		public virtual string Last_name
+		[Worm.Orm.Meta.ColumnAttribute(Tbl_phone.Properties.Phone_number)]
+		public virtual string Phone_number
 		{
 			get
 			{
-using (this.SyncHelper(true, "Last_name"))
+using (this.SyncHelper(true, "Phone_number"))
 {
-    return this._last_name;
+    return this._phone_number;
 }
 			}
 			set
 			{
-using (this.SyncHelper(false, "Last_name"))
+using (this.SyncHelper(false, "Phone_number"))
 {
-    this._last_name = value;
+    this._phone_number = value;
 }
 			}
 		}
 		#endregion
 		
-		public virtual void CopyBody(Tbl_user from, Tbl_user to)
+		public virtual void CopyBody(Tbl_phone from, Tbl_phone to)
 		{
-			to._first_name = from._first_name;
-			to._last_name = from._last_name;
+			to._user_id = from._user_id;
+			to._phone_number = from._phone_number;
 		}
 		
 		public override void SetValue(System.Reflection.PropertyInfo pi, Worm.Orm.Meta.ColumnAttribute c, object value)
 		{
 			string fieldName = c.FieldName;
-			if (Tbl_user.Properties.First_name.Equals(fieldName))
+			if (Tbl_phone.Properties.User_id.Equals(fieldName))
 			{
-				this._first_name = ((string)(value));
+				this._user_id = ((DAWorm.Tbl_user)(value));
 				return;
 			}
-			if (Tbl_user.Properties.Last_name.Equals(fieldName))
+			if (Tbl_phone.Properties.Phone_number.Equals(fieldName))
 			{
-				this._last_name = ((string)(value));
+				this._phone_number = ((string)(value));
 				return;
 			}
 			base.SetValue(pi, c, value);
@@ -103,13 +103,13 @@ using (this.SyncHelper(false, "Last_name"))
 		
 		public override object GetValue(string propAlias, Worm.Orm.Meta.IOrmObjectSchemaBase schema)
 		{
-			if (Tbl_user.Properties.First_name.Equals(propAlias))
+			if (Tbl_phone.Properties.User_id.Equals(propAlias))
 			{
-				return this.First_name;
+				return this.User_id;
 			}
-			if (Tbl_user.Properties.Last_name.Equals(propAlias))
+			if (Tbl_phone.Properties.Phone_number.Equals(propAlias))
 			{
-				return this.Last_name;
+				return this.Phone_number;
 			}
 			return base.GetValue(propAlias, schema);
 		}
@@ -127,9 +127,9 @@ using (this.SyncHelper(false, "Last_name"))
 			#region Private Fields
 			public const string ID = "ID";
 			
-			public const string First_name = "First_name";
+			public const string User_id = "User_id";
 			
-			public const string Last_name = "Last_name";
+			public const string Phone_number = "Phone_number";
 			#endregion
 			
 			#region Constructors
@@ -144,7 +144,7 @@ using (this.SyncHelper(false, "Last_name"))
 		{
 			
 			#region Private Fields
-			public const string EntityName = "Tbl_user";
+			public const string EntityName = "Tbl_phone";
 			#endregion
 			
 			#region Constructors
@@ -154,7 +154,7 @@ using (this.SyncHelper(false, "Last_name"))
 			#endregion
 		}
 		
-		public class Tbl_userSchemaDef : Worm.Orm.Meta.IOrmObjectSchema, Worm.Orm.Meta.IOrmSchemaInit
+		public class Tbl_phoneSchemaDef : Worm.Orm.Meta.IOrmObjectSchema, Worm.Orm.Meta.IOrmSchemaInit
 		{
 			
 			#region Private Fields
@@ -190,14 +190,14 @@ lock (this._forTablesLock)
 {
     if ((this._tables == null)) {
         this._tables = new Worm.Orm.Meta.OrmTable[] {
-                new Worm.Orm.Meta.OrmTable("[dbo].[tbl_user]")};
+                new Worm.Orm.Meta.OrmTable("[dbo].[tbl_phone]")};
     }
 }
 				}
 				return this._tables;
 			}
 			
-			protected virtual Worm.Orm.Meta.OrmTable GetTable(DAWorm.Tbl_user.Tbl_userSchemaDef.TablesLink tbl)
+			protected virtual Worm.Orm.Meta.OrmTable GetTable(DAWorm.Tbl_phone.Tbl_phoneSchemaDef.TablesLink tbl)
 			{
 				return ((Worm.Orm.Meta.OrmTable)(this.GetTables().GetValue(((int)(tbl)))));
 			}
@@ -254,9 +254,9 @@ lock (this._forIdxLock)
 {
     if ((this._idx == null)) {
         Worm.Collections.IndexedCollection<string, Worm.Orm.Meta.MapField2Column> idx = new Worm.Cache.OrmObjectIndex();
-        idx.Add(new Worm.Orm.Meta.MapField2Column("ID", "user_id", this.GetTable(DAWorm.Tbl_user.Tbl_userSchemaDef.TablesLink.tbldbotbl_user), Worm.Orm.Meta.Field2DbRelations.None));
-        idx.Add(new Worm.Orm.Meta.MapField2Column("First_name", "first_name", this.GetTable(DAWorm.Tbl_user.Tbl_userSchemaDef.TablesLink.tbldbotbl_user)));
-        idx.Add(new Worm.Orm.Meta.MapField2Column("Last_name", "last_name", this.GetTable(DAWorm.Tbl_user.Tbl_userSchemaDef.TablesLink.tbldbotbl_user)));
+        idx.Add(new Worm.Orm.Meta.MapField2Column("ID", "phone_id", this.GetTable(DAWorm.Tbl_phone.Tbl_phoneSchemaDef.TablesLink.tbldbotbl_phone), Worm.Orm.Meta.Field2DbRelations.None));
+        idx.Add(new Worm.Orm.Meta.MapField2Column("User_id", "user_id", this.GetTable(DAWorm.Tbl_phone.Tbl_phoneSchemaDef.TablesLink.tbldbotbl_phone)));
+        idx.Add(new Worm.Orm.Meta.MapField2Column("Phone_number", "phone_number", this.GetTable(DAWorm.Tbl_phone.Tbl_phoneSchemaDef.TablesLink.tbldbotbl_phone)));
         this._idx = idx;
     }
 }
@@ -274,7 +274,7 @@ lock (this._forIdxLock)
 			public enum TablesLink
 			{
 				
-				tbldbotbl_user = 0,
+				tbldbotbl_phone = 0,
 			}
 			#endregion
 		}

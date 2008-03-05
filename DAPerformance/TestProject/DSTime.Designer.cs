@@ -556,6 +556,8 @@ namespace TestProject {
             
             private global::System.Data.DataColumn columnTime;
             
+            private global::System.Data.DataColumn columnGroup;
+            
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             public TestDataTable() {
                 this.TableName = "Test";
@@ -608,6 +610,13 @@ namespace TestProject {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public global::System.Data.DataColumn GroupColumn {
+                get {
+                    return this.columnGroup;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.ComponentModel.Browsable(false)]
             public int Count {
                 get {
@@ -636,12 +645,13 @@ namespace TestProject {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            public TestRow AddTestRow(ClassRow parentClassRowByClass_Test, string Name, double Time) {
+            public TestRow AddTestRow(ClassRow parentClassRowByClass_Test, string Name, double Time, string Group) {
                 TestRow rowTestRow = ((TestRow)(this.NewRow()));
                 object[] columnValuesArray = new object[] {
                         null,
                         Name,
-                        Time};
+                        Time,
+                        Group};
                 if ((parentClassRowByClass_Test != null)) {
                     columnValuesArray[0] = parentClassRowByClass_Test[0];
                 }
@@ -667,6 +677,7 @@ namespace TestProject {
                 this.columnClassId = base.Columns["ClassId"];
                 this.columnName = base.Columns["Name"];
                 this.columnTime = base.Columns["Time"];
+                this.columnGroup = base.Columns["Group"];
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -677,6 +688,8 @@ namespace TestProject {
                 base.Columns.Add(this.columnName);
                 this.columnTime = new global::System.Data.DataColumn("Time", typeof(double), null, global::System.Data.MappingType.Element);
                 base.Columns.Add(this.columnTime);
+                this.columnGroup = new global::System.Data.DataColumn("Group", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnGroup);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -914,6 +927,21 @@ namespace TestProject {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public string Group {
+                get {
+                    try {
+                        return ((string)(this[this.tableTest.GroupColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'Group\' in table \'Test\' is DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableTest.GroupColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             public ClassRow ClassRow {
                 get {
                     return ((ClassRow)(this.GetParentRow(this.Table.ParentRelations["Class_Test"])));
@@ -951,6 +979,16 @@ namespace TestProject {
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             public void SetTimeNull() {
                 this[this.tableTest.TimeColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public bool IsGroupNull() {
+                return this.IsNull(this.tableTest.GroupColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public void SetGroupNull() {
+                this[this.tableTest.GroupColumn] = global::System.Convert.DBNull;
             }
         }
         
