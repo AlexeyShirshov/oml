@@ -136,20 +136,63 @@ Imports System.Runtime.InteropServices
 '    End Sub
 'End Class
 
+Friend Interface IListEdit
+    Inherits IList
+    Overloads Sub Add(ByVal o As Orm.OrmBase)
+    Overloads Sub Remove(ByVal o As Orm.OrmBase)
+    Overloads Sub Insert(ByVal pos As Integer, ByVal o As Orm.OrmBase)
+End Interface
+
 Public Class ReadOnlyList(Of T As Orm.OrmBase)
-    'Inherits ObjectModel.ReadOnlyCollection(Of T)
+    Inherits ObjectModel.ReadOnlyCollection(Of T)
+    Implements IListEdit
 
-    'Private _l As IList(Of T)
-    'Protected Friend ReadOnly Property List() As IList(Of T)
-    '    Get
-    '        Return _l
-    '    End Get
-    'End Property
+    Private _l As List(Of T)
+    Protected Friend ReadOnly Property List() As IList(Of T)
+        Get
+            Return _l
+        End Get
+    End Property
 
-    'Public Sub New(ByVal list As IList(Of T))
-    '    MyBase.New(list)
-    'End Sub
+    Public Sub New()
+        MyClass.New(New List(Of T))
+    End Sub
 
+    Public Sub New(ByVal list As List(Of T))
+        MyBase.New(list)
+        _l = list
+    End Sub
+
+    Public Sub New(ByVal list As ReadOnlyList(Of T))
+        MyClass.New(New List(Of T)(list))
+    End Sub
+
+    Public Sub Add(ByVal o As T)
+        _l.Add(o)
+    End Sub
+
+    Public Sub AddRange(ByVal col As IEnumerable(Of T))
+        'For Each o As T In col
+        '    Add(o)
+        'Next
+        _l.AddRange(col)
+    End Sub
+
+    Public Sub Sort(ByVal cs As IComparer(Of T))
+        _l.Sort(cs)
+    End Sub
+
+    Private Sub _Add(ByVal o As Orm.OrmBase) Implements IListEdit.Add
+        CType(_l, IList).Add(o)
+    End Sub
+
+    Public Overloads Sub Insert(ByVal pos As Integer, ByVal o As Orm.OrmBase) Implements IListEdit.Insert
+        CType(_l, IList).Insert(pos, o)
+    End Sub
+
+    Public Overloads Sub Remove(ByVal o As Orm.OrmBase) Implements IListEdit.Remove
+        CType(_l, IList).Remove(o)
+    End Sub
 End Class
 
 Namespace Collections

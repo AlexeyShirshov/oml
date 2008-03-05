@@ -473,7 +473,7 @@ Public MustInherit Class QueryGenerator
     '    End Get
     'End Property
 
-    Public Function ExternalSort(Of T As {OrmBase, New})(ByVal sort As Sort, ByVal objs As ICollection(Of T)) As ICollection(Of T)
+    Public Function ExternalSort(Of T As {OrmBase, New})(ByVal sort As Sort, ByVal objs As ReadOnlyList(Of T)) As ReadOnlyList(Of T)
         If sort.Previous IsNot Nothing Then
             Throw New ArgumentException("Sort is linked")
         End If

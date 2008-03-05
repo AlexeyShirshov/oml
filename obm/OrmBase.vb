@@ -190,11 +190,11 @@ Namespace Orm
                 Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
             End Function
 
-            Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
+            Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, True, withLoad)
             End Function
 
-            Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As Generic.ICollection(Of T)
+            Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, direct, withLoad)
             End Function
 
@@ -226,7 +226,7 @@ Namespace Orm
                 GetMgr.M2MCancel(_o, t)
             End Sub
 
-            Public Sub Merge(Of T As {OrmBase, New})(ByVal col As ICollection(Of T), ByVal removeNotInList As Boolean)
+            Public Sub Merge(Of T As {OrmBase, New})(ByVal col As ReadOnlyList(Of T), ByVal removeNotInList As Boolean)
                 If removeNotInList Then
                     For Each o As T In Find(Of T)(Nothing, Nothing, False)
                         If Not col.Contains(o) Then
@@ -241,20 +241,20 @@ Namespace Orm
                 Next
             End Sub
 
-			Public Sub Merge(Of T As {OrmBase, New})(ByVal col As ICollection(Of T), ByVal removeNotInList As Boolean, ByVal direct As Boolean)
-				If removeNotInList Then
-					For Each o As T In Find(Of T)(Nothing, Nothing, False)
-						If Not col.Contains(o) Then
-							Delete(o, direct)
-						End If
-					Next
-				End If
-				For Each o As T In col
-					If Not Find(Of T)(Nothing, Nothing, False).Contains(o) Then
-						Add(o, direct)
-					End If
-				Next
-			End Sub
+            Public Sub Merge(Of T As {OrmBase, New})(ByVal col As ReadOnlyList(Of T), ByVal removeNotInList As Boolean, ByVal direct As Boolean)
+                If removeNotInList Then
+                    For Each o As T In Find(Of T)(Nothing, Nothing, False)
+                        If Not col.Contains(o) Then
+                            Delete(o, direct)
+                        End If
+                    Next
+                End If
+                For Each o As T In col
+                    If Not Find(Of T)(Nothing, Nothing, False).Contains(o) Then
+                        Add(o, direct)
+                    End If
+                Next
+            End Sub
         End Class
 
         <EditorBrowsable(EditorBrowsableState.Never)> _
@@ -660,7 +660,7 @@ Namespace Orm
             End Get
         End Property
 
-        Private Sub RaisePropertyChanged(ByVal fieldName As String, ByVal oldValue As Object)
+        Protected Sub RaisePropertyChanged(ByVal fieldName As String, ByVal oldValue As Object)
             Dim value As Object = GetValue(fieldName)
             If Not value.Equals(oldValue) Then
                 RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(fieldName, oldValue, value))
