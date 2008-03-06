@@ -13,11 +13,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EFCB67BA-1D42-40DD-A184-23C539F387B8}"
 	ProjectSection(SolutionItems) = preProject
-		DAPerformance2.vsmdi = DAPerformance2.vsmdi
-		DAPerformance6.vsmdi = DAPerformance6.vsmdi
-		DAPerformance7.vsmdi = DAPerformance7.vsmdi
 		DAPerformance8.vsmdi = DAPerformance8.vsmdi
 		LocalTestRun.testrunconfig = LocalTestRun.testrunconfig
+		workload.docx = workload.docx
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaAdoEF", "DaAdoEF\DaAdoEF.csproj", "{79801517-34F7-4847-984A-13336BDB1BE2}"
