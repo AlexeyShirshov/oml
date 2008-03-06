@@ -158,6 +158,10 @@ Public Class ReadOnlyList(Of T As Orm.OrmBase)
         MyClass.New(New List(Of T))
     End Sub
 
+    Public Sub New(ByVal col As IEnumerable(Of T))
+        MyBase.New(New List(Of T)(col))
+    End Sub
+
     Public Sub New(ByVal list As List(Of T))
         MyBase.New(list)
         _l = list

@@ -181,7 +181,7 @@ Namespace Database
                             Dim l2 As New Dictionary(Of Type, List(Of OrmBase))
                             For Each p As Pair(Of ObjectState, OrmBase) In saved
                                 Dim o As OrmBase = p.Second
-                                Dim mo As OrmBase = o.AcceptChanges(False, OrmBase.IsGoogState(p.First))
+                                Dim mo As OrmBase = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
                                 l.Add(o, mo)
                                 Dim ls As List(Of OrmBase) = Nothing
                                 If Not l2.TryGetValue(o.GetType, ls) Then
@@ -199,7 +199,7 @@ Namespace Database
                         Else
                             For Each p As Pair(Of ObjectState, OrmBase) In saved
                                 Dim o As OrmBase = p.Second
-                                o.AcceptChanges(True, OrmBase.IsGoogState(p.First))
+                                o.AcceptChanges(True, OrmBase.IsGoodState(p.First))
                                 RaiseEvent ObjectAccepted(o)
                             Next
                         End If
