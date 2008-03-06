@@ -662,7 +662,7 @@ Namespace Orm
 
         Protected Sub RaisePropertyChanged(ByVal fieldName As String, ByVal oldValue As Object)
             Dim value As Object = GetValue(fieldName)
-            If Not value.Equals(oldValue) Then
+            If Not Object.Equals(value, oldValue) Then
                 RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(fieldName, oldValue, value))
             End If
         End Sub
@@ -1611,7 +1611,7 @@ l1:
 
 #End Region
 
-        Public Shared Function IsGoogState(ByVal state As ObjectState) As Boolean
+        Public Shared Function IsGoodState(ByVal state As ObjectState) As Boolean
             Return state = ObjectState.Modified OrElse state = ObjectState.Created OrElse state = ObjectState.Deleted
         End Function
 
