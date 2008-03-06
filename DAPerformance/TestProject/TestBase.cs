@@ -10,7 +10,7 @@ namespace Tests
 {
     public abstract class TestBase
     {
-        static DSTime dsTime = new DSTime();
+        static DSTestTime dsTestTime = new DSTestTime();
         static ReportCreator reporter;
         static HiPerfTimer performer = new HiPerfTimer();
         protected static TestContext context;
@@ -19,12 +19,6 @@ namespace Tests
         public TestBase()
         {
             Utils.SetDataDirectory();
-        }
-
-        [ClassInitialize()]
-        public static void ClassInit()
-        {
-         
         }
 
         [TestInitialize()]
@@ -37,48 +31,14 @@ namespace Tests
         public void TestTimeCleaning()
         {
             performer.Stop();
-            DSTime.ClassRow classRow = GetClassRow();
-            DSTime.GroupRow groupRow = GetGroupRow();
-            dsTime.Test.AddTestRow(classRow, context.TestName, performer.Duration, groupRow);
-        }
-
-        private DSTime.ClassRow GetClassRow()
-        {
-            DSTime.ClassRow[] classRows = (DSTime.ClassRow[])dsTime.Class.Select(string.Format("Name='{0}'", classType.Name));
-            DSTime.ClassRow classRow;
-            if (classRows.Length == 1)
-            {
-                classRow = dsTime.Class.FindById(classRows[0].Id);
-                classRow.Name = classType.Name;
-            }
-            else
-            {
-                classRow = dsTime.Class.AddClassRow(classType.Name);
-            }
-            return classRow;
-        }
-
-        private DSTime.GroupRow GetGroupRow()
-        {
             string groupName = Regex.Replace(context.TestName, ".*(Select)(Collection)?.*(With)(out)?(Load)", "$1 $2 $3$4 $5").Replace("  ", " ").ToLower();
-            DSTime.GroupRow[] groupRows = (DSTime.GroupRow[])dsTime.Group.Select(string.Format("Name='{0}'", groupName));
-            DSTime.GroupRow groupRow;
-            if (groupRows.Length == 1)
-            {
-                groupRow = dsTime.Group.FindById(groupRows[0].Id);
-                groupRow.Name = groupName;
-            }
-            else
-            {
-                groupRow = dsTime.Group.AddGroupRow(groupName);
-            }
-            return groupRow;
+            dsTestTime.Time.AddTimeRow(classType.Name, groupName, context.TestName, performer.Duration);
         }
-
+        
         [AssemblyCleanup()]
         public static void Clean()
         {
-            ReportCreator.Write(dsTime);
+            ReportCreator.Write(dsTestTime);
         }
     }
 

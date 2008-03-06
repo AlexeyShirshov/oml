@@ -11,15 +11,10 @@ namespace Tests
     public class ReportCreator
     {
         static string fileName = string.Format("CheckTime {0}.xml", DateTime.Now.ToString("yyyy-MM-dd hh_mm_ss"));
-        static XmlDocument xmlDoc = new XmlDocument();
-        static ReportCreator()
+        
+        public static void Write(DSTestTime dsTestTime)
         {
-
-        }
-
-        public static void Write(DSTime dsTime)
-        {
-            dsTime.WriteXml(fileName);
+            dsTestTime.WriteXml(fileName);
         }
 
 

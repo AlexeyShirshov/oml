@@ -71,6 +71,11 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DSTestTime.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>DSTestTime.xsd</DependentUpon>
+    </Compile>
     <Compile Include="DSTime.cs">
       <DependentUpon>DSTime.xsd</DependentUpon>
       <SubType>Component</SubType>
@@ -118,6 +123,17 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="DSTestTime.xsc">
+      <DependentUpon>DSTestTime.xsd</DependentUpon>
+    </None>
+    <None Include="DSTestTime.xsd">
+      <SubType>Designer</SubType>
+      <Generator>MSDataSetGenerator</Generator>
+      <LastGenOutput>DSTestTime.Designer.cs</LastGenOutput>
+    </None>
+    <None Include="DSTestTime.xss">
+      <DependentUpon>DSTestTime.xsd</DependentUpon>
+    </None>
     <None Include="DSTime.xsc">
       <DependentUpon>DSTime.xsd</DependentUpon>
     </None>

@@ -7,9 +7,6 @@ namespace Tests
 {
     internal class HiPerfTimer
     {
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern int SetThreadAffinityMask(int hThread, int dwThreadAffinityMask);
-
         [DllImport("Kernel32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool QueryPerformanceCounter(
@@ -22,40 +19,26 @@ namespace Tests
 
         private long startTime, stopTime;
         private long freq;
-
-        // Constructor
+        public static bool run = true;
 
         public HiPerfTimer()
         {
-            //SetThreadAffinityMask(Thread.CurrentThread.ManagedThreadId, 0);
-
             if (QueryPerformanceFrequency(out freq) == false)
             {
-                // high-performance counter not supported
-
                 throw new Win32Exception();
             }
         }
 
-        // Start the timer
-
         public void Start()
         {
-            // lets do the waiting threads there work
-
             Thread.Sleep(0);
-
             QueryPerformanceCounter(out startTime);
         }
-
-        // Stop the timer
 
         public void Stop()
         {
             QueryPerformanceCounter(out stopTime);
         }
-
-        // Returns the duration of the timer (in seconds)
 
         public double Duration
         {
