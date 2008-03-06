@@ -7,11 +7,16 @@ namespace Tests
 {
     internal class HiPerfTimer
     {
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern int SetThreadAffinityMask(int hThread, int dwThreadAffinityMask);
+
         [DllImport("Kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool QueryPerformanceCounter(
             out long lpPerformanceCount);
 
         [DllImport("Kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool QueryPerformanceFrequency(
             out long lpFrequency);
 
@@ -22,8 +27,7 @@ namespace Tests
 
         public HiPerfTimer()
         {
-            startTime = 0;
-            stopTime = 0;
+            //SetThreadAffinityMask(Thread.CurrentThread.ManagedThreadId, 0);
 
             if (QueryPerformanceFrequency(out freq) == false)
             {

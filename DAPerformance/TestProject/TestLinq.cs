@@ -60,7 +60,7 @@ namespace Tests
         }
 
         [TestMethod]
-        public void SelectWithListLoad()
+        public void SelectWithListWithLoad()
         {
             linqProvider.SelectWithListLoad();
         }
@@ -78,7 +78,7 @@ namespace Tests
         }
 
          [TestMethod]
-         public void SelectShortWithListLoad()
+         public void SelectShortWithListWithLoad()
         {
             linqProvider.SelectShortWithListLoad();
         }
@@ -99,7 +99,7 @@ namespace Tests
       
 
         [TestMethod]
-        public void SelectCollectionWithListLoad()
+        public void SelectCollectionWithListWithLoad()
         {
             linqProvider.SelectCollectionWithListLoad();
         }
@@ -119,7 +119,7 @@ namespace Tests
         }
 
         [TestMethod]
-        public void SelectSmallWithListLoad()
+        public void SelectSmallWithListWithLoad()
         {
             linqProvider.SelectSmallWithListLoad();
         }
@@ -137,7 +137,7 @@ namespace Tests
         }
 
         [TestMethod]
-        public void SelectSmallCollectionWithListLoad()
+        public void SelectSmallCollectionWithListWithLoad()
         {
             linqProvider.SelectSmallCollectionWithListLoad();
         }
@@ -155,7 +155,7 @@ namespace Tests
         }
 
         [TestMethod]
-        public void SelectCollectionShortWithListLoad()
+        public void SelectCollectionShortWithListWithLoad()
         {
             linqProvider.SelectShortWithListLoad();
         }

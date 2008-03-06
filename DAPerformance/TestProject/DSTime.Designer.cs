@@ -29,7 +29,11 @@ namespace TestProject {
         
         private TestDataTable tableTest;
         
+        private GroupDataTable tableGroup;
+        
         private global::System.Data.DataRelation relationClass_Test;
+        
+        private global::System.Data.DataRelation relationGroup_Test;
         
         private global::System.Data.SchemaSerializationMode _schemaSerializationMode = global::System.Data.SchemaSerializationMode.IncludeSchema;
         
@@ -62,6 +66,9 @@ namespace TestProject {
                 }
                 if ((ds.Tables["Test"] != null)) {
                     base.Tables.Add(new TestDataTable(ds.Tables["Test"]));
+                }
+                if ((ds.Tables["Group"] != null)) {
+                    base.Tables.Add(new GroupDataTable(ds.Tables["Group"]));
                 }
                 this.DataSetName = ds.DataSetName;
                 this.Prefix = ds.Prefix;
@@ -96,6 +103,15 @@ namespace TestProject {
         public TestDataTable Test {
             get {
                 return this.tableTest;
+            }
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.ComponentModel.Browsable(false)]
+        [global::System.ComponentModel.DesignerSerializationVisibility(global::System.ComponentModel.DesignerSerializationVisibility.Content)]
+        public GroupDataTable Group {
+            get {
+                return this.tableGroup;
             }
         }
         
@@ -164,6 +180,9 @@ namespace TestProject {
                 if ((ds.Tables["Test"] != null)) {
                     base.Tables.Add(new TestDataTable(ds.Tables["Test"]));
                 }
+                if ((ds.Tables["Group"] != null)) {
+                    base.Tables.Add(new GroupDataTable(ds.Tables["Group"]));
+                }
                 this.DataSetName = ds.DataSetName;
                 this.Prefix = ds.Prefix;
                 this.Namespace = ds.Namespace;
@@ -206,7 +225,14 @@ namespace TestProject {
                     this.tableTest.InitVars();
                 }
             }
+            this.tableGroup = ((GroupDataTable)(base.Tables["Group"]));
+            if ((initTable == true)) {
+                if ((this.tableGroup != null)) {
+                    this.tableGroup.InitVars();
+                }
+            }
             this.relationClass_Test = this.Relations["Class_Test"];
+            this.relationGroup_Test = this.Relations["Group_Test"];
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -220,10 +246,16 @@ namespace TestProject {
             base.Tables.Add(this.tableClass);
             this.tableTest = new TestDataTable();
             base.Tables.Add(this.tableTest);
+            this.tableGroup = new GroupDataTable();
+            base.Tables.Add(this.tableGroup);
             this.relationClass_Test = new global::System.Data.DataRelation("Class_Test", new global::System.Data.DataColumn[] {
                         this.tableClass.IdColumn}, new global::System.Data.DataColumn[] {
                         this.tableTest.ClassIdColumn}, false);
             this.Relations.Add(this.relationClass_Test);
+            this.relationGroup_Test = new global::System.Data.DataRelation("Group_Test", new global::System.Data.DataColumn[] {
+                        this.tableGroup.IdColumn}, new global::System.Data.DataColumn[] {
+                        this.tableTest.GroupIdColumn}, false);
+            this.Relations.Add(this.relationGroup_Test);
         }
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -233,6 +265,11 @@ namespace TestProject {
         
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         private bool ShouldSerializeTest() {
+            return false;
+        }
+        
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        private bool ShouldSerializeGroup() {
             return false;
         }
         
@@ -292,6 +329,8 @@ namespace TestProject {
         public delegate void ClassRowChangeEventHandler(object sender, ClassRowChangeEvent e);
         
         public delegate void TestRowChangeEventHandler(object sender, TestRowChangeEvent e);
+        
+        public delegate void GroupRowChangeEventHandler(object sender, GroupRowChangeEvent e);
         
         /// <summary>
         ///Represents the strongly named DataTable class.
@@ -420,11 +459,13 @@ namespace TestProject {
                 base.Columns.Add(this.columnName);
                 this.Constraints.Add(new global::System.Data.UniqueConstraint("Constraint1", new global::System.Data.DataColumn[] {
                                 this.columnId}, true));
+                this.Constraints.Add(new global::System.Data.UniqueConstraint("Constraint2", new global::System.Data.DataColumn[] {
+                                this.columnName}, false));
                 this.columnId.AutoIncrement = true;
-                this.columnId.AutoIncrementSeed = -1;
-                this.columnId.AutoIncrementStep = -1;
+                this.columnId.AutoIncrementSeed = 1;
                 this.columnId.AllowDBNull = false;
                 this.columnId.Unique = true;
+                this.columnName.Unique = true;
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -556,7 +597,7 @@ namespace TestProject {
             
             private global::System.Data.DataColumn columnTime;
             
-            private global::System.Data.DataColumn columnGroup;
+            private global::System.Data.DataColumn columnGroupId;
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             public TestDataTable() {
@@ -610,9 +651,9 @@ namespace TestProject {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            public global::System.Data.DataColumn GroupColumn {
+            public global::System.Data.DataColumn GroupIdColumn {
                 get {
-                    return this.columnGroup;
+                    return this.columnGroupId;
                 }
             }
             
@@ -645,15 +686,18 @@ namespace TestProject {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            public TestRow AddTestRow(ClassRow parentClassRowByClass_Test, string Name, double Time, string Group) {
+            public TestRow AddTestRow(ClassRow parentClassRowByClass_Test, string Name, double Time, GroupRow parentGroupRowByGroup_Test) {
                 TestRow rowTestRow = ((TestRow)(this.NewRow()));
                 object[] columnValuesArray = new object[] {
                         null,
                         Name,
                         Time,
-                        Group};
+                        null};
                 if ((parentClassRowByClass_Test != null)) {
                     columnValuesArray[0] = parentClassRowByClass_Test[0];
+                }
+                if ((parentGroupRowByGroup_Test != null)) {
+                    columnValuesArray[3] = parentGroupRowByGroup_Test[0];
                 }
                 rowTestRow.ItemArray = columnValuesArray;
                 this.Rows.Add(rowTestRow);
@@ -677,7 +721,7 @@ namespace TestProject {
                 this.columnClassId = base.Columns["ClassId"];
                 this.columnName = base.Columns["Name"];
                 this.columnTime = base.Columns["Time"];
-                this.columnGroup = base.Columns["Group"];
+                this.columnGroupId = base.Columns["GroupId"];
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -688,8 +732,8 @@ namespace TestProject {
                 base.Columns.Add(this.columnName);
                 this.columnTime = new global::System.Data.DataColumn("Time", typeof(double), null, global::System.Data.MappingType.Element);
                 base.Columns.Add(this.columnTime);
-                this.columnGroup = new global::System.Data.DataColumn("Group", typeof(string), null, global::System.Data.MappingType.Element);
-                base.Columns.Add(this.columnGroup);
+                this.columnGroupId = new global::System.Data.DataColumn("GroupId", typeof(int), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnGroupId);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -767,6 +811,257 @@ namespace TestProject {
                 global::System.Xml.Schema.XmlSchemaAttribute attribute2 = new global::System.Xml.Schema.XmlSchemaAttribute();
                 attribute2.Name = "tableTypeName";
                 attribute2.FixedValue = "TestDataTable";
+                type.Attributes.Add(attribute2);
+                type.Particle = sequence;
+                global::System.Xml.Schema.XmlSchema dsSchema = ds.GetSchemaSerializable();
+                if (xs.Contains(dsSchema.TargetNamespace)) {
+                    global::System.IO.MemoryStream s1 = new global::System.IO.MemoryStream();
+                    global::System.IO.MemoryStream s2 = new global::System.IO.MemoryStream();
+                    try {
+                        global::System.Xml.Schema.XmlSchema schema = null;
+                        dsSchema.Write(s1);
+                        for (global::System.Collections.IEnumerator schemas = xs.Schemas(dsSchema.TargetNamespace).GetEnumerator(); schemas.MoveNext(); ) {
+                            schema = ((global::System.Xml.Schema.XmlSchema)(schemas.Current));
+                            s2.SetLength(0);
+                            schema.Write(s2);
+                            if ((s1.Length == s2.Length)) {
+                                s1.Position = 0;
+                                s2.Position = 0;
+                                for (; ((s1.Position != s1.Length) 
+                                            && (s1.ReadByte() == s2.ReadByte())); ) {
+                                    ;
+                                }
+                                if ((s1.Position == s1.Length)) {
+                                    return type;
+                                }
+                            }
+                        }
+                    }
+                    finally {
+                        if ((s1 != null)) {
+                            s1.Close();
+                        }
+                        if ((s2 != null)) {
+                            s2.Close();
+                        }
+                    }
+                }
+                xs.Add(dsSchema);
+                return type;
+            }
+        }
+        
+        /// <summary>
+        ///Represents the strongly named DataTable class.
+        ///</summary>
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "2.0.0.0")]
+        [global::System.Serializable()]
+        [global::System.Xml.Serialization.XmlSchemaProviderAttribute("GetTypedTableSchema")]
+        public partial class GroupDataTable : global::System.Data.TypedTableBase<GroupRow> {
+            
+            private global::System.Data.DataColumn columnId;
+            
+            private global::System.Data.DataColumn columnName;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public GroupDataTable() {
+                this.TableName = "Group";
+                this.BeginInit();
+                this.InitClass();
+                this.EndInit();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            internal GroupDataTable(global::System.Data.DataTable table) {
+                this.TableName = table.TableName;
+                if ((table.CaseSensitive != table.DataSet.CaseSensitive)) {
+                    this.CaseSensitive = table.CaseSensitive;
+                }
+                if ((table.Locale.ToString() != table.DataSet.Locale.ToString())) {
+                    this.Locale = table.Locale;
+                }
+                if ((table.Namespace != table.DataSet.Namespace)) {
+                    this.Namespace = table.Namespace;
+                }
+                this.Prefix = table.Prefix;
+                this.MinimumCapacity = table.MinimumCapacity;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            protected GroupDataTable(global::System.Runtime.Serialization.SerializationInfo info, global::System.Runtime.Serialization.StreamingContext context) : 
+                    base(info, context) {
+                this.InitVars();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public global::System.Data.DataColumn IdColumn {
+                get {
+                    return this.columnId;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public global::System.Data.DataColumn NameColumn {
+                get {
+                    return this.columnName;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            [global::System.ComponentModel.Browsable(false)]
+            public int Count {
+                get {
+                    return this.Rows.Count;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public GroupRow this[int index] {
+                get {
+                    return ((GroupRow)(this.Rows[index]));
+                }
+            }
+            
+            public event GroupRowChangeEventHandler GroupRowChanging;
+            
+            public event GroupRowChangeEventHandler GroupRowChanged;
+            
+            public event GroupRowChangeEventHandler GroupRowDeleting;
+            
+            public event GroupRowChangeEventHandler GroupRowDeleted;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public void AddGroupRow(GroupRow row) {
+                this.Rows.Add(row);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public GroupRow AddGroupRow(string Name) {
+                GroupRow rowGroupRow = ((GroupRow)(this.NewRow()));
+                object[] columnValuesArray = new object[] {
+                        null,
+                        Name};
+                rowGroupRow.ItemArray = columnValuesArray;
+                this.Rows.Add(rowGroupRow);
+                return rowGroupRow;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public GroupRow FindById(int Id) {
+                return ((GroupRow)(this.Rows.Find(new object[] {
+                            Id})));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public override global::System.Data.DataTable Clone() {
+                GroupDataTable cln = ((GroupDataTable)(base.Clone()));
+                cln.InitVars();
+                return cln;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            protected override global::System.Data.DataTable CreateInstance() {
+                return new GroupDataTable();
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            internal void InitVars() {
+                this.columnId = base.Columns["Id"];
+                this.columnName = base.Columns["Name"];
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            private void InitClass() {
+                this.columnId = new global::System.Data.DataColumn("Id", typeof(int), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnId);
+                this.columnName = new global::System.Data.DataColumn("Name", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnName);
+                this.Constraints.Add(new global::System.Data.UniqueConstraint("Constraint1", new global::System.Data.DataColumn[] {
+                                this.columnId}, true));
+                this.Constraints.Add(new global::System.Data.UniqueConstraint("Constraint2", new global::System.Data.DataColumn[] {
+                                this.columnName}, false));
+                this.columnId.AutoIncrement = true;
+                this.columnId.AutoIncrementSeed = 1;
+                this.columnId.AllowDBNull = false;
+                this.columnId.Unique = true;
+                this.columnName.Unique = true;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public GroupRow NewGroupRow() {
+                return ((GroupRow)(this.NewRow()));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            protected override global::System.Data.DataRow NewRowFromBuilder(global::System.Data.DataRowBuilder builder) {
+                return new GroupRow(builder);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            protected override global::System.Type GetRowType() {
+                return typeof(GroupRow);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            protected override void OnRowChanged(global::System.Data.DataRowChangeEventArgs e) {
+                base.OnRowChanged(e);
+                if ((this.GroupRowChanged != null)) {
+                    this.GroupRowChanged(this, new GroupRowChangeEvent(((GroupRow)(e.Row)), e.Action));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            protected override void OnRowChanging(global::System.Data.DataRowChangeEventArgs e) {
+                base.OnRowChanging(e);
+                if ((this.GroupRowChanging != null)) {
+                    this.GroupRowChanging(this, new GroupRowChangeEvent(((GroupRow)(e.Row)), e.Action));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            protected override void OnRowDeleted(global::System.Data.DataRowChangeEventArgs e) {
+                base.OnRowDeleted(e);
+                if ((this.GroupRowDeleted != null)) {
+                    this.GroupRowDeleted(this, new GroupRowChangeEvent(((GroupRow)(e.Row)), e.Action));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            protected override void OnRowDeleting(global::System.Data.DataRowChangeEventArgs e) {
+                base.OnRowDeleting(e);
+                if ((this.GroupRowDeleting != null)) {
+                    this.GroupRowDeleting(this, new GroupRowChangeEvent(((GroupRow)(e.Row)), e.Action));
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public void RemoveGroupRow(GroupRow row) {
+                this.Rows.Remove(row);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public static global::System.Xml.Schema.XmlSchemaComplexType GetTypedTableSchema(global::System.Xml.Schema.XmlSchemaSet xs) {
+                global::System.Xml.Schema.XmlSchemaComplexType type = new global::System.Xml.Schema.XmlSchemaComplexType();
+                global::System.Xml.Schema.XmlSchemaSequence sequence = new global::System.Xml.Schema.XmlSchemaSequence();
+                DSTime ds = new DSTime();
+                global::System.Xml.Schema.XmlSchemaAny any1 = new global::System.Xml.Schema.XmlSchemaAny();
+                any1.Namespace = "http://www.w3.org/2001/XMLSchema";
+                any1.MinOccurs = new decimal(0);
+                any1.MaxOccurs = decimal.MaxValue;
+                any1.ProcessContents = global::System.Xml.Schema.XmlSchemaContentProcessing.Lax;
+                sequence.Items.Add(any1);
+                global::System.Xml.Schema.XmlSchemaAny any2 = new global::System.Xml.Schema.XmlSchemaAny();
+                any2.Namespace = "urn:schemas-microsoft-com:xml-diffgram-v1";
+                any2.MinOccurs = new decimal(1);
+                any2.ProcessContents = global::System.Xml.Schema.XmlSchemaContentProcessing.Lax;
+                sequence.Items.Add(any2);
+                global::System.Xml.Schema.XmlSchemaAttribute attribute1 = new global::System.Xml.Schema.XmlSchemaAttribute();
+                attribute1.Name = "namespace";
+                attribute1.FixedValue = ds.Namespace;
+                type.Attributes.Add(attribute1);
+                global::System.Xml.Schema.XmlSchemaAttribute attribute2 = new global::System.Xml.Schema.XmlSchemaAttribute();
+                attribute2.Name = "tableTypeName";
+                attribute2.FixedValue = "GroupDataTable";
                 type.Attributes.Add(attribute2);
                 type.Particle = sequence;
                 global::System.Xml.Schema.XmlSchema dsSchema = ds.GetSchemaSerializable();
@@ -927,17 +1222,17 @@ namespace TestProject {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            public string Group {
+            public int GroupId {
                 get {
                     try {
-                        return ((string)(this[this.tableTest.GroupColumn]));
+                        return ((int)(this[this.tableTest.GroupIdColumn]));
                     }
                     catch (global::System.InvalidCastException e) {
-                        throw new global::System.Data.StrongTypingException("The value for column \'Group\' in table \'Test\' is DBNull.", e);
+                        throw new global::System.Data.StrongTypingException("The value for column \'GroupId\' in table \'Test\' is DBNull.", e);
                     }
                 }
                 set {
-                    this[this.tableTest.GroupColumn] = value;
+                    this[this.tableTest.GroupIdColumn] = value;
                 }
             }
             
@@ -948,6 +1243,16 @@ namespace TestProject {
                 }
                 set {
                     this.SetParentRow(value, this.Table.ParentRelations["Class_Test"]);
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public GroupRow GroupRow {
+                get {
+                    return ((GroupRow)(this.GetParentRow(this.Table.ParentRelations["Group_Test"])));
+                }
+                set {
+                    this.SetParentRow(value, this.Table.ParentRelations["Group_Test"]);
                 }
             }
             
@@ -982,13 +1287,73 @@ namespace TestProject {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            public bool IsGroupNull() {
-                return this.IsNull(this.tableTest.GroupColumn);
+            public bool IsGroupIdNull() {
+                return this.IsNull(this.tableTest.GroupIdColumn);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            public void SetGroupNull() {
-                this[this.tableTest.GroupColumn] = global::System.Convert.DBNull;
+            public void SetGroupIdNull() {
+                this[this.tableTest.GroupIdColumn] = global::System.Convert.DBNull;
+            }
+        }
+        
+        /// <summary>
+        ///Represents strongly named DataRow class.
+        ///</summary>
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "2.0.0.0")]
+        public partial class GroupRow : global::System.Data.DataRow {
+            
+            private GroupDataTable tableGroup;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            internal GroupRow(global::System.Data.DataRowBuilder rb) : 
+                    base(rb) {
+                this.tableGroup = ((GroupDataTable)(this.Table));
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public int Id {
+                get {
+                    return ((int)(this[this.tableGroup.IdColumn]));
+                }
+                set {
+                    this[this.tableGroup.IdColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public string Name {
+                get {
+                    try {
+                        return ((string)(this[this.tableGroup.NameColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'Name\' in table \'Group\' is DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableGroup.NameColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public bool IsNameNull() {
+                return this.IsNull(this.tableGroup.NameColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public void SetNameNull() {
+                this[this.tableGroup.NameColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public TestRow[] GetTestRows() {
+                if ((this.Table.ChildRelations["Group_Test"] == null)) {
+                    return new TestRow[0];
+                }
+                else {
+                    return ((TestRow[])(base.GetChildRows(this.Table.ChildRelations["Group_Test"])));
+                }
             }
         }
         
@@ -1041,6 +1406,37 @@ namespace TestProject {
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             public TestRow Row {
+                get {
+                    return this.eventRow;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public global::System.Data.DataRowAction Action {
+                get {
+                    return this.eventAction;
+                }
+            }
+        }
+        
+        /// <summary>
+        ///Row event argument class
+        ///</summary>
+        [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Data.Design.TypedDataSetGenerator", "2.0.0.0")]
+        public class GroupRowChangeEvent : global::System.EventArgs {
+            
+            private GroupRow eventRow;
+            
+            private global::System.Data.DataRowAction eventAction;
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public GroupRowChangeEvent(GroupRow row, global::System.Data.DataRowAction action) {
+                this.eventRow = row;
+                this.eventAction = action;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public GroupRow Row {
                 get {
                     return this.eventRow;
                 }

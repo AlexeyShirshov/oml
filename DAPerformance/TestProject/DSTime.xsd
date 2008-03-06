@@ -15,18 +15,26 @@
         <xs:element name="Class" msprop:Generator_UserTableName="Class" msprop:Generator_RowDeletedName="ClassRowDeleted" msprop:Generator_RowChangedName="ClassRowChanged" msprop:Generator_RowClassName="ClassRow" msprop:Generator_RowChangingName="ClassRowChanging" msprop:Generator_RowEvArgName="ClassRowChangeEvent" msprop:Generator_RowEvHandlerName="ClassRowChangeEventHandler" msprop:Generator_TableClassName="ClassDataTable" msprop:Generator_TableVarName="tableClass" msprop:Generator_RowDeletingName="ClassRowDeleting" msprop:Generator_TablePropName="Class">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="Id" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="-1" msdata:AutoIncrementStep="-1" msprop:Generator_UserColumnName="Id" msprop:Generator_ColumnPropNameInRow="Id" msprop:Generator_ColumnVarNameInTable="columnId" msprop:Generator_ColumnPropNameInTable="IdColumn" type="xs:int" />
-              <xs:element name="Name" msprop:Generator_UserColumnName="Name" msprop:Generator_ColumnVarNameInTable="columnName" msprop:Generator_ColumnPropNameInRow="Name" msprop:Generator_ColumnPropNameInTable="NameColumn" type="xs:string" minOccurs="0" />
+              <xs:element name="Id" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="1" msprop:Generator_UserColumnName="Id" msprop:Generator_ColumnVarNameInTable="columnId" msprop:Generator_ColumnPropNameInRow="Id" msprop:Generator_ColumnPropNameInTable="IdColumn" type="xs:int" />
+              <xs:element name="Name" msprop:Generator_UserColumnName="Name" msprop:Generator_ColumnPropNameInRow="Name" msprop:Generator_ColumnVarNameInTable="columnName" msprop:Generator_ColumnPropNameInTable="NameColumn" type="xs:string" minOccurs="0" />
             </xs:sequence>
           </xs:complexType>
         </xs:element>
         <xs:element name="Test" msprop:Generator_UserTableName="Test" msprop:Generator_RowDeletedName="TestRowDeleted" msprop:Generator_RowChangedName="TestRowChanged" msprop:Generator_RowClassName="TestRow" msprop:Generator_RowChangingName="TestRowChanging" msprop:Generator_RowEvArgName="TestRowChangeEvent" msprop:Generator_RowEvHandlerName="TestRowChangeEventHandler" msprop:Generator_TableClassName="TestDataTable" msprop:Generator_TableVarName="tableTest" msprop:Generator_RowDeletingName="TestRowDeleting" msprop:Generator_TablePropName="Test">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="ClassId" msprop:Generator_UserColumnName="ClassId" msprop:Generator_ColumnVarNameInTable="columnClassId" msprop:Generator_ColumnPropNameInRow="ClassId" msprop:Generator_ColumnPropNameInTable="ClassIdColumn" type="xs:int" minOccurs="0" />
-              <xs:element name="Name" msprop:Generator_UserColumnName="Name" msprop:Generator_ColumnVarNameInTable="columnName" msprop:Generator_ColumnPropNameInRow="Name" msprop:Generator_ColumnPropNameInTable="NameColumn" type="xs:string" minOccurs="0" />
-              <xs:element name="Time" msprop:Generator_UserColumnName="Time" msprop:Generator_ColumnVarNameInTable="columnTime" msprop:Generator_ColumnPropNameInRow="Time" msprop:Generator_ColumnPropNameInTable="TimeColumn" type="xs:double" minOccurs="0" />
-              <xs:element name="Group" msprop:Generator_UserColumnName="Group" msprop:Generator_ColumnPropNameInRow="Group" msprop:Generator_ColumnVarNameInTable="columnGroup" msprop:Generator_ColumnPropNameInTable="GroupColumn" type="xs:string" minOccurs="0" />
+              <xs:element name="ClassId" msprop:Generator_UserColumnName="ClassId" msprop:Generator_ColumnPropNameInRow="ClassId" msprop:Generator_ColumnVarNameInTable="columnClassId" msprop:Generator_ColumnPropNameInTable="ClassIdColumn" type="xs:int" minOccurs="0" />
+              <xs:element name="Name" msprop:Generator_UserColumnName="Name" msprop:Generator_ColumnPropNameInRow="Name" msprop:Generator_ColumnVarNameInTable="columnName" msprop:Generator_ColumnPropNameInTable="NameColumn" type="xs:string" minOccurs="0" />
+              <xs:element name="Time" msprop:Generator_UserColumnName="Time" msprop:Generator_ColumnPropNameInRow="Time" msprop:Generator_ColumnVarNameInTable="columnTime" msprop:Generator_ColumnPropNameInTable="TimeColumn" type="xs:double" minOccurs="0" />
+              <xs:element name="GroupId" msprop:Generator_UserColumnName="GroupId" msprop:Generator_ColumnVarNameInTable="columnGroupId" msprop:Generator_ColumnPropNameInRow="GroupId" msprop:Generator_ColumnPropNameInTable="GroupIdColumn" type="xs:int" minOccurs="0" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Group" msprop:Generator_UserTableName="Group" msprop:Generator_RowDeletedName="GroupRowDeleted" msprop:Generator_TableClassName="GroupDataTable" msprop:Generator_RowChangedName="GroupRowChanged" msprop:Generator_RowClassName="GroupRow" msprop:Generator_RowChangingName="GroupRowChanging" msprop:Generator_RowEvArgName="GroupRowChangeEvent" msprop:Generator_RowEvHandlerName="GroupRowChangeEventHandler" msprop:Generator_TablePropName="Group" msprop:Generator_TableVarName="tableGroup" msprop:Generator_RowDeletingName="GroupRowDeleting">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Id" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="1" msprop:Generator_UserColumnName="Id" msprop:Generator_ColumnPropNameInRow="Id" msprop:Generator_ColumnVarNameInTable="columnId" msprop:Generator_ColumnPropNameInTable="IdColumn" type="xs:int" />
+              <xs:element name="Name" msprop:Generator_UserColumnName="Name" msprop:Generator_ColumnPropNameInRow="Name" msprop:Generator_ColumnVarNameInTable="columnName" msprop:Generator_ColumnPropNameInTable="NameColumn" type="xs:string" minOccurs="0" />
             </xs:sequence>
           </xs:complexType>
         </xs:element>
@@ -36,10 +44,23 @@
       <xs:selector xpath=".//mstns:Class" />
       <xs:field xpath="mstns:Id" />
     </xs:unique>
+    <xs:unique name="Constraint2">
+      <xs:selector xpath=".//mstns:Class" />
+      <xs:field xpath="mstns:Name" />
+    </xs:unique>
+    <xs:unique name="Group_Constraint1" msdata:ConstraintName="Constraint1" msdata:PrimaryKey="true">
+      <xs:selector xpath=".//mstns:Group" />
+      <xs:field xpath="mstns:Id" />
+    </xs:unique>
+    <xs:unique name="Group_Constraint2" msdata:ConstraintName="Constraint2">
+      <xs:selector xpath=".//mstns:Group" />
+      <xs:field xpath="mstns:Name" />
+    </xs:unique>
   </xs:element>
   <xs:annotation>
     <xs:appinfo>
       <msdata:Relationship name="Class_Test" msdata:parent="Class" msdata:child="Test" msdata:parentkey="Id" msdata:childkey="ClassId" msprop:Generator_UserRelationName="Class_Test" msprop:Generator_RelationVarName="relationClass_Test" msprop:Generator_UserChildTable="Test" msprop:Generator_UserParentTable="Class" msprop:Generator_ParentPropName="ClassRow" msprop:Generator_ChildPropName="GetTestRows" />
+      <msdata:Relationship name="Group_Test" msdata:parent="Group" msdata:child="Test" msdata:parentkey="Id" msdata:childkey="GroupId" msprop:Generator_UserRelationName="Group_Test" msprop:Generator_RelationVarName="relationGroup_Test" msprop:Generator_UserChildTable="Test" msprop:Generator_UserParentTable="Group" msprop:Generator_ParentPropName="GroupRow" msprop:Generator_ChildPropName="GetTestRows" />
     </xs:appinfo>
   </xs:annotation>
 </xs:schema>

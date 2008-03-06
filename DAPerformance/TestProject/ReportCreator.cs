@@ -10,7 +10,7 @@ namespace Tests
 {
     public class ReportCreator
     {
-        static string fileName = string.Format("checkTime{0}.xml", DateTime.Now.ToString("ddMMhhmmss"));
+        static string fileName = string.Format("CheckTime {0}.xml", DateTime.Now.ToString("yyyy-MM-dd hh_mm_ss"));
         static XmlDocument xmlDoc = new XmlDocument();
         static ReportCreator()
         {
@@ -19,7 +19,6 @@ namespace Tests
 
         public static void Write(DSTime dsTime)
         {
-                //fileStream = File.Create(fileName);
             dsTime.WriteXml(fileName);
         }
 

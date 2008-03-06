@@ -77,7 +77,7 @@ namespace Tests
         }
 
         [TestMethod]
-        public void TestSelectSmallWithLoad()
+        public void SelectSmallWithLoad()
         {
             DataSet ds = adoProvider.SelectSmall();
             Assert.AreEqual(1, ds.Tables.Count);
@@ -93,7 +93,7 @@ namespace Tests
        
 
         [TestMethod]
-        public void TestSelectSmallWithReaderWithLoad()
+        public void SelectSmallWithReaderWithLoad()
         {
             adoProvider.SelectSmallWithReader();
         }
@@ -102,12 +102,6 @@ namespace Tests
         public void SelectCollectionSmallWithReaderWithLoad()
         {
             adoProvider.SelectCollectionSmallWithReader();
-        }
-
-        [AssemblyCleanup()]
-        public static void AssemblyCleanup()
-        {
-           TestBase.Clean();
         }
     }
 }
