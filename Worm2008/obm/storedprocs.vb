@@ -686,6 +686,20 @@ Namespace Database.Storedprocs
                 _names = names
             End Sub
 
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal cache As Boolean)
+                MyBase.New(cache)
+                _name = name
+                _obj = params
+                _names = names
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal timeout As TimeSpan)
+                MyBase.New(timeout)
+                _name = name
+                _obj = params
+                _names = names
+            End Sub
+
             Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
                 Dim l As New List(Of Pair(Of String, Object))
                 For i As Integer = 0 To _obj.Length - 1
@@ -710,6 +724,14 @@ Namespace Database.Storedprocs
 
         Public Shared Function Exec(ByVal name As String) As T
             Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        End Function
+
+        Public Shared Function Exec(ByVal name As String, ByVal cache As Boolean) As T
+            Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}, cache).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        End Function
+
+        Public Shared Function Exec(ByVal name As String, ByVal timeout As TimeSpan) As T
+            Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}, timeout).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
         End Function
 
         Public Shared Function Exec(ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T

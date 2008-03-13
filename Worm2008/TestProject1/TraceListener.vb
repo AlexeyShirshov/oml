@@ -44,8 +44,10 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 
     <TestMethod()> Public Sub TestMaxFileSize()
         Dim l As New Worm.Web.TraceListener("xxx")
-        l.MaxFileSize = 100
-        For i As Integer = 0 To 9
+        l.BaseFileName = "xxx"
+        l.Location = Logging.LogFileLocation.TempDirectory
+        l.MaxFileSize = 1000
+        For i As Integer = 0 To 100
             l.Write("io2rf9vmdfvklamdfvlakd345gfv")
         Next
         Diagnostics.Debug.WriteLine(l.FullLogFileName)
