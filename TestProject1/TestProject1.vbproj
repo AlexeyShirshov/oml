@@ -115,6 +115,7 @@
     <Compile Include="TestRealSchema\TestSearch.vb" />
     <Compile Include="TestRealSchema\TestSerialization.vb" />
     <Compile Include="TestRealSchema\TestTracker.vb" />
+    <Compile Include="TraceListener.vb" />
     <Compile Include="VSCodeGenAccessors.vb" />
     <Compile Include="XML\Criteria.vb" />
   </ItemGroup>
