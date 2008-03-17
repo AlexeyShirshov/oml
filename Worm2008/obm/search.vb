@@ -99,7 +99,7 @@ Namespace Configuration
                 End If
 l2:
             Else
-                Dim f2 As IOrmFullTextSupport2 = TryCast(f, IOrmFullTextSupport2)
+                Dim f2 As IOrmFullTextSupportEx = TryCast(f, IOrmFullTextSupportEx)
                 If f2 IsNot Nothing Then
                     f2.MakeSearchString(contextkey, tokens, value)
                 Else

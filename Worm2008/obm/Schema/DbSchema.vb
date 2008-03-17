@@ -1928,6 +1928,32 @@ Namespace Database
             Return sb.ToString
         End Function
 
+        Public Function GetDictionarySelect(ByVal type As Type, ByVal level As Integer, _
+            ByVal params As ParamMgr, ByVal filter As IFilter, ByVal filter_info As Object, _
+            ByVal firstField As String, ByVal secField As String) As String
+
+            If String.IsNullOrEmpty(firstField) Then
+                Throw New ArgumentNullException("firstField")
+            End If
+
+            Dim s As IOrmObjectSchema = GetObjectSchema(type)
+            
+            Dim sb As New StringBuilder
+            Dim almgr As AliasMgr = AliasMgr.Create
+
+            If String.IsNullOrEmpty(secField) Then
+                sb.Append(GetDicStmt(type, s, firstField, level, almgr, params, filter, filter_info, True))
+            Else
+                sb.Append("select name,sum(cnt) from (")
+                sb.Append(GetDicStmt(type, s, firstField, level, almgr, params, filter, filter_info, False))
+                sb.Append(" union ")
+                sb.Append(GetDicStmt(type, s, secField, level, almgr, params, filter, filter_info, False))
+                sb.Append(") sd group by name order by name")
+            End If
+
+            Return sb.ToString
+        End Function
+
         Protected Function GetDicStmt(ByVal t As Type, ByVal schema As IOrmObjectSchema, ByVal field As String, ByVal level As Integer, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filter As IFilter, _
             ByVal filter_info As Object, ByVal appendOrder As Boolean) As String

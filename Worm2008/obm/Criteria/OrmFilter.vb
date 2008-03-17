@@ -11,13 +11,14 @@ Namespace Criteria.Core
     End Interface
 
     Public Interface IFilter
-        Inherits IGetFilter
+        Inherits IGetFilter, ICloneable
         Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
         Function GetAllFilters() As ICollection(Of IFilter)
         Function Equals(ByVal f As IFilter) As Boolean
         Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter
         Function ToString() As String
         Function ToStaticString() As String
+        Overloads Function Clone() As IFilter
     End Interface
 
     Public Interface ITemplateFilterBase
@@ -74,9 +75,14 @@ Namespace Criteria.Core
         End Sub
 
         Protected MustOverride Function _ToString() As String Implements IFilter.ToString
+        Protected MustOverride Function _Clone() As Object Implements ICloneable.Clone
         Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
         Public MustOverride Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
         Public MustOverride Function ToStaticString() As String Implements IFilter.ToStaticString
+
+        Public Function Clone() As IFilter Implements IFilter.Clone
+            Return CType(_Clone(), IFilter)
+        End Function
 
         Public Overrides Function ToString() As String
             Return _ToString()
@@ -201,7 +207,7 @@ Namespace Criteria.Core
 
         Public Const EmptyHash As String = "fd_empty_hash_aldf"
 
-        Public Sub New(ByVal tmp As OrmFilterTemplateBase, ByVal value As IFilterValue)
+        Public Sub New(ByVal value As IFilterValue, ByVal tmp As OrmFilterTemplateBase)
             MyBase.New(value, tmp)
         End Sub
 
@@ -504,6 +510,10 @@ Namespace Criteria.Core
             _values = values
         End Sub
 
+        Protected Sub New(ByVal value As IParamFilterValue)
+            MyBase.New(value)
+        End Sub
+
         'Public Sub New(ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal values() As Object)
         '    MyClass.New("{0}.{1}", value, oper, values)
         'End Sub
@@ -538,9 +548,13 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("schema")
             End If
 
-            Dim values As List(Of String) = schema.ExtractValues(schema, tableAliases, _values)
+            If ParamValue.ShouldUse Then
+                Dim values As List(Of String) = schema.ExtractValues(schema, tableAliases, _values)
 
-            Return String.Format(_format, values.ToArray) & OperationString & GetParam(schema, pname)
+                Return String.Format(_format, values.ToArray) & OperationString & GetParam(schema, pname)
+            Else
+                Return String.Empty
+            End If
         End Function
 
         Public Overrides Function ToStaticString() As String
@@ -564,6 +578,16 @@ Namespace Criteria.Core
         End Function
 
         Protected MustOverride ReadOnly Property OperationString() As String
+
+        Protected Sub CopyTo(ByVal obj As CustomFilterBase)
+            With obj
+                ._format = _format
+                ._oper = _oper
+                ._sstr = _sstr
+                ._str = _str
+                ._values = _values
+            End With
+        End Sub
 
         'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeSQLStmt
         '    Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases

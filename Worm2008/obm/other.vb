@@ -1,6 +1,8 @@
 Imports System.Collections.Generic
 Imports System.Runtime.CompilerServices
 Imports System.Runtime.InteropServices
+Imports System.Data
+Imports Worm.Criteria.Core
 
 '<Serializable()> _
 'Public Class ReadOnlyList(Of T)
@@ -143,7 +145,7 @@ Friend Interface IListEdit
     Overloads Sub Insert(ByVal pos As Integer, ByVal o As Orm.OrmBase)
 End Interface
 
-Public Class ReadOnlyList(Of T As Orm.OrmBase)
+Public Class ReadOnlyList(Of T As {Orm.OrmBase, New})
     Inherits ObjectModel.ReadOnlyCollection(Of T)
     Implements IListEdit
 
@@ -197,6 +199,46 @@ Public Class ReadOnlyList(Of T As Orm.OrmBase)
     Public Overloads Sub Remove(ByVal o As Orm.OrmBase) Implements IListEdit.Remove
         CType(_l, IList).Remove(o)
     End Sub
+
+    Public Function LoadObjects() As ReadOnlyList(Of T)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Return o.GetMgr.LoadObjects(Of T)(Me)
+        Else
+            Return Me
+        End If
+    End Function
+
+    Public Function LoadObjects(ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Return o.GetMgr.LoadObjects(Of T)(Me, start, length)
+        Else
+            Return Me
+        End If
+    End Function
+
+    Public Function LoadObjects(ByVal fields() As String, ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Return o.GetMgr.LoadObjects(Of T)(Me, fields, start, length)
+        Else
+            Return Me
+        End If
+    End Function
+
+    Public Function ApplyFilter(ByVal filter As IFilter, ByRef evaluated As Boolean) As ReadOnlyList(Of T)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Return o.GetMgr.ApplyFilter(Of T)(Me, filter, evaluated)
+        Else
+            Return Me
+        End If
+    End Function
+
+    Public Function ApplySort(ByVal s As Sorting.Sort) As ICollection(Of T)
+        Return OrmManagerBase.ApplySort(Of T)(Me, s)
+    End Function
 End Class
 
 Namespace Collections
@@ -1628,5 +1670,127 @@ Public Class PerfCounter
         QueryPerformanceFrequency(f)
         Return TimeSpan.FromSeconds(([end] - _start) / f)
     End Function
+End Class
+
+Public NotInheritable Class TypeConvertor
+    ' Methods
+    Shared Sub New()
+        Dim dbTypeMapEntry As New DbTypeMapEntry(GetType(Boolean), DbType.Boolean, SqlDbType.Bit)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Byte), DbType.Double, SqlDbType.TinyInt)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Byte()), DbType.Binary, SqlDbType.Image)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(DateTime), DbType.DateTime, SqlDbType.DateTime)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Decimal), DbType.Decimal, SqlDbType.Decimal)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Double), DbType.Double, SqlDbType.Float)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Guid), DbType.Guid, SqlDbType.UniqueIdentifier)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Short), DbType.Int16, SqlDbType.SmallInt)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Integer), DbType.Int32, SqlDbType.Int)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Long), DbType.Int64, SqlDbType.BigInt)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Object), DbType.Object, SqlDbType.Variant)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(String), DbType.String, SqlDbType.VarChar)
+        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+    End Sub
+
+    Private Sub New()
+    End Sub
+
+    Private Shared Function Find(ByVal dbType As DbType) As DbTypeMapEntry
+        Dim retObj As Object = Nothing
+        Dim i As Integer
+        For i = 0 To TypeConvertor._DbTypeList.Count - 1
+            Dim entry As DbTypeMapEntry = DirectCast(TypeConvertor._DbTypeList.Item(i), DbTypeMapEntry)
+            If (entry.DbType = dbType) Then
+                retObj = entry
+                Exit For
+            End If
+        Next i
+        If (retObj Is Nothing) Then
+            Throw New ApplicationException("Referenced an unsupported DbType")
+        End If
+        Return DirectCast(retObj, DbTypeMapEntry)
+    End Function
+
+    Private Shared Function Find(ByVal sqlDbType As SqlDbType) As DbTypeMapEntry
+        Dim retObj As Object = Nothing
+        Dim i As Integer
+        For i = 0 To TypeConvertor._DbTypeList.Count - 1
+            Dim entry As DbTypeMapEntry = DirectCast(TypeConvertor._DbTypeList.Item(i), DbTypeMapEntry)
+            If (entry.SqlDbType = sqlDbType) Then
+                retObj = entry
+                Exit For
+            End If
+        Next i
+        If (retObj Is Nothing) Then
+            Throw New ApplicationException("Referenced an unsupported SqlDbType")
+        End If
+        Return DirectCast(retObj, DbTypeMapEntry)
+    End Function
+
+    Private Shared Function Find(ByVal type As Type) As DbTypeMapEntry
+        Dim retObj As Object = Nothing
+        Dim i As Integer
+        For i = 0 To TypeConvertor._DbTypeList.Count - 1
+            Dim entry As DbTypeMapEntry = DirectCast(TypeConvertor._DbTypeList.Item(i), DbTypeMapEntry)
+            If (entry.Type Is type) Then
+                retObj = entry
+                Exit For
+            End If
+        Next i
+        If (retObj Is Nothing) Then
+            Throw New ApplicationException("Referenced an unsupported Type")
+        End If
+        Return DirectCast(retObj, DbTypeMapEntry)
+    End Function
+
+    Public Shared Function ToDbType(ByVal sqlDbType As SqlDbType) As DbType
+        Return TypeConvertor.Find(sqlDbType).DbType
+    End Function
+
+    Public Shared Function ToDbType(ByVal type As Type) As DbType
+        Return TypeConvertor.Find(type).DbType
+    End Function
+
+    Public Shared Function ToNetType(ByVal dbType As DbType) As Type
+        Return TypeConvertor.Find(dbType).Type
+    End Function
+
+    Public Shared Function ToNetType(ByVal sqlDbType As SqlDbType) As Type
+        Return TypeConvertor.Find(sqlDbType).Type
+    End Function
+
+    Public Shared Function ToSqlDbType(ByVal dbType As DbType) As SqlDbType
+        Return TypeConvertor.Find(dbType).SqlDbType
+    End Function
+
+    Public Shared Function ToSqlDbType(ByVal type As Type) As SqlDbType
+        Return TypeConvertor.Find(type).SqlDbType
+    End Function
+
+
+    ' Fields
+    Private Shared _DbTypeList As ArrayList = New ArrayList
+
+    ' Nested Types
+    <StructLayout(LayoutKind.Sequential)> _
+    Private Structure DbTypeMapEntry
+        Public Type As Type
+        Public DbType As DbType
+        Public SqlDbType As SqlDbType
+        Public Sub New(ByVal type As Type, ByVal dbType As DbType, ByVal sqlDbType As SqlDbType)
+            Me.Type = type
+            Me.DbType = dbType
+            Me.SqlDbType = sqlDbType
+        End Sub
+    End Structure
 End Class
 

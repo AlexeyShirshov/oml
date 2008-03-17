@@ -112,7 +112,7 @@ Namespace Xml
             'End Property
 
             Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
-                Dim sortex As IOrmSortingEx = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSortingEx)
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_sort)
@@ -124,7 +124,7 @@ Namespace Xml
             End Function
 
             Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of T)) As OrmManagerBase.CachedItem
-                Dim sortex As IOrmSortingEx = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSortingEx)
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_sort)
@@ -186,7 +186,7 @@ Namespace Xml
                 Dim r As ReadOnlyList(Of T) = _mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, Nothing)
 
                 If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-                    r = Schema.ExternalSort(Of T)(_sort, r)
+                    r = Schema.ExternalSort(Of T)(_mgr, _sort, r)
                 End If
                 Return r
             End Function

@@ -77,6 +77,10 @@ Namespace Xml
             Protected Overrides Function CreateField(ByVal t As System.Type, ByVal fieldName As String, ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaField
                 Return New XmlCriteriaField(t, fieldName, CType(con, Condition.ConditionConstructor), oper)
             End Function
+
+            Protected Overrides Function _Clone() As Object
+                Return New XmlCriteriaLink(Type, CType(ConditionCtor, Condition.ConditionConstructor))
+            End Function
         End Class
     End Namespace
 End Namespace

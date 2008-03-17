@@ -106,12 +106,14 @@ Public Class TestProcs
     End Sub
 
     <TestMethod()> _
-    Public Sub TestP4()
+    Public Sub TestNonQuery_P4()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New P4Proc(1)
             Dim s As String = p.GetResult(mgr)
 
             Assert.AreEqual("first", s)
+            Assert.AreEqual("first", NonQueryStoredProcBase.Exec(Of String)(mgr, "dbo.p4", "n", "i", 1))
+
             Dim t As Table1 = mgr.Find(Of Table1)(1)
             t.Name = "alex"
             mgr.BeginTransaction()
@@ -150,7 +152,7 @@ Public Class TestProcs
     <TestMethod()> _
     Public Sub TestP2OrmSimple()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
-            Dim c As Worm.ReadOnlyList(Of Table1) = Worm.Database.Storedprocs.QueryOrmStoredProcBase(Of Table1).Exec("dbo.p2", _
+            Dim c As Worm.ReadOnlyList(Of Table1) = Worm.Database.Storedprocs.QueryOrmStoredProcBase(Of Table1).Exec(mgr, "dbo.p2", _
                 New String() {"ID", "Title", "Code", "Enum", "EnumStr", "DT"}, "i", 2)
 
             Assert.AreEqual(1, c.Count)
@@ -195,8 +197,8 @@ Public Class TestProcs
             Dim p As New ScalarProc(10)
             Assert.AreEqual(20, p.GetResult(mgr))
             Assert.AreEqual(100, p.GetResult(90, mgr))
-            Assert.AreEqual(20, ScalarProc.Exec("dbo.ScalarProc", "i", 10))
-            Assert.AreEqual(30, ScalarProc.Exec("dbo.ScalarProc", "i", 20))
+            Assert.AreEqual(20, ScalarProc.Exec(mgr, "dbo.ScalarProc", "i", 10))
+            Assert.AreEqual(30, ScalarProc.Exec(mgr, "dbo.ScalarProc", "i", 20))
         End Using
     End Sub
 

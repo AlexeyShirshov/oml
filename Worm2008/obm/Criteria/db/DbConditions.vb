@@ -20,11 +20,16 @@ Namespace Database
                     Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
                 End Function
 
-                'Public Overloads ReadOnly Property Condition() As Worm.Criteria.Core.IFilter
-                '    Get
-                '        Return CType(MyBase.Condition, Worm.Criteria.Core.IFilter)
-                '    End Get
-                'End Property
+                Protected Sub New(ByVal cond As Worm.Criteria.Conditions.Condition)
+                    MyBase.New(cond)
+                End Sub
+
+                Public Sub New()
+                End Sub
+
+                Protected Overrides Function _Clone() As Object
+                    Return New ConditionConstructor(CType(_cond.Clone, Worm.Criteria.Conditions.Condition))
+                End Function
             End Class
 
             Private Class ConditionTemplate
@@ -116,7 +121,11 @@ Namespace Database
             End Sub
 
             Protected Overrides Function CreateMe(ByVal left As Worm.Criteria.Core.IFilter, ByVal right As Worm.Criteria.Core.IFilter, ByVal [operator] As cc.ConditionOperator) As cc.Condition
-                Return New Condition(CType(left, IFilter), CType(right, IFilter), [operator])
+                If TryCast(left, IEntityFilter) Is Nothing OrElse TryCast(right, IEntityFilter) Is Nothing Then
+                    Return New Condition(left, right, [operator])
+                Else
+                    Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
+                End If
             End Function
 
             'Protected Overrides Function CreateMeE(ByVal left As Worm.Criteria.Core.IEntityFilter, ByVal right As Worm.Criteria.Core.IEntityFilter, ByVal [operator] As cc.ConditionOperator) As cc.Condition

@@ -812,7 +812,7 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Function GetMgr() As OrmManagerBase
+        Protected Friend Function GetMgr() As OrmManagerBase
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
             If Not String.IsNullOrEmpty(_mgrStr) Then
                 Do While mgr IsNot Nothing AndAlso mgr.IdentityString <> _mgrStr

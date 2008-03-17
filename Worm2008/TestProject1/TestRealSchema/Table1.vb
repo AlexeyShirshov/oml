@@ -267,9 +267,9 @@ Public Class Table1Implementation
         Return Nothing
     End Function
 
-    Public Function ExternalSort(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Sort, ByVal objs As Worm.ReadOnlyList(Of T)) As Worm.ReadOnlyList(Of T) Implements IOrmSorting.ExternalSort
-        Throw New NotSupportedException
-    End Function
+    'Public Function ExternalSort(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Sort, ByVal objs As Worm.ReadOnlyList(Of T)) As Worm.ReadOnlyList(Of T) Implements IOrmSorting.ExternalSort
+    '    Throw New NotSupportedException
+    'End Function
 
     Public Enum Table1Sort
         DateTime

@@ -16,6 +16,7 @@ Namespace Criteria.Values
     Public Interface IParamFilterValue
         Inherits IFilterValue
         Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
+        ReadOnly Property ShouldUse() As Boolean
     End Interface
 
     Public Interface IEvaluableValue
@@ -241,6 +242,12 @@ Namespace Criteria.Values
             End Try
             Return r
         End Function
+
+        Public Overridable ReadOnly Property ShouldUse() As Boolean Implements IParamFilterValue.ShouldUse
+            Get
+                Return True
+            End Get
+        End Property
     End Class
 
     Public Class LiteralValue
@@ -259,6 +266,12 @@ Namespace Criteria.Values
         Public Function _ToString() As String Implements IFilterValue._ToString
             Return _pname
         End Function
+
+        Public Overridable ReadOnly Property ShouldUse() As Boolean Implements IParamFilterValue.ShouldUse
+            Get
+                Return True
+            End Get
+        End Property
     End Class
 
     Public Class DBNullValue
@@ -454,6 +467,12 @@ Namespace Criteria.Values
             sb.Insert(0, "(").Append(")")
             Return sb.ToString
         End Function
+
+        Public Overrides ReadOnly Property ShouldUse() As Boolean
+            Get
+                Return Value IsNot Nothing AndAlso Value.Count > 0
+            End Get
+        End Property
     End Class
 
     Public Class BetweenValue

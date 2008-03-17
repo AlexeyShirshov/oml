@@ -17,7 +17,16 @@ Namespace Criteria.Conditions
         Implements ITemplateFilter
 
         Public MustInherit Class ConditionConstructorBase
-            Private _cond As Condition
+            Implements ICloneable
+
+            Protected _cond As Condition
+
+            Public Sub New()
+            End Sub
+
+            Protected Sub New(ByVal cond As Condition)
+                _cond = cond
+            End Sub
 
             Public Function AddFilter(ByVal f As IFilter, ByVal [operator] As ConditionOperator) As ConditionConstructorBase
                 Return AddFilter(f, [operator], True)
@@ -74,6 +83,11 @@ Namespace Criteria.Conditions
 
             Protected MustOverride Function CreateCondition(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
             Protected MustOverride Function CreateEntityCondition(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As Condition
+            Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
+
+            Public Function Clone() As ConditionConstructorBase
+                Return CType(_Clone(), ConditionConstructorBase)
+            End Function
         End Class
 
         Protected MustInherit Class ConditionTemplateBase
@@ -253,6 +267,14 @@ Namespace Criteria.Conditions
                 Return Me
             End Get
         End Property
+
+        Protected Function _Clone() As Object Implements System.ICloneable.Clone
+            Return CreateMe(_left, _right, _oper)
+        End Function
+
+        Public Function Clone() As Core.IFilter Implements Core.IFilter.Clone
+            Return CreateMe(_left, _right, _oper)
+        End Function
     End Class
 
     Public MustInherit Class EntityCondition

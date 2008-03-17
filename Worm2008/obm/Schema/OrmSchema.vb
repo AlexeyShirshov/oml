@@ -473,17 +473,14 @@ Public MustInherit Class QueryGenerator
     '    End Get
     'End Property
 
-    Public Function ExternalSort(Of T As {OrmBase, New})(ByVal sort As Sort, ByVal objs As ReadOnlyList(Of T)) As ReadOnlyList(Of T)
-        If sort.Previous IsNot Nothing Then
-            Throw New ArgumentException("Sort is linked")
-        End If
-
-        Dim schema As IOrmObjectSchemaBase = GetObjectSchema(GetType(T))
-        Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
-        If s Is Nothing Then
-            Throw New OrmSchemaException(String.Format("Type {0} is not support sorting", GetType(T)))
-        End If
-        Return s.ExternalSort(Of T)(sort, objs)
+    Public Function ExternalSort(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal sort As Sort, ByVal objs As ReadOnlyList(Of T)) As ReadOnlyList(Of T)
+        Return sort.ExternalSort(Of T)(mgr, Me, objs)
+        'Dim schema As IOrmObjectSchemaBase = GetObjectSchema(GetType(T))
+        'Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
+        'If s Is Nothing Then
+        '    Throw New OrmSchemaException(String.Format("Type {0} is not support sorting", GetType(T)))
+        'End If
+        'Return s.ExternalSort(Of T)(sort, objs)
     End Function
 
     Public Function GetJoinSelectMapping(ByVal t As Type, ByVal subType As Type) As System.Data.Common.DataTableMapping

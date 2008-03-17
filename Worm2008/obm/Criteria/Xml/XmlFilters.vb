@@ -44,7 +44,11 @@ Namespace Xml
             Inherits Worm.Criteria.Core.EntityFilterBase
 
             Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
-                MyBase.New(New XmlEntityTemplate(t, fieldName, operation), value)
+                MyBase.New(value, New XmlEntityTemplate(t, fieldName, operation))
+            End Sub
+
+            Protected Sub New(ByVal value As IFilterValue, ByVal tmp As XmlEntityTemplate)
+                MyBase.New(value, tmp)
             End Sub
 
             Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
@@ -59,6 +63,10 @@ Namespace Xml
                 Dim map As MapField2Column = _oschema.GetFieldColumnMap()(Template.FieldName)
 
                 Return map._columnName & Template.OperToStmt & "'" & val._ToString & "'"
+            End Function
+
+            Protected Overrides Function _Clone() As Object
+                Return New XmlEntityFilter(val, CType(Template, XmlEntityTemplate))
             End Function
         End Class
     End Namespace
