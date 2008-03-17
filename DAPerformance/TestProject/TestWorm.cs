@@ -7,6 +7,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
+    [Ignore]
     [TestClass]
     public class TestWorm : TestBase
     {

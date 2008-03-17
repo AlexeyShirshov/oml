@@ -26,7 +26,8 @@ namespace DALinq.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=MIKO\\MK5;Initial Catalog=TestDA;Integrated Security=True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=.\\SQLEXPRESS;AttachDbFilename=D:\\depot_tfs\\DAPerformance\\DB\\TestDA.md" +
+            "f;Integrated Security=True")]
         public string TestDAConnectionString {
             get {
                 return ((string)(this["TestDAConnectionString"]));
@@ -36,7 +37,7 @@ namespace DALinq.Properties {
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.SpecialSettingAttribute(global::System.Configuration.SpecialSetting.ConnectionString)]
-        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=MIKO\\MK5;Initial Catalog=TestDA;Integrated Security=True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Data Source=.\\SQLEXPRESS;Initial Catalog=TestDA;Integrated Security=True")]
         public string TestDAConnectionString1 {
             get {
                 return ((string)(this["TestDAConnectionString1"]));

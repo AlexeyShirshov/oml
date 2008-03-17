@@ -13,6 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EFCB67BA-1D42-40DD-A184-23C539F387B8}"
 	ProjectSection(SolutionItems) = preProject
+		DAPerformance2.vsmdi = DAPerformance2.vsmdi
 		DAPerformance8.vsmdi = DAPerformance8.vsmdi
 		LocalTestRun.testrunconfig = LocalTestRun.testrunconfig
 		workload.docx = workload.docx
@@ -20,9 +21,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaAdoEF", "DaAdoEF\DaAdoEF.csproj", "{79801517-34F7-4847-984A-13336BDB1BE2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Helper", "Helper\Helper.csproj", "{F5F9FF51-D529-410E-BFD3-26BC1D32C7A1}"
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 7
+		SccNumberOfProjects = 8
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs03.codeplex.com/
 		SccLocalPath0 = .
@@ -44,9 +47,12 @@ Global
 		SccProjectUniqueName6 = DaAdoEF\\DaAdoEF.csproj
 		SccProjectName6 = DaAdoEF
 		SccLocalPath6 = DaAdoEF
+		SccProjectUniqueName7 = Helper\\Helper.csproj
+		SccProjectName7 = Helper
+		SccLocalPath7 = Helper
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
-		CategoryFile = DAPerformance8.vsmdi
+		CategoryFile = DAPerformance2.vsmdi
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +83,10 @@ Global
 		{79801517-34F7-4847-984A-13336BDB1BE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{79801517-34F7-4847-984A-13336BDB1BE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{79801517-34F7-4847-984A-13336BDB1BE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5F9FF51-D529-410E-BFD3-26BC1D32C7A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5F9FF51-D529-410E-BFD3-26BC1D32C7A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5F9FF51-D529-410E-BFD3-26BC1D32C7A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5F9FF51-D529-410E-BFD3-26BC1D32C7A1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

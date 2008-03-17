@@ -13,10 +13,11 @@ namespace Tests
     /// <summary>
     /// Summary description for UnitTest1
     /// </summary>
+    [Ignore]
     [TestClass]
     public class TestAdo : TestBase
     {
-        static AdoProvider adoProvider = new AdoProvider(ConfigurationSettings.AppSettings["connectionString"]);
+        static AdoProvider adoProvider = new AdoProvider(conn);
 
         public TestContext TestContext
         {

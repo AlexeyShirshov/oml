@@ -9,11 +9,9 @@ namespace Tests
 {
     class Utils
     {
-
         public static void SetDataDirectory()
         {
             string _executingPath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase);
-            // Remove file:\\
             AppDomain.CurrentDomain.SetData("DataDirectory", Path.GetFullPath(_executingPath.Substring(6) + @"..\..\..\..\DB"));
         }
     }

@@ -6,13 +6,15 @@ namespace DAAdo
 {
     public class AdoProvider
     {
+        private IDbConnection connection;
         private string _connectionString;
 
-        public AdoProvider(string connectionString)
+        public AdoProvider(IDbConnection connection)
         {
-            _connectionString = connectionString;
+            this.connection = connection;
         }
 
+        #region Old
         public DataSet Select()
         {
             DataSet ds = new DataSet();
@@ -140,5 +142,6 @@ namespace DAAdo
                 conn.Close();
             }
         }
+        #endregion
     }
 }

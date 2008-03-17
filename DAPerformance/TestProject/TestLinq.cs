@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using DALinq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Helper;
 
 namespace Tests
 {
@@ -12,7 +13,7 @@ namespace Tests
     [TestClass]
     public class TestLinq : TestBase
     {
-        static LinqProvider linqProvider = new LinqProvider();
+        static LinqProvider linqProvider = new LinqProvider(conn);
 
         public TestContext TestContext
         {
@@ -25,140 +26,112 @@ namespace Tests
             TestBase.classType = typeof(TestLinq);
         }
 
-        #region Additional test attributes
-        //
-        // You can use the following additional attributes as you write your tests:
-        //
-        // Use ClassInitialize to run code before running the first test in the class
-        // [ClassInitialize()]
-        // public static void MyClassInitialize(TestContext testContext) { }
-        //
-        // Use ClassCleanup to run code after all tests in a class have run
-        // [ClassCleanup()]
-        // public static void MyClassCleanup() { }
-        //
-        // Use TestInitialize to run code before running each test 
-        // [TestInitialize()]
-        // public void MyTestInitialize() { }
-        //
-        // Use TestCleanup to run code after each test has run
-        // [TestCleanup()]
-        // public void MyTestCleanup() { }
-        //
-        #endregion
-
         [TestMethod]
-        public void SelectWithLoad()
+        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
+        public void TypeCycleWithoutLoad()
         {
-            linqProvider.SelectWithLoad();
+            linqProvider.TypeCycleWithoutLoad(mediumUserIds);
         }
 
         [TestMethod]
-        public void SelectWithoutLoad()
+        [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
+        public void TypeCycleWithLoad()
         {
-            linqProvider.SelectWithoutLoad();
+            linqProvider.TypeCycleWithLoad(mediumUserIds);
         }
 
         [TestMethod]
-        public void SelectWithListWithLoad()
+        [QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
+        public void TypeCycleLazyLoad()
         {
-            linqProvider.SelectWithListLoad();
-        }
-
-         [TestMethod]
-        public void SelectShortWithoutLoad()
-        {
-            linqProvider.SelectShortWithoutLoad();
-        }
-
-         [TestMethod]
-         public void SelectShortWithLoad()
-        {
-            linqProvider.SelectShortWithLoad();
-        }
-
-         [TestMethod]
-         public void SelectShortWithListWithLoad()
-        {
-            linqProvider.SelectShortWithListLoad();
-        }
-
-        
-
-        [TestMethod]
-        public void SelectCollectionWithoutLoad()
-        {
-            linqProvider.SelectCollectionWithoutLoad();
+            linqProvider.TypeCycleLazyLoad(mediumUserIds);
         }
 
         [TestMethod]
-        public void SelectCollectionWithLoad()
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
+        public void SmallCollectionByIdArray()
         {
-            linqProvider.SelectCollectionWithLoad();
-        }      
-      
-
-        [TestMethod]
-        public void SelectCollectionWithListWithLoad()
-        {
-            linqProvider.SelectCollectionWithListLoad();
-        }
-
-
-
-        [TestMethod]
-        public void SelectSmallWithLoad()
-        {
-            linqProvider.SelectSmallWithLoad();
+            linqProvider.CollectionByIdArray(smallUserIds);
         }
 
         [TestMethod]
-        public void SelectSmallWithoutLoad()
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void SmallCollection()
         {
-            linqProvider.SelectSmallWithoutLoad();
+            linqProvider.SmallCollection();
         }
 
         [TestMethod]
-        public void SelectSmallWithListWithLoad()
+        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
+        public void SmallCollectionWithChildrenByIdArray()
         {
-            linqProvider.SelectSmallWithListLoad();
+            linqProvider.CollectionWithChildrenByIdArray(smallUserIds);
         }
 
         [TestMethod]
-        public void SelectSmallCollectionWithoutLoad()
+        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
+        public void LargeCollectionByIdArray()
         {
-            linqProvider.SelectSmallCollectionWithoutLoad();
+            linqProvider.CollectionByIdArray(largeUserIds);
         }
 
         [TestMethod]
-        public void SelectSmallCollectionWithLoad()
+        [QueryTypeAttribute(QueryType.LargeCollection)]
+        public void LargeCollection()
         {
-            linqProvider.SelectSmallCollectionWithLoad();
+            linqProvider.LargeCollection();
         }
 
         [TestMethod]
-        public void SelectSmallCollectionWithListWithLoad()
+        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
+        public void LargeCollectionWithChildrenByIdArray()
         {
-            linqProvider.SelectSmallCollectionWithListLoad();
+            linqProvider.CollectionWithChildrenByIdArray(largeUserIds);
         }
 
         [TestMethod]
-        public void SelectCollectionShortWithoutLoad()
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
+        public void CollectionByPredicateWithoutLoad()
         {
-            linqProvider.SelectShortWithoutLoad();
+            linqProvider.CollectionByPredicateWithoutLoad();
         }
 
         [TestMethod]
-        public void SelectCollectionShortWithLoad()
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
+        public void CollectionByPredicateWithLoad()
         {
-            linqProvider.SelectShortWithLoad();
+            linqProvider.CollectionByPredicateWithLoad();
         }
 
         [TestMethod]
-        public void SelectCollectionShortWithListWithLoad()
+        [QueryTypeAttribute(QueryType.SelectLargeCollection)]
+        public void SelectLargeCollection()
         {
-            linqProvider.SelectShortWithListLoad();
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                linqProvider.LargeCollection();
+            }
         }
-   
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
+        public void SameObjectInCycleLoad()
+        {
+            linqProvider.SameObjectInCycleLoad(smallUserIds[0]);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
+        public void SelectBySamePredicate()
+        {
+            linqProvider.SelectBySamePredicate();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
+        public void ObjectsWithLoadWithPropertiesAccess()
+        {
+            linqProvider.ObjectsWithLoadWithPropertiesAccess();
+        }
     }
 }

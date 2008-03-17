@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Database Name="TestDA" Class="DatabaseDataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
-  <Connection Mode="AppSettings" ConnectionString="Data Source=MIKO\MK5;Initial Catalog=TestDA;Integrated Security=True" SettingsObjectName="DALinq.Properties.Settings" SettingsPropertyName="TestDAConnectionString1" Provider="System.Data.SqlClient" />
+  <Connection Mode="AppSettings" ConnectionString="Data Source=.\SQLEXPRESS;AttachDbFilename=D:\depot_tfs\DAPerformance\DB\TestDA.mdf;Integrated Security=True" SettingsObjectName="DALinq.Properties.Settings" SettingsPropertyName="TestDAConnectionString" Provider="System.Data.SqlClient" />
   <Table Name="dbo.tbl_phone" Member="tbl_phones">
     <Type Name="tbl_phone">
       <Column Name="phone_id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />

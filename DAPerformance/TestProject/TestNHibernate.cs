@@ -11,6 +11,7 @@ namespace Tests
     /// <summary>
     /// Summary description for UnitTest1
     /// </summary>
+    [Ignore]
     [TestClass]
     public class TestNHibernate : TestBase
     {

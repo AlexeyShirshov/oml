@@ -2,18 +2,143 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Helper;
 
 namespace DALinq
 {
     public class LinqProvider
     {
-        DatabaseDataContext db = new DatabaseDataContext();
-           
+        DatabaseDataContext db;
+        public LinqProvider(System.Data.IDbConnection connection)
+        {
+            db = new DatabaseDataContext(connection);
+        }
+
+        public void TypeCycleWithoutLoad(int[] userIds)
+        {
+            foreach (int id in userIds)
+            {
+                var users = (from e in db.tbl_users
+                             where e.user_id == id
+                             select e);
+            }
+        }
+
+        public void TypeCycleWithLoad(int[] userIds)
+        {
+            foreach (int id in userIds)
+            {
+                var users = (from e in db.tbl_users
+                             where e.user_id == id
+                             select e).ToList();
+            }
+        }
+
+        public void TypeCycleLazyLoad(int[] userIds)
+        {
+            foreach (int id in userIds)
+            {
+                var users = from e in db.tbl_users
+                             where e.user_id == id
+                             select e;
+                foreach (var user in users)
+                {
+                    string name = user.first_name;
+                }
+            }
+        }
+
+     
+        public void SmallCollection()
+        {
+            var users = (from e in db.tbl_users
+                        select e).Take(Constants.Small).ToList();
+        }
+
+        public void CollectionWithChildrenByIdArray(int[] userIds)
+        {
+            var users = (from e in db.tbl_users
+                         where userIds.Contains<int>(e.user_id)
+                         from o in e.tbl_phones
+                         select new { e.user_id, e.first_name, e.last_name, o.phone_id, o.phone_number }).ToList();
+
+        }
+
+        public void CollectionByIdArray(int[] userIds)
+        {
+            var users = (from e in db.tbl_users
+                         where userIds.Contains<int>(e.user_id)
+                         select e).ToList();
+        }
+
+        public void LargeCollection()
+        {
+            var users = (from e in db.tbl_users
+                         select e).ToList();
+        }
+
+        public void CollectionByPredicateWithoutLoad()
+        {
+            for (int i = 0; i < Constants.LargeIteration; i++)
+            {
+                var users = (from u in db.tbl_users
+                             from p in u.tbl_phones
+                             where p.phone_number.StartsWith((i + 1).ToString())
+                             select u);
+            }
+        }
+        
+
+        public void CollectionByPredicateWithLoad()
+        {
+            for (int i = 0; i < Constants.LargeIteration; i++)
+            {
+                var users = (from u in db.tbl_users
+                             from p in u.tbl_phones
+                             where p.phone_number.StartsWith((i + 1).ToString())
+                             select u).ToList();
+            }
+        }
+
+        public void SameObjectInCycleLoad(int userId)
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                var users = (from e in db.tbl_users
+                             where e.user_id == userId
+                             select e).ToList();
+            }
+        }
+
+        public void SelectBySamePredicate()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                var users = (from u in db.tbl_users
+                             from p in u.tbl_phones
+                             where p.phone_number.StartsWith((i + 1).ToString())
+                             select u);
+            }
+        }
+
+        public void ObjectsWithLoadWithPropertiesAccess()
+        {
+            var users = (from u in db.tbl_users
+                          select u).ToList();
+            foreach (var user in users)
+            {
+                string name = user.first_name;
+            }
+        }
+
+        #region Old
+
         public void SelectWithoutLoad()
         {
-             var query = from e in db.tbl_users where e.user_id == 1
+            var query = from e in db.tbl_users
+                        where e.user_id == 1
                         select new { e.user_id, e.first_name, e.last_name };
-            
+
         }
 
         public void SelectShortWithoutLoad()
@@ -50,36 +175,32 @@ namespace DALinq
         {
             var users = (from e in db.tbl_users
                          where e.user_id == 1
-                         select new { e.user_id, e.first_name, e.last_name }).ToList();           
+                         select new { e.user_id, e.first_name, e.last_name }).ToList();
         }
-      
 
-
- 
-
-         public void SelectCollectionWithoutLoad()
+        public void SelectCollectionWithoutLoad()
         {
             var query = from e in db.tbl_users select new { e.user_id, e.first_name, e.last_name };
         }
 
-         public void SelectCollectionShortWithoutLoad()
-         {
-             var query = db.tbl_users;
-         }
+        public void SelectCollectionShortWithoutLoad()
+        {
+            var query = db.tbl_users;
+        }
 
-         public void SelectCollectionShortWithListLoad()
-         {
-             var query = db.tbl_users.ToList();
-         }
+        public void SelectCollectionShortWithListLoad()
+        {
+            var query = db.tbl_users.ToList();
+        }
 
-         public void SelectCollectionShortWithLoad()
-         {
-             var query = db.tbl_users;
-             foreach (var user in query)
-             {
-                 string result = string.Format("{0} {1} {2}", user.user_id, user.first_name, user.last_name);
-             }
-         }
+        public void SelectCollectionShortWithLoad()
+        {
+            var query = db.tbl_users;
+            foreach (var user in query)
+            {
+                string result = string.Format("{0} {1} {2}", user.user_id, user.first_name, user.last_name);
+            }
+        }
 
         public void SelectCollectionWithLoad()
         {
@@ -96,14 +217,6 @@ namespace DALinq
         {
             List<tbl_user> users = db.tbl_users.ToList();
         }
-      
-      
-       
-
-
-
-
-       
 
         public void SelectSmallCollectionWithoutLoad()
         {
@@ -112,7 +225,7 @@ namespace DALinq
 
         public void SelectSmallCollectionWithListLoad()
         {
-           var phones = db.tbl_phones.ToList();
+            var phones = db.tbl_phones.ToList();
         }
 
         public void SelectSmallCollectionWithLoad()
@@ -130,14 +243,13 @@ namespace DALinq
                           where e.phone_id == 1
                           select new { e.phone_id, e.user_id, e.phone_number });
         }
-       
 
         public void SelectSmallWithListLoad()
         {
             var phones = (from e in db.tbl_phones
                           where e.phone_id == 1
                           select new { e.phone_id, e.user_id, e.phone_number }).ToList();
-           
+
         }
 
         public void SelectSmallWithLoad()
@@ -151,6 +263,7 @@ namespace DALinq
             }
         }
 
+        #endregion Old
 
     }
 }
