@@ -51,14 +51,12 @@ Namespace Orm.Meta
 
     Public Interface IOrmSorting
         'ReadOnly Property IsExternalSort(ByVal s As Sort) As Boolean
-        Function ExternalSort(Of T As {OrmBase, New})(ByVal s As Sort, ByVal objs As ReadOnlyList(Of T)) As ReadOnlyList(Of T)
+        'Function ExternalSort(Of T As {OrmBase, New})(ByVal s As Sort, ByVal objs As ReadOnlyList(Of T)) As ReadOnlyList(Of T)
         Function CreateSortComparer(ByVal s As Sort) As IComparer
         Function CreateSortComparer(Of T As {OrmBase, New})(ByVal s As Sort) As Generic.IComparer(Of T)
     End Interface
 
-    Public Interface IOrmSortingEx
-        Inherits IOrmSorting
-
+    Public Interface IOrmSorting2
         ReadOnly Property SortExpiration(ByVal s As Sort) As TimeSpan
     End Interface
 
@@ -93,7 +91,7 @@ Namespace Orm.Meta
         ReadOnly Property ApplayAsterisk() As Boolean
     End Interface
 
-    Public Interface IOrmFullTextSupport2
+    Public Interface IOrmFullTextSupportEx
         Inherits IOrmFullTextSupport
 
         ReadOnly Property UseFreeText() As Boolean

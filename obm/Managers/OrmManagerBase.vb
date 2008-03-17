@@ -1554,7 +1554,7 @@ l1:
                     End If
                     If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
                         'Dim objs As ICollection(Of T) = r
-                        ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, r))
+                        ce = del.GetCacheItem(_schema.ExternalSort(Of T)(Me, psort, r))
                         dic(id) = ce
                     End If
                 Else
@@ -1567,7 +1567,7 @@ l1:
                         If objs IsNot Nothing AndAlso objs.Count > 0 Then
                             Dim srt As IOrmSorting = Nothing
                             If psort.IsExternal Then
-                                ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
+                                ce = del.GetCacheItem(_schema.ExternalSort(Of T)(Me, psort, objs))
                                 dic(id) = ce
                             ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
                                 Using SyncHelper.AcquireDynamicLock(sync)
@@ -1990,7 +1990,7 @@ l1:
                     End If
                     If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
                         Dim objs As ReadOnlyList(Of T) = ce.GetObjectList(Of T)(Me)
-                        ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
+                        ce = del.GetCacheItem(_schema.ExternalSort(Of T)(Me, psort, objs))
                         dic(id) = ce
                     End If
                 Else
@@ -1999,7 +1999,7 @@ l1:
                     If objs IsNot Nothing AndAlso objs.Count > 0 Then
                         Dim srt As IOrmSorting = Nothing
                         If psort.IsExternal Then
-                            ce = del.GetCacheItem(_schema.ExternalSort(Of T)(psort, objs))
+                            ce = del.GetCacheItem(_schema.ExternalSort(Of T)(Me, psort, objs))
                             dic(id) = ce
                         ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
                             Using SyncHelper.AcquireDynamicLock(sync)
@@ -2957,7 +2957,7 @@ l1:
 
 #End Region
 
-    Public Function ApplyFilter(Of T As OrmBase)(ByVal col As ReadOnlyList(Of T), ByVal filter As IFilter, ByRef evaluated As Boolean) As ReadOnlyList(Of T)
+    Public Function ApplyFilter(Of T As {OrmBase, New})(ByVal col As ReadOnlyList(Of T), ByVal filter As IFilter, ByRef evaluated As Boolean) As ReadOnlyList(Of T)
         evaluated = True
         Dim f As IEntityFilter = TryCast(filter, IEntityFilter)
         If f Is Nothing Then
@@ -3052,7 +3052,7 @@ l1:
         Return tt > ttl
     End Function
 
-    Public Function GetLoadedCount(Of T As OrmBase)(ByVal col As ReadOnlyList(Of T)) As Integer
+    Public Function GetLoadedCount(Of T As {OrmBase, New})(ByVal col As ReadOnlyList(Of T)) As Integer
         Dim r As Integer = 0
         For Each o As OrmBase In col
             If o.IsLoaded Then
@@ -3640,6 +3640,7 @@ l1:
 #End Region
 
     Protected MustOverride Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+    Protected MustOverride Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
 
     Protected Friend Sub RegisterInCashe(ByVal obj As OrmBase)
         If Not IsInCache(obj) Then
@@ -3651,7 +3652,48 @@ l1:
     End Sub
 
     Public Function BuildObjDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal criteria As IGetFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+        Return BuildObjDic(Of T)(level, criteria, join, AddressOf (New clsDic(Of T)).f)
+    End Function
 
+    Public Function BuildObjDictionary(Of T As {New, OrmBase})(ByVal level As Integer, _
+        ByVal criteria As IGetFilter, ByVal join As OrmJoin, ByVal field As String) As DicIndex(Of T)
+        Return BuildObjDic(Of T)(level, criteria, join, AddressOf (New clsDic(Of T)(field)).f)
+    End Function
+
+    Public Function BuildObjDictionary(Of T As {New, OrmBase})(ByVal level As Integer, _
+        ByVal criteria As IGetFilter, ByVal join As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+        Return BuildObjDic(Of T)(level, criteria, join, AddressOf (New clsDic(Of T)(firstField, secondField)).f)
+    End Function
+
+    Protected Delegate Function GetRootsDelegate(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase, ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+
+    Private Class clsDic(Of T As {New, OrmBase})
+        Private _f As String
+        Private _s As String
+
+        Public Sub New()
+
+        End Sub
+
+        Public Sub New(ByVal f As String)
+            MyClass.New(f, Nothing)
+        End Sub
+
+        Public Sub New(ByVal f As String, ByVal s As String)
+            _f = f
+            _s = s
+        End Sub
+        Public Function f(ByVal mgr As OrmManagerBase, ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+            If String.IsNullOrEmpty(_f) Then
+                Return mgr.BuildDictionary(Of T)(level, filter, join)
+            Else
+                Return mgr.BuildDictionary(Of T)(level, filter, join, _f, _s)
+            End If
+        End Function
+    End Class
+
+    Protected Function BuildObjDic(Of T As {New, OrmBase})(ByVal level As Integer, ByVal criteria As IGetFilter, _
+        ByVal join As OrmJoin, ByVal getRoots As GetRootsDelegate(Of T)) As DicIndex(Of T)
         Dim key As String = String.Empty
 
         Dim tt As System.Type = GetType(T)
@@ -3678,7 +3720,7 @@ l1:
             Using SyncHelper.AcquireDynamicLock(sync)
                 roots = CType(dic(id), DicIndex(Of T))
                 If roots Is Nothing Then
-                    roots = BuildDictionary(Of T)(level, GetFilter(criteria, tt), join)
+                    roots = getRoots(Me, level, GetFilter(criteria, tt), join)
                     dic.Add(id, roots)
                 End If
             End Using

@@ -118,7 +118,7 @@ Namespace Database
             'End Property
 
             Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
-                Dim sortex As IOrmSortingEx = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSortingEx)
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_sort)
@@ -130,7 +130,7 @@ Namespace Database
             End Function
 
             Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of T)) As OrmManagerBase.CachedItem
-                Dim sortex As IOrmSortingEx = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSortingEx)
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_sort)
@@ -195,7 +195,7 @@ Namespace Database
 
                     Dim r As New ReadOnlyList(Of T)(_mgr.LoadMultipleObjects(Of T)(cmd, withLoad, Nothing, arr))
                     If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-                        r = _mgr.DbSchema.ExternalSort(Of T)(_sort, r)
+                        r = _mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, r)
                     End If
                     Return r
                 End Using
@@ -402,7 +402,7 @@ Namespace Database
 
                             If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                                 Dim l2 As New List(Of Integer)
-                                For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_sort, _mgr.ConvertIds2Objects(Of T)(l, False))
+                                For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False))
                                     l2.Add(o.Identifier)
                                 Next
                                 l = l2
@@ -448,7 +448,7 @@ Namespace Database
 
                     If _sort IsNot Nothing AndAlso Sort.IsExternal Then
                         Dim l2 As New List(Of Integer)
-                        For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_sort, _mgr.ConvertIds2Objects(Of T)(l, False))
+                        For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False))
                             l2.Add(o.Identifier)
                         Next
                         l = l2

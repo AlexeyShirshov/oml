@@ -38,16 +38,16 @@ Namespace Orm
             Return SortOrder.CreateCustom(t, sortExpression, Nothing, values)
         End Function
 
-        Public Shared Function External(ByVal fieldName As String) As SortOrder
-            Return New SortOrder(Nothing, fieldName, True)
+        Public Shared Function External(ByVal tag As String) As SortOrder
+            Return New SortOrder(Nothing, tag, True)
         End Function
 
         Public Shared Function Field(ByVal t As Type, ByVal fieldName As String) As SortOrder
             Return New SortOrder(t, fieldName)
         End Function
 
-        Public Shared Function External(ByVal t As Type, ByVal fieldName As String) As SortOrder
-            Return New SortOrder(t, fieldName, True)
+        Public Shared Function External(ByVal tag As String, ByVal externalSort As ExternalSortDelegate) As SortOrder
+            Return New SortOrder(Nothing, tag, True, externalSort)
         End Function
 
         Public Shared Widening Operator CType(ByVal so As Sorting) As Sort
@@ -63,6 +63,8 @@ End Namespace
 
 Namespace Sorting
 
+    Public Delegate Function ExternalSortDelegate(ByVal mgr As OrmManagerBase, ByVal generator As QueryGenerator, ByVal sort As Sort, ByVal objs As ICollection) As ICollection
+
     Public Class SortOrder
         Private _f As String
         Private _ext As Boolean
@@ -71,6 +73,7 @@ Namespace Sorting
         Private _t As Type
         Private _custom As String
         Private _values() As Pair(Of Object, String)
+        Private _del As ExternalSortDelegate
 
         Protected Friend Sub New(ByVal t As Type, ByVal prev As SortOrder)
             _prev = prev
@@ -96,6 +99,13 @@ Namespace Sorting
             _ext = ext
             _prev = prev
             _t = t
+        End Sub
+
+        Protected Friend Sub New(ByVal t As Type, ByVal f As String, ByVal ext As Boolean, ByVal del As ExternalSortDelegate)
+            _f = f
+            _ext = ext
+            _t = t
+            _del = del
         End Sub
 
         'Public Function NextSort(ByVal field As String) As SortOrder
@@ -174,13 +184,13 @@ Namespace Sorting
                     If so.IsCustom Then
                         Return New Sort(so._t, so._custom, so._values)
                     Else
-                        Return New Sort(so._t, so._f, so._order, so._ext)
+                        Return New Sort(so._t, so._f, so._order, so._ext, so._del)
                     End If
                 Else
                     If so.IsCustom Then
                         Return New Sort(so._prev, so._t, so._custom, so._values)
                     Else
-                        Return New Sort(so._prev, so._t, so._f, so._order, so._ext)
+                        Return New Sort(so._prev, so._t, so._f, so._order, so._ext, so._del)
                     End If
                 End If
             Else
@@ -203,16 +213,18 @@ Namespace Sorting
         Private _custom As String
         Private _values() As Pair(Of Object, String)
         Private _ext As Boolean
+        Private _del As ExternalSortDelegate
 
         Private _prev As Sort
         Private _t As Type
 
-        Protected Friend Sub New(ByVal prev As Sort, ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
+        Protected Friend Sub New(ByVal prev As Sort, ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
             _f = fieldName
             _order = order
             _ext = external
             _t = t
             _prev = prev
+            _del = del
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal sortExpression As String, ByVal values() As Pair(Of Object, String))
@@ -239,6 +251,21 @@ Namespace Sorting
             _f = fieldName
             _order = order
             _ext = external
+        End Sub
+
+        Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
+            _f = fieldName
+            _order = order
+            _ext = external
+            _t = t
+            _del = del
+        End Sub
+
+        Public Sub New(ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
+            _f = fieldName
+            _order = order
+            _ext = external
+            _del = del
         End Sub
 
         'Protected Friend Sub New()
@@ -358,6 +385,23 @@ Namespace Sorting
                 Return _prev
             End Get
         End Property
+
+        Public Overridable Function ExternalSort(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal schema As QueryGenerator, ByVal objs As ReadOnlyList(Of T)) As ReadOnlyList(Of T)
+            If Not IsExternal Then
+                Throw New InvalidOperationException("Sort is not external")
+            End If
+
+            If Previous IsNot Nothing Then
+                Throw New ArgumentException("Sort is linked")
+            End If
+
+            If _del IsNot Nothing Then
+                Return CType(_del(mgr, schema, Me, objs), Global.Worm.ReadOnlyList(Of T))
+            Else
+                Throw New InvalidOperationException("Delegate is not set")
+            End If
+
+        End Function
     End Class
 
     Public Class OrmComparer(Of T As {OrmBase})

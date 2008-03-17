@@ -343,7 +343,7 @@ End Class
 
 Public Class EntitySchema4v1Implementation
     Inherits ObjectSchemaBaseImplementation
-    Implements IOrmSortingEx
+    Implements IOrmSorting2, IOrmSorting
 
     Private _idx As OrmObjectIndex
     Protected _tables() As OrmTable = {New OrmTable("dbo.ent2")}
@@ -397,9 +397,9 @@ Public Class EntitySchema4v1Implementation
         Return Nothing
     End Function
 
-    Public Function ExternalSort(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Sort, ByVal objs As Worm.ReadOnlyList(Of T)) As Worm.ReadOnlyList(Of T) Implements IOrmSorting.ExternalSort
-        Throw New NotSupportedException
-    End Function
+    'Public Function ExternalSort(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Sort, ByVal objs As Worm.ReadOnlyList(Of T)) As Worm.ReadOnlyList(Of T) Implements IOrmSorting.ExternalSort
+    '    Throw New NotSupportedException
+    'End Function
 
     Public Enum Entity4Sort
         Name
@@ -442,7 +442,7 @@ Public Class EntitySchema4v1Implementation
         End Function
     End Class
 
-    Public ReadOnly Property SortExpiration(ByVal s As Sort) As System.TimeSpan Implements IOrmSortingEx.SortExpiration
+    Public ReadOnly Property SortExpiration(ByVal s As Sort) As System.TimeSpan Implements IOrmSorting2.SortExpiration
         Get
             Return TimeSpan.MaxValue
         End Get

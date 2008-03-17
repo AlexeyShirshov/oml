@@ -16,6 +16,17 @@ Namespace Xml
                 Protected Overrides Function CreateEntityCondition(ByVal left As Worm.Criteria.Core.IEntityFilter, ByVal right As Worm.Criteria.Core.IEntityFilter, ByVal [operator] As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.Conditions.Condition
                     Return New EntityCondition(CType(left, IEntityFilter), CType(right, IEntityFilter), [operator])
                 End Function
+
+                Protected Sub New(ByVal cond As Condition)
+                    MyBase.New(cond)
+                End Sub
+
+                Public Sub New()
+                End Sub
+
+                Protected Overrides Function _Clone() As Object
+                    Return New ConditionConstructor(CType(_cond.Clone, Conditions.Condition))
+                End Function
             End Class
 
             Private Class ConditionTemplate

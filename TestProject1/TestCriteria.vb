@@ -10,8 +10,13 @@ Imports Worm.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestComplexTypes()
-        Dim f As IEntityFilter = CType(Database.Criteria.Ctor.Field(GetType(Entity4), "ID").Eq(56). _
-            [And](GetType(Entity4), "Title").Eq("lsd").Filter, IEntityFilter)
+        Dim cr As Worm.Criteria.CriteriaLink = Database.Criteria.Ctor.Field(GetType(Entity4), "ID").Eq(56). _
+            [And](GetType(Entity4), "Title").Eq("lsd")
+
+        Dim cr2 As Database.Criteria.CriteriaLink = CType(cr.Clone, Database.Criteria.CriteriaLink)
+        cr2.And(GetType(Entity4), "Title").In(New String() {"a"})
+
+        Dim f As IEntityFilter = CType(cr.Filter, IEntityFilter)
 
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
@@ -21,6 +26,9 @@ Imports Worm.Criteria.Core
         almgr.AddTable(schema.GetTables(GetType(Entity4))(0))
 
         Assert.AreEqual("(t2.id = @p1 and t2.name = @p2)", f.MakeQueryStmt(schema, almgr, pmgr))
+
+        Dim f2 As IEntityFilter = CType(cr2.Filter, IEntityFilter)
+        Assert.AreEqual("((t2.id = @p1 and t2.name = @p2) and t2.name in (@p3))", f2.MakeQueryStmt(schema, almgr, pmgr))
         'new Criteria(GetType(Entity)).Field("sdf").Eq(56). _
         '    [And]("sdfln").Eq("lsd")
 

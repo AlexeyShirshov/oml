@@ -1986,7 +1986,7 @@ Namespace Database
             End Using
 
             Dim col2 As ICollection(Of T) = Nothing
-            Dim f2 As IOrmFullTextSupport2 = TryCast(searchSchema, IOrmFullTextSupport2)
+            Dim f2 As IOrmFullTextSupportEx = TryCast(searchSchema, IOrmFullTextSupportEx)
             Dim tokens() As String = frmt.GetTokens
             If tokens.Length > 1 AndAlso (f2 Is Nothing OrElse f2.UseFreeText) Then
                 Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
@@ -2372,6 +2372,26 @@ l2:
             Dim params As New ParamMgr(DbSchema, "p")
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), GetFilterInfo)
+                cmd.CommandType = System.Data.CommandType.Text
+                params.AppendParams(cmd.Parameters)
+                Dim b As ConnAction = TestConn(cmd)
+                Try
+                    Dim root As DicIndex(Of T) = BuildDictionaryInternal(Of T)(cmd, level, Me)
+                    root.Filter = filter
+                    root.Join = join
+                    Return root
+                Finally
+                    CloseConn(b)
+                End Try
+            End Using
+        End Function
+
+        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, _
+            ByVal filter As IFilter, ByVal join As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+            Invariant()
+            Dim params As New ParamMgr(DbSchema, "p")
+            Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), GetFilterInfo, firstField, secondField)
                 cmd.CommandType = System.Data.CommandType.Text
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)

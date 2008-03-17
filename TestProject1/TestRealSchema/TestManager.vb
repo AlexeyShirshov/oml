@@ -961,6 +961,11 @@ Public Class TestManagerRS
                 New String() {"sec"}), Nothing, False)
 
             Assert.AreEqual(1, t.Count)
+
+            t = mgr.Find(Of Table1)(Criteria.Ctor.AutoTypeField("EnumStr").NotIn( _
+                New String() {}), Nothing, False)
+
+            Assert.AreNotEqual(1, t.Count)
         End Using
     End Sub
 

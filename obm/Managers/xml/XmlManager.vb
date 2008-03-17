@@ -62,6 +62,10 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
+        Protected Overrides Function BuildDictionary(Of T As {New, Orm.OrmBase})(ByVal level As Integer, ByVal filter As Worm.Criteria.Core.IFilter, ByVal join As Worm.Criteria.Joins.OrmJoin, ByVal firstField As String, ByVal secondField As String) As Orm.DicIndex(Of T)
+            Throw New NotImplementedException
+        End Function
+
         Protected Overrides ReadOnly Property Exec() As System.TimeSpan
             Get
 

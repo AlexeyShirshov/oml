@@ -304,6 +304,112 @@ Namespace Database.Storedprocs
                 Return Nothing
             End Get
         End Property
+
+        Protected Class NonQueryStoredProcSimple
+            Inherits NonQueryStoredProcBase
+
+            Private _name As String
+            Private _obj() As Object
+            Private _names() As String
+            Private _out As IEnumerable(Of OutParam)
+
+#Region " Ctors "
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object)
+                _name = name
+                _obj = params
+                _names = names
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal cache As Boolean)
+                MyBase.New(cache)
+                _name = name
+                _obj = params
+                _names = names
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal timeout As TimeSpan)
+                MyBase.New(timeout)
+                _name = name
+                _obj = params
+                _names = names
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal outParams As IEnumerable(Of OutParam))
+                _name = name
+                _obj = params
+                _names = names
+                _out = outParams
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal cache As Boolean, ByVal outParams As IEnumerable(Of OutParam))
+                MyBase.New(cache)
+                _name = name
+                _obj = params
+                _names = names
+                _out = outParams
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal timeout As TimeSpan, ByVal outParams As IEnumerable(Of OutParam))
+                MyBase.New(timeout)
+                _name = name
+                _obj = params
+                _names = names
+                _out = outParams
+            End Sub
+
+#End Region
+
+            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
+                Dim l As New List(Of Pair(Of String, Object))
+                For i As Integer = 0 To _obj.Length - 1
+                    l.Add(New Pair(Of String, Object)(_names(i), _obj(i)))
+                Next
+                Return l
+            End Function
+
+            Protected Overrides Function GetName() As String
+                Return _name
+            End Function
+
+            Protected Overrides Function GetOutParams() As System.Collections.Generic.IEnumerable(Of OutParam)
+                Return _out
+            End Function
+        End Class
+
+        Public Shared Sub Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String)
+            Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing)
+            p.GetResult(mgr)
+        End Sub
+
+        Public Shared Sub Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object)
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Dim p As New NonQueryStoredProcSimple(name, ss, params)
+            p.GetResult(mgr)
+        End Sub
+
+        Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal outParamName As String) As T
+            Dim out As New List(Of OutParam)
+            out.Add(New OutParam(outParamName, TypeConvertor.ToDbType(GetType(T)), 1000))
+            Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing, out)
+            Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
+            Return CType(dic(outParamName), T)
+        End Function
+
+        Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal outParamName As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Dim out As New List(Of OutParam)
+            out.Add(New OutParam(outParamName, TypeConvertor.ToDbType(GetType(T)), 1000))
+            Dim p As New NonQueryStoredProcSimple(name, ss, params, out)
+            Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
+            Return CType(dic(outParamName), T)
+        End Function
     End Class
 
     Public MustInherit Class QueryStoredProcBase
@@ -465,7 +571,31 @@ Namespace Database.Storedprocs
                 MyClass.New(name, names, params, New String() {})
             End Sub
 
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal cache As Boolean)
+                MyClass.New(name, names, params, New String() {}, cache)
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal timeout As TimeSpan)
+                MyClass.New(name, names, params, New String() {}, timeout)
+            End Sub
+
             Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal columns() As String)
+                _name = name
+                _obj = params
+                _names = names
+                _cols = columns
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal columns() As String, ByVal cache As Boolean)
+                MyBase.New(cache)
+                _name = name
+                _obj = params
+                _names = names
+                _cols = columns
+            End Sub
+
+            Public Sub New(ByVal name As String, ByVal names() As String, ByVal params() As Object, ByVal columns() As String, ByVal timeout As TimeSpan)
+                MyBase.New(timeout)
                 _name = name
                 _obj = params
                 _names = names
@@ -497,29 +627,82 @@ Namespace Database.Storedprocs
             End Function
         End Class
 
-        Public Shared Function Exec(ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+#Region " Exec "
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
             Dim ss() As String = paramNames.Split()
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
-            Return New QueryOrmStoredProcSimple(Of T)(name, ss, params).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+            Return New QueryOrmStoredProcSimple(Of T)(name, ss, params).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal name As String, ByVal columns() As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
             Dim ss() As String = paramNames.Split()
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
-            Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, columns).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+            Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, cache).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal name As String) As ReadOnlyList(Of T)
-            Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, timeout).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal name As String, ByVal columns() As String) As ReadOnlyList(Of T)
-            Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, columns).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, columns).GetResult(mgr)
         End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, columns, cache).GetResult(mgr)
+        End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, columns, timeout).GetResult(mgr)
+        End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String) As ReadOnlyList(Of T)
+            Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}).GetResult(mgr)
+        End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean) As ReadOnlyList(Of T)
+            Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, cache).GetResult(mgr)
+        End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan) As ReadOnlyList(Of T)
+            Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, timeout).GetResult(mgr)
+        End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String) As ReadOnlyList(Of T)
+            Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, columns).GetResult(mgr)
+        End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal cache As Boolean) As ReadOnlyList(Of T)
+            Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, columns, cache).GetResult(mgr)
+        End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal timeout As TimeSpan) As ReadOnlyList(Of T)
+            Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, columns, timeout).GetResult(mgr)
+        End Function
+
+#End Region
+
     End Class
 
     Public MustInherit Class MultiResultsetQueryOrmStoredProcBase
@@ -722,24 +905,40 @@ Namespace Database.Storedprocs
             'End Sub
         End Class
 
-        Public Shared Function Exec(ByVal name As String) As T
-            Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String) As T
+            Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal name As String, ByVal cache As Boolean) As T
-            Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}, cache).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean) As T
+            Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}, cache).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal name As String, ByVal timeout As TimeSpan) As T
-            Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}, timeout).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan) As T
+            Return New ScalarProcSimple(Of T)(name, New String() {}, New Object() {}, timeout).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
             Dim ss() As String = paramNames.Split()
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
-            Return New ScalarProcSimple(Of T)(name, ss, params).GetResult(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
+            Return New ScalarProcSimple(Of T)(name, ss, params).GetResult(mgr)
+        End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return New ScalarProcSimple(Of T)(name, ss, params, cache).GetResult(mgr)
+        End Function
+
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
+            Dim ss() As String = paramNames.Split()
+            If ss.Length <> params.Length Then
+                Throw New ArgumentException("Number of parameter names is not equals to parameter values")
+            End If
+            Return New ScalarProcSimple(Of T)(name, ss, params, timeout).GetResult(mgr)
         End Function
     End Class
 End Namespace

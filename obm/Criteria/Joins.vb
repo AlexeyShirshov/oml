@@ -45,6 +45,9 @@ Namespace Criteria.Joins
             _oper = operation
         End Sub
 
+        Protected Sub New()
+        End Sub
+
         'Public Function GetStaticString() As String Implements IFilter.GetStaticString
         '    Throw New NotSupportedException
         'End Function
@@ -137,6 +140,22 @@ Namespace Criteria.Joins
                 Return Me
             End Get
         End Property
+
+        Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
+
+        Public Function Clone() As Core.IFilter Implements Core.IFilter.Clone
+            Return CType(_Clone(), IFilter)
+        End Function
+
+        Protected Sub CopyTo(ByVal obj As JoinFilter)
+            With obj
+                ._e1 = _e1
+                ._e2 = _e2
+                ._oper = _oper
+                ._t1 = _t1
+                ._t2 = _t2
+            End With
+        End Sub
     End Class
 
     Public MustInherit Class OrmJoin
@@ -251,6 +270,9 @@ Namespace Database
             Inherits Worm.Criteria.Joins.JoinFilter
             'Implements Worm.Database.Criteria.Core.IFilter
 
+            Protected Sub New()
+            End Sub
+
             Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal t2 As Type, ByVal fieldName2 As String, ByVal operation As FilterOperation)
                 MyBase.New(t, fieldName, t2, fieldName2, operation)
             End Sub
@@ -358,6 +380,12 @@ Namespace Database
 
             Public Shared Function ChangeEntityJoinToParam(ByVal source As IFilter, ByVal t As Type, ByVal field As String, ByVal value As TypeWrap(Of Object)) As IFilter
                 Return ChangeEntityJoinToValue(source, t, field, New ScalarValue(value.Value))
+            End Function
+
+            Protected Overrides Function _Clone() As Object
+                Dim c As New JoinFilter
+                CopyTo(c)
+                Return c
             End Function
         End Class
 

@@ -345,6 +345,9 @@ Namespace Orm
             End Get
         End Property
 
+        Public Shadows Function FindById(ByVal id As Integer) As DicIndex(Of T)
+            Return CType(MyBase.FindById(id), Global.Worm.Orm.DicIndex(Of T))
+        End Function
     End Class
 
 End Namespace

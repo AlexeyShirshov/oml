@@ -179,7 +179,7 @@ Namespace Criteria
     End Class
 
     Public MustInherit Class CriteriaLink
-        Implements IGetFilter
+        Implements IGetFilter, ICloneable
 
         Private _con As Condition.ConditionConstructorBase
         Private _t As Type
@@ -201,6 +201,7 @@ Namespace Criteria
             _t = t
         End Sub
 
+        Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
         Protected MustOverride Function CreateField(ByVal t As Type, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
 
         Public Function [And](ByVal t As Type, ByVal fieldName As String) As CriteriaField
@@ -289,6 +290,16 @@ Namespace Criteria
                 Return _con
             End Get
         End Property
+
+        Protected ReadOnly Property Type() As Type
+            Get
+                Return _t
+            End Get
+        End Property
+
+        Public Function Clone() As CriteriaLink
+            Return CType(_Clone(), CriteriaLink)
+        End Function
     End Class
 
     'Friend Class _CriteriaLink

@@ -296,6 +296,9 @@ Namespace Database
                 Return New CriteriaNonField(CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or).NotExists(t, joinFilter)
             End Function
 
+            Protected Overrides Function _Clone() As Object
+                Return New CriteriaLink(Type, CType(ConditionCtor.Clone, Condition.ConditionConstructor))
+            End Function
         End Class
     End Namespace
 End Namespace

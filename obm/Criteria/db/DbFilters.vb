@@ -169,6 +169,9 @@ Namespace Database
                 Return v.GetStaticString & "$" & TemplateBase.Oper2String(_oper)
             End Function
 
+            Protected Overrides Function _Clone() As Object
+                Return New NonTemplateFilter(CType(val, Values.IDatabaseFilterValue), _oper)
+            End Function
             'Public Overloads Function MakeSQLStmt1(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeSQLStmt
             '    Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
             '    If id IsNot Nothing Then
@@ -190,6 +193,10 @@ Namespace Database
                 '_templ = New TableFilterTemplate(table, column, operation)
             End Sub
 
+            Protected Sub New(ByVal v As IFilterValue, ByVal template As TemplateBase)
+                MyBase.New(v, template)
+            End Sub
+
             Protected Overrides Function _ToString() As String
                 'Return _templ.Table.TableName & _templ.Column & Value._ToString & _templ.OperToString
                 Return Value._ToString & Template.GetStaticString()
@@ -206,20 +213,24 @@ Namespace Database
             End Property
 
             Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
-                Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = Nothing
+                If ParamValue.ShouldUse Then
+                    Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = Nothing
 
-                If almgr IsNot Nothing Then
-                    tableAliases = almgr.Aliases
+                    If almgr IsNot Nothing Then
+                        tableAliases = almgr.Aliases
+                    End If
+
+                    Dim map As New MapField2Column(String.Empty, Template.Column, Template.Table)
+                    Dim [alias] As String = String.Empty
+
+                    If tableAliases IsNot Nothing Then
+                        [alias] = tableAliases(map._tableName) & "."
+                    End If
+
+                    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
+                Else
+                    Return String.Empty
                 End If
-
-                Dim map As New MapField2Column(String.Empty, Template.Column, Template.Table)
-                Dim [alias] As String = String.Empty
-
-                If tableAliases IsNot Nothing Then
-                    [alias] = tableAliases(map._tableName) & "."
-                End If
-
-                Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
             End Function
 
             Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of Worm.Criteria.Core.IFilter)
@@ -251,6 +262,10 @@ Namespace Database
 
             '    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
             'End Function
+
+            Protected Overrides Function _Clone() As Object
+                Return New TableFilter(val, Template)
+            End Function
         End Class
 
         Public Class OrmFilterTemplate
@@ -278,12 +293,16 @@ Namespace Database
             Private _dbFilter As Boolean
 
             Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
-                MyBase.New(New OrmFilterTemplate(t, fieldName, operation), value)
+                MyBase.New(value, New OrmFilterTemplate(t, fieldName, operation))
             End Sub
 
             Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As Values.IDatabaseFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
-                MyBase.New(New OrmFilterTemplate(t, fieldName, operation), value)
+                MyBase.New(value, New OrmFilterTemplate(t, fieldName, operation))
                 _dbFilter = True
+            End Sub
+
+            Protected Sub New(ByVal v As IFilterValue, ByVal template As OrmFilterTemplate)
+                MyBase.New(v, template)
             End Sub
 
             'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt
@@ -312,32 +331,35 @@ Namespace Database
             'End Function
 
             Public Overloads Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+                If ParamValue.ShouldUse Then
+                    Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = Nothing
 
-                Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = Nothing
+                    If almgr IsNot Nothing Then
+                        tableAliases = almgr.Aliases
+                    End If
 
-                If almgr IsNot Nothing Then
-                    tableAliases = almgr.Aliases
-                End If
+                    If schema Is Nothing Then
+                        Throw New ArgumentNullException("schema")
+                    End If
 
-                If schema Is Nothing Then
-                    Throw New ArgumentNullException("schema")
-                End If
+                    If _oschema Is Nothing Then
+                        _oschema = schema.GetObjectSchema(Template.Type)
+                    End If
 
-                If _oschema Is Nothing Then
-                    _oschema = schema.GetObjectSchema(Template.Type)
-                End If
+                    Dim map As MapField2Column = _oschema.GetFieldColumnMap()(Template.FieldName)
+                    Dim [alias] As String = String.Empty
 
-                Dim map As MapField2Column = _oschema.GetFieldColumnMap()(Template.FieldName)
-                Dim [alias] As String = String.Empty
+                    If tableAliases IsNot Nothing Then
+                        [alias] = tableAliases(map._tableName) & "."
+                    End If
 
-                If tableAliases IsNot Nothing Then
-                    [alias] = tableAliases(map._tableName) & "."
-                End If
-
-                If _dbFilter Then
-                    Return [alias] & map._columnName & Template.OperToStmt & GetParam(CType(schema, SQLGenerator), pname, CType(almgr, AliasMgr))
+                    If _dbFilter Then
+                        Return [alias] & map._columnName & Template.OperToStmt & GetParam(CType(schema, SQLGenerator), pname, CType(almgr, AliasMgr))
+                    Else
+                        Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
+                    End If
                 Else
-                    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
+                    Return String.Empty
                 End If
             End Function
 
@@ -356,6 +378,10 @@ Namespace Database
                     Throw New InvalidOperationException
                 End If
             End Function
+
+            Protected Overrides Function _Clone() As Object
+                Return New EntityFilter(val, CType(Template, OrmFilterTemplate))
+            End Function
         End Class
 
         Public Class CustomFilter
@@ -365,11 +391,21 @@ Namespace Database
                 MyBase.New(format, value, oper, values)
             End Sub
 
+            Protected Sub New(ByVal value As IParamFilterValue)
+                MyBase.New(value)
+            End Sub
+
             Protected Overrides ReadOnly Property OperationString() As String
                 Get
                     Return TemplateBase.Oper2String(Operation)
                 End Get
             End Property
+
+            Protected Overrides Function _Clone() As Object
+                Dim c As New CustomFilter(ParamValue)
+                CopyTo(c)
+                Return c
+            End Function
         End Class
     End Namespace
 
