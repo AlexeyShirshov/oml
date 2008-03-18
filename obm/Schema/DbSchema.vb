@@ -1096,6 +1096,13 @@ Namespace Database
             Return SelectWithJoin(original_type, almgr, params, Nothing, True, Nothing, additionalColumns, filterInfo, arr)
         End Function
 
+        Public Function [Select](ByVal original_type As Type, _
+            ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal queryAspect() As QueryAspect, _
+            ByVal arr As Generic.IList(Of ColumnAttribute), _
+             ByVal additionalColumns As String, ByVal filterInfo As Object) As String
+            Return SelectWithJoin(original_type, almgr, params, Nothing, True, queryAspect, additionalColumns, filterInfo, arr)
+        End Function
+
         Public Function SelectID(ByVal original_type As Type, ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filterInfo As Object) As String
             Return SelectWithJoin(original_type, almgr, params, Nothing, False, Nothing, Nothing, filterInfo, Nothing)
         End Function
@@ -1443,7 +1450,10 @@ Namespace Database
                 'Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = TryCast(con.Condition, IFilter)
                 'If f IsNot Nothing Then
-                sb.Append(" where ").Append(f.MakeQueryStmt(Me, almgr, pmgr))
+                Dim s As String = f.MakeQueryStmt(Me, almgr, pmgr)
+                If Not String.IsNullOrEmpty(s) Then
+                    sb.Append(" where ").Append(s)
+                End If
                 'Else
                 '    sb.Append(" where ").Append(bf.MakeQueryStmt(Me, pmgr))
                 'End If
@@ -1536,7 +1546,7 @@ Namespace Database
         '    Return i
         'End Function
 
-        Public Function SelectM2M(ByVal selectedType As Type, ByVal filteredType As Type, _
+        Public Function SelectM2M(ByVal selectedType As Type, ByVal filteredType As Type, ByVal aspects() As QueryAspect, _
             ByVal appendMainTable As Boolean, ByVal appJoins As Boolean, ByVal filterInfo As Object, _
             ByVal pmgr As ParamMgr, ByVal almgr As AliasMgr, ByVal withLoad As Boolean, ByVal direct As Boolean) As String
 
@@ -1569,7 +1579,15 @@ Namespace Database
 
             Dim sb As New StringBuilder
             Dim id_clm As String = selected_r.Column
-            sb.Append("select ").Append([alias]).Append(".")
+            sb.Append("select ")
+            If aspects IsNot Nothing Then
+                For Each asp As QueryAspect In aspects
+                    If asp.AscpectType = QueryAspect.AspectType.Columns Then
+                        sb.Append(asp.MakeStmt(Me))
+                    End If
+                Next
+            End If
+            sb.Append([alias]).Append(".")
             sb.Append(filtered_r.Column).Append(" ").Append(filteredType.Name).Append("ID")
             If filtered_r Is selectedType Then
                 sb.Append("Rev")
@@ -1613,6 +1631,12 @@ Namespace Database
         Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As OrmBase, ByVal type As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal filter_info As Object, ByVal appJoins As Boolean, ByVal withLoad As Boolean, ByVal appendMain As Boolean, _
             ByRef params As IList(Of System.Data.Common.DbParameter), ByVal direct As Boolean) As String
+            Return SelectM2M(almgr, obj, type, filter, filter_info, appJoins, withLoad, appendMain, params, direct, New QueryAspect() {})
+        End Function
+
+        Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As OrmBase, ByVal type As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
+            ByVal filter_info As Object, ByVal appJoins As Boolean, ByVal withLoad As Boolean, ByVal appendMain As Boolean, _
+            ByRef params As IList(Of System.Data.Common.DbParameter), ByVal direct As Boolean, ByVal aspects() As QueryAspect) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -1628,7 +1652,7 @@ Namespace Database
             Dim schema2 As IOrmObjectSchema = GetObjectSchema(type)
 
             Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(filter_info) IsNot Nothing OrElse appendMain OrElse SQLGenerator.NeedJoin(schema2)
-            sb.Append(SelectM2M(type, t, appendMainTable, appJoins, filter_info, pmgr, almgr, withLoad, direct))
+            sb.Append(SelectM2M(type, t, aspects, appendMainTable, appJoins, filter_info, pmgr, almgr, withLoad, direct))
 
             Dim selected_r As M2MRelation = Nothing
             Dim filtered_r As M2MRelation = Nothing
@@ -1937,7 +1961,7 @@ Namespace Database
             End If
 
             Dim s As IOrmObjectSchema = GetObjectSchema(type)
-            
+
             Dim sb As New StringBuilder
             Dim almgr As AliasMgr = AliasMgr.Create
 

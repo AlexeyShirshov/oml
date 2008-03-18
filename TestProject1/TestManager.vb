@@ -123,6 +123,9 @@ Imports Worm.Orm
                 Assert.IsFalse(e4.InternalProperties.IsLoaded)
             Next
 
+            c = e.M2M.Find(Of Entity4)(2, Nothing, Worm.Orm.Sorting.Field("Title").Asc, False)
+
+            Assert.AreEqual(2, c.Count)
         End Using
     End Sub
 

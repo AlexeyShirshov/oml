@@ -331,7 +331,9 @@ Namespace Database
             'End Function
 
             Public Overloads Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
-                If ParamValue.ShouldUse Then
+                Dim pv As IParamFilterValue = TryCast(Value, IParamFilterValue)
+
+                If pv Is Nothing OrElse ParamValue.ShouldUse Then
                     Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = Nothing
 
                     If almgr IsNot Nothing Then

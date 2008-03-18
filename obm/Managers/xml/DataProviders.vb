@@ -8,6 +8,7 @@ Imports Worm.Orm.Meta
 
 Namespace Xml
     Partial Public Class QueryManager
+
         Protected MustInherit Class BaseDataProvider(Of T As {New, OrmBase})
             Inherits CustDelegate(Of T)
             Implements ICacheValidator

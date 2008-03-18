@@ -17,7 +17,7 @@ Imports Worm.Orm.Meta
 
         Dim pmgr As New ParamMgr(schema, "p")
         Dim almgr As AliasMgr = AliasMgr.Create
-        Assert.AreEqual("select t1.ent2_id Entity4ID,t1.ent1_id EntityID from dbo.[1to2] t1", schema.SelectM2M(t, t2, False, True, Nothing, pmgr, almgr, False, True))
+        Assert.AreEqual("select t1.ent2_id Entity4ID,t1.ent1_id EntityID from dbo.[1to2] t1", schema.SelectM2M(t, t2, New Worm.Orm.Query.QueryAspect() {}, False, True, Nothing, pmgr, almgr, False, True))
 
         Dim e As New Entity(10, Nothing, schema)
 
@@ -26,6 +26,9 @@ Imports Worm.Orm.Meta
         Assert.AreEqual("select t1.ent1_id EntityID,t1.ent2_id Entity4ID from dbo.[1to2] t1 where t1.ent1_id = @p1", schema.SelectM2M(almgr, e, t2, Nothing, Nothing, True, False, False, params, True))
 
         Assert.AreEqual(1, params.Count)
+
+        almgr = AliasMgr.Create
+        Assert.AreEqual("select top 1 t1.ent2_id Entity4ID,t1.ent1_id EntityID from dbo.[1to2] t1", schema.SelectM2M(t, t2, New Worm.Orm.Query.QueryAspect() {New TopAspect(1)}, False, True, Nothing, pmgr, almgr, False, True))
     End Sub
 
     <TestMethod()> _
@@ -38,7 +41,7 @@ Imports Worm.Orm.Meta
 
         Dim pmgr As New ParamMgr(schema, "p")
         Dim almgr As AliasMgr = AliasMgr.Create
-        Assert.AreEqual("select t1.ent2_id Entity4ID,t1.ent1_id EntityID from dbo.[1to2] t1 join dbo.t1 t2 on t1.ent1_id = t2.i", schema.SelectM2M(t, t2, False, True, Nothing, pmgr, almgr, False, True))
+        Assert.AreEqual("select t1.ent2_id Entity4ID,t1.ent1_id EntityID from dbo.[1to2] t1 join dbo.t1 t2 on t1.ent1_id = t2.i", schema.SelectM2M(t, t2, New Worm.Orm.Query.QueryAspect() {}, False, True, Nothing, pmgr, almgr, False, True))
 
         Dim e As New Entity(10, Nothing, schema)
 
@@ -79,7 +82,7 @@ Imports Worm.Orm.Meta
         'End Try
 
         almgr = AliasMgr.Create
-        Assert.AreEqual("select t1.ent1_id EntityID,t1.ent2_id Entity4ID from dbo.[1to2] t1 join dbo.ent2 t2 on t1.ent2_id = t2.id join dbo.t1 t3 on t3.i = t2.id", schema.SelectM2M(t, t2, True, True, Nothing, pmgr, almgr, False, True))
+        Assert.AreEqual("select t1.ent1_id EntityID,t1.ent2_id Entity4ID from dbo.[1to2] t1 join dbo.ent2 t2 on t1.ent2_id = t2.id join dbo.t1 t3 on t3.i = t2.id", schema.SelectM2M(t, t2, New Worm.Orm.Query.QueryAspect() {}, True, True, Nothing, pmgr, almgr, False, True))
 
         Dim e As New Entity4(10, Nothing, schema)
 

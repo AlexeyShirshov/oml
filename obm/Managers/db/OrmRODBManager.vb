@@ -635,9 +635,15 @@ Namespace Database
         'End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
+            ByVal obj As OrmBase, ByVal filter As IFilter, ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
+            ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
+            Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, queryAscpect, id, key, direct)
+        End Function
+
+        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
             ByVal obj As OrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
-            Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, id, key, direct)
+            Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, New QueryAspect() {}, id, key, direct)
         End Function
 
         'Protected Overrides Function GetCustDelegateTag(Of T As {New, OrmBase})( _
@@ -650,7 +656,7 @@ Namespace Database
         Protected Function FindConnected(ByVal ct As Type, ByVal selectedType As Type, _
             ByVal filterType As Type, ByVal connectedFilter As IFilter, _
             ByVal filter As IFilter, ByVal withLoad As Boolean, _
-            ByVal sort As Sort) As IList
+            ByVal sort As Sort, ByVal q() As QueryAspect) As IList
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim arr As Generic.List(Of ColumnAttribute) = Nothing
 
@@ -679,9 +685,9 @@ Namespace Database
                         'js.Add(j)
                         'js.AddRange(Schema.GetAllJoins(selectedType))
                         Dim columns As String = DbSchema.GetSelectColumnList(selectedType)
-                        sb.Append(DbSchema.Select(ct, almgr, params, arr, columns, cfi))
+                        sb.Append(DbSchema.Select(ct, almgr, params, q, arr, columns, cfi))
                     Else
-                        sb.Append(DbSchema.Select(ct, almgr, params, arr, Nothing, cfi))
+                        sb.Append(DbSchema.Select(ct, almgr, params, q, arr, Nothing, cfi))
                     End If
                     'If withLoad Then
                     '    arr = DatabaseSchema.GetSortedFieldList(ct)
@@ -1006,7 +1012,7 @@ Namespace Database
                 Dim oschema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(type2load)
                 Dim r2 As M2MRelation = DbSchema.GetM2MRelation(type2load, type, direct)
                 Dim appendMainTable As Boolean = f IsNot Nothing OrElse oschema2.GetFilter(GetFilterInfo) IsNot Nothing
-                sb.Append(DbSchema.SelectM2M(type2load, type, appendMainTable, True, GetFilterInfo, params, almgr, withLoad, direct))
+                sb.Append(DbSchema.SelectM2M(type2load, type, New QueryAspect() {}, appendMainTable, True, GetFilterInfo, params, almgr, withLoad, direct))
 
                 If Not DbSchema.AppendWhere(type2load, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
                     sb.Append(" where 1=1 ")
