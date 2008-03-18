@@ -332,9 +332,10 @@ Namespace Database
             'Private _sync As String
             'Private _rev As Boolean
             'Private _soft_renew As Boolean
+            Private _qa() As QueryAspect
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As OrmBase, ByVal filter As IFilter, _
-                ByVal sort As Sort, _
+                ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
                 ByVal id As String, ByVal key As String, ByVal direct As Boolean)
                 MyBase.New(mgr, filter, sort, key, id)
                 _obj = obj
@@ -356,7 +357,7 @@ Namespace Database
                         Dim almgr As AliasMgr = AliasMgr.Create
 
                         Dim sb As New StringBuilder
-                        sb.Append(_mgr.DbSchema.SelectM2M(almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, _sort IsNot Nothing, params, _direct))
+                        sb.Append(_mgr.DbSchema.SelectM2M(almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, _sort IsNot Nothing, params, _direct, _qa))
 
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
                             _mgr.DbSchema.AppendOrder(t, _sort, almgr, sb)
@@ -433,7 +434,7 @@ Namespace Database
                     '    external_sort = True
                     'End If
 
-                    For Each o As OrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort)
+                    For Each o As OrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
                         'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
                         Dim id1 As Integer = CType(o.GetValue(f1), OrmBase).Identifier

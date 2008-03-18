@@ -198,6 +198,22 @@ Namespace Orm
                 Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, direct, withLoad)
             End Function
 
+            Public Function Find(ByVal top As Integer, ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
+                Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
+                Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
+                    New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
+                Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
+                Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {top, criteria, sort, withLoad}, Nothing), IList)
+            End Function
+
+            Public Function Find(Of T As {New, OrmBase})(ByVal top As Integer, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+                Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, True, withLoad, top)
+            End Function
+
+            Public Function Find(Of T As {New, OrmBase})(ByVal top As Integer, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+                Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, direct, withLoad, top)
+            End Function
+
             Public Sub Add(ByVal obj As OrmBase)
                 GetMgr.M2MAdd(_o, obj, True)
             End Sub

@@ -2571,7 +2571,7 @@ l1:
     End Function
 
     Protected Friend Function FindMany2Many2(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal criteria As IGetFilter, _
-        ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+        ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean, Optional ByVal top As Integer = -1) As ReadOnlyList(Of T)
         '    Dim p As Pair(Of M2MCache, Boolean) = FindM2M(Of T)(obj, direct, criteria, sort, withLoad)
         '    'Return p.First.GetObjectList(Of T)(Me, withLoad, p.Second.Created)
         '    return GetResultset(of T)(withload,dic,
@@ -2594,7 +2594,12 @@ l1:
 
         'CreateM2MDepends(filter, key, id)
 
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
+        Dim del As ICustDelegate(Of T) = Nothing
+        If top > 0 Then
+            del = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, New QueryAspect() {_schema.CreateTopAspect(top)}, id, key, direct)
+        Else
+            del = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
+        End If
         Dim s As Boolean = True
         Dim r As ReadOnlyList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
         If Not s Then
@@ -3585,6 +3590,10 @@ l1:
 
     'Protected MustOverride Function GetCustDelegate4Top(Of T As {OrmBase, New})(ByVal top As Integer, ByVal filter As IOrmFilter, _
     '    ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
+
+    Protected MustOverride Function GetCustDelegate(Of T2 As {OrmBase, New})( _
+        ByVal obj As OrmBase, ByVal filter As IFilter, _
+        ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As Boolean) As ICustDelegate(Of T2)
 
     Protected MustOverride Function GetCustDelegate(Of T2 As {OrmBase, New})( _
         ByVal obj As OrmBase, ByVal filter As IFilter, _
