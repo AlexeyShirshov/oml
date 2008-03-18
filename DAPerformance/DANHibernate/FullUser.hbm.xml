@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <hibernate-mapping xmlns="urn:nhibernate-mapping-2.2">
-  <class name="DANHibernate.LazyUser, DANHibernate" table="tbl_user" lazy="true">
+  <class name="DANHibernate.FullUser, DANHibernate" table="tbl_user">
     <id name="UserId" column="user_id" type="integer">
       <generator class="assigned" />
     </id>
-    <bag name="Phones" table="tbl_phone" cascade="none" lazy="true">
+    <bag name="Phones" table="tbl_phone" cascade="all" lazy="false">
       <key column ="user_id" />
       <many-to-many class="DANHibernate.Phone, DANHibernate" column="phone_id" />
     </bag>

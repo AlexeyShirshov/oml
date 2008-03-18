@@ -1,17 +1,21 @@
 using System;
 using System.Data;
 using System.Text;
+using System.Collections;
 using System.Collections.Generic;
+
 using DANHibernate;
+using Helper;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NHibernate;
+using NHibernate.Hql;
+using NHibernate.Expression;
 using NHibernate.Cfg;
 namespace Tests
 {
     /// <summary>
     /// Summary description for UnitTest1
     /// </summary>
-    [Ignore]
     [TestClass]
     public class TestNHibernate : TestBase
     {
@@ -67,88 +71,161 @@ namespace Tests
             session.Close();
         }
 
-
         [TestMethod]
-		public void SelectWithLoad() 
+        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
+        public void TypeCycleWithoutLoad()
         {
-		    User user  = (User)session.Load(typeof(User), 1);
-		}
-
-        [TestMethod]
-        public void SelectCollectionWithLoad()
-        {
-            object recentUsers = session.CreateCriteria(typeof(User)).List();
-        }
-
-        [TestMethod]
-        public void SelectSmallWithLoad()
-        {
-            Phone phone = (Phone)session.Load(typeof(Phone), 1);
-        }
-
-        [TestMethod]
-        public void SelectCollectionSmallWithLoad()
-        {
-            object recentPhones = session.CreateCriteria(typeof(Phone)).List();
-        }
-
-        [TestMethod]
-        public void LazySelectWithoutLoad()
-        {
-            LazyUser user = (LazyUser)session.Load(typeof(LazyUser), 1);
-        }
-
-        [TestMethod]
-        public void LazySelectWithLoad()
-        {
-            LazyUser user = (LazyUser)session.Load(typeof(LazyUser), 1);
-            string result = string.Format("{0} {1} {2}", user.UserId, user.FirstName, user.LastName);
-        }
-
-        [TestMethod]
-        public void LazySelectCollectionWithoutLoad()
-        {
-            object recentUsers = session.CreateCriteria(typeof(LazyUser)).List();
-        }
-
-        [TestMethod]
-        public void LazySelectCollectionWithLoad()
-        {
-            System.Collections.IList recentUsers = session.CreateCriteria(typeof(LazyUser)).List();
-            foreach (LazyUser user in recentUsers)
+            foreach (int id in mediumUserIds)
             {
-                string result = string.Format("{0} {1} {2}", user.UserId, user.FirstName, user.LastName);
+                LazyUser user = (LazyUser)session.Load(typeof(LazyUser), id);
             }
         }
 
         [TestMethod]
-        public void LazySelectSmallWithoutLoad()
+        [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
+        public void TypeCycleWithLoad()
         {
-            LazyPhone phone = (LazyPhone)session.Load(typeof(LazyPhone), 1);
-        }
-
-        [TestMethod]
-        public void LazySelectSmallWithLoad()
-        {
-            LazyPhone phone = (LazyPhone)session.Load(typeof(LazyPhone), 1);
-            string result = string.Format("{0} {1} {2}", phone.PhoneId, phone.UserId, phone.PhoneNumber);
-        }
-
-        [TestMethod]
-        public void LazySelectCollectionSmallWithoutLoad()
-        {
-            System.Collections.IList recentPhones = session.CreateCriteria(typeof(LazyPhone)).List();
-        }
-
-        [TestMethod]
-        public void LazySelectCollectionSmallWithLoad()
-        {
-            System.Collections.IList recentPhones = session.CreateCriteria(typeof(LazyPhone)).List();
-            foreach (LazyPhone phone in recentPhones)
+            foreach (int id in mediumUserIds)
             {
-                string result = string.Format("{0} {1} {2}", phone.PhoneId, phone.UserId, phone.PhoneNumber);
+                User user = (User)session.Load(typeof(User), id);
             }
         }
 
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
+        public void TypeCycleLazyLoad()
+        {
+            foreach (int id in mediumUserIds)
+            {
+                LazyUser user = (LazyUser)session.Load(typeof(LazyUser), id);
+                string name = user.FirstName;
+            }
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
+        public void SmallCollectionByIdArray()
+        {
+            object users = session.CreateCriteria(typeof(User))
+                .Add(Expression.In("UserId", smallUserIds)).List();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void SmallCollection()
+        {
+            object users = session.CreateCriteria(typeof(User)).SetMaxResults(Constants.Small).List();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
+        public void SmallCollectionWithChildrenByIdArray()
+        {
+            IList users = session.CreateCriteria(typeof(FullUser))
+               .Add(Expression.In("UserId", smallUserIds)).List();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
+        public void LargeCollectionByIdArray()
+        {
+            object users = session.CreateCriteria(typeof(User))
+               .Add(Expression.In("UserId", largeUserIds)).List();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollection)]
+        public void LargeCollection()
+        {
+            object users = session.CreateCriteria(typeof(User)).SetMaxResults(Constants.Large).List();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
+        public void LargeCollectionWithChildrenByIdArray()
+        {
+            IList users = session.CreateCriteria(typeof(FullUser))
+              .Add(Expression.In("UserId", largeUserIds)).List();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
+        public void CollectionByPredicateWithoutLoad()
+        {
+             for (int i = 0; i < Constants.LargeIteration; i++)
+            {
+                // 4 minutes!
+                // IList users = session.CreateCriteria(typeof(LazyUser))
+                // .CreateCriteria("Phones")
+                //.Add(Expression.Like("PhoneNumber", (i + 1) + "%")).List();
+
+                 IQuery q = session.CreateQuery(
+                     "select u.UserId,  u.FirstName,  u.LastName from LazyUser as u " +
+                 "inner join u.Phones as p where p.PhoneNumber like '" + (i + 1) + "%'");
+                 IList users = q.List();
+            }
+            
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
+        public void CollectionByPredicateWithLoad()
+        {
+            for (int i = 0; i < Constants.LargeIteration; i++)
+            {
+                // 4 minutes!
+                //IList users = session.CreateCriteria(typeof(User))
+                //   .CreateCriteria("Phones")
+                //    .Add(Expression.Like("PhoneNumber", (i + 1) + "%")).List();
+
+                IQuery q = session.CreateQuery(
+                     "select u.UserId,  u.FirstName,  u.LastName from User as u " +
+                 "inner join u.Phones as p where p.PhoneNumber like '" + (i + 1) + "%'");
+                IList users = q.List();
+            }
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SelectLargeCollection)]
+        public void SelectLargeCollection()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                object users = session.CreateCriteria(typeof(User)).SetMaxResults(Constants.Large).List();
+            }
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
+        public void SameObjectInCycleLoad()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                User user = (User)session.Load(typeof(User), smallUserIds[0]);
+            }
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
+        public void SelectBySamePredicate()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                IList users = session.CreateCriteria(typeof(User))
+                    .CreateCriteria("Phones")
+                    .Add(Expression.Like("PhoneNumber", "1%")).List();
+            }
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
+        public void ObjectsWithLoadWithPropertiesAccess()
+        {
+            IList users = session.CreateCriteria(typeof(User)).List();
+            foreach (User user in users)
+            {
+                string name = user.FirstName;
+            }
+        }
     }
 }

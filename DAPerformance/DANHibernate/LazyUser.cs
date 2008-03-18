@@ -8,6 +8,7 @@ namespace DANHibernate
         private int _userId;
         private string _firstName;
         private string _lastName;
+        private IList<Phone> _phones = new List<Phone>();
 
         public LazyUser()
         {
@@ -37,6 +38,12 @@ namespace DANHibernate
             get{ return _lastName; }
             set{ _lastName = value; }
         }
+
+         public virtual IList<Phone> Phones
+         {
+             get { return _phones; }
+             set { _phones = value; }
+         }
     }
 
 }

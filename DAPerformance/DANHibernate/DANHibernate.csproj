@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FullUser.cs" />
     <Compile Include="LazyPhone.cs" />
     <Compile Include="LazyUser.cs" />
     <Compile Include="Phone.cs" />
@@ -63,6 +64,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="LazyPhone.hbm.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="FullUser.hbm.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

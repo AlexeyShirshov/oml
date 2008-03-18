@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Text;
 
 using DAAdo;
+using Helper;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
@@ -13,7 +14,6 @@ namespace Tests
     /// <summary>
     /// Summary description for UnitTest1
     /// </summary>
-    [Ignore]
     [TestClass]
     public class TestAdo : TestBase
     {
@@ -30,79 +30,94 @@ namespace Tests
             TestBase.classType = typeof(TestAdo);
         }
 
-        #region Additional test attributes
-        //
-        // You can use the following additional attributes as you write your tests:
-        //
-        // Use ClassInitialize to run code before running the first test in the class
-        // [ClassInitialize()]
-        // public static void MyClassInitialize(TestContext testContext) { }
-        //
-        // Use ClassCleanup to run code after all tests in a class have run
-        // [ClassCleanup()]
-        // public static void MyClassCleanup() { }
-        //
-        // Use TestInitialize to run code before running each test 
-        // [TestInitialize()]
-        // public void MyTestInitialize() { }
-        //
-        // Use TestCleanup to run code after each test has run
-        // [TestCleanup()]
-        // public void MyTestCleanup() { }
-        //
-        #endregion
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
+        public void TypeCycleWithLoad()
+        {
+            adoProvider.TypeCycleWithLoad(mediumUserIds);
+        }
+
 
         [TestMethod]
-        public void SelectWithLoad()
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
+        public void SmallCollectionByIdArray()
         {
-            DataSet ds = adoProvider.Select();
-            Assert.AreEqual(1, ds.Tables.Count);
+            adoProvider.CollectionByIdArray(smallUserIds);
         }
 
         [TestMethod]
-        public void SelectCollectionWithLoad()
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void SmallCollection()
         {
-           adoProvider.SelectCollection();
+            adoProvider.SmallCollection();
         }
 
         [TestMethod]
-        public void SelectWithReaderWithLoad()
+        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
+        public void SmallCollectionWithChildrenByIdArray()
         {
-            adoProvider.SelectWithReader();
+            adoProvider.CollectionWithChildrenByIdArray(smallUserIds);
         }
 
         [TestMethod]
-        public void SelectCollectionWithReaderWithLoad()
+        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
+        public void LargeCollectionByIdArray()
         {
-            adoProvider.SelectCollectionWithReader();
+            adoProvider.CollectionByIdArray(largeUserIds);
         }
 
         [TestMethod]
-        public void SelectSmallWithLoad()
+        [QueryTypeAttribute(QueryType.LargeCollection)]
+        public void LargeCollection()
         {
-            DataSet ds = adoProvider.SelectSmall();
-            Assert.AreEqual(1, ds.Tables.Count);
+            adoProvider.LargeCollection();
         }
 
         [TestMethod]
-        public void SelectCollectionSmallWithLoad()
+        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
+        public void LargeCollectionWithChildrenByIdArray()
         {
-            DataSet ds = adoProvider.SelectCollectionSmall();
-            Assert.AreEqual(1, ds.Tables.Count);
+            adoProvider.CollectionWithChildrenByIdArray(largeUserIds);
         }
 
-       
-
-        [TestMethod]
-        public void SelectSmallWithReaderWithLoad()
-        {
-            adoProvider.SelectSmallWithReader();
-        }
 
         [TestMethod]
-        public void SelectCollectionSmallWithReaderWithLoad()
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
+        public void CollectionByPredicateWithLoad()
         {
-            adoProvider.SelectCollectionSmallWithReader();
+            adoProvider.CollectionByPredicateWithLoad();
         }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SelectLargeCollection)]
+        public void SelectLargeCollection()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                adoProvider.LargeCollection();
+            }
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
+        public void SameObjectInCycleLoad()
+        {
+            adoProvider.SameObjectInCycleLoad(smallUserIds[0]);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
+        public void SelectBySamePredicate()
+        {
+            adoProvider.SelectBySamePredicate();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
+        public void ObjectsWithLoadWithPropertiesAccess()
+        {
+            adoProvider.ObjectsWithLoadWithPropertiesAccess();
+        }
+
     }
 }

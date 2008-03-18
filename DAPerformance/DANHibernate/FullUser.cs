@@ -4,18 +4,19 @@ using System.Collections.Generic;
 using System.Text;
 namespace DANHibernate
 {
-    public class User
+    public class FullUser
     {
         private int _userId;
         private string _firstName;
         private string _lastName;
         private IList<Phone> _phones = new List<Phone>();
+        
        
-        public User()
+        public FullUser()
         {
         }
 
-        public User(int userId, string firstName, string lastName)
+        public FullUser(int userId, string firstName, string lastName)
         {
             _userId = userId;
             _firstName = firstName;

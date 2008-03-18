@@ -4,6 +4,10 @@
     <id name="UserId" column="user_id" type="integer">
       <generator class="assigned" />
     </id>
+    <bag name="Phones" table="tbl_phone" cascade="none" lazy="true">
+      <key column ="user_id" />
+      <many-to-many class="DANHibernate.Phone, DANHibernate" column="phone_id" />
+    </bag>
     <property name="FirstName" column= "first_name" type="String" length="50"/>
     <property name="LastName" column= "last_name" type="String" length="50"/>
   </class>

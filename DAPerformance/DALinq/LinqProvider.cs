@@ -74,7 +74,7 @@ namespace DALinq
         public void LargeCollection()
         {
             var users = (from e in db.tbl_users
-                         select e).ToList();
+                         select e).Take(Constants.Large).ToList();
         }
 
         public void CollectionByPredicateWithoutLoad()
@@ -116,7 +116,7 @@ namespace DALinq
             {
                 var users = (from u in db.tbl_users
                              from p in u.tbl_phones
-                             where p.phone_number.StartsWith((i + 1).ToString())
+                             where p.phone_number.StartsWith("1")
                              select u);
             }
         }
