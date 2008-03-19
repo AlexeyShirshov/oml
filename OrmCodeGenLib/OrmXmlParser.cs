@@ -386,7 +386,7 @@ namespace Worm.CodeGen.Core
 				string rightAccessorName = rightTargetElement.GetAttribute("accessorName");
 
 				string leftAccessedEntityTypeId = leftTargetElement.GetAttribute("accessedEntityType");
-				string rightAccessedEntityTypeId = leftTargetElement.GetAttribute("accessedEntityType");
+				string rightAccessedEntityTypeId = rightTargetElement.GetAttribute("accessedEntityType");
 
 				TypeDescription leftAccessedEntityType = _ormObjectsDef.GetType(leftAccessedEntityTypeId, false);
 				TypeDescription rightAccessedEntityType = _ormObjectsDef.GetType(rightAccessedEntityTypeId, false);
