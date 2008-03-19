@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
     public enum AccessLevel
     {

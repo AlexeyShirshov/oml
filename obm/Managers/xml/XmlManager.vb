@@ -3,6 +3,7 @@ Imports Worm.Orm.Meta
 Imports System.Collections.Generic
 Imports System.Xml.XPath
 Imports Worm.Orm
+Imports Worm.Criteria.Joins
 
 Namespace Xml
     Partial Public Class QueryManager
@@ -181,7 +182,11 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
-        Protected Overloads Overrides Function Search(Of T As {New, Orm.OrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Orm.Meta.IFtsStringFormater) As ReadOnlyList(Of T)
+        Protected Overrides Function MakeM2MJoin(ByVal m2m As Orm.Meta.M2MRelation, ByVal type2join As System.Type) As Worm.Criteria.Joins.OrmJoin()
+            Throw New NotImplementedException
+        End Function
+
+        Protected Overloads Overrides Function Search(Of T As {New, Orm.OrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Orm.Meta.IFtsStringFormater, Optional ByVal joins() As OrmJoin = Nothing) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 

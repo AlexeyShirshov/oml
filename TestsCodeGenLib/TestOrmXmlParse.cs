@@ -3,8 +3,8 @@ using System.Text;
 using System.Collections.Generic;
 using System.Xml;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using OrmCodeGenLib;
-using OrmCodeGenLib.Descriptors;
+using Worm.CodeGen.Core;
+using Worm.CodeGen.Core.Descriptors;
 using System.IO;
 namespace TestsCodeGenLib
 {
@@ -44,12 +44,12 @@ namespace TestsCodeGenLib
         [Description("Проверка загрузки xml документа с валидацией")]
         public void TestReadXml()
         {
-            OrmCodeGenLib_OrmXmlParserAccessor parser;
+            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
             parser = null;
             using (XmlReader rdr = XmlReader.Create(GetSampleFileStream()))
 	        {
-                object privateParser = OrmCodeGenLib_OrmXmlParserAccessor.CreatePrivate(rdr, null);
-	            parser = new OrmCodeGenLib_OrmXmlParserAccessor(privateParser);
+                object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr, null);
+                parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
                 parser.Read();
             }
 
@@ -64,12 +64,12 @@ namespace TestsCodeGenLib
         [Description("Проверка загрузки описателей схемы")]
         public void TestFillFileDescription()
         {
-            OrmCodeGenLib_OrmXmlParserAccessor parser;
+            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
             parser = null;
             using (XmlReader rdr = XmlReader.Create(GetSampleFileStream()))
             {
-                object privateParser = OrmCodeGenLib_OrmXmlParserAccessor.CreatePrivate(rdr);
-                parser = new OrmCodeGenLib_OrmXmlParserAccessor(privateParser);
+                object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr);
+                parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
                 parser.Read();
             }
 
@@ -86,12 +86,12 @@ namespace TestsCodeGenLib
         [Description("Проверка загрузки списка таблиц из файла")]
         public void TestFillTables()
         {
-            OrmCodeGenLib_OrmXmlParserAccessor parser;
+            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
             parser = null;
             using (XmlReader rdr = XmlReader.Create(GetSampleFileStream()))
             {
-                object privateParser = OrmCodeGenLib_OrmXmlParserAccessor.CreatePrivate(rdr);
-                parser = new OrmCodeGenLib_OrmXmlParserAccessor(privateParser);
+                object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr);
+                parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
                 parser.Read();
             }
 
@@ -113,12 +113,12 @@ namespace TestsCodeGenLib
         [Description("Проверка поиска списка сущностей")]
         public void TestFindEntities()
         {
-            OrmCodeGenLib_OrmXmlParserAccessor parser;
+            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
             parser = null;
             using (XmlReader rdr = XmlReader.Create(GetSampleFileStream()))
             {
-                object privateParser = OrmCodeGenLib_OrmXmlParserAccessor.CreatePrivate(rdr);
-                parser = new OrmCodeGenLib_OrmXmlParserAccessor(privateParser);
+                object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr);
+                parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
                 parser.Read();
             }
 
@@ -137,12 +137,12 @@ namespace TestsCodeGenLib
         [TestMethod]
         public void TestFillTypes()
         {
-            OrmCodeGenLib_OrmXmlParserAccessor parser;
+            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
             parser = null;
             using (XmlReader rdr = XmlReader.Create(GetSampleFileStream()))
             {
-                object privateParser = OrmCodeGenLib_OrmXmlParserAccessor.CreatePrivate(rdr);
-                parser = new OrmCodeGenLib_OrmXmlParserAccessor(privateParser);
+                object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr);
+                parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
                 parser.Read();
             }
 
@@ -161,12 +161,12 @@ namespace TestsCodeGenLib
         [Description("Проверка загрузки списка таблиц сущности")]
         public void TestFillEntityTables()
         {
-            OrmCodeGenLib_OrmXmlParserAccessor parser;
+            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
             parser = null;
             using (XmlReader rdr = XmlReader.Create(GetSampleFileStream()))
             {
-                object privateParser = OrmCodeGenLib_OrmXmlParserAccessor.CreatePrivate(rdr);
-                parser = new OrmCodeGenLib_OrmXmlParserAccessor(privateParser);
+                object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr);
+                parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
                 parser.Read();
             }
 
@@ -197,12 +197,12 @@ namespace TestsCodeGenLib
         [Description("Проверка получения свойств")]
         public void TestFillProperties()
         {
-            OrmCodeGenLib_OrmXmlParserAccessor parser;
+            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
             parser = null;
             using (XmlReader rdr = XmlReader.Create(GetSampleFileStream()))
             {
-                object privateParser = OrmCodeGenLib_OrmXmlParserAccessor.CreatePrivate(rdr);
-                parser = new OrmCodeGenLib_OrmXmlParserAccessor(privateParser);
+                object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr);
+                parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
                 parser.Read();
             }
 
@@ -285,12 +285,12 @@ namespace TestsCodeGenLib
         [Description("Проверка получения свойств")]
         public void TestFillSuppressedProperties()
         {
-            OrmCodeGenLib_OrmXmlParserAccessor parser;
+            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
             parser = null;
             using (XmlReader rdr = XmlReader.Create(Resources.GetXmlDocumentStream("suppressed")))
             {
-                object privateParser = OrmCodeGenLib_OrmXmlParserAccessor.CreatePrivate(rdr);
-                parser = new OrmCodeGenLib_OrmXmlParserAccessor(privateParser);
+                object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr);
+                parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
                 parser.Read();
             }
 
@@ -330,12 +330,12 @@ namespace TestsCodeGenLib
         [Description("Проверка заполнения релейшенов")]
         public void TestFillRelations()
         {
-            OrmCodeGenLib_OrmXmlParserAccessor parser;
+            Worm_CodeGen_Core_OrmXmlParserAccessor parser;
             parser = null;
             using (XmlReader rdr = XmlReader.Create(GetSampleFileStream()))
             {
-                object privateParser = OrmCodeGenLib_OrmXmlParserAccessor.CreatePrivate(rdr);
-                parser = new OrmCodeGenLib_OrmXmlParserAccessor(privateParser);
+                object privateParser = Worm_CodeGen_Core_OrmXmlParserAccessor.CreatePrivate(rdr);
+                parser = new Worm_CodeGen_Core_OrmXmlParserAccessor(privateParser);
                 parser.Read();
             }
 

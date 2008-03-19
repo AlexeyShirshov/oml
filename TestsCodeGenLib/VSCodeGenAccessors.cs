@@ -47,11 +47,11 @@ internal class BaseAccessor {
 }
 [System.Diagnostics.DebuggerStepThrough()]
 [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.TestTools.UnitTestGeneration", "1.0.0.0")]
-internal class OrmCodeGenLib_OrmXmlGeneratorAccessor : BaseAccessor {
+internal class WormCodeGenCore_OrmXmlGeneratorAccessor : BaseAccessor {
     
-    protected static Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType m_privateType = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType("OrmCodeGenLib", "OrmCodeGenLib.OrmXmlGenerator");
+    protected static Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType m_privateType = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlGenerator");
     
-    internal OrmCodeGenLib_OrmXmlGeneratorAccessor(object target) : 
+    internal WormCodeGenCore_OrmXmlGeneratorAccessor(object target) : 
             base(target, m_privateType) {
     }
     
@@ -64,10 +64,11 @@ internal class OrmCodeGenLib_OrmXmlGeneratorAccessor : BaseAccessor {
             m_privateObject.SetField("_ormXmlDocument", value);
         }
     }
-    
-    internal global::OrmCodeGenLib.OrmObjectsDef _ormObjectsDef {
+
+    internal global::Worm.CodeGen.Core.OrmObjectsDef _ormObjectsDef
+    {
         get {
-            global::OrmCodeGenLib.OrmObjectsDef ret = ((global::OrmCodeGenLib.OrmObjectsDef)(m_privateObject.GetField("_ormObjectsDef")));
+            global::Worm.CodeGen.Core.OrmObjectsDef ret = ((global::Worm.CodeGen.Core.OrmObjectsDef)(m_privateObject.GetField("_ormObjectsDef")));
             return ret;
         }
         set {
@@ -95,19 +96,19 @@ internal class OrmCodeGenLib_OrmXmlGeneratorAccessor : BaseAccessor {
         }
     }
     
-    internal static object CreatePrivate(global::OrmCodeGenLib.OrmObjectsDef ormObjectsDef) {
+    internal static object CreatePrivate(global::Worm.CodeGen.Core.OrmObjectsDef ormObjectsDef) {
         object[] args = new object[] {
                 ormObjectsDef};
-        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("OrmCodeGenLib", "OrmCodeGenLib.OrmXmlGenerator", new System.Type[] {
-                    typeof(global::OrmCodeGenLib.OrmObjectsDef)}, args);
+        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlGenerator", new System.Type[] {
+                    typeof(global::Worm.CodeGen.Core.OrmObjectsDef)}, args);
         return priv_obj.Target;
     }
     
-    internal static global::System.Xml.XmlDocument Generate(global::OrmCodeGenLib.OrmObjectsDef schema) {
+    internal static global::System.Xml.XmlDocument Generate(global::Worm.CodeGen.Core.OrmObjectsDef schema) {
         object[] args = new object[] {
                 schema};
         global::System.Xml.XmlDocument ret = ((global::System.Xml.XmlDocument)(m_privateType.InvokeStatic("Generate", new System.Type[] {
-                    typeof(global::OrmCodeGenLib.OrmObjectsDef)}, args)));
+                    typeof(global::Worm.CodeGen.Core.OrmObjectsDef)}, args)));
         return ret;
     }
     
@@ -143,11 +144,11 @@ internal class OrmCodeGenLib_OrmXmlGeneratorAccessor : BaseAccessor {
 }
 [System.Diagnostics.DebuggerStepThrough()]
 [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.TestTools.UnitTestGeneration", "1.0.0.0")]
-internal class OrmCodeGenLib_OrmXmlParserAccessor : BaseAccessor {
+internal class Worm_CodeGen_Core_OrmXmlParserAccessor : BaseAccessor {
     
-    protected static Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType m_privateType = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType("OrmCodeGenLib", "OrmCodeGenLib.OrmXmlParser");
+    protected static Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType m_privateType = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateType("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlParser");
     
-    internal OrmCodeGenLib_OrmXmlParserAccessor(object target) : 
+    internal Worm_CodeGen_Core_OrmXmlParserAccessor(object target) : 
             base(target, m_privateType) {
     }
     
@@ -180,10 +181,11 @@ internal class OrmCodeGenLib_OrmXmlParserAccessor : BaseAccessor {
             m_privateObject.SetField("_ormXmlDocument", value);
         }
     }
-    
-    internal global::OrmCodeGenLib.OrmObjectsDef _ormObjectsDef {
+
+    internal global::Worm.CodeGen.Core.OrmObjectsDef _ormObjectsDef
+    {
         get {
-            global::OrmCodeGenLib.OrmObjectsDef ret = ((global::OrmCodeGenLib.OrmObjectsDef)(m_privateObject.GetField("_ormObjectsDef")));
+            global::Worm.CodeGen.Core.OrmObjectsDef ret = ((global::Worm.CodeGen.Core.OrmObjectsDef)(m_privateObject.GetField("_ormObjectsDef")));
             return ret;
         }
         set {
@@ -230,10 +232,11 @@ internal class OrmCodeGenLib_OrmXmlParserAccessor : BaseAccessor {
             m_privateObject.SetProperty("SourceXmlDocument", value);
         }
     }
-    
-    internal global::OrmCodeGenLib.OrmObjectsDef OrmObjectsDef {
+
+    internal global::Worm.CodeGen.Core.OrmObjectsDef OrmObjectsDef
+    {
         get {
-            global::OrmCodeGenLib.OrmObjectsDef ret = ((global::OrmCodeGenLib.OrmObjectsDef)(m_privateObject.GetProperty("OrmObjectsDef")));
+            global::Worm.CodeGen.Core.OrmObjectsDef ret = ((global::Worm.CodeGen.Core.OrmObjectsDef)(m_privateObject.GetProperty("OrmObjectsDef")));
             return ret;
         }
     }
@@ -241,7 +244,7 @@ internal class OrmCodeGenLib_OrmXmlParserAccessor : BaseAccessor {
     internal static object CreatePrivate(global::System.Xml.XmlReader reader) {
         object[] args = new object[] {
                 reader};
-        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("OrmCodeGenLib", "OrmCodeGenLib.OrmXmlParser", new System.Type[] {
+        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlParser", new System.Type[] {
                     typeof(global::System.Xml.XmlReader)}, args);
         return priv_obj.Target;
     }
@@ -250,7 +253,7 @@ internal class OrmCodeGenLib_OrmXmlParserAccessor : BaseAccessor {
         object[] args = new object[] {
                 reader,
                 xmlResolver};
-        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("OrmCodeGenLib", "OrmCodeGenLib.OrmXmlParser", new System.Type[] {
+        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlParser", new System.Type[] {
                     typeof(global::System.Xml.XmlReader),
                     typeof(global::System.Xml.XmlResolver)}, args);
         return priv_obj.Target;
@@ -259,26 +262,26 @@ internal class OrmCodeGenLib_OrmXmlParserAccessor : BaseAccessor {
     internal static object CreatePrivate(global::System.Xml.XmlDocument document) {
         object[] args = new object[] {
                 document};
-        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("OrmCodeGenLib", "OrmCodeGenLib.OrmXmlParser", new System.Type[] {
+        Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject priv_obj = new Microsoft.VisualStudio.TestTools.UnitTesting.PrivateObject("Worm.CodeGen.Core", "Worm.CodeGen.Core.OrmXmlParser", new System.Type[] {
                     typeof(global::System.Xml.XmlDocument)}, args);
         return priv_obj.Target;
     }
     
-    internal static global::OrmCodeGenLib.OrmObjectsDef Parse(global::System.Xml.XmlReader reader, global::System.Xml.XmlResolver xmlResolver) {
+    internal static global::Worm.CodeGen.Core.OrmObjectsDef Parse(global::System.Xml.XmlReader reader, global::System.Xml.XmlResolver xmlResolver) {
         object[] args = new object[] {
                 reader,
                 xmlResolver};
-        global::OrmCodeGenLib.OrmObjectsDef ret = ((global::OrmCodeGenLib.OrmObjectsDef)(m_privateType.InvokeStatic("Parse", new System.Type[] {
+        global::Worm.CodeGen.Core.OrmObjectsDef ret = ((global::Worm.CodeGen.Core.OrmObjectsDef)(m_privateType.InvokeStatic("Parse", new System.Type[] {
                     typeof(global::System.Xml.XmlReader),
                     typeof(global::System.Xml.XmlResolver)}, args)));
         return ret;
     }
     
-    internal static global::OrmCodeGenLib.OrmObjectsDef LoadXmlDocument(global::System.Xml.XmlDocument document, bool skipValidation) {
+    internal static global::Worm.CodeGen.Core.OrmObjectsDef LoadXmlDocument(global::System.Xml.XmlDocument document, bool skipValidation) {
         object[] args = new object[] {
                 document,
                 skipValidation};
-        global::OrmCodeGenLib.OrmObjectsDef ret = ((global::OrmCodeGenLib.OrmObjectsDef)(m_privateType.InvokeStatic("LoadXmlDocument", new System.Type[] {
+        global::Worm.CodeGen.Core.OrmObjectsDef ret = ((global::Worm.CodeGen.Core.OrmObjectsDef)(m_privateType.InvokeStatic("LoadXmlDocument", new System.Type[] {
                     typeof(global::System.Xml.XmlDocument),
                     typeof(bool)}, args)));
         return ret;
@@ -304,11 +307,11 @@ internal class OrmCodeGenLib_OrmXmlParserAccessor : BaseAccessor {
         m_privateObject.Invoke("FillEntities", new System.Type[0], args);
     }
     
-    internal void FillSuppresedProperties(global::OrmCodeGenLib.Descriptors.EntityDescription entity) {
+    internal void FillSuppresedProperties(global::Worm.CodeGen.Core.Descriptors.EntityDescription entity) {
         object[] args = new object[] {
                 entity};
         m_privateObject.Invoke("FillSuppresedProperties", new System.Type[] {
-                    typeof(global::OrmCodeGenLib.Descriptors.EntityDescription)}, args);
+                    typeof(global::Worm.CodeGen.Core.Descriptors.EntityDescription)}, args);
     }
     
     internal void FillFileDescriptions() {
@@ -321,11 +324,11 @@ internal class OrmCodeGenLib_OrmXmlParserAccessor : BaseAccessor {
         m_privateObject.Invoke("FindEntities", new System.Type[0], args);
     }
     
-    internal void FillProperties(global::OrmCodeGenLib.Descriptors.EntityDescription entity) {
+    internal void FillProperties(global::Worm.CodeGen.Core.Descriptors.EntityDescription entity) {
         object[] args = new object[] {
                 entity};
         m_privateObject.Invoke("FillProperties", new System.Type[] {
-                    typeof(global::OrmCodeGenLib.Descriptors.EntityDescription)}, args);
+                    typeof(global::Worm.CodeGen.Core.Descriptors.EntityDescription)}, args);
     }
     
     internal void FillRelations() {
@@ -338,11 +341,11 @@ internal class OrmCodeGenLib_OrmXmlParserAccessor : BaseAccessor {
         m_privateObject.Invoke("FillTables", new System.Type[0], args);
     }
     
-    internal void FillEntityTables(global::OrmCodeGenLib.Descriptors.EntityDescription entity) {
+    internal void FillEntityTables(global::Worm.CodeGen.Core.Descriptors.EntityDescription entity) {
         object[] args = new object[] {
                 entity};
         m_privateObject.Invoke("FillEntityTables", new System.Type[] {
-                    typeof(global::OrmCodeGenLib.Descriptors.EntityDescription)}, args);
+                    typeof(global::Worm.CodeGen.Core.Descriptors.EntityDescription)}, args);
     }
     
     internal void Read() {

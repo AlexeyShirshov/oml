@@ -1,10 +1,11 @@
-﻿namespace OrmCodeGenLib.Descriptors
+﻿namespace Worm.CodeGen.Core.Descriptors
 {
 	public class SelfRelationTarget
 	{
 		private string _fieldName;
 		private bool _cascadeDelete;
 		private string _accessorName;
+		private TypeDescription _accessedEntityType;
 
 		public SelfRelationTarget(string fieldName, bool cascadeDelete) : this(fieldName, cascadeDelete, null)
 		{
@@ -33,6 +34,12 @@
 		{
 			get { return _accessorName; }
 			set { _accessorName = value; }
+		}
+
+		public TypeDescription AccessedEntityType
+		{
+			get { return _accessedEntityType; }
+			set { _accessedEntityType = value; }
 		}
 
 		public override bool Equals(object obj)

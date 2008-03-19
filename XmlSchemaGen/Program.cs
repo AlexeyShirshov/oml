@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace XmlSchemaGen
+namespace Worm.CodeGen.XmlGenerator
 {
 	class Program
 	{
 		static void Main(string[] args)
 		{
-			Console.WriteLine("Orm xml schema generator. v0.1 2007");
+			Console.WriteLine("Worm xml schema generator. v0.1 2007");
 			if (args.Length == 0)
 			{
 				ShowUsage();

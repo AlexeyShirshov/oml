@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
     public class SettingsManager : IDisposable
     {

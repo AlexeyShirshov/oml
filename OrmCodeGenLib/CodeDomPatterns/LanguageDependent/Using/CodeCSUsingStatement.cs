@@ -4,7 +4,7 @@ using System.Text;
 using System.CodeDom;
 using System.IO;
 
-namespace OrmCodeGenLib.CodeDomPatterns
+namespace Worm.CodeGen.Core.CodeDomPatterns
 {
     public class CodeCSUsingStatement : CodeUsingStatementBase
     {
@@ -17,7 +17,6 @@ namespace OrmCodeGenLib.CodeDomPatterns
         public CodeCSUsingStatement(CodeExpression usingExpression, params CodeStatement[] statements) : base(usingExpression, statements)
         {
         }   
-     
 
         protected override void RefreshValue()
         {

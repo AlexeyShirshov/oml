@@ -235,6 +235,13 @@
 		<xs:documentation>Description for obsolete property.</xs:documentation>
 	  </xs:annotation>
 	</xs:attribute>
+	  <xs:attribute name="enablePropertyChanged" type="xs:boolean" use="optional" default="false">
+		  <xs:annotation>
+			  <xs:documentation>
+				Включает для свойства поднятие события PropertyChanged, при этом реализация идет на уровне конкретной сущности. При этом в целом для сущности отключается общий механизм этого события.
+			  </xs:documentation>
+		  </xs:annotation>
+	  </xs:attribute>
   </xs:complexType>
   <xs:complexType name="PropertiesCollection_t">
     <xs:annotation>
@@ -378,6 +385,11 @@
 			  <xs:documentation>Имя связанной сущности для генерации методов.</xs:documentation>
 		  </xs:annotation>
 	  </xs:attribute>
+	  <xs:attribute name="accessedEntityType" type="xs:Name" use="optional">
+		  <xs:annotation>
+			  <xs:documentation>Тип связанной сущности для генерации методов</xs:documentation>
+		  </xs:annotation>
+	  </xs:attribute>
   </xs:complexType>
   <xs:complexType name="LinkTarget_t">
     <xs:annotation>
@@ -401,6 +413,11 @@
 	  <xs:attribute name="accessorName" type="xs:Name" use="optional">
 		  <xs:annotation>
 			  <xs:documentation>Имя связанной сущности для генерации методов.</xs:documentation>
+		  </xs:annotation>
+	  </xs:attribute>
+	  <xs:attribute name="accessedEntityType" type="xs:Name" use="optional">
+		  <xs:annotation>
+			  <xs:documentation>Тип связанной сущности для генерации методов</xs:documentation>
 		  </xs:annotation>
 	  </xs:attribute>
   </xs:complexType>
@@ -598,6 +615,13 @@
 		  <xs:annotation>
 			  <xs:documentation xml:lang="ru">
 				Ссылка на тип, описанный в елементе &lt;types/&gt;, который будет использоваться как базовый для классов сущностей.
+			  </xs:documentation>
+		  </xs:annotation>
+	  </xs:attribute>
+	  <xs:attribute name="enableCommonPropertyChangedFire" type="xs:boolean" use="optional">
+		  <xs:annotation>
+			  <xs:documentation>
+				Отключить поднятие событий изменения для свойств.
 			  </xs:documentation>
 		  </xs:annotation>
 	  </xs:attribute>

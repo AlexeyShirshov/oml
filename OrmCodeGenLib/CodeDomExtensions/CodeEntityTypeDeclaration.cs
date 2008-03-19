@@ -1,7 +1,7 @@
 ﻿using System.CodeDom;
-using OrmCodeGenLib.Descriptors;
+using Worm.CodeGen.Core.Descriptors;
 
-namespace OrmCodeGenLib.CodeDomExtensions
+namespace Worm.CodeGen.Core.CodeDomExtensions
 {
 	/// <summary>
 	/// Обертка над <see cref="CodeTypeDeclaration"/> применительно к <see cref="EntityDescription"/>

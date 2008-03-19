@@ -1,4 +1,4 @@
-namespace OrmCodeGenLib.Descriptors
+namespace Worm.CodeGen.Core.Descriptors
 {
     public class LinkTarget : SelfRelationTarget
     {

@@ -1673,52 +1673,6 @@ l1:
     '    Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
     'End Function
 
-    Public Function FindDistinct(Of T As {OrmBase, New})(ByVal relation As M2MRelation, _
-        ByVal criteria As IGetFilter, _
-        ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
-
-        Dim key As String = "distinct" & _schema.GetEntityKey(GetFilterInfo, GetType(T))
-
-        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(GetType(T)).ToStaticString
-        End If
-
-        If relation IsNot Nothing Then
-            key &= relation.Table.RawName & relation.Column
-        End If
-
-        key &= GetStaticKey()
-
-        Dim dic As IDictionary = GetDic(_cache, key)
-
-        Dim id As String = GetType(T).ToString
-        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            id &= criteria.Filter(GetType(T)).ToString
-        End If
-
-        If relation IsNot Nothing Then
-            id &= relation.Table.RawName & relation.Column
-        End If
-
-        Dim sync As String = id & GetStaticKey()
-
-        'CreateDepends(filter, key, id)
-
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(relation, GetFilter(criteria, GetType(T)), sort, key, id)
-        'Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
-        Dim s As Boolean = True
-        Dim r As ReadOnlyList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
-        If Not s Then
-            Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
-            Using ac As New ApplyCriteria(Me, Nothing)
-                Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
-                c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
-                r = FindDistinct(Of T)(relation, ObjectSchema.CreateCriteriaLink(c), sort, withLoad)
-            End Using
-        End If
-        Return r
-    End Function
-
     Public Function FindJoin(Of T As {OrmBase, New})(ByVal type2join As Type, ByVal joinField As String, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
@@ -1754,6 +1708,17 @@ l1:
 
     Public Function Find(Of T As {OrmBase, New})(ByVal criteria As IGetFilter) As ReadOnlyList(Of T)
         Return Find(Of T)(criteria, Nothing, False)
+    End Function
+
+    Public Function FindDistinct(Of T As {OrmBase, New})(ByVal criteria As IGetFilter, _
+        ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+        Dim filter As IFilter = Nothing
+        If criteria IsNot Nothing Then
+            filter = criteria.Filter(GetType(T))
+        End If
+        Dim joins() As OrmJoin = Nothing
+        HasJoins(GetType(T), filter, sort, joins)
+        Return FindWithJoins(Of T)(New DistinctAspect(), joins, filter, sort, withLoad)
     End Function
 
     Public Function Find(Of T As {OrmBase, New})(ByVal criteria As IGetFilter, _
@@ -2566,6 +2531,52 @@ l1:
         Return FindM2MReturnKeys(Of T)(obj, direct).First.Entry
     End Function
 
+    Public Function FindDistinct(Of T As {OrmBase, New})(ByVal relation As M2MRelation, _
+        ByVal criteria As IGetFilter, _
+        ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+
+        Dim key As String = "distinct" & _schema.GetEntityKey(GetFilterInfo, GetType(T))
+
+        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+            key &= criteria.Filter(GetType(T)).ToStaticString
+        End If
+
+        If relation IsNot Nothing Then
+            key &= relation.Table.RawName & relation.Column
+        End If
+
+        key &= GetStaticKey()
+
+        Dim dic As IDictionary = GetDic(_cache, key)
+
+        Dim id As String = GetType(T).ToString
+        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+            id &= criteria.Filter(GetType(T)).ToString
+        End If
+
+        If relation IsNot Nothing Then
+            id &= relation.Table.RawName & relation.Column
+        End If
+
+        Dim sync As String = id & GetStaticKey()
+
+        'CreateDepends(filter, key, id)
+
+        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(relation, GetFilter(criteria, GetType(T)), sort, key, id)
+        'Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
+        Dim s As Boolean = True
+        Dim r As ReadOnlyList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
+        If Not s Then
+            Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
+            Using ac As New ApplyCriteria(Me, Nothing)
+                Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
+                c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
+                r = FindDistinct(Of T)(relation, ObjectSchema.CreateCriteriaLink(c), sort, withLoad)
+            End Using
+        End If
+        Return r
+    End Function
+
     Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As Boolean) As String
         Return tt1.Name & Const_JoinStaticString & direct & " - new version - " & tt2.Name & GetStaticKey()
     End Function
@@ -2798,47 +2809,6 @@ l1:
         Next
     End Sub
 
-    'Protected Sub ObjRelationUpdate(ByVal obj As OrmBase, ByVal oldid As Integer, ByVal t As Type)
-    '    Invariant()
-
-    '    If obj Is Nothing Then
-    '        Throw New ArgumentNullException("obj parameter cannot be nothing")
-    '    End If
-
-    '    If t Is Nothing Then
-    '        Throw New ArgumentNullException("t parameter cannot be nothing")
-    '    End If
-
-    '    Dim tt1 As Type = obj.GetType
-    '    Dim tt2 As Type = t
-
-    '    Dim key As String = tt1.Name & Const_JoinStaticString & tt2.Name & GetStaticKey()
-    '    Dim key2 As String = tt2.Name & Const_JoinStaticString & tt1.Name & GetStaticKey()
-    '    Dim new_id As String = obj.Identifier.ToString
-    '    Dim old_id As String = oldid.ToString
-    '    Dim sync As String = old_id & Const_KeyStaticString & key & GetTablePostfix
-    '    Dim dic As IDictionary = GetDic(_cache, key & GetTablePostfix)
-
-    '    If dic.Contains(old_id.ToString) Then
-    '        Dim dt As System.Data.DataTable = GetDataTable(old_id, key & GetTablePostfix, sync, tt2, obj, Nothing, False, True, False)
-    '        dic.Remove(old_id)
-    '        dic.Add(new_id, dt)
-    '        Using SyncHelper.AcquireDynamicLock(sync)
-    '            Dim literal As String = tt1.Name & "ID"
-    '            Dim literal2 As String = tt2.Name & "ID"
-    '            If tt1 Is tt2 Then
-    '                literal2 = literal & "Rev"
-    '            End If
-    '            For Each dr As System.Data.DataRow In dt.Select(literal & " = " & old_id)
-    '                dr(literal) = obj.Identifier
-    '                Dim l_id As Integer = CInt(dr(literal2))
-    '                SubObjRelationUpdate(l_id, key2, literal2, literal, _
-    '                        obj.Identifier, oldid, tt1, tt2)
-    '            Next
-    '        End Using
-    '    End If
-    'End Sub
-
     Protected Friend Sub M2MAdd(ByVal mainobj As OrmBase, ByVal subobj As OrmBase, ByVal direct As Boolean)
         If mainobj Is Nothing Then
             Throw New ArgumentNullException("mainobj")
@@ -2856,25 +2826,6 @@ l1:
             M2MAddInternal(subobj, mainobj, direct)
         End If
     End Sub
-
-    'Public Sub Obj2ObjRelationAdd(ByVal mainobj As OrmBase, ByVal subobj As OrmBase)
-    '    Obj2ObjRelationAddInternal(mainobj, subobj)
-    '    Obj2ObjRelationAddInternal(subobj, mainobj)
-    'End Sub
-
-    'Protected Friend Function FindM2MNonGeneric(ByVal mainobj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As M2MCache
-    '    Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
-    '    'Dim pm As New Reflection.ParameterModifier(6)
-    '    'pm(5) = True
-    '    Dim types As Type() = New Type() {GetType(OrmBase), GetType(Boolean), GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}
-    '    Dim o() As Object = New Object() {mainobj, direct, Nothing, Nothing, False}
-    '    'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
-    '    '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
-    '    Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("FindM2M", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
-    '    Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {tt2})
-    '    Dim p As Pair(Of M2MCache, Boolean) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Pair(Of M2MCache, Boolean))
-    '    Return p.First
-    'End Function
 
     Protected Friend Function FindM2MNonGeneric(ByVal mainobj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As Pair(Of M2MCache, Boolean)
         Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
@@ -3572,7 +3523,7 @@ l1:
 
     Protected MustOverride Function Search(Of T As {OrmBase, New})( _
         ByVal type2search As Type, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, _
-        ByVal frmt As IFtsStringFormater) As ReadOnlyList(Of T)
+        ByVal frmt As IFtsStringFormater, Optional ByVal joins() As OrmJoin = Nothing) As ReadOnlyList(Of T)
 
     Protected Friend MustOverride Function GetStaticKey() As String
 
@@ -3642,6 +3593,7 @@ l1:
 
     Protected MustOverride Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
         ByVal oper As FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
+    Protected MustOverride Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As OrmJoin()
 
     Protected MustOverride ReadOnly Property Exec() As TimeSpan
     Protected MustOverride ReadOnly Property Fecth() As TimeSpan
@@ -3853,12 +3805,17 @@ l1:
                         Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2join, oschema)
 
                         If String.IsNullOrEmpty(field) Then
-                            Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+                            Dim m2m As M2MRelation = _schema.GetM2MRelation(type2join, selectType, True)
+                            If m2m IsNot Nothing Then
+                                l.AddRange(MakeM2MJoin(m2m, type2join))
+                            Else
+                                Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+                            End If
+                        Else
+                            l.Add(MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
                         End If
 
                         types.Add(type2join)
-
-                        l.Add(MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
 
                         Dim ts As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2join), IOrmObjectSchema)
                         Dim pk_table As OrmTable = ts.GetTables(0)

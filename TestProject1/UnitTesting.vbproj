@@ -125,9 +125,9 @@
       <Project>{7D8F3864-281D-495E-B0E4-5731FC31D007}</Project>
       <Name>ASPNETHosting</Name>
     </ProjectReference>
-    <ProjectReference Include="..\obm\Orm.vbproj">
+    <ProjectReference Include="..\obm\Worm.Orm.vbproj">
       <Project>{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}</Project>
-      <Name>Orm</Name>
+      <Name>Worm.Orm</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

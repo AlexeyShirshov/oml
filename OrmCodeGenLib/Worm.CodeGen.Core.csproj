@@ -7,8 +7,8 @@
     <ProjectGuid>{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OrmCodeGenLib</RootNamespace>
-    <AssemblyName>OrmCodeGenLib</AssemblyName>
+    <RootNamespace>Worm.CodeGen.Core</RootNamespace>
+    <AssemblyName>Worm.CodeGen.Core</AssemblyName>
     <SccProjectName>SAK</SccProjectName>
     <SccLocalPath>SAK</SccLocalPath>
     <SccAuxPath>SAK</SccAuxPath>
@@ -87,9 +87,9 @@
     <Compile Include="SettingsManager.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\obm\Orm.vbproj">
+    <ProjectReference Include="..\obm\Worm.Orm.vbproj">
       <Project>{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}</Project>
-      <Name>Orm</Name>
+      <Name>Worm.Orm</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
