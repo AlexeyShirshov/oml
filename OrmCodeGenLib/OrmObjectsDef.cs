@@ -232,17 +232,20 @@ namespace Worm.CodeGen.Core
 
         public TypeDescription GetType(string typeId, bool throwNotFoundException)
         {
-            TypeDescription type;
-            type = Types.Find(delegate(TypeDescription match) { return match.Identifier == typeId; });
-            if(type == null && Includes.Count != 0)
-                foreach (OrmObjectsDef objectsDef in Includes)
-                {
-                    type = objectsDef.GetType(typeId, false);
-                    if (type != null)
-                        break;
-                }
-            if (throwNotFoundException && type == null)
-                throw new KeyNotFoundException(string.Format("Type with id '{0}' not found.", typeId));
+            TypeDescription type = null;
+            if (!string.IsNullOrEmpty(typeId))
+            {
+                type = Types.Find(delegate(TypeDescription match) { return match.Identifier == typeId; });
+                if (type == null && Includes.Count != 0)
+                    foreach (OrmObjectsDef objectsDef in Includes)
+                    {
+                        type = objectsDef.GetType(typeId, false);
+                        if (type != null)
+                            break;
+                    }
+                if (throwNotFoundException && type == null)
+                    throw new KeyNotFoundException(string.Format("Type with id '{0}' not found.", typeId));
+            }
             return type;
         }
 
