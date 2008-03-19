@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace OrmCodeGenLib.Descriptors
+namespace Worm.CodeGen.Core.Descriptors
 {
     public class PropertyDescription : ICloneable
     {
@@ -20,6 +20,7 @@ namespace OrmCodeGenLib.Descriptors
         private bool _isSuppressed;
         private EntityDescription _entity;
         private bool _disabled;
+    	private bool _enablePropertyChanged;
 
 		private ObsoleteType _obsolete;
     	private string _obsoleteDescripton;
@@ -154,6 +155,12 @@ namespace OrmCodeGenLib.Descriptors
     	{
     		get { return _obsoleteDescripton; }
     		set { _obsoleteDescripton = value; }
+    	}
+
+    	public bool EnablePropertyChanged
+    	{
+    		get { return _enablePropertyChanged; }
+    		set { _enablePropertyChanged = value; }
     	}
 
     	#region ICloneable Members

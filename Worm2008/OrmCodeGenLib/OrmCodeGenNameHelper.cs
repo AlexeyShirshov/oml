@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
-using OrmCodeGenLib.Descriptors;
+using Worm.CodeGen.Core.Descriptors;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
     internal static class OrmCodeGenNameHelper
     {

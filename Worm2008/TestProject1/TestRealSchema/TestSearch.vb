@@ -139,4 +139,18 @@ Public Class TestSearch
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestM2MSearch()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("Search"))
+            Dim t3 As Table3 = mgr.Find(Of Table3)(1)
+            Dim col As Worm.ReadOnlyList(Of Table1) = t3.M2M.Find(Of Table1)()
+
+            Assert.AreEqual(2, col.Count)
+
+            col = t3.M2M.Search(Of Table1)("first")
+
+            Assert.AreEqual(1, col.Count)
+            Assert.AreEqual("first", col(0).Name)
+        End Using
+    End Sub
 End Class

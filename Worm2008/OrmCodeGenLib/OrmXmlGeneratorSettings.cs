@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
     /// <summary>
-    /// Specifies a set of features to support Worm xml schema generator of <see cref="OrmCodeGenLib.OrmObjectsDef"/> class.
+    /// Specifies a set of features to support Worm xml schema generator of <see cref="Worm.CodeGen.Core.OrmObjectsDef"/> class.
     /// </summary>
     public class OrmXmlGeneratorSettings: ICloneable
     {

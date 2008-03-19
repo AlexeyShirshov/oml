@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-namespace OrmCodeGenLib.CodeDomPatterns
+namespace Worm.CodeGen.Core.CodeDomPatterns
 {
 	public class CodeCsAsExpression : CodeAsExpressionBase
 	{

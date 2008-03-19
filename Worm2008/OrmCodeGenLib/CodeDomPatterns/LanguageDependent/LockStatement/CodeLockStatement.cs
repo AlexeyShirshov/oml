@@ -4,7 +4,7 @@ using System.Text;
 using System.IO;
 using System.CodeDom;
 
-namespace OrmCodeGenLib.CodeDomPatterns
+namespace Worm.CodeGen.Core.CodeDomPatterns
 {
     public abstract class CodeLockStatementBase : CodeSnippetStatement
     {

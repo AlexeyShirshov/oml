@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.CodeDom;
-using OrmCodeGenLib.Descriptors;
+using Worm.CodeGen.Core.Descriptors;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
     static class OrmCodeGenHelper
     {

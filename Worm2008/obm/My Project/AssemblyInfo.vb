@@ -10,10 +10,10 @@ Imports System.Runtime
 
 ' Review the values of the assembly attributes
 
-<Assembly: AssemblyTitle("Worm.Orm")> 
+<Assembly: AssemblyTitle("Worm")> 
 <Assembly: AssemblyDescription("")> 
 <Assembly: AssemblyCompany("")> 
-<Assembly: AssemblyProduct("")> 
+<Assembly: AssemblyProduct("Web object-relational mapping framework")> 
 <Assembly: AssemblyCopyright("Copyright ©  2005")> 
 <Assembly: AssemblyTrademark("")> 
 

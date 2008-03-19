@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Xml;
 using System.Xml.Schema;
-using OrmCodeGenLib.Descriptors;
+using Worm.CodeGen.Core.Descriptors;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
     internal class OrmXmlParser
     {
@@ -172,7 +172,7 @@ namespace OrmCodeGenLib
             {
                 XmlNode entityNode =
                     _ormXmlDocument.DocumentElement.SelectSingleNode(
-                        string.Format("{0}:Entities/{0}:Entity[@id='{1}']", OrmCodeGenLib.OrmObjectsDef.NS_PREFIX,
+                        string.Format("{0}:Entities/{0}:Entity[@id='{1}']", Worm.CodeGen.Core.OrmObjectsDef.NS_PREFIX,
                                       entity.Identifier), _nsMgr);
 
                 XmlElement entityElement = (XmlElement)entityNode;
@@ -226,6 +226,10 @@ namespace OrmCodeGenLib
                 Uri baseUri = new Uri(baseUriString, UriKind.RelativeOrAbsolute);
                 _ormObjectsDef.FileName = Path.GetFileName(baseUri.ToString());
             }
+        	string enableCommonPropertyChangedFireAttr =
+        		_ormXmlDocument.DocumentElement.GetAttribute("enableCommonPropertyChangedFire");
+			if (!string.IsNullOrEmpty(enableCommonPropertyChangedFireAttr))
+				_ormObjectsDef.EnableCommonPropertyChangedFire = XmlConvert.ToBoolean(enableCommonPropertyChangedFireAttr);
         }
 
         internal protected void FindEntities()
@@ -284,11 +288,11 @@ namespace OrmCodeGenLib
 
             foreach (XmlNode propertyNode in propertiesList)
             {
-                string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription;
+				string name, description, typeId, fieldname, sAttributes, tableId, fieldAccessLevelName, propertyAccessLevelName, propertyAlias, propertyDisabled, propertyObsolete, propertyObsoleteDescription, enablePropertyChangedAttribute;
                 string[] attributes;
                 TableDescription table;
                 AccessLevel fieldAccessLevel, propertyAccessLevel;
-                bool disabled = false;
+            	bool disabled = false, enablePropertyChanged = false;
             	ObsoleteType obsolete;
 
                 XmlElement propertyElement = (XmlElement) propertyNode;
@@ -304,6 +308,7 @@ namespace OrmCodeGenLib
                 propertyDisabled = propertyElement.GetAttribute("disabled");
             	propertyObsolete = propertyElement.GetAttribute("obsolete");
 				propertyObsoleteDescription = propertyElement.GetAttribute("obsoleteDescription");
+            	enablePropertyChangedAttribute = propertyElement.GetAttribute("enablePropertyChanged");
 
                 attributes = sAttributes.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                 if (!string.IsNullOrEmpty(propertyAccessLevelName))
@@ -337,10 +342,14 @@ namespace OrmCodeGenLib
 					obsolete = ObsoleteType.None;
 				}
 
+				if (!string.IsNullOrEmpty(enablePropertyChangedAttribute))
+					enablePropertyChanged = XmlConvert.ToBoolean(enablePropertyChangedAttribute);
+
                 PropertyDescription property = new PropertyDescription(entity ,name, propertyAlias, attributes, description, typeDesc, fieldname, table, fieldAccessLevel, propertyAccessLevel);
                 property.Disabled = disabled;
             	property.Obsolete = obsolete;
             	property.ObsoleteDescripton = propertyObsoleteDescription;
+            	property.EnablePropertyChanged = enablePropertyChanged;
 
                 entity.Properties.Add(property);
             }
@@ -376,6 +385,12 @@ namespace OrmCodeGenLib
 				string leftAccessorName = leftTargetElement.GetAttribute("accessorName");
 				string rightAccessorName = rightTargetElement.GetAttribute("accessorName");
 
+				string leftAccessedEntityTypeId = leftTargetElement.GetAttribute("accessedEntityType");
+				string rightAccessedEntityTypeId = leftTargetElement.GetAttribute("accessedEntityType");
+
+				TypeDescription leftAccessedEntityType = _ormObjectsDef.GetType(leftAccessedEntityTypeId, false);
+				TypeDescription rightAccessedEntityType = _ormObjectsDef.GetType(rightAccessedEntityTypeId, false);
+
 				TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
 
 				EntityDescription underlyingEntity;
@@ -398,6 +413,8 @@ namespace OrmCodeGenLib
 
 				LinkTarget leftLinkTarget = new LinkTarget(leftLinkTargetEntity, leftFieldName, leftCascadeDelete, leftAccessorName);
 				LinkTarget rightLinkTarget = new LinkTarget(rightLinkTargetEntity, rightFieldName, rightCascadeDelete, rightAccessorName);
+				leftLinkTarget.AccessedEntityType = leftAccessedEntityType;
+				rightLinkTarget.AccessedEntityType = rightAccessedEntityType;
 
 				RelationDescription relation = new RelationDescription(leftLinkTarget, rightLinkTarget, relationTable, underlyingEntity, disabled);
 				_ormObjectsDef.Relations.Add(relation);
@@ -429,6 +446,12 @@ namespace OrmCodeGenLib
 				string directAccessorName = directTargetElement.GetAttribute("accessorName");
 				string reverseAccessorName = reverseTargetElement.GetAttribute("accessorName");
 
+				string directAccessedEntityTypeId = directTargetElement.GetAttribute("accessedEntityType");
+				string reverseAccessedEntityTypeId = reverseTargetElement.GetAttribute("accessedEntityType");
+
+				TypeDescription directAccessedEntityType = _ormObjectsDef.GetType(directAccessedEntityTypeId, false);
+				TypeDescription reverseAccessedEntityType = _ormObjectsDef.GetType(reverseAccessedEntityTypeId, false);
+
 				TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
 
 				EntityDescription underlyingEntity;
@@ -449,6 +472,9 @@ namespace OrmCodeGenLib
 
 				SelfRelationTarget directTarget = new SelfRelationTarget(directFieldName, directCascadeDelete, directAccessorName);
 				SelfRelationTarget reverseTarget = new SelfRelationTarget(reverseFieldName, reverseCascadeDelete, reverseAccessorName);
+
+				directTarget.AccessedEntityType = directAccessedEntityType;
+				reverseTarget.AccessedEntityType = reverseAccessedEntityType;
 
 				SelfRelationDescription relation = new SelfRelationDescription(entity, directTarget, reverseTarget, relationTable, underlyingEntity, disabled);
 				_ormObjectsDef.Relations.Add(relation);

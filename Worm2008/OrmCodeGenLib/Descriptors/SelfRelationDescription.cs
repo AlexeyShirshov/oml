@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace OrmCodeGenLib.Descriptors
+namespace Worm.CodeGen.Core.Descriptors
 {
     public abstract class RelationDescriptionBase
     {
@@ -66,7 +66,7 @@ namespace OrmCodeGenLib.Descriptors
     	{
 			get
 			{
-				return !string.IsNullOrEmpty(Left.AccessorName) && !string.IsNullOrEmpty(Right.AccessorName);
+				return !string.IsNullOrEmpty(Left.AccessorName) || !string.IsNullOrEmpty(Right.AccessorName);
 			}
     	}
     }

@@ -4,20 +4,20 @@ using System.Text;
 using Microsoft.CSharp;
 using Microsoft.VisualBasic;
 using System.CodeDom;
-using OrmCodeGenLib;
-using OrmCodeGenLib.Descriptors;
+using Worm.CodeGen.Core;
+using Worm.CodeGen.Core.Descriptors;
 using System.Xml;
 using System.CodeDom.Compiler;
 using System.IO;
 
 
-namespace OrmCodeGen
+namespace Worm.CodeGen.CodeGenerator
 {
     class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("OrmObjects CodeGen utility.");
+            Console.WriteLine("Worm code generator utility.");
             Console.WriteLine();
 
 			CommandLine.Utility.Arguments cmdLine = new CommandLine.Utility.Arguments(args);

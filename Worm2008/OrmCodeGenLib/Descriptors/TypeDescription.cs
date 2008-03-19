@@ -1,7 +1,7 @@
 using System;
 using System.Reflection;
 
-namespace OrmCodeGenLib.Descriptors
+namespace Worm.CodeGen.Core.Descriptors
 {
     public class TypeDescription
     {
@@ -93,7 +93,8 @@ namespace OrmCodeGenLib.Descriptors
                     return _clrType.FullName;
                 if (IsUserType)
                     return _userType;
-                throw new InvalidOperationException("Usable only for none entity types. Try 'IsEntityType' at first.");
+            	return OrmCodeGenNameHelper.GetEntityClassName(_entity, true);
+
             }
         }
 
@@ -190,6 +191,7 @@ namespace OrmCodeGenLib.Descriptors
         None = 0x0000,
         Enum = 0x0001,
         ValueType = 0x0002,
-        Nullable = 0x0004
+        Nullable = 0x0004,
+		Char = 0 >> 1,
     }
 }

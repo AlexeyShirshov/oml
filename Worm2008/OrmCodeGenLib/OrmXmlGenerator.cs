@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Xml;
-using OrmCodeGenLib.Descriptors;
+using Worm.CodeGen.Core.Descriptors;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
     internal class OrmXmlGenerator
     {
@@ -165,6 +165,11 @@ namespace OrmCodeGenLib
 					if (!string.IsNullOrEmpty(relation.Right.AccessorName))
 						rightElement.SetAttribute("accessorName", relation.Right.AccessorName);
 
+					if (relation.Left.AccessedEntityType != null)
+						leftElement.SetAttribute("accessedEntityType", relation.Left.AccessedEntityType.Identifier);
+					if (relation.Right.AccessedEntityType != null)
+						rightElement.SetAttribute("accessedEntityType", relation.Right.AccessedEntityType.Identifier);
+
                     if (relation.UnderlyingEntity != null)
                     {
                         relationElement.SetAttribute("underlyingEntity", relation.UnderlyingEntity.Identifier);
@@ -198,6 +203,11 @@ namespace OrmCodeGenLib
                     reverseElement.SetAttribute("cascadeDelete", XmlConvert.ToString(relation.Reverse.CascadeDelete));
 					if (!string.IsNullOrEmpty(relation.Reverse.AccessorName))
 						reverseElement.SetAttribute("accessorName", relation.Reverse.AccessorName);
+
+					if (relation.Direct.AccessedEntityType != null)
+						directElement.SetAttribute("accessedEntityType", relation.Direct.AccessedEntityType.Identifier);
+					if (relation.Reverse.AccessedEntityType != null)
+						reverseElement.SetAttribute("accessedEntityType", relation.Reverse.AccessedEntityType.Identifier);
 
                     if (relation.UnderlyingEntity != null)
                     {
@@ -269,6 +279,8 @@ namespace OrmCodeGenLib
 						propertyElement.SetAttribute("obsolete", property.Obsolete.ToString());
 					if(!string.IsNullOrEmpty(property.ObsoleteDescripton))
 						propertyElement.SetAttribute("obsoleteDescription", property.ObsoleteDescripton);
+					if (property.EnablePropertyChanged)
+						propertyElement.SetAttribute("enablePropertyChanged", XmlConvert.ToString(property.EnablePropertyChanged));
                     propertiesNode.AppendChild(propertyElement);
                 }
                 entityElement.AppendChild(propertiesNode);
@@ -336,6 +348,9 @@ namespace OrmCodeGenLib
             _ormXmlDocumentMain.DocumentElement.SetAttribute("schemaVersion", _ormObjectsDef.SchemaVersion);
 			if (!string.IsNullOrEmpty(_ormObjectsDef.EntityBaseTypeName))
 				_ormXmlDocumentMain.DocumentElement.SetAttribute("entityBaseType", _ormObjectsDef.EntityBaseTypeName);
+			if (_ormObjectsDef.EnableCommonPropertyChangedFire)
+				_ormXmlDocumentMain.DocumentElement.SetAttribute("enableCommonPropertyChangedFire",
+				                                                 XmlConvert.ToString(_ormObjectsDef.EnableCommonPropertyChangedFire));
 
             StringBuilder commentBuilder = new StringBuilder();
             foreach (string comment in _ormObjectsDef.SystemComments)

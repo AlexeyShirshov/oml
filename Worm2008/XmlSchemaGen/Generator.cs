@@ -3,12 +3,12 @@ using System.Collections.Generic;
 using System.Text;
 using System.Data;
 using System.Data.Common;
-using OrmCodeGenLib;
-using OrmCodeGenLib.Descriptors;
+using Worm.CodeGen.Core;
+using Worm.CodeGen.Core.Descriptors;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace XmlSchemaGen
+namespace Worm.CodeGen.XmlGenerator
 {
 	public class Pair<T>
 	{

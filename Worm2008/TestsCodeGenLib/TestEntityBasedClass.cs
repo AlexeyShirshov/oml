@@ -6,7 +6,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Xml;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using OrmCodeGenLib;
+using Worm.CodeGen.Core;
 
 namespace TestsCodeGenLib
 {

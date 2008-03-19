@@ -51,9 +51,9 @@
     <Compile Include="VSCodeGenAccessors.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OrmCodeGenLib\OrmCodeGenLib.csproj">
+    <ProjectReference Include="..\OrmCodeGenLib\Worm.CodeGen.Core.csproj">
       <Project>{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}</Project>
-      <Name>OrmCodeGenLib</Name>
+      <Name>Worm.CodeGen.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

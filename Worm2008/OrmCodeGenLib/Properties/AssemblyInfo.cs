@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("OrmCodeGenLib")]
+[assembly: AssemblyTitle("Worm.CodeGen.Core")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("X-Media LLC")]
-[assembly: AssemblyProduct("OrmCodeGenLib")]
-[assembly: AssemblyCopyright("Copyright © X-Media LLC 2007")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("Code generator library. This is a part of Worm framework")]
+[assembly: AssemblyCopyright("Copyright © 2007")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

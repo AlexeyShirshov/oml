@@ -307,7 +307,7 @@ Namespace Criteria.Core
                 _oschema = schema.GetObjectSchema(Template.Type)
             End If
 
-            Dim prname As String = ParamValue.GetParam(schema, pname, Me)
+            Dim prname As String = ParamValue.GetParam(schema, pname, Nothing)
 
             Dim map As MapField2Column = _oschema.GetFieldColumnMap()(Template.FieldName)
 

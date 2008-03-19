@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace OrmCodeGenLib.Descriptors
+namespace Worm.CodeGen.Core.Descriptors
 {
     public class TableDescription
     {

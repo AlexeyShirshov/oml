@@ -699,7 +699,7 @@ Namespace Database
                     'End If
                     Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse SQLGenerator.NeedJoin(schema2)
                     'Dim table As String = schema2.GetTables(0)
-                    DbSchema.AppendJoins(selectedType, almgr, schema2.GetTables, sb, params, DbSchema.GetObjectSchema(ct).GetTables(0), id_clm, appendMainTable, GetFilterInfo)
+                    DbSchema.AppendNativeTypeJoins(selectedType, almgr, schema2.GetTables, sb, params, DbSchema.GetObjectSchema(ct).GetTables(0), id_clm, appendMainTable, GetFilterInfo)
                     If withLoad Then
                         For Each tbl As OrmTable In schema2.GetTables
                             If almgr.Aliases.ContainsKey(tbl) Then
@@ -1954,7 +1954,8 @@ Namespace Database
         End Function
 
         Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal type2search As Type, _
-            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal frmt As IFtsStringFormater) As ReadOnlyList(Of T)
+            ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, _
+            ByVal frmt As IFtsStringFormater, Optional ByVal js() As OrmJoin = Nothing) As ReadOnlyList(Of T)
 
             Dim fields As New List(Of Pair(Of String, Type))
             Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
@@ -2480,6 +2481,15 @@ l2:
             Dim jf As New Database.Criteria.Joins.JoinFilter(type2join, "ID", selectType, field, oper)
 
             Return New Database.Criteria.Joins.OrmJoin(tbl, joinType, jf)
+        End Function
+
+        Protected Overrides Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As Worm.Criteria.Joins.OrmJoin()
+            Dim jf As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, m2m.Type, "ID", Worm.Criteria.FilterOperation.Equal)
+            Dim mj As New Database.Criteria.Joins.OrmJoin(m2m.Table, JoinType.Join, jf)
+            m2m = _schema.GetM2MRelation(m2m.Type, type2join, True)
+            Dim jt As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, type2join, "ID", Worm.Criteria.FilterOperation.Equal)
+            Dim tj As New Database.Criteria.Joins.OrmJoin(_schema.GetTables(type2join)(0), JoinType.Join, jt)
+            Return New Database.Criteria.Joins.OrmJoin() {mj, tj}
         End Function
 
         Protected Overrides ReadOnly Property Exec() As System.TimeSpan

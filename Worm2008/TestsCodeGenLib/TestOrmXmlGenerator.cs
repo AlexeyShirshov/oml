@@ -3,7 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Xml;
-using OrmCodeGenLib;
+using Worm.CodeGen.Core;
 using System.IO;
 
 namespace TestsCodeGenLib
@@ -40,7 +40,7 @@ namespace TestsCodeGenLib
             using (XmlReader rdr = XmlReader.Create(stream))
             {
 
-                OrmCodeGenLib.OrmObjectsDef schemaDef = OrmObjectsDef.LoadFromXml(rdr, new TestXmlUrlResolver());
+                Worm.CodeGen.Core.OrmObjectsDef schemaDef = OrmObjectsDef.LoadFromXml(rdr, new TestXmlUrlResolver());
                 ormXmlDocumentSet = schemaDef.GetOrmXmlDocumentSet(new OrmXmlGeneratorSettings());
 
             }

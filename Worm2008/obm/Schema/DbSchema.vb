@@ -1080,7 +1080,7 @@ Namespace Database
                 selectcmd.Append(join.MakeSQLStmt(Me, almgr, params))
 
                 If appendSecondTable Then
-                    AppendJoins(relation.Type, almgr, GetTables(relation.Type), selectcmd, params, tbl, relation.Column, True, filterInfo)
+                    AppendNativeTypeJoins(relation.Type, almgr, GetTables(relation.Type), selectcmd, params, tbl, relation.Column, True, filterInfo)
                 End If
             Else
                 Throw New NotImplementedException
@@ -1275,7 +1275,7 @@ Namespace Database
         ''' <param name="id">имя внешнего ключевого поля</param>
         ''' <param name="appendMainTable"></param>
         ''' <remarks></remarks>
-        Protected Friend Sub AppendJoins(ByVal selectedType As Type, ByVal almgr As AliasMgr, _
+        Protected Friend Sub AppendNativeTypeJoins(ByVal selectedType As Type, ByVal almgr As AliasMgr, _
             ByVal tables As OrmTable(), ByVal selectcmd As StringBuilder, ByVal pname As ParamMgr, _
             ByVal table As OrmTable, ByVal id As String, ByVal appendMainTable As Boolean, ByVal filterInfo As Object) ', Optional ByVal dic As IDictionary(Of OrmTable, OrmTable) = Nothing)
 
@@ -1365,7 +1365,7 @@ Namespace Database
 
             'Dim f As IOrmFilter = schema.GetFilter(filter_info)
             'Dim dic As New Generic.Dictionary(Of OrmTable, OrmTable)
-            AppendJoins(selectedType, almgr, tables, selectcmd, pname, table, id, appendMainTable, filterInfo)
+            AppendNativeTypeJoins(selectedType, almgr, tables, selectcmd, pname, table, id, appendMainTable, filterInfo)
 
             For Each tbl As OrmTable In tables
                 'Dim newt As OrmTable = Nothing
@@ -1810,7 +1810,7 @@ Namespace Database
             If Not appendMain Then
                 appendMain = selSchema.GetFilter(filter_info) IsNot Nothing
             End If
-            AppendJoins(searchType, almgr, GetTables(searchType), sb, params, ct, "[key]", appendMain, filter_info)
+            AppendNativeTypeJoins(searchType, almgr, GetTables(searchType), sb, params, ct, "[key]", appendMain, filter_info)
             'If fields.Count > 0 Then
             If appendMain Then
                 'Dim mainAlias As String = almgr.Aliases(searchTable)

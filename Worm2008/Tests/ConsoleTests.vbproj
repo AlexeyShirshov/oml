@@ -115,13 +115,13 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\obm\Orm.vbproj">
+    <ProjectReference Include="..\obm\Worm.Orm.vbproj">
       <Project>{0D27B4E8-FCC0-4126-A3C0-D3C2E26E71BD}</Project>
-      <Name>Orm</Name>
+      <Name>Worm.Orm</Name>
     </ProjectReference>
-    <ProjectReference Include="..\TestProject1\TestProject1.vbproj">
+    <ProjectReference Include="..\TestProject1\UnitTesting.vbproj">
       <Project>{9D39DD33-0A52-460D-A5E2-8576E46B334F}</Project>
-      <Name>TestProject1</Name>
+      <Name>UnitTesting</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

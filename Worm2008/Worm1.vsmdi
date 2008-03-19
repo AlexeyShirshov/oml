@@ -33,6 +33,11 @@
       <TestLink id="e925d53c-97a5-75f4-0b8b-4fefdaec0873" name="TestEval" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
     </TestLinks>
   </TestList>
+  <TestList name="Many to many" id="0b60b46d-3752-4940-8ddc-29525aa8d432" parentListId="5f989bae-f181-4247-94e4-da011373d434">
+    <TestLinks>
+      <TestLink id="4acffe8b-7e92-4e07-bcb1-aebe492a09c4" name="TestDistinct" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    </TestLinks>
+  </TestList>
   <TestList name="Condition (unit tests)" id="19b37304-e9da-47e1-ba7c-7229d0a474aa" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6">
     <TestLinks>
       <TestLink id="9f1ce22e-90e7-2678-1181-7e52d2763775" name="TestMakeSQLStmt3" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
@@ -55,7 +60,7 @@
       <TestLink id="56f9b8c6-f4a3-6882-f7a8-b5c78ac03869" name="TestSimpleTypes2" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
     </TestLinks>
   </TestList>
-  <TestList name="Schema (logic)" id="2e7684bc-fdc8-4666-a3e8-f18460666f2e" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6">
+  <TestList name="Schema (logic)" id="2e7684bc-fdc8-4666-a3e8-f18460666f2e" parentListId="f7141a68-2d19-427d-babc-2ce180fbc746">
     <TestLinks>
       <TestLink id="93087893-8572-af2d-faab-5566cd596984" name="TestSelectm2m4" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
       <TestLink id="af6c693b-5509-5caa-8df5-39a172c234c7" name="TestInsert2" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
@@ -276,7 +281,7 @@
       <TestLink id="e7d96982-5dac-9a74-ce0f-2994569732d5" name="TestMakeSQLStmt4" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
     </TestLinks>
   </TestList>
-  <TestList name="RealSchema" id="cecac694-d2b6-4e08-b5a4-8296cb3a79a7" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6">
+  <TestList name="RealSchema" id="cecac694-d2b6-4e08-b5a4-8296cb3a79a7" parentListId="f7141a68-2d19-427d-babc-2ce180fbc746">
     <TestLinks>
       <TestLink id="3b25b3e1-4e25-1a3d-c9c7-7532b9fbaa31" name="TestLoadTable3" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
       <TestLink id="a38d6e9c-3215-ed2e-6707-0f0be3241ab4" name="TestLoadTable1" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
@@ -299,16 +304,16 @@
   </TestList>
   <TestList name="StoredProcs" id="dbd807ce-30ba-498d-bc7e-d9fc309191c3" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6">
     <TestLinks>
-      <TestLink id="6dff6ed4-e7a8-dd63-9ac5-e8e0572f4fe7" name="TestP2OrmSimple" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
       <TestLink id="c0c03ea4-a3af-a84b-576e-ab937a3aeab6" name="TestP2Orm" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
       <TestLink id="7b6e8074-3692-dd9f-f8e4-f6e9b4aef743" name="TestP1" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
       <TestLink id="e0f8dc11-3795-d7cb-7fe2-605946319580" name="TestP3" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
       <TestLink id="d9c6b801-8035-790b-eb6d-173725b2ed87" name="TestP11" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+      <TestLink id="ad5bd3d9-fcac-9fb2-5c45-db48bf470c24" name="TestScalar" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
       <TestLink id="c6d0e4ca-53ff-256c-ed11-a95cc5318ff7" name="TestPartial" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
       <TestLink id="c3b38707-eb69-66f5-9e1f-0a333151eb01" name="TestMulti" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
-      <TestLink id="ad5bd3d9-fcac-9fb2-5c45-db48bf470c24" name="TestScalar" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
-      <TestLink id="1e020381-5cf6-b4c0-21d5-ab8f42e8b5e8" name="TestP2" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
       <TestLink id="dca3bd76-c837-8e90-6349-4238d672d999" name="TestNonQuery_P4" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+      <TestLink id="6dff6ed4-e7a8-dd63-9ac5-e8e0572f4fe7" name="TestP2OrmSimple" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+      <TestLink id="1e020381-5cf6-b4c0-21d5-ab8f42e8b5e8" name="TestP2" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
     </TestLinks>
   </TestList>
   <TestList name="TestListManager" id="e8ed6a25-f258-4795-8926-4b35899abcd5" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6">
@@ -323,7 +328,7 @@
       <TestLink id="e9efb39c-a1da-d76a-406e-1eb23abea07c" name="TestCreate" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
     </TestLinks>
   </TestList>
-  <TestList name="Schema (unit tests)" id="ef1fa78e-bc97-4a51-916f-762235d3635a" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6">
+  <TestList name="Schema (unit tests)" id="ef1fa78e-bc97-4a51-916f-762235d3635a" parentListId="f7141a68-2d19-427d-babc-2ce180fbc746">
     <TestLinks>
       <TestLink id="fb2978e9-f442-8ec0-5fbe-8472ae9a8028" name="TestGetObjectSchema" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
       <TestLink id="a03bdc92-7a1e-5522-a942-2053d441cb5d" name="TestGetUnions" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
@@ -341,11 +346,17 @@
       <TestLink id="47e6464d-1010-d6b7-08af-2d628917cbc6" name="TestSelect3" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
     </TestLinks>
   </TestList>
+  <TestList name="Many to many" id="ef7d2595-ddac-4225-bf4a-bedc1d126177" parentListId="b461160c-fd6a-447e-8a5f-ed5b7e77b067">
+    <TestLinks>
+      <TestLink id="b671214d-0416-d221-1b03-c97146c912d1" name="TestM2MSearch" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    </TestLinks>
+  </TestList>
   <TestList name="Xml" id="f5dc1f04-2ef2-47c3-a9cd-1a8f441a74fc" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6">
     <TestLinks>
       <TestLink id="2529fef8-640b-f17c-88b4-a39c5f0841b8" name="TestQuery" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
     </TestLinks>
   </TestList>
+  <TestList name="Generator testing" id="f7141a68-2d19-427d-babc-2ce180fbc746" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6" />
   <TestList name="other" id="fd01b9f0-7581-43bb-b110-9e163c2cef36" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6">
     <TestLinks>
       <TestLink id="16f98b11-b486-f90d-e352-18feeb5380f5" name="TestMerge" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />

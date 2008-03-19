@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Xml;
 using System.Xml.Serialization;
-using OrmCodeGenLib.Descriptors;
+using Worm.CodeGen.Core.Descriptors;
 
-namespace OrmCodeGenLib
+namespace Worm.CodeGen.Core
 {
 	[Serializable]
     public class OrmObjectsDef
@@ -35,6 +35,8 @@ namespace OrmCodeGenLib
 
 		private string _entityBaseTypeName;
 		private TypeDescription _entityBaseType;
+
+		private bool _enableCommonPropertyChangedFire;
 
         #endregion Private Fields
 
@@ -168,6 +170,12 @@ namespace OrmCodeGenLib
 				_entityBaseTypeName = value;
 				_entityBaseType = GetType(_entityBaseTypeName, false);
 			}
+		}
+
+		public bool EnableCommonPropertyChangedFire
+		{
+			get { return _enableCommonPropertyChangedFire; }
+			set { _enableCommonPropertyChangedFire = value; }
 		}
 
 		//[XmlIgnore]

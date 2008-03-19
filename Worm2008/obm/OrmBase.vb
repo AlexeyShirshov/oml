@@ -5,6 +5,7 @@ Imports Worm.Orm.Meta
 Imports Worm.Criteria
 Imports System.Collections.Generic
 Imports System.ComponentModel
+Imports Worm.Criteria.Core
 
 Namespace Orm
 
@@ -182,36 +183,68 @@ Namespace Orm
                 End Get
             End Property
 
-            Public Function Find(ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
+            Public Function Find(ByVal t As Type, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
                 Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
-                Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
+                Dim mi As Reflection.MethodInfo = _o.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
                     New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
                 Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
-                Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
+                Return CType(mi_real.Invoke(_o, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
             End Function
 
-            Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, OrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, True, withLoad)
             End Function
 
-            Public Function Find(Of T As {New, OrmBase})(ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, OrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, direct, withLoad)
             End Function
 
-            Public Function Find(ByVal top As Integer, ByVal t As Type, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
-                Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
-                Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
-                    New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
-                Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
-                Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {top, criteria, sort, withLoad}, Nothing), IList)
+            Public Function Find(Of T As {New, OrmBase})() As ReadOnlyList(Of T)
+                Return GetMgr.FindMany2Many2(Of T)(_o, Nothing, Nothing, True, False)
             End Function
 
-            Public Function Find(Of T As {New, OrmBase})(ByVal top As Integer, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, OrmBase})(ByVal direct As Boolean) As ReadOnlyList(Of T)
+                Return GetMgr.FindMany2Many2(Of T)(_o, Nothing, Nothing, True, direct)
+            End Function
+
+            Public Function Find(Of T As {New, OrmBase})(ByVal sort As Sort) As ReadOnlyList(Of T)
+                Return GetMgr.FindMany2Many2(Of T)(_o, Nothing, sort, True, False)
+            End Function
+
+            Public Function Find(Of T As {New, OrmBase})(ByVal sort As Sort, ByVal direct As Boolean) As ReadOnlyList(Of T)
+                Return GetMgr.FindMany2Many2(Of T)(_o, Nothing, sort, direct, False)
+            End Function
+
+            Public Function Find(ByVal top As Integer, ByVal t As Type, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
+                Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
+                Dim mi As Reflection.MethodInfo = _o.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, _
+                    New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
+                Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
+                Return CType(mi_real.Invoke(_o, flags, Nothing, New Object() {top, criteria, sort, withLoad}, Nothing), IList)
+            End Function
+
+            Public Function Find(Of T As {New, OrmBase})(ByVal top As Integer, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, True, withLoad, top)
             End Function
 
-            Public Function Find(Of T As {New, OrmBase})(ByVal top As Integer, ByVal criteria As CriteriaLink, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, OrmBase})(ByVal top As Integer, ByVal criteria As igetfilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, direct, withLoad, top)
+            End Function
+
+            Public Function FindDistinct(ByVal t As Type, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As IList
+                Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
+                Dim mi As Reflection.MethodInfo = _o.GetType.GetMethod("FindDistinct", flags, Nothing, Reflection.CallingConventions.Any, _
+                    New Type() {GetType(CriteriaLink), GetType(Sort), GetType(Boolean)}, Nothing)
+                Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
+                Return CType(mi_real.Invoke(_o, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
+            End Function
+
+            Public Function FindDistinct(Of T As {New, OrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+                Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, True, withLoad)
+            End Function
+
+            Public Function FindDistinct(Of T As {New, OrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+                Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, direct, withLoad)
             End Function
 
             Public Sub Add(ByVal obj As OrmBase)
@@ -271,6 +304,30 @@ Namespace Orm
                     End If
                 Next
             End Sub
+
+            Public Function Search(Of T As {OrmBase, New})(ByVal text As String) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function Search(Of T As {OrmBase, New})(ByVal text As String, ByVal sort As Sort) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function Search(Of T As {OrmBase, New})(ByVal text As String, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function Search(Of T As {OrmBase, New})(ByVal text As String, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function Search(Of T As {OrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function Search(Of T As {OrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
         End Class
 
         <EditorBrowsable(EditorBrowsableState.Never)> _
@@ -294,12 +351,12 @@ Namespace Orm
                 Protected Friend Set(ByVal value As Boolean)
                     Using _o.SyncHelper(False)
                         If value AndAlso Not _o._loaded Then
-                            Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
+                            Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(_o.GetType)
                             For i As Integer = 0 To arr.Count - 1
                                 _o._members_load_state(i) = True
                             Next
                         ElseIf Not value AndAlso _o._loaded Then
-                            Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(Me.GetType)
+                            Dim arr As Generic.List(Of ColumnAttribute) = GetMgr.ObjectSchema.GetSortedFieldList(_o.GetType)
                             For i As Integer = 0 To arr.Count - 1
                                 _o._members_load_state(i) = False
                             Next
@@ -384,12 +441,12 @@ Namespace Orm
                 Get
                     Dim columns As New Generic.List(Of ColumnAttribute)
                     Dim t As Type = obj.GetType
-                    For Each pi As Reflection.PropertyInfo In Me.GetType.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
+                    For Each pi As Reflection.PropertyInfo In _o.GetType.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
                         Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
                         If c IsNot Nothing Then
                             Dim original As Object = pi.GetValue(obj, Nothing)
                             If (_o.OrmSchema.GetAttributes(t, c) And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
-                                Dim current As Object = pi.GetValue(Me, Nothing)
+                                Dim current As Object = pi.GetValue(_o, Nothing)
                                 If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
                                     (current IsNot Nothing AndAlso Not current.Equals(original)) Then
                                     columns.Add(c)
@@ -403,7 +460,7 @@ Namespace Orm
 
             Public ReadOnly Property ObjName() As String
                 Get
-                    Return Me.GetType.Name & " - " & ObjectState.ToString & " (" & _o._id & "): "
+                    Return _o.GetType.Name & " - " & ObjectState.ToString & " (" & _o._id & "): "
                 End Get
             End Property
 
@@ -416,7 +473,7 @@ Namespace Orm
                             sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
                         Next
                     Else
-                        Dim t As Type = Me.GetType
+                        Dim t As Type = _o.GetType
                         'Dim o As OrmBase = CType(t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
                         '    New Object() {Identifier, OrmCache, _schema}), OrmBase)
                         'Dim o As OrmBase = GetNew()

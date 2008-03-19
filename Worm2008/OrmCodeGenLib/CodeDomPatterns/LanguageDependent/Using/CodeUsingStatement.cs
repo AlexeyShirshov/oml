@@ -4,7 +4,7 @@ using System.Text;
 using System.IO;
 using System.CodeDom;
 
-namespace OrmCodeGenLib.CodeDomPatterns
+namespace Worm.CodeGen.Core.CodeDomPatterns
 {
     public abstract class CodeUsingStatementBase : CodeSnippetStatement
     {
@@ -38,7 +38,10 @@ namespace OrmCodeGenLib.CodeDomPatterns
 
         public CodeStatement[] Statements
         {
-            get { return m_statements; }
+            get
+            {
+            	return m_statements;
+            }
             set
             {
                 m_statements = value;
