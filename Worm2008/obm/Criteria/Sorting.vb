@@ -454,7 +454,7 @@ Namespace Sorting
             _t = GetType(T)
         End Sub
 
-        Public Function Compare(ByVal x As T, ByVal y As T) As Integer Implements System.Collections.Generic.IComparer(Of T).Compare
+        Public Overridable Function Compare(ByVal x As T, ByVal y As T) As Integer Implements System.Collections.Generic.IComparer(Of T).Compare
             Dim p As Integer = 0
             For Each s As Sort In _s
                 'If s.IsAny Then
