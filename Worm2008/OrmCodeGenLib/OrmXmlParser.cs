@@ -388,8 +388,8 @@ namespace Worm.CodeGen.Core
 				string leftAccessedEntityTypeId = leftTargetElement.GetAttribute("accessedEntityType");
 				string rightAccessedEntityTypeId = rightTargetElement.GetAttribute("accessedEntityType");
 
-				TypeDescription leftAccessedEntityType = _ormObjectsDef.GetType(leftAccessedEntityTypeId, false);
-				TypeDescription rightAccessedEntityType = _ormObjectsDef.GetType(rightAccessedEntityTypeId, false);
+				TypeDescription leftAccessedEntityType = _ormObjectsDef.GetType(leftAccessedEntityTypeId, true);
+				TypeDescription rightAccessedEntityType = _ormObjectsDef.GetType(rightAccessedEntityTypeId, true);
 
 				TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
 
@@ -449,8 +449,8 @@ namespace Worm.CodeGen.Core
 				string directAccessedEntityTypeId = directTargetElement.GetAttribute("accessedEntityType");
 				string reverseAccessedEntityTypeId = reverseTargetElement.GetAttribute("accessedEntityType");
 
-				TypeDescription directAccessedEntityType = _ormObjectsDef.GetType(directAccessedEntityTypeId, false);
-				TypeDescription reverseAccessedEntityType = _ormObjectsDef.GetType(reverseAccessedEntityTypeId, false);
+				TypeDescription directAccessedEntityType = _ormObjectsDef.GetType(directAccessedEntityTypeId, true);
+				TypeDescription reverseAccessedEntityType = _ormObjectsDef.GetType(reverseAccessedEntityTypeId, true);
 
 				TableDescription relationTable = _ormObjectsDef.GetTable(relationTableId);
 
