@@ -270,6 +270,8 @@ namespace TestProject {
             
             private global::System.Data.DataColumn columnTime;
             
+            private global::System.Data.DataColumn columnComment;
+            
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             public TimeDataTable() {
                 this.TableName = "Time";
@@ -329,6 +331,13 @@ namespace TestProject {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public global::System.Data.DataColumn CommentColumn {
+                get {
+                    return this.columnComment;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             [global::System.ComponentModel.Browsable(false)]
             public int Count {
                 get {
@@ -357,13 +366,14 @@ namespace TestProject {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-            public TimeRow AddTimeRow(string Class, string Group, string Test, double Time) {
+            public TimeRow AddTimeRow(string Class, string Group, string Test, double Time, string Comment) {
                 TimeRow rowTimeRow = ((TimeRow)(this.NewRow()));
                 object[] columnValuesArray = new object[] {
                         Class,
                         Group,
                         Test,
-                        Time};
+                        Time,
+                        Comment};
                 rowTimeRow.ItemArray = columnValuesArray;
                 this.Rows.Add(rowTimeRow);
                 return rowTimeRow;
@@ -387,6 +397,7 @@ namespace TestProject {
                 this.columnGroup = base.Columns["Group"];
                 this.columnTest = base.Columns["Test"];
                 this.columnTime = base.Columns["Time"];
+                this.columnComment = base.Columns["Comment"];
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -399,6 +410,8 @@ namespace TestProject {
                 base.Columns.Add(this.columnTest);
                 this.columnTime = new global::System.Data.DataColumn("Time", typeof(double), null, global::System.Data.MappingType.Element);
                 base.Columns.Add(this.columnTime);
+                this.columnComment = new global::System.Data.DataColumn("Comment", typeof(string), null, global::System.Data.MappingType.Element);
+                base.Columns.Add(this.columnComment);
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
@@ -591,6 +604,21 @@ namespace TestProject {
             }
             
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public string Comment {
+                get {
+                    try {
+                        return ((string)(this[this.tableTime.CommentColumn]));
+                    }
+                    catch (global::System.InvalidCastException e) {
+                        throw new global::System.Data.StrongTypingException("The value for column \'Comment\' in table \'Time\' is DBNull.", e);
+                    }
+                }
+                set {
+                    this[this.tableTime.CommentColumn] = value;
+                }
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             public bool IsClassNull() {
                 return this.IsNull(this.tableTime.ClassColumn);
             }
@@ -628,6 +656,16 @@ namespace TestProject {
             [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
             public void SetTimeNull() {
                 this[this.tableTime.TimeColumn] = global::System.Convert.DBNull;
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public bool IsCommentNull() {
+                return this.IsNull(this.tableTime.CommentColumn);
+            }
+            
+            [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+            public void SetCommentNull() {
+                this[this.tableTime.CommentColumn] = global::System.Convert.DBNull;
             }
         }
         

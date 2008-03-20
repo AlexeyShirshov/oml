@@ -13,7 +13,7 @@ namespace Tests
     [TestClass]
     public class TestLinq : TestBase
     {
-        static LinqProvider linqProvider = new LinqProvider(conn);
+        static LinqProvider linqProvider = new LinqProvider(BaseSqlConnection);
 
         public TestContext TestContext
         {

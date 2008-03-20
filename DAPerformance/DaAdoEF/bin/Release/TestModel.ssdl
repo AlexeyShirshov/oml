@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Schema Namespace="TestDAModel.Store" Alias="Self" ProviderManifestToken="09.00.3042" xmlns="http://schemas.microsoft.com/ado/2006/04/edm/ssdl">
+  <EntityContainer Name="dbo">
+    <EntitySet Name="tbl_phone" EntityType="TestDAModel.Store.tbl_phone" />
+    <EntitySet Name="tbl_user" EntityType="TestDAModel.Store.tbl_user" />
+    <AssociationSet Name="FK_tbl_phone_tbl_user" Association="TestDAModel.Store.FK_tbl_phone_tbl_user">
+      <End Role="tbl_user" EntitySet="tbl_user" />
+      <End Role="tbl_phone" EntitySet="tbl_phone" />
+    </AssociationSet>
+  </EntityContainer>
+  <EntityType Name="tbl_phone">
+    <Key>
+      <PropertyRef Name="phone_id" />
+      <PropertyRef Name="user_id" />
+    </Key>
+    <Property Name="phone_id" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="user_id" Type="int" Nullable="false" />
+    <Property Name="phone_number" Type="varchar" MaxLength="50" />
+  </EntityType>
+  <EntityType Name="tbl_user">
+    <Key>
+      <PropertyRef Name="user_id" />
+    </Key>
+    <Property Name="user_id" Type="int" Nullable="false" StoreGeneratedPattern="Identity" />
+    <Property Name="first_name" Type="varchar" MaxLength="50" />
+    <Property Name="last_name" Type="varchar" MaxLength="50" />
+  </EntityType>
+  <Association Name="FK_tbl_phone_tbl_user">
+    <End Role="tbl_user" Type="TestDAModel.Store.tbl_user" Multiplicity="1" />
+    <End Role="tbl_phone" Type="TestDAModel.Store.tbl_phone" Multiplicity="*" />
+    <ReferentialConstraint>
+      <Principal Role="tbl_user">
+        <PropertyRef Name="user_id" />
+      </Principal>
+      <Dependent Role="tbl_phone">
+        <PropertyRef Name="user_id" />
+      </Dependent>
+    </ReferentialConstraint>
+  </Association>
+</Schema>

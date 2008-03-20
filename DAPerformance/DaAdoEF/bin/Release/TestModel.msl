@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Mapping Space="C-S" xmlns="urn:schemas-microsoft-com:windows:storage:mapping:CS">
+  <EntityContainerMapping StorageEntityContainer="dbo" CdmEntityContainer="TestDAEntities">
+    <EntitySetMapping Name="tbl_phone">
+      <EntityTypeMapping TypeName="IsTypeOf(TestDAModel.tbl_phone)">
+        <MappingFragment StoreEntitySet="tbl_phone">
+          <ScalarProperty Name="phone_id" ColumnName="phone_id" />
+          <ScalarProperty Name="user_id" ColumnName="user_id" />
+          <ScalarProperty Name="phone_number" ColumnName="phone_number" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <EntitySetMapping Name="tbl_user">
+      <EntityTypeMapping TypeName="IsTypeOf(TestDAModel.tbl_user)">
+        <MappingFragment StoreEntitySet="tbl_user">
+          <ScalarProperty Name="user_id" ColumnName="user_id" />
+          <ScalarProperty Name="first_name" ColumnName="first_name" />
+          <ScalarProperty Name="last_name" ColumnName="last_name" />
+        </MappingFragment>
+      </EntityTypeMapping>
+    </EntitySetMapping>
+    <AssociationSetMapping Name="FK_tbl_phone_tbl_user" TypeName="TestDAModel.FK_tbl_phone_tbl_user" StoreEntitySet="tbl_phone">
+      <EndProperty Name="tbl_user">
+        <ScalarProperty Name="user_id" ColumnName="user_id" />
+      </EndProperty>
+      <EndProperty Name="tbl_phone">
+        <ScalarProperty Name="phone_id" ColumnName="phone_id" />
+        <ScalarProperty Name="user_id" ColumnName="user_id" />
+      </EndProperty>
+    </AssociationSetMapping>
+  </EntityContainerMapping>
+</Mapping>

@@ -9,16 +9,17 @@
       </DataSource>
     </xs:appinfo>
   </xs:annotation>
-  <xs:element name="DSTestTime" msdata:IsDataSet="true" msdata:UseCurrentLocale="true" msprop:Generator_DataSetName="DSTestTime" msprop:Generator_UserDSName="DSTestTime" msprop:EnableTableAdapterManager="true">
+  <xs:element name="DSTestTime" msdata:IsDataSet="true" msdata:UseCurrentLocale="true" msprop:Generator_UserDSName="DSTestTime" msprop:Generator_DataSetName="DSTestTime" msprop:EnableTableAdapterManager="true">
     <xs:complexType>
       <xs:choice minOccurs="0" maxOccurs="unbounded">
-        <xs:element name="Time" msprop:Generator_UserTableName="Time" msprop:Generator_RowDeletedName="TimeRowDeleted" msprop:Generator_TableClassName="TimeDataTable" msprop:Generator_RowChangedName="TimeRowChanged" msprop:Generator_RowClassName="TimeRow" msprop:Generator_RowChangingName="TimeRowChanging" msprop:Generator_RowEvArgName="TimeRowChangeEvent" msprop:Generator_RowEvHandlerName="TimeRowChangeEventHandler" msprop:Generator_TablePropName="Time" msprop:Generator_TableVarName="tableTime" msprop:Generator_RowDeletingName="TimeRowDeleting">
+        <xs:element name="Time" msprop:Generator_UserTableName="Time" msprop:Generator_RowDeletedName="TimeRowDeleted" msprop:Generator_RowChangedName="TimeRowChanged" msprop:Generator_RowClassName="TimeRow" msprop:Generator_RowChangingName="TimeRowChanging" msprop:Generator_RowEvArgName="TimeRowChangeEvent" msprop:Generator_RowEvHandlerName="TimeRowChangeEventHandler" msprop:Generator_TableClassName="TimeDataTable" msprop:Generator_TableVarName="tableTime" msprop:Generator_RowDeletingName="TimeRowDeleting" msprop:Generator_TablePropName="Time">
           <xs:complexType>
             <xs:sequence>
-              <xs:element name="Class" msprop:Generator_UserColumnName="Class" msprop:Generator_ColumnPropNameInRow="Class" msprop:Generator_ColumnVarNameInTable="columnClass" msprop:Generator_ColumnPropNameInTable="ClassColumn" type="xs:string" minOccurs="0" />
-              <xs:element name="Group" msprop:Generator_UserColumnName="Group" msprop:Generator_ColumnPropNameInRow="Group" msprop:Generator_ColumnVarNameInTable="columnGroup" msprop:Generator_ColumnPropNameInTable="GroupColumn" type="xs:string" minOccurs="0" />
-              <xs:element name="Test" msprop:Generator_UserColumnName="Test" msprop:Generator_ColumnPropNameInRow="Test" msprop:Generator_ColumnVarNameInTable="columnTest" msprop:Generator_ColumnPropNameInTable="TestColumn" type="xs:string" minOccurs="0" />
-              <xs:element name="Time" msprop:Generator_UserColumnName="Time" msprop:Generator_ColumnPropNameInRow="Time" msprop:Generator_ColumnVarNameInTable="columnTime" msprop:Generator_ColumnPropNameInTable="TimeColumn" type="xs:double" minOccurs="0" />
+              <xs:element name="Class" msprop:Generator_UserColumnName="Class" msprop:Generator_ColumnVarNameInTable="columnClass" msprop:Generator_ColumnPropNameInRow="Class" msprop:Generator_ColumnPropNameInTable="ClassColumn" type="xs:string" minOccurs="0" />
+              <xs:element name="Group" msprop:Generator_UserColumnName="Group" msprop:Generator_ColumnVarNameInTable="columnGroup" msprop:Generator_ColumnPropNameInRow="Group" msprop:Generator_ColumnPropNameInTable="GroupColumn" type="xs:string" minOccurs="0" />
+              <xs:element name="Test" msprop:Generator_UserColumnName="Test" msprop:Generator_ColumnVarNameInTable="columnTest" msprop:Generator_ColumnPropNameInRow="Test" msprop:Generator_ColumnPropNameInTable="TestColumn" type="xs:string" minOccurs="0" />
+              <xs:element name="Time" msprop:Generator_UserColumnName="Time" msprop:Generator_ColumnVarNameInTable="columnTime" msprop:Generator_ColumnPropNameInRow="Time" msprop:Generator_ColumnPropNameInTable="TimeColumn" type="xs:double" minOccurs="0" />
+              <xs:element name="Comment" msprop:Generator_UserColumnName="Comment" msprop:Generator_ColumnPropNameInRow="Comment" msprop:Generator_ColumnVarNameInTable="columnComment" msprop:Generator_ColumnPropNameInTable="CommentColumn" type="xs:string" minOccurs="0" />
             </xs:sequence>
           </xs:complexType>
         </xs:element>

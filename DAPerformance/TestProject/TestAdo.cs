@@ -11,13 +11,10 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests
 {
-    /// <summary>
-    /// Summary description for UnitTest1
-    /// </summary>
     [TestClass]
     public class TestAdo : TestBase
     {
-        static AdoProvider adoProvider = new AdoProvider(conn);
+        static AdoProvider adoProvider = new AdoProvider(BaseSqlConnection);
 
         public TestContext TestContext
         {

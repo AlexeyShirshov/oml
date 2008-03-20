@@ -65,6 +65,9 @@
     <Reference Include="System.Data.DataSetExtensions">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Data.Entity">
+      <RequiredTargetFramework>3.5</RequiredTargetFramework>
+    </Reference>
     <Reference Include="System.Web.Extensions">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -75,15 +78,6 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>DSTestTime.xsd</DependentUpon>
-    </Compile>
-    <Compile Include="DSTime.cs">
-      <DependentUpon>DSTime.xsd</DependentUpon>
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="DSTime.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>DSTime.xsd</DependentUpon>
     </Compile>
     <Compile Include="HiPerfTimer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -137,17 +131,6 @@
     </None>
     <None Include="DSTestTime.xss">
       <DependentUpon>DSTestTime.xsd</DependentUpon>
-    </None>
-    <None Include="DSTime.xsc">
-      <DependentUpon>DSTime.xsd</DependentUpon>
-    </None>
-    <None Include="DSTime.xsd">
-      <SubType>Designer</SubType>
-      <Generator>MSDataSetGenerator</Generator>
-      <LastGenOutput>DSTime.Designer.cs</LastGenOutput>
-    </None>
-    <None Include="DSTime.xss">
-      <DependentUpon>DSTime.xsd</DependentUpon>
     </None>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

@@ -5,17 +5,17 @@ using System.Text;
 using System.Collections.Generic;
 using DaAdoEF;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Helper;
 
 namespace Tests
 {
     /// <summary>
     /// Summary description for UnitTest1
     /// </summary>
-    [Ignore]
     [TestClass]
     public class TestAdoEF : TestBase
     {
-        static AdoEFProvider adoEFProvider = new AdoEFProvider();
+        static AdoEFProvider adoEFProvider = new AdoEFProvider(BaseEntityConnection);
 
         static TestAdoEF()
         {
@@ -27,30 +27,117 @@ namespace Tests
             get { return context; }
             set { context = value; }
         }
+        
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
+        public void TypeCycleWithoutLoad()
+        {
+            adoEFProvider.TypeCycleWithoutLoad(mediumUserIds);
+        }
+/*
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
+        public void TypeCycleWithLoad()
+        {
+            adoEFProvider.TypeCycleWithLoad(mediumUserIds);
+        }
 
-        #region Additional test attributes
-        //
-        // You can use the following additional attributes as you write your tests:
-        //
-        // Use ClassInitialize to run code before running the first test in the class
-        // [ClassInitialize()]
-        // public static void MyClassInitialize(TestContext testContext) { }
-        //
-        // Use ClassCleanup to run code after all tests in a class have run
-        // [ClassCleanup()]
-        // public static void MyClassCleanup() { }
-        //
-        // Use TestInitialize to run code before running each test 
-        // [TestInitialize()]
-        // public void MyTestInitialize() { }
-        //
-        // Use TestCleanup to run code after each test has run
-        // [TestCleanup()]
-        // public void MyTestCleanup() { }
-        //
-        #endregion
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
+        public void TypeCycleLazyLoad()
+        {
+            adoEFProvider.TypeCycleLazyLoad(mediumUserIds);
+        }
 
-     
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
+        public void SmallCollectionByIdArray()
+        {
+            adoEFProvider.CollectionByIdArray(smallUserIds);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void SmallCollection()
+        {
+            adoEFProvider.SmallCollection();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
+        public void SmallCollectionWithChildrenByIdArray()
+        {
+            adoEFProvider.CollectionWithChildrenByIdArray(smallUserIds);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
+        public void LargeCollectionByIdArray()
+        {
+            adoEFProvider.CollectionByIdArray(largeUserIds);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollection)]
+        public void LargeCollection()
+        {
+            adoEFProvider.LargeCollection();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
+        public void LargeCollectionWithChildrenByIdArray()
+        {
+            adoEFProvider.CollectionWithChildrenByIdArray(largeUserIds);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
+        public void CollectionByPredicateWithoutLoad()
+        {
+            adoEFProvider.CollectionByPredicateWithoutLoad();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
+        public void CollectionByPredicateWithLoad()
+        {
+            adoEFProvider.CollectionByPredicateWithLoad();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SelectLargeCollection)]
+        public void SelectLargeCollection()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                adoEFProvider.LargeCollection();
+            }
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
+        public void SameObjectInCycleLoad()
+        {
+            adoEFProvider.SameObjectInCycleLoad(smallUserIds[0]);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
+        public void SelectBySamePredicate()
+        {
+            adoEFProvider.SelectBySamePredicate();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
+        public void ObjectsWithLoadWithPropertiesAccess()
+        {
+            adoEFProvider.ObjectsWithLoadWithPropertiesAccess();
+        }
+        */
+
+        #region old
         //Single
         [TestMethod]
         public void SelectWithLinqWithLoad()
@@ -300,6 +387,6 @@ namespace Tests
             adoEFProvider.SelectSmallCollectionWithEntityClientAnonimousWithoutLoad();
         }
 
-       
+        #endregion old
     }
 }

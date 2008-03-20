@@ -48,7 +48,6 @@ namespace DALinq
             }
         }
 
-     
         public void SmallCollection()
         {
             var users = (from e in db.tbl_users
@@ -87,7 +86,6 @@ namespace DALinq
                              select u);
             }
         }
-        
 
         public void CollectionByPredicateWithLoad()
         {
