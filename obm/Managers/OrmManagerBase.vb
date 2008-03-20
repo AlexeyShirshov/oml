@@ -10,7 +10,7 @@ Imports Worm.Orm
 Imports System.Collections.Generic
 
 #Const DontUseStringIntern = True
-
+#Const TraceM2M = True
 
 'Namespace Managers
 
@@ -510,8 +510,12 @@ Public MustInherit Class OrmManagerBase
             If withLoad OrElse mgr._externalFilter IsNot Nothing Then
                 Dim c As Integer = mgr.GetLoadedCount(Of T)(Entry.Current)
                 Dim cnt As Integer = Entry.CurrentCount
+#If TraceM2M Then
+                Debug.WriteLine(Environment.StackTrace)
+                Debug.WriteLine(cnt)
+#End If
                 If c < cnt Then
-                    If Not OrmManagerBase.IsGoodTime4Load(_fetchTime, _execTime, cnt, c) Then
+                    If mgr._externalFilter IsNot Nothing AndAlso Not OrmManagerBase.IsGoodTime4Load(_fetchTime, _execTime, cnt, c) Then
                         successed = IListObjectConverter.ExtractListResult.NeedLoad
                         Return r
                     Else
@@ -527,6 +531,9 @@ Public MustInherit Class OrmManagerBase
                 End If
             Else
                 Try
+#If TraceM2M Then
+                    Debug.WriteLine(Entry.Current.Count)
+#End If
                     r = mgr.ConvertIds2Objects(Of T)(Entry.Current, mgr.GetStart, mgr.GetLength, False)
                 Catch ex As InvalidOperationException When ex.Message.StartsWith("Cannot prepare current data view")
                     r = mgr.ConvertIds2Objects(Of T)(Entry.Original, mgr.GetStart, mgr.GetLength, False)
@@ -537,6 +544,9 @@ Public MustInherit Class OrmManagerBase
 
         Public Overrides Function GetObjectList(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
             Try
+#If TraceM2M Then
+                Debug.WriteLine(Entry.Current.Count)
+#End If
                 Return mgr.ConvertIds2Objects(Of T)(Entry.Current, False)
             Catch ex As InvalidOperationException When ex.Message.StartsWith("Cannot prepare current data view")
                 Return mgr.ConvertIds2Objects(Of T)(Entry.Original, False)
@@ -2601,17 +2611,17 @@ l1:
             id &= criteria.Filter(tt2).ToString
         End If
 
-        Dim sync As String = GetSync(key, id)
-
         'CreateM2MDepends(filter, key, id)
 
         Dim del As ICustDelegate(Of T) = Nothing
         If top > 0 Then
+            id &= "top" & top
             del = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, New QueryAspect() {_schema.CreateTopAspect(top)}, id, key, direct)
         Else
             del = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
         End If
         Dim s As Boolean = True
+        Dim sync As String = GetSync(key, id)
         Dim r As ReadOnlyList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
         If Not s Then
             Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
@@ -3692,7 +3702,7 @@ l1:
 
     Protected Shared Sub BuildDic(Of T As {New, OrmBase})(ByVal name As String, ByVal cnt As Integer, _
         ByVal level As Integer, ByVal root As DicIndex(Of T), ByRef last As DicIndex(Of T), _
-        ByRef first As Boolean)
+        ByRef first As Boolean, ByVal firstField As String, ByVal secField As String)
         'If name.Length = 0 Then name = "<без имени>"
 
         Dim current As DicIndex(Of T) = Nothing
@@ -3714,7 +3724,7 @@ l1:
 l1:
         If p Is root And name <> "" Then
             If name(0) = "'" Then
-                Dim s As New DicIndex(Of T)("'", Nothing, 0)
+                Dim s As New DicIndex(Of T)("'", Nothing, 0, firstField, secField)
                 p = CType(root.Dictionary(s), DicIndex(Of T))
                 If p IsNot Nothing Then GoTo l1
             End If
@@ -3722,7 +3732,7 @@ l1:
             For k As Integer = 1 To name.Length
                 Dim c As Integer = 0
                 If k = name.Length Then c = cnt
-                Dim s As New DicIndex(Of T)(name.Substring(0, k), _prev, c)
+                Dim s As New DicIndex(Of T)(name.Substring(0, k), _prev, c, firstField, secField)
                 If _prev Is root Then
                     If root.Dictionary.Contains(s.Name) Then
                         s = CType(root.Dictionary(s.Name), DicIndex(Of T))
@@ -3745,7 +3755,7 @@ l1:
             Next
             current = _prev
         Else
-            current = New DicIndex(Of T)(name, p, cnt)
+            current = New DicIndex(Of T)(name, p, cnt, firstField, secField)
             p.AddChild(current)
             root.Add2Dictionary(current)
         End If
