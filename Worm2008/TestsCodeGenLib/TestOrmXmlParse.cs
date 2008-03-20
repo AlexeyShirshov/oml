@@ -152,7 +152,7 @@ namespace TestsCodeGenLib
 
             OrmObjectsDef ormObjectDef;
             ormObjectDef = parser.OrmObjectsDef;
-            Assert.AreEqual<int>(10, ormObjectDef.Types.Count);
+            Assert.AreEqual<int>(11, ormObjectDef.Types.Count);
 
 
         }
@@ -351,7 +351,7 @@ namespace TestsCodeGenLib
             OrmObjectsDef ormObjectsDef;
             ormObjectsDef = parser.OrmObjectsDef;
 
-            Assert.AreEqual<int>(4, ormObjectsDef.Relations.Count);
+            Assert.AreEqual<int>(5, ormObjectsDef.Relations.Count);
 
             RelationDescription relation = null;
 

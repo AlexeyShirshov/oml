@@ -2383,7 +2383,7 @@ l2:
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)
                 Try
-                    Dim root As DicIndex(Of T) = BuildDictionaryInternal(Of T)(cmd, level, Me)
+                    Dim root As DicIndex(Of T) = BuildDictionaryInternal(Of T)(cmd, level, Me, Nothing, Nothing)
                     root.Filter = filter
                     root.Join = join
                     Return root
@@ -2403,7 +2403,7 @@ l2:
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)
                 Try
-                    Dim root As DicIndex(Of T) = BuildDictionaryInternal(Of T)(cmd, level, Me)
+                    Dim root As DicIndex(Of T) = BuildDictionaryInternal(Of T)(cmd, level, Me, firstField, secondField)
                     root.Filter = filter
                     root.Join = join
                     Return root
@@ -2413,8 +2413,9 @@ l2:
             End Using
         End Function
 
-        Protected Shared Function BuildDictionaryInternal(Of T As {New, OrmBase})(ByVal cmd As System.Data.Common.DbCommand, ByVal level As Integer, ByVal mgr As OrmReadOnlyDBManager) As DicIndex(Of T)
-            Dim last As DicIndex(Of T) = New DicIndex(Of T)("ROOT", Nothing, 0)
+        Protected Shared Function BuildDictionaryInternal(Of T As {New, OrmBase})(ByVal cmd As System.Data.Common.DbCommand, ByVal level As Integer, ByVal mgr As OrmReadOnlyDBManager, _
+            ByVal firstField As String, ByVal secField As String) As DicIndex(Of T)
+            Dim last As DicIndex(Of T) = New DicIndex(Of T)("ROOT", Nothing, 0, firstField, secField)
             Dim root As DicIndex(Of T) = last
             'Dim arr As New Hashtable
             'Dim arr1 As New ArrayList
@@ -2430,7 +2431,7 @@ l2:
                     Dim name As String = dr.GetString(0)
                     Dim cnt As Integer = dr.GetInt32(1)
 
-                    BuildDic(Of T)(name, cnt, level, root, last, first)
+                    BuildDic(Of T)(name, cnt, level, root, last, first, firstField, secField)
                 Loop
                 If mgr IsNot Nothing Then
                     mgr._fetch = ft.GetTime

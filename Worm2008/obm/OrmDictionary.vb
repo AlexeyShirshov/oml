@@ -222,8 +222,18 @@ Namespace Orm
     Public Class DicIndex(Of T As {New, OrmBase})
         Inherits DicIndexBase
 
-        Public Sub New(ByVal name As String, ByVal parent As DicIndex(Of T), ByVal count As Integer)
+        Private _firstField As String
+        Private _secField As String
+
+        'Public Sub New(ByVal name As String, ByVal parent As DicIndex(Of T), ByVal count As Integer)
+        '    MyBase.new(name, parent, count)
+        'End Sub
+
+        Public Sub New(ByVal name As String, ByVal parent As DicIndex(Of T), ByVal count As Integer, _
+            ByVal firstField As String, ByVal secField As String)
             MyBase.new(name, parent, count)
+            _firstField = firstField
+            _secField = secField
         End Sub
 
         Public Overloads Function FindElements(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
@@ -235,6 +245,10 @@ Namespace Orm
         End Function
 
         Private Function FindObjects(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As ReadOnlyList(Of T)
+            If String.IsNullOrEmpty(field) Then
+                Throw New ArgumentNullException("field")
+            End If
+
             Dim col As ReadOnlyList(Of T)
             Dim s As QueryGenerator = mgr.ObjectSchema
             If strong Then
@@ -260,21 +274,27 @@ Namespace Orm
             Dim tt As Type = GetType(T)
             Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(tt)
             Dim odic As IOrmDictionary = TryCast(oschema, IOrmDictionary)
-            Dim b As Boolean = False
-            If odic IsNot Nothing AndAlso Not String.IsNullOrEmpty(odic.GetSecondDicField) Then
-                b = True
+            Dim firstField As String = _firstField
+            Dim secField As String = _secField
+            If odic IsNot Nothing Then
+                If String.IsNullOrEmpty(firstField) Then
+                    firstField = odic.GetFirstDicField
+                End If
+                If String.IsNullOrEmpty(secField) Then
+                    secField = odic.GetSecondDicField
+                End If
             End If
 
-            Dim col As ReadOnlyList(Of T) = FindObjects(mgr, loadName, strong, tt, odic.GetFirstDicField)
+            Dim col As ReadOnlyList(Of T) = FindObjects(mgr, loadName, strong, tt, firstField)
 
-            If b Then
-                Dim col2 As ReadOnlyList(Of T) = FindObjects(mgr, loadName, strong, tt, odic.GetSecondDicField)
+            If Not String.IsNullOrEmpty(secField) Then
+                Dim col2 As ReadOnlyList(Of T) = FindObjects(mgr, loadName, strong, tt, secField)
                 If col.Count = 0 Then
                     col = col2
                 Else
                     Dim c As New System.Collections.SortedList
-                    Dim fname As String = odic.GetFirstDicField
-                    Dim sname As String = odic.GetSecondDicField
+                    Dim fname As String = firstField
+                    Dim sname As String = secField
                     Dim add As New Hashtable
                     For Each ar As T In col2
                         'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, sname))

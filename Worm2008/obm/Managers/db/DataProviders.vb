@@ -340,6 +340,7 @@ Namespace Database
                 MyBase.New(mgr, filter, sort, key, id)
                 _obj = obj
                 _direct = direct
+                _qa = queryAscpect
                 '_sync = sync & OrmManagerBase.GetTablePostfix
                 '_rev = rev
             End Sub

@@ -192,6 +192,5 @@ namespace Worm.CodeGen.Core.Descriptors
         Enum = 0x0001,
         ValueType = 0x0002,
         Nullable = 0x0004,
-		Char = 0 >> 1,
     }
 }
