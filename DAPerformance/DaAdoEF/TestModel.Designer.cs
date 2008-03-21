@@ -12,7 +12,7 @@
 [assembly: global::System.Data.Objects.DataClasses.EdmRelationshipAttribute("TestDAModel", "FK_tbl_phone_tbl_user", "tbl_user", global::System.Data.Metadata.Edm.RelationshipMultiplicity.One, typeof(TestDAModel.tbl_user), "tbl_phone", global::System.Data.Metadata.Edm.RelationshipMultiplicity.Many, typeof(TestDAModel.tbl_phone))]
 
 // Original file name:
-// Generation date: 22.02.2008 2:05:19
+// Generation date: 21.03.2008 15:31:40
 namespace TestDAModel
 {
     
