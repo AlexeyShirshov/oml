@@ -10,7 +10,7 @@ Imports Worm.Orm
 Imports System.Collections.Generic
 
 #Const DontUseStringIntern = True
-#Const TraceM2M = True
+#Const TraceM2M = False
 
 'Namespace Managers
 
