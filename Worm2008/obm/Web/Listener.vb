@@ -336,6 +336,7 @@ Namespace Web
         Protected Sub CheckStream(ByVal size As Long)
             If (ListenerStream.FileSize + size) > MaxFileSize Then
                 _curFileNum += 1
+                m_Stream.CloseStream()
                 m_Stream = Nothing
             End If
         End Sub

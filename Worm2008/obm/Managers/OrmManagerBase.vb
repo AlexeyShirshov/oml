@@ -3682,7 +3682,7 @@ l1:
         End If
 
         Dim id As String = f & " - dics - "
-        Dim sync As String = id & GetStaticKey()
+        Dim sync As String = id & GetStaticKey() & "--level" & level
 
         Dim roots As DicIndex(Of T) = CType(dic(id), DicIndex(Of T))
         Invariant()
