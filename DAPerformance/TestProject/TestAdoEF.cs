@@ -3,36 +3,51 @@ using System.Configuration;
 using System.Data;
 using System.Text;
 using System.Collections.Generic;
+using System.Data.EntityClient;
 using DaAdoEF;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Helper;
+using Common;
 
 namespace Tests
 {
-    [Ignore]
     [TestClass]
     public class TestAdoEF : TestBase
     {
-        static AdoEFProvider adoEFProvider = new AdoEFProvider(BaseEntityConnection);
+        AdoEFProvider adoEFProvider;
 
+        #region constructors
         static TestAdoEF()
         {
             TestBase.classType = typeof(TestAdoEF);
         }
+
+        public TestAdoEF()
+        {
+            adoEFProvider = new AdoEFProvider(ConfigurationManager.ConnectionStrings["TestDAEntities"].ToString());
+        }
+
+        ~TestAdoEF()
+        {
+            if (adoEFProvider != null)
+            {
+                adoEFProvider.Dispose();
+            }
+        }
+        #endregion constructors
 
         public TestContext TestContext
         {
             get { return context; }
             set { context = value; }
         }
-        
+
         [TestMethod]
         [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
         public void TypeCycleWithoutLoad()
         {
             adoEFProvider.TypeCycleWithoutLoad(mediumUserIds);
         }
-/*
+
         [TestMethod]
         [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
         public void TypeCycleWithLoad()
@@ -48,92 +63,93 @@ namespace Tests
         }
 
         [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void SmallCollection()
+        {
+            adoEFProvider.GetCollection(Constants.Small);
+        }
+
+        [Ignore]
+        [TestMethod]
         [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
         public void SmallCollectionByIdArray()
         {
             adoEFProvider.CollectionByIdArray(smallUserIds);
         }
-
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollection)]
-        public void SmallCollection()
-        {
-            adoEFProvider.SmallCollection();
-        }
-
+/*
         [TestMethod]
         [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
         public void SmallCollectionWithChildrenByIdArray()
         {
             adoEFProvider.CollectionWithChildrenByIdArray(smallUserIds);
         }
+/*
+                [TestMethod]
+                [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
+                public void LargeCollectionByIdArray()
+                {
+                    adoEFProvider.CollectionByIdArray(largeUserIds);
+                }
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
-        public void LargeCollectionByIdArray()
-        {
-            adoEFProvider.CollectionByIdArray(largeUserIds);
-        }
+                [TestMethod]
+                [QueryTypeAttribute(QueryType.LargeCollection)]
+                public void LargeCollection()
+                {
+                    adoEFProvider.LargeCollection();
+                }
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.LargeCollection)]
-        public void LargeCollection()
-        {
-            adoEFProvider.LargeCollection();
-        }
+                [TestMethod]
+                [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
+                public void LargeCollectionWithChildrenByIdArray()
+                {
+                    adoEFProvider.CollectionWithChildrenByIdArray(largeUserIds);
+                }
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
-        public void LargeCollectionWithChildrenByIdArray()
-        {
-            adoEFProvider.CollectionWithChildrenByIdArray(largeUserIds);
-        }
+                [TestMethod]
+                [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
+                public void CollectionByPredicateWithoutLoad()
+                {
+                    adoEFProvider.CollectionByPredicateWithoutLoad();
+                }
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
-        public void CollectionByPredicateWithoutLoad()
-        {
-            adoEFProvider.CollectionByPredicateWithoutLoad();
-        }
+                [TestMethod]
+                [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
+                public void CollectionByPredicateWithLoad()
+                {
+                    adoEFProvider.CollectionByPredicateWithLoad();
+                }
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
-        public void CollectionByPredicateWithLoad()
-        {
-            adoEFProvider.CollectionByPredicateWithLoad();
-        }
+                [TestMethod]
+                [QueryTypeAttribute(QueryType.SelectLargeCollection)]
+                public void SelectLargeCollection()
+                {
+                    for (int i = 0; i < Constants.SmallIteration; i++)
+                    {
+                        adoEFProvider.LargeCollection();
+                    }
+                }
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SelectLargeCollection)]
-        public void SelectLargeCollection()
-        {
-            for (int i = 0; i < Constants.SmallIteration; i++)
-            {
-                adoEFProvider.LargeCollection();
-            }
-        }
+                [TestMethod]
+                [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
+                public void SameObjectInCycleLoad()
+                {
+                    adoEFProvider.SameObjectInCycleLoad(smallUserIds[0]);
+                }
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
-        public void SameObjectInCycleLoad()
-        {
-            adoEFProvider.SameObjectInCycleLoad(smallUserIds[0]);
-        }
+                [TestMethod]
+                [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
+                public void SelectBySamePredicate()
+                {
+                    adoEFProvider.SelectBySamePredicate();
+                }
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
-        public void SelectBySamePredicate()
-        {
-            adoEFProvider.SelectBySamePredicate();
-        }
-
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
-        public void ObjectsWithLoadWithPropertiesAccess()
-        {
-            adoEFProvider.ObjectsWithLoadWithPropertiesAccess();
-        }
-        */
+                [TestMethod]
+                [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
+                public void ObjectsWithLoadWithPropertiesAccess()
+                {
+                    adoEFProvider.ObjectsWithLoadWithPropertiesAccess();
+                }
+                */
 
         #region old
         //Single
@@ -199,7 +215,7 @@ namespace Tests
 
 
 
-     //Collection
+        //Collection
         [TestMethod]
         public void SelectCollectionWithLinqWithLoad()
         {

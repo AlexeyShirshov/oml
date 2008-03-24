@@ -3,7 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using DALinq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Helper;
+using Common;
 
 namespace Tests
 {
@@ -58,7 +58,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.SmallCollection)]
         public void SmallCollection()
         {
-            linqProvider.SmallCollection();
+            linqProvider.GetCollection(Constants.Small);
         }
 
         [TestMethod]
@@ -79,7 +79,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.LargeCollection)]
         public void LargeCollection()
         {
-            linqProvider.LargeCollection();
+            linqProvider.GetCollection(Constants.Large);
         }
 
         [TestMethod]
@@ -109,7 +109,7 @@ namespace Tests
         {
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
-                linqProvider.LargeCollection();
+                linqProvider.GetCollection(Constants.Large);
             }
         }
 

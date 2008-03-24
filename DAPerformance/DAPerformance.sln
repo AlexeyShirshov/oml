@@ -20,7 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DaAdoEF", "DaAdoEF\DaAdoEF.csproj", "{79801517-34F7-4847-984A-13336BDB1BE2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Helper", "Helper\Helper.csproj", "{F5F9FF51-D529-410E-BFD3-26BC1D32C7A1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Helper\Common.csproj", "{F5F9FF51-D529-410E-BFD3-26BC1D32C7A1}"
 EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
@@ -46,7 +46,7 @@ Global
 		SccProjectUniqueName6 = DaAdoEF\\DaAdoEF.csproj
 		SccProjectName6 = DaAdoEF
 		SccLocalPath6 = DaAdoEF
-		SccProjectUniqueName7 = Helper\\Helper.csproj
+		SccProjectUniqueName7 = Helper\\Common.csproj
 		SccProjectName7 = Helper
 		SccLocalPath7 = Helper
 	EndGlobalSection

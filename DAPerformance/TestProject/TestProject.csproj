@@ -114,9 +114,9 @@
       <Project>{8788EF18-EE83-4412-9D5C-6CB8C81F5B25}</Project>
       <Name>DAWorm</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Helper\Helper.csproj">
+    <ProjectReference Include="..\Helper\Common.csproj">
       <Project>{F5F9FF51-D529-410E-BFD3-26BC1D32C7A1}</Project>
-      <Name>Helper</Name>
+      <Name>Common</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

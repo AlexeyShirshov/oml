@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Helper;
+using Common;
 
 namespace DALinq
 {
@@ -48,10 +48,10 @@ namespace DALinq
             }
         }
 
-        public void SmallCollection()
+        public void GetCollection(int count)
         {
             var users = (from e in db.tbl_users
-                        select e).Take(Constants.Small).ToList();
+                        select e).Take(count).ToList();
         }
 
         public void CollectionWithChildrenByIdArray(int[] userIds)
@@ -68,12 +68,6 @@ namespace DALinq
             var users = (from e in db.tbl_users
                          where userIds.Contains<int>(e.user_id)
                          select e).ToList();
-        }
-
-        public void LargeCollection()
-        {
-            var users = (from e in db.tbl_users
-                         select e).Take(Constants.Large).ToList();
         }
 
         public void CollectionByPredicateWithoutLoad()

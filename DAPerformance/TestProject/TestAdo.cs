@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Text;
 
 using DAAdo;
-using Helper;
+using Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests

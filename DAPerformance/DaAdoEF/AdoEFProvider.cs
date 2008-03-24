@@ -15,26 +15,31 @@ namespace DaAdoEF
         TestDAEntities entities;
 
         #region new
-        public AdoEFProvider(EntityConnection connection)
+        public AdoEFProvider(string connectionString)
         {
+            EntityConnection connection = new EntityConnection(connectionString);
+            connection.Open();
             entities = new TestDAEntities(connection);
+        }
+
+        public void Dispose()
+        {
+            entities.Dispose();
         }
 
         public void TypeCycleWithoutLoad(int[] userIds)
         {
             foreach (int id in userIds)
             {
-                tbl_user user = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", id)).First();
+                ObjectQuery<tbl_user> query = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", id));
             }
         }
-/*
+
         public void TypeCycleWithLoad(int[] userIds)
         {
             foreach (int id in userIds)
             {
-                var users = (from e in db.tbl_users
-                             where e.user_id == id
-                             select e).ToList();
+                tbl_user user = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", id)).First();
             }
         }
 
@@ -42,22 +47,21 @@ namespace DaAdoEF
         {
             foreach (int id in userIds)
             {
-                var users = from e in db.tbl_users
-                             where e.user_id == id
-                             select e;
-                foreach (var user in users)
-                {
-                    string name = user.first_name;
-                }
+                ObjectQuery<tbl_user> query = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", id));
+                string first_name = query.First().first_name;
             }
         }
 
-        public void SmallCollection()
+        public void GetCollection(int count)
         {
-            var users = (from e in db.tbl_users
-                        select e).Take(Constants.Small).ToList();
+            List<tbl_user> users = entities.tbl_user.Take(count).ToList();
         }
 
+        public void CollectionByIdArray(int[] userIds)
+        {
+            //tbl_user user = entities.tbl_user.Select( c => c.user_id == 1);
+        }
+/*
         public void CollectionWithChildrenByIdArray(int[] userIds)
         {
             var users = (from e in db.tbl_users
@@ -67,12 +71,7 @@ namespace DaAdoEF
 
         }
 
-        public void CollectionByIdArray(int[] userIds)
-        {
-            var users = (from e in db.tbl_users
-                         where userIds.Contains<int>(e.user_id)
-                         select e).ToList();
-        }
+       
 
         public void LargeCollection()
         {

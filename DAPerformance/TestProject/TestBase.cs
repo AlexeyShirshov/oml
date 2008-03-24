@@ -10,7 +10,7 @@ using System.Configuration;
 using System.Data;
 using System.Data.EntityClient;
 using System.Data.SqlClient;
-using Helper;
+using Common;
 
 namespace Tests
 {
@@ -91,7 +91,7 @@ namespace Tests
         {
             performer.Stop();
             QueryTypeAttribute attribute = Assembly.GetExecutingAssembly().GetType(classType.ToString())
-                .GetMethod(context.TestName).GetCustomAttributes(typeof(Helper.QueryTypeAttribute), false)[0] as QueryTypeAttribute;
+                .GetMethod(context.TestName).GetCustomAttributes(typeof(Common.QueryTypeAttribute), false)[0] as QueryTypeAttribute;
 
             QueryType queryType = attribute.QueryType;
             string typeInfo = TypeInfo.Types[queryType];

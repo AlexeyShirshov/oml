@@ -1,7 +1,7 @@
 using System;
 using System.Data;
 using System.Data.SqlClient;
-using Helper;
+using Common;
 
 namespace DAAdo
 {
@@ -47,25 +47,14 @@ namespace DAAdo
             }
             reader.Close();
         }
-
-        private string Convert(int[] ids)
-        {
-            System.Text.StringBuilder s = new System.Text.StringBuilder();
-            foreach (int i in ids)
-            {
-                s.Append(i.ToString() + ",");
-            }
-            if (s.Length > 0) s.Remove(s.Length - 1, 1); //remove last comma
-            return s.ToString();
-        }
-
+          
         public void CollectionWithChildrenByIdArray(int[] userIds)
         {
             
             SqlCommand command = new SqlCommand(
               "select tbl_user.user_id, first_name, last_name, phone_id, phone_number" +
             " from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" +
-            " where tbl_user.user_id in (" + Convert(userIds) + ")", conn);
+            " where tbl_user.user_id in (" + Helper.Convert(userIds, ",") + ")", conn);
             SqlDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
@@ -81,7 +70,7 @@ namespace DAAdo
         public void CollectionByIdArray(int[] userIds)
         {
             SqlCommand command = new SqlCommand(
-              "select * from tbl_user where [user_id] in (" + Convert(userIds) + ")", conn);
+              "select * from tbl_user where [user_id] in (" + Helper.Convert(userIds, ",") + ")", conn);
             SqlDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Helper
+namespace Common
 {
     public class QueryTypeAttribute : Attribute
     {

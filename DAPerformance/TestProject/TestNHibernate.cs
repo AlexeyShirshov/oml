@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 using DANHibernate;
-using Helper;
+using Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NHibernate;
 using NHibernate.Hql;
