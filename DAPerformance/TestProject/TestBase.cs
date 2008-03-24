@@ -5,7 +5,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TestProject;
 using System.Configuration;
 using System.Data;
 using System.Data.EntityClient;
@@ -95,7 +94,9 @@ namespace Tests
 
             QueryType queryType = attribute.QueryType;
             string typeInfo = TypeInfo.Types[queryType];
-            dsTestTime.Time.AddTimeRow(classType.Name, queryType.ToString(), context.TestName, performer.Duration, typeInfo);
+
+            string syntaxType = attribute.SyntaxType.ToString();
+            dsTestTime.Time.AddTimeRow(classType.Name, queryType.ToString(), context.TestName, performer.Duration, typeInfo, syntaxType);
         }
         
         [AssemblyCleanup]

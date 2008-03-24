@@ -24,6 +24,12 @@ namespace Common
         ObjectsWithLoadWithPropertiesAccess
     }
 
+    public enum Syntax
+    {
+        Default,
+        Linq
+    }
+
     public static class TypeInfo {
         static Dictionary<QueryType, string> types = new Dictionary<QueryType, string>();
         public static Dictionary<QueryType, string> Types

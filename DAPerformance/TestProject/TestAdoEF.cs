@@ -42,62 +42,84 @@ namespace Tests
         }
 
         [TestMethod]
-        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
+        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad, Syntax.Linq)]
         public void TypeCycleWithoutLoad()
         {
-            adoEFProvider.TypeCycleWithoutLoad(mediumUserIds);
+            adoEFProvider.TypeCycleWithoutLoadLinq(mediumUserIds);
         }
 
+        [Ignore]//Incorrect linq syntax
         [TestMethod]
-        [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
+        [QueryTypeAttribute(QueryType.TypeCycleWithLoad, Syntax.Linq)]
         public void TypeCycleWithLoad()
         {
-            adoEFProvider.TypeCycleWithLoad(mediumUserIds);
+            adoEFProvider.TypeCycleWithLoadLinq(mediumUserIds);
         }
 
         [TestMethod]
-        [QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
+        [QueryTypeAttribute(QueryType.TypeCycleLazyLoad, Syntax.Linq)]
         public void TypeCycleLazyLoad()
         {
-            adoEFProvider.TypeCycleLazyLoad(mediumUserIds);
+            adoEFProvider.TypeCycleLazyLoadLinq(mediumUserIds);
         }
 
         [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollection)]
+        [QueryTypeAttribute(QueryType.SmallCollection, Syntax.Linq)]
         public void SmallCollection()
         {
-            adoEFProvider.GetCollection(Constants.Small);
+            adoEFProvider.GetCollectionLinq(Constants.Small);
         }
 
         [Ignore]
         [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray, Syntax.Linq)]
         public void SmallCollectionByIdArray()
         {
-            adoEFProvider.CollectionByIdArray(smallUserIds);
+            adoEFProvider.CollectionByIdArrayLinq(smallUserIds);
         }
-/*
+
+        [Ignore]
         [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
+        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray, Syntax.Linq)]
         public void SmallCollectionWithChildrenByIdArray()
         {
-            adoEFProvider.CollectionWithChildrenByIdArray(smallUserIds);
+            //adoEFProvider.CollectionWithChildrenByIdArray(smallUserIds);
         }
+
+        [Ignore]
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray, Syntax.Linq)]
+        public void LargeCollectionByIdArray()
+        {
+           // adoEFProvider.CollectionByIdArray(largeUserIds);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollection, Syntax.Linq)]
+        public void LargeCollection()
+        {
+            adoEFProvider.GetCollectionLinq(Constants.Large);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SelectLargeCollection, Syntax.Linq)]
+        public void SelectLargeCollection()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                adoEFProvider.GetCollectionLinq(Constants.Large);
+            }
+        }
+
+        [Ignore]
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad, Syntax.Linq)]
+        public void SameObjectInCycleLoad()
+        {
+            adoEFProvider.SameObjectInCycleLoadLinq(Constants.SmallIteration, smallUserIds[0]);
+        }
+
 /*
-                [TestMethod]
-                [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
-                public void LargeCollectionByIdArray()
-                {
-                    adoEFProvider.CollectionByIdArray(largeUserIds);
-                }
-
-                [TestMethod]
-                [QueryTypeAttribute(QueryType.LargeCollection)]
-                public void LargeCollection()
-                {
-                    adoEFProvider.LargeCollection();
-                }
-
                 [TestMethod]
                 [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
                 public void LargeCollectionWithChildrenByIdArray()
@@ -119,22 +141,6 @@ namespace Tests
                     adoEFProvider.CollectionByPredicateWithLoad();
                 }
 
-                [TestMethod]
-                [QueryTypeAttribute(QueryType.SelectLargeCollection)]
-                public void SelectLargeCollection()
-                {
-                    for (int i = 0; i < Constants.SmallIteration; i++)
-                    {
-                        adoEFProvider.LargeCollection();
-                    }
-                }
-
-                [TestMethod]
-                [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
-                public void SameObjectInCycleLoad()
-                {
-                    adoEFProvider.SameObjectInCycleLoad(smallUserIds[0]);
-                }
 
                 [TestMethod]
                 [QueryTypeAttribute(QueryType.SelectBySamePredicate)]

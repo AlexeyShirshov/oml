@@ -27,7 +27,7 @@ namespace DaAdoEF
             entities.Dispose();
         }
 
-        public void TypeCycleWithoutLoad(int[] userIds)
+        public void TypeCycleWithoutLoadLinq(int[] userIds)
         {
             foreach (int id in userIds)
             {
@@ -35,15 +35,15 @@ namespace DaAdoEF
             }
         }
 
-        public void TypeCycleWithLoad(int[] userIds)
+        public void TypeCycleWithLoadLinq(int[] userIds)
         {
             foreach (int id in userIds)
             {
-                tbl_user user = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", id)).First();
+                List<tbl_user> user = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", id)).ToList<tbl_user>();
             }
         }
 
-        public void TypeCycleLazyLoad(int[] userIds)
+        public void TypeCycleLazyLoadLinq(int[] userIds)
         {
             foreach (int id in userIds)
             {
@@ -52,14 +52,21 @@ namespace DaAdoEF
             }
         }
 
-        public void GetCollection(int count)
+        public void GetCollectionLinq(int count)
         {
             List<tbl_user> users = entities.tbl_user.Take(count).ToList();
         }
 
-        public void CollectionByIdArray(int[] userIds)
+        public void CollectionByIdArrayLinq(int[] userIds)
         {
-            //tbl_user user = entities.tbl_user.Select( c => c.user_id == 1);
+        }
+
+        public void SameObjectInCycleLoadLinq(int iterationCount, int userId)
+        {
+            for (int i = 0; i < iterationCount; i++)
+            {
+                //List<tbl_user> user = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", userId)).ToList<tbl_user>();
+            }
         }
 /*
         public void CollectionWithChildrenByIdArray(int[] userIds)
@@ -72,12 +79,6 @@ namespace DaAdoEF
         }
 
        
-
-        public void LargeCollection()
-        {
-            var users = (from e in db.tbl_users
-                         select e).Take(Constants.Large).ToList();
-        }
 
         public void CollectionByPredicateWithoutLoad()
         {
@@ -101,15 +102,7 @@ namespace DaAdoEF
             }
         }
 
-        public void SameObjectInCycleLoad(int userId)
-        {
-            for (int i = 0; i < Constants.SmallIteration; i++)
-            {
-                var users = (from e in db.tbl_users
-                             where e.user_id == userId
-                             select e).ToList();
-            }
-        }
+     
 
         public void SelectBySamePredicate()
         {
