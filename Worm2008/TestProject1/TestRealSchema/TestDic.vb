@@ -65,7 +65,7 @@ Public Class TestDic
 
             Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr)
 
-            Assert.AreEqual(3, col.Count)
+            Assert.AreEqual(2, col.Count)
         End Using
 
     End Sub
@@ -82,8 +82,43 @@ Public Class TestDic
 
             Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElementsLoadOnlyNames(mgr)
 
-            Assert.AreEqual(3, col.Count)
+            Assert.AreEqual(2, col.Count)
         End Using
 
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestBuildWithSort()
+
+        Dim s As New SQLGenerator("1")
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
+
+            Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
+
+            Assert.AreEqual(3, idx.TotalCount)
+
+            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr, Sorting.Field("Code"))
+
+            Assert.AreEqual(2, col.Count)
+        End Using
+
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestBuildComplexWithSort()
+
+        Dim s As New SQLGenerator("2")
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
+
+            Dim idx As DicIndex(Of Table1) = mgr.BuildObjDictionary(Of Table1)(1, Nothing, Nothing)
+
+            Assert.AreEqual(6, idx.TotalCount)
+
+            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr, Sorting.Field("Code"))
+
+            Assert.AreEqual(2, col.Count)
+        End Using
+
+    End Sub
+
 End Class

@@ -33,8 +33,38 @@ Namespace Database
             'Private _disposeMgr As Boolean
             Private _commited As Boolean
 
+            Public Class CancelEventArgs
+                Inherits EventArgs
+
+                Private _cancel As Boolean
+                Private _o As OrmBase
+
+                Public Sub New(ByVal o As OrmBase)
+                    _o = o
+                End Sub
+
+                Public Property Cancel() As Boolean
+                    Get
+                        Return _cancel
+                    End Get
+                    Set(ByVal value As Boolean)
+                        _cancel = value
+                    End Set
+                End Property
+
+                Public Property SavedObject() As OrmBase
+                    Get
+                        Return _o
+                    End Get
+                    Set(ByVal value As OrmBase)
+                        _o = value
+                    End Set
+                End Property
+            End Class
+
             Public Event BeginSave(ByVal count As Integer)
             Public Event EndSave()
+            Public Event ObjectSaving(ByVal sender As BatchSaver, ByVal args As CancelEventArgs)
             Public Event ObjectSaved(ByVal o As OrmBase)
             Public Event ObjectAccepted(ByVal o As OrmBase)
             Public Event ObjectRejected(ByVal o As OrmBase)
@@ -140,10 +170,14 @@ Namespace Database
                         End If
                         Try
                             Dim os As ObjectState = o.ObjectState
-                            If o.Save(False) Then
-                                need2save.Add(o)
-                            Else
-                                RaiseEvent ObjectSaved(o)
+                            Dim args As New CancelEventArgs(o)
+                            RaiseEvent ObjectSaving(Me, args)
+                            If Not args.Cancel Then
+                                If o.Save(False) Then
+                                    need2save.Add(o)
+                                Else
+                                    RaiseEvent ObjectSaved(o)
+                                End If
                             End If
                             saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
                         Catch ex As Exception

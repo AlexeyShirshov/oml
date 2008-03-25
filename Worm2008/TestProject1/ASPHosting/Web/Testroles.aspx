@@ -1,4 +1,6 @@
 <%@ Assembly Name="Worm.Orm" %>
+<%@ Import Namespace="Worm.Cache" %>
+<%@ Import Namespace="Worm.Database" %>
 <%@ Import Namespace="Worm.Orm" %>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
@@ -14,7 +16,8 @@
         End Function
       
         Public Function CreateDBManager() As OrmReadOnlyDBManager
-            Return New OrmReadOnlyDBManager(New OrmCache, New Worm.Orm.DbSchema("1"), "Data Source=vs2\sqlmain;Integrated Security=true;Initial Catalog=test;")
+            Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
+            Return New OrmReadOnlyDBManager(New OrmCache, New SQLGenerator("1"), "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
         End Function
     
         Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)

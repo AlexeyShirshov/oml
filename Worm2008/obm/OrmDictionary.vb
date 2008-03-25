@@ -236,15 +236,44 @@ Namespace Orm
             _secField = secField
         End Sub
 
+        Public Overloads Function FindElements(ByVal mgr As OrmManagerBase, ByVal sort As Worm.Sorting.Sort) As ReadOnlyList(Of T)
+            Return FindElementsInternal(mgr, False, sort)
+        End Function
+
         Public Overloads Function FindElements(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
-            Return FindElementsInternal(mgr, False)
+            Return FindElementsInternal(mgr, False, Nothing)
         End Function
 
         Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
-            Return FindElementsInternal(mgr, True)
+            Return FindElementsInternal(mgr, True, Nothing)
         End Function
 
-        Private Function FindObjects(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As ReadOnlyList(Of T)
+        Private Function FindObjects(ByVal mgr As OrmManagerBase, _
+            ByVal strong As Boolean, ByVal tt As Type, ByVal field As String, ByVal sec As String, ByVal sort As Worm.Sorting.Sort) As ReadOnlyList(Of T)
+
+            If String.IsNullOrEmpty(field) Then
+                Throw New ArgumentNullException("field")
+            End If
+
+            Dim s As QueryGenerator = mgr.ObjectSchema
+            Dim cr As Criteria.CriteriaLink = Nothing
+            If strong Then
+                cr = s.CreateCriteria(tt).Field(field).Eq(Name)
+                If Not String.IsNullOrEmpty(sec) Then
+                    cr.Or(tt, sec).Eq(Name)
+                End If
+            Else
+                cr = s.CreateCriteria(tt).Field(field).Like(Name & "%")
+                If Not String.IsNullOrEmpty(sec) Then
+                    cr.Or(tt, sec).Like(Name & "%")
+                End If
+            End If
+
+            Return mgr.Find(Of T)(cr, sort, False)
+        End Function
+
+        Private Function FindObjects(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, _
+            ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As ReadOnlyList(Of T)
             If String.IsNullOrEmpty(field) Then
                 Throw New ArgumentNullException("field")
             End If
@@ -267,7 +296,7 @@ Namespace Orm
             Return col
         End Function
 
-        Protected Function FindElementsInternal(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean) As ReadOnlyList(Of T)
+        Protected Function FindElementsInternal(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, ByVal sort As Worm.Sorting.Sort) As ReadOnlyList(Of T)
 
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False
@@ -285,72 +314,76 @@ Namespace Orm
                 End If
             End If
 
-            Dim col As ReadOnlyList(Of T) = FindObjects(mgr, loadName, strong, tt, firstField)
+            If sort Is Nothing Then
+                Dim col As ReadOnlyList(Of T) = FindObjects(mgr, loadName, strong, tt, firstField)
 
-            If Not String.IsNullOrEmpty(secField) Then
-                Dim col2 As ReadOnlyList(Of T) = FindObjects(mgr, loadName, strong, tt, secField)
-                If col.Count = 0 Then
-                    col = col2
-                Else
-                    Dim c As New System.Collections.SortedList
-                    Dim fname As String = firstField
-                    Dim sname As String = secField
-                    Dim add As New Hashtable
-                    For Each ar As T In col2
-                        'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, sname))
-                        Dim fv As String = CStr(ar.GetValue(sname, oschema))
-                        Dim ar2 As T = CType(c(fv), T)
-                        If ar2 IsNot Nothing Then
-                            If ar2 = ar Then
-                                Throw New InvalidOperationException("Duplicate object " & fv)
-                            Else
-                                'Throw New MediaContentException("Artists with equal names " & ar.ObjName & ", " & ar2.ObjName)
-                                Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
-                                If addt Is Nothing Then
-                                    addt = New Generic.List(Of T)
-                                    add.Add(fv, addt)
+                If Not String.IsNullOrEmpty(secField) Then
+                    Dim col2 As ReadOnlyList(Of T) = FindObjects(mgr, loadName, strong, tt, secField)
+                    If col.Count = 0 Then
+                        col = col2
+                    Else
+                        Dim c As New System.Collections.SortedList
+                        Dim fname As String = firstField
+                        Dim sname As String = secField
+                        Dim add As New Hashtable
+                        For Each ar As T In col2
+                            If col.Contains(ar) Then Continue For
+                            Dim fv As String = CStr(ar.GetValue(sname, oschema))
+                            Dim ar2 As T = CType(c(fv), T)
+                            If ar2 IsNot Nothing Then
+                                If ar2 = ar Then
+                                    Throw New InvalidOperationException("Duplicate object " & fv)
+                                Else
+                                    'Throw New MediaContentException("Artists with equal names " & ar.ObjName & ", " & ar2.ObjName)
+                                    Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
+                                    If addt Is Nothing Then
+                                        addt = New Generic.List(Of T)
+                                        add.Add(fv, addt)
+                                    End If
+                                    addt.Add(ar)
+                                    Continue For
                                 End If
-                                addt.Add(ar)
-                                Continue For
                             End If
-                        End If
-                        c.Add(fv, ar)
-                    Next
-                    For Each ar As T In col
-                        'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                        Dim fv As String = CStr(ar.GetValue(fname, oschema))
-                        Dim ar2 As T = CType(c(fv), T)
-                        If ar2 IsNot Nothing Then
-                            If ar2 = ar Then
-                                Continue For
-                            Else
-                                'Throw New MediaContentException("Artists with equal names " & ar.ObjName & ", " & ar2.ObjName)
-                                Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
-                                If addt Is Nothing Then
-                                    addt = New Generic.List(Of T)
-                                    add.Add(fv, addt)
+                            c.Add(fv, ar)
+                        Next
+                        For Each ar As T In col
+                            'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
+                            Dim fv As String = CStr(ar.GetValue(fname, oschema))
+                            Dim ar2 As T = CType(c(fv), T)
+                            If ar2 IsNot Nothing Then
+                                If ar2 = ar Then
+                                    Continue For
+                                Else
+                                    'Throw New MediaContentException("Artists with equal names " & ar.ObjName & ", " & ar2.ObjName)
+                                    Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
+                                    If addt Is Nothing Then
+                                        addt = New Generic.List(Of T)
+                                        add.Add(fv, addt)
+                                    End If
+                                    If addt.IndexOf(ar) < 0 Then addt.Add(ar)
+                                    Continue For
                                 End If
-                                If addt.IndexOf(ar) < 0 Then addt.Add(ar)
-                                Continue For
                             End If
-                        End If
-                        c.Add(fv, ar)
-                    Next
-                    Dim result As New ReadOnlyList(Of T)
-                    For Each ar As T In c.Values
-                        result.Add(ar)
-                        'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                        Dim fv As String = CStr(ar.GetValue(fname, oschema))
-                        Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
-                        If addt IsNot Nothing Then
-                            result.AddRange(addt)
-                        End If
-                    Next
-                    col = result
+                            c.Add(fv, ar)
+                        Next
+                        Dim result As New ReadOnlyList(Of T)
+                        For Each ar As T In c.Values
+                            result.Add(ar)
+                            'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
+                            Dim fv As String = CStr(ar.GetValue(fname, oschema))
+                            Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
+                            If addt IsNot Nothing Then
+                                result.AddRange(addt)
+                            End If
+                        Next
+                        col = result
+                    End If
                 End If
-            End If
 
-            Return col
+                Return col
+            Else
+                Return FindObjects(mgr, strong, tt, firstField, secField, sort)
+            End If
         End Function
 
         Public Overloads ReadOnly Property Parent() As DicIndex(Of T)

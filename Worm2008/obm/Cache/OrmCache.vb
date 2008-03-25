@@ -664,7 +664,11 @@ Namespace Cache
                         Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
                         For Each id As String In p.Value.Keys
                             Dim ce As OrmManagerBase.M2MCache = TryCast(dic(id), OrmManagerBase.M2MCache)
-                            etrs.Add(New Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String))(ce, New Pair(Of String, String)(p.Key, id)))
+                            If ce Is Nothing Then
+                                dic.Remove(id)
+                            Else
+                                etrs.Add(New Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String))(ce, New Pair(Of String, String)(p.Key, id)))
+                            End If
                         Next
                     Next
                 End If

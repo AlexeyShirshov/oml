@@ -343,6 +343,10 @@ Namespace Database
                     If rs IsNot Nothing Then
                         es = rs.GetEditableSchema
                     End If
+                    Dim js As IOrmObjectSchema = TryCast(es, IOrmObjectSchema)
+                    Dim tbls() As OrmTable = GetTables(es)
+
+                    Dim pkt As OrmTable = tbls(0)
 
                     For Each de As DictionaryEntry In GetProperties(real_t)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
@@ -363,15 +367,25 @@ Namespace Database
                                 If (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault AndAlso v Is DBNull.Value Then
                                     If Not String.IsNullOrEmpty(DefaultValue) Then
                                         f = New dc.EntityFilter(real_t, c.FieldName, New LiteralValue(DefaultValue), FilterOperation.Equal)
+                                    Else
+                                        Throw New OrmSchemaException("DefaultValue required for operation")
+                                    End If
+                                ElseIf v Is DBNull.Value AndAlso pkt IsNot tb AndAlso js IsNot Nothing Then
+                                    Dim j As OrmJoin = CType(js.GetJoins(pkt, tb), OrmJoin)
+                                    If j.JoinType = Joins.JoinType.Join Then
+                                        GoTo l1
                                     End If
                                 Else
+l1:
                                     f = New dc.EntityFilter(real_t, c.FieldName, New ScalarValue(v), FilterOperation.Equal)
                                 End If
-                                If Not inserted_tables.ContainsKey(tb) Then
-                                    inserted_tables.Add(tb, New List(Of ITemplateFilter))
-                                End If
-                                inserted_tables(tb).Add(f)
 
+                                If f IsNot Nothing Then
+                                    If Not inserted_tables.ContainsKey(tb) Then
+                                        inserted_tables.Add(tb, New List(Of ITemplateFilter))
+                                    End If
+                                    inserted_tables(tb).Add(f)
+                                End If
                             End If
 
                             If (att And Field2DbRelations.SyncInsert) = Field2DbRelations.SyncInsert Then
@@ -385,10 +399,6 @@ Namespace Database
                         End If
                     Next
 
-                    Dim tbls() As OrmTable = GetTables(es)
-
-                    Dim pkt As OrmTable = tbls(0)
-
                     If Not inserted_tables.ContainsKey(pkt) Then
                         inserted_tables.Add(pkt, Nothing)
                     End If
@@ -398,7 +408,6 @@ Namespace Database
                     For j As Integer = 1 To ins_tables.Count - 1
                         Dim join_table As OrmTable = ins_tables(j).First
                         Dim jn As OrmJoin = Nothing
-                        Dim js As IOrmObjectSchema = TryCast(es, IOrmObjectSchema)
                         If js IsNot Nothing Then
                             jn = CType(GetJoins(js, pkt, join_table, filterInfo), OrmJoin)
                         End If
