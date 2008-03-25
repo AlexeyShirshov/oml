@@ -13,11 +13,11 @@ namespace DaAdoEF
     public class AdoEFProvider
     {
         TestDAEntities entities;
-
+        EntityConnection connection;
         #region new
         public AdoEFProvider(string connectionString)
         {
-            EntityConnection connection = new EntityConnection(connectionString);
+            connection = new EntityConnection(connectionString);
             connection.Open();
             entities = new TestDAEntities(connection);
         }
@@ -27,11 +27,13 @@ namespace DaAdoEF
             entities.Dispose();
         }
 
+        #region Linq Syntax
+
         public void TypeCycleWithoutLoadLinq(int[] userIds)
         {
             foreach (int id in userIds)
             {
-                ObjectQuery<tbl_user> query = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", id));
+                ObjectQuery<tbl_user> query = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", id));
             }
         }
 
@@ -39,7 +41,7 @@ namespace DaAdoEF
         {
             foreach (int id in userIds)
             {
-                List<tbl_user> user = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", id)).ToList<tbl_user>();
+                List<tbl_user> user = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", id)).ToList<tbl_user>();
             }
         }
 
@@ -47,7 +49,7 @@ namespace DaAdoEF
         {
             foreach (int id in userIds)
             {
-                ObjectQuery<tbl_user> query = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", id));
+                ObjectQuery<tbl_user> query = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", id));
                 string first_name = query.First().first_name;
             }
         }
@@ -57,74 +59,190 @@ namespace DaAdoEF
             List<tbl_user> users = entities.tbl_user.Take(count).ToList();
         }
 
-        public void CollectionByIdArrayLinq(int[] userIds)
-        {
-        }
 
         public void SameObjectInCycleLoadLinq(int iterationCount, int userId)
         {
             for (int i = 0; i < iterationCount; i++)
             {
-                //List<tbl_user> user = entities.tbl_user.SelectValue<tbl_user>("it", new ObjectParameter("user_id", userId)).ToList<tbl_user>();
+                List<tbl_user> user = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", userId)).ToList<tbl_user>();
             }
         }
-/*
-        public void CollectionWithChildrenByIdArray(int[] userIds)
+
+        public void CollectionByPredicateWithoutLoadLinq(int iterationCount)
         {
-            var users = (from e in db.tbl_users
-                         where userIds.Contains<int>(e.user_id)
-                         from o in e.tbl_phones
-                         select new { e.user_id, e.first_name, e.last_name, o.phone_id, o.phone_number }).ToList();
-
-        }
-
-       
-
-        public void CollectionByPredicateWithoutLoad()
-        {
-            for (int i = 0; i < Constants.LargeIteration; i++)
+            for (int i = 0; i < iterationCount; i++)
             {
-                var users = (from u in db.tbl_users
-                             from p in u.tbl_phones
-                             where p.phone_number.StartsWith((i + 1).ToString())
-                             select u);
+                string id = (i + 1).ToString();
+                var users = entities.tbl_user.Join(entities.tbl_phone,
+                    u => u.user_id, p => p.user_id, (u, p) => new {U = u, P = p}).
+                        Where(jn => jn.P.phone_number.StartsWith(id)).
+                        Select(jn => jn.U);
             }
         }
 
-        public void CollectionByPredicateWithLoad()
+        public void CollectionByPredicateWithLoadLinq(int iterationCount)
         {
-            for (int i = 0; i < Constants.LargeIteration; i++)
+            for (int i = 0; i < iterationCount; i++)
             {
-                var users = (from u in db.tbl_users
-                             from p in u.tbl_phones
-                             where p.phone_number.StartsWith((i + 1).ToString())
-                             select u).ToList();
+                string id = (i + 1).ToString();
+                var users = entities.tbl_user.Join(entities.tbl_phone,
+                    u => u.user_id, p => p.user_id, (u, p) => new { U = u, P = p }).
+                        Where(jn => jn.P.phone_number.StartsWith(id)).
+                        Select(jn => jn.U).ToList();
             }
         }
 
-     
 
-        public void SelectBySamePredicate()
+
+        public void SelectBySamePredicateLinq(int iterationCount)
         {
-            for (int i = 0; i < Constants.SmallIteration; i++)
+            for (int i = 0; i < iterationCount; i++)
             {
-                var users = (from u in db.tbl_users
-                             from p in u.tbl_phones
-                             where p.phone_number.StartsWith("1")
-                             select u);
+                var users = entities.tbl_user.Join(entities.tbl_phone,
+                    u => u.user_id, p => p.user_id, (u, p) => new { U = u, P = p }).
+                        Where(jn => jn.P.phone_number.StartsWith("1")).
+                        Select(jn => jn.U).ToList();
             }
         }
 
-        public void ObjectsWithLoadWithPropertiesAccess()
+        public void ObjectsWithLoadWithPropertiesAccessLinq()
         {
-            var users = (from u in db.tbl_users
-                          select u).ToList();
-            foreach (var user in users)
+            List<tbl_user> users = entities.tbl_user.ToList();
+            foreach (tbl_user user in users)
             {
                 string name = user.first_name;
             }
         }
-        */
+
+        #endregion Linq Syntax
+
+        #region Default syntax
+
+
+        public void TypeCycleWithoutLoad(int[] userIds)
+        {
+            foreach (int id in userIds)
+            {
+                EntityCommand cmd = new EntityCommand(
+                  "SELECT VALUE c FROM TestDAEntities.tbl_user AS c WHERE c.user_id=" + id, connection);
+                DbDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
+            }
+        }
+
+        public void TypeCycleWithLoad(int[] userIds)
+        {
+            foreach (int id in userIds)
+            {
+                EntityCommand cmd = new EntityCommand(
+                 "SELECT VALUE c FROM TestDAEntities.tbl_user AS c WHERE c.user_id=" + id, connection);
+                DbDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
+
+                while (reader.Read())
+                {
+                    string result = string.Format("{0} {1} {2}", reader["user_id"], reader["first_name"], reader["last_name"]);
+                }
+            }
+        }
+
+        public void TypeCycleLazyLoad(int[] userIds)
+        {
+            foreach (int id in userIds)
+            {
+                EntityCommand cmd = new EntityCommand(
+                   "SELECT VALUE c FROM TestDAEntities.tbl_user AS c WHERE c.user_id=" + id, connection);
+                DbDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
+                reader.Read();
+                object name = reader["user_id"];
+            }
+        }
+
+        public void GetCollection(int count)
+        {
+            EntityCommand cmd = new EntityCommand(
+                  "SELECT TOP " + count + "VALUE c FROM TestDAEntities.tbl_user AS c ", connection);
+            DbDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
+        }
+
+        public void CollectionWithChildrenByIdArray(int[] userIds)
+        {
+            //var users = (from e in db.tbl_users
+            //             where userIds.Contains<int>(e.user_id)
+            //             from o in e.tbl_phones
+            //             select new { e.user_id, e.first_name, e.last_name, o.phone_id, o.phone_number }).ToList();
+            //EntityCommand cmd = new EntityCommand(
+            //        "SELECT VALUE c FROM TestDAEntities.tbl_user AS c WHERE c.user_id=" + id);
+            //DbDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleResult);
+        }
+
+        public void CollectionByIdArray(int[] userIds)
+        {
+        //    var users = (from e in db.tbl_users
+        //                 where userIds.Contains<int>(e.user_id)
+        //                 select e).ToList();
+        //     EntityCommand cmd = new EntityCommand(
+        //            "SELECT VALUE c FROM TestDAEntities.tbl_user AS c WHERE c.user_id=" + id);
+        //    DbDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SingleResult);
+        
+        }
+
+        public void CollectionByPredicateWithoutLoad(int iterationCount)
+        {
+            //for (int i = 0; i < Constants.LargeIteration; i++)
+            //{
+            //    var users = (from u in db.tbl_users
+            //                 from p in u.tbl_phones
+            //                 where p.phone_number.StartsWith((i + 1).ToString())
+            //                 select u);
+            //}
+        }
+
+        public void CollectionByPredicateWithLoad(int iterationCount)
+        {
+            //for (int i = 0; i < Constants.LargeIteration; i++)
+            //{
+            //    var users = (from u in db.tbl_users
+            //                 from p in u.tbl_phones
+            //                 where p.phone_number.StartsWith((i + 1).ToString())
+            //                 select u).ToList();
+            //}
+        }
+
+        public void SameObjectInCycleLoad(int iterationCount, int userId)
+        {
+            for (int i = 0; i < iterationCount; i++)
+            {
+                EntityCommand cmd = new EntityCommand(
+                   "SELECT VALUE c FROM TestDAEntities.tbl_user AS c WHERE c.user_id=" + userId, connection);
+                DbDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
+            }
+        }
+
+        public void SelectBySamePredicate(int iterationCount)
+        {
+            //for (int i = 0; i < Constants.SmallIteration; i++)
+            //{
+            //    var users = (from u in db.tbl_users
+            //                 from p in u.tbl_phones
+            //                 where p.phone_number.StartsWith("1")
+            //                 select u);
+            //}
+        }
+
+        public void ObjectsWithLoadWithPropertiesAccess()
+        {
+                
+            EntityCommand cmd = new EntityCommand(
+                   "SELECT VALUE c FROM TestDAEntities.tbl_user AS c", connection);
+            DbDataReader reader = cmd.ExecuteReader(System.Data.CommandBehavior.SequentialAccess);
+            while (reader.Read())
+            {
+                string result = string.Format("{0} {1} {2}", reader["user_id"], reader["first_name"], reader["last_name"]);
+            }
+          
+        }
+
+        #endregion Default syntax
+
         #endregion new
 
         #region old
