@@ -8,12 +8,16 @@
 
 <script runat="server">
 
-    Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)
-        Dim sb As New StringBuilder
+    Protected Function CreateDBManager() As OrmReadOnlyDBManager
         Dim c As New OrmCache
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
         Dim conn As String = "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;"
-        Using mgr As New OrmReadOnlyDBManager(c, New DbSchema("1"), conn)
+        Return New OrmReadOnlyDBManager(c, New SQLGenerator("1"), conn)
+    End Function
+    
+    Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)
+        Dim sb As New StringBuilder
+        Using mgr As OrmReadOnlyDBManager = CreateDBManager()
             Dim o As New OrmDictionary(Of TestProject1.Table1)(mgr.Cache)
             
             For Each t As TestProject1.Table1 In mgr.FindTop(Of TestProject1.Table1)(100, Nothing, Nothing, True)
@@ -26,15 +30,24 @@
             Next
             
             pre.InnerHtml = sb.ToString
+            
         End Using
         
         
     End Sub
+    
+    Public Function GetTime() As Date
+        Using mgr As OrmReadOnlyDBManager = CreateDBManager()
+            Return Date.Now
+        End Using
+    End Function
 </script>
 
 <html xmlns="http://www.w3.org/1999/xhtml" >
 <head>
     <title>Test objects</title>
 </head>
-<body><pre runat="server" id="pre" /></body>
+<body><pre runat="server" id="pre" />
+<%=GetTime() & "  test objects ok"%>
+</body>
 </html>

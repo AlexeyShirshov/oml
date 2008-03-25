@@ -223,6 +223,12 @@ Namespace Criteria.Joins
             End Set
         End Property
 
+        Public ReadOnly Property JoinType() As Worm.Criteria.Joins.JoinType
+            Get
+                Return _joinType
+            End Get
+        End Property
+
         Public Function InjectJoinFilter(ByVal t As Type, ByVal field As String, ByVal table As OrmTable, ByVal column As String) As Core.TemplateBase
             For Each _fl As Core.IFilter In _condition.GetAllFilters()
                 Dim f As JoinFilter = Nothing
