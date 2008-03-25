@@ -271,6 +271,7 @@ namespace Tests
             adoEFProvider.SelectBySamePredicate (Constants.SmallIteration);
         }
 
+        [TestMethod]
         [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
         public void ObjectsWithLoadWithPropertiesAccess()
         {
