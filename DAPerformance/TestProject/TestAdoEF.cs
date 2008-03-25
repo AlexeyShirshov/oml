@@ -75,6 +75,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.SmallCollectionByIdArray, Syntax.Linq)]
         public void SmallCollectionByIdArrayLinq()
         {
+            adoEFProvider.CollectionWithChildrenByIdArrayLinq(smallUserIds);
         }
 
         [Ignore]//incorrrect in Ado EF beta 3 ("Contains()" method in Linq to Entities)
@@ -82,6 +83,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray, Syntax.Linq)]
         public void SmallCollectionWithChildrenByIdArrayLinq()
         {
+            adoEFProvider.CollectionWithChildrenByIdArrayLinq(smallUserIds);
         }
 
         [Ignore]//incorrrect in Ado EF beta 3 ("Contains()" method in Linq to Entities)
@@ -89,6 +91,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.LargeCollectionByIdArray, Syntax.Linq)]
         public void LargeCollectionByIdArrayLinq()
         {
+            adoEFProvider.CollectionByIdArrayLinq(largeUserIds);
         }
 
         [Ignore]//incorrrect in Ado EF beta 3 ("Contains()" method in Linq to Entities)
@@ -96,6 +99,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray, Syntax.Linq)]
         public void LargeCollectionWithChildrenByIdArrayLinq()
         {
+            adoEFProvider.CollectionWithChildrenByIdArrayLinq(largeUserIds);
         }
 
         [TestMethod]
@@ -178,7 +182,6 @@ namespace Tests
             adoEFProvider.TypeCycleLazyLoad (mediumUserIds);
         }
 
-        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.SmallCollection  )]
         public void SmallCollection ()
@@ -186,41 +189,40 @@ namespace Tests
             adoEFProvider.GetCollection (Constants.Small);
         }
 
-        [Ignore]
+        [Ignore]//incorrrect in Ado EF beta 3 ("Contains()" method in Linq to Entities)
         [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray  )]
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
         public void SmallCollectionByIdArray ()
         {
-            adoEFProvider.CollectionByIdArray(smallUserIds);
+            
         }
 
-        [Ignore]       
+        [Ignore]//incorrrect in Ado EF beta 3 ("Contains()" method in Linq to Entities)     
         [TestMethod]
         [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray  )]
         public void SmallCollectionWithChildrenByIdArray ()
         {
-            adoEFProvider.CollectionWithChildrenByIdArray(smallUserIds);
+            
         }
 
 
-        [Ignore]
+        [Ignore]//incorrrect in Ado EF beta 3 ("Contains()" method in Linq to Entities)
         [TestMethod]
         [QueryTypeAttribute(QueryType.LargeCollectionByIdArray  )]
         public void LargeCollectionByIdArray ()
         {
-            adoEFProvider.CollectionByIdArray(largeUserIds);
+            
         }
 
 
-        [Ignore]
+        [Ignore]//incorrrect in Ado EF beta 3 ("Contains()" method in Linq to Entities)
         [TestMethod]
         [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray  )]
         public void LargeCollectionWithChildrenByIdArray ()
         {
-            adoEFProvider.CollectionWithChildrenByIdArray(largeUserIds);
+            
         }
 
-        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.LargeCollection  )]
         public void LargeCollection ()
@@ -228,7 +230,6 @@ namespace Tests
             adoEFProvider.GetCollection (Constants.Large);
         }
 
-        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.SelectLargeCollection  )]
         public void SelectLargeCollection ()
@@ -246,7 +247,6 @@ namespace Tests
             adoEFProvider.SameObjectInCycleLoad (Constants.SmallIteration, smallUserIds[0]);
         }
 
-        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
         public void CollectionByPredicateWithoutLoad ()
@@ -256,7 +256,6 @@ namespace Tests
 
 
 
-        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
         public void CollectionByPredicateWithLoad()
@@ -265,7 +264,6 @@ namespace Tests
         }
 
 
-        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
         public void SelectBySamePredicate()
@@ -273,7 +271,6 @@ namespace Tests
             adoEFProvider.SelectBySamePredicate (Constants.SmallIteration);
         }
 
-        [TestMethod]
         [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
         public void ObjectsWithLoadWithPropertiesAccess()
         {
