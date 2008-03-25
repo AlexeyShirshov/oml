@@ -103,6 +103,8 @@ namespace DAWorm
                 //OrmJoin join = new OrmJoin(tbl, Worm.Criteria.Joins.JoinType.Join, filter);
                 //OrmJoin[] joins = new OrmJoin[] { join };
                 //ICollection<Tbl_user> users = manager.FindWithJoins<Tbl_user>(null, joins, null, null, true);
+                Type tp = typeof(Tbl_phone);
+                manager.Find<Tbl_user>(Worm.Database.Criteria.Ctor.Field(tp,Tbl_phone.Properties.Phone_number).Like("1%"), null, false);
             }
         }
 
