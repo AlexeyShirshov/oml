@@ -178,8 +178,9 @@ Namespace Database
                                 Else
                                     RaiseEvent ObjectSaved(o)
                                 End If
+                                saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
                             End If
-                            saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
+
                         Catch ex As Exception
                             Throw New OrmManagerException("Error during save " & o.ObjName, ex)
                         End Try
