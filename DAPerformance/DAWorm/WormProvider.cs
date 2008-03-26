@@ -63,8 +63,11 @@ namespace DAWorm
 
         public void CollectionWithChildrenByIdArray(int[] userIds)
         {
+            Type tp = typeof(Tbl_phone);
             ICollection<Tbl_user> users = manager.ConvertIds2Objects<Tbl_user>(userIds, false);
-            ICollection<Tbl_phone> phones = manager.FindJoin<Tbl_phone>(typeof(Tbl_user), "User_id", null, null, true);   
+            ICollection<Tbl_phone> phones = manager.FindJoin<Tbl_phone>(typeof(Tbl_user), "User_id",
+                Worm.Database.Criteria.Ctor.Field(tp, Tbl_phone.Properties.User_id).In(userIds),
+                null, true);   
         }
 
         public void CollectionByIdArray(int[] userIds)

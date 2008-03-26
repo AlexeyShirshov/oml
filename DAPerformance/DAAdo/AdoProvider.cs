@@ -100,8 +100,8 @@ namespace DAAdo
         {
             for (int i = 0; i < Constants.LargeIteration; i++)
             {
-                SqlCommand command = new SqlCommand(
-              "select * from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" + 
+               SqlCommand command = new SqlCommand(
+              "select distinct tbl_user.user_id, first_name, last_name from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" + 
               " where phone_number like '" + (i + 1).ToString() + "%'", conn);
                 SqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())
@@ -138,7 +138,7 @@ namespace DAAdo
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
                 SqlCommand command = new SqlCommand(
-            "select * from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" +
+            "select distinct tbl_user.user_id, first_name, last_name  from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" +
             " where phone_number like '1%'", conn);
                 SqlDataReader reader = command.ExecuteReader();
                 while (reader.Read())

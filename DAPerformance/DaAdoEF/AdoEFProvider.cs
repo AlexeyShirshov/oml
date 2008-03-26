@@ -76,7 +76,7 @@ namespace DaAdoEF
                 var users = entities.tbl_user.Join(entities.tbl_phone,
                     u => u.user_id, p => p.user_id, (u, p) => new {U = u, P = p}).
                         Where(jn => jn.P.phone_number.StartsWith(id)).
-                        Select(jn => jn.U);
+                        Select(jn => jn.U).Distinct();
             }
         }
 
@@ -88,7 +88,7 @@ namespace DaAdoEF
                 var users = entities.tbl_user.Join(entities.tbl_phone,
                     u => u.user_id, p => p.user_id, (u, p) => new { U = u, P = p }).
                         Where(jn => jn.P.phone_number.StartsWith(id)).
-                        Select(jn => jn.U).ToList();
+                        Select(jn => jn.U).Distinct().ToList();
             }
         }
 
@@ -101,7 +101,7 @@ namespace DaAdoEF
                 var users = entities.tbl_user.Join(entities.tbl_phone,
                     u => u.user_id, p => p.user_id, (u, p) => new { U = u, P = p }).
                         Where(jn => jn.P.phone_number.StartsWith("1")).
-                        Select(jn => jn.U);
+                        Select(jn => jn.U).Distinct();
             }
         }
 
@@ -178,10 +178,11 @@ namespace DaAdoEF
         {
             for (int i = 0; i < iterationCount; i++)
             {
+                string id = (i + 1).ToString();
                 var users = (from u in entities.tbl_user
                              from p in u.tbl_phone
-                             where p.phone_number.StartsWith((i + 1).ToString())
-                             select u);
+                             where p.phone_number.StartsWith(id)
+                             select u).Distinct();
             }
         }
 
@@ -193,7 +194,7 @@ namespace DaAdoEF
                 var users = (from u in entities.tbl_user
                              from p in u.tbl_phone
                              where p.phone_number.StartsWith(id)
-                             select u).ToList();
+                             select u).Distinct().ToList();
             }
         }
 
@@ -214,7 +215,7 @@ namespace DaAdoEF
                 var users = (from u in entities.tbl_user
                              from p in u.tbl_phone
                              where p.phone_number.StartsWith("1")
-                             select u);
+                             select u).Distinct();
             }
         }
 

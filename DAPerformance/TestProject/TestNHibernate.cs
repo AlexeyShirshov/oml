@@ -148,7 +148,7 @@ namespace Tests
                 //.Add(Expression.Like("PhoneNumber", (i + 1) + "%")).List();
 
                  IQuery q = session.CreateQuery(
-                     "select u.UserId,  u.FirstName,  u.LastName from LazyUser as u " +
+                     "select distinct u.UserId,  u.FirstName,  u.LastName from LazyUser as u " +
                  "inner join u.Phones as p where p.PhoneNumber like '" + (i + 1) + "%'");
                  IList users = q.List();
             }
@@ -167,7 +167,7 @@ namespace Tests
                 //    .Add(Expression.Like("PhoneNumber", (i + 1) + "%")).List();
 
                 IQuery q = session.CreateQuery(
-                     "select u.UserId,  u.FirstName,  u.LastName from User as u " +
+                     "select distinct u.UserId,  u.FirstName,  u.LastName from User as u " +
                  "inner join u.Phones as p where p.PhoneNumber like '" + (i + 1) + "%'");
                 IList users = q.List();
             }
@@ -201,7 +201,8 @@ namespace Tests
             {
                 IList users = session.CreateCriteria(typeof(LazyUser))
                     .CreateCriteria("Phones")
-                    .Add(Expression.Like("PhoneNumber", "1%")).List();
+                    .Add(Expression.Like("PhoneNumber", "1%"))
+                    .SetProjection(Projections.Distinct(Projections.Property("UserId"))).List();
             }
         }
 
