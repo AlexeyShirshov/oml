@@ -101,7 +101,7 @@ namespace DaAdoEF
                 var users = entities.tbl_user.Join(entities.tbl_phone,
                     u => u.user_id, p => p.user_id, (u, p) => new { U = u, P = p }).
                         Where(jn => jn.P.phone_number.StartsWith("1")).
-                        Select(jn => jn.U).ToList();
+                        Select(jn => jn.U);
             }
         }
 

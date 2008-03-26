@@ -77,20 +77,9 @@ namespace DAWorm
             for (int i = 0; i < iterationCount; i++)
             {
                 string id = (i + 1).ToString() + "%";
-                //Worm.Database.Criteria.Core.EntityFilter filter = new Worm.Database.Criteria.Core.EntityFilter
-                //    (typeof(Tbl_phone), "Phone_number", new Worm.Criteria.Values.LiteralValue(id), Worm.Criteria.FilterOperation.Like);
-                ICollection<Tbl_user> users = manager.FindJoin<Tbl_user>(typeof(Tbl_phone), "User_id", null, null, false);   
-
-                //OrmTable tbl = manager.DbSchema.GetTables(typeof(Tbl_user))[0];
-                //JoinFilter filter = new JoinFilter((tbl, "User_id", typeof(c), "Phone_number", Worm.Criteria.FilterOperation.Like);
-                //OrmJoin join = new OrmJoin(tbl, Worm.Criteria.Joins.JoinType.Join, filter);
-                //OrmJoin[] joins = new OrmJoin[] { join };
-                //ICollection<Tbl_user> users = manager.FindWithJoins<Tbl_user>(null, joins, null, null, false);
-
-                // Relation DAWorm.Tbl_user to DAWorm.Tbl_phone is ambiguous or not exist. Use FindJoin method.
-                //string id = (i + 1).ToString() + "%";
-                //ICollection<Tbl_user> users = manager.Find<Tbl_user>(
-                //    Worm.Database.Criteria.Ctor.Field(typeof(Tbl_phone), "Phone_number").Like(id), null, false);
+                Type tp = typeof(Tbl_phone);
+                ICollection<Tbl_user> users = manager.FindJoin<Tbl_user>(tp, "ID",
+                    Worm.Database.Criteria.Ctor.Field(tp, Tbl_phone.Properties.Phone_number).Like(id), null, false);   
             }
         }
 
@@ -98,13 +87,12 @@ namespace DAWorm
         {
             for (int i = 0; i < iterationCount; i++)
             {
-                //OrmTable tbl = manager.DbSchema.GetTables(typeof(Tbl_user))[0];
-                //JoinFilter filter = new JoinFilter(tbl, "user_id", typeof(Tbl_phone), "user_id", Worm.Criteria.FilterOperation.Equal);
-                //OrmJoin join = new OrmJoin(tbl, Worm.Criteria.Joins.JoinType.Join, filter);
-                //OrmJoin[] joins = new OrmJoin[] { join };
-                //ICollection<Tbl_user> users = manager.FindWithJoins<Tbl_user>(null, joins, null, null, true);
+                string id = (i + 1).ToString() + "%";
                 Type tp = typeof(Tbl_phone);
-                manager.Find<Tbl_user>(Worm.Database.Criteria.Ctor.Field(tp,Tbl_phone.Properties.Phone_number).Like("1%"), null, false);
+                ICollection<Tbl_user> users = manager.FindJoin<Tbl_user>(tp, "ID",
+                    Worm.Database.Criteria.Ctor.Field(tp, Tbl_phone.Properties.Phone_number).Like(id), null, true);   
+
+                //manager.Find<Tbl_user>(Worm.Database.Criteria.Ctor.Field(tp,Tbl_phone.Properties.Phone_number).Like("1%"), null, false);
             }
         }
 
@@ -121,10 +109,9 @@ namespace DAWorm
         {
             for (int i = 0; i < iterationCount; i++)
             {
-                //var users = (from u in db.tbl_users
-                //             from p in u.tbl_phones
-                //             where p.phone_number.StartsWith("1")
-                //             select u);
+                Type tp = typeof(Tbl_phone);
+                ICollection<Tbl_user> users = manager.FindJoin<Tbl_user>(tp, "ID",
+                    Worm.Database.Criteria.Ctor.Field(tp, Tbl_phone.Properties.Phone_number).Like("1%"), null, false); 
             }
         }
 

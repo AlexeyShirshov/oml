@@ -55,30 +55,6 @@ namespace Tests
             }
         }
 
-        //private static void GetIdsArray(int count, int[] idsArray)
-        //{
-        //    using (EntityCommand cmd = econn.CreateCommand())
-        //    {
-        //        var sql = "SELECT VALUE id FROM tbl_user.user_id AS id";
-        //        //EntityCommand cmd = new EntityCommand(sql, conn);
-        //        //DbDataReader reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess);
-        //        //int i = 0;
-        //        //while (reader.Read())
-        //        //{
-        //        // // idsArray[i++] = 
-        //        //}
-        //        //cmd.CommandText = "select TOP " + count + " user_id from tbl_user";
-        //        //using (EntityDataReader reader = cmd.ExecuteReader(CommandBehavior.SequentialAccess))
-        //        //{
-        //        //    int i = 0;
-        //        //    while (reader.Read())
-        //        //    {
-        //        //        idsArray[i++] = reader.GetInt32(0);
-        //        //    }
-        //        //}
-        //    }
-        //}
-
         [TestInitialize]
         public virtual void TestInitialize()
         {

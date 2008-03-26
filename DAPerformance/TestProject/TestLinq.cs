@@ -7,9 +7,6 @@ using Common;
 
 namespace Tests
 {
-    /// <summary>
-    /// Summary description for UnitTest1
-    /// </summary>
     [TestClass]
     public class TestLinq : TestBase
     {

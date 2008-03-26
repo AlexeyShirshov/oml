@@ -199,7 +199,7 @@ namespace Tests
         {
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
-                IList users = session.CreateCriteria(typeof(User))
+                IList users = session.CreateCriteria(typeof(LazyUser))
                     .CreateCriteria("Phones")
                     .Add(Expression.Like("PhoneNumber", "1%")).List();
             }

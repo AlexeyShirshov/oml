@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Reflection;
+using System.Data.SqlClient;
 using System.Text;
 
 using DAAdo;
@@ -14,7 +15,7 @@ namespace Tests
     [TestClass]
     public class TestAdo : TestBase
     {
-        static AdoProvider adoProvider = new AdoProvider(BaseSqlConnection);
+        private static AdoProvider adoProvider = new AdoProvider(BaseSqlConnection);
 
         public TestContext TestContext
         {

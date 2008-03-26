@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Common;
+using System.Data.SqlClient;
 
 namespace DALinq
 {
@@ -13,7 +14,7 @@ namespace DALinq
         {
             db = new DatabaseDataContext(connection);
         }
-
+        
         public void TypeCycleWithoutLoad(int[] userIds)
         {
             foreach (int id in userIds)

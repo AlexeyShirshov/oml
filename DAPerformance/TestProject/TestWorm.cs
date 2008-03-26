@@ -15,7 +15,6 @@ namespace Tests
     [TestClass]
     public class TestWorm : TestBase
     {
-      
         static OrmReadOnlyDBManager manager;
         static WormProvider wormProvider;
 
@@ -28,15 +27,22 @@ namespace Tests
         static TestWorm()
         {
             TestBase.classType = typeof(TestWorm);
-            manager = new OrmDBManager(new OrmCache(), new DbSchema("1"), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
+            manager = new OrmDBManager(new OrmCache(), new SQLGenerator("1"), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
             wormProvider = new WormProvider(manager);
         }
 
         [TestInitialize]
         public override void TestInitialize()
         {
-            wormProvider.Manager = new OrmDBManager(new OrmCache(), new DbSchema("1"), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
+            wormProvider.Manager = new OrmDBManager(new OrmCache(), new SQLGenerator("1"), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
             base.TestInitialize();
+        }
+
+        [TestCleanup]
+        public override void TestCleanup()
+        {
+            base.TestCleanup();
+           // manager.Dispose();
         }
 
         [TestMethod]
@@ -102,7 +108,6 @@ namespace Tests
             wormProvider.CollectionWithChildrenByIdArray(largeUserIds);
         }
 
-        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
         public void CollectionByPredicateWithoutLoad()
@@ -110,7 +115,6 @@ namespace Tests
             wormProvider.CollectionByPredicateWithoutLoad(Constants.LargeIteration);
         }
 
-        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
         public void CollectionByPredicateWithLoad()
@@ -135,7 +139,6 @@ namespace Tests
             wormProvider.SameObjectInCycleLoad(Constants.SmallIteration, smallUserIds[0]);
         }
 
-        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
         public void SelectBySamePredicate()
@@ -148,12 +151,6 @@ namespace Tests
         public void ObjectsWithLoadWithPropertiesAccess()
         {
             wormProvider.ObjectsWithLoadWithPropertiesAccess();
-        }
-
-        [ClassCleanup]
-        public static void ClassCleanup()
-        {
-            manager.Dispose();
         }
     }
 }
