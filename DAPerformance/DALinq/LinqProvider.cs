@@ -78,7 +78,7 @@ namespace DALinq
                 var users = (from u in db.tbl_users
                              from p in u.tbl_phones
                              where p.phone_number.StartsWith((i + 1).ToString())
-                             select u).Distinct();
+                             select u.user_id).ToList();
             }
         }
 
@@ -89,7 +89,7 @@ namespace DALinq
                 var users = (from u in db.tbl_users
                              from p in u.tbl_phones
                              where p.phone_number.StartsWith((i + 1).ToString())
-                             select u).Distinct().ToList();
+                             select u)./*Distinct().*/ToList();
             }
         }
 
