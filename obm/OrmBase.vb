@@ -1075,15 +1075,14 @@ Namespace Orm
             Return modified
         End Function
 
-        Protected Function PrepareRead(ByVal fieldName As String, ByVal d As IDisposable) As IDisposable
+        Protected Sub PrepareRead(ByVal fieldName As String, ByRef d As IDisposable)
             If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) Then
                 d = SyncHelper(True)
                 If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) AndAlso Not IsFieldLoaded(fieldName) Then
                     Load()
                 End If
             End If
-            Return d
-        End Function
+        End Sub
 
         Protected Friend Sub RaiseBeginModification()
             Dim modified As OrmBase = GetSoftClone()
@@ -1242,7 +1241,7 @@ Namespace Orm
             Dim d As IDisposable = New BlankSyncHelper(Nothing)
             Try
                 If reader Then
-                    d = PrepareRead(fieldName, d)
+                    PrepareRead(fieldName, d)
                 Else
                     d = SyncHelper(True)
                     PrepareUpdate()
@@ -1471,10 +1470,12 @@ Namespace Orm
         <EditorBrowsable(EditorBrowsableState.Never)> _
         <Conditional("DEBUG")> _
         Public Sub Invariant()
-            If IsLoaded AndAlso _
-                _state <> Orm.ObjectState.None AndAlso _state <> Orm.ObjectState.Modified AndAlso _state <> Orm.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified or Deleted: current state is " & _state.ToString)
-            'If Not IsLoaded AndAlso _
-            '   (_state = Orm.ObjectState.None OrElse _state = Orm.ObjectState.Modified OrElse _state = Orm.ObjectState.Deleted) Then Throw New OrmObjectException(ObjName & "When object is not loaded its state has not be None or Modified or Deleted: current state is " & _state.ToString)
+            Using SyncHelper(True)
+                If IsLoaded AndAlso _
+                    _state <> Orm.ObjectState.None AndAlso _state <> Orm.ObjectState.Modified AndAlso _state <> Orm.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified or Deleted: current state is " & _state.ToString)
+                If Not IsLoaded AndAlso _
+                   (_state = Orm.ObjectState.None OrElse _state = Orm.ObjectState.Modified OrElse _state = Orm.ObjectState.Deleted) Then Throw New OrmObjectException(ObjName & "When object is not loaded its state has not be None or Modified or Deleted: current state is " & _state.ToString)
+            End Using
         End Sub
 
         Public Function EnsureLoaded() As OrmBase

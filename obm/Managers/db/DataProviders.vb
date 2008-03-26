@@ -259,6 +259,31 @@ Namespace Database
                 End If
             End Sub
 
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
+                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal distinct As Boolean, ByVal cols As List(Of ColumnAttribute))
+                MyBase.New(mgr, f, cols, sort, key, id)
+                _join = join
+                If distinct Then
+                    _asc = New QueryAspect() {New DistinctAspect()}
+                End If
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
+                ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal top As Integer, ByVal cols As List(Of ColumnAttribute))
+                MyBase.New(mgr, f, cols, sort, key, id)
+                _join = join
+                _asc = New QueryAspect() {New TopAspect(top)}
+            End Sub
+
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
+               ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal aspect As QueryAspect, ByVal cols As List(Of ColumnAttribute))
+                MyBase.New(mgr, f, cols, sort, key, id)
+                _join = join
+                If aspect IsNot Nothing Then
+                    _asc = New QueryAspect() {aspect}
+                End If
+            End Sub
+
             Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
                 sb.Append(Schema.SelectWithJoin(t, almgr, pmgr, _join, True, _asc, Nothing, _mgr.GetFilterInfo, arr))
             End Sub

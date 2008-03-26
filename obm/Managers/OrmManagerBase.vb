@@ -1616,6 +1616,12 @@ l1:
     Public Function FindWithJoins(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, _
         ByVal joins() As OrmJoin, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+        Return FindWithJoins(Of T)(aspect, joins, criteria, sort, withLoad, Nothing)
+    End Function
+
+    Public Function FindWithJoins(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, _
+        ByVal joins() As OrmJoin, ByVal criteria As IGetFilter, _
+        ByVal sort As Sort, ByVal withLoad As Boolean, ByVal cols() As String) As ReadOnlyList(Of T)
 
         Dim key As String = FindWithJoinsGetKey(Of T)(aspect, joins, criteria)
 
@@ -1625,9 +1631,26 @@ l1:
 
         Dim sync As String = id & GetStaticKey()
 
-        'CreateDepends(filter, key, id)
+        Dim l As List(Of ColumnAttribute) = Nothing
+        If cols IsNot Nothing Then
+            Dim has_id As Boolean = False
+            l = New List(Of ColumnAttribute)
+            For Each c As String In cols
+                Dim col As ColumnAttribute = _schema.GetColumnByFieldName(GetType(T), c)
+                If col Is Nothing Then
+                    Throw New ArgumentException("Invalid column name " & c)
+                End If
+                If c = "ID" Then
+                    has_id = True
+                End If
+                l.Add(col)
+            Next
+            If Not has_id Then
+                l.Add(_schema.GetColumnByFieldName(GetType(T), "ID"))
+            End If
+        End If
 
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(aspect, joins, GetFilter(criteria, GetType(T)), sort, key, id)
+        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(aspect, joins, GetFilter(criteria, GetType(T)), sort, key, id, l)
         Dim s As Boolean = True
         Dim r As ReadOnlyList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
         If Not s Then
@@ -1635,7 +1658,7 @@ l1:
             Using ac As New ApplyCriteria(Me, Nothing)
                 Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
                 c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
-                r = FindWithJoins(Of T)(aspect, joins, ObjectSchema.CreateCriteriaLink(c), sort, withLoad)
+                r = FindWithJoins(Of T)(aspect, joins, ObjectSchema.CreateCriteriaLink(c), sort, withLoad, cols)
             End Using
         End If
         Return r
@@ -3070,7 +3093,7 @@ l1:
             'Dim join As OrmJoin = MakeJoin(type2search, selectType, field, FilterOperation.Equal, JoinType.Join, True)
             Return Search(Of T)(type2search, contextKey, sort, Nothing, New FtsDef([string], GetSearchSection))
             'End If
-            Return New ReadOnlyList(Of T)()
+            'Return New ReadOnlyList(Of T)()
         Else
             Return Search(Of T)([string], sort, contextKey)
         End If
@@ -3544,7 +3567,7 @@ l1:
         ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As ICustDelegate(Of T)
 
     Protected MustOverride Function GetCustDelegate(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IFilter, _
-        ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
+        ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As ICustDelegate(Of T)
 
     Protected MustOverride Function GetCustDelegate(Of T As {OrmBase, New})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
         ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)

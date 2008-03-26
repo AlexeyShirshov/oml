@@ -1407,7 +1407,7 @@ Public Module helper
                 arr(idx) = de.Value
             Next
 
-            For i As Integer = 0 To arr.Length - 1
+            For i As Integer = 0 To dic.Count - 1
                 l.Add(New Pair(Of TKey, TValue)(model(i), arr(i)))
             Next
         End If

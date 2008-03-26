@@ -371,7 +371,7 @@ Namespace Database
                                         Throw New OrmSchemaException("DefaultValue required for operation")
                                     End If
                                 ElseIf v Is DBNull.Value AndAlso pkt IsNot tb AndAlso js IsNot Nothing Then
-                                    Dim j As OrmJoin = CType(js.GetJoins(pkt, tb), OrmJoin)
+									Dim j As OrmJoin = CType(GetJoins(js, pkt, tb, filterInfo), OrmJoin)
                                     If j.JoinType = Joins.JoinType.Join Then
                                         GoTo l1
                                     End If

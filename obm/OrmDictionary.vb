@@ -269,7 +269,9 @@ Namespace Orm
                 End If
             End If
 
-            Return mgr.Find(Of T)(cr, sort, False)
+            Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
+			con.AddFilter(cr.Filter(GetType(T))).AddFilter(Root.Filter)
+			Return mgr.FindWithJoins(Of T)(Nothing, New OrmJoin() {Root.Join}, con.Condition, sort, False)
         End Function
 
         Private Function FindObjects(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, _
@@ -280,19 +282,21 @@ Namespace Orm
 
             Dim col As ReadOnlyList(Of T)
             Dim s As QueryGenerator = mgr.ObjectSchema
+            Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
+			con.AddFilter(Root.Filter)
+
             If strong Then
-                If loadName Then
-                    col = mgr.Find(Of T)(s.CreateCriteria(tt).Field(field).Eq(Name), Nothing, New String() {field})
-                Else
-                    col = mgr.Find(Of T)(s.CreateCriteria(tt).Field(field).Eq(Name), Nothing, False)
-                End If
+                con.AddFilter(s.CreateCriteria(tt).Field(field).Eq(Name).Filter(GetType(T)))
             Else
-                If loadName Then
-                    col = mgr.Find(Of T)(s.CreateCriteria(tt).Field(field).Like(Name & "%"), Nothing, New String() {field})
-                Else
-                    col = mgr.Find(Of T)(s.CreateCriteria(tt).Field(field).Like(Name & "%"), Nothing, False)
-                End If
+                con.AddFilter(s.CreateCriteria(tt).Field(field).Like(Name & "%").Filter(GetType(T)))
             End If
+
+            If loadName Then
+				col = mgr.FindWithJoins(Of T)(Nothing, New OrmJoin() {Root.Join}, con.Condition, Nothing, True, New String() {field})
+            Else
+				col = mgr.FindWithJoins(Of T)(Nothing, New OrmJoin() {Root.Join}, con.Condition, Nothing, False)
+            End If
+
             Return col
         End Function
 
