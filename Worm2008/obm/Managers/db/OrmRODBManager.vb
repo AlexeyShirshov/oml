@@ -632,8 +632,8 @@ Namespace Database
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal filter As IFilter, _
-            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
-            Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManagerBase.ICustDelegate(Of T)
+            Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect, cols)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
@@ -2005,7 +2005,7 @@ Namespace Database
             Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
                 joins, selCols, searchCols, queryFields, searchSchema, selSchema)
 
-            Dim col As ICollection(Of T) = Nothing
+            Dim col As New List(Of T)
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
 
                 With cmd
@@ -2020,14 +2020,16 @@ Namespace Database
                     params.AppendParams(.Parameters)
                 End With
 
-                If type2search Is selectType OrElse searchCols.Count = 0 Then
-                    col = CType(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols), List(Of T))
-                Else
-                    col = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T))
+                If Not String.IsNullOrEmpty(cmd.CommandText) Then
+                    If type2search Is selectType OrElse searchCols.Count = 0 Then
+                        col = LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols)
+                    Else
+                        col = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), Global.System.Collections.Generic.List(Of T))
+                    End If
                 End If
             End Using
 
-            Dim col2 As ICollection(Of T) = Nothing
+            Dim col2 As New List(Of T)
             Dim f2 As IOrmFullTextSupportEx = TryCast(searchSchema, IOrmFullTextSupportEx)
             Dim tokens() As String = frmt.GetTokens
             If tokens.Length > 1 AndAlso (f2 Is Nothing OrElse f2.UseFreeText) Then
@@ -2043,10 +2045,12 @@ Namespace Database
                         params.AppendParams(.Parameters)
                     End With
 
-                    If type2search Is selectType OrElse searchCols.Count = 0 Then
-                        col2 = CType(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols), List(Of T))
-                    Else
-                        col2 = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T))
+                    If Not String.IsNullOrEmpty(cmd.CommandText) Then
+                        If type2search Is selectType OrElse searchCols.Count = 0 Then
+                            col2 = LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols)
+                        Else
+                            col2 = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T))
+                        End If
                     End If
                 End Using
             End If
