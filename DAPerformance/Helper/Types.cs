@@ -63,7 +63,7 @@ namespace Common
         public const int Medium = 100;
         public const int Large = 2000;
 
-        public const int SmallIteration = 10;
-        public const int LargeIteration = 1000;
+        public const int SmallIteration = 100;
+        public const int LargeIteration = 5000;
     }
 }

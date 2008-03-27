@@ -7,12 +7,12 @@ namespace DAWorm
 {
     public partial class User
     {
-        public Worm.ReadOnlyList<Phone> Phones
-        {
-            get
-            {
-                return GetMgr().Find<Phone>(Ctor.AutoTypeField(Phone.Properties.User).Eq(this), null, false);
-            }
-        }
+        //public Worm.ReadOnlyList<Phone> Phones
+        //{
+        //    get
+        //    {
+        //        return GetMgr().Find<Phone>(Ctor.AutoTypeField(Phone.Properties.User).Eq(this), null, false);
+        //    }
+        //}
     }
 }
