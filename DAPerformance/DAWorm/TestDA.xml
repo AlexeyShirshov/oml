@@ -21,7 +21,7 @@ By user 'olko' at 03.03.2008 3:29:23.
     </oos:Type>
   </oos:Types>
   <oos:Entities>
-    <oos:Entity id="e_dbo_tbl_phone" name="Tbl_phone">
+    <oos:Entity id="e_dbo_tbl_phone" name="Phone">
       <oos:Tables inheritsBase="false">
         <oos:Table ref="tbldbotbl_phone" />
       </oos:Tables>
@@ -31,7 +31,7 @@ By user 'olko' at 03.03.2008 3:29:23.
         <oos:Property propertyName="Phone_number" table="tbldbotbl_phone" fieldName="phone_number" typeRef="tStringnullable" />
       </oos:Properties>
     </oos:Entity>
-    <oos:Entity id="e_dbo_tbl_user" name="Tbl_user">
+    <oos:Entity id="e_dbo_tbl_user" name="User" behaviour="ForcePartial">
       <oos:Tables inheritsBase="false">
         <oos:Table ref="tbldbotbl_user" />
       </oos:Tables>

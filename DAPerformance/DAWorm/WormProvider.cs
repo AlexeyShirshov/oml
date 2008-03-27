@@ -12,8 +12,7 @@ namespace DAWorm
 {
     public class WormProvider
     {
-        OrmReadOnlyDBManager manager;
-       
+        OrmReadOnlyDBManager manager;       
 
         public WormProvider(OrmReadOnlyDBManager manager)
         {

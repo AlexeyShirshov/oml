@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="Tbl_phone.cs" />
     <Compile Include="Tbl_user.cs" />
+    <Compile Include="User.cs" />
     <Compile Include="WormProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

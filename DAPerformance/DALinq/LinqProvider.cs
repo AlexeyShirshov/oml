@@ -110,7 +110,7 @@ namespace DALinq
                 var users = (from u in db.tbl_users
                              from p in u.tbl_phones
                              where p.phone_number.StartsWith("1")
-                             select u).Distinct();
+                             select u).ToList();
             }
         }
 

@@ -15,8 +15,20 @@ namespace Tests
     [TestClass]
     public class TestWorm : TestBase
     {
-        static OrmReadOnlyDBManager manager;
+        static SQLGenerator _schema;
         static WormProvider wormProvider;
+
+        protected static SQLGenerator GetSchema()
+        {
+            if (_schema == null)
+                _schema = new SQLGenerator("1");
+            return _schema;
+        }
+
+        protected static OrmCache GetCache()
+        {
+            return new OrmCache();
+        }
 
         public TestContext TestContext
         {
@@ -27,14 +39,16 @@ namespace Tests
         static TestWorm()
         {
             TestBase.classType = typeof(TestWorm);
-            manager = new OrmDBManager(new OrmCache(), new SQLGenerator("1"), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
-            wormProvider = new WormProvider(manager);
+            using (OrmDBManager manager = new OrmDBManager(GetCache(), GetSchema(), ConfigurationSettings.AppSettings["ConnectionStringBase"]))
+            {
+                wormProvider = new WormProvider(manager);
+            }
         }
 
         [TestInitialize]
         public override void TestInitialize()
         {
-            wormProvider.Manager = new OrmDBManager(new OrmCache(), new SQLGenerator("1"), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
+            wormProvider.Manager = new OrmDBManager(GetCache(), GetSchema(), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
             base.TestInitialize();
         }
 
@@ -42,7 +56,8 @@ namespace Tests
         public override void TestCleanup()
         {
             base.TestCleanup();
-           // manager.Dispose();
+            wormProvider.Manager.Dispose();
+            wormProvider.Manager = null;
         }
 
         [TestMethod]
