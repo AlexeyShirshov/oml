@@ -86,6 +86,9 @@ Namespace Database.Storedprocs
                     sb.Append("null").Append("$")
                 End If
             Next
+            If sb.Length = 0 Then
+                Return "xxx"
+            End If
             Return sb.ToString
         End Function
 
@@ -362,9 +365,11 @@ Namespace Database.Storedprocs
 
             Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
                 Dim l As New List(Of Pair(Of String, Object))
-                For i As Integer = 0 To _obj.Length - 1
-                    l.Add(New Pair(Of String, Object)(_names(i), _obj(i)))
-                Next
+                If _obj IsNot Nothing AndAlso _obj.Length > 0 Then
+                    For i As Integer = 0 To _obj.Length - 1
+                        l.Add(New Pair(Of String, Object)(_names(i), _obj(i)))
+                    Next
+                End If
                 Return l
             End Function
 
@@ -383,7 +388,7 @@ Namespace Database.Storedprocs
         End Sub
 
         Public Shared Sub Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object)
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
@@ -399,8 +404,19 @@ Namespace Database.Storedprocs
             Return CType(dic(outParamName), T)
         End Function
 
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal outParams As String) As Dictionary(Of String, Object)
+            Dim ss() As String = outParams.Split(","c)
+            Dim out As New List(Of OutParam)
+            For Each pn As String In ss
+                out.Add(New OutParam(pn, TypeConvertor.ToDbType(GetType(Integer)), 1000))
+            Next
+            Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing, out)
+            Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
+            Return dic
+        End Function
+
         Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal outParamName As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
@@ -630,7 +646,7 @@ Namespace Database.Storedprocs
 #Region " Exec "
 
         Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
@@ -638,7 +654,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
@@ -646,7 +662,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
@@ -654,7 +670,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
@@ -662,7 +678,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
@@ -670,7 +686,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
@@ -918,7 +934,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
@@ -926,7 +942,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
@@ -934,7 +950,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As T
-            Dim ss() As String = paramNames.Split()
+            Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
