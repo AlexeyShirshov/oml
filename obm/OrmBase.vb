@@ -1475,6 +1475,9 @@ Namespace Orm
                     _state <> Orm.ObjectState.None AndAlso _state <> Orm.ObjectState.Modified AndAlso _state <> Orm.ObjectState.Deleted Then Throw New OrmObjectException(ObjName & "When object is loaded its state has to be None or Modified or Deleted: current state is " & _state.ToString)
                 If Not IsLoaded AndAlso _
                    (_state = Orm.ObjectState.None OrElse _state = Orm.ObjectState.Modified OrElse _state = Orm.ObjectState.Deleted) Then Throw New OrmObjectException(ObjName & "When object is not loaded its state has not be None or Modified or Deleted: current state is " & _state.ToString)
+                If _state = Orm.ObjectState.Modified AndAlso OrmCache.Modified(Me) Is Nothing Then
+                    Throw New OrmObjectException(ObjName & "When object is in modified state it has to have an original copy")
+                End If
             End Using
         End Sub
 

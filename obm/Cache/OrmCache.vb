@@ -225,6 +225,8 @@ Namespace Cache
         ''' <remarks></remarks>
         Private _field_depends As New Dictionary(Of EntityField, Dictionary(Of String, List(Of String)))
 
+        Private _lock As New Object
+
         Private _tp As New TypeDepends
         Private _qt As New Dictionary(Of Object, Dictionary(Of String, Pair(Of String)))
         Private _ct_depends As New Dictionary(Of Type, Dictionary(Of String, Dictionary(Of String, Object)))
@@ -287,9 +289,9 @@ Namespace Cache
         Public ReadOnly Property SyncRoot() As IDisposable
             Get
 #If DebugLocks Then
-                Return New CSScopeMgr_DebugWithStack(Me, "d:\temp\")
+                Return New CSScopeMgr_DebugWithStack(_lock, "d:\temp\")
 #Else
-                Return New CSScopeMgr(Me)
+                Return New CSScopeMgr(_lock)
 #End If
             End Get
         End Property
@@ -373,6 +375,9 @@ Namespace Cache
                     _modifiedobjects.Remove(name)
                     If _modifiedobjects.Count = 0 Then 'AndAlso obj.old_state <> ObjectState.Created Then
                         RaiseEvent CacheHasnotModification(Me, EventArgs.Empty)
+                    End If
+                    If obj.ObjectState = ObjectState.Modified Then
+                        Throw New OrmCacheException("Unregistered object must not be in modified state")
                     End If
                 End If
             End Using

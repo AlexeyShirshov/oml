@@ -11,6 +11,7 @@ Imports System.Collections.Generic
 
 #Const DontUseStringIntern = True
 #Const TraceM2M = False
+#Const TraceCreation = False
 
 'Namespace Managers
 
@@ -1272,7 +1273,7 @@ _callstack = environment.StackTrace
                     Dim tt1 As Type = o.GetType
                     Dim key As String = GetM2MKey(tt1, type2load, direct)
                     If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                        key &= criteria.Filter(type2load).tostaticstring
+                        key &= criteria.Filter(type2load).ToStaticString
                     End If
 
                     Dim dic As IDictionary = GetDic(_cache, key)
@@ -1330,7 +1331,7 @@ _callstack = environment.StackTrace
                             Dim tt1 As Type = o.GetType
                             Dim key As String = GetM2MKey(tt1, type2load, direct)
                             If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                                key &= criteria.Filter(type2load).toStaticString
+                                key &= criteria.Filter(type2load).ToStaticString
                             End If
 
                             Dim dic As IDictionary = GetDic(_cache, key)
@@ -2232,14 +2233,14 @@ l1:
                         End If
                     End If
                     created = True
+                    If a IsNot Nothing AndAlso addOnCreate Then
+                        AddObjectInternal(a, CType(dic, System.Collections.IDictionary))
+                    End If
                 End If
             End Using
         End If
 
         If a IsNot Nothing Then
-            If created AndAlso addOnCreate Then
-                AddObjectInternal(a, CType(dic, System.Collections.IDictionary))
-            End If
             If Not created AndAlso load AndAlso Not a.IsLoaded Then
                 a.Load()
             End If
@@ -2367,6 +2368,9 @@ l1:
         SyncLock dic.SyncRoot
             If Not dic.Contains(id) Then
                 dic.Add(id, obj)
+#If TraceCreation Then
+                Diagnostics.Debug.WriteLine(String.Format("{2} - dt: {0}, {1}", Now, Environment.StackTrace, obj.GetName))
+#End If
             Else
                 trace = True
             End If

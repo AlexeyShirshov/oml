@@ -409,27 +409,28 @@ Namespace Database
         End Function
 
         Public Overrides Function SaveAll(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
-            Dim old_id As Integer = 0
-            Dim sa As SaveAction
-            Dim state As ObjectState = obj.ObjectState
-            If state = ObjectState.Created Then
-                old_id = obj.Identifier
-                sa = SaveAction.Insert
-            End If
+            Using obj.GetSyncRoot
+                Dim old_id As Integer = 0
+                Dim sa As SaveAction
+                Dim state As ObjectState = obj.ObjectState
+                If state = ObjectState.Created Then
+                    old_id = obj.Identifier
+                    sa = SaveAction.Insert
+                End If
 
-            If state = ObjectState.Deleted Then
-                sa = SaveAction.Delete
-            End If
-            Dim t As Type = obj.GetType
-            Dim old_state As ObjectState = state
-            Dim hasNew As Boolean = False
-            Dim err As Boolean = True
-            Try
-#If DebugLocks Then
-                Using SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
-#Else
-                Using SyncHelper.AcquireDynamicLock("4098jwefpv345mfds-" & t.ToString & obj.Identifier)
-#End If
+                If state = ObjectState.Deleted Then
+                    sa = SaveAction.Delete
+                End If
+                Dim t As Type = obj.GetType
+                Dim old_state As ObjectState = state
+                Dim hasNew As Boolean = False
+                Dim err As Boolean = True
+                Try
+                    '#If DebugLocks Then
+                    '                Using SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
+                    '#Else
+                    '                Using SyncHelper.AcquireDynamicLock("4098jwefpv345mfds-" & t.ToString & obj.Identifier)
+                    '#End If
                     Dim processedType As New List(Of Type)
                     If sa = SaveAction.Delete Then
                         For Each r As M2MRelation In DbSchema.GetM2MRelations(t)
@@ -560,18 +561,18 @@ Namespace Database
                         obj.AcceptChanges(True, OrmBase.IsGoodState(state))
                     End If
 
-                End Using
-                err = False
-            Finally
-                If err Then
-                    If sa = SaveAction.Insert Then
-                        obj.RejectChanges()
-                    End If
+                    err = False
+                Finally
+                    If err Then
+                        If sa = SaveAction.Insert Then
+                            obj.RejectChanges()
+                        End If
 
-                    state = old_state
-                End If
-            End Try
-            Return hasNew
+                        state = old_state
+                    End If
+                End Try
+                Return hasNew
+            End Using
         End Function
 
         'Public Overloads Sub DeleteRelation2(ByVal obj As OrmBase, ByVal t As Type)

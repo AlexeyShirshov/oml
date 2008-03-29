@@ -1544,13 +1544,8 @@ Public Module helper
 
 End Module
 
-''' <summary>
-''' Обертка над типом
-''' </summary>
-''' <typeparam name="T">Тип</typeparam>
-''' <remarks>Необходима для устранения операций неявного приведения типов</remarks>
-Public Class TypeWrap(Of T)
-    Private _o As T
+Public Class ObjectWrap(Of T)
+    Protected _o As T
 
     ''' <summary>
     ''' Конструктор
@@ -1575,6 +1570,40 @@ Public Class TypeWrap(Of T)
             _o = value
         End Set
     End Property
+End Class
+
+''' <summary>
+''' Обертка над типом
+''' </summary>
+''' <typeparam name="T">Тип</typeparam>
+''' <remarks>Необходима для устранения операций неявного приведения типов</remarks>
+Public Class TypeWrap(Of T)
+    Inherits ObjectWrap(Of T)
+    'Private _o As T
+
+    ''' <summary>
+    ''' Конструктор
+    ''' </summary>
+    ''' <param name="o">Экземпляр типа</param>
+    ''' <remarks></remarks>
+    Public Sub New(ByVal o As T)
+        MyBase.New(o)
+    End Sub
+
+    '''' <summary>
+    '''' Экземпляр типа
+    '''' </summary>
+    '''' <value>Устанавливаемое значение</value>
+    '''' <returns>Установленое значение</returns>
+    '''' <remarks></remarks>
+    'Public Property Value() As T
+    '    Get
+    '        Return _o
+    '    End Get
+    '    Set(ByVal value As T)
+    '        _o = value
+    '    End Set
+    'End Property
 
     ''' <summary>
     ''' Определение равенства объектов

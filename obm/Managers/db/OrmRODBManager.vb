@@ -32,6 +32,7 @@ Namespace Database
             Private _save As Nullable(Of Boolean)
             'Private _disposeMgr As Boolean
             Private _commited As Boolean
+            Private _lockList As New Dictionary(Of ObjectWrap(Of OrmBase), IDisposable)
 
             Public Class CancelEventArgs
                 Inherits EventArgs
@@ -153,95 +154,130 @@ Namespace Database
                 _objects.AddRange(col)
             End Sub
 
+            Protected Function GetObjWrap(ByVal obj As OrmBase) As ObjectWrap(Of OrmBase)
+                For Each o As ObjectWrap(Of OrmBase) In _lockList.Keys
+                    If ReferenceEquals(o.Value, obj) Then
+                        Return o
+                    End If
+                Next
+                Throw New InvalidOperationException("Cannot find object")
+            End Function
+
+            Protected Sub ObjectAcceptedHandler(ByVal obj As OrmBase) Handles Me.ObjectAccepted
+                Dim o As ObjectWrap(Of OrmBase) = GetObjWrap(obj)
+                _lockList(o).Dispose()
+                _lockList.Remove(o)
+            End Sub
+
+            Protected Sub ObjectRejectedHandler(ByVal obj As OrmBase) Handles Me.ObjectRejected
+                Dim o As ObjectWrap(Of OrmBase) = GetObjWrap(obj)
+                _lockList(o).Dispose()
+                _lockList.Remove(o)
+            End Sub
+
             Protected Sub Save()
                 Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
                 Dim [error] As Boolean = True
                 Dim saved As New List(Of Pair(Of ObjectState, OrmBase)), copies As New List(Of Pair(Of OrmBase))
                 Dim rejectList As New List(Of OrmBase), need2save As New List(Of OrmBase)
 
-                _mgr.BeginTransaction()
-                Try
-                    RaiseEvent BeginSave(_objects.Count)
-                    For Each o As OrmBase In _objects
-                        If o.ObjectState = ObjectState.Created Then
-                            rejectList.Add(o)
-                        ElseIf o.ObjectState = ObjectState.Modified Then
-                            copies.Add(New Pair(Of OrmBase)(o, o.GetFullClone))
-                        End If
-                        Try
-                            Dim os As ObjectState = o.ObjectState
-                            Dim args As New CancelEventArgs(o)
-                            RaiseEvent ObjectSaving(Me, args)
-                            If Not args.Cancel Then
-                                If o.Save(False) Then
-                                    need2save.Add(o)
-                                Else
-                                    RaiseEvent ObjectSaved(o)
-                                End If
-                                saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
+                Using New CSScopeMgr(_mgr.Cache)
+                    _mgr.BeginTransaction()
+                    Try
+                        RaiseEvent BeginSave(_objects.Count)
+                        For Each o As OrmBase In _objects
+                            If o.ObjectState = ObjectState.Created Then
+                                rejectList.Add(o)
+                            ElseIf o.ObjectState = ObjectState.Modified Then
+                                copies.Add(New Pair(Of OrmBase)(o, o.GetFullClone))
                             End If
-
-                        Catch ex As Exception
-                            Throw New OrmManagerException("Error during save " & o.ObjName, ex)
-                        End Try
-                    Next
-
-                    For Each o As OrmBase In need2save
-                        If o.Save(False) Then
-                            Throw New OrmManagerException(String.Format("It seems {0} has relation(s) to new objects after second save", o.ObjName))
-                        End If
-                        RaiseEvent ObjectSaved(o)
-                    Next
-
-                    RaiseEvent EndSave()
-                    [error] = False
-                Finally
-                    If [error] Then
-                        If Not hasTransaction Then
-                            _mgr.Rollback()
-                        End If
-
-                        RaiseEvent BeginRejecting()
-                        Rollback(saved, rejectList, copies)
-                        RaiseEvent SaveFailed()
-                    Else
-                        If Not hasTransaction Then
-                            _mgr.Commit()
-                            _commited = True
-                        End If
-
-                        RaiseEvent BeginAccepting()
-                        If _acceptInBatch Then
-                            Dim l As New Dictionary(Of OrmBase, OrmBase)
-                            Dim l2 As New Dictionary(Of Type, List(Of OrmBase))
-                            For Each p As Pair(Of ObjectState, OrmBase) In saved
-                                Dim o As OrmBase = p.Second
-                                Dim mo As OrmBase = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
-                                l.Add(o, mo)
-                                Dim ls As List(Of OrmBase) = Nothing
-                                If Not l2.TryGetValue(o.GetType, ls) Then
-                                    ls = New List(Of OrmBase)
-                                    l2.Add(o.GetType, ls)
+                            Try
+                                Dim args As New CancelEventArgs(o)
+                                RaiseEvent ObjectSaving(Me, args)
+                                If Not args.Cancel Then
+                                    _lockList.Add(New ObjectWrap(Of OrmBase)(o), o.GetSyncRoot)
+                                    Dim os As ObjectState = o.ObjectState
+                                    If o.Save(False) Then
+                                        need2save.Add(o)
+                                    Else
+                                        RaiseEvent ObjectSaved(o)
+                                    End If
+                                    saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
                                 End If
-                                ls.Add(o)
-                                RaiseEvent ObjectAccepted(o)
-                            Next
-                            For Each t As Type In l2.Keys
-                                Dim ls As List(Of OrmBase) = l2(t)
-                                _mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
-                                    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
-                            Next
-                        Else
-                            For Each p As Pair(Of ObjectState, OrmBase) In saved
-                                Dim o As OrmBase = p.Second
-                                o.AcceptChanges(True, OrmBase.IsGoodState(p.First))
-                                RaiseEvent ObjectAccepted(o)
-                            Next
-                        End If
 
-                        RaiseEvent SaveSuccessed()
-                    End If
-                End Try
+                            Catch ex As Exception
+                                Throw New OrmManagerException("Error during save " & o.ObjName, ex)
+                            End Try
+                        Next
+
+                        For Each o As OrmBase In need2save
+                            If o.Save(False) Then
+                                Throw New OrmManagerException(String.Format("It seems {0} has relation(s) to new objects after second save", o.ObjName))
+                            End If
+                            RaiseEvent ObjectSaved(o)
+                        Next
+
+                        RaiseEvent EndSave()
+                        [error] = False
+                    Finally
+                        Try
+                            If [error] Then
+                                If Not hasTransaction Then
+                                    _mgr.Rollback()
+                                End If
+
+                                RaiseEvent BeginRejecting()
+                                Rollback(saved, rejectList, copies)
+                                RaiseEvent SaveFailed()
+                            Else
+                                If Not hasTransaction Then
+                                    _mgr.Commit()
+                                    _commited = True
+                                End If
+
+                                RaiseEvent BeginAccepting()
+                                If _acceptInBatch Then
+                                    Dim l As New Dictionary(Of OrmBase, OrmBase)
+                                    Dim l2 As New Dictionary(Of Type, List(Of OrmBase))
+                                    For Each p As Pair(Of ObjectState, OrmBase) In saved
+                                        Dim o As OrmBase = p.Second
+                                        Dim mo As OrmBase = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
+                                        l.Add(o, mo)
+                                        Dim ls As List(Of OrmBase) = Nothing
+                                        If Not l2.TryGetValue(o.GetType, ls) Then
+                                            ls = New List(Of OrmBase)
+                                            l2.Add(o.GetType, ls)
+                                        End If
+                                        ls.Add(o)
+                                        RaiseEvent ObjectAccepted(o)
+                                    Next
+                                    For Each t As Type In l2.Keys
+                                        Dim ls As List(Of OrmBase) = l2(t)
+                                        _mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
+                                            AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
+                                    Next
+                                Else
+                                    For Each p As Pair(Of ObjectState, OrmBase) In saved
+                                        Dim o As OrmBase = p.Second
+                                        o.AcceptChanges(True, OrmBase.IsGoodState(p.First))
+                                        RaiseEvent ObjectAccepted(o)
+                                    Next
+                                End If
+
+                                RaiseEvent SaveSuccessed()
+                            End If
+                        Finally
+                            Do While _lockList.Count > 0
+                                Dim o As ObjectWrap(Of OrmBase) = Nothing
+                                For Each kv As KeyValuePair(Of ObjectWrap(Of OrmBase), IDisposable) In _lockList
+                                    o = kv.Key
+                                    kv.Value.Dispose()
+                                Next
+                                _lockList.Remove(o)
+                            Loop
+                        End Try
+                    End Try
+                End Using
             End Sub
 
             Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, OrmBase)), ByVal rejectList As List(Of OrmBase), ByVal copies As List(Of Pair(Of OrmBase)))
