@@ -239,9 +239,9 @@ Namespace Xml
                 If obj.ObjectState = ObjectState.NotLoaded Then
                     Using obj.GetSyncRoot()
                         obj.RaiseBeginModification()
-                        If obj.IsLoaded Then obj.IsLoaded = False
+                        'If obj.IsLoaded Then obj.IsLoaded = False
                         LoadData(oschema, node, obj)
-                        If obj.ObjectState = ObjectState.Modified Then obj.ObjectState = ObjectState.None
+                        If obj.ObjectState = ObjectState.Modified AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
                         values.Add(obj)
                         loaded += 1
                     End Using
@@ -284,7 +284,8 @@ Namespace Xml
             Dim original_type As Type = obj.GetType
             Using obj.GetSyncRoot()
                 obj._loading = True
-                For Each c As ColumnAttribute In _schema.GetSortedFieldList(original_type)
+                Dim columns As List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
+                For Each c As ColumnAttribute In columns
                     If (_schema.GetAttributes(original_type, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                         Dim attr As String = _schema.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
                         Dim n As XPathNavigator = node.Clone
@@ -303,7 +304,7 @@ Namespace Xml
                     End If
                 Next
                 obj._loading = False
-                obj.CheckIsAllLoaded(ObjectSchema)
+                obj.CheckIsAllLoaded(ObjectSchema, columns.Count)
             End Using
         End Function
     End Class

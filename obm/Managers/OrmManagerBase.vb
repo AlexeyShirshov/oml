@@ -1829,40 +1829,24 @@ l1:
 
     Public Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+        Return FindTop(Of T)(top, criteria, sort, withLoad, Nothing)
+    End Function
 
-        '    Dim key As String = String.Empty
+    Public Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal criteria As IGetFilter, _
+        ByVal sort As Sort, ByVal cols() As String) As ReadOnlyList(Of T)
+        Return FindTop(Of T)(top, criteria, sort, True, cols)
+    End Function
 
-        '    If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-        '        key = _schema.GetEntityKey(GetType(T)) & criteria.Filter.GetStaticString & GetStaticKey() & "Top"
-        '    Else
-        '        key = _schema.GetEntityKey(GetType(T)) & GetStaticKey() & "Top"
-        '    End If
+    Protected Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal criteria As IGetFilter, _
+        ByVal sort As Sort, ByVal withLoad As Boolean, ByVal cols() As String) As ReadOnlyList(Of T)
 
-        '    If sort IsNot Nothing Then
-        '        key &= sort.ToString
-        '    End If
-
-        '    Dim dic As IDictionary = GetDic(_cache, key)
-
-        '    Dim f As String = String.Empty
-        '    If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-        '        f = CObj(criteria.Filter).ToString
-        '    End If
-
-        '    Dim id As String = f & " - top - " & top
-        '    Dim sync As String = id & GetStaticKey()
-
-        '    'CreateDepends(filter, key, id)
-
-        '    Dim del As ICustDelegate(Of T) = GetCustDelegate4Top(Of T)(top, GetFilter(criteria), sort, key, id)
-        '    Return GetFromCache(Of T)(dic, sync, id, withLoad, del).GetObjectList(Of T)(Me, withLoad, del.Created)
         Dim filter As IFilter = Nothing
         If criteria IsNot Nothing Then
             filter = criteria.Filter(GetType(T))
         End If
         Dim joins() As OrmJoin = Nothing
         HasJoins(GetType(T), filter, sort, joins)
-        Return FindWithJoins(Of T)(ObjectSchema.CreateTopAspect(top, sort), joins, filter, sort, withLoad)
+        Return FindWithJoins(Of T)(ObjectSchema.CreateTopAspect(top, sort), joins, filter, sort, withLoad, cols)
     End Function
 
     '<Obsolete("Use OrmBase Find method")> _

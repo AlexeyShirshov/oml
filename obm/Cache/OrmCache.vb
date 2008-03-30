@@ -376,9 +376,9 @@ Namespace Cache
                     If _modifiedobjects.Count = 0 Then 'AndAlso obj.old_state <> ObjectState.Created Then
                         RaiseEvent CacheHasnotModification(Me, EventArgs.Empty)
                     End If
-                    If obj.ObjectState = ObjectState.Modified Then
-                        Throw New OrmCacheException("Unregistered object must not be in modified state")
-                    End If
+                    'If obj.ObjectState = ObjectState.Modified Then
+                    '    Throw New OrmCacheException("Unregistered object must not be in modified state")
+                    'End If
                 End If
             End Using
         End Sub

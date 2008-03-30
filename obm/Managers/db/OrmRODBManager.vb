@@ -189,7 +189,7 @@ Namespace Database
                             If o.ObjectState = ObjectState.Created Then
                                 rejectList.Add(o)
                             ElseIf o.ObjectState = ObjectState.Modified Then
-                                copies.Add(New Pair(Of OrmBase)(o, o.GetFullClone))
+                                copies.Add(New Pair(Of OrmBase)(o, o.CreateOriginalVersion))
                             End If
                             Try
                                 Dim args As New CancelEventArgs(o)
@@ -895,9 +895,9 @@ Namespace Database
                         Dim obj2 As OrmBase = CreateDBObject(id2, secondType)
                         If obj1.ObjectState <> ObjectState.Modified Then
                             Using obj1.GetSyncRoot()
-                                If obj1.IsLoaded Then obj1.IsLoaded = False
+                                'If obj1.IsLoaded Then obj1.IsLoaded = False
                                 LoadFromDataReader(obj1, dr, first_cols, False)
-                                If obj1.ObjectState = ObjectState.NotLoaded Then obj1.ObjectState = ObjectState.None
+                                If obj1.ObjectState = ObjectState.NotLoaded AndAlso obj1.IsLoaded Then obj1.ObjectState = ObjectState.None
                                 values.Add(obj1)
                             End Using
                         Else
@@ -906,9 +906,9 @@ Namespace Database
 
                         If obj2.ObjectState <> ObjectState.Modified Then
                             Using obj2.GetSyncRoot()
-                                If obj2.IsLoaded Then obj2.IsLoaded = False
+                                'If obj2.IsLoaded Then obj2.IsLoaded = False
                                 LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count)
-                                If obj2.ObjectState = ObjectState.NotLoaded Then obj2.ObjectState = ObjectState.None
+                                If obj2.ObjectState = ObjectState.NotLoaded AndAlso obj2.IsLoaded Then obj2.ObjectState = ObjectState.None
                             End Using
                         End If
                     Loop
@@ -1136,9 +1136,9 @@ Namespace Database
                                         Dim obj As T = CreateDBObject(Of T)(id2)
                                         If obj.ObjectState <> ObjectState.Modified Then
                                             Using obj.GetSyncRoot()
-                                                If obj.IsLoaded Then obj.IsLoaded = False
+                                                'If obj.IsLoaded Then obj.IsLoaded = False
                                                 LoadFromDataReader(obj, dr, arr, False, 2)
-                                                If obj.ObjectState = ObjectState.NotLoaded Then obj.ObjectState = ObjectState.None
+                                                If obj.ObjectState = ObjectState.NotLoaded AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
                                             End Using
                                         End If
                                     End If
@@ -1336,8 +1336,8 @@ Namespace Database
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     Using obj.GetSyncRoot()
-                        Dim old As Boolean = obj.IsLoaded
-                        If Not modifiedloaded Then obj.IsLoaded = False
+                        'Dim old As Boolean = obj.IsLoaded
+                        'If Not modifiedloaded Then obj.IsLoaded = False
                         'obj.IsLoaded = False
                         Dim loaded As Boolean = False
                         Do While dr.Read
@@ -1347,16 +1347,14 @@ Namespace Database
                             LoadFromDataReader(obj, dr, arr, check_pk)
                             loaded = True
                         Loop
+                        If dr.RecordsAffected = 0 Then
+                            Throw DbSchema.PrepareConcurrencyException(obj)
+                        End If
+
                         If Not obj.IsLoaded Then
                             If load Then
                                 obj.ObjectState = ObjectState.NotFoundInDB
                                 RemoveObjectFromCache(obj)
-                            Else
-                                If dr.RecordsAffected = 0 Then
-                                    Throw DbSchema.PrepareConcurrencyException(obj)
-                                Else
-                                    obj.IsLoaded = old
-                                End If
                             End If
                         Else
                             If obj.ObjectState = ObjectState.Created Then
@@ -1446,20 +1444,25 @@ Namespace Database
             Dim id As Integer = CInt(dr.GetValue(idx))
             Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
             If obj IsNot Nothing Then
-                If withLoad AndAlso obj.ObjectState <> ObjectState.Modified Then
+                If withLoad Then
                     Using obj.GetSyncRoot()
-                        If obj.IsLoaded Then obj.IsLoaded = False
-                        LoadFromDataReader(obj, dr, arr, False)
-                        'If Not obj.IsLoaded Then
-                        '    obj.ObjectState = ObjectState.NotFoundInDB
-                        '    RemoveObjectFromCache(obj)
-                        'Else
-                        If obj.ObjectState = ObjectState.NotLoaded AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
-                        values.Add(obj)
-                        loaded += 1
-                        'End If
+                        If obj.ObjectState <> ObjectState.Modified AndAlso obj.ObjectState <> ObjectState.Deleted Then
+                            'If obj.IsLoaded Then obj.IsLoaded = False
+                            LoadFromDataReader(obj, dr, arr, False)
+                            'If Not obj.IsLoaded Then
+                            '    obj.ObjectState = ObjectState.NotFoundInDB
+                            '    RemoveObjectFromCache(obj)
+                            'Else
+                            If obj.ObjectState = ObjectState.NotLoaded AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
+                            values.Add(obj)
+                            loaded += 1
+                            'End If
+                        ElseIf obj.ObjectState = ObjectState.Modified Then
+                            GoTo l1
+                        End If
                     End Using
                 Else
+l1:
                     values.Add(obj)
                     If obj.IsLoaded Then
                         loaded += 1
@@ -1690,7 +1693,7 @@ Namespace Database
                 Finally
                     obj._loading = False
                 End Try
-                obj.CheckIsAllLoaded(ObjectSchema)
+                obj.CheckIsAllLoaded(ObjectSchema, arr.Count)
             End Using
         End Sub
 

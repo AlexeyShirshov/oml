@@ -466,10 +466,12 @@ Imports Worm.Orm
     Public Sub TestAdd()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity = New Entity(-100, mgr.Cache, mgr.ObjectSchema)
+            Assert.IsNull(e.InternalProperties.OriginalCopy)
 
             mgr.BeginTransaction()
             Try
                 e.Save(True)
+                Assert.IsNull(e.InternalProperties.OriginalCopy)
 
                 Assert.IsTrue(e.Identifier <> -100)
             Finally
@@ -486,10 +488,13 @@ Imports Worm.Orm
             mgr.BeginTransaction()
             Try
                 e.Save(False)
+                Assert.IsNotNull(e.InternalProperties.OriginalCopy)
 
                 Assert.IsTrue(e.Identifier <> -100)
             Finally
+                Assert.IsNotNull(e.InternalProperties.OriginalCopy)
                 e.RejectChanges()
+                Assert.IsNull(e.InternalProperties.OriginalCopy)
 
                 Assert.AreEqual(-100, e.Identifier)
 
@@ -728,6 +733,39 @@ Imports Worm.Orm
         End Using
     End Sub
 
+    <TestMethod(), ExpectedException(GetType(OrmObjectException))> _
+    Public Sub TestConcurrentDelete()
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
+            Dim e2 As TestProject1.Entity = mgr.Find(Of Entity)(1)
+
+            Assert.IsTrue(e2.CanEdit)
+            Assert.IsTrue(e2.CanLoad)
+
+            e2.Delete()
+            Assert.AreEqual(ObjectState.Deleted, e2.InternalProperties.ObjectState)
+            Assert.IsFalse(e2.CanEdit)
+            Assert.IsFalse(e2.CanLoad)
+
+            e2 = mgr.Find(Of Entity)(1)
+            Assert.AreEqual(ObjectState.Deleted, e2.InternalProperties.ObjectState)
+            Assert.IsFalse(e2.CanEdit)
+            Assert.IsFalse(e2.CanLoad)
+
+            e2.Load()
+            'mgr.BeginTransaction()
+            'Try
+            '    e2.Save(True)
+
+            '    e2 = mgr.Find(Of Entity)(1)
+
+            '    Assert.IsNull(e2)
+            'Finally
+            '    mgr.Rollback()
+            'End Try
+
+        End Using
+    End Sub
+
     <TestMethod()> _
     Public Sub TestM2MTag()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
@@ -782,6 +820,7 @@ Imports Worm.Orm
             Assert.IsTrue(l.Contains(mgr.Find(Of Entity5)(1)))
             Dim e2 As TestProject1.Entity5 = mgr.Find(Of Entity5)(2)
             Assert.IsTrue(l.Contains(e2))
+            Assert.AreEqual(ObjectState.NotLoaded, e2.InternalProperties.ObjectState)
 
             c = e2.M2M.Find(Of Entity5)(Nothing, Nothing, False, False)
             Assert.AreEqual(0, c.Count)
@@ -792,6 +831,7 @@ Imports Worm.Orm
             mgr.BeginTransaction()
             Try
                 e2.M2M.Add(e, False)
+                Assert.AreEqual(ObjectState.NotLoaded, e2.InternalProperties.ObjectState)
 
                 c = e2.M2M.Find(Of Entity5)(Nothing, Nothing, False, False)
                 Assert.AreEqual(1, c.Count)
@@ -803,6 +843,7 @@ Imports Worm.Orm
                 Assert.AreEqual(2, c.Count)
 
                 e2.Save(True)
+                Assert.AreEqual(ObjectState.NotLoaded, e2.InternalProperties.ObjectState)
 
                 c = e.M2M.Find(Of Entity5)(Nothing, Nothing, True, False)
                 Assert.AreEqual(2, c.Count)
@@ -981,14 +1022,14 @@ Imports Worm.Orm
     <TestMethod()> _
     Public Sub TestLoadWithAlter()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim c As ICollection(Of Entity2) = Nothing
+            Dim c As Worm.ReadOnlyList(Of Entity2) = Nothing
             Using New Worm.OrmManagerBase.CacheListBehavior(mgr, False)
                 c = mgr.FindTop(Of Entity2)(100, Nothing, Nothing, True)
             End Using
 
-            Dim l As IList(Of Entity2) = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity2))
+            'Dim l As IList(Of Entity2) = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity2))
 
-            Dim e As Entity2 = l(0)
+            Dim e As Entity2 = c(0)
 
             Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
             Dim oldv As String = e.Str
@@ -1002,9 +1043,9 @@ Imports Worm.Orm
             Assert.AreEqual(ObjectState.Modified, e.InternalProperties.ObjectState)
             Assert.AreEqual("ioquv", e.Str)
 
-            e.Load()
+            'e.Load()
 
-            Assert.AreEqual(oldv, e.Str)
+            'Assert.AreEqual(oldv, e.Str)
         End Using
     End Sub
 
@@ -1128,6 +1169,32 @@ Imports Worm.Orm
             c = New cls(e.Str)
             e.Str = e.Str
             Assert.IsFalse(c.Invoked)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestPartialLoad()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim e As Entity5 = mgr.Find(Of Entity5)(1)
+            e.Load()
+            Assert.IsTrue(e.InternalProperties.IsLoaded)
+            Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
+
+            mgr.FindTop(Of Entity5)(10, Nothing, Nothing, New String() {"Title"})
+
+            Assert.IsTrue(e.InternalProperties.IsLoaded)
+            Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestPartialLoad2()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            mgr.FindTop(Of Entity5)(10, Nothing, Nothing, New String() {"Title"})
+            Dim e As Entity5 = mgr.Find(Of Entity5)(1)
+
+            Assert.IsFalse(e.InternalProperties.IsLoaded)
+            Assert.AreEqual(ObjectState.NotLoaded, e.InternalProperties.ObjectState)
         End Using
     End Sub
 

@@ -47,23 +47,9 @@ Namespace Orm
     ''' </remarks>
     <Serializable()> _
     Public MustInherit Class OrmBase
-        Implements IComparable, Serialization.IXmlSerializable
+        Implements IComparable, Serialization.IXmlSerializable, ICloneable
 
-        'Class AcceptState
-        '    Public ReadOnly DT As System.Data.DataTable
-        '    Public ReadOnly id As String
-        '    Public ReadOnly key As String
-        '    Public t As Type
-
-        '    Public Sub New(ByVal dt As System.Data.DataTable, ByVal id As String, ByVal key As String, ByVal t As Type)
-        '        Me.DT = dt
-        '        Me.id = id
-        '        Me.key = key
-        '        Me.t = t
-        '    End Sub
-
-        'End Class
-
+#Region " Classes "
         <EditorBrowsable(EditorBrowsableState.Never)> _
         Public Class AcceptState2
             'Public ReadOnly el As EditableList
@@ -227,7 +213,7 @@ Namespace Orm
                 Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, True, withLoad, top)
             End Function
 
-            Public Function Find(Of T As {New, OrmBase})(ByVal top As Integer, ByVal criteria As igetfilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            Public Function Find(Of T As {New, OrmBase})(ByVal top As Integer, ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, direct, withLoad, top)
             End Function
 
@@ -540,6 +526,8 @@ Namespace Orm
             End Sub
         End Class
 
+#End Region
+
         ''' <summary>
         ''' Состояние объекта
         ''' </summary>
@@ -574,6 +562,8 @@ Namespace Orm
         Protected Friend _mgrStr As String
         <NonSerialized()> _
         Protected _dontRaisePropertyChange As Boolean
+        <NonSerialized()> _
+        Protected _alterLock As New Object
 
         Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
         Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
@@ -830,10 +820,10 @@ Namespace Orm
             End If
         End Function
 
-        Friend Function CheckIsAllLoaded(ByVal schema As QueryGenerator) As Boolean
+        Friend Function CheckIsAllLoaded(ByVal schema As QueryGenerator, ByVal loadedColumns As Integer) As Boolean
             Using SyncHelper(False)
                 Dim allloaded As Boolean = True
-                If Not _loaded Then
+                If Not _loaded OrElse _loaded_members.Count <= loadedColumns Then
                     Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
                     For i As Integer = 0 To arr.Count - 1
                         If Not _members_load_state(i) Then
@@ -895,63 +885,55 @@ Namespace Orm
             Return mgr
         End Function
 
+        Protected Function RemoveVersionData(ByVal setState As Boolean) As OrmBase
+            Dim mo As OrmBase = Nothing
+
+            'unreg = unreg OrElse _state <> Orm.ObjectState.Created
+            If setState Then
+                ObjectState = Orm.ObjectState.None
+                Debug.Assert(IsLoaded)
+                If Not IsLoaded Then
+                    Throw New OrmObjectException(ObjName & "Cannot set state None while object is not loaded")
+                End If
+            End If
+            'If unreg Then
+            mo = OriginalCopy
+            OrmCache.UnregisterModification(Me)
+            '_mo = Nothing
+            'End If
+
+            Return mo
+        End Function
+
+        Protected Sub AcceptRelationalChanges(ByVal mc As OrmManagerBase)
+            Dim t As Type = Me.GetType
+            For Each acs As AcceptState2 In _needAccept
+                acs.Accept(Me, mc)
+            Next
+            _needAccept.Clear()
+
+            Dim rel As IRelation = mc.ObjectSchema.GetConnectedTypeRelation(t)
+            If rel IsNot Nothing Then
+                Dim c As New OrmManagerBase.M2MEnum(rel, Me, mc.ObjectSchema)
+                mc.Cache.ConnectedEntityEnum(t, AddressOf c.Accept)
+            End If
+        End Sub
+
         Protected Friend Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As OrmBase
             CheckCash()
             Dim mo As OrmBase = Nothing
             Using SyncHelper(False)
-                Dim t As Type = Me.GetType
-                Dim mc As OrmManagerBase = GetMgr()
-                Dim valProcs As Boolean
-                For Each acs As AcceptState2 In _needAccept
-                    acs.Accept(Me, mc)
-                    valProcs = True
-                    'If Not String.IsNullOrEmpty(acs.id) Then
-                    '    mc.ResetAllM2MRelations(acs.id, acs.key)
-                    'End If
-                    'If acs.t IsNot Nothing Then
-                    '    mc.Obj2ObjRelationRemove(Me, acs.t)
-                    'End If
-                Next
-                _needAccept.Clear()
-
-                Dim rel As IRelation = mc.ObjectSchema.GetConnectedTypeRelation(t)
-                If rel IsNot Nothing Then
-                    Dim c As New OrmManagerBase.M2MEnum(rel, Me, mc.ObjectSchema)
-                    mc.Cache.ConnectedEntityEnum(t, AddressOf c.Accept)
-                    'Dim f As Pair(Of String, Type) = rel.GetFirstType
-                    'Dim fv As OrmBase = CType(mc.DatabaseSchema.GetFieldValue(Me, f.First), OrmBase)
-                    'If mc.HasTableInCache(fv, f.Second) Then
-                    '    mc.Obj2ObjRelationReset(fv, f.Second)
-                    '    mc.Obj2ObjRelationRemove(fv, f.Second)
-                    'End If
-
-                    'Dim s As Pair(Of String, Type) = rel.GetSecondType
-                    'Dim sv As OrmBase = CType(mc.DatabaseSchema.GetFieldValue(Me, s.First), OrmBase)
-                    'If mc.HasTableInCache(sv, s.Second) Then
-                    '    mc.Obj2ObjRelationReset(sv, s.Second)
-                    '    mc.Obj2ObjRelationRemove(sv, s.Second)
-                    'End If
+                If _state = Orm.ObjectState.Created OrElse _state = Orm.ObjectState.Clone Then 'OrElse _state = Orm.ObjectState.NotLoaded Then
+                    Throw New OrmObjectException(ObjName & "accepting changes allowed in state Modified, deleted or none")
                 End If
-                'Debug.WriteLine(" state is: " & _state)
-                If _state <> Orm.ObjectState.None Then
-                    'Debug.WriteLine(t.Name & ": " & _needAdd)
-                    'If _state = Orm.ObjectState.Deleted Then
-                    '    mc.RemoveObjectFromCache(Me)
-                    'End If
 
-                    Dim unreg As Boolean = _state <> Orm.ObjectState.Created
-                    If setState Then
-                        ObjectState = Orm.ObjectState.None
-                        Debug.Assert(IsLoaded)
-                        If Not IsLoaded Then
-                            Throw New OrmObjectException("Cannot set state None while object is not loaded")
-                        End If
-                    End If
-                    If unreg Then
-                        mo = OriginalCopy
-                        OrmCache.UnregisterModification(Me)
-                        '_mo = Nothing
-                    End If
+                Dim mc As OrmManagerBase = GetMgr()
+                Dim valProcs As Boolean = _needAccept.Count > 0
+
+                AcceptRelationalChanges(mc)
+
+                If _state <> Orm.ObjectState.None Then
+                    mo = RemoveVersionData(setState)
 
                     If _needDelete Then
                         If updateCache Then
@@ -966,18 +948,19 @@ Namespace Orm
                         If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
                             dic(Identifier) = Me
                         End If
-                        RaiseEvent Added(Me, EventArgs.Empty)
                         If updateCache Then
                             'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
                             mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
                             Accept_AfterUpdateCacheAdd(Me, mc, mo)
                         End If
+                        RaiseEvent Added(Me, EventArgs.Empty)
                     Else
-                        If valProcs Then
-                            mc.Cache.ValidateSPOnUpdate(Me, Nothing)
-                        End If
                         RaiseEvent Updated(Me, EventArgs.Empty)
                     End If
+                End If
+
+                If valProcs Then
+                    mc.Cache.ValidateSPOnUpdate(Me, Nothing)
                 End If
             End Using
 
@@ -1068,12 +1051,13 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Friend Function GetFullClone() As OrmBase
-            Dim modified As OrmBase = CloneMe()
-            modified._old_state = modified.ObjectState
-            modified.ObjectState = ObjectState.Clone
-            Return modified
-        End Function
+        'Protected Friend Function GetFullClone() As OrmBase
+        '    Dim modified As OrmBase = CType(Clone(), OrmBase)
+        '    modified._old_state = modified.ObjectState
+        '    modified.ObjectState = ObjectState.Clone
+        '    modified._loaded_members = _loaded_members
+        '    Return modified
+        'End Function
 
         Protected Sub PrepareRead(ByVal fieldName As String, ByRef d As IDisposable)
             If Not IsLoaded AndAlso (_state = Orm.ObjectState.NotLoaded OrElse _state = Orm.ObjectState.None) Then
@@ -1085,7 +1069,7 @@ Namespace Orm
         End Sub
 
         Protected Friend Sub RaiseBeginModification()
-            Dim modified As OrmBase = GetSoftClone()
+            Dim modified As OrmBase = CreateOriginalVersion()
             ObjectState = Orm.ObjectState.Modified
             OrmCache.RegisterModification(modified, Identifier)
             If Not _loading Then
@@ -1095,7 +1079,7 @@ Namespace Orm
 
         <Obsolete()> _
         Protected Friend Sub CreateModified(ByVal id As Integer)
-            Dim modified As OrmBase = GetSoftClone()
+            Dim modified As OrmBase = CreateOriginalVersion()
             ObjectState = Orm.ObjectState.Modified
             OrmCache.RegisterModification(modified, id)
             If Not _loading Then
@@ -1104,7 +1088,7 @@ Namespace Orm
         End Sub
 
         Protected Sub CreateModified()
-            Dim modified As OrmBase = GetFullClone()
+            Dim modified As OrmBase = CreateOriginalVersion()
             ObjectState = Orm.ObjectState.Modified
             OrmCache.RegisterModification(modified)
             If Not _loading Then
@@ -1277,13 +1261,10 @@ Namespace Orm
                 If mo.User IsNot Nothing Then
                     If Not mo.User.Equals(GetMgr.CurrentUser) Then
                         Throw New OrmObjectException(ObjName & "Object in readonly state")
-                    Else
-                        'If HasChanges Then
-                        '    Throw New OrmObjectException(ObjName & "Object has changes!")
-                        'End If
-                        RejectChanges()
-                        'state = ObjectState.None
-                        'OrmCache.UnregisterModification(Me)
+                    End If
+                Else
+                    If _state = Orm.ObjectState.Deleted OrElse _state = Orm.ObjectState.Modified Then
+                        Throw New OrmObjectException(ObjName & "Cannot load object while its state is deleted or modified!")
                     End If
                 End If
             End If
@@ -1296,6 +1277,22 @@ Namespace Orm
             End If
             Invariant()
         End Sub
+
+        Public Function BeginAlter() As IDisposable
+            Return New CSScopeMgr(_alterLock)
+        End Function
+
+        Public ReadOnly Property CanEdit() As Boolean
+            Get
+                Return _state <> Orm.ObjectState.Deleted
+            End Get
+        End Property
+
+        Public ReadOnly Property CanLoad() As Boolean
+            Get
+                Return _state <> Orm.ObjectState.Deleted AndAlso _state <> Orm.ObjectState.Modified
+            End Get
+        End Property
 
         Public Function Save(ByVal AcceptChanges As Boolean) As Boolean
             Return GetMgr.SaveAll(Me, AcceptChanges)
@@ -1370,21 +1367,26 @@ Namespace Orm
                     If IsReadOnly Then
                         Throw New OrmObjectException(ObjName & " object in readonly state")
                     End If
+
+                    If OriginalCopy Is Nothing Then
+                        If _state <> Orm.ObjectState.Created Then
+                            Throw New OrmObjectException(ObjName & ": When object is in modified state it has to have an original copy")
+                        End If
+                        Return
+                    End If
+
                     'Debug.WriteLine(Environment.StackTrace)
                     _needAdd = False
                     _needDelete = False
 
-                    If OriginalCopy Is Nothing Then
-                        RejectChangesInternal()
-                        'OrmManagerBase.WriteError("ModifiedObject is nothing (" & ObjName & ")")
-                        Return
-                    End If
                     Dim oldid As Integer = Identifier
                     Dim olds As ObjectState = OriginalCopy._old_state
-                    If olds <> Orm.ObjectState.Created Then RejectChangesInternal()
-                    ObjectState = Orm.ObjectState.Modified
                     Dim newid As Integer = OriginalCopy.Identifier
-                    AcceptChanges(True, True)
+                    If olds <> Orm.ObjectState.Created Then
+                        '_loaded_members = 
+                        RevertToOriginalVersion()
+                        RemoveVersionData(False)
+                    End If
                     Identifier = newid
                     ObjectState = olds
                     If _state = Orm.ObjectState.Created Then
@@ -1400,6 +1402,7 @@ Namespace Orm
                         OrmCache.UnregisterModification(Me)
 
                         _loaded = False
+                        '_loaded_members = New BitArray(_loaded_members.Count)
                     End If
                     'ElseIf state = Obm.ObjectState.Deleted Then
                     '    CheckCash()
@@ -1410,6 +1413,7 @@ Namespace Orm
                     'Else
                     '    Throw New OrmObjectException(ObjName & "Rejecting changes in the state " & _state.ToString & " is not allowed")
                 End If
+                Invariant()
             End Using
         End Sub
 
@@ -1439,6 +1443,8 @@ Namespace Orm
 
         Public Overridable Sub Delete()
             Using SyncHelper(False)
+                If _state = Orm.ObjectState.Deleted Then Return
+
                 If _state = Orm.ObjectState.Clone Then
                     Throw New OrmObjectException(ObjName & "Deleting clone is not allowed")
                 End If
@@ -1571,7 +1577,7 @@ l1:
 
             _loading = False
             Dim schema As QueryGenerator = GetMgr.ObjectSchema
-            If schema IsNot Nothing Then CheckIsAllLoaded(schema)
+            If schema IsNot Nothing Then CheckIsAllLoaded(schema, Integer.MaxValue)
 
         End Sub
 
@@ -1691,7 +1697,7 @@ l1:
 #End Region
 
         Public Shared Function IsGoodState(ByVal state As ObjectState) As Boolean
-            Return state = ObjectState.Modified OrElse state = ObjectState.Created OrElse state = ObjectState.Deleted
+            Return state = ObjectState.Modified OrElse state = ObjectState.Created 'OrElse state = ObjectState.Deleted
         End Function
 
 #Region " Operators "
@@ -1794,10 +1800,20 @@ l1:
 
         '#End Region
 
+        Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
+            Dim o As OrmBase = CType(Activator.CreateInstance(Me.GetType), OrmBase)
+            o.Init(Identifier, OrmCache, OrmSchema)
+            Using SyncHelper(True)
+                o.SetObjectState(ObjectState)
+                CopyBodyInternal(Me, o)
+            End Using
+            Return o
+        End Function
+
         Protected Friend MustOverride Sub CopyBodyInternal(ByVal [from] As OrmBase, ByVal [to] As OrmBase)
-        Protected MustOverride Function CloneMe() As OrmBase
-        Protected MustOverride Sub RejectChangesInternal()
-        Protected Friend MustOverride Function GetSoftClone() As OrmBase
+        'Protected MustOverride Function CloneMe() As OrmBase
+        Protected MustOverride Sub RevertToOriginalVersion()
+        Protected Friend MustOverride Function CreateOriginalVersion() As OrmBase
     End Class
 
     Public Enum ObjectState
@@ -1854,7 +1870,7 @@ l1:
     <Serializable()> _
     Public MustInherit Class OrmBaseT(Of T As {New, OrmBaseT(Of T)})
         Inherits OrmBase
-        Implements IComparable(Of T), ICloneable, IOrmProxy(Of T)
+        Implements IComparable(Of T), IOrmProxy(Of T)
 
         Protected Sub New()
 
@@ -1876,25 +1892,11 @@ l1:
             Return Math.Sign(Identifier - other.Identifier)
         End Function
 
-        Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-            Dim o As OrmBase = CType(Activator.CreateInstance(Me.GetType), OrmBase)
-            o.Init(Identifier, OrmCache, OrmSchema)
-            Using SyncHelper(True)
-                o.SetObjectState(ObjectState)
-                Dim editable As IOrmEditable(Of T) = TryCast(Me, IOrmEditable(Of T))
-                If editable Is Nothing Then
-                    Throw New OrmObjectException(String.Format("Object {0} must implement IOrmEditable to perform this operation", ObjName))
-                End If
-                editable.CopyBody(CType(Me, T), CType(o, T))
-            End Using
-            Return o
+        Protected Function CloneMe() As T
+            Return CType(Clone(), T)
         End Function
 
-        Protected Overrides Function CloneMe() As OrmBase
-            Return CType(Clone(), OrmBase)
-        End Function
-
-        Protected Overrides Sub RejectChangesInternal()
+        Protected Overrides Sub RevertToOriginalVersion()
             Dim modified As OrmBase = OriginalCopy
             If modified IsNot Nothing Then
                 Dim editable As IOrmEditable(Of T) = TryCast(Me, IOrmEditable(Of T))
@@ -1907,9 +1909,9 @@ l1:
             End If
         End Sub
 
-        Protected Friend Overrides Function GetSoftClone() As OrmBase
+        Protected Friend Overrides Function CreateOriginalVersion() As OrmBase
             Dim clone As OrmBase = CType(Activator.CreateInstance(Me.GetType), OrmBase)
-            clone.Init(Identifier, OrmCache, OrmSchema)
+            clone.Init(Identifier, OrmCache, Nothing)
             Dim editable As IOrmEditable(Of T) = TryCast(Me, IOrmEditable(Of T))
             If editable IsNot Nothing Then
                 Using SyncHelper(False)
@@ -1918,6 +1920,8 @@ l1:
             End If
             clone._old_state = ObjectState
             clone.ObjectState = ObjectState.Clone
+            'clone._loaded_members = _loaded_members
+            'clone._loaded = _loaded
             Return clone
         End Function
 
