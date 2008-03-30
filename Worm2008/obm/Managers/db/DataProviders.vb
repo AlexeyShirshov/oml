@@ -417,9 +417,9 @@ Namespace Database
                                     Dim obj As T = _mgr.CreateDBObject(Of T)(id2)
                                     If obj.ObjectState <> ObjectState.Modified Then
                                         Using obj.GetSyncRoot()
-                                            If obj.IsLoaded Then obj.IsLoaded = False
+                                            'If obj.IsLoaded Then obj.IsLoaded = False
                                             _mgr.LoadFromDataReader(obj, dr, arr, False, 2)
-                                            If obj.ObjectState = ObjectState.NotLoaded Then obj.ObjectState = ObjectState.None
+                                            If obj.ObjectState = ObjectState.NotLoaded AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
                                             _mgr._loadedInLastFetch += 1
                                         End Using
                                     End If

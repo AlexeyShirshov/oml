@@ -10,6 +10,14 @@ Module Module2
         Inherits Orm.OrmBaseT(Of TestEditTable)
         Implements Orm.Meta.IOrmEditable(Of TestEditTable)
 
+        Public Sub New()
+
+        End Sub
+
+        Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
+            MyBase.New(id, cache, schema)
+        End Sub
+
         Private _name As String
         <Orm.Meta.Column(column:="name")> Public Property Name() As String
             Get
@@ -49,6 +57,14 @@ Module Module2
     Private _cache As New OrmCache
     Private _schema As New Database.SQLGenerator("1")
     Private _exCount As Integer
+    Private _identity As Integer = 100
+
+    <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
+    Function GetIdentity() As Integer
+        Dim i As Integer = _identity
+        _identity += 1
+        Return i
+    End Function
 
     Sub main()
         'Dim arr As ArrayList = ArrayList.Synchronized(New ArrayList)
@@ -60,13 +76,17 @@ Module Module2
         Dim n As Date = Now
         Dim trd As New List(Of Threading.Thread)
         Randomize()
-        For i As Integer = 0 To 100
+        For i As Integer = 0 To 10
             Dim t As New Threading.Thread(AddressOf EditSub)
             trd.Add(t)
             t = New Threading.Thread(AddressOf QuerySub)
             trd.Add(t)
             t = New Threading.Thread(AddressOf QuerySub2)
             trd.Add(t)
+            't = New Threading.Thread(AddressOf AddSub)
+            'trd.Add(t)
+            't = New Threading.Thread(AddressOf DeleteSub)
+            'trd.Add(t)
         Next
         For i As Integer = 0 To trd.Count - 1
             Dim t As Threading.Thread = trd(i)
@@ -85,6 +105,78 @@ Module Module2
         max = CInt(d("max"))
     End Sub
 
+    Sub DeleteSub(ByVal o As Object)
+        'Dim arr As ArrayList = CType(o, ArrayList)
+        'Dim e As New Threading.AutoResetEvent(False)
+        'arr.Add(e)
+        'Console.WriteLine("edit sub done")
+        'e.Set()
+        For i As Integer = 0 To 1000
+            Using mgr As OrmDBManager = CreateManager()
+                Dim r As New Random
+                Dim done As Boolean
+                Do
+                    Try
+                        Dim min As Integer, max As Integer
+                        GetMinMax(mgr, min, max)
+                        Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
+                        If t IsNot Nothing Then
+                            Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                                Using t.BeginAlter
+                                    t.Delete()
+                                End Using
+                                st.Commit()
+                            End Using
+                            done = True
+                        End If
+                    Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
+                        Threading.Interlocked.Increment(_exCount)
+                    Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")
+                        Threading.Interlocked.Increment(_exCount)
+                    End Try
+                Loop While Not done
+            End Using
+            If i Mod 10 = 0 Then
+                Console.WriteLine(String.Format("thread: {0} delete: {1}", o, i))
+            End If
+        Next
+    End Sub
+
+    Sub AddSub(ByVal o As Object)
+        'Dim arr As ArrayList = CType(o, ArrayList)
+        'Dim e As New Threading.AutoResetEvent(False)
+        'arr.Add(e)
+        'Console.WriteLine("edit sub done")
+        'e.Set()
+        For i As Integer = 0 To 1000
+            Using mgr As OrmDBManager = CreateManager()
+                Dim r As New Random
+                Dim done As Boolean
+                Do
+                    Try
+                        Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                            Dim t As New TestEditTable(GetIdentity, mgr.Cache, mgr.ObjectSchema)
+                            t.Name = Guid.NewGuid.ToString
+                            If r.NextDouble > 0.3 Then
+                                t.Code = r.Next(1000)
+                            End If
+                            st.Add(t)
+                            st.Commit()
+                        End Using
+                        done = True
+                    Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
+                        Threading.Interlocked.Increment(_exCount)
+                    Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")
+                        Threading.Interlocked.Increment(_exCount)
+                    End Try
+                Loop While Not done
+            End Using
+            If i Mod 10 = 0 Then
+                Console.WriteLine(String.Format("thread: {0} add: {1}", o, i))
+            End If
+        Next
+    End Sub
+
     Sub EditSub(ByVal o As Object)
         'Dim arr As ArrayList = CType(o, ArrayList)
         'Dim e As New Threading.AutoResetEvent(False)
@@ -101,20 +193,24 @@ Module Module2
                         GetMinMax(mgr, min, max)
                         Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
                         If t IsNot Nothing Then
-                            If r.NextDouble > 0.5 Then
-                                Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
-                                    t.Name = Guid.NewGuid.ToString
-                                    st.Commit()
-                                End Using
-                            Else
-                                t.Name = Guid.NewGuid.ToString
-                                t.Save(True)
-                            End If
-                            done = True
+                            Using t.BeginAlter
+                                If t.CanEdit Then
+                                    If r.NextDouble > 0.5 Then
+                                        Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                                            t.Name = Guid.NewGuid.ToString
+                                            st.Commit()
+                                        End Using
+                                    Else
+                                        t.Name = Guid.NewGuid.ToString
+                                        t.Save(True)
+                                    End If
+                                    done = True
+                                End If
+                            End Using
                         End If
                     Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
                         Threading.Interlocked.Increment(_exCount)
-                    Catch ex As SqlClient.SqlException
+                    Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")
                         Threading.Interlocked.Increment(_exCount)
                     End Try
                 Loop While Not done
@@ -146,7 +242,7 @@ Module Module2
                             done = True
                         Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
                             Threading.Interlocked.Increment(_exCount)
-                        Catch ex As SqlClient.SqlException
+                        Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")
                             Threading.Interlocked.Increment(_exCount)
                         End Try
                     Loop While Not done
@@ -179,7 +275,7 @@ Module Module2
                             done = True
                         Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
                             Threading.Interlocked.Increment(_exCount)
-                        Catch ex As SqlClient.SqlException
+                        Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")
                             Threading.Interlocked.Increment(_exCount)
                         End Try
                     Loop While Not done
