@@ -23,10 +23,18 @@ namespace Tests
             TestBase.classType = typeof(TestLinq);
         }
 
+        [TestInitialize]
+        public override void TestInitialize()
+        {
+            linqProvider.CreateNewDatabaseDataContext();
+            base.TestInitialize();
+        }
+
         [TestMethod]
         [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
         public void TypeCycleWithoutLoad()
         {
+            linqProvider.LoadingEnabled = true;
             linqProvider.TypeCycleWithoutLoad(mediumUserIds);
         }
 
@@ -34,6 +42,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
         public void TypeCycleWithLoad()
         {
+            linqProvider.LoadingEnabled = false;
             linqProvider.TypeCycleWithLoad(mediumUserIds);
         }
 
@@ -41,6 +50,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
         public void TypeCycleLazyLoad()
         {
+            linqProvider.LoadingEnabled = true;
             linqProvider.TypeCycleLazyLoad(mediumUserIds);
         }
 
@@ -48,6 +58,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
         public void SmallCollectionByIdArray()
         {
+            linqProvider.LoadingEnabled = false;
             linqProvider.CollectionByIdArray(smallUserIds);
         }
 
@@ -55,6 +66,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.SmallCollection)]
         public void SmallCollection()
         {
+            linqProvider.LoadingEnabled = false;
             linqProvider.GetCollection(Constants.Small);
         }
 
@@ -62,6 +74,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
         public void SmallCollectionWithChildrenByIdArray()
         {
+            linqProvider.LoadingEnabled = false;
             linqProvider.CollectionWithChildrenByIdArray(smallUserIds);
         }
 
@@ -69,6 +82,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
         public void LargeCollectionByIdArray()
         {
+            linqProvider.LoadingEnabled = false;
             linqProvider.CollectionByIdArray(largeUserIds);
         }
 
@@ -76,6 +90,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.LargeCollection)]
         public void LargeCollection()
         {
+            linqProvider.LoadingEnabled = false;
             linqProvider.GetCollection(Constants.Large);
         }
 
@@ -83,6 +98,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
         public void LargeCollectionWithChildrenByIdArray()
         {
+            linqProvider.LoadingEnabled = false;
             linqProvider.CollectionWithChildrenByIdArray(largeUserIds);
         }
 
@@ -90,6 +106,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
         public void CollectionByPredicateWithoutLoad()
         {
+            linqProvider.LoadingEnabled = true;
             linqProvider.CollectionByPredicateWithoutLoad();
         }
 
@@ -97,6 +114,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
         public void CollectionByPredicateWithLoad()
         {
+            linqProvider.LoadingEnabled = false;
             linqProvider.CollectionByPredicateWithLoad();
         }
 
@@ -104,6 +122,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.SelectLargeCollection)]
         public void SelectLargeCollection()
         {
+            linqProvider.LoadingEnabled = false;
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
                 linqProvider.GetCollection(Constants.Large);
@@ -114,6 +133,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
         public void SameObjectInCycleLoad()
         {
+            linqProvider.LoadingEnabled = false;
             linqProvider.SameObjectInCycleLoad(smallUserIds[0]);
         }
 
@@ -121,6 +141,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
         public void SelectBySamePredicate()
         {
+            linqProvider.LoadingEnabled = true;
             linqProvider.SelectBySamePredicate();
         }
 
@@ -128,6 +149,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
         public void ObjectsWithLoadWithPropertiesAccess()
         {
+            linqProvider.LoadingEnabled = false;
             linqProvider.ObjectsWithLoadWithPropertiesAccess();
         }
     }
