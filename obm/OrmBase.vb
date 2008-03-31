@@ -564,6 +564,8 @@ Namespace Orm
         Protected _dontRaisePropertyChange As Boolean
         <NonSerialized()> _
         Protected _alterLock As New Object
+        <NonSerialized()> _
+        Protected _saved As Boolean
 
         Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
         Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
@@ -1199,6 +1201,14 @@ Namespace Orm
 #End Region
 
 #Region " Synchronization "
+        Protected Friend Property ObjSaved() As Boolean
+            Get
+                Return _saved
+            End Get
+            Set(ByVal value As Boolean)
+                _saved = value
+            End Set
+        End Property
 
         Friend Function GetSyncRoot() As IDisposable
             Return SyncHelper(False)

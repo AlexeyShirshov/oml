@@ -76,7 +76,7 @@ Module Module2
         Dim n As Date = Now
         Dim trd As New List(Of Threading.Thread)
         Randomize()
-        For i As Integer = 0 To 10
+        For i As Integer = 0 To 100
             Dim t As New Threading.Thread(AddressOf EditSub)
             trd.Add(t)
             t = New Threading.Thread(AddressOf QuerySub)
