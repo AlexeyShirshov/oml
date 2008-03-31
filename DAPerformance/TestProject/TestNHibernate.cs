@@ -35,28 +35,21 @@ namespace Tests
             cfg = new Configuration();
             cfg.AddAssembly("DANHibernate");
             factory = cfg.BuildSessionFactory();
-            session = factory.OpenSession();
         }
 
-        [ClassCleanup]
-        public static void ClassCleanup()
+        [TestInitialize]
+        public override void TestInitialize()
         {
+            session = factory.OpenSession();
+            base.TestInitialize();
+        }
+
+        [TestCleanup]
+        public override void TestCleanup()
+        {
+            base.TestCleanup();
             session.Close();
         }
-
-        //[TestInitialize]
-        //public override void TestInitialize()
-        //{
-        //    session = factory.OpenSession();
-        //    base.TestInitialize();
-        //}
-
-        //[TestCleanup]
-        //public override void TestCleanup()
-        //{
-        //    base.TestCleanup();
-        //    session.Close();
-        //}
 
         #region Default syntax
         [TestMethod]

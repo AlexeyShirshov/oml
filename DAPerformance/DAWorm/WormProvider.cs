@@ -19,7 +19,7 @@ namespace DAWorm
             this.manager = manager;
            
             // Opens connection ?
-            ICollection<Tbl_user> users = manager.FindTop<Tbl_user>(10000, null, null, false);
+            ICollection<User> users = manager.FindTop<User>(10000, null, null, false);
         }
 
         public OrmReadOnlyDBManager Manager
@@ -33,7 +33,7 @@ namespace DAWorm
         {
             foreach (int id in userIds)
             {
-                Tbl_user user = new Tbl_user(id, manager.Cache, manager.DbSchema);
+                User user = new User(id, manager.Cache, manager.DbSchema);
             }
         }
 
@@ -41,7 +41,7 @@ namespace DAWorm
         {
             foreach (int id in userIds)
             {
-                Tbl_user user = new Tbl_user(id, manager.Cache, manager.DbSchema);
+                User user = new User(id, manager.Cache, manager.DbSchema);
                 user.Load();
             }
         }
@@ -50,28 +50,28 @@ namespace DAWorm
         {
             foreach (int id in userIds)
             {
-                Tbl_user user = new Tbl_user(id, manager.Cache, manager.DbSchema);
+                User user = new User(id, manager.Cache, manager.DbSchema);
                 string name = user.First_name;
             }
         }
 
         public void GetCollection(int count)
         {
-            ICollection<Tbl_user> users = manager.FindTop<Tbl_user>(count, null, null, true);
+            ICollection<User> users = manager.FindTop<User>(count, null, null, true);
         }
 
         public void CollectionWithChildrenByIdArray(int[] userIds)
         {
-            Type tp = typeof(Tbl_phone);
-            ICollection<Tbl_user> users = manager.ConvertIds2Objects<Tbl_user>(userIds, false);
-            ICollection<Tbl_phone> phones = manager.FindJoin<Tbl_phone>(typeof(Tbl_user), "User_id",
-                Worm.Database.Criteria.Ctor.Field(tp, Tbl_phone.Properties.User_id).In(userIds),
+            Type tp = typeof(Phone);
+            ICollection<User> users = manager.ConvertIds2Objects<User>(userIds, false);
+            ICollection<Phone> phones = manager.FindJoin<Phone>(typeof(User), "User_id",
+                Worm.Database.Criteria.Ctor.Field(tp, Phone.Properties.User_id).In(userIds),
                 null, true);   
         }
 
         public void CollectionByIdArray(int[] userIds)
         {
-            ICollection<Tbl_user> users = manager.ConvertIds2Objects<Tbl_user>(userIds, false);
+            ICollection<User> users = manager.ConvertIds2Objects<User>(userIds, false);
         }
 
         public void CollectionByPredicateWithoutLoad(int iterationCount)
@@ -79,9 +79,9 @@ namespace DAWorm
             for (int i = 0; i < iterationCount; i++)
             {
                 string id = (i + 1).ToString() + "%";
-                Type tp = typeof(Tbl_phone);
-                ICollection<Tbl_user> users = manager.FindJoin<Tbl_user>(tp, "ID",
-                    Worm.Database.Criteria.Ctor.Field(tp, Tbl_phone.Properties.Phone_number).Like(id), null, false);   
+                Type tp = typeof(Phone);
+                ICollection<User> users = manager.FindJoin<User>(tp, "ID",
+                    Worm.Database.Criteria.Ctor.Field(tp, Phone.Properties.Phone_number).Like(id), null, false);   
             }
         }
 
@@ -90,11 +90,11 @@ namespace DAWorm
             for (int i = 0; i < iterationCount; i++)
             {
                 string id = (i + 1).ToString() + "%";
-                Type tp = typeof(Tbl_phone);
-                ICollection<Tbl_user> users = manager.FindJoin<Tbl_user>(tp, "ID",
-                    Worm.Database.Criteria.Ctor.Field(tp, Tbl_phone.Properties.Phone_number).Like(id), null, true);   
+                Type tp = typeof(Phone);
+                ICollection<User> users = manager.FindJoin<User>(tp, "ID",
+                    Worm.Database.Criteria.Ctor.Field(tp, Phone.Properties.Phone_number).Like(id), null, true);   
 
-                //manager.Find<Tbl_user>(Worm.Database.Criteria.Ctor.Field(tp,Tbl_phone.Properties.Phone_number).Like("1%"), null, false);
+                //manager.Find<User>(Worm.Database.Criteria.Ctor.Field(tp,Phone.Properties.Phone_number).Like("1%"), null, false);
             }
         }
 
@@ -102,7 +102,7 @@ namespace DAWorm
         {
             for (int i = 0; i < iterationCount; i++)
             {
-                Tbl_user user = new Tbl_user(userId, manager.Cache, manager.DbSchema);
+                User user = new User(userId, manager.Cache, manager.DbSchema);
                 user.Load();
             }
         }
@@ -111,16 +111,16 @@ namespace DAWorm
         {
             for (int i = 0; i < iterationCount; i++)
             {
-                Type tp = typeof(Tbl_phone);
-                ICollection<Tbl_user> users = manager.FindJoin<Tbl_user>(tp, "ID",
-                    Worm.Database.Criteria.Ctor.Field(tp, Tbl_phone.Properties.Phone_number).Like("1%"), null, false); 
+                Type tp = typeof(Phone);
+                ICollection<User> users = manager.FindJoin<User>(tp, "ID",
+                    Worm.Database.Criteria.Ctor.Field(tp, Phone.Properties.Phone_number).Like("1%"), null, false); 
             }
         }
 
         public void ObjectsWithLoadWithPropertiesAccess()
         {
-            ICollection<Tbl_user> users = manager.FindTop<Tbl_user>(10000, null, null, true);
-            foreach (Tbl_user user in users)
+            ICollection<User> users = manager.FindTop<User>(10000, null, null, true);
+            foreach (User user in users)
             {
                 string name = user.First_name;
             }
@@ -134,10 +134,10 @@ namespace DAWorm
         //    OrmCache cache = new OrmCache();
         //    using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, schema, _connectionString))
         //    {
-        //        //Tbl_user user = new Tbl_user(1, cache, schema);
+        //        //User user = new User(1, cache, schema);
         //        //user.Load();
-        //        Tbl_user user = manager.Find<Tbl_user>(1);
-        //       // ICollection<Tbl_user> users = manager.FindTop<Tbl_user>(10000, null, null, false);
+        //        User user = manager.Find<User>(1);
+        //       // ICollection<User> users = manager.FindTop<User>(10000, null, null, false);
         //    }
         //}
 
@@ -148,7 +148,7 @@ namespace DAWorm
         //    OrmCache cache = new OrmCache();
         //    using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, Schema, _connectionString))
         //    {
-        //        ICollection<Tbl_user> users = manager.FindTop<Tbl_user>(10000, null, null, false);
+        //        ICollection<User> users = manager.FindTop<User>(10000, null, null, false);
         //    }
         //    System.Diagnostics.Debug.WriteLine(p.GetTime());
         //}
@@ -158,7 +158,7 @@ namespace DAWorm
         //    OrmCache cache = new OrmCache();
         //    using (OrmReadOnlyDBManager manager = new OrmDBManager(new OrmCache(), Schema, _connectionString))
         //    {
-        //        Tbl_user user = new Tbl_user(1, cache, Schema);
+        //        User user = new User(1, cache, Schema);
         //        user.Load();
         //    }
         //}
@@ -167,7 +167,7 @@ namespace DAWorm
         //{
         //    using (OrmReadOnlyDBManager manager = new OrmDBManager(new OrmCache(), Schema, _connectionString))
         //    {
-        //        ICollection<Tbl_user> users = manager.FindTop<Tbl_user>(10000, null, null, true);
+        //        ICollection<User> users = manager.FindTop<User>(10000, null, null, true);
         //    }
         //}
 
@@ -176,7 +176,7 @@ namespace DAWorm
         //    OrmCache cache = new OrmCache();
         //    using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, Schema, _connectionString))
         //    {
-        //        Tbl_phone phone = manager.Find<Tbl_phone>(1);
+        //        Phone phone = manager.Find<Phone>(1);
         //    }
         //}
 
@@ -185,7 +185,7 @@ namespace DAWorm
         //    OrmCache cache = new OrmCache();
         //    using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, Schema, _connectionString))
         //    {
-        //        ICollection<Tbl_phone> phones = manager.FindTop<Tbl_phone>(1000, null, null, false);
+        //        ICollection<Phone> phones = manager.FindTop<Phone>(1000, null, null, false);
         //    }
         //}
 
@@ -194,7 +194,7 @@ namespace DAWorm
         //    OrmCache cache = new OrmCache();
         //    using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, Schema, _connectionString))
         //    {
-        //        Tbl_phone phone = new Tbl_phone(1, cache, Schema);
+        //        Phone phone = new Phone(1, cache, Schema);
         //        phone.Load();
         //    }
         //}
@@ -203,7 +203,7 @@ namespace DAWorm
         //{
         //    using (OrmReadOnlyDBManager manager = new OrmDBManager(new OrmCache(), Schema, _connectionString))
         //    {
-        //        ICollection<Tbl_phone> phones = manager.FindTop<Tbl_phone>(1000, null, null, true);
+        //        ICollection<Phone> phones = manager.FindTop<Phone>(1000, null, null, true);
         //    }
         //}
         #endregion old
