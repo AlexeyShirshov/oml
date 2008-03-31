@@ -409,7 +409,13 @@ Namespace Database
         End Function
 
         Public Overrides Function SaveAll(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
-            Using obj.GetSyncRoot
+            Dim t As Type = obj.GetType
+            'Using obj.GetSyncRoot
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("4098jwefpv345mfds-" & t.ToString & obj.Identifier)
+#End If
                 Dim old_id As Integer = 0
                 Dim sa As SaveAction
                 Dim state As ObjectState = obj.ObjectState
@@ -421,16 +427,10 @@ Namespace Database
                 If state = ObjectState.Deleted Then
                     sa = SaveAction.Delete
                 End If
-                Dim t As Type = obj.GetType
                 Dim old_state As ObjectState = state
                 Dim hasNew As Boolean = False
                 Dim err As Boolean = True
                 Try
-                    '#If DebugLocks Then
-                    '                Using SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
-                    '#Else
-                    '                Using SyncHelper.AcquireDynamicLock("4098jwefpv345mfds-" & t.ToString & obj.Identifier)
-                    '#End If
                     Dim processedType As New List(Of Type)
                     If sa = SaveAction.Delete Then
                         For Each r As M2MRelation In DbSchema.GetM2MRelations(t)
@@ -569,6 +569,8 @@ Namespace Database
                         End If
 
                         state = old_state
+                    Else
+                        obj.ObjSaved = True
                     End If
                 End Try
                 Return hasNew
