@@ -35,6 +35,28 @@ Namespace Orm
         End Sub
     End Class
 
+    <Serializable()> _
+    Public Class ObjectStateException
+        Inherits System.Exception
+
+        Public Sub New()
+        End Sub
+
+        Public Sub New(ByVal message As String)
+            MyBase.New(message)
+        End Sub
+
+        Public Sub New(ByVal message As String, ByVal inner As Exception)
+            MyBase.New(message, inner)
+        End Sub
+
+        Private Sub New( _
+            ByVal info As System.Runtime.Serialization.SerializationInfo, _
+            ByVal context As System.Runtime.Serialization.StreamingContext)
+            MyBase.New(info, context)
+        End Sub
+    End Class
+
     ''' <summary>
     ''' Базовый класс для всех типов
     ''' </summary>
@@ -1305,6 +1327,23 @@ Namespace Orm
             Return New CSScopeMgr(_alterLock)
 #End If
         End Function
+
+        Public Function BeginEdit() As IDisposable
+#If DebugLocks Then
+            Dim d As IDisposable = New CSScopeMgr_Debug(_alterLock, "d:\temp")
+#Else
+            Dim d As IDisposable = New CSScopeMgr(_alterLock)
+#End If
+            If Not CanEdit Then
+                d.Dispose()
+                Throw New ObjectStateException(ObjName & "Object is not editable")
+            End If
+            Return d
+        End Function
+
+        Public Sub CheckEditOrThrow()
+            If Not CanEdit Then Throw New ObjectStateException(ObjName & "Object is not editable")
+        End Sub
 
         Public ReadOnly Property CanEdit() As Boolean
             Get
