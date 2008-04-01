@@ -1198,6 +1198,16 @@ Imports Worm.Orm
         End Using
     End Sub
 
+    <TestMethod()> _
+        Public Sub TestBeginEdit()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim e As Entity5 = mgr.Find(Of Entity5)(1)
+            Using e.BeginEdit
+
+            End Using
+        End Using
+    End Sub
+
     Public Class cls
         Private _prev As String
         Private _inv As Boolean
