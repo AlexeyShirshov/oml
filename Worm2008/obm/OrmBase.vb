@@ -566,6 +566,8 @@ Namespace Orm
         Protected _alterLock As New Object
         <NonSerialized()> _
         Protected _saved As Boolean
+        <NonSerialized()> _
+        Protected Friend _upd As IList(Of Worm.Criteria.Core.EntityFilterBase)
 
         Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
         Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
@@ -957,6 +959,9 @@ Namespace Orm
                         End If
                         RaiseEvent Added(Me, EventArgs.Empty)
                     Else
+                        If _upd IsNot Nothing Then
+                            mc.InvalidateCache(Me, CType(_upd, System.Collections.ICollection))
+                        End If
                         RaiseEvent Updated(Me, EventArgs.Empty)
                     End If
                 End If
@@ -988,7 +993,7 @@ Namespace Orm
         End Sub
 
         Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As OrmBase, ByVal mc As OrmManagerBase)
-            mc.RemoveObjectFromCache(obj)
+            mc._RemoveObjectFromCache(obj)
             obj._needDelete = False
         End Sub
 
@@ -1046,11 +1051,16 @@ Namespace Orm
                     Debug.Assert(_state = Orm.ObjectState.None) ' OrElse state = Obm.ObjectState.Created)
                     'CreateModified(_id)
                     CreateModified()
+                    EnsureInCache()
                     'If modified.old_state = Obm.ObjectState.Created Then
                     '    _mo = mo
                     'End If
                 End If
             End If
+        End Sub
+
+        Protected Sub EnsureInCache()
+            GetMgr.EnsureInCache(Me)
         End Sub
 
         'Protected Friend Function GetFullClone() As OrmBase
@@ -1289,7 +1299,11 @@ Namespace Orm
         End Sub
 
         Public Function BeginAlter() As IDisposable
+#If DebugLocks Then
+            Return New CSScopeMgr_Debug(_alterLock, "d:\temp")
+#Else
             Return New CSScopeMgr(_alterLock)
+#End If
         End Function
 
         Public ReadOnly Property CanEdit() As Boolean
@@ -1388,6 +1402,7 @@ Namespace Orm
                     'Debug.WriteLine(Environment.StackTrace)
                     _needAdd = False
                     _needDelete = False
+                    _upd = Nothing
 
                     Dim oldid As Integer = Identifier
                     Dim olds As ObjectState = OriginalCopy._old_state

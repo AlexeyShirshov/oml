@@ -115,11 +115,13 @@ Namespace Database
                         End Try
                     End If
                 End If
-            End Using
 
-            If inv Then
-                InvalidateCache(obj, CType(upd, System.Collections.ICollection))
-            End If
+                If inv Then
+                    obj._upd = upd
+                    'Это было вне юзинга
+                    'InvalidateCache(obj, CType(upd, System.Collections.ICollection))
+                End If
+            End Using
         End Sub
 
         Protected Overridable Sub InsertObject(ByVal obj As OrmBase)
@@ -411,11 +413,7 @@ Namespace Database
         Public Overrides Function SaveAll(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
             Dim t As Type = obj.GetType
             'Using obj.GetSyncRoot
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("4098jwefpv345mfds-" & t.ToString & obj.Identifier)
-#End If
+            Using GetSyncForSave(t, obj)
                 Dim old_id As Integer = 0
                 Dim sa As SaveAction
                 Dim state As ObjectState = obj.ObjectState

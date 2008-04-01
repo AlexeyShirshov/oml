@@ -1397,12 +1397,13 @@ _callstack = environment.StackTrace
         'o = CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, False, False, dic}, Nothing), OrmBase)
 
         'Assert(o IsNot Nothing, "Object must be created: " & id & ". Type - " & type.ToString)
-        'Using o.GetSyncRoot()
-        If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(type, id) Then
-            o.ObjectState = ObjectState.NotLoaded
-            'AddObject(o)
-        End If
-        'End Using
+        Using o.GetSyncRoot()
+            If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(type, id) Then
+                Debug.Assert(Not o.IsLoaded)
+                o.ObjectState = ObjectState.NotLoaded
+                'AddObject(o)
+            End If
+        End Using
         Return o
     End Function
 
@@ -1433,6 +1434,7 @@ _callstack = environment.StackTrace
         Assert(o IsNot Nothing, "Object must be created: " & id & ". Type - " & GetType(T).ToString)
         Using o.GetSyncRoot()
             If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(GetType(T), id) Then
+                Debug.Assert(Not o.IsLoaded)
                 o.ObjectState = ObjectState.NotLoaded
                 'AddObject(o)
             End If
@@ -2047,7 +2049,7 @@ l1:
         Return True
     End Function
 
-    Protected Sub InvalidateCache(ByVal obj As OrmBase, ByVal upd As ICollection) '(Of EntityFilter)
+    Protected Friend Sub InvalidateCache(ByVal obj As OrmBase, ByVal upd As ICollection)
         Dim t As Type = obj.GetType
         Dim l As New List(Of String)
         For Each f As EntityFilterBase In upd
@@ -2366,12 +2368,46 @@ l1:
         End If
     End Sub
 
-    Public Sub RemoveObjectFromCache(ByVal obj As OrmBase)
+    Protected Friend Sub EnsureInCache(ByVal obj As OrmBase)
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
+
+        If obj.Identifier < 0 Then
+            Throw New ArgumentNullException(String.Format("Cannot add object {0} to cache ", obj.ObjName))
+        End If
+
+        Dim dic As IDictionary = GetDictionary(obj.GetType)
+
+        If dic Is Nothing Then
+            ''todo: throw an exception when all collections will be implemented
+            'Return
+            Dim name As String = obj.GetType.Name
+            Throw New OrmManagerException("Collection for " & name & " not exists")
+        End If
+
+        Dim id As Integer = obj.Identifier
+        SyncLock dic.SyncRoot
+            If Not dic.Contains(id) Then
+                dic.Add(id, obj)
+            End If
+        End SyncLock
+    End Sub
+
+    Public Function RemoveObjectFromCache(ByVal obj As OrmBase) As Boolean
 
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj parameter cannot be nothing")
         End If
 
+        If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+            Return False
+        End If
+
+        Return _RemoveObjectFromCache(obj)
+    End Function
+
+    Protected Friend Function _RemoveObjectFromCache(ByVal obj As OrmBase) As Boolean
         'Debug.Assert(Not obj.IsLoaded)
         Dim t As System.Type = obj.GetType
 
@@ -2392,8 +2428,9 @@ l1:
             Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
             mdic.Remove(o.Second.Second)
         Next
-    End Sub
 
+        Return True
+    End Function
 #End Region
 
 #Region " helpers "

@@ -289,7 +289,7 @@ Namespace Cache
         Public ReadOnly Property SyncRoot() As IDisposable
             Get
 #If DebugLocks Then
-                Return New CSScopeMgr_DebugWithStack(_lock, "d:\temp\")
+                Return New CSScopeMgr_Debug(_lock, "d:\temp\")
 #Else
                 Return New CSScopeMgr(_lock)
 #End If
@@ -302,10 +302,13 @@ Namespace Cache
                     Throw New ArgumentNullException("obj")
                 End If
 
+                Dim mo As ModifiedObject = Nothing
                 Dim name As String = obj.GetType().Name & ":" & obj.Identifier
+                'Using SyncHelper.AcquireDynamicLock(name)
                 Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
-                Dim mo As New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser)
+                mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser)
                 _modifiedobjects.Add(name, mo)
+                'End Using
                 If _modifiedobjects.Count = 1 Then
                     RaiseEvent CacheHasModification(Me, EventArgs.Empty)
                 End If
@@ -339,10 +342,13 @@ Namespace Cache
                     Throw New ArgumentNullException("obj")
                 End If
 
+                Dim mo As ModifiedObject = Nothing
                 Dim name As String = obj.GetType().Name & ":" & id
+                'Using SyncHelper.AcquireDynamicLock(name)
                 Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
-                Dim mo As New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser)
+                mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser)
                 _modifiedobjects.Add(name, mo)
+                'End Using
                 If _modifiedobjects.Count = 1 Then
                     RaiseEvent CacheHasModification(Me, EventArgs.Empty)
                 End If
@@ -559,6 +565,7 @@ Namespace Cache
                         l.Add(field)
                     End If
                 Next
+                obj._upd = Nothing
             End Using
 
             ValidateSPOnUpdate(obj, fields)

@@ -67,7 +67,9 @@ Namespace Database
             Public Event EndSave()
             Public Event ObjectSaving(ByVal sender As BatchSaver, ByVal args As CancelEventArgs)
             Public Event ObjectSaved(ByVal o As OrmBase)
+            Public Event ObjectAccepting(ByVal o As OrmBase)
             Public Event ObjectAccepted(ByVal o As OrmBase)
+            Public Event ObjectRejecting(ByVal o As OrmBase)
             Public Event ObjectRejected(ByVal o As OrmBase)
             Public Event ObjectRestored(ByVal o As OrmBase)
             Public Event SaveSuccessed()
@@ -163,13 +165,13 @@ Namespace Database
                 Throw New InvalidOperationException("Cannot find object")
             End Function
 
-            Protected Sub ObjectAcceptedHandler(ByVal obj As OrmBase) Handles Me.ObjectAccepted
+            Protected Sub ObjectAcceptedHandler(ByVal obj As OrmBase) Handles Me.ObjectAccepting
                 Dim o As ObjectWrap(Of OrmBase) = GetObjWrap(obj)
                 _lockList(o).Dispose()
                 _lockList.Remove(o)
             End Sub
 
-            Protected Sub ObjectRejectedHandler(ByVal obj As OrmBase) Handles Me.ObjectRejected
+            Protected Sub ObjectRejectedHandler(ByVal obj As OrmBase) Handles Me.ObjectRejecting
                 Dim o As ObjectWrap(Of OrmBase) = GetObjWrap(obj)
                 _lockList(o).Dispose()
                 _lockList.Remove(o)
@@ -181,7 +183,11 @@ Namespace Database
                 Dim saved As New List(Of Pair(Of ObjectState, OrmBase)), copies As New List(Of Pair(Of OrmBase))
                 Dim rejectList As New List(Of OrmBase), need2save As New List(Of OrmBase)
 
+#If DebugLocks Then
+                Using New CSScopeMgr_Debug(_mgr.Cache, "d:\temp\")
+#Else
                 Using New CSScopeMgr(_mgr.Cache)
+#End If
                     _mgr.BeginTransaction()
                     Try
                         RaiseEvent BeginSave(_objects.Count)
@@ -195,7 +201,7 @@ Namespace Database
                                 Dim args As New CancelEventArgs(o)
                                 RaiseEvent ObjectSaving(Me, args)
                                 If Not args.Cancel Then
-                                    _lockList.Add(New ObjectWrap(Of OrmBase)(o), o.GetSyncRoot)
+                                    _lockList.Add(New ObjectWrap(Of OrmBase)(o), _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
                                     Dim os As ObjectState = o.ObjectState
                                     If o.Save(False) Then
                                         need2save.Add(o)
@@ -241,6 +247,7 @@ Namespace Database
                                     Dim l2 As New Dictionary(Of Type, List(Of OrmBase))
                                     For Each p As Pair(Of ObjectState, OrmBase) In saved
                                         Dim o As OrmBase = p.Second
+                                        RaiseEvent ObjectAccepting(o)
                                         Dim mo As OrmBase = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
                                         l.Add(o, mo)
                                         Dim ls As List(Of OrmBase) = Nothing
@@ -259,6 +266,7 @@ Namespace Database
                                 Else
                                     For Each p As Pair(Of ObjectState, OrmBase) In saved
                                         Dim o As OrmBase = p.Second
+                                        RaiseEvent ObjectAccepting(o)
                                         o.AcceptChanges(True, OrmBase.IsGoodState(p.First))
                                         RaiseEvent ObjectAccepted(o)
                                     Next
@@ -282,6 +290,7 @@ Namespace Database
 
             Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, OrmBase)), ByVal rejectList As List(Of OrmBase), ByVal copies As List(Of Pair(Of OrmBase)))
                 For Each o As OrmBase In rejectList
+                    RaiseEvent ObjectRejecting(o)
                     o.RejectChanges()
                     RaiseEvent ObjectRejected(o)
                 Next
@@ -293,6 +302,7 @@ Namespace Database
                 For Each p As Pair(Of ObjectState, OrmBase) In saved
                     Dim o As OrmBase = p.Second
                     If Not rejectList.Contains(o) Then
+                        RaiseEvent ObjectRejecting(o)
                         o.RejectRelationChanges()
                         RaiseEvent ObjectRejected(o)
                     End If
@@ -1275,6 +1285,14 @@ Namespace Database
             Return objs
         End Function
 
+        Protected Function GetSyncForSave(ByVal t As Type, ByVal obj As OrmBase) As IDisposable
+#If DebugLocks Then
+            Return SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
+#Else
+            Return SyncHelper.AcquireDynamicLock("4098jwefpv345mfds-" & t.ToString & obj.Identifier)
+#End If
+        End Function
+
         Protected Friend Overrides Function GetStaticKey() As String
             Return String.Empty
         End Function
@@ -1365,8 +1383,8 @@ Namespace Database
                             End If
                         End If
                     End Using
-                    _cache.LogLoadTime(obj, et.GetTime)
                 End Using
+                _cache.LogLoadTime(obj, et.GetTime)
             Finally
                 CloseConn(b)
             End Try
