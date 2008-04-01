@@ -6,7 +6,7 @@ Imports Worm.Database.Criteria
 Module Module2
 
     <Orm.Meta.Entity("junk", "id", "1")> _
-    Class TestEditTable
+    Public Class TestEditTable
         Inherits Orm.OrmBaseT(Of TestEditTable)
         Implements Orm.Meta.IOrmEditable(Of TestEditTable)
 
@@ -76,17 +76,17 @@ Module Module2
         Dim n As Date = Now
         Dim trd As New List(Of Threading.Thread)
         Randomize()
-        For i As Integer = 0 To 100
+        For i As Integer = 0 To 10
             Dim t As New Threading.Thread(AddressOf EditSub)
             trd.Add(t)
             t = New Threading.Thread(AddressOf QuerySub)
             trd.Add(t)
             t = New Threading.Thread(AddressOf QuerySub2)
             trd.Add(t)
-            't = New Threading.Thread(AddressOf AddSub)
-            'trd.Add(t)
-            't = New Threading.Thread(AddressOf DeleteSub)
-            'trd.Add(t)
+            t = New Threading.Thread(AddressOf Load)
+            trd.Add(t)
+            t = New Threading.Thread(AddressOf Unload)
+            trd.Add(t)
         Next
         For i As Integer = 0 To trd.Count - 1
             Dim t As Threading.Thread = trd(i)
@@ -99,10 +99,72 @@ Module Module2
         Console.WriteLine(_exCount)
     End Sub
 
-    Sub GetMinMax(ByVal mgr As OrmReadOnlyDBManager, ByRef min As Integer, ByRef max As Integer)
+    Public Sub GetMinMax(ByVal mgr As OrmReadOnlyDBManager, ByRef min As Integer, ByRef max As Integer)
         Dim d As Dictionary(Of String, Object) = Storedprocs.NonQueryStoredProcBase.Exec(mgr, "GetMinMax", "min,max")
         min = CInt(d("min"))
         max = CInt(d("max"))
+    End Sub
+
+    Sub Load(ByVal o As Object)
+        For i As Integer = 0 To 1000
+            Using mgr As OrmDBManager = CreateManager()
+                Dim r As New Random
+                Dim done As Boolean
+                Do
+                    Try
+                        Dim min As Integer, max As Integer, cnt As Integer
+                        GetMinMax(mgr, min, max)
+                        Dim l As New List(Of Integer)
+                        Do
+                            Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
+                            If t IsNot Nothing AndAlso r.NextDouble > 0.5 Then
+                                l.Add(t.Identifier)
+                                cnt += 1
+                            End If
+                        Loop While cnt < 10
+                        mgr.LoadObjectsIds(Of TestEditTable)(l)
+                        done = True
+                    Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
+                        Threading.Interlocked.Increment(_exCount)
+                    Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")
+                        Threading.Interlocked.Increment(_exCount)
+                    End Try
+                Loop While Not done
+            End Using
+            If i Mod 10 = 0 Then
+                Console.WriteLine(String.Format("thread: {0} load: {1}", o, i))
+            End If
+        Next
+    End Sub
+
+    Sub Unload(ByVal o As Object)
+        For i As Integer = 0 To 1000
+            Using mgr As OrmDBManager = CreateManager()
+                Dim r As New Random
+                Dim done As Boolean
+                Do
+                    Try
+                        Dim min As Integer, max As Integer, cnt As Integer
+                        GetMinMax(mgr, min, max)
+                        Do
+                            Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
+                            If t IsNot Nothing AndAlso r.NextDouble > 0.5 Then
+                                mgr.RemoveObjectFromCache(t)
+                                cnt += 1
+                            End If
+                        Loop While cnt < 10
+                        done = True
+                    Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
+                        Threading.Interlocked.Increment(_exCount)
+                    Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")
+                        Threading.Interlocked.Increment(_exCount)
+                    End Try
+                Loop While Not done
+            End Using
+            If i Mod 10 = 0 Then
+                Console.WriteLine(String.Format("thread: {0} unload: {1}", o, i))
+            End If
+        Next
     End Sub
 
     Sub DeleteSub(ByVal o As Object)
@@ -191,23 +253,30 @@ Module Module2
                     Try
                         Dim min As Integer, max As Integer
                         GetMinMax(mgr, min, max)
-                        Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
-                        If t IsNot Nothing Then
-                            Using t.BeginAlter
-                                If t.CanEdit Then
-                                    If r.NextDouble > 0.5 Then
-                                        Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
-                                            t.Name = Guid.NewGuid.ToString
-                                            st.Commit()
-                                        End Using
-                                    Else
-                                        t.Name = Guid.NewGuid.ToString
-                                        t.Save(True)
-                                    End If
-                                    done = True
+                        Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                            Do
+                                Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
+                                If t IsNot Nothing Then
+                                    Using t.BeginAlter
+                                        If t.CanEdit Then
+                                            If r.NextDouble > 0.5 Then
+                                                t.Name = Guid.NewGuid.ToString
+                                                If r.NextDouble > 0.5 Then
+                                                    AddHandler st.Saver.ObjectSaved, AddressOf throwEx
+                                                End If
+                                            Else
+                                                t.Name = Guid.NewGuid.ToString
+                                                t.Save(True)
+                                            End If
+                                        End If
+                                    End Using
                                 End If
-                            End Using
-                        End If
+                                If st.Saver.AffectedObjects.Count > 4 Then Exit For
+                            Loop While True
+                            st.Commit()
+                        End Using
+                        done = True
+                    Catch ex As OrmManagerException When ex.InnerException IsNot Nothing AndAlso ex.InnerException.Message = "xxx"
                     Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
                         Threading.Interlocked.Increment(_exCount)
                     Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")
@@ -219,6 +288,10 @@ Module Module2
                 Console.WriteLine(String.Format("thread: {0} edit: {1}", o, i))
             End If
         Next
+    End Sub
+
+    Sub throwEx(ByVal o As Orm.OrmBase)
+        Throw New Exception("xxx")
     End Sub
 
     Sub QuerySub(ByVal o As Object)
@@ -287,7 +360,7 @@ Module Module2
         Next
     End Sub
 
-    Function CreateManager() As OrmDBManager
+    Public Function CreateManager() As OrmDBManager
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
         Return New OrmDBManager(_cache, _schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
     End Function

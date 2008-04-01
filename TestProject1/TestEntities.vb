@@ -500,7 +500,7 @@ Public Class Entity5
     Implements IOrmEditable(Of Entity5)
 
     Private _name As String
-    Private _upd() As Byte
+    Private _mark() As Byte
 
     Public Sub New()
         MyBase.New()
@@ -535,7 +535,7 @@ Public Class Entity5
     Protected Sub CopyEntity5(ByVal [from] As Entity5, ByVal [to] As Entity5) Implements IOrmEditable(Of Entity5).CopyBody
         With [from]
             [to]._name = ._name
-            [to]._upd = ._upd
+            [to]._mark = ._mark
         End With
     End Sub
 
@@ -557,12 +557,12 @@ Public Class Entity5
     Protected Property Version() As Byte()
         Get
             Using SyncHelper(True, "Title")
-                Return _upd
+                Return _mark
             End Using
         End Get
         Set(ByVal value As Byte())
             Using SyncHelper(False, "Title")
-                _upd = value
+                _mark = value
             End Using
         End Set
     End Property

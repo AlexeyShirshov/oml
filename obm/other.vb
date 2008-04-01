@@ -390,7 +390,11 @@ Namespace Collections
 
         Public Overridable Function SyncHelper(ByVal reader As Boolean) As IDisposable
             'Return New RWScopeMgr(reader, _rw)
+#If DebugLocks Then
+            Return New CSScopeMgr_Debug(Me, "d:\temp")
+#Else
             Return New CSScopeMgr(Me)
+#End If
         End Function
 
         Protected MustOverride Function GetKeyForItem(ByVal item As TItem) As TItemKey

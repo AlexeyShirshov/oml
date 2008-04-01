@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{8E02FB04-15DE-416A-9468-0C99CC1DBE65}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <StartupObject>Tests.Module2</StartupObject>
+    <StartupObject>Tests.TestLocks</StartupObject>
     <RootNamespace>Tests</RootNamespace>
     <AssemblyName>Tests</AssemblyName>
     <MyType>Console</MyType>
@@ -93,6 +93,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="TestLocks.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">
