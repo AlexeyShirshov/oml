@@ -51,7 +51,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Public Overrides Function SaveAll(ByVal obj As Orm.OrmBase, ByVal AcceptChanges As Boolean) As Boolean
+        Public Overrides Function SaveChanges(ByVal obj As Orm.OrmBase, ByVal AcceptChanges As Boolean) As Boolean
             Throw New NotImplementedException
         End Function
 

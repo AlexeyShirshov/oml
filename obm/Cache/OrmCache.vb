@@ -548,25 +548,27 @@ Namespace Cache
                 Throw New ArgumentNullException("obj")
             End If
 
-            Dim t As Type = obj.GetType
+            If fields IsNot Nothing Then
+                Dim t As Type = obj.GetType
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
 #Else
-            Using SyncHelper.AcquireDynamicLock("913bh5g9nh04nvgtr0924ng")
+                Using SyncHelper.AcquireDynamicLock("913bh5g9nh04nvgtr0924ng")
 #End If
 
-                Dim l As List(Of String) = Nothing
-                If Not _invalidate.TryGetValue(t, l) Then
-                    l = New List(Of String)
-                    _invalidate.Add(t, l)
-                End If
-                For Each field As String In fields
-                    If Not l.Contains(field) Then
-                        l.Add(field)
+                    Dim l As List(Of String) = Nothing
+                    If Not _invalidate.TryGetValue(t, l) Then
+                        l = New List(Of String)
+                        _invalidate.Add(t, l)
                     End If
-                Next
-                obj._upd = Nothing
-            End Using
+                    For Each field As String In fields
+                        If Not l.Contains(field) Then
+                            l.Add(field)
+                        End If
+                    Next
+                    obj._upd = Nothing
+                End Using
+            End If
 
             ValidateSPOnUpdate(obj, fields)
         End Sub

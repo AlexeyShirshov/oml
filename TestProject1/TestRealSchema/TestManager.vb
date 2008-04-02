@@ -105,14 +105,14 @@ Public Class TestManagerRS
                     t2 = mgr2.Find(Of Table3)(1)
                     prev = t2.Code
                     t2.Code = t.Code + CByte(10)
-                    mgr2.SaveAll(t2, True)
+                    mgr2.SaveChanges(t2, True)
                 End Using
 
-                mgr.SaveAll(t, True)
+                mgr.SaveChanges(t, True)
             Finally
                 Using mgr2 As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
                     t2.Code = prev
-                    mgr2.SaveAll(t2, True)
+                    mgr2.SaveChanges(t2, True)
                 End Using
             End Try
         End Using

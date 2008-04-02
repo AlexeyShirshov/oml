@@ -590,6 +590,8 @@ Namespace Orm
         Protected _saved As Boolean
         <NonSerialized()> _
         Protected Friend _upd As IList(Of Worm.Criteria.Core.EntityFilterBase)
+        <NonSerialized()> _
+        Protected Friend _valProcs As Boolean
 
         Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
         Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
@@ -954,7 +956,7 @@ Namespace Orm
                 End If
 
                 Dim mc As OrmManagerBase = GetMgr()
-                Dim valProcs As Boolean = _needAccept.Count > 0
+                _valProcs = _needAccept.Count > 0
 
                 AcceptRelationalChanges(mc)
 
@@ -962,13 +964,15 @@ Namespace Orm
                     mo = RemoveVersionData(setState)
 
                     If _needDelete Then
+                        _valProcs = False
                         If updateCache Then
                             mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
                             'mc.Cache.UpdateCacheOnDelete(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing)
-                            Accept_AfterUpdateCacheDelete(Me, mc)
                         End If
+                        Accept_AfterUpdateCacheDelete(Me, mc)
                         RaiseEvent Deleted(Me, EventArgs.Empty)
                     ElseIf _needAdd Then
+                        _valProcs = False
                         Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
                         Dim o As OrmBase = CType(dic(Identifier), OrmBase)
                         If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
@@ -977,24 +981,32 @@ Namespace Orm
                         If updateCache Then
                             'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
                             mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
-                            Accept_AfterUpdateCacheAdd(Me, mc, mo)
                         End If
+                        Accept_AfterUpdateCacheAdd(Me, mc, mo)
                         RaiseEvent Added(Me, EventArgs.Empty)
                     Else
-                        If _upd IsNot Nothing Then
+                        If (_upd IsNot Nothing OrElse _valProcs) AndAlso updateCache Then
                             mc.InvalidateCache(Me, CType(_upd, System.Collections.ICollection))
                         End If
                         RaiseEvent Updated(Me, EventArgs.Empty)
                     End If
-                End If
-
-                If valProcs Then
+                ElseIf _valProcs AndAlso updateCache Then
                     mc.Cache.ValidateSPOnUpdate(Me, Nothing)
                 End If
+
             End Using
 
             Return mo
         End Function
+
+        Friend Sub UpdateCache()
+            Dim mc As OrmManagerBase = GetMgr()
+            If _upd IsNot Nothing OrElse _valProcs Then
+                mc.InvalidateCache(Me, CType(_upd, System.Collections.ICollection))
+            Else
+                mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
+            End If
+        End Sub
 
         'Protected Sub AcceptChanges(ByVal cashe As MediaCacheBase)
         '    Debug.Assert(_state = Obm.ObjectState.Created)
@@ -1358,7 +1370,7 @@ Namespace Orm
         End Property
 
         Public Function Save(ByVal AcceptChanges As Boolean) As Boolean
-            Return GetMgr.SaveAll(Me, AcceptChanges)
+            Return GetMgr.SaveChanges(Me, AcceptChanges)
         End Function
 
         ''' <param name="obj">The System.Object to compare with the current System.Object.</param>

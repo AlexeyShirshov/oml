@@ -410,7 +410,7 @@ Namespace Database
             Return obj
         End Function
 
-        Public Overrides Function SaveAll(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
+        Public Overrides Function SaveChanges(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
             Dim t As Type = obj.GetType
             'Using obj.GetSyncRoot
             Using GetSyncForSave(t, obj)
@@ -556,7 +556,8 @@ Namespace Database
                         If hasNew Then
                             Throw New OrmObjectException("Cannot accept changes. Some of relation has new objects")
                         End If
-                        obj.AcceptChanges(True, OrmBase.IsGoodState(state))
+                        obj.AcceptChanges(False, OrmBase.IsGoodState(state))
+                        obj.UpdateCache()
                     End If
 
                     err = False
