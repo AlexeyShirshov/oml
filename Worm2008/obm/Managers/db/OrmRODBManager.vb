@@ -165,13 +165,13 @@ Namespace Database
                 Throw New InvalidOperationException("Cannot find object")
             End Function
 
-            Protected Sub ObjectAcceptedHandler(ByVal obj As OrmBase) Handles Me.ObjectAccepting
+            Protected Sub ObjectAcceptedHandler(ByVal obj As OrmBase) Handles Me.ObjectAccepted
                 Dim o As ObjectWrap(Of OrmBase) = GetObjWrap(obj)
                 _lockList(o).Dispose()
                 _lockList.Remove(o)
             End Sub
 
-            Protected Sub ObjectRejectedHandler(ByVal obj As OrmBase) Handles Me.ObjectRejecting
+            Protected Sub ObjectRejectedHandler(ByVal obj As OrmBase) Handles Me.ObjectRestored
                 Dim o As ObjectWrap(Of OrmBase) = GetObjWrap(obj)
                 _lockList(o).Dispose()
                 _lockList.Remove(o)
@@ -243,25 +243,35 @@ Namespace Database
 
                                 RaiseEvent BeginAccepting()
                                 If _acceptInBatch Then
-                                    Dim l As New Dictionary(Of OrmBase, OrmBase)
+                                    'Dim l As New Dictionary(Of OrmBase, OrmBase)
                                     Dim l2 As New Dictionary(Of Type, List(Of OrmBase))
+                                    Dim val As New List(Of OrmBase)
                                     For Each p As Pair(Of ObjectState, OrmBase) In saved
                                         Dim o As OrmBase = p.Second
                                         RaiseEvent ObjectAccepting(o)
                                         Dim mo As OrmBase = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
-                                        l.Add(o, mo)
-                                        Dim ls As List(Of OrmBase) = Nothing
-                                        If Not l2.TryGetValue(o.GetType, ls) Then
-                                            ls = New List(Of OrmBase)
-                                            l2.Add(o.GetType, ls)
-                                        End If
-                                        ls.Add(o)
+                                        'l.Add(o, mo)
                                         RaiseEvent ObjectAccepted(o)
+                                        If o._upd IsNot Nothing OrElse o._valProcs Then
+                                            val.Add(o)
+                                        Else
+                                            Dim ls As List(Of OrmBase) = Nothing
+                                            If Not l2.TryGetValue(o.GetType, ls) Then
+                                                ls = New List(Of OrmBase)
+                                                l2.Add(o.GetType, ls)
+                                            End If
+                                            ls.Add(o)
+                                        End If
+                                    Next
+                                    For Each o As OrmBase In val
+                                        _mgr.InvalidateCache(o, CType(o._upd, System.Collections.ICollection))
                                     Next
                                     For Each t As Type In l2.Keys
                                         Dim ls As List(Of OrmBase) = l2(t)
+                                        '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
+                                        '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
                                         _mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
-                                            AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
+                                            Nothing, Nothing, _callbacks)
                                     Next
                                 Else
                                     For Each p As Pair(Of ObjectState, OrmBase) In saved
@@ -2559,7 +2569,7 @@ l2:
             Throw New NotImplementedException
         End Sub
 
-        Public Overrides Function SaveAll(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
+        Public Overrides Function SaveChanges(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
             Throw New NotImplementedException()
         End Function
 

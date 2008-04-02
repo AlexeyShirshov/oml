@@ -2051,14 +2051,18 @@ l1:
 
     Protected Friend Sub InvalidateCache(ByVal obj As OrmBase, ByVal upd As ICollection)
         Dim t As Type = obj.GetType
-        Dim l As New List(Of String)
-        For Each f As EntityFilterBase In upd
-            '    Assert(f.Type Is t, "")
+        Dim l As List(Of String) = Nothing
+        If upd IsNot Nothing Then
+            l = New List(Of String)
+            For Each f As EntityFilterBase In upd
+                '    Assert(f.Type Is t, "")
 
-            '    Cache.AddUpdatedFields(obj, f.FieldName)
-            l.Add(f.Template.FieldName)
-        Next
+                '    Cache.AddUpdatedFields(obj, f.FieldName)
+                l.Add(f.Template.FieldName)
+            Next
+        End If
         Cache.AddUpdatedFields(obj, l)
+        obj._valProcs = False
     End Sub
 
     'Protected Function GetDataTable(ByVal id As String, ByVal key As String, ByVal sync As String, ByVal t As Type, _
@@ -3632,7 +3636,7 @@ l1:
 
     Protected Friend MustOverride Sub DeleteObject(ByVal obj As OrmBase)
 
-    Public MustOverride Function SaveAll(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
+    Public MustOverride Function SaveChanges(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
 
     Protected MustOverride Sub M2MSave(ByVal obj As OrmBase, ByVal t As Type, ByVal direct As Boolean, ByVal el As EditableList)
 
