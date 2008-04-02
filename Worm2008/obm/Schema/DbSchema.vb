@@ -740,6 +740,10 @@ l1:
                 Dim upd_cmd As New StringBuilder
                 dbparams = Nothing
                 If obj.ObjectState = ObjectState.Modified Then
+                    If obj.OriginalCopy Is Nothing Then
+                        Throw New ObjectStateException(obj.ObjName & "Object in state modified has to have an original copy")
+                    End If
+
                     Dim sel_columns As New Generic.List(Of ColumnAttribute)
                     Dim updated_tables As New Dictionary(Of OrmTable, TableUpdate)
                     Dim rt As Type = obj.GetType
