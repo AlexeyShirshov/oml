@@ -529,7 +529,7 @@ Namespace Database.Storedprocs
                 _obj = params
             End Sub
 
-            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of CoreFramework.Structures.Pair(Of String, Object))
+            Protected Overrides Function GetInParams() As System.Collections.Generic.IEnumerable(Of Pair(Of String, Object))
                 Dim l As New List(Of Pair(Of String, Object))
                 If _obj IsNot Nothing Then
                     For i As Integer = 0 To _obj.Length - 1
