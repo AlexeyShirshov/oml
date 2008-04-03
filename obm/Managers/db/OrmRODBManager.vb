@@ -171,7 +171,7 @@ Namespace Database
                 _lockList.Remove(o)
             End Sub
 
-            Protected Sub ObjectRejectedHandler(ByVal obj As OrmBase) Handles Me.ObjectRestored
+            Protected Sub ObjectRejectedHandler(ByVal obj As OrmBase) Handles Me.ObjectRejected
                 Dim o As ObjectWrap(Of OrmBase) = GetObjWrap(obj)
                 _lockList(o).Dispose()
                 _lockList.Remove(o)
@@ -271,14 +271,18 @@ Namespace Database
                                         '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                         '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
                                         _mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
-                                            Nothing, Nothing, _callbacks)
+                                            AddressOf OrmBase.ClearCacheFlags, Nothing, _callbacks)
                                     Next
                                 Else
                                     For Each p As Pair(Of ObjectState, OrmBase) In saved
                                         Dim o As OrmBase = p.Second
                                         RaiseEvent ObjectAccepting(o)
-                                        o.AcceptChanges(True, OrmBase.IsGoodState(p.First))
+                                        o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
                                         RaiseEvent ObjectAccepted(o)
+                                    Next
+                                    For Each p As Pair(Of ObjectState, OrmBase) In saved
+                                        Dim o As OrmBase = p.Second
+                                        o.UpdateCache()
                                     Next
                                 End If
 
