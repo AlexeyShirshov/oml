@@ -966,7 +966,7 @@ Namespace Orm
                     If _needDelete Then
                         _valProcs = False
                         If updateCache Then
-                            mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
+                            mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
                             'mc.Cache.UpdateCacheOnDelete(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing)
                         End If
                         Accept_AfterUpdateCacheDelete(Me, mc)
@@ -980,7 +980,7 @@ Namespace Orm
                         End If
                         If updateCache Then
                             'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
-                            mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
+                            mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
                         End If
                         Accept_AfterUpdateCacheAdd(Me, mc, mo)
                         RaiseEvent Added(Me, EventArgs.Empty)
@@ -1004,7 +1004,7 @@ Namespace Orm
             If _upd IsNot Nothing OrElse _valProcs Then
                 mc.InvalidateCache(Me, CType(_upd, System.Collections.ICollection))
             Else
-                mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing, Nothing)
+                mc.Cache.UpdateCache(mc.ObjectSchema, New OrmBase() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
             End If
         End Sub
 
@@ -1016,24 +1016,30 @@ Namespace Orm
         '    End Using
         'End Sub
 
-        Friend Shared Sub Accept_AfterUpdateCache(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
-            ByVal contextKey As Object)
+        'Friend Shared Sub Accept_AfterUpdateCache(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
+        '    ByVal contextKey As Object)
 
-            If obj._needDelete Then
-                Accept_AfterUpdateCacheDelete(obj, mc)
-            ElseIf obj._needAdd Then
-                Accept_AfterUpdateCacheAdd(obj, mc, contextKey)
-            End If
+        '    If obj._needDelete Then
+        '        Accept_AfterUpdateCacheDelete(obj, mc)
+        '    ElseIf obj._needAdd Then
+        '        Accept_AfterUpdateCacheAdd(obj, mc, contextKey)
+        '    End If
+        'End Sub
+
+        Protected Friend Shared Sub ClearCacheFlags(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
+            ByVal contextKey As Object)
+            obj._needAdd = False
+            obj._needDelete = False
         End Sub
 
         Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As OrmBase, ByVal mc As OrmManagerBase)
             mc._RemoveObjectFromCache(obj)
-            obj._needDelete = False
+            'obj._needDelete = False
         End Sub
 
         Friend Shared Sub Accept_AfterUpdateCacheAdd(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
             ByVal contextKey As Object)
-            obj._needAdd = False
+            'obj._needAdd = False
             Dim nm As OrmManagerBase.INewObjects = mc.NewObjectManager
             If nm IsNot Nothing Then
                 Dim mo As OrmBase = TryCast(contextKey, OrmBase)

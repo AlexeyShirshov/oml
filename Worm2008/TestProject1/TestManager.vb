@@ -711,6 +711,31 @@ Imports Worm.Orm
     End Sub
 
     <TestMethod()> _
+    Public Sub TestDeletaCacheVal()
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
+            Dim c As Worm.ReadOnlyList(Of Entity4) = mgr.Find(Of Entity4)(Criteria.Ctor.AutoTypeField("Title").Like("2%"), Nothing, False)
+
+            Assert.AreEqual(3, c.Count)
+
+            Dim e2 As TestProject1.Entity4 = mgr.Find(Of Entity4)(11)
+            Assert.IsTrue(c.Contains(e2))
+
+            e2.Delete()
+            e2.M2M.Delete(GetType(Entity))
+
+            mgr.BeginTransaction()
+            Try
+                e2.Save(True)
+                c = mgr.Find(Of Entity4)(Criteria.Ctor.AutoTypeField("Title").Like("2%"), Nothing, False)
+
+                Assert.AreEqual(2, c.Count)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestCompositeDelete()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("2"))
             Dim e As Entity2 = mgr.Find(Of Entity2)(10)
