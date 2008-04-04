@@ -421,7 +421,9 @@ Namespace Web
                             End If
                         Else
                             Using mgr As OrmDBManager = _getMgr()
-                                mgr.ObjectSchema.SetFieldValue(user, p.Name, p.PropertyValue)
+                                Using user.BeginEdit
+                                    mgr.ObjectSchema.SetFieldValue(user, p.Name, p.PropertyValue)
+                                End Using
                             End Using
                         End If
                     End If
@@ -440,13 +442,18 @@ Namespace Web
                 End If
                 If user IsNot Nothing Then
                     Using mgr As OrmDBManager = _getMgr()
-                        If Not String.IsNullOrEmpty(_lastActivityField) Then
-                            mgr.ObjectSchema.SetFieldValue(user, _lastActivityField, d)
-                        End If
-                        If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                            mgr.ObjectSchema.SetFieldValue(user, _lastUpdateField, d)
-                        End If
-                        user.Save(True)
+                        Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                            Using user.BeginEdit
+                                If Not String.IsNullOrEmpty(_lastActivityField) Then
+                                    mgr.ObjectSchema.SetFieldValue(user, _lastActivityField, d)
+                                End If
+                                If Not String.IsNullOrEmpty(_lastUpdateField) Then
+                                    mgr.ObjectSchema.SetFieldValue(user, _lastUpdateField, d)
+                                End If
+                            End Using
+                            st.Add(user)
+                            st.Commit()
+                        End Using
                     End Using
                 End If
             End If

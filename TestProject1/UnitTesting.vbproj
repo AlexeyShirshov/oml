@@ -131,6 +131,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ASPHosting\Web\testhttpdic.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
     <Content Include="ASPHosting\Web\TestMembership.aspx">
       <SubType>ASPXCodeBehind</SubType>
     </Content>
