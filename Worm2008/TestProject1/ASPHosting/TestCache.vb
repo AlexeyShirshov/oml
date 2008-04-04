@@ -120,6 +120,31 @@ Public Class TestCache
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestExpire()
+        Dim h As ASPNETHosting.ASPNetHost = GetHost()
+        Using sw As New StringWriter()
+            h.ProcessRequest("ASPHosting/Web/testhttpdic.aspx", String.Empty, sw)
+            If Write2Console Then
+                Debug.WriteLine(sw.GetStringBuilder.ToString)
+            End If
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("cnt = 0"))
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("created = True"))
+
+            Threading.Thread.Sleep(1000 * 60 * 2)
+
+            sw.GetStringBuilder.Length = 0
+            h.ProcessRequest("ASPHosting/Web/testhttpdic.aspx", "second", sw)
+            If Write2Console Then
+                Debug.WriteLine(sw.GetStringBuilder.ToString)
+            End If
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("cnt = 2"))
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("created = False"))
+        End Using
+    End Sub
+
     Protected Function GetHost() As ASPNETHosting.ASPNetHost
         Dim dir As String = Path.GetDirectoryName(_testContext.TestDir).Replace("TestResults", "TestProject1")
         Dim pr As New ASPNETHosting.ASPNetHost(dir, "/") '& "\ASPHosting\web"

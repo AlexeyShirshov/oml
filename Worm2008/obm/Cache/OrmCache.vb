@@ -1273,6 +1273,10 @@ l1:
         '    Return td
         'End Function
 
+        Public Overrides Function CreateResultsetsDictionary(ByVal mark As String) As System.Collections.IDictionary
+            Return MyBase.CreateResultsetsDictionary(mark)
+        End Function
+
         Protected Overrides Function CreateDictionary(ByVal t As System.Type) As System.Collections.IDictionary
             Dim pol As DictionatyCachePolicy = GetPolicy(t)
             Dim args() As Object = Nothing

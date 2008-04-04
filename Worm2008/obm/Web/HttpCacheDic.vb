@@ -159,6 +159,22 @@ Namespace Cache
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
         Public Sub AddItem(ByVal item As System.Collections.Generic.KeyValuePair(Of String, TValue)) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of String, TValue)).Add
+            'If IsNothing(item) Then
+            '    Throw New ArgumentNullException("item")
+            'End If
+
+            'Dim realKey As String = GetKey(item.Key)
+            'Dim o As Object = Cache.Add(realKey, item.Value, _dep, _abs_expiration, _sld_expiration, _
+            '    _priority, AddressOf CacheItemRemovedCallback1)
+            'If IsNothing(o) Then
+            '    AddKey(_keys, realKey)
+            'Else
+            '    Throw New ArgumentException("The key is already in collection: " & item.Key)
+            'End If
+            AddItem(item, False)
+        End Sub
+
+        Protected Sub AddItem(ByVal item As System.Collections.Generic.KeyValuePair(Of String, TValue), ByVal asSet As Boolean)
             If IsNothing(item) Then
                 Throw New ArgumentNullException("item")
             End If
@@ -166,10 +182,19 @@ Namespace Cache
             Dim realKey As String = GetKey(item.Key)
             Dim o As Object = Cache.Add(realKey, item.Value, _dep, _abs_expiration, _sld_expiration, _
                 _priority, AddressOf CacheItemRemovedCallback1)
-            If IsNothing(o) Then
-                AddKey(_keys, realKey)
+            If Not asSet Then
+                If IsNothing(o) Then
+                    AddKey(_keys, realKey)
+                Else
+                    Throw New ArgumentException("The key is already in collection: " & item.Key)
+                End If
             Else
-                Throw New ArgumentException("The key is already in collection: " & item.Key)
+                Dim idx As Integer = _keys.BinarySearch(realKey)
+                If idx >= 0 Then
+                    _keys(idx) = realKey
+                Else
+                    _keys.Insert(Not idx, realKey)
+                End If
             End If
         End Sub
 
@@ -249,7 +274,9 @@ Namespace Cache
                 Throw New ArgumentNullException("key")
             End If
 
-            Return Cache(GetKey(key)) IsNot Nothing
+            Dim r As Boolean = Cache(GetKey(key)) IsNot Nothing
+            Diagnostics.Debug.Assert(r OrElse Not _keys.Contains(key))
+            Return r
         End Function
 
         Default Public Property Item(ByVal key As String) As TValue Implements System.Collections.Generic.IDictionary(Of String, TValue).Item
@@ -272,11 +299,12 @@ Namespace Cache
                     Throw New ArgumentNullException("key")
                 End If
 
-                Dim realKey As String = GetKey(key)
-                If Not ContainsKey(realKey) Then
-                    AddKey(_keys, realKey)
-                End If
-                Cache(realKey) = value
+                'Dim realKey As String = GetKey(key)
+                'If Not ContainsKey(realKey) Then
+                AddItem(New KeyValuePair(Of String, TValue)(key, value), True)
+                'Else
+                'Cache(realKey) = value
+                'End If
             End Set
         End Property
 
