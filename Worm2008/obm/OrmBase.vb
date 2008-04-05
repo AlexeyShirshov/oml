@@ -888,12 +888,12 @@ Namespace Orm
             End If
 
             If _state = Orm.ObjectState.Modified Then
-                mc.SaveObject(Me)
+                mc.UpdateObject(Me)
             ElseIf _state = Orm.ObjectState.Created OrElse _state = Orm.ObjectState.NotFoundInDB Then
                 If OriginalCopy IsNot Nothing Then
                     Throw New OrmObjectException(ObjName & "Object with identifier " & Identifier & " already exists.")
                 End If
-                mc.Add(Me)
+                mc.AddObject(Me)
                 Debug.Assert(_state = Orm.ObjectState.Modified) ' OrElse _state = Orm.ObjectState.None
                 _needAdd = True
                 'Debug.WriteLine("need add: " & Me.GetType.Name)

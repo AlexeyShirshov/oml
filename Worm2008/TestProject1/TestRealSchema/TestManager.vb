@@ -622,7 +622,7 @@ Public Class TestManagerRS
     End Sub
 
     <TestMethod()> _
-    Public Sub TestM2MSoring()
+    Public Sub TestM2MSorting()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim tt1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t As Type = mgr.ObjectSchema.GetTypeByEntityName("Table3")

@@ -2170,6 +2170,13 @@ l1:
 #End Region
 
 #Region " Object support "
+    Protected Function GetSyncForSave(ByVal t As Type, ByVal obj As OrmBase) As IDisposable
+#If DebugLocks Then
+            Return SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
+#Else
+        Return SyncHelper.AcquireDynamicLock("4098jwefpv345mfds-" & t.ToString & obj.Identifier)
+#End If
+    End Function
 
     Protected Friend Function LoadType(ByVal id As Integer, ByVal t As Type, ByVal load As Boolean, ByVal checkOnCreate As Boolean) As OrmBase
         Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
@@ -2326,7 +2333,7 @@ l1:
         Return LoadTypeInternal(Of T)(id, load, checkOnCreate, dic, True)
     End Function
 
-    Protected Sub AddObject(ByVal obj As OrmBase)
+    Protected Sub Add2Cache(ByVal obj As OrmBase)
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -3571,6 +3578,141 @@ l1:
         Return Nothing
     End Function
 
+    Public Function SaveChanges(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
+        Try
+            Dim t As Type = obj.GetType
+            'Using obj.GetSyncRoot
+            Using GetSyncForSave(t, obj)
+                Dim old_id As Integer = 0
+                Dim sa As SaveAction
+                Dim state As ObjectState = obj.ObjectState
+                If state = ObjectState.Created Then
+                    old_id = obj.Identifier
+                    sa = SaveAction.Insert
+                End If
+
+                If state = ObjectState.Deleted Then
+                    sa = SaveAction.Delete
+                End If
+                Dim old_state As ObjectState = state
+                Dim hasNew As Boolean = False
+                Dim err As Boolean = True
+                Try
+                    Dim processedType As New List(Of Type)
+                    If sa = SaveAction.Delete Then
+                        For Each r As M2MRelation In ObjectSchema.GetM2MRelations(t)
+                            Dim acs As OrmBase.AcceptState2 = Nothing
+                            If r.ConnectedType Is Nothing Then
+                                If r.DeleteCascade Then
+                                    M2MDelete(obj, r.Type, Not r.non_direct)
+                                End If
+                                acs = M2MSave(obj, r.Type, Not r.non_direct)
+                                processedType.Add(r.Type)
+                            End If
+                            If acs IsNot Nothing Then obj.AddAccept(acs)
+                        Next
+
+                        Dim oo As IRelation = TryCast(ObjectSchema.GetObjectSchema(t), IRelation)
+                        If oo IsNot Nothing Then
+                            Dim o As New M2MEnum(oo, obj, ObjectSchema)
+                            Cache.ConnectedEntityEnum(t, AddressOf o.Remove)
+                        End If
+                    End If
+
+                    obj.Save(Me)
+                    obj.RaiseSaved(sa)
+
+                    If sa = SaveAction.Insert Then
+                        Dim oo As IRelation = TryCast(ObjectSchema.GetObjectSchema(t), IRelation)
+                        If oo IsNot Nothing Then
+                            Dim o As New M2MEnum(oo, obj, ObjectSchema)
+                            Cache.ConnectedEntityEnum(t, AddressOf o.Add)
+                        End If
+
+                        M2MUpdate(obj, old_id)
+
+                        For Each r As M2MRelation In ObjectSchema.GetM2MRelations(t)
+                            Dim tt As Type = r.Type
+                            If Not ObjectSchema.IsMany2ManyReadonly(t, tt) Then
+                                Dim acs As OrmBase.AcceptState2 = M2MSave(obj, tt, Not r.non_direct)
+                                If acs IsNot Nothing Then
+                                    hasNew = hasNew OrElse acs.el.HasNew
+                                    'obj.AddAccept(acs)
+                                End If
+                            End If
+                        Next
+                    ElseIf sa = SaveAction.Update Then
+                        If obj._needAccept IsNot Nothing Then
+                            For Each acp As OrmBase.AcceptState2 In obj._needAccept
+                                'Dim el As EditableList = acp.el.PrepareNewSave(Me)
+                                Dim el As EditableList = acp.el.PrepareSave(Me)
+                                If el IsNot Nothing Then
+                                    M2MSave(obj, acp.el.SubType, acp.el.Direct, el)
+                                    acp.CacheItem.Entry.Saved = True
+                                End If
+                                hasNew = hasNew OrElse acp.el.HasNew
+                                processedType.Add(acp.el.SubType)
+                            Next
+                        End If
+                        For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
+                            Dim m2me As M2MCache = o.First
+                            If m2me.Filter IsNot Nothing Then
+                                Dim dic As IDictionary = GetDic(_cache, o.Second.First)
+                                dic.Remove(o.Second.Second)
+                            Else
+                                If m2me.Entry.HasChanges AndAlso Not m2me.Entry.Saved AndAlso Not processedType.Contains(m2me.Entry.SubType) Then
+                                    Throw New InvalidOperationException
+                                End If
+                            End If
+                        Next
+                    End If
+
+                    If AcceptChanges Then
+                        If hasNew Then
+                            Throw New OrmObjectException("Cannot accept changes. Some of relation has new objects")
+                        End If
+                        obj.AcceptChanges(False, OrmBase.IsGoodState(state))
+                    End If
+
+                    err = False
+                Finally
+                    If err Then
+                        If sa = SaveAction.Insert Then
+                            obj.RejectChanges()
+                        End If
+
+                        state = old_state
+                    Else
+                        obj.ObjSaved = True
+                    End If
+                End Try
+                Return hasNew
+            End Using
+        Finally
+            If obj.ObjSaved AndAlso AcceptChanges Then
+                obj.UpdateCache()
+            End If
+        End Try
+    End Function
+
+    Public Function AddObject(ByVal obj As OrmBase) As OrmBase
+        Invariant()
+
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
+
+        Using obj.GetSyncRoot()
+            If obj.ObjectState = ObjectState.Created OrElse obj.ObjectState = ObjectState.NotFoundInDB Then
+                InsertObject(obj)
+            ElseIf obj.ObjectState = ObjectState.Clone Then
+                Throw New InvalidOperationException("Object with state " & obj.ObjectState.ToString & " cann't be added to cashe")
+            End If
+        End Using
+
+        Return obj
+    End Function
+
 #Region " Abstract members "
 
     Protected MustOverride Function GetSearchSection() As String
@@ -3630,13 +3772,11 @@ l1:
 
     'Protected MustOverride Overloads Sub FindObjects(ByVal t As Type, ByVal WithLoad As Boolean, ByVal arr As System.Collections.ArrayList, ByVal sort As String, ByVal sort_type As SortType)
 
-    Protected Friend MustOverride Sub SaveObject(ByVal obj As OrmBase)
+    Protected Friend MustOverride Sub UpdateObject(ByVal obj As OrmBase)
 
-    Public MustOverride Function Add(ByVal obj As OrmBase) As OrmBase
+    Protected MustOverride Sub InsertObject(ByVal obj As OrmBase)
 
     Protected Friend MustOverride Sub DeleteObject(ByVal obj As OrmBase)
-
-    Public MustOverride Function SaveChanges(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
 
     Protected MustOverride Sub M2MSave(ByVal obj As OrmBase, ByVal t As Type, ByVal direct As Boolean, ByVal el As EditableList)
 
@@ -3667,7 +3807,7 @@ l1:
 
     Protected Friend Sub RegisterInCashe(ByVal obj As OrmBase)
         If Not IsInCache(obj) Then
-            AddObject(obj)
+            Add2Cache(obj)
             If obj.OriginalCopy IsNot Nothing Then
                 Me.Cache.RegisterExistingModification(obj, obj.Identifier)
             End If
@@ -3917,12 +4057,17 @@ l1:
                     'Dim sschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
                     'field = _schema.GetJoinFieldNameByType(sortType, selectType, sschema)
                     If String.IsNullOrEmpty(field) Then
-                        Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, sortType))
+                        Dim m2m As M2MRelation = _schema.GetM2MRelation(sortType, selectType, True)
+                        If m2m IsNot Nothing Then
+                            l.AddRange(MakeM2MJoin(m2m, sortType))
+                        Else
+                            Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, sortType))
+                        End If
                     End If
 
-                    'types.Add(sortType)
-                    'l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
-                End If
+                        'types.Add(sortType)
+                        'l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                    End If
                 ns = ns.Previous
             Loop While ns IsNot Nothing
         End If
