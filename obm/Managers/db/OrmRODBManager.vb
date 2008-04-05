@@ -1299,14 +1299,6 @@ Namespace Database
             Return objs
         End Function
 
-        Protected Function GetSyncForSave(ByVal t As Type, ByVal obj As OrmBase) As IDisposable
-#If DebugLocks Then
-            Return SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & t.ToString & obj.Identifier, "d:\temp\")
-#Else
-            Return SyncHelper.AcquireDynamicLock("4098jwefpv345mfds-" & t.ToString & obj.Identifier)
-#End If
-        End Function
-
         Protected Friend Overrides Function GetStaticKey() As String
             Return String.Empty
         End Function
@@ -2553,13 +2545,17 @@ l2:
             Return root
         End Function
 
-        Protected Friend Overrides Sub SaveObject(ByVal obj As OrmBase)
+        Protected Friend Overrides Sub UpdateObject(ByVal obj As OrmBase)
             Throw New NotImplementedException()
         End Sub
 
-        Public Overrides Function Add(ByVal obj As OrmBase) As OrmBase
+        'Public Overrides Function AddObject(ByVal obj As OrmBase) As OrmBase
+        '    Throw New NotImplementedException()
+        'End Function
+
+        Protected Overrides Sub InsertObject(ByVal obj As Orm.OrmBase)
             Throw New NotImplementedException()
-        End Function
+        End Sub
 
         Protected Friend Overrides Sub DeleteObject(ByVal obj As OrmBase)
             Throw New NotImplementedException()
@@ -2573,9 +2569,9 @@ l2:
             Throw New NotImplementedException
         End Sub
 
-        Public Overrides Function SaveChanges(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
-            Throw New NotImplementedException()
-        End Function
+        'Public Overrides Function SaveChanges(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
+        '    Throw New NotImplementedException()
+        'End Function
 
         Protected Overrides Function GetSearchSection() As String
             Return String.Empty

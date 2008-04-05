@@ -1135,6 +1135,32 @@ Imports Worm.Orm
     End Sub
 
     <TestMethod()> _
+    Public Sub TestDistinct()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim r As Worm.ReadOnlyList(Of Entity) = mgr.Find(Of Entity)(Criteria.Ctor.Field(GetType(Entity4), "Title").Like("b%"), Nothing, False)
+
+            Assert.AreEqual(8, r.Count)
+
+            r = mgr.FindDistinct(Of Entity)(Criteria.Ctor.Field(GetType(Entity4), "Title").Like("b%"), Nothing, False)
+
+            Assert.AreEqual(5, r.Count)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestM2MSort()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim r As Worm.ReadOnlyList(Of Entity) = mgr.Find(Of Entity)(Criteria.Ctor.Field(GetType(Entity), "ID").LessThan(3), Sorting.Field(GetType(Entity4), "Title"), False)
+
+            Assert.AreEqual(15, r.Count)
+
+            Assert.AreEqual(1, r(0).Identifier)
+            Assert.AreEqual(2, r(1).Identifier)
+            Assert.AreEqual(2, r(2).Identifier)
+            Assert.AreEqual(1, r(3).Identifier)
+        End Using
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestExpireCache()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e1 As Entity = mgr.Find(Of Entity)(1)

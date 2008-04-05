@@ -39,9 +39,9 @@ Namespace Xml
 
 #Region " Overrides "
 
-        Public Overrides Function Add(ByVal obj As Orm.OrmBase) As Orm.OrmBase
-            Throw New NotImplementedException
-        End Function
+        'Public Overrides Function AddObject(ByVal obj As Orm.OrmBase) As Orm.OrmBase
+        '    Throw New NotImplementedException
+        'End Function
 
         Protected Friend Overrides Sub DeleteObject(ByVal obj As Orm.OrmBase)
             Throw New NotImplementedException
@@ -51,11 +51,15 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Public Overrides Function SaveChanges(ByVal obj As Orm.OrmBase, ByVal AcceptChanges As Boolean) As Boolean
-            Throw New NotImplementedException
-        End Function
+        Protected Overrides Sub InsertObject(ByVal obj As Orm.OrmBase)
+            Throw New NotImplementedException()
+        End Sub
 
-        Protected Friend Overrides Sub SaveObject(ByVal obj As Orm.OrmBase)
+        'Public Overrides Function SaveChanges(ByVal obj As Orm.OrmBase, ByVal AcceptChanges As Boolean) As Boolean
+        '    Throw New NotImplementedException
+        'End Function
+
+        Protected Friend Overrides Sub UpdateObject(ByVal obj As Orm.OrmBase)
             Throw New NotImplementedException
         End Sub
 
