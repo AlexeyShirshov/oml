@@ -1121,12 +1121,16 @@ l1:
             Dim l As List(Of StoredProcBase) = Nothing
             If _procTypes.TryGetValue(t, l) Then
                 For Each sp As StoredProcBase In l
-                    If Not sp.IsReseted Then
-                        Dim r As StoredProcBase.ValidateResult = sp.ValidateOnInsertDelete(obj)
-                        If r <> StoredProcBase.ValidateResult.DontReset Then
-                            sp.ResetCache(Me, r)
+                    Try
+                        If Not sp.IsReseted Then
+                            Dim r As StoredProcBase.ValidateResult = sp.ValidateOnInsertDelete(obj)
+                            If r <> StoredProcBase.ValidateResult.DontReset Then
+                                sp.ResetCache(Me, r)
+                            End If
                         End If
-                    End If
+                    Catch ex As Exception
+                        Throw New OrmCacheException(String.Format("Fail to validate sp {0}", sp.Name), ex)
+                    End Try
                 Next
             End If
         End Sub
