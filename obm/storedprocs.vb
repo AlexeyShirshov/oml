@@ -54,6 +54,12 @@ Namespace Database.Storedprocs
             _expireDate = Now.Add(timeout)
         End Sub
 
+        Public ReadOnly Property Name() As String
+            Get
+                Return GetName()
+            End Get
+        End Property
+
         Public ReadOnly Property CacheHit() As Boolean
             Get
                 Return _cacheHit
