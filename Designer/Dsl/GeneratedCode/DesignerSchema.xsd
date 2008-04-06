@@ -1,0 +1,539 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema id="DesignerSchema" targetNamespace="http://schemas.microsoft.com/dsltools/Designer" elementFormDefault="qualified" xmlns="http://schemas.microsoft.com/dsltools/Designer" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <!-- WormModel -->
+  <xsd:element name="wormModel" type="WormModel" />
+  <xsd:complexType name="WormModel">
+    <xsd:annotation>
+      <xsd:documentation>The root in which all other elements are embedded. Appears as a diagram.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Relationship: WormModelHasEntities -->
+      <xsd:element name="entities" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Instances of WormModelHasEntities</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
+              <xsd:element ref="wormModelHasEntities">
+                <xsd:annotation>
+                  <xsd:documentation>[Relationship deriving from WormModelHasEntities needs to be serialized in full-form]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element ref="entity" >
+                <xsd:annotation>
+                  <xsd:documentation>[Target role-player]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:choice>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+    <!-- Id -->
+    <xsd:attribute name="Id" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>Instance Guid of this element, needed because SerializeId is set to true.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- dslVersion -->
+    <xsd:attribute name="dslVersion" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>Version of the model serialized in this file.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: DefaultNamespace -->
+    <xsd:attribute name="defaultNamespace" type="xsd:string" />
+    <!-- Property: SchemaVersion -->
+    <xsd:attribute name="schemaVersion" type="xsd:string" />
+  </xsd:complexType>
+  
+  <!-- WormModel Moniker -->
+  <xsd:element name="wormModelMoniker" type="WormModelMoniker" />
+  <xsd:complexType name="WormModelMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for WormModel instance.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="Id" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Attribute to store the moniker string.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  
+  <!-- Entity -->
+  <xsd:element name="entity" type="Entity" />
+  <xsd:complexType name="Entity">
+    <xsd:annotation>
+      <xsd:documentation>Entity</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Relationship: EntityHasTables -->
+      <xsd:element name="tables" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Instances of EntityHasTables</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
+              <xsd:element ref="entityHasTables">
+                <xsd:annotation>
+                  <xsd:documentation>[Relationship deriving from EntityHasTables needs to be serialized in full-form]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element ref="table" >
+                <xsd:annotation>
+                  <xsd:documentation>[Target role-player]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:choice>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <!-- Relationship: EntityHasProperties -->
+      <xsd:element name="properties" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Instances of EntityHasProperties</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
+              <xsd:element ref="entityHasProperties">
+                <xsd:annotation>
+                  <xsd:documentation>[Relationship deriving from EntityHasProperties needs to be serialized in full-form]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element ref="property" >
+                <xsd:annotation>
+                  <xsd:documentation>[Target role-player]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:choice>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <!-- Relationship: EntityReferencesTargetEntities -->
+      <xsd:element name="targetEntities" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Instances of EntityReferencesTargetEntities</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element ref="entityReferencesTargetEntities" minOccurs="0" maxOccurs="unbounded">
+              <xsd:annotation>
+                <xsd:documentation>[Instance of EntityReferencesTargetEntities needs to be serialized in full-form]</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <!-- Relationship: EntityHasSupressedProperties -->
+      <xsd:element name="supressedProperties" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Instances of EntityHasSupressedProperties</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
+              <xsd:element ref="entityHasSupressedProperties">
+                <xsd:annotation>
+                  <xsd:documentation>[Relationship deriving from EntityHasSupressedProperties needs to be serialized in full-form]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element ref="supressedProperty" >
+                <xsd:annotation>
+                  <xsd:documentation>[Target role-player]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:choice>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <!-- Relationship: EntityReferencesSelfTargetEntities -->
+      <xsd:element name="selfTargetEntities" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Instances of EntityReferencesSelfTargetEntities</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element ref="entityReferencesSelfTargetEntities" minOccurs="0" maxOccurs="unbounded">
+              <xsd:annotation>
+                <xsd:documentation>[Instance of EntityReferencesSelfTargetEntities needs to be serialized in full-form]</xsd:documentation>
+              </xsd:annotation>
+            </xsd:element>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+    <!-- Id -->
+    <xsd:attribute name="Id" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>Instance Guid of this element, needed because SerializeId is set to true.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Name -->
+    <xsd:attribute name="name" type="xsd:string" />
+    <!-- Property: Namespace -->
+    <xsd:attribute name="namespace" type="xsd:string" />
+    <!-- Property: Behaviour -->
+    <xsd:attribute name="behaviour" type="xsd:string" />
+    <!-- Property: Description -->
+    <xsd:attribute name="description" type="xsd:string" />
+    <!-- Property: UseGenerics -->
+    <xsd:attribute name="useGenerics" type="xsd:boolean" />
+    <!-- Property: MakeInterface -->
+    <xsd:attribute name="makeInterface" type="xsd:boolean" />
+    <!-- Property: BaseEntity -->
+    <xsd:attribute name="baseEntity" type="xsd:string" />
+  </xsd:complexType>
+  
+  <!-- Entity Moniker -->
+  <xsd:element name="entityMoniker" type="EntityMoniker" />
+  <xsd:complexType name="EntityMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for Entity instance.</xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="Id" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Attribute to store the moniker string.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  
+  <!-- Table -->
+  <xsd:element name="table" type="Table" />
+  <xsd:complexType name="Table">
+    <!-- Property: Name -->
+    <xsd:attribute name="name" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Table name</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Schema -->
+    <xsd:attribute name="schema" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Schema name for table</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  
+  <!-- Table Moniker -->
+  <xsd:element name="tableMoniker" abstract="true" type="TableMoniker" />
+  <xsd:complexType name="TableMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for Table instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- Property -->
+  <xsd:element name="property" type="Property" />
+  <xsd:complexType name="Property">
+    <!-- Property: Name -->
+    <xsd:attribute name="name" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Property name</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Type -->
+    <xsd:attribute name="type" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Property type</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Description -->
+    <xsd:attribute name="description" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Property description</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: FieldName -->
+    <xsd:attribute name="fieldName" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Field name</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Table -->
+    <xsd:attribute name="table" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Property table</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: FieldAccessLevel -->
+    <xsd:attribute name="fieldAccessLevel" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Field access level</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Alias -->
+    <xsd:attribute name="alias" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Property alias</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: AccessLevel -->
+    <xsd:attribute name="accessLevel" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Access Level</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Nullable -->
+    <xsd:attribute name="nullable" type="xsd:boolean" >
+      <xsd:annotation>
+        <xsd:documentation>Nullable</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Attributes -->
+    <xsd:attribute name="attributes" type="xsd:string" />
+  </xsd:complexType>
+  
+  <!-- Property Moniker -->
+  <xsd:element name="propertyMoniker" abstract="true" type="PropertyMoniker" />
+  <xsd:complexType name="PropertyMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for Property instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- SupressedProperty -->
+  <xsd:element name="supressedProperty" type="SupressedProperty" />
+  <xsd:complexType name="SupressedProperty">
+    <xsd:annotation>
+      <xsd:documentation>SupressedProperty</xsd:documentation>
+    </xsd:annotation>
+    <!-- Property: Name -->
+    <xsd:attribute name="name" type="xsd:string" />
+  </xsd:complexType>
+  
+  <!-- SupressedProperty Moniker -->
+  <xsd:element name="supressedPropertyMoniker" abstract="true" type="SupressedPropertyMoniker" />
+  <xsd:complexType name="SupressedPropertyMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for SupressedProperty instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- WormModelHasEntities -->
+  <xsd:element name="wormModelHasEntities" abstract="true" type="WormModelHasEntities" />
+  <xsd:complexType name="WormModelHasEntities" abstract="true" >
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Target end Entity -->
+      <xsd:element ref="entity" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>[Target role-player]</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  
+  <!-- WormModelHasEntities Moniker -->
+  <xsd:element name="wormModelHasEntitiesMoniker" abstract="true" type="WormModelHasEntitiesMoniker" />
+  <xsd:complexType name="WormModelHasEntitiesMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for WormModelHasEntities instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- EntityHasTables -->
+  <xsd:element name="entityHasTables" abstract="true" type="EntityHasTables" />
+  <xsd:complexType name="EntityHasTables" abstract="true" >
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Target end Table -->
+      <xsd:element ref="table" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>[Target role-player]</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  
+  <!-- EntityHasTables Moniker -->
+  <xsd:element name="entityHasTablesMoniker" abstract="true" type="EntityHasTablesMoniker" />
+  <xsd:complexType name="EntityHasTablesMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for EntityHasTables instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- EntityHasProperties -->
+  <xsd:element name="entityHasProperties" abstract="true" type="EntityHasProperties" />
+  <xsd:complexType name="EntityHasProperties" abstract="true" >
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Target end Property -->
+      <xsd:element ref="property" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>[Target role-player]</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  
+  <!-- EntityHasProperties Moniker -->
+  <xsd:element name="entityHasPropertiesMoniker" abstract="true" type="EntityHasPropertiesMoniker" />
+  <xsd:complexType name="EntityHasPropertiesMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for EntityHasProperties instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- EntityReferencesTargetEntities -->
+  <xsd:element name="entityReferencesTargetEntities" type="EntityReferencesTargetEntities" />
+  <xsd:complexType name="EntityReferencesTargetEntities">
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Target end Entity -->
+      <xsd:element ref="entityMoniker" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>[Target role-player]</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <!-- Property: UndelyingEntity -->
+    <xsd:attribute name="undelyingEntity" type="xsd:string" />
+    <!-- Property: LeftCascadeDelete -->
+    <xsd:attribute name="leftCascadeDelete" type="xsd:boolean" />
+    <!-- Property: LeftFieldName -->
+    <xsd:attribute name="leftFieldName" type="xsd:string" />
+    <!-- Property: LeftAccessorName -->
+    <xsd:attribute name="leftAccessorName" type="xsd:string" />
+    <!-- Property: Disabled -->
+    <xsd:attribute name="disabled" type="xsd:boolean" />
+    <!-- Property: Table -->
+    <xsd:attribute name="table" type="xsd:string" />
+    <!-- Property: LeftEntity -->
+    <xsd:attribute name="leftEntity" type="xsd:string" />
+    <!-- Property: LeftAccessedEntityType -->
+    <xsd:attribute name="leftAccessedEntityType" type="xsd:string" />
+    <!-- Property: RightAccessedEntityType -->
+    <xsd:attribute name="rightAccessedEntityType" type="xsd:string" />
+    <!-- Property: RightFieldName -->
+    <xsd:attribute name="rightFieldName" type="xsd:string" />
+    <!-- Property: RightCascadeDelete -->
+    <xsd:attribute name="rightCascadeDelete" type="xsd:boolean" />
+    <!-- Property: RightAccessorName -->
+    <xsd:attribute name="rightAccessorName" type="xsd:string" />
+    <!-- Property: RightEntity -->
+    <xsd:attribute name="rightEntity" type="xsd:string" />
+  </xsd:complexType>
+  
+  <!-- EntityReferencesTargetEntities Moniker -->
+  <xsd:element name="entityReferencesTargetEntitiesMoniker" abstract="true" type="EntityReferencesTargetEntitiesMoniker" />
+  <xsd:complexType name="EntityReferencesTargetEntitiesMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for EntityReferencesTargetEntities instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- EntityHasSupressedProperties -->
+  <xsd:element name="entityHasSupressedProperties" abstract="true" type="EntityHasSupressedProperties" />
+  <xsd:complexType name="EntityHasSupressedProperties" abstract="true" >
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Target end SupressedProperty -->
+      <xsd:element ref="supressedProperty" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>[Target role-player]</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  
+  <!-- EntityHasSupressedProperties Moniker -->
+  <xsd:element name="entityHasSupressedPropertiesMoniker" abstract="true" type="EntityHasSupressedPropertiesMoniker" />
+  <xsd:complexType name="EntityHasSupressedPropertiesMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for EntityHasSupressedProperties instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- EntityReferencesSelfTargetEntities -->
+  <xsd:element name="entityReferencesSelfTargetEntities" type="EntityReferencesSelfTargetEntities" />
+  <xsd:complexType name="EntityReferencesSelfTargetEntities">
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Target end Entity -->
+      <xsd:element ref="entityMoniker" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>[Target role-player]</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+    <!-- Property: DirectFieldName -->
+    <xsd:attribute name="directFieldName" type="xsd:string" />
+    <!-- Property: DirectAccessor -->
+    <xsd:attribute name="directAccessor" type="xsd:string" />
+    <!-- Property: DirectCascadeDelete -->
+    <xsd:attribute name="directCascadeDelete" type="xsd:boolean" />
+    <!-- Property: ReverseFieldName -->
+    <xsd:attribute name="reverseFieldName" type="xsd:string" />
+    <!-- Property: ReverseAccessor -->
+    <xsd:attribute name="reverseAccessor" type="xsd:string" />
+    <!-- Property: ReverseCascadeDelete -->
+    <xsd:attribute name="reverseCascadeDelete" type="xsd:boolean" />
+    <!-- Property: Table -->
+    <xsd:attribute name="table" type="xsd:string" />
+    <!-- Property: UnderlyingEntity -->
+    <xsd:attribute name="underlyingEntity" type="xsd:string" />
+    <!-- Property: Disabled -->
+    <xsd:attribute name="disabled" type="xsd:boolean" />
+  </xsd:complexType>
+  
+  <!-- EntityReferencesSelfTargetEntities Moniker -->
+  <xsd:element name="entityReferencesSelfTargetEntitiesMoniker" abstract="true" type="EntityReferencesSelfTargetEntitiesMoniker" />
+  <xsd:complexType name="EntityReferencesSelfTargetEntitiesMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for EntityReferencesSelfTargetEntities instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- Enum PropertyAttribute -->
+  <xsd:simpleType name="PropertyAttribute">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="PK"/>
+      <xsd:enumeration value="ReadOnly"/>
+      <xsd:enumeration value="None">
+        <xsd:annotation>
+          <xsd:documentation>none</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="SyncInsert">
+        <xsd:annotation>
+          <xsd:documentation>SyncInsert</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="SyncUpdate">
+        <xsd:annotation>
+          <xsd:documentation>SyncUpdate</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="InsertDefault">
+        <xsd:annotation>
+          <xsd:documentation>InsertDefault</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="RV">
+        <xsd:annotation>
+          <xsd:documentation>RV</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="RowVersion">
+        <xsd:annotation>
+          <xsd:documentation>RowVersion</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="PrimaryKey">
+        <xsd:annotation>
+          <xsd:documentation>PrimaryKey</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Private">
+        <xsd:annotation>
+          <xsd:documentation>Private</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Factory">
+        <xsd:annotation>
+          <xsd:documentation>Factory</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+</xsd:schema>
+

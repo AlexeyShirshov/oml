@@ -1,0 +1,9 @@
+﻿<#@ template inherits="Microsoft.VisualStudio.TextTemplating.VSHost.ModelingTextTransformation" debug="true"#>
+<#@ import namespace="Worm.Designer" #>
+<#@ Designer processor="DesignerDirectiveProcessor" requires="fileName='%MODELFILE%'" #>
+<#@ output extension=".%EXT%" #>
+<#@ import namespace="System.Collections" #>
+<#
+	Hashtable propertyBag = new Hashtable();
+#>
+

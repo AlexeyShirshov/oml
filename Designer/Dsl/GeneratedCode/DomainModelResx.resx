@@ -1,0 +1,1018 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Worm.Designer.DesignerDomainModel.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Designer</value>
+    <comment>Description for DslLibrary &apos;Designer&apos;</comment>
+  </data>
+  <data name="Worm.Designer.DesignerDomainModel.DisplayName" xml:space="preserve">
+    <value>Designer</value>
+    <comment>DisplayName for DslLibrary &apos;Designer&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel.Description" xml:space="preserve">
+    <value>The root in which all other elements are embedded. Appears as a diagram.</value>
+    <comment>Description for DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel.DisplayName" xml:space="preserve">
+    <value>Worm Model</value>
+    <comment>DisplayName for DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/DefaultNamespace.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.WormModel.Default Namespace</value>
+    <comment>Description for DomainProperty &apos;DefaultNamespace&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/DefaultNamespace.DisplayName" xml:space="preserve">
+    <value>Default Namespace</value>
+    <comment>DisplayName for DomainProperty &apos;DefaultNamespace&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/SchemaVersion.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.WormModel.Schema Version</value>
+    <comment>Description for DomainProperty &apos;SchemaVersion&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/SchemaVersion.DisplayName" xml:space="preserve">
+    <value>Schema Version</value>
+    <comment>DisplayName for DomainProperty &apos;SchemaVersion&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity.Description" xml:space="preserve">
+    <value>Entity</value>
+    <comment>Description for DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity.DisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>DisplayName for DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/IdProperty.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Entity.Id</value>
+    <comment>Description for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/IdProperty.DisplayName" xml:space="preserve">
+    <value>Id</value>
+    <comment>DisplayName for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/Name.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Entity.Name</value>
+    <comment>Description for DomainProperty &apos;Name&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/Name.DisplayName" xml:space="preserve">
+    <value>Name</value>
+    <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/Namespace.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Entity.Namespace</value>
+    <comment>Description for DomainProperty &apos;Namespace&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/Namespace.DisplayName" xml:space="preserve">
+    <value>Namespace</value>
+    <comment>DisplayName for DomainProperty &apos;Namespace&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/Behaviour.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Entity.Behaviour</value>
+    <comment>Description for DomainProperty &apos;Behaviour&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/Behaviour.DisplayName" xml:space="preserve">
+    <value>Behaviour</value>
+    <comment>DisplayName for DomainProperty &apos;Behaviour&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/Description.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Entity.Description</value>
+    <comment>Description for DomainProperty &apos;Description&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/Description.DisplayName" xml:space="preserve">
+    <value>Description</value>
+    <comment>DisplayName for DomainProperty &apos;Description&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/UseGenerics.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Entity.Use Generics</value>
+    <comment>Description for DomainProperty &apos;UseGenerics&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/UseGenerics.DisplayName" xml:space="preserve">
+    <value>Use Generics</value>
+    <comment>DisplayName for DomainProperty &apos;UseGenerics&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/MakeInterface.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Entity.Make Interface</value>
+    <comment>Description for DomainProperty &apos;MakeInterface&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/MakeInterface.DisplayName" xml:space="preserve">
+    <value>Make Interface</value>
+    <comment>DisplayName for DomainProperty &apos;MakeInterface&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/BaseEntity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Entity.Base Entity</value>
+    <comment>Description for DomainProperty &apos;BaseEntity&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/BaseEntity.DisplayName" xml:space="preserve">
+    <value>Base Entity</value>
+    <comment>DisplayName for DomainProperty &apos;BaseEntity&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Table.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Table</value>
+    <comment>Description for DomainClass &apos;Table&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Table.DisplayName" xml:space="preserve">
+    <value>Table</value>
+    <comment>DisplayName for DomainClass &apos;Table&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Table/Name.Description" xml:space="preserve">
+    <value>Table name</value>
+    <comment>Description for DomainProperty &apos;Name&apos; on DomainClass &apos;Table&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Table/Name.DisplayName" xml:space="preserve">
+    <value>Name</value>
+    <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;Table&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Table/IdProperty.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Table.Id</value>
+    <comment>Description for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Table&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Table/IdProperty.DisplayName" xml:space="preserve">
+    <value>Id</value>
+    <comment>DisplayName for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Table&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Table/Schema.Description" xml:space="preserve">
+    <value>Schema name for table</value>
+    <comment>Description for DomainProperty &apos;Schema&apos; on DomainClass &apos;Table&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Table/Schema.DisplayName" xml:space="preserve">
+    <value>Schema</value>
+    <comment>DisplayName for DomainProperty &apos;Schema&apos; on DomainClass &apos;Table&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Property</value>
+    <comment>Description for DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property.DisplayName" xml:space="preserve">
+    <value>Property</value>
+    <comment>DisplayName for DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Name.Description" xml:space="preserve">
+    <value>Property name</value>
+    <comment>Description for DomainProperty &apos;Name&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Name.DisplayName" xml:space="preserve">
+    <value>Name</value>
+    <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Type.Description" xml:space="preserve">
+    <value>Property type</value>
+    <comment>Description for DomainProperty &apos;Type&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Type.DisplayName" xml:space="preserve">
+    <value>Type</value>
+    <comment>DisplayName for DomainProperty &apos;Type&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Description.Description" xml:space="preserve">
+    <value>Property description</value>
+    <comment>Description for DomainProperty &apos;Description&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Description.DisplayName" xml:space="preserve">
+    <value>Description</value>
+    <comment>DisplayName for DomainProperty &apos;Description&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/FieldName.Description" xml:space="preserve">
+    <value>Field name</value>
+    <comment>Description for DomainProperty &apos;FieldName&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/FieldName.DisplayName" xml:space="preserve">
+    <value>Field Name</value>
+    <comment>DisplayName for DomainProperty &apos;FieldName&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Table.Description" xml:space="preserve">
+    <value>Property table</value>
+    <comment>Description for DomainProperty &apos;Table&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Table.DisplayName" xml:space="preserve">
+    <value>Table</value>
+    <comment>DisplayName for DomainProperty &apos;Table&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/FieldAccessLevel.Description" xml:space="preserve">
+    <value>Field access level</value>
+    <comment>Description for DomainProperty &apos;FieldAccessLevel&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/FieldAccessLevel.DisplayName" xml:space="preserve">
+    <value>Field Access Level</value>
+    <comment>DisplayName for DomainProperty &apos;FieldAccessLevel&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Alias.Description" xml:space="preserve">
+    <value>Property alias</value>
+    <comment>Description for DomainProperty &apos;Alias&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Alias.DisplayName" xml:space="preserve">
+    <value>Alias</value>
+    <comment>DisplayName for DomainProperty &apos;Alias&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/AccessLevel.Description" xml:space="preserve">
+    <value>Access Level</value>
+    <comment>Description for DomainProperty &apos;AccessLevel&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/AccessLevel.DisplayName" xml:space="preserve">
+    <value>Access Level</value>
+    <comment>DisplayName for DomainProperty &apos;AccessLevel&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Nullable.Description" xml:space="preserve">
+    <value>Nullable</value>
+    <comment>Description for DomainProperty &apos;Nullable&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Nullable.DisplayName" xml:space="preserve">
+    <value>Nullable</value>
+    <comment>DisplayName for DomainProperty &apos;Nullable&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Attributes.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Property.Attributes</value>
+    <comment>Description for DomainProperty &apos;Attributes&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Attributes.DisplayName" xml:space="preserve">
+    <value>Attributes</value>
+    <comment>DisplayName for DomainProperty &apos;Attributes&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SupressedProperty.Description" xml:space="preserve">
+    <value>SupressedProperty</value>
+    <comment>Description for DomainClass &apos;SupressedProperty&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SupressedProperty.DisplayName" xml:space="preserve">
+    <value>Supressed Property</value>
+    <comment>DisplayName for DomainClass &apos;SupressedProperty&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SupressedProperty/Name.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.SupressedProperty.Name</value>
+    <comment>Description for DomainProperty &apos;Name&apos; on DomainClass &apos;SupressedProperty&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SupressedProperty/Name.DisplayName" xml:space="preserve">
+    <value>Name</value>
+    <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;SupressedProperty&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModelHasEntities.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.WormModelHasEntities</value>
+    <comment>Description for DomainClass &apos;WormModelHasEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModelHasEntities.DisplayName" xml:space="preserve">
+    <value>Worm Model Has Entities</value>
+    <comment>DisplayName for DomainClass &apos;WormModelHasEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModelHasEntities/WormModel.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.WormModelHasEntities.WormModel</value>
+    <comment>Description for DomainRole &apos;WormModel&apos; on DomainRelationship &apos;WormModelHasEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModelHasEntities/WormModel.DisplayName" xml:space="preserve">
+    <value>Worm Model</value>
+    <comment>DisplayName for DomainRole &apos;WormModel&apos; on DomainRelationship &apos;WormModelHasEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModelHasEntities/WormModel.PropertyDisplayName" xml:space="preserve">
+    <value>Entities</value>
+    <comment>PropertyDisplayName for DomainRole &apos;WormModel&apos; on DomainRelationship &apos;WormModelHasEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModelHasEntities/Entity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.WormModelHasEntities.Entity</value>
+    <comment>Description for DomainRole &apos;Entity&apos; on DomainRelationship &apos;WormModelHasEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModelHasEntities/Entity.DisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>DisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;WormModelHasEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModelHasEntities/Entity.PropertyDisplayName" xml:space="preserve">
+    <value>Worm Model</value>
+    <comment>PropertyDisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;WormModelHasEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasTables.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasTables</value>
+    <comment>Description for DomainClass &apos;EntityHasTables&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasTables.DisplayName" xml:space="preserve">
+    <value>Entity Has Tables</value>
+    <comment>DisplayName for DomainClass &apos;EntityHasTables&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasTables/Entity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasTables.Entity</value>
+    <comment>Description for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasTables&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasTables/Entity.DisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>DisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasTables&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasTables/Entity.PropertyDisplayName" xml:space="preserve">
+    <value>Tables</value>
+    <comment>PropertyDisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasTables&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasTables/Table.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasTables.Table</value>
+    <comment>Description for DomainRole &apos;Table&apos; on DomainRelationship &apos;EntityHasTables&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasTables/Table.DisplayName" xml:space="preserve">
+    <value>Table</value>
+    <comment>DisplayName for DomainRole &apos;Table&apos; on DomainRelationship &apos;EntityHasTables&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasTables/Table.PropertyDisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>PropertyDisplayName for DomainRole &apos;Table&apos; on DomainRelationship &apos;EntityHasTables&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasProperties.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasProperties</value>
+    <comment>Description for DomainClass &apos;EntityHasProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasProperties.DisplayName" xml:space="preserve">
+    <value>Entity Has Properties</value>
+    <comment>DisplayName for DomainClass &apos;EntityHasProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasProperties/Entity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasProperties.Entity</value>
+    <comment>Description for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasProperties/Entity.DisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>DisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasProperties/Entity.PropertyDisplayName" xml:space="preserve">
+    <value>Properties</value>
+    <comment>PropertyDisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasProperties/Property.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasProperties.Property</value>
+    <comment>Description for DomainRole &apos;Property&apos; on DomainRelationship &apos;EntityHasProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasProperties/Property.DisplayName" xml:space="preserve">
+    <value>Property</value>
+    <comment>DisplayName for DomainRole &apos;Property&apos; on DomainRelationship &apos;EntityHasProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasProperties/Property.PropertyDisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>PropertyDisplayName for DomainRole &apos;Property&apos; on DomainRelationship &apos;EntityHasProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities</value>
+    <comment>Description for DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities.DisplayName" xml:space="preserve">
+    <value>Entity References Target Entities</value>
+    <comment>DisplayName for DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/UndelyingEntity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Undelying entity</value>
+    <comment>Description for DomainProperty &apos;UndelyingEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/UndelyingEntity.DisplayName" xml:space="preserve">
+    <value>Undelying entity</value>
+    <comment>DisplayName for DomainProperty &apos;UndelyingEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Left Cascade Delete</value>
+    <comment>Description for DomainProperty &apos;LeftCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.DisplayName" xml:space="preserve">
+    <value>Left Cascade Delete</value>
+    <comment>DisplayName for DomainProperty &apos;LeftCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Left Field Name</value>
+    <comment>Description for DomainProperty &apos;LeftFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.DisplayName" xml:space="preserve">
+    <value>Left Field Name</value>
+    <comment>DisplayName for DomainProperty &apos;LeftFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessorName.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Left Accessor Name</value>
+    <comment>Description for DomainProperty &apos;LeftAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessorName.DisplayName" xml:space="preserve">
+    <value>Left Accessor Name</value>
+    <comment>DisplayName for DomainProperty &apos;LeftAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/Disabled.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Disabled</value>
+    <comment>Description for DomainProperty &apos;Disabled&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/Disabled.DisplayName" xml:space="preserve">
+    <value>Disabled</value>
+    <comment>DisplayName for DomainProperty &apos;Disabled&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/Table.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Table</value>
+    <comment>Description for DomainProperty &apos;Table&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/Table.DisplayName" xml:space="preserve">
+    <value>Table</value>
+    <comment>DisplayName for DomainProperty &apos;Table&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftEntity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Left Entity</value>
+    <comment>Description for DomainProperty &apos;LeftEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftEntity.DisplayName" xml:space="preserve">
+    <value>Left Entity</value>
+    <comment>DisplayName for DomainProperty &apos;LeftEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessedEntityType.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Left Accessed Entity Type</value>
+    <comment>Description for DomainProperty &apos;LeftAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessedEntityType.DisplayName" xml:space="preserve">
+    <value>Left Accessed Entity Type</value>
+    <comment>DisplayName for DomainProperty &apos;LeftAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessedEntityType.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Right Accessed Entity Type</value>
+    <comment>Description for DomainProperty &apos;RightAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessedEntityType.DisplayName" xml:space="preserve">
+    <value>Right Accessed Entity Type</value>
+    <comment>DisplayName for DomainProperty &apos;RightAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightFieldName.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Right Field Name</value>
+    <comment>Description for DomainProperty &apos;RightFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightFieldName.DisplayName" xml:space="preserve">
+    <value>Right Field Name</value>
+    <comment>DisplayName for DomainProperty &apos;RightFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightCascadeDelete.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Right Cascade Delete</value>
+    <comment>Description for DomainProperty &apos;RightCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightCascadeDelete.DisplayName" xml:space="preserve">
+    <value>Right Cascade Delete</value>
+    <comment>DisplayName for DomainProperty &apos;RightCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessorName.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Right Accessor Name</value>
+    <comment>Description for DomainProperty &apos;RightAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessorName.DisplayName" xml:space="preserve">
+    <value>Right Accessor Name</value>
+    <comment>DisplayName for DomainProperty &apos;RightAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightEntity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.Right Entity</value>
+    <comment>Description for DomainProperty &apos;RightEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightEntity.DisplayName" xml:space="preserve">
+    <value>Right Entity</value>
+    <comment>DisplayName for DomainProperty &apos;RightEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/SourceEntity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.SourceEntity</value>
+    <comment>Description for DomainRole &apos;SourceEntity&apos; on DomainRelationship &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/SourceEntity.DisplayName" xml:space="preserve">
+    <value>Source Entity</value>
+    <comment>DisplayName for DomainRole &apos;SourceEntity&apos; on DomainRelationship &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/SourceEntity.PropertyDisplayName" xml:space="preserve">
+    <value>Target Entities</value>
+    <comment>PropertyDisplayName for DomainRole &apos;SourceEntity&apos; on DomainRelationship &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/TargetEntity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesTargetEntities.TargetEntity</value>
+    <comment>Description for DomainRole &apos;TargetEntity&apos; on DomainRelationship &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/TargetEntity.DisplayName" xml:space="preserve">
+    <value>Target Entity</value>
+    <comment>DisplayName for DomainRole &apos;TargetEntity&apos; on DomainRelationship &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/TargetEntity.PropertyDisplayName" xml:space="preserve">
+    <value>Source Entities</value>
+    <comment>PropertyDisplayName for DomainRole &apos;TargetEntity&apos; on DomainRelationship &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasSupressedProperties.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasSupressedProperties</value>
+    <comment>Description for DomainClass &apos;EntityHasSupressedProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasSupressedProperties.DisplayName" xml:space="preserve">
+    <value>Entity Has Supressed Properties</value>
+    <comment>DisplayName for DomainClass &apos;EntityHasSupressedProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasSupressedProperties/Entity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasSupressedProperties.Entity</value>
+    <comment>Description for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasSupressedProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasSupressedProperties/Entity.DisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>DisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasSupressedProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasSupressedProperties/Entity.PropertyDisplayName" xml:space="preserve">
+    <value>Supressed Properties</value>
+    <comment>PropertyDisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasSupressedProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasSupressedProperties/SupressedProperty.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasSupressedProperties.SupressedProperty</value>
+    <comment>Description for DomainRole &apos;SupressedProperty&apos; on DomainRelationship &apos;EntityHasSupressedProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasSupressedProperties/SupressedProperty.DisplayName" xml:space="preserve">
+    <value>Supressed Property</value>
+    <comment>DisplayName for DomainRole &apos;SupressedProperty&apos; on DomainRelationship &apos;EntityHasSupressedProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityHasSupressedProperties/SupressedProperty.PropertyDisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>PropertyDisplayName for DomainRole &apos;SupressedProperty&apos; on DomainRelationship &apos;EntityHasSupressedProperties&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities</value>
+    <comment>Description for DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities.DisplayName" xml:space="preserve">
+    <value>Entity References Self Target Entities</value>
+    <comment>DisplayName for DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectFieldName.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Direct Field Name</value>
+    <comment>Description for DomainProperty &apos;DirectFieldName&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectFieldName.DisplayName" xml:space="preserve">
+    <value>Direct Field Name</value>
+    <comment>DisplayName for DomainProperty &apos;DirectFieldName&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectAccessor.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Direct Accessor</value>
+    <comment>Description for DomainProperty &apos;DirectAccessor&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectAccessor.DisplayName" xml:space="preserve">
+    <value>Direct Accessor</value>
+    <comment>DisplayName for DomainProperty &apos;DirectAccessor&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectCascadeDelete.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Direct Cascade Delete</value>
+    <comment>Description for DomainProperty &apos;DirectCascadeDelete&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectCascadeDelete.DisplayName" xml:space="preserve">
+    <value>Direct Cascade Delete</value>
+    <comment>DisplayName for DomainProperty &apos;DirectCascadeDelete&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseFieldName.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Reverse Field Name</value>
+    <comment>Description for DomainProperty &apos;ReverseFieldName&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseFieldName.DisplayName" xml:space="preserve">
+    <value>Reverse Field Name</value>
+    <comment>DisplayName for DomainProperty &apos;ReverseFieldName&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseAccessor.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Reverse Accessor</value>
+    <comment>Description for DomainProperty &apos;ReverseAccessor&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseAccessor.DisplayName" xml:space="preserve">
+    <value>Reverse Accessor</value>
+    <comment>DisplayName for DomainProperty &apos;ReverseAccessor&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseCascadeDelete.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Reverse Cascade Delete</value>
+    <comment>Description for DomainProperty &apos;ReverseCascadeDelete&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseCascadeDelete.DisplayName" xml:space="preserve">
+    <value>Reverse Cascade Delete</value>
+    <comment>DisplayName for DomainProperty &apos;ReverseCascadeDelete&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/Table.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Table</value>
+    <comment>Description for DomainProperty &apos;Table&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/Table.DisplayName" xml:space="preserve">
+    <value>Table</value>
+    <comment>DisplayName for DomainProperty &apos;Table&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/UnderlyingEntity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Underlying Entity</value>
+    <comment>Description for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/UnderlyingEntity.DisplayName" xml:space="preserve">
+    <value>Underlying Entity</value>
+    <comment>DisplayName for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/Disabled.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Disabled</value>
+    <comment>Description for DomainProperty &apos;Disabled&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/Disabled.DisplayName" xml:space="preserve">
+    <value>Disabled</value>
+    <comment>DisplayName for DomainProperty &apos;Disabled&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfSourceEntity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.SelfSourceEntity</value>
+    <comment>Description for DomainRole &apos;SelfSourceEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfSourceEntity.DisplayName" xml:space="preserve">
+    <value>Self Source Entity</value>
+    <comment>DisplayName for DomainRole &apos;SelfSourceEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfSourceEntity.PropertyDisplayName" xml:space="preserve">
+    <value>Self Target Entities</value>
+    <comment>PropertyDisplayName for DomainRole &apos;SelfSourceEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfTargetEntity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.SelfTargetEntity</value>
+    <comment>Description for DomainRole &apos;SelfTargetEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfTargetEntity.DisplayName" xml:space="preserve">
+    <value>Self Target Entity</value>
+    <comment>DisplayName for DomainRole &apos;SelfTargetEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfTargetEntity.PropertyDisplayName" xml:space="preserve">
+    <value>Self Source Entities</value>
+    <comment>PropertyDisplayName for DomainRole &apos;SelfTargetEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/PK.DisplayName" xml:space="preserve">
+    <value>PK</value>
+    <comment>Display name for EnumerationLiteral &apos;PK&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/PK.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.PropertyAttribute.PK</value>
+    <comment>Description for EnumerationLiteral &apos;PK&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/ReadOnly.DisplayName" xml:space="preserve">
+    <value>ReadOnly</value>
+    <comment>Display name for EnumerationLiteral &apos;ReadOnly&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/ReadOnly.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.PropertyAttribute.ReadOnly</value>
+    <comment>Description for EnumerationLiteral &apos;ReadOnly&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/None.DisplayName" xml:space="preserve">
+    <value>None</value>
+    <comment>Display name for EnumerationLiteral &apos;None&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/None.Description" xml:space="preserve">
+    <value>none</value>
+    <comment>Description for EnumerationLiteral &apos;None&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/SyncInsert.DisplayName" xml:space="preserve">
+    <value>SyncInsert</value>
+    <comment>Display name for EnumerationLiteral &apos;SyncInsert&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/SyncInsert.Description" xml:space="preserve">
+    <value>SyncInsert</value>
+    <comment>Description for EnumerationLiteral &apos;SyncInsert&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/SyncUpdate.DisplayName" xml:space="preserve">
+    <value>SyncUpdate</value>
+    <comment>Display name for EnumerationLiteral &apos;SyncUpdate&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/SyncUpdate.Description" xml:space="preserve">
+    <value>SyncUpdate</value>
+    <comment>Description for EnumerationLiteral &apos;SyncUpdate&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/InsertDefault.DisplayName" xml:space="preserve">
+    <value>InsertDefault</value>
+    <comment>Display name for EnumerationLiteral &apos;InsertDefault&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/InsertDefault.Description" xml:space="preserve">
+    <value>InsertDefault</value>
+    <comment>Description for EnumerationLiteral &apos;InsertDefault&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/RV.DisplayName" xml:space="preserve">
+    <value>RV</value>
+    <comment>Display name for EnumerationLiteral &apos;RV&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/RV.Description" xml:space="preserve">
+    <value>RV</value>
+    <comment>Description for EnumerationLiteral &apos;RV&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/RowVersion.DisplayName" xml:space="preserve">
+    <value>RowVersion</value>
+    <comment>Display name for EnumerationLiteral &apos;RowVersion&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/RowVersion.Description" xml:space="preserve">
+    <value>RowVersion</value>
+    <comment>Description for EnumerationLiteral &apos;RowVersion&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/PrimaryKey.DisplayName" xml:space="preserve">
+    <value>PrimaryKey</value>
+    <comment>Display name for EnumerationLiteral &apos;PrimaryKey&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/PrimaryKey.Description" xml:space="preserve">
+    <value>PrimaryKey</value>
+    <comment>Description for EnumerationLiteral &apos;PrimaryKey&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/Private.DisplayName" xml:space="preserve">
+    <value>Private</value>
+    <comment>Display name for EnumerationLiteral &apos;Private&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/Private.Description" xml:space="preserve">
+    <value>Private</value>
+    <comment>Description for EnumerationLiteral &apos;Private&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/Factory.DisplayName" xml:space="preserve">
+    <value>Factory</value>
+    <comment>Display name for EnumerationLiteral &apos;Factory&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.PropertyAttribute/Factory.Description" xml:space="preserve">
+    <value>Factory</value>
+    <comment>Description for EnumerationLiteral &apos;Factory&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityShape.Description" xml:space="preserve">
+    <value>Entity</value>
+    <comment>Description for DomainClass &apos;EntityShape&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityShape.DisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>DisplayName for DomainClass &apos;EntityShape&apos;</comment>
+  </data>
+  <data name="EntityShapeTablesTitle" xml:space="preserve">
+    <value>Tables</value>
+    <comment>Compartment title</comment>
+  </data>
+  <data name="EntityShapePropertiesTitle" xml:space="preserve">
+    <value>Properties</value>
+    <comment>Compartment title</comment>
+  </data>
+  <data name="EntityShapeSupressedPropertiesTitle" xml:space="preserve">
+    <value>SupressedProperties</value>
+    <comment>Compartment title</comment>
+  </data>
+  <data name="EntityShapeNameDefaultText" xml:space="preserve">
+    <value>Name</value>
+    <comment>Text decorator default text</comment>
+  </data>
+  <data name="Worm.Designer.EntityConnector.Description" xml:space="preserve">
+    <value>Connector between entities. Represents relationships on the Diagram.</value>
+    <comment>Description for DomainClass &apos;EntityConnector&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityConnector.DisplayName" xml:space="preserve">
+    <value>Entity Connector</value>
+    <comment>DisplayName for DomainClass &apos;EntityConnector&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfConnector.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.SelfConnector</value>
+    <comment>Description for DomainClass &apos;SelfConnector&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfConnector.DisplayName" xml:space="preserve">
+    <value>Self Connector</value>
+    <comment>DisplayName for DomainClass &apos;SelfConnector&apos;</comment>
+  </data>
+  <data name="FormatList" xml:space="preserve">
+    <value>Designer (*.wxml)|*.wxml</value>
+    <comment>A list of file format specifiers for the Save dialog box</comment>
+  </data>
+  <data name="ModelExplorerTitle" xml:space="preserve">
+    <value>Designer Explorer</value>
+    <comment>Model Explorer Toolwindow title</comment>
+  </data>
+  <data name="Worm.Designer.DesignerDiagram.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.DesignerDiagram</value>
+    <comment>Description for DomainClass &apos;DesignerDiagram&apos;</comment>
+  </data>
+  <data name="Worm.Designer.DesignerDiagram.DisplayName" xml:space="preserve">
+    <value>Minimal Language Diagram</value>
+    <comment>DisplayName for DomainClass &apos;DesignerDiagram&apos;</comment>
+  </data>
+  <data name="Worm DesignerToolboxTab" xml:space="preserve">
+    <value>Worm Designer</value>
+    <comment>Toolbox item tab name</comment>
+  </data>
+  <data name="EntityClassToolboxItem" xml:space="preserve">
+    <value>Entity</value>
+    <comment>Toolbox item name</comment>
+  </data>
+  <data name="EntityClassToolboxTooltip" xml:space="preserve">
+    <value>Entity Class</value>
+    <comment>Toolbox tooltip text</comment>
+  </data>
+  <data name="RelationToolboxItem" xml:space="preserve">
+    <value>Relation</value>
+    <comment>Toolbox item name</comment>
+  </data>
+  <data name="RelationToolboxTooltip" xml:space="preserve">
+    <value>Relation</value>
+    <comment>Toolbox tooltip text</comment>
+  </data>
+  <data name="SelfRelationToolboxItem" xml:space="preserve">
+    <value>SelfRelation</value>
+    <comment>Toolbox item name</comment>
+  </data>
+  <data name="SelfRelationToolboxTooltip" xml:space="preserve">
+    <value>Self Relation</value>
+    <comment>Toolbox tooltip text</comment>
+  </data>
+  <data name="UnrecognizedElementType" xml:space="preserve">
+    <value>ElementType {0} is not recognized as a type of domain class which belongs to this domain model.</value>
+    <comment>Incorrect ElementType passed in to Model.CreateElement method</comment>
+  </data>
+  <data name="UnrecognizedElementLinkType" xml:space="preserve">
+    <value>ElementLinkType {0} is not recognized as a type of domain relationship which belongs to this domain model.</value>
+    <comment>Incorrect ElementLinkType passed in to Model.CreateElementLink method</comment>
+  </data>
+  <data name="AmbiguousSchema" xml:space="preserve">
+    <value>More than one schema found for target namespace &apos;{0}&apos;, use the first one at &apos;{1}&apos;.</value>
+    <comment>Serialization Warning: AmbiguousSchema</comment>
+  </data>
+  <data name="ExpectingFullFormRelationship" xml:space="preserve">
+    <value>Element &apos;{0}&apos; is treated as the target role-player of a relationship &apos;{1}&apos; instance, which should be serialized in full-form.</value>
+    <comment>Serialization Warning: ExpectingFullFormRelationship</comment>
+  </data>
+  <data name="ExpectingShortFormRelationship" xml:space="preserve">
+    <value>Instances of relationship &apos;{0}&apos; should be serialized in short-form.</value>
+    <comment>Serialization Warning: ExpectingShortFormRelationship</comment>
+  </data>
+  <data name="IgnoredPropertyValue" xml:space="preserve">
+    <value>Invalid property value &apos;{0}&apos; for property &apos;{1}&apos; with type &apos;{2}&apos;, ignored.</value>
+    <comment>Serialization Warning: IgnoredPropertyValue</comment>
+  </data>
+  <data name="MissingId" xml:space="preserve">
+    <value>Missing &apos;Id&apos; attribute, a new Guid &apos;{0}&apos; is auto-generated.</value>
+    <comment>Serialization Warning: MissingId</comment>
+  </data>
+  <data name="MonikerResolvedToDuplicateLink" xml:space="preserve">
+    <value>Resolving moniker &apos;{0}&apos; causes a duplicate link to be created, so the link and the moniker are ignored.</value>
+    <comment>Serialization Warning: MonikerResolvedToDuplicateLink</comment>
+  </data>
+  <data name="NoSchema" xml:space="preserve">
+    <value>Cannot find a schema that defines target namespace &apos;{0}&apos;, schema validation skipped.</value>
+    <comment>Serialization Warning: NoSchema</comment>
+  </data>
+  <data name="UnexpectedXmlElement" xml:space="preserve">
+    <value>Unexpected XML element &apos;{0}&apos;, ignored.</value>
+    <comment>Serialization Warning: UnexpectedXmlElement</comment>
+  </data>
+  <data name="AmbiguousMoniker" xml:space="preserve">
+    <value>Ambiguous moniker &apos;{0}&apos; encountered. It is used for both &apos;{1}&apos; and &apos;{2}&apos;.</value>
+    <comment>Serialization Error: AmbiguousMoniker</comment>
+  </data>
+  <data name="CannotMonikerizeElement" xml:space="preserve">
+    <value>Instances of DomainClass &apos;{0}&apos; cannot be serialized as a moniker.
+A DomainClass can be serialized as a moniker only if 
+1) it has a defined/inherited DomainProperty marked as IsMonikerKey=true, or 
+2) it is marked/inherited with SerializeId=true.</value>
+    <comment>Serialization Error: CannotMonikerizeElement</comment>
+  </data>
+  <data name="CannotOpenDocument" xml:space="preserve">
+    <value>Error encountered, check Error List window for details.</value>
+    <comment>Serialization Error: CannotOpenDocument</comment>
+  </data>
+  <data name="CannotSaveDocument" xml:space="preserve">
+    <value>Error encountered, check Error List window for details.</value>
+    <comment>Serialization Error: CannotSaveDocument</comment>
+  </data>
+  <data name="DanglingRelationship" xml:space="preserve">
+    <value>Relationship &apos;{0}&apos; instance is missing target role-player.</value>
+    <comment>Serialization Error: DanglingRelationship</comment>
+  </data>
+  <data name="InvalidPropertyValue" xml:space="preserve">
+    <value>Invalid property value &apos;{0}&apos; for property &apos;{1}&apos; with type &apos;{2}&apos;.</value>
+    <comment>Serialization Error: InvalidPropertyValue</comment>
+  </data>
+  <data name="MissingMoniker" xml:space="preserve">
+    <value>Missing moniker. A moniker is expected in attribute &apos;{0}&apos;.</value>
+    <comment>Serialization Error: MissingMoniker</comment>
+  </data>
+  <data name="MissingTransaction" xml:space="preserve">
+    <value>This must be called within the context of an active transaction.</value>
+    <comment>Serialization Error: MissingTransaction</comment>
+  </data>
+  <data name="UnresolvedMoniker" xml:space="preserve">
+    <value>Cannot resolve moniker &apos;{0}&apos;.</value>
+    <comment>Serialization Error: UnresolvedMoniker</comment>
+  </data>
+  <data name="VersionMismatch" xml:space="preserve">
+    <value>Unsupported version &apos;{0}&apos;, can only support &apos;{1}&apos;.</value>
+    <comment>Serialization Error: VersionMismatch</comment>
+  </data>
+  <data name="CannotCloseExistingDiagramDocument" xml:space="preserve">
+    <value>Diagram file &apos;{0}&apos; cannot be closed.</value>
+    <comment>User cancel closing diagram file. Hence, the DSL model file cannot be opened</comment>
+  </data>
+  <data name="MinimumMultiplicityMissingLink" xml:space="preserve">
+    <value>{0} {1} has no {2}.</value>
+    <comment>Multiplicity underflow validation.</comment>
+  </data>
+  <data name="SaveOperationCancelled" xml:space="preserve">
+    <value>Save operation cancelled.</value>
+    <comment>Message when save is cancelled on validation errors</comment>
+  </data>
+  <data name="SaveValidationFailed" xml:space="preserve">
+    <value>There were validation errors, continue save?</value>
+    <comment>Message when validation errors are found on save</comment>
+  </data>
+  <data name="UnloadableSaveValidationFailed" xml:space="preserve">
+    <value>There were validation errors. Continuing to save may cause the file to become unloadable, do you want to continue?</value>
+    <comment>Message when validation errors are found on save that will cause file to become unloadable</comment>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="EntityClassToolboxBitmap" type="System.Resources.ResXFileRef, System.Windows.Forms" xml:space="preserve">
+    <value>..\Resources\InterfaceTool.bmp;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <comment>Toolbox item image</comment>
+  </data>
+  <data name="RelationToolboxBitmap" type="System.Resources.ResXFileRef, System.Windows.Forms" xml:space="preserve">
+    <value>..\Resources\ExampleConnectorToolBitmap.bmp;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <comment>Toolbox item image</comment>
+  </data>
+  <data name="SelfRelationToolboxBitmap" type="System.Resources.ResXFileRef, System.Windows.Forms" xml:space="preserve">
+    <value>..\Resources\GeneralizationTool.bmp;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <comment>Toolbox item image</comment>
+  </data>
+</root>
+
+

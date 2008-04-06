@@ -1,0 +1,40 @@
+<#@ Dsl processor="DslDirectiveProcessor" requires="fileName='..\..\Dsl\DslDefinition.dsl'" #>
+<#@ include file="DslPackage\Package.tt" #>
+<#
+	string directiveName = "Designer";
+#>
+//
+// Package attributes which may need to change are placed on the partial class below, rather than in the main include file.
+//
+namespace <#= CodeGenerationUtilities.GetPackageNamespace(this.Dsl) #>
+{
+	using Microsoft.VisualStudio.Shell;
+    using Microsoft.VisualStudio.TextTemplating.VSHost;
+
+	/// <summary>
+	/// Double-derived class to allow easier code customization.
+	/// </summary>
+
+    [ProvideCodeGenerator(typeof(XmlTemplatedCodeGenerator), "XmlTemplatedCodeGenerator", "Xml code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.CSharpProjectGuid)]
+    [ProvideCodeGenerator(typeof(XmlTemplatedCodeGenerator), "XmlTemplatedCodeGenerator", "Xml code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.VisualBasicProjectGuid)]
+    [ProvideCodeGenerator(typeof(LanguageTemplatedCodeGenerator), "LanguageTemplatedCodeGenerator", "Language code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.CSharpProjectGuid)]
+    [ProvideCodeGenerator(typeof(LanguageTemplatedCodeGenerator), "LanguageTemplatedCodeGenerator", "Language code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.VisualBasicProjectGuid)]
+	[VSShell::ProvideMenuResource("1000.ctmenu", 4)]
+	[VSShell::ProvideToolboxItems(1)]
+	[VSTextTemplatingHost::ProvideDirectiveProcessor(typeof(global::<#= this.Dsl.Namespace #>.<#= directiveName #>DirectiveProcessor), global::<#= this.Dsl.Namespace #>.<#= directiveName #>DirectiveProcessor.<#= directiveName #>DirectiveProcessorName, "A directive processor that provides access to <#= directiveName #> files")]
+	[global::System.Runtime.InteropServices.Guid(Constants.<#= dslName #>PackageId)]
+	internal sealed partial class <#= dslName #>Package : <#= dslName #>PackageBase
+	{
+		protected override void Initialize()
+		{
+			base.Initialize();
+			
+		//	this.AddToolWindow(typeof(Worm.Designer.ToolWindow.ActiveWriterClassDetailsToolWindow));
+		}
+	}
+}
+
+
+
+
+
