@@ -154,9 +154,29 @@ namespace Tests
             linqProvider.ObjectsWithLoadWithPropertiesAccess();
         }
 
+
         [TestMethod]
         [QueryTypeAttribute(QueryType.SmallCollection)]
-        public void FFF1()  
+        public void a1()
+        {
+            for (ulong i = 0; i < 1000000; i++)
+            {
+            }
+        }
+
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void a2()
+        {
+            for (ulong i = 0; i < 1000000; i++)
+            {
+            }
+        }
+        
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void a3()
         {
             for (ulong i = 0; i < 1000000; i++)
             {
@@ -165,7 +185,7 @@ namespace Tests
 
         [TestMethod]
         [QueryTypeAttribute(QueryType.SmallCollection)]
-        public void ZZZ1()
+        public void a4()
         {
             for (ulong i = 0; i < 1000000; i++)
             {

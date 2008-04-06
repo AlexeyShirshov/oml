@@ -101,14 +101,19 @@ namespace TestConsole
             //TypeCycleWithLoadWorm();
             //Console.WriteLine(performer.Duration.ToString() + " TypeCycleWithLoadWorm");
 
-            LargeCollectionWithChildrenByIdArrayDataset();
-            Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayDataset");
+            //LargeCollectionWithChildrenByIdArrayDataset();
+            //Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayDataset");
             
-            LargeCollectionWithChildrenByIdArrayWorm();
-            Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayWorm");
+            //LargeCollectionWithChildrenByIdArrayWorm();
+            //Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayWorm");
 
-            LargeCollectionWithChildrenByIdArrayNH();
-            Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayNH");
+            //LargeCollectionWithChildrenByIdArrayNH();
+            //Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayNH");
+
+            FFF1();
+            Console.WriteLine(performer.Duration.ToString() + " FFF");
+            ZZZ1();
+            Console.WriteLine(performer.Duration.ToString() + " ZZZ");
         }
 
         private static void InitUserIds()
@@ -129,6 +134,26 @@ namespace TestConsole
                 DataRow row = ds.Tables[0].Rows[i];
                 idsArray[i] = (int)row["user_id"];
             }
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public static void FFF1()
+        {
+            performer.Start();
+            for (ulong i = 0; i < 1000000; i++)
+            {
+            }
+            performer.Stop();
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public static void ZZZ1()
+        {
+            performer.Start();
+            for (ulong i = 0; i < 1000000; i++)
+            {
+            }
+            performer.Stop();
         }
 
         public static void TypeCycleWithLoad()
