@@ -7,6 +7,7 @@ namespace DANHibernate
     {
         private int _userId;
         private int _phoneId;
+        private User _user;
         private string _phoneNumber;
 
         public Phone()
@@ -24,6 +25,12 @@ namespace DANHibernate
         {
             get{ return _userId; }
             set{ _userId = value; }
+        }
+        
+        public virtual User User
+        {
+            get { return _user; }
+            set { _user = value; }
         }
 
         public virtual int PhoneId 

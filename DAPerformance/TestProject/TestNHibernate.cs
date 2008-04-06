@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Collections;
 using System.Collections.Generic;
-
+    
 using DANHibernate;
 using Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -97,7 +97,7 @@ namespace Tests
         {
             object users = session.CreateCriteria(typeof(User)).SetMaxResults(Constants.Small).List();
         }
-
+        
         [TestMethod]
         [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
         public void SmallCollectionWithChildrenByIdArray()
@@ -129,40 +129,29 @@ namespace Tests
               .Add(Expression.In("UserId", largeUserIds)).List();
         }
 
+        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
         public void CollectionByPredicateWithoutLoad()
         {
-             for (int i = 0; i < Constants.LargeIteration; i++)
+            for (int i = 0; i < Constants.LargeIteration; i++)
             {
-                // 4 minutes!
-                // IList users = session.CreateCriteria(typeof(LazyUser))
-                // .CreateCriteria("Phones")
-                //.Add(Expression.Like("PhoneNumber", (i + 1) + "%")).List();
-
-                 IQuery q = session.CreateQuery(
-                     "select distinct u.UserId,  u.FirstName,  u.LastName from LazyUser as u " +
-                 "inner join u.Phones as p where p.PhoneNumber like '" + (i + 1) + "%'");
-                 IList users = q.List();
+                IList users1 = session.CreateCriteria(typeof(LazyUser)).
+                    CreateCriteria("Phones").
+                    Add(Expression.Like("PhoneNumber", (i + 1) + "%")).List();
             }
-            
         }
 
+        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
         public void CollectionByPredicateWithLoad()
         {
             for (int i = 0; i < Constants.LargeIteration; i++)
             {
-                // 4 minutes!
-                //IList users = session.CreateCriteria(typeof(User))
-                //   .CreateCriteria("Phones")
-                //    .Add(Expression.Like("PhoneNumber", (i + 1) + "%")).List();
-
-                IQuery q = session.CreateQuery(
-                     "select distinct u.UserId,  u.FirstName,  u.LastName from User as u " +
-                 "inner join u.Phones as p where p.PhoneNumber like '" + (i + 1) + "%'");
-                IList users = q.List();
+                IList users1 = session.CreateCriteria(typeof(User)).
+                    CreateCriteria("Phones").
+                    Add(Expression.Like("PhoneNumber", (i + 1) + "%")).List();
             }
         }
 
@@ -215,7 +204,7 @@ namespace Tests
         #region Linq syntax
 
         [TestMethod]
-        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad, Syntax.Linq)]
+        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad, Syntax.Dataset)]
         public void TypeCycleWithoutLoadLinq()
         {
             foreach (int id in mediumUserIds)

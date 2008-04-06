@@ -42,6 +42,7 @@ namespace Tests
         }
 
         #region Linq Syntax
+        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad, Syntax.Linq)]
         public void TypeCycleWithoutLoadLinq()
@@ -126,6 +127,7 @@ namespace Tests
             adoEFProvider.SameObjectInCycleLoadLinq(Constants.SmallIteration, smallUserIds[0]);
         }
 
+        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad, Syntax.Linq)]
         public void CollectionByPredicateWithoutLoadLinq()
@@ -133,15 +135,12 @@ namespace Tests
             adoEFProvider.CollectionByPredicateWithoutLoadLinq(Constants.LargeIteration);
         }
 
-
-
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad, Syntax.Linq)]
         public void CollectionByPredicateWithLoadLinq()
         {
             adoEFProvider.CollectionByPredicateWithLoadLinq(Constants.LargeIteration);
         }
-
 
         [TestMethod]
         [QueryTypeAttribute(QueryType.SelectBySamePredicate, Syntax.Linq)]
@@ -161,6 +160,7 @@ namespace Tests
 
 
         #region Default Syntax
+        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad  )]
         public void TypeCycleWithoutLoad ()
@@ -247,6 +247,7 @@ namespace Tests
             adoEFProvider.SameObjectInCycleLoad (Constants.SmallIteration, smallUserIds[0]);
         }
 
+        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
         public void CollectionByPredicateWithoutLoad ()
@@ -254,15 +255,12 @@ namespace Tests
             adoEFProvider.CollectionByPredicateWithoutLoad (Constants.LargeIteration);
         }
 
-
-
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
         public void CollectionByPredicateWithLoad()
         {
             adoEFProvider.CollectionByPredicateWithLoad (Constants.LargeIteration);
         }
-
 
         [TestMethod]
         [QueryTypeAttribute(QueryType.SelectBySamePredicate)]

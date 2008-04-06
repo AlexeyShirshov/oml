@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DALinq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Common;
+using System.Threading;
 
 namespace Tests
 {
@@ -152,5 +153,24 @@ namespace Tests
             linqProvider.LoadingEnabled = false;
             linqProvider.ObjectsWithLoadWithPropertiesAccess();
         }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void FFF1()  
+        {
+            for (ulong i = 0; i < 1000000; i++)
+            {
+            }
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void ZZZ1()
+        {
+            for (ulong i = 0; i < 1000000; i++)
+            {
+            }
+        }
+
     }
 }

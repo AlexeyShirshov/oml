@@ -27,7 +27,8 @@ namespace Common
     public enum Syntax
     {
         Default,
-        Linq
+        Linq,
+        Dataset
     }
 
     public static class TypeInfo {
@@ -59,8 +60,8 @@ namespace Common
 
     public class Constants
     {
-        public const int Small = 10;
-        public const int Medium = 100;
+        public const int Small = 500;
+        public const int Medium = 1000;
         public const int Large = 2000;
 
         public const int SmallIteration = 100;

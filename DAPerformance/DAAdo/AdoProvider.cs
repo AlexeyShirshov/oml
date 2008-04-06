@@ -15,7 +15,7 @@ namespace DAAdo
             this.conn = connection;
         }
 
-     
+        #region New
         public void TypeCycleWithLoad(int[] userIds)
         {
             foreach (int id in userIds)
@@ -34,10 +34,10 @@ namespace DAAdo
         }
 
    
-        public void SmallCollection()
+        public void Collection(int count)
         {
             SqlCommand command = new SqlCommand(
-                "select top " + Constants.Small  + "* from tbl_user", conn);
+                "select top " + count + "* from tbl_user", conn);
             SqlDataReader reader = command.ExecuteReader();
             while (reader.Read())
             {
@@ -82,19 +82,7 @@ namespace DAAdo
             reader.Close();
         }
 
-        public void LargeCollection()
-        {
-            SqlCommand command = new SqlCommand(
-               "select top " + Constants.Large + " * from tbl_user", conn);
-            SqlDataReader reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                int userId = reader.GetInt32(0);
-                string firstName = reader.GetString(1);
-                string lastName = reader.GetString(2);
-            }
-            reader.Close();
-        }
+    
 
         public void CollectionByPredicateWithLoad()
         {
@@ -164,7 +152,104 @@ namespace DAAdo
             }
             reader.Close();
         }
+        #endregion New
 
+        #region Dataset
+        public void TypeCycleWithLoadDataset(int[] userIds)
+        {
+            foreach (int id in userIds)
+            {
+                SqlCommand command = new SqlCommand(
+                    "select * from tbl_user where user_id=" + id, conn);
+
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                DataSet ds = new DataSet();  
+                adapter.Fill(ds);
+            }
+        }
+
+
+        public void CollectionDataset(int count)
+        {
+            SqlCommand command = new SqlCommand(
+                "select top " + count + "* from tbl_user", conn);
+            SqlDataAdapter adapter = new SqlDataAdapter(command);
+            DataSet ds = new DataSet();
+            adapter.Fill(ds);
+        }
+
+        public void CollectionWithChildrenByIdArrayDataset(int[] userIds)
+        {
+
+            SqlCommand command = new SqlCommand(
+              "select tbl_user.user_id, first_name, last_name, phone_id, phone_number" +
+            " from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" +
+            " where tbl_user.user_id in (" + Helper.Convert(userIds, ",") + ")", conn);
+            SqlDataAdapter adapter = new SqlDataAdapter(command);
+            DataSet ds = new DataSet();
+            adapter.Fill(ds);
+        }
+
+        public void CollectionByIdArrayDataset(int[] userIds)
+        {
+            SqlCommand command = new SqlCommand(
+              "select * from tbl_user where [user_id] in (" + Helper.Convert(userIds, ",") + ")", conn);
+            SqlDataAdapter adapter = new SqlDataAdapter(command);
+            DataSet ds = new DataSet();
+            adapter.Fill(ds);
+        }
+
+
+
+        public void CollectionByPredicateWithLoadDataset()
+        {
+            for (int i = 0; i < Constants.LargeIteration; i++)
+            {
+                SqlCommand command = new SqlCommand(
+               "select distinct tbl_user.user_id, first_name, last_name from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" +
+               " where phone_number like '" + (i + 1).ToString() + "%'", conn);
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                DataSet ds = new DataSet();
+                adapter.Fill(ds);
+            }
+        }
+
+
+
+        public void SameObjectInCycleLoadDataset(int userId)
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                SqlCommand command = new SqlCommand(
+               "select * from tbl_user where user_id=" + userId, conn);
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                DataSet ds = new DataSet();
+                adapter.Fill(ds);
+            }
+        }
+
+        public void SelectBySamePredicateDataset()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                SqlCommand command = new SqlCommand(
+            "select distinct tbl_user.user_id, first_name, last_name  from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" +
+            " where phone_number like '1%'", conn);
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                DataSet ds = new DataSet();
+                adapter.Fill(ds);
+            }
+        }
+
+        public void ObjectsWithLoadWithPropertiesAccessDataset()
+        {
+            SqlCommand command = new SqlCommand(
+            "select * from tbl_user", conn);
+            SqlDataAdapter adapter = new SqlDataAdapter(command);
+            DataSet ds = new DataSet();
+            adapter.Fill(ds);
+        }
+        #endregion Dataset
 
         #region Old
         public DataSet Select()

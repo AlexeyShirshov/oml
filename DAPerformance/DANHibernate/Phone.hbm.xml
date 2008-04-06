@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <hibernate-mapping xmlns="urn:nhibernate-mapping-2.2">
-  <class name="DANHibernate.Phone, DANHibernate" table="tbl_phone">
+  <class name="DANHibernate.Phone, DANHibernate" table="tbl_phone" lazy="true">
     <id name="PhoneId" column="phone_id" type="integer">
       <generator class="assigned" />
     </id>

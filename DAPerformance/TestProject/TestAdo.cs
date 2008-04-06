@@ -47,7 +47,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.SmallCollection)]
         public void SmallCollection()
         {
-            adoProvider.SmallCollection();
+            adoProvider.Collection(Constants.Small);
         }
 
         [TestMethod]
@@ -68,7 +68,7 @@ namespace Tests
         [QueryTypeAttribute(QueryType.LargeCollection)]
         public void LargeCollection()
         {
-            adoProvider.LargeCollection();
+            adoProvider.Collection(Constants.Large);
         }
 
         [TestMethod]
@@ -92,7 +92,7 @@ namespace Tests
         {
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
-                adoProvider.LargeCollection();
+                adoProvider.Collection(Constants.Large);
             }
         }
 
@@ -117,5 +117,96 @@ namespace Tests
             adoProvider.ObjectsWithLoadWithPropertiesAccess();
         }
 
+        #region Dataset
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.TypeCycleWithLoad, Syntax.Dataset)]
+        public void TypeCycleWithLoadDataset()
+        {
+            adoProvider.TypeCycleWithLoadDataset(mediumUserIds);
+        }
+
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray, Syntax.Dataset)]
+        public void SmallCollectionByIdArrayDataset()
+        {
+            adoProvider.CollectionByIdArrayDataset(smallUserIds);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollection, Syntax.Dataset)]
+        public void SmallCollectionDataset()
+        {
+            adoProvider.CollectionDataset(Constants.Small);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray, Syntax.Dataset)]
+        public void SmallCollectionWithChildrenByIdArrayDataset()
+        {
+            adoProvider.CollectionWithChildrenByIdArrayDataset(smallUserIds);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray, Syntax.Dataset)]
+        public void LargeCollectionByIdArrayDataset()
+        {
+            adoProvider.CollectionByIdArrayDataset(largeUserIds);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollection, Syntax.Dataset)]
+        public void LargeCollectionDataset()
+        {
+            adoProvider.CollectionDataset(Constants.Large);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray, Syntax.Dataset)]
+        public void LargeCollectionWithChildrenByIdArrayDataset()
+        {
+            adoProvider.CollectionWithChildrenByIdArrayDataset(largeUserIds);
+        }
+
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad, Syntax.Dataset)]
+        public void CollectionByPredicateWithLoadDataset()
+        {
+            adoProvider.CollectionByPredicateWithLoadDataset();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SelectLargeCollection, Syntax.Dataset)]
+        public void SelectLargeCollectionDataset()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                adoProvider.CollectionDataset(Constants.Large);
+            }
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad, Syntax.Dataset)]
+        public void SameObjectInCycleLoadDataset()
+        {
+            adoProvider.SameObjectInCycleLoadDataset(smallUserIds[0]);
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.SelectBySamePredicate, Syntax.Dataset)]
+        public void SelectBySamePredicateDataset()
+        {
+            adoProvider.SelectBySamePredicateDataset();
+        }
+
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess, Syntax.Dataset)]
+        public void ObjectsWithLoadWithPropertiesAccessDataset()
+        {
+            adoProvider.ObjectsWithLoadWithPropertiesAccessDataset();
+        }
+
+        #endregion Dataset
     }
 }
