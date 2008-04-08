@@ -29,7 +29,7 @@ Public Class TestProcs
             r1.Table3 = mgr.Find(Of Table33)(2)
             mgr.BeginTransaction()
             Try
-                r1.Save(True)
+                r1.SaveChanges(True)
 
                 l = p.GetResult(mgr)
 
@@ -60,7 +60,7 @@ Public Class TestProcs
             r1.Table1 = t2
             mgr.BeginTransaction()
             Try
-                r1.Save(True)
+                r1.SaveChanges(True)
 
                 l = p.GetResult(mgr)
 
@@ -118,7 +118,7 @@ Public Class TestProcs
             t.Name = "alex"
             mgr.BeginTransaction()
             Try
-                t.Save(True)
+                t.SaveChanges(True)
 
                 s = p.GetResult(mgr)
 

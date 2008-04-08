@@ -18,7 +18,7 @@ Public Class TestReject
             Try
                 t1.Tbl = mgr.Find(Of Table1)(1)
                 t1.Money = 10
-                t1.Save(False)
+                t1.SaveChanges(False)
                 Assert.IsFalse(mgr.IsInCache(t1))
 
                 t1.AcceptChanges()
@@ -40,7 +40,7 @@ Public Class TestReject
                 t1.Tbl = mgr.Find(Of Table1)(1)
                 t1.Money = 10
                 Assert.AreEqual(ObjectState.Created, t1.InternalProperties.ObjectState)
-                t1.Save(False)
+                t1.SaveChanges(False)
                 Assert.IsFalse(mgr.IsInCache(t1))
                 Assert.AreEqual(ObjectState.Modified, t1.InternalProperties.ObjectState)
 
@@ -65,7 +65,7 @@ Public Class TestReject
                 Assert.IsTrue(mgr.IsInCache(t1))
                 t1.Delete()
                 Assert.IsTrue(mgr.IsInCache(t1))
-                t1.Save(False)
+                t1.SaveChanges(False)
                 Assert.IsTrue(mgr.IsInCache(t1))
 
                 t1.AcceptChanges()
@@ -88,7 +88,7 @@ Public Class TestReject
                 t1.Delete()
                 Assert.IsTrue(mgr.IsInCache(t1))
                 Assert.AreEqual(ObjectState.Deleted, t1.InternalProperties.ObjectState)
-                t1.Save(False)
+                t1.SaveChanges(False)
                 Assert.IsTrue(mgr.IsInCache(t1))
                 Assert.AreEqual(ObjectState.Deleted, t1.InternalProperties.ObjectState)
 

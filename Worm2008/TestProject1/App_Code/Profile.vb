@@ -42,7 +42,7 @@ Public Class MyProfile
             Throw New NotSupportedException("Cascade delete is not supported")
         End If
         u.Delete()
-        u.Save(True)
+        u.SaveChanges(True)
     End Sub
 
     Protected Overrides Sub DeleteProfile(ByVal mgr As OrmDBManager, ByVal u As Worm.Orm.OrmBase)
@@ -79,7 +79,7 @@ Public Class MyProfile
                     u.IsAnonymous = True
                     u.UserName = name
                     u.Email = name
-                    u.Save(True)
+                    u.SaveChanges(True)
                     Return u
                 Else
                     Return Nothing

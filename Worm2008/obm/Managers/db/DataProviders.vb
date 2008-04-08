@@ -336,11 +336,11 @@ Namespace Database
             End Sub
 
             Protected Overrides Sub AppendSelect(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-                sb.Append(Schema.SelectDistinct(t, almgr, pmgr, _rel, True, _appendSecong, arr))
+                sb.Append(Schema.SelectDistinct(t, almgr, pmgr, _rel, True, _appendSecong, _mgr.GetFilterInfo, arr))
             End Sub
 
             Protected Overrides Sub AppendSelectID(ByVal sb As System.Text.StringBuilder, ByVal t As System.Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As System.Collections.Generic.IList(Of ColumnAttribute))
-                sb.Append(Schema.SelectDistinct(t, almgr, pmgr, _rel, False, _appendSecong, _mgr.GetFilterInfo))
+                sb.Append(Schema.SelectDistinct(t, almgr, pmgr, _rel, False, _appendSecong, _mgr.GetFilterInfo, Nothing))
             End Sub
 
             Protected Overrides Function AppendWhere() As IFilter

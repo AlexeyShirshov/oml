@@ -63,7 +63,34 @@ Namespace Database
                 End Property
             End Class
 
+            Public Class CannotSaveEventArgs
+                Inherits EventArgs
+
+                Private _skip As Boolean
+                Public Property Skip() As Boolean
+                    Get
+                        Return _skip
+                    End Get
+                    Set(ByVal value As Boolean)
+                        _skip = value
+                    End Set
+                End Property
+
+                Private _objs As List(Of OrmBase)
+                Public ReadOnly Property Objects() As List(Of OrmBase)
+                    Get
+                        Return _objs
+                    End Get
+                End Property
+
+                Public Sub New(ByVal objs As List(Of OrmBase))
+                    _objs = objs
+                End Sub
+
+            End Class
+
             Public Event BeginSave(ByVal count As Integer)
+            Public Event CannotSave(ByVal sender As BatchSaver, ByVal args As CannotSaveEventArgs)
             Public Event EndSave()
             Public Event ObjectSaving(ByVal sender As BatchSaver, ByVal args As CancelEventArgs)
             Public Event ObjectSaved(ByVal o As OrmBase)
@@ -177,6 +204,28 @@ Namespace Database
                 _lockList.Remove(o)
             End Sub
 
+            Protected Sub SaveObj(ByVal o As OrmBase, ByVal need2save As List(Of OrmBase), ByVal saved As List(Of Pair(Of ObjectState, OrmBase)))
+                Try
+                    Dim args As New CancelEventArgs(o)
+                    RaiseEvent ObjectSaving(Me, args)
+                    If Not args.Cancel Then
+                        Dim owr As New ObjectWrap(Of OrmBase)(o)
+                        _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
+                        Dim os As ObjectState = o.ObjectState
+                        If o.SaveChanges(False) Then
+                            _lockList(owr).Dispose()
+                            _lockList.Remove(owr)
+                            need2save.Add(o)
+                        Else
+                            saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
+                            RaiseEvent ObjectSaved(o)
+                        End If
+                    End If
+                Catch ex As Exception
+                    Throw New OrmManagerException("Error during save " & o.ObjName, ex)
+                End Try
+            End Sub
+
             Protected Sub Save()
                 Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
                 Dim [error] As Boolean = True
@@ -197,31 +246,43 @@ Namespace Database
                             ElseIf o.ObjectState = ObjectState.Modified Then
                                 copies.Add(New Pair(Of OrmBase)(o, o.CreateOriginalVersion))
                             End If
-                            Try
-                                Dim args As New CancelEventArgs(o)
-                                RaiseEvent ObjectSaving(Me, args)
-                                If Not args.Cancel Then
-                                    _lockList.Add(New ObjectWrap(Of OrmBase)(o), _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
-                                    Dim os As ObjectState = o.ObjectState
-                                    If o.Save(False) Then
-                                        need2save.Add(o)
-                                    Else
-                                        RaiseEvent ObjectSaved(o)
-                                    End If
-                                    saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
-                                End If
+                            SaveObj(o, need2save, saved)
+                            'Try
+                            '    Dim args As New CancelEventArgs(o)
+                            '    RaiseEvent ObjectSaving(Me, args)
+                            '    If Not args.Cancel Then
+                            '        _lockList.Add(New ObjectWrap(Of OrmBase)(o), _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
+                            '        Dim os As ObjectState = o.ObjectState
+                            '        If o.SaveChanges(False) Then
+                            '            need2save.Add(o)
+                            '        Else
+                            '            saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
+                            '            RaiseEvent ObjectSaved(o)
+                            '        End If
+                            '    End If
 
-                            Catch ex As Exception
-                                Throw New OrmManagerException("Error during save " & o.ObjName, ex)
-                            End Try
+                            'Catch ex As Exception
+                            '    Throw New OrmManagerException("Error during save " & o.ObjName, ex)
+                            'End Try
                         Next
 
-                        For Each o As OrmBase In need2save
-                            If o.Save(False) Then
-                                Throw New OrmManagerException(String.Format("It seems {0} has relation(s) to new objects after second save", o.ObjName))
+                        For i As Integer = 0 To 4
+                            Dim ns As New List(Of OrmBase)(need2save)
+                            need2save.Clear()
+                            For Each o As OrmBase In ns
+                                SaveObj(o, need2save, saved)
+                            Next
+                            If need2save.Count = 0 Then
+                                Exit For
                             End If
-                            RaiseEvent ObjectSaved(o)
                         Next
+                        If need2save.Count > 0 Then
+                            Dim args As New CannotSaveEventArgs(need2save)
+                            RaiseEvent CannotSave(Me, args)
+                            If Not args.Skip Then
+                                Throw New OrmManagerException(String.Format("Cannot save object graph"))
+                            End If
+                        End If
 
                         RaiseEvent EndSave()
                         [error] = False
@@ -549,6 +610,7 @@ Namespace Database
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
         Private _batchSaver As BatchSaver
+        Private Shared _tsStmt As New TraceSource("Worm.Diagnostics.DB.Stmt", SourceLevels.Information)
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
 
@@ -562,6 +624,12 @@ Namespace Database
 
             _connStr = connectionString
         End Sub
+
+        Public Shared ReadOnly Property StmtSource() As TraceSource
+            Get
+                Return _tsStmt
+            End Get
+        End Property
 
         Public Function CreateBatchSaver(ByRef createdNew As Boolean) As BatchSaver
             createdNew = False
@@ -1747,6 +1815,7 @@ l1:
                 End If
             End If
 
+            TraceStmt(cmd)
             Return r
         End Function
 
@@ -1762,6 +1831,30 @@ l1:
                     _conn.Dispose()
                     _conn = Nothing
             End Select
+        End Sub
+
+        <Conditional("TRACE")> _
+        Protected Sub TraceStmt(ByVal cmd As System.Data.Common.DbCommand)
+            If _tsStmt.Switch.ShouldTrace(TraceEventType.Information) Then
+                For Each p As System.Data.Common.DbParameter In cmd.Parameters
+                    With p
+                        Dim t As Type = GetType(DBNull)
+                        Dim val As String = "null"
+                        Dim tp As String = "nvarchar(1)"
+                        If p.Value IsNot Nothing AndAlso p.Value IsNot DBNull.Value Then
+                            t = p.Value.GetType
+                            val = p.Value.ToString
+                            If TypeOf p.Value Is String Then
+                                val = "'" & val & "'"
+                            End If
+                            tp = DbTypeConvertor.ToSqlDbType(p.DbType).ToString
+                        End If
+                        WriteInfo(_tsStmt, DbSchema.DeclareVariable(p.ParameterName, tp))
+                        WriteLineInfo(_tsStmt, ";set " & p.ParameterName & " = " & val)
+                    End With
+                Next
+                WriteLineInfo(_tsStmt, cmd.CommandText)
+            End If
         End Sub
 
         Protected Friend Overrides Function LoadObjectsInternal(Of T As {OrmBase, New})( _
@@ -2545,17 +2638,17 @@ l2:
             Return root
         End Function
 
-        Protected Friend Overrides Sub UpdateObject(ByVal obj As OrmBase)
+        Protected Friend Overrides Function UpdateObject(ByVal obj As OrmBase) As Boolean
             Throw New NotImplementedException()
-        End Sub
+        End Function
 
         'Public Overrides Function AddObject(ByVal obj As OrmBase) As OrmBase
         '    Throw New NotImplementedException()
         'End Function
 
-        Protected Overrides Sub InsertObject(ByVal obj As Orm.OrmBase)
+        Protected Overrides Function InsertObject(ByVal obj As Orm.OrmBase) As Boolean
             Throw New NotImplementedException()
-        End Sub
+        End Function
 
         Protected Friend Overrides Sub DeleteObject(ByVal obj As OrmBase)
             Throw New NotImplementedException()

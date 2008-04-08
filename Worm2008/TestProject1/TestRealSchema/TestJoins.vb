@@ -146,7 +146,7 @@ Public Class TestJoinsRS
             t2.Tbl = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()
             Try
-                t2.Save(True)
+                t2.SaveChanges(True)
                 c = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first"), Nothing, False)
                 Assert.AreEqual(3, c.Count)
             Finally
@@ -173,7 +173,7 @@ Public Class TestJoinsRS
             t2.Tbl = t1
             mgr.BeginTransaction()
             Try
-                t1.Save(True)
+                t1.SaveChanges(True)
                 c = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first"), Nothing, False)
                 Assert.AreEqual(2, c.Count)
             Finally
@@ -194,7 +194,7 @@ Public Class TestJoinsRS
             t1.Name = "sdfasdf"
             mgr.BeginTransaction()
             Try
-                t1.Save(True)
+                t1.SaveChanges(True)
                 c = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first"), Nothing, False)
                 Assert.AreEqual(0, c.Count)
             Finally

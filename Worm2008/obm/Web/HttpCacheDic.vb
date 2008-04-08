@@ -275,7 +275,7 @@ Namespace Cache
             End If
 
             Dim r As Boolean = Cache(GetKey(key)) IsNot Nothing
-            Diagnostics.Debug.Assert(r OrElse Not _keys.Contains(key))
+            System.Diagnostics.Debug.Assert(r OrElse Not _keys.Contains(key))
             Return r
         End Function
 

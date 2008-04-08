@@ -550,7 +550,7 @@ Namespace Web
                     If Not String.IsNullOrEmpty(_lastUpdateField) Then
                         schema.SetFieldValue(user, _lastUpdateField, d)
                     End If
-                    user.Save(True)
+                    user.SaveChanges(True)
                 End Try
             End Using
             System.Web.Security.AnonymousIdentificationModule.ClearAnonymousIdentifier()

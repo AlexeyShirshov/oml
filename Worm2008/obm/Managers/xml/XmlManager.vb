@@ -51,17 +51,17 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Protected Overrides Sub InsertObject(ByVal obj As Orm.OrmBase)
+        Protected Overrides Function InsertObject(ByVal obj As Orm.OrmBase) As Boolean
             Throw New NotImplementedException()
-        End Sub
+        End Function
 
         'Public Overrides Function SaveChanges(ByVal obj As Orm.OrmBase, ByVal AcceptChanges As Boolean) As Boolean
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Friend Overrides Sub UpdateObject(ByVal obj As Orm.OrmBase)
+        Protected Friend Overrides Function UpdateObject(ByVal obj As Orm.OrmBase) As Boolean
             Throw New NotImplementedException
-        End Sub
+        End Function
 
         Protected Overrides Function BuildDictionary(Of T As {New, Orm.OrmBase})(ByVal level As Integer, ByVal filter As Worm.Criteria.Core.IFilter, ByVal join As Worm.Criteria.Joins.OrmJoin) As Orm.DicIndex(Of T)
             Throw New NotImplementedException

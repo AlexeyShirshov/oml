@@ -601,7 +601,20 @@ Public MustInherit Class OrmManagerBase
             Me.FetchTime = fetchTime
             Me.CacheHit = hit
             Me.LoadedInResultset = loaded
+            If _tsExec.Switch.ShouldTrace(TraceEventType.Information) Then
+                WriteLineInfo(_tsExec, GetTraceStr)
+            End If
         End Sub
+
+        Private Function GetTraceStr() As String
+            Dim sb As New StringBuilder
+            sb.AppendLine("Resultset count: " & Me.Count)
+            sb.AppendLine("Execution time: " & Me.ExecutionTime.ToString)
+            sb.AppendLine("Fetch time: " & Me.FetchTime.ToString)
+            sb.AppendLine("Cache hit: " & Me.CacheHit)
+            sb.AppendLine("Count of loaded objects in resultset: " & Me.LoadedInResultset)
+            Return sb.ToString
+        End Function
     End Structure
 
     Public Interface ICustDelegate(Of T As {OrmBase, New})
@@ -799,6 +812,7 @@ Public MustInherit Class OrmManagerBase
     Protected Shared _LoadObjectsMI As Reflection.MethodInfo = Nothing
     Private Shared _realCreateDbObjectDic As Hashtable = Hashtable.Synchronized(New Hashtable())
     Private Shared _realLoadTypeDic As Hashtable = Hashtable.Synchronized(New Hashtable())
+    Private Shared _tsExec As New TraceSource("Worm.Diagnostics.Execution", SourceLevels.Information)
 
     Protected _findload As Boolean = False
     '#If DEBUG Then
@@ -857,6 +871,12 @@ Public MustInherit Class OrmManagerBase
     Public Event BeginDelete(ByVal o As OrmBase)
 
     Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport, ByVal contextKey As Object) As String
+
+    Public Shared ReadOnly Property ExecSource() As TraceSource
+        Get
+            Return _tsExec
+        End Get
+    End Property
 
     <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")> _
     Protected Sub New(ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
@@ -3619,7 +3639,11 @@ l1:
                         End If
                     End If
 
-                    obj.Save(Me)
+                    Dim saved As Boolean = obj.Save(Me)
+                    If Not saved Then
+                        Return True
+                    End If
+
                     obj.RaiseSaved(sa)
 
                     If sa = SaveAction.Insert Then
@@ -3704,7 +3728,9 @@ l1:
 
         Using obj.GetSyncRoot()
             If obj.ObjectState = ObjectState.Created OrElse obj.ObjectState = ObjectState.NotFoundInDB Then
-                InsertObject(obj)
+                If Not InsertObject(obj) Then
+                    Return Nothing
+                End If
             ElseIf obj.ObjectState = ObjectState.Clone Then
                 Throw New InvalidOperationException("Object with state " & obj.ObjectState.ToString & " cann't be added to cashe")
             End If
@@ -3772,9 +3798,9 @@ l1:
 
     'Protected MustOverride Overloads Sub FindObjects(ByVal t As Type, ByVal WithLoad As Boolean, ByVal arr As System.Collections.ArrayList, ByVal sort As String, ByVal sort_type As SortType)
 
-    Protected Friend MustOverride Sub UpdateObject(ByVal obj As OrmBase)
+    Protected Friend MustOverride Function UpdateObject(ByVal obj As OrmBase) As Boolean
 
-    Protected MustOverride Sub InsertObject(ByVal obj As OrmBase)
+    Protected MustOverride Function InsertObject(ByVal obj As OrmBase) As Boolean
 
     Protected Friend MustOverride Sub DeleteObject(ByVal obj As OrmBase)
 

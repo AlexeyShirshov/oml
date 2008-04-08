@@ -253,7 +253,7 @@ Namespace Database
             Return vbCrLf
         End Function
 
-        Protected Overridable Function DeclareVariable(ByVal name As String, ByVal type As String) As String
+        Protected Friend Overridable Function DeclareVariable(ByVal name As String, ByVal type As String) As String
             Return "declare " & name & " " & type
         End Function
 
@@ -377,6 +377,11 @@ Namespace Database
                                     End If
                                 Else
 l1:
+                                    If GetType(OrmBase).IsAssignableFrom(v.GetType) Then
+                                        If CType(v, OrmBase).ObjectState = ObjectState.Created Then
+                                            Throw New OrmSchemaException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(v, OrmBase).ObjName)
+                                        End If
+                                    End If
                                     f = New dc.EntityFilter(real_t, c.FieldName, New ScalarValue(v), FilterOperation.Equal)
                                 End If
 
@@ -597,6 +602,13 @@ l1:
                             Dim current As Object = pi.GetValue(obj, Nothing)
                             If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
                                 (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse obj.ForseUpdate(c) Then
+
+                                If GetType(OrmBase).IsAssignableFrom(current.GetType) Then
+                                    If CType(current, OrmBase).ObjectState = ObjectState.Created Then
+                                        Throw New OrmSchemaException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, OrmBase).ObjName)
+                                    End If
+                                End If
+
                                 Dim fieldTable As OrmTable = GetFieldTable(oschema, c.FieldName)
 
                                 If unions IsNot Nothing Then
@@ -1056,7 +1068,7 @@ l1:
         Public Overridable Function SelectDistinct(ByVal original_type As Type, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal relation As M2MRelation, _
             ByVal wideLoad As Boolean, ByVal appendSecondTable As Boolean, ByVal filterInfo As Object, _
-            Optional ByVal arr As Generic.IList(Of ColumnAttribute) = Nothing) As String
+            ByVal arr As Generic.IList(Of ColumnAttribute)) As String
 
             If original_type Is Nothing Then
                 Throw New ArgumentNullException("parameter cannot be nothing", "original_type")

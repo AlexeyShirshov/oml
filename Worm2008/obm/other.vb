@@ -1343,6 +1343,24 @@ End Namespace
 ''' <remarks></remarks>
 Public Module helper
 
+    Public Sub WriteInfo(ByVal _tsStmt As TraceSource, ByVal str As String)
+        If _tsStmt.Switch.ShouldTrace(TraceEventType.Information) Then
+            For Each l As TraceListener In _tsStmt.Listeners
+                l.Write(str)
+                If Trace.AutoFlush Then _tsStmt.Flush()
+            Next
+        End If
+    End Sub
+
+    Public Sub WriteLineInfo(ByVal _tsStmt As TraceSource, ByVal str As String)
+        If _tsStmt.Switch.ShouldTrace(TraceEventType.Information) Then
+            For Each l As TraceListener In _tsStmt.Listeners
+                l.WriteLine(str)
+                If Trace.AutoFlush Then _tsStmt.Flush()
+            Next
+        End If
+    End Sub
+
     ''' <summary>
     ''' Метод определяет нужно ли добавлять псевдоним таблицы для поля в БД
     ''' </summary>
@@ -1705,33 +1723,35 @@ Public Class PerfCounter
     End Function
 End Class
 
-Public NotInheritable Class TypeConvertor
+Public NotInheritable Class DbTypeConvertor
     ' Methods
     Shared Sub New()
         Dim dbTypeMapEntry As New DbTypeMapEntry(GetType(Boolean), DbType.Boolean, SqlDbType.Bit)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(Byte), DbType.Double, SqlDbType.TinyInt)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(Byte()), DbType.Binary, SqlDbType.Image)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(DateTime), DbType.DateTime, SqlDbType.DateTime)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(Decimal), DbType.Decimal, SqlDbType.Decimal)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(Double), DbType.Double, SqlDbType.Float)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(Guid), DbType.Guid, SqlDbType.UniqueIdentifier)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(Short), DbType.Int16, SqlDbType.SmallInt)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(Integer), DbType.Int32, SqlDbType.Int)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(Long), DbType.Int64, SqlDbType.BigInt)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(Object), DbType.Object, SqlDbType.Variant)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(String), DbType.String, SqlDbType.VarChar)
-        TypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Byte), DbType.Byte, SqlDbType.VarBinary)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
     End Sub
 
     Private Sub New()
@@ -1740,15 +1760,15 @@ Public NotInheritable Class TypeConvertor
     Private Shared Function Find(ByVal dbType As DbType) As DbTypeMapEntry
         Dim retObj As Object = Nothing
         Dim i As Integer
-        For i = 0 To TypeConvertor._DbTypeList.Count - 1
-            Dim entry As DbTypeMapEntry = DirectCast(TypeConvertor._DbTypeList.Item(i), DbTypeMapEntry)
+        For i = 0 To DbTypeConvertor._DbTypeList.Count - 1
+            Dim entry As DbTypeMapEntry = DirectCast(DbTypeConvertor._DbTypeList.Item(i), DbTypeMapEntry)
             If (entry.DbType = dbType) Then
                 retObj = entry
                 Exit For
             End If
         Next i
         If (retObj Is Nothing) Then
-            Throw New ApplicationException("Referenced an unsupported DbType")
+            Throw New ApplicationException("Referenced an unsupported DbType " & dbType.ToString)
         End If
         Return DirectCast(retObj, DbTypeMapEntry)
     End Function
@@ -1756,8 +1776,8 @@ Public NotInheritable Class TypeConvertor
     Private Shared Function Find(ByVal sqlDbType As SqlDbType) As DbTypeMapEntry
         Dim retObj As Object = Nothing
         Dim i As Integer
-        For i = 0 To TypeConvertor._DbTypeList.Count - 1
-            Dim entry As DbTypeMapEntry = DirectCast(TypeConvertor._DbTypeList.Item(i), DbTypeMapEntry)
+        For i = 0 To DbTypeConvertor._DbTypeList.Count - 1
+            Dim entry As DbTypeMapEntry = DirectCast(DbTypeConvertor._DbTypeList.Item(i), DbTypeMapEntry)
             If (entry.SqlDbType = sqlDbType) Then
                 retObj = entry
                 Exit For
@@ -1772,41 +1792,41 @@ Public NotInheritable Class TypeConvertor
     Private Shared Function Find(ByVal type As Type) As DbTypeMapEntry
         Dim retObj As Object = Nothing
         Dim i As Integer
-        For i = 0 To TypeConvertor._DbTypeList.Count - 1
-            Dim entry As DbTypeMapEntry = DirectCast(TypeConvertor._DbTypeList.Item(i), DbTypeMapEntry)
+        For i = 0 To DbTypeConvertor._DbTypeList.Count - 1
+            Dim entry As DbTypeMapEntry = DirectCast(DbTypeConvertor._DbTypeList.Item(i), DbTypeMapEntry)
             If (entry.Type Is type) Then
                 retObj = entry
                 Exit For
             End If
         Next i
         If (retObj Is Nothing) Then
-            Throw New ApplicationException("Referenced an unsupported Type")
+            Throw New ApplicationException("Referenced an unsupported Type " & type.ToString)
         End If
         Return DirectCast(retObj, DbTypeMapEntry)
     End Function
 
     Public Shared Function ToDbType(ByVal sqlDbType As SqlDbType) As DbType
-        Return TypeConvertor.Find(sqlDbType).DbType
+        Return DbTypeConvertor.Find(sqlDbType).DbType
     End Function
 
     Public Shared Function ToDbType(ByVal type As Type) As DbType
-        Return TypeConvertor.Find(type).DbType
+        Return DbTypeConvertor.Find(type).DbType
     End Function
 
     Public Shared Function ToNetType(ByVal dbType As DbType) As Type
-        Return TypeConvertor.Find(dbType).Type
+        Return DbTypeConvertor.Find(dbType).Type
     End Function
 
     Public Shared Function ToNetType(ByVal sqlDbType As SqlDbType) As Type
-        Return TypeConvertor.Find(sqlDbType).Type
+        Return DbTypeConvertor.Find(sqlDbType).Type
     End Function
 
     Public Shared Function ToSqlDbType(ByVal dbType As DbType) As SqlDbType
-        Return TypeConvertor.Find(dbType).SqlDbType
+        Return DbTypeConvertor.Find(dbType).SqlDbType
     End Function
 
     Public Shared Function ToSqlDbType(ByVal type As Type) As SqlDbType
-        Return TypeConvertor.Find(type).SqlDbType
+        Return DbTypeConvertor.Find(type).SqlDbType
     End Function
 
 
