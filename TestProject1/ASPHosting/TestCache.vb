@@ -132,7 +132,7 @@ Public Class TestCache
             Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("cnt = 0"))
             Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("created = True"))
 
-            Threading.Thread.Sleep(1000 * 60 * 2)
+            System.Threading.Thread.Sleep(1000 * 60 * 2)
 
             sw.GetStringBuilder.Length = 0
             h.ProcessRequest("ASPHosting/Web/testhttpdic.aspx", "second", sw)

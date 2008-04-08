@@ -404,7 +404,7 @@ Namespace Database.Storedprocs
 
         Public Shared Function Exec(Of T)(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal outParamName As String) As T
             Dim out As New List(Of OutParam)
-            out.Add(New OutParam(outParamName, TypeConvertor.ToDbType(GetType(T)), 1000))
+            out.Add(New OutParam(outParamName, DbTypeConvertor.ToDbType(GetType(T)), 1000))
             Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing, out)
             Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
             Return CType(dic(outParamName), T)
@@ -414,7 +414,7 @@ Namespace Database.Storedprocs
             Dim ss() As String = outParams.Split(","c)
             Dim out As New List(Of OutParam)
             For Each pn As String In ss
-                out.Add(New OutParam(pn, TypeConvertor.ToDbType(GetType(Integer)), 1000))
+                out.Add(New OutParam(pn, DbTypeConvertor.ToDbType(GetType(Integer)), 1000))
             Next
             Dim p As New NonQueryStoredProcSimple(name, Nothing, Nothing, out)
             Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
@@ -427,7 +427,7 @@ Namespace Database.Storedprocs
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
             End If
             Dim out As New List(Of OutParam)
-            out.Add(New OutParam(outParamName, TypeConvertor.ToDbType(GetType(T)), 1000))
+            out.Add(New OutParam(outParamName, DbTypeConvertor.ToDbType(GetType(T)), 1000))
             Dim p As New NonQueryStoredProcSimple(name, ss, params, out)
             Dim dic As Dictionary(Of String, Object) = CType(p.GetResult(mgr), Global.System.Collections.Generic.Dictionary(Of String, Object))
             Return CType(dic(outParamName), T)

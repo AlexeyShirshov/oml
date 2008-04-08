@@ -266,7 +266,7 @@ Module Module2
                                                 End If
                                             Else
                                                 t.Name = Guid.NewGuid.ToString
-                                                t.Save(True)
+                                                t.SaveChanges(True)
                                             End If
                                         End If
                                     End Using

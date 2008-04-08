@@ -239,7 +239,7 @@ Namespace Web
                     schema.SetFieldValue(u, crf, d)
                 End If
 
-                u.Save(True)
+                u.SaveChanges(True)
 
                 UserCreated(u)
                 status = MembershipCreateStatus.Success

@@ -19,7 +19,7 @@ Namespace Database
             MyBase.New(schema, connectionString)
         End Sub
 
-        Protected Friend Overrides Sub UpdateObject(ByVal obj As OrmBase)
+        Protected Friend Overrides Function UpdateObject(ByVal obj As OrmBase) As Boolean
             Invariant()
 
             If obj Is Nothing Then
@@ -34,7 +34,12 @@ Namespace Database
             Dim upd As IList(Of Worm.Criteria.Core.EntityFilterBase) = Nothing
             Dim inv As Boolean
             Using obj.GetSyncRoot()
-                Dim cmdtext As String = DbSchema.Update(obj, GetFilterInfo, params, cols, upd)
+                Dim cmdtext As String = Nothing
+                Try
+                    cmdtext = DbSchema.Update(obj, GetFilterInfo, params, cols, upd)
+                Catch ex As OrmSchemaException When ex.Message.Contains("Cannot save object while it has reference to new object")
+                    Return False
+                End Try
                 If cmdtext.Length > 0 Then
                     If DbSchema.SupportMultiline Then
                         Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
@@ -122,9 +127,10 @@ Namespace Database
                     'InvalidateCache(obj, CType(upd, System.Collections.ICollection))
                 End If
             End Using
-        End Sub
+            Return True
+        End Function
 
-        Protected Overrides Sub InsertObject(ByVal obj As OrmBase)
+        Protected Overrides Function InsertObject(ByVal obj As OrmBase) As Boolean
             Invariant()
 
             If obj Is Nothing Then
@@ -143,7 +149,12 @@ Namespace Database
                 Dim params As ICollection(Of System.Data.Common.DbParameter) = Nothing
                 Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
                 Using obj.GetSyncRoot()
-                    Dim cmdtext As String = DbSchema.Insert(obj, GetFilterInfo, params, cols)
+                    Dim cmdtext As String = Nothing
+                    Try
+                        cmdtext = DbSchema.Insert(obj, GetFilterInfo, params, cols)
+                    Catch ex As OrmSchemaException When ex.Message.Contains("Cannot save object while it has reference to new object")
+                        Return False
+                    End Try
                     If cmdtext.Length > 0 Then
                         Dim tran As System.Data.IDbTransaction = Transaction
                         BeginTransaction()
@@ -206,7 +217,8 @@ Namespace Database
             Finally
                 If err Then obj.IsLoaded = oldl
             End Try
-        End Sub
+            Return True
+        End Function
 
         Protected Overrides Sub M2MSave(ByVal obj As OrmBase, ByVal t As Type, ByVal direct As Boolean, ByVal el As EditableList)
             If obj Is Nothing Then

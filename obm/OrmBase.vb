@@ -881,27 +881,32 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Friend Sub Save(ByVal mc As OrmManagerBase)
+        Protected Friend Function Save(ByVal mc As OrmManagerBase) As Boolean
             CheckCash()
             If IsReadOnly Then
                 Throw New OrmObjectException(ObjName & "Object in readonly state")
             End If
 
+            Dim r As Boolean = True
             If _state = Orm.ObjectState.Modified Then
-                mc.UpdateObject(Me)
+                r = mc.UpdateObject(Me)
             ElseIf _state = Orm.ObjectState.Created OrElse _state = Orm.ObjectState.NotFoundInDB Then
                 If OriginalCopy IsNot Nothing Then
                     Throw New OrmObjectException(ObjName & "Object with identifier " & Identifier & " already exists.")
                 End If
-                mc.AddObject(Me)
-                Debug.Assert(_state = Orm.ObjectState.Modified) ' OrElse _state = Orm.ObjectState.None
-                _needAdd = True
-                'Debug.WriteLine("need add: " & Me.GetType.Name)
+                Dim o As OrmBase = mc.AddObject(Me)
+                If o Is Nothing Then
+                    r = False
+                Else
+                    Debug.Assert(_state = Orm.ObjectState.Modified) ' OrElse _state = Orm.ObjectState.None
+                    _needAdd = True
+                End If
             ElseIf _state = Orm.ObjectState.Deleted Then
                 mc.DeleteObject(Me)
                 _needDelete = True
             End If
-        End Sub
+            Return r
+        End Function
 
         Protected Friend Function GetMgr() As OrmManagerBase
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
@@ -1375,7 +1380,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public Function Save(ByVal AcceptChanges As Boolean) As Boolean
+        Public Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean
             Return GetMgr.SaveChanges(Me, AcceptChanges)
         End Function
 

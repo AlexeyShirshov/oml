@@ -257,7 +257,7 @@ Imports Worm.Orm
             mgr.BeginTransaction()
             Try
                 e.M2M.Delete(e2)
-                e.Save(True)
+                e.SaveChanges(True)
 
                 c = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)
                 Assert.AreEqual(10, c.Count)
@@ -381,7 +381,7 @@ Imports Worm.Orm
             mgr.BeginTransaction()
             Try
                 'mgr.Obj2ObjRelationSave(e, GetType(Entity4))
-                e.Save(True)
+                e.SaveChanges(True)
 
                 c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), _
                     Sorting.Field("Title").Asc, True)
@@ -447,7 +447,7 @@ Imports Worm.Orm
             mgr.BeginTransaction()
             Try
                 'mgr.Obj2ObjRelationSave(e, GetType(Entity4))
-                e.Save(True)
+                e.SaveChanges(True)
 
                 c2 = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), _
                     Sorting.Field("Title").Asc, True)
@@ -470,7 +470,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                e.Save(True)
+                e.SaveChanges(True)
                 Assert.IsNull(e.InternalProperties.OriginalCopy)
 
                 Assert.IsTrue(e.Identifier <> -100)
@@ -487,7 +487,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                e.Save(False)
+                e.SaveChanges(False)
                 Assert.IsNotNull(e.InternalProperties.OriginalCopy)
 
                 Assert.IsTrue(e.Identifier <> -100)
@@ -517,7 +517,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                e.Save(True)
+                e.SaveChanges(True)
 
                 Assert.IsTrue(e.Identifier <> -100)
             Finally
@@ -553,7 +553,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                e.Save(True)
+                e.SaveChanges(True)
 
                 Assert.IsTrue(e.Identifier <> -100)
             Finally
@@ -610,7 +610,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                e2.Save(True)
+                e2.SaveChanges(True)
 
                 'Assert.IsTrue(e.Identifier <> -100)
             Finally
@@ -626,7 +626,7 @@ Imports Worm.Orm
             e2.Delete()
             mgr.BeginTransaction()
             Try
-                e2.Save(True)
+                e2.SaveChanges(True)
 
                 e2 = mgr.Find(Of Entity4)(10)
 
@@ -648,7 +648,7 @@ Imports Worm.Orm
             Try
                 e2.M2M.Delete(GetType(Entity))
 
-                e2.Save(True)
+                e2.SaveChanges(True)
 
                 e2 = mgr.Find(Of Entity4)(10)
 
@@ -669,7 +669,7 @@ Imports Worm.Orm
             Try
                 Assert.IsTrue(mgr.IsInCache(e2))
 
-                e2.Save(True)
+                e2.SaveChanges(True)
 
                 Assert.IsFalse(mgr.IsInCache(e2))
 
@@ -696,7 +696,7 @@ Imports Worm.Orm
 
                 Assert.AreEqual(2, c2.Count)
 
-                e2.Save(True)
+                e2.SaveChanges(True)
 
                 Assert.IsFalse(mgr.IsInCache(e2))
 
@@ -725,7 +725,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                e2.Save(True)
+                e2.SaveChanges(True)
                 c = mgr.Find(Of Entity4)(Criteria.Ctor.AutoTypeField("Title").Like("2%"), Nothing, False)
 
                 Assert.AreEqual(2, c.Count)
@@ -745,7 +745,7 @@ Imports Worm.Orm
             e.Delete()
             mgr.BeginTransaction()
             Try
-                e.Save(True)
+                e.SaveChanges(True)
 
                 Assert.IsFalse(mgr.IsInCache(e))
 
@@ -867,7 +867,7 @@ Imports Worm.Orm
                 c = e.M2M.Find(Of Entity5)(Nothing, Nothing, True, False)
                 Assert.AreEqual(2, c.Count)
 
-                e2.Save(True)
+                e2.SaveChanges(True)
                 Assert.AreEqual(ObjectState.NotLoaded, e2.InternalProperties.ObjectState)
 
                 c = e.M2M.Find(Of Entity5)(Nothing, Nothing, True, False)
@@ -900,7 +900,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                e.Save(False)
+                e.SaveChanges(False)
 
                 c = e.M2M.Find(Of Entity4)(Nothing, Nothing, True)
                 Assert.AreEqual(5, c.Count)

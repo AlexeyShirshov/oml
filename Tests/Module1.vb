@@ -59,7 +59,7 @@ Module Module1
             t.CreatedAt = Now
             mgr.BeginTransaction()
             Try
-                t.Save(True)
+                t.SaveChanges(True)
             Finally
                 mgr.Rollback()
             End Try

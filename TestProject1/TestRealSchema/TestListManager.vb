@@ -25,7 +25,7 @@ Imports Worm.Orm
                 n.EnumStr = Enum1.first
                 n.CreatedAt = Now
 
-                n.Save(True)
+                n.SaveChanges(True)
 
                 c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(2, c.Count)
@@ -39,7 +39,7 @@ Imports Worm.Orm
                 n.CreatedAt = Now
                 n.Enum = CType(3, Global.System.Nullable(Of Global.TestProject1.Enum1))
 
-                n.Save(True)
+                n.SaveChanges(True)
 
                 c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(3, c.Count)
@@ -75,14 +75,14 @@ Imports Worm.Orm
                 n.CreatedAt = Now
                 n.Enum = CType(3, Global.System.Nullable(Of Global.TestProject1.Enum1))
 
-                n.Save(True)
+                n.SaveChanges(True)
 
                 c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(3, c.Count)
                 l = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Table1))
 
                 l(1).Delete()
-                l(1).Save(True)
+                l(1).SaveChanges(True)
 
                 c = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
                 Assert.AreEqual(2, c.Count)

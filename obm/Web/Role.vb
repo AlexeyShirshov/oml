@@ -148,7 +148,7 @@ Namespace Web
                                 u.M2M.Add(r)
                             End If
                         Next
-                        u.Save(True)
+                        u.SaveChanges(True)
                     End If
                 Next
             End Using
@@ -179,7 +179,7 @@ Namespace Web
                             End If
                         Next
                     End If
-                    u.Save(True)
+                    u.SaveChanges(True)
                 Next
             End Using
         End Sub

@@ -13,7 +13,7 @@ Public Class MyRoles
             Throw New NotSupportedException("Cascade delete is not supported")
         End If
         role.Delete()
-        role.Save(True)
+        role.SaveChanges(True)
     End Sub
 
     Protected Overrides Function FindRoles(ByVal mgr As OrmDBManager, ByVal f As CriteriaLink) As System.Collections.IList
@@ -31,7 +31,7 @@ Public Class MyRoles
             If createIfNotExist Then
                 Dim r As New MyRole(-100, mgr.Cache, mgr.ObjectSchema)
                 r.RoleName = name
-                r.Save(True)
+                r.SaveChanges(True)
                 Return r
             Else
                 Return Nothing

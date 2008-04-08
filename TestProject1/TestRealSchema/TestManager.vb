@@ -83,7 +83,7 @@ Public Class TestManagerRS
 
             mgr.BeginTransaction()
             Try
-                t2.Save(True)
+                t2.SaveChanges(True)
 
             Finally
                 mgr.Rollback()
@@ -129,7 +129,7 @@ Public Class TestManagerRS
 
             mgr.BeginTransaction()
             Try
-                t2.Save(True)
+                t2.SaveChanges(True)
 
                 tt = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
                 Assert.AreEqual(1, tt.Count)
@@ -152,7 +152,7 @@ Public Class TestManagerRS
 
             mgr.BeginTransaction()
             Try
-                t2.Save(True)
+                t2.SaveChanges(True)
 
                 tt = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
                 Assert.AreEqual(3, tt.Count)
@@ -175,7 +175,7 @@ Public Class TestManagerRS
 
             mgr.BeginTransaction()
             Try
-                t2.Save(True)
+                t2.SaveChanges(True)
 
                 tt = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
                 Assert.AreEqual(2, tt.Count)
@@ -205,7 +205,7 @@ Public Class TestManagerRS
             attr.Value = "hi!"
             t.Xml.DocumentElement.Attributes.Append(attr)
 
-            t.Save(True)
+            t.SaveChanges(True)
         End Using
     End Sub
 
@@ -217,7 +217,7 @@ Public Class TestManagerRS
             mgr.BeginTransaction()
 
             Try
-                t2.Save(True)
+                t2.SaveChanges(True)
             Finally
                 mgr.Rollback()
             End Try
@@ -247,7 +247,7 @@ Public Class TestManagerRS
             mgr.BeginTransaction()
 
             Try
-                t.Save(True)
+                t.SaveChanges(True)
 
                 Assert.AreNotEqual(g, t.GUID)
             Finally
@@ -265,7 +265,7 @@ Public Class TestManagerRS
             mgr.BeginTransaction()
 
             Try
-                t.Save(True)
+                t.SaveChanges(True)
 
             Finally
                 mgr.Rollback()
@@ -363,7 +363,7 @@ Public Class TestManagerRS
             r1.Table3 = t3
             mgr.BeginTransaction()
             Try
-                r1.Save(True)
+                r1.SaveChanges(True)
 
                 c = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
 
@@ -397,7 +397,7 @@ Public Class TestManagerRS
             r1.Delete()
             mgr.BeginTransaction()
             Try
-                r1.Save(True)
+                r1.SaveChanges(True)
 
                 c = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
 
@@ -432,7 +432,7 @@ Public Class TestManagerRS
             r1.Table3 = t3
             mgr.BeginTransaction()
             Try
-                r1.Save(True)
+                r1.SaveChanges(True)
 
                 Dim c2 As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(f, Nothing, WithLoad)
 
@@ -458,7 +458,7 @@ Public Class TestManagerRS
 
             mgr.BeginTransaction()
             Try
-                t1.Save(True)
+                t1.SaveChanges(True)
             Finally
                 mgr.Rollback()
             End Try
@@ -486,7 +486,7 @@ Public Class TestManagerRS
             r1.Table3 = t3
             mgr.BeginTransaction()
             Try
-                r1.Save(False)
+                r1.SaveChanges(False)
 
                 Assert.AreNotEqual(-100, r1.Identifier)
 
@@ -609,7 +609,7 @@ Public Class TestManagerRS
                 Dim tt2 As Table33 = mgr.Find(Of Table33)(1)
                 Assert.AreEqual(Of Byte)(1, tt2.Code)
                 tt2.Code = 2
-                tt2.Save(True)
+                tt2.SaveChanges(True)
 
                 c = tt1.M2M.Find(Of Table33)(New Criteria.Ctor(t).Field("Code").Eq(2), Nothing, WithLoad)
 
@@ -712,7 +712,7 @@ Public Class TestManagerRS
             mgr.BeginTransaction()
             Try
                 s1.Delete()
-                s1.Save(True)
+                s1.SaveChanges(True)
             Finally
                 mgr.Rollback()
             End Try
@@ -730,7 +730,7 @@ Public Class TestManagerRS
             Try
                 s1 = New SimpleObj2
                 s1.Title = "555"
-                s1.Save(True)
+                s1.SaveChanges(True)
             Finally
                 Assert.IsTrue(s1.Identifier > 0)
                 Assert.AreEqual("555", s1.Title)
@@ -783,7 +783,7 @@ Public Class TestManagerRS
             e.Delete()
             mgr.BeginTransaction()
             Try
-                e.Save(True)
+                e.SaveChanges(True)
 
                 Assert.IsFalse(mgr.IsInCache(e))
 
@@ -808,7 +808,7 @@ Public Class TestManagerRS
 
             mgr.BeginTransaction()
             Try
-                e.Save(True)
+                e.SaveChanges(True)
             Finally
                 mgr.Rollback()
             End Try
@@ -823,7 +823,7 @@ Public Class TestManagerRS
             e.Message2 = "dionsd"
             mgr.BeginTransaction()
             Try
-                e.Save(True)
+                e.SaveChanges(True)
             Finally
                 mgr.Rollback()
             End Try
@@ -863,7 +863,7 @@ Public Class TestManagerRS
                 Assert.AreEqual(1D, t.Money)
 
                 t.Money = 2
-                t.Save(True)
+                t.SaveChanges(True)
 
                 c = mgr.Find(Of Table2)(Criteria.Ctor.AutoTypeField("Money").Eq(1), Nothing, False)
                 c2 = mgr.Find(Of Table2)(Criteria.Ctor.AutoTypeField("Money").Eq(2), Nothing, False)
@@ -993,7 +993,7 @@ Public Class TestManagerRS
                 Dim t2 As New Table2(1934, mgr.Cache, mgr.DbSchema)
                 t2.Tbl = mgr.Find(Of Table1)(1)
                 t2.Money = 2
-                t2.Save(True)
+                t2.SaveChanges(True)
 
                 t = mgr.Find(Of Table2)(Criteria.Ctor.AutoTypeField("Money").In( _
                     GetType(Table1), "Code"), Nothing, False)
@@ -1039,7 +1039,7 @@ Public Class TestManagerRS
             Try
                 Dim t2 As New Table2(1934, mgr.Cache, mgr.DbSchema)
                 t2.Tbl = mgr.Find(Of Table1)(1)
-                t2.Save(True)
+                t2.SaveChanges(True)
 
                 t = mgr.Find(Of Table2)(Criteria.Ctor.AutoTypeField("Table1").NotExists( _
                     GetType(Table1), f), Nothing, False)
@@ -1064,7 +1064,7 @@ Public Class TestManagerRS
             mgr.BeginTransaction()
             Try
                 GetList(c)(0).Code = 100
-                GetList(c)(0).Save(True)
+                GetList(c)(0).SaveChanges(True)
 
                 c = mgr.Find(Of Table1)(Criteria.Ctor.AutoTypeField("Code").Between(2, 45), Sorting.Field("Code"), False)
 
@@ -1073,7 +1073,7 @@ Public Class TestManagerRS
                 Dim t As New Table1(GetIdentity, mgr.Cache, mgr.ObjectSchema)
                 t.Code = 30
                 t.CreatedAt = Now
-                t.Save(True)
+                t.SaveChanges(True)
 
                 c = mgr.Find(Of Table1)(Criteria.Ctor.AutoTypeField("Code").Between(2, 45), Sorting.Field("Code"), False)
 
@@ -1102,6 +1102,59 @@ Public Class TestManagerRS
                 CustomAnd("power({0},2)", New Pair(Of Object, String)(GetType(Table1), "Code")).GreaterThan(1000), Nothing, True)
 
             Assert.AreEqual(1, c.Count)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSaveNew()
+        'OrmReadOnlyDBManager.StmtSource.Listeners.Add(New Diagnostics.DefaultTraceListener)
+        OrmReadOnlyDBManager.StmtSource.Listeners(0).TraceOutputOptions = TraceOptions.None
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim t1 As Table1 = New Table1(-345, mgr.Cache, mgr.ObjectSchema)
+            Dim t2 As Table2 = mgr.Find(Of Table2)(1)
+            t2.Tbl = t1
+
+            Assert.AreEqual(ObjectState.Modified, t2.InternalProperties.ObjectState)
+            mgr.BeginTransaction()
+            Try
+                Dim b As Boolean = t2.SaveChanges(True)
+                Assert.AreEqual(ObjectState.Modified, t2.InternalProperties.ObjectState)
+                Assert.IsTrue(b)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSaveNewSmart()
+        'OrmReadOnlyDBManager.StmtSource.Listeners.Add(New Diagnostics.DefaultTraceListener)
+        OrmReadOnlyDBManager.StmtSource.Listeners(0).TraceOutputOptions = TraceOptions.None
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim t1 As Table1 = New Table1(-345, mgr.Cache, mgr.ObjectSchema)
+            t1.CreatedAt = Now
+            Dim t2 As Table2 = mgr.Find(Of Table2)(1)
+            t2.Tbl = t1
+
+            Assert.AreEqual(ObjectState.Modified, t2.InternalProperties.ObjectState)
+            mgr.BeginTransaction()
+            Try
+                Dim b As Boolean = t2.SaveChanges(True)
+                Assert.AreEqual(ObjectState.Created, t1.InternalProperties.ObjectState)
+                Assert.AreEqual(ObjectState.Modified, t2.InternalProperties.ObjectState)
+                Assert.IsTrue(b)
+
+                Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                    st.Add(t2)
+                    st.Add(t1)
+                    st.Commit()
+                End Using
+
+                Assert.AreEqual(ObjectState.None, t2.InternalProperties.ObjectState)
+                Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
+            Finally
+                mgr.Rollback()
+            End Try
         End Using
     End Sub
 
