@@ -15,10 +15,8 @@ namespace <#= CodeGenerationUtilities.GetPackageNamespace(this.Dsl) #>
 	/// Double-derived class to allow easier code customization.
 	/// </summary>
 
-    [ProvideCodeGenerator(typeof(XmlTemplatedCodeGenerator), "XmlTemplatedCodeGenerator", "Xml code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.CSharpProjectGuid)]
-    [ProvideCodeGenerator(typeof(XmlTemplatedCodeGenerator), "XmlTemplatedCodeGenerator", "Xml code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.VisualBasicProjectGuid)]
-    [ProvideCodeGenerator(typeof(LanguageTemplatedCodeGenerator), "LanguageTemplatedCodeGenerator", "Language code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.CSharpProjectGuid)]
-    [ProvideCodeGenerator(typeof(LanguageTemplatedCodeGenerator), "LanguageTemplatedCodeGenerator", "Language code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.VisualBasicProjectGuid)]
+    [ProvideCodeGenerator(typeof(WormCodeGenerator), "WormCodeGenerator", "Code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.CSharpProjectGuid)]
+    [ProvideCodeGenerator(typeof(WormCodeGenerator), "WormCodeGenerator", "Code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.VisualBasicProjectGuid)]
 	[VSShell::ProvideMenuResource("1000.ctmenu", 4)]
 	[VSShell::ProvideToolboxItems(1)]
 	[VSTextTemplatingHost::ProvideDirectiveProcessor(typeof(global::<#= this.Dsl.Namespace #>.<#= directiveName #>DirectiveProcessor), global::<#= this.Dsl.Namespace #>.<#= directiveName #>DirectiveProcessor.<#= directiveName #>DirectiveProcessorName, "A directive processor that provides access to <#= directiveName #> files")]

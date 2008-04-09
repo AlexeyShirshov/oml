@@ -123,7 +123,7 @@ namespace Worm.Designer
 		protected override void InitializeInstanceResources()
 		{
 			base.InitializeInstanceResources();
-			this.SetDecorators(DslDiagrams::LinkDecorator.DecoratorFilledDiamond, DslDiagrams::LinkDecorator.DecoratorFilledArrow, false);
+			this.SetDecorators(DslDiagrams::LinkDecorator.DecoratorFilledArrow, DslDiagrams::LinkDecorator.DecoratorFilledArrow, false);
 		}
 		
 		#endregion

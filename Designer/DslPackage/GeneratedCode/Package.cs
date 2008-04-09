@@ -91,10 +91,8 @@ namespace Worm.Designer
 	/// Double-derived class to allow easier code customization.
 	/// </summary>
 
-    [ProvideCodeGenerator(typeof(XmlTemplatedCodeGenerator), "XmlTemplatedCodeGenerator", "Xml code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.CSharpProjectGuid)]
-    [ProvideCodeGenerator(typeof(XmlTemplatedCodeGenerator), "XmlTemplatedCodeGenerator", "Xml code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.VisualBasicProjectGuid)]
-    [ProvideCodeGenerator(typeof(LanguageTemplatedCodeGenerator), "LanguageTemplatedCodeGenerator", "Language code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.CSharpProjectGuid)]
-    [ProvideCodeGenerator(typeof(LanguageTemplatedCodeGenerator), "LanguageTemplatedCodeGenerator", "Language code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.VisualBasicProjectGuid)]
+    [ProvideCodeGenerator(typeof(WormCodeGenerator), "WormCodeGenerator", "Code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.CSharpProjectGuid)]
+    [ProvideCodeGenerator(typeof(WormCodeGenerator), "WormCodeGenerator", "Code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.VisualBasicProjectGuid)]
 	[VSShell::ProvideMenuResource("1000.ctmenu", 4)]
 	[VSShell::ProvideToolboxItems(1)]
 	[VSTextTemplatingHost::ProvideDirectiveProcessor(typeof(global::Worm.Designer.DesignerDirectiveProcessor), global::Worm.Designer.DesignerDirectiveProcessor.DesignerDirectiveProcessorName, "A directive processor that provides access to Designer files")]

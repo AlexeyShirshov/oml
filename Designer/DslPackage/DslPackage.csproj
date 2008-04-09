@@ -95,8 +95,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="LanguageTemplatedCodeGenerator.cs" />
-    <Compile Include="XmlTemplatedCodeGenerator.cs" />
+    <Compile Include="DesignerEditorFactory.cs" />
+    <Compile Include="WormCodeGenerator.cs" />
     <Compile Include="GeneratedCode\CommandSet.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -227,9 +227,7 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>VisualBasic.vstemplate</LastGenOutput>
     </None>
-    <None Include="Resources\CodeGeneratorTemplate.tt">
-    </None>
-    <None Include="Resources\XmlGeneratorTemplate.tt">
+    <None Include="Resources\WormGeneratorTemplate.tt">
     </None>
   </ItemGroup>
   <PropertyGroup>

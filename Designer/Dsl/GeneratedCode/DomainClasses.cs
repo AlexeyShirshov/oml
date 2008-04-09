@@ -61,7 +61,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of DefaultNamespace domain property.
-		/// Description for Worm.Designer.WormModel.Default Namespace
+		/// Default namespace used in case entity has no any namespace specified
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/DefaultNamespace.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/DefaultNamespace.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -144,14 +144,15 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for SchemaVersion
 		/// </summary>
-		private global::System.String schemaVersionPropertyStorage = string.Empty;
+		private global::System.String schemaVersionPropertyStorage = "1";
 		
 		/// <summary>
 		/// Gets or sets the value of SchemaVersion domain property.
-		/// Description for Worm.Designer.WormModel.Schema Version
+		/// Schema Version
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/SchemaVersion.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/SchemaVersion.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("1")]
 		[DslModeling::DomainObjectId("bd1e5b90-b0b3-4647-a044-f4f459241872")]
 		public global::System.String SchemaVersion
 		{

@@ -141,7 +141,7 @@ namespace Worm.Designer
 			classStyleSet.OverridePen(DslDiagrams::DiagramPens.ShapeOutline, outlinePen);
 			// Fill brush settings for this shape.
 			DslDiagrams::BrushSettings backgroundBrush = new DslDiagrams::BrushSettings();
-			backgroundBrush.Color = global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.LightSteelBlue);
+			backgroundBrush.Color = global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.PaleGreen);
 			classStyleSet.OverrideBrush(DslDiagrams::DiagramBrushes.ShapeBackground, backgroundBrush);
 		
 		}
@@ -309,7 +309,7 @@ namespace Worm.Designer
 				{
 					string title = global::Worm.Designer.DesignerDomainModel.SingletonResourceManager.GetString("EntityShapeTablesTitle");
 					DslDiagrams::ElementListCompartmentDescription descriptor = new DslDiagrams::ElementListCompartmentDescription("Tables", title, 
-						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.Lavender), false, 
+						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.Honeydew), false, 
 						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.White), false,
 						null, null,
 						false);
@@ -318,7 +318,7 @@ namespace Worm.Designer
 				{
 					string title = global::Worm.Designer.DesignerDomainModel.SingletonResourceManager.GetString("EntityShapePropertiesTitle");
 					DslDiagrams::ElementListCompartmentDescription descriptor = new DslDiagrams::ElementListCompartmentDescription("Properties", title, 
-						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.Lavender), false, 
+						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.Honeydew), false, 
 						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.White), false,
 						null, null,
 						false);
@@ -327,7 +327,7 @@ namespace Worm.Designer
 				{
 					string title = global::Worm.Designer.DesignerDomainModel.SingletonResourceManager.GetString("EntityShapeSupressedPropertiesTitle");
 					DslDiagrams::ElementListCompartmentDescription descriptor = new DslDiagrams::ElementListCompartmentDescription("SupressedProperties", title, 
-						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.LightGray), false, 
+						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.Honeydew), false, 
 						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.White), false,
 						null, null,
 						false);

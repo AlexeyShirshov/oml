@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+using EnvDTE;
+using DslModeling = global::Microsoft.VisualStudio.Modeling;
 namespace Worm.Designer
 {
     public partial class Table
@@ -28,4 +29,6 @@ namespace Worm.Designer
         }
     }
 
+   
+  
 }

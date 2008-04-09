@@ -134,7 +134,7 @@
     <comment>DisplayName for DomainClass &apos;WormModel&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModel/DefaultNamespace.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.WormModel.Default Namespace</value>
+    <value>Default namespace used in case entity has no any namespace specified</value>
     <comment>Description for DomainProperty &apos;DefaultNamespace&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModel/DefaultNamespace.DisplayName" xml:space="preserve">
@@ -142,7 +142,7 @@
     <comment>DisplayName for DomainProperty &apos;DefaultNamespace&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModel/SchemaVersion.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.WormModel.Schema Version</value>
+    <value>Schema Version</value>
     <comment>Description for DomainProperty &apos;SchemaVersion&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModel/SchemaVersion.DisplayName" xml:space="preserve">

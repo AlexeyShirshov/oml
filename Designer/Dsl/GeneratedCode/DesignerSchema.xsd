@@ -43,9 +43,17 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: DefaultNamespace -->
-    <xsd:attribute name="defaultNamespace" type="xsd:string" />
+    <xsd:attribute name="defaultNamespace" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Default namespace used in case entity has no any namespace specified</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: SchemaVersion -->
-    <xsd:attribute name="schemaVersion" type="xsd:string" />
+    <xsd:attribute name="schemaVersion" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Schema Version</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
   
   <!-- WormModel Moniker -->

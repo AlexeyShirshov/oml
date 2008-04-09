@@ -677,8 +677,10 @@ namespace Worm.Designer
 				global::System.String propValue = instanceOfWormModel.SchemaVersion;
 				if (!serializationContext.Result.Failed)
 				{
-					if (!string.IsNullOrEmpty(propValue))
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "1") != 0))
+					{	// No need to write the value out if it's the same as default value.
 						writer.WriteAttributeString("schemaVersion", propValue);
+					}
 				}
 			}
 		}

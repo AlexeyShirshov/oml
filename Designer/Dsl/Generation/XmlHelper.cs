@@ -31,17 +31,9 @@ namespace Worm.Designer
 
         #region Private Variables
                  
-        private object _model;
-        private string _namespace;
-        private string _defaultNamespace;
-
+        
         private Hashtable _propertyBag = null;
-        private DTE _dte = null;
-
-        private string _modelFileName = null;
-        private string _modelFilePath = null;
-        private ProjectItem _projectItem = null;
-        private string _assemblyName = null;
+       
         
         #endregion
 

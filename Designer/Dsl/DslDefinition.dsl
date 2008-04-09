@@ -3,12 +3,12 @@
   <Classes>
     <DomainClass Id="2d55930a-31b5-4bd4-9a68-1bdec0d265fe" Description="The root in which all other elements are embedded. Appears as a diagram." Name="WormModel" DisplayName="Worm Model" Namespace="Worm.Designer">
       <Properties>
-        <DomainProperty Id="ef57328f-fa14-4ae6-b1b5-66eefd00ff48" Description="Description for Worm.Designer.WormModel.Default Namespace" Name="DefaultNamespace" DisplayName="Default Namespace">
+        <DomainProperty Id="ef57328f-fa14-4ae6-b1b5-66eefd00ff48" Description="Default namespace used in case entity has no any namespace specified" Name="DefaultNamespace" DisplayName="Default Namespace">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="bd1e5b90-b0b3-4647-a044-f4f459241872" Description="Description for Worm.Designer.WormModel.Schema Version" Name="SchemaVersion" DisplayName="Schema Version">
+        <DomainProperty Id="bd1e5b90-b0b3-4647-a044-f4f459241872" Description="Schema Version" Name="SchemaVersion" DisplayName="Schema Version" DefaultValue="1">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
@@ -460,20 +460,20 @@
     </DomainEnumeration>
   </Types>
   <Shapes>
-    <CompartmentShape Id="1ac7c68e-23be-47ec-a6fe-2ece8f63e49c" Description="Entity" Name="EntityShape" DisplayName="Entity" Namespace="Worm.Designer" FixedTooltipText="Entity Shape" FillColor="LightSteelBlue" InitialHeight="0.5" OutlineThickness="0.01125" HasDefaultConnectionPoints="true" Geometry="RoundedRectangle">
+    <CompartmentShape Id="1ac7c68e-23be-47ec-a6fe-2ece8f63e49c" Description="Entity" Name="EntityShape" DisplayName="Entity" Namespace="Worm.Designer" FixedTooltipText="Entity Shape" FillColor="PaleGreen" InitialHeight="0.5" OutlineThickness="0.01125" HasDefaultConnectionPoints="true" Geometry="RoundedRectangle">
       <ShapeHasDecorators Position="InnerTopCenter" HorizontalOffset="0" VerticalOffset="0">
         <TextDecorator Name="Name" DisplayName="Name" DefaultText="Name" />
       </ShapeHasDecorators>
       <ShapeHasDecorators Position="InnerTopRight" HorizontalOffset="0" VerticalOffset="0">
         <ExpandCollapseDecorator Name="ExpandCollapseDecorator1" DisplayName="Expand Collapse Decorator1" />
       </ShapeHasDecorators>
-      <Compartment TitleFillColor="Lavender" Name="Tables" Title="Tables" />
-      <Compartment TitleFillColor="Lavender" Name="Properties" Title="Properties" />
-      <Compartment Name="SupressedProperties" Title="SupressedProperties" />
+      <Compartment TitleFillColor="Honeydew" Name="Tables" Title="Tables" />
+      <Compartment TitleFillColor="Honeydew" Name="Properties" Title="Properties" />
+      <Compartment TitleFillColor="Honeydew" Name="SupressedProperties" Title="SupressedProperties" />
     </CompartmentShape>
   </Shapes>
   <Connectors>
-    <Connector Id="225befbc-d957-4e89-b5c2-443a14fd2215" Description="Connector between entities. Represents relationships on the Diagram." Name="EntityConnector" DisplayName="Entity Connector" Namespace="Worm.Designer" FixedTooltipText="Entity connector" Color="255, 192, 128" SourceEndStyle="FilledDiamond" TargetEndStyle="FilledArrow" Thickness="0.01" />
+    <Connector Id="225befbc-d957-4e89-b5c2-443a14fd2215" Description="Connector between entities. Represents relationships on the Diagram." Name="EntityConnector" DisplayName="Entity Connector" Namespace="Worm.Designer" FixedTooltipText="Entity connector" Color="255, 192, 128" SourceEndStyle="FilledArrow" TargetEndStyle="FilledArrow" Thickness="0.01" />
     <Connector Id="e46a7dfd-29de-4667-9442-0b46cb32615b" Description="Description for Worm.Designer.SelfConnector" Name="SelfConnector" DisplayName="Self Connector" Namespace="Worm.Designer" FixedTooltipText="SelfConnector" />
   </Connectors>
   <XmlSerializationBehavior Name="DesignerSerializationBehavior" Namespace="Worm.Designer">
