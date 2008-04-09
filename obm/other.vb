@@ -1752,6 +1752,8 @@ Public NotInheritable Class DbTypeConvertor
         DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
         dbTypeMapEntry = New DbTypeMapEntry(GetType(Byte), DbType.Byte, SqlDbType.VarBinary)
         DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
+        dbTypeMapEntry = New DbTypeMapEntry(GetType(Single), DbType.Single, SqlDbType.Real)
+        DbTypeConvertor._DbTypeList.Add(dbTypeMapEntry)
     End Sub
 
     Private Sub New()
