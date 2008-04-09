@@ -191,8 +191,8 @@ Namespace Database.Storedprocs
             Dim dic As IDictionary = OrmReadOnlyDBManager._GetDic(c, key)
             If dic IsNot Nothing Then
                 If r = ValidateResult.ResetAll Then
-                    For Each kv As KeyValuePair(Of String, Boolean) In dic
-                        _reseted(kv.Key) = True
+                    For Each kv As DictionaryEntry In dic
+                        _reseted(CStr(kv.Key)) = True
                     Next
                     dic.Clear()
                 Else
