@@ -16,7 +16,8 @@ namespace Tests
     public abstract class TestBase
     {
         static DSTestTime dsTestTime = new DSTestTime();
-        static HiPerfTimer performer = new HiPerfTimer();
+        static Timer performer = new Timer();
+        //static HiPerfTimer performer = new HiPerfTimer();
         protected static TestContext context;
         protected static Type classType;
         protected static int[] smallUserIds = new int[Constants.Small];
@@ -61,20 +62,36 @@ namespace Tests
             performer.Start();
         }
 
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.EmptyTest)]
+        public void a()
+        {
+        }
+
         [TestCleanup]
         public virtual void TestCleanup()
         {
             performer.Stop();
-            QueryTypeAttribute attribute = Assembly.GetExecutingAssembly().GetType(classType.ToString())
-                .GetMethod(context.TestName).GetCustomAttributes(typeof(Common.QueryTypeAttribute), false)[0] as QueryTypeAttribute;
+            Type type = Assembly.GetExecutingAssembly().GetType(classType.ToString());
+            MethodInfo info = type.GetMethod(context.TestName);
+            object[] attributesCollection = info.GetCustomAttributes(typeof(Common.QueryTypeAttribute), false);
+            if (attributesCollection.Length != 1)
+            {
+                throw new Exception("Method with 'UnitTest' attribute must have 'QueryTypeAttribute'");
+            }
 
-            QueryType queryType = attribute.QueryType;
-            string typeInfo = TypeInfo.Types[queryType];
+            QueryTypeAttribute attribute = attributesCollection[0] as QueryTypeAttribute;
 
-            string syntaxType = attribute.SyntaxType.ToString();
-            dsTestTime.Time.AddTimeRow(classType.Name, queryType.ToString(), context.TestName, performer.Duration, typeInfo, syntaxType);
+            if (attribute.QueryType != QueryType.EmptyTest)
+            {
+                QueryType queryType = attribute.QueryType;
+                string typeInfo = TypeInfo.Types[queryType];
+
+                string syntaxType = attribute.SyntaxType.ToString();
+                dsTestTime.Time.AddTimeRow(classType.Name, queryType.ToString(), context.TestName, performer.Duration.Ticks, typeInfo, syntaxType);
+            }
         }
-        
+
         [AssemblyCleanup]
         public static void Clean()
         {
@@ -87,6 +104,17 @@ namespace Tests
     [TestClass]
     public class Fake : TestBase
     {
+        public TestContext TestContext
+        {
+            get { return context; }
+            set { context = value; }
+        }
+
+        static Fake()
+        {
+            TestBase.classType = typeof(Fake);
+        }
+
         [AssemblyCleanup()]
         public static void AssemblyCleanup()
         {

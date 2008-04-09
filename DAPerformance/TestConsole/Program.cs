@@ -110,9 +110,11 @@ namespace TestConsole
             //LargeCollectionWithChildrenByIdArrayNH();
             //Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayNH");
 
-            FFF1();
-            Console.WriteLine(performer.Duration.ToString() + " FFF");
-            ZZZ1();
+           /// FFF1();
+           // Console.WriteLine(performer.Duration.ToString() + " FFF");
+           // ZZZ1();
+           // Console.WriteLine(performer.Duration.ToString() + " ZZZ");
+            LargeCollectionDataset();
             Console.WriteLine(performer.Duration.ToString() + " ZZZ");
         }
 
@@ -153,6 +155,13 @@ namespace TestConsole
             for (ulong i = 0; i < 1000000; i++)
             {
             }
+            performer.Stop();
+        }
+
+        public static void LargeCollectionDataset()
+        {
+            performer.Start();
+            adoProvider.CollectionDataset(Constants.Large);
             performer.Stop();
         }
 

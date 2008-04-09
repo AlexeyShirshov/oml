@@ -155,42 +155,42 @@ namespace Tests
         }
 
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollection)]
-        public void a1()
-        {
-            for (ulong i = 0; i < 1000000; i++)
-            {
-            }
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.SmallCollection)]
+        //public void a1()
+        //{
+        //    for (ulong i = 0; i < 1; i++)
+        //    {
+        //    }
+        //}
 
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollection)]
-        public void a2()
-        {
-            for (ulong i = 0; i < 1000000; i++)
-            {
-            }
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.SmallCollection)]
+        //public void a2()
+        //{
+        //    for (ulong i = 0; i < 1000000; i++)
+        //    {
+        //    }
+        //}
         
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollection)]
-        public void a3()
-        {
-            for (ulong i = 0; i < 1000000; i++)
-            {
-            }
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.SmallCollection)]
+        //public void a3()
+        //{
+        //    for (ulong i = 0; i < 1000000; i++)
+        //    {
+        //    }
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollection)]
-        public void a4()
-        {
-            for (ulong i = 0; i < 1000000; i++)
-            {
-            }
-        }
+        //[Priority(0), TestMethod]
+        //[QueryTypeAttribute(QueryType.SmallCollection)]
+        //public void a4()
+        //{
+        //    for (ulong i = 0; i < 1000000; i++)
+        //    {
+        //    }
+        //}
 
     }
 }

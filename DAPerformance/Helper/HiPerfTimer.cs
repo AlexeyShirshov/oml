@@ -48,4 +48,28 @@ namespace Tests
             }
         }
     }
+
+    public class Timer
+    {
+        private DateTime startTime, stopTime;
+        public static bool run = true;
+
+        public void Start()
+        {
+            startTime = DateTime.Now;
+        }
+
+        public void Stop()
+        {
+            stopTime = DateTime.Now;
+        }
+
+        public TimeSpan Duration
+        {
+            get
+            {
+                return (stopTime - startTime);
+            }
+        }
+    }
 }

@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<OrderedTest name="OrderedTest1" storage="d:\depot_tfs\daperformance\testproject\orderedtest1.orderedtest" id="f72ec045-c1c0-426c-8b1d-d28d7ba0321d" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2006">
+  <Css projectStructure="" iteration="" />
+  <Execution timeOut="2147483647" />
+  <Owners>
+    <Owner name="" />
+  </Owners>
+  <TestLinks>
+    <TestLink id="90d1b5ea-1d8c-3a3a-76e7-8d41fa45ce6e" name="a" storage="bin\debug\testproject.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="39045d15-6451-0bfe-7056-ab63fb67ac80" name="a" storage="bin\debug\testproject.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="2f4c9eac-4e43-59f3-6f89-debe3b2246ff" name="CollectionByPredicateWithLoad" storage="bin\debug\testproject.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="877ad746-bbb6-3bf7-4063-b54276eb8cc7" name="CollectionByPredicateWithLoadDataset" storage="bin\debug\testproject.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="0db96eb7-2be0-6107-a700-7e29e7e5e30b" name="LargeCollection" storage="bin\debug\testproject.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="e1489f60-f455-68f4-5608-6fe9cb7e4d3f" name="LargeCollectionByIdArray" storage="bin\debug\testproject.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="0abc50ef-6877-ea03-80c9-03456a02393b" name="LargeCollectionByIdArrayDataset" storage="bin\debug\testproject.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="2798e58c-4301-9324-7c60-24a73f0c7742" name="LargeCollectionDataset" storage="bin\debug\testproject.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="f8ea274a-036f-1e53-70c1-faf49dff4ea8" name="LargeCollectionWithChildrenByIdArray" storage="bin\debug\testproject.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+    <TestLink id="58ce4f65-4d69-4587-ed25-b3386c0f3025" name="LargeCollectionWithChildrenByIdArrayDataset" storage="bin\debug\testproject.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+  </TestLinks>
+</OrderedTest>
