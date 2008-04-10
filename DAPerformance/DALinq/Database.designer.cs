@@ -244,9 +244,9 @@ namespace DALinq
 		
 		private int _user_id;
 		
-		private string _first_name;
+		private System.Data.Linq.Link<string> _first_name;
 		
-		private string _last_name;
+		private System.Data.Linq.Link<string> _last_name;
 		
 		private EntitySet<tbl_phone> _tbl_phones;
 		
@@ -293,15 +293,15 @@ namespace DALinq
 		{
 			get
 			{
-				return this._first_name;
+				return this._first_name.Value;
 			}
 			set
 			{
-				if ((this._first_name != value))
+				if ((this._first_name.Value != value))
 				{
 					this.Onfirst_nameChanging(value);
 					this.SendPropertyChanging();
-					this._first_name = value;
+					this._first_name.Value = value;
 					this.SendPropertyChanged("first_name");
 					this.Onfirst_nameChanged();
 				}
@@ -313,15 +313,15 @@ namespace DALinq
 		{
 			get
 			{
-				return this._last_name;
+				return this._last_name.Value;
 			}
 			set
 			{
-				if ((this._last_name != value))
+				if ((this._last_name.Value != value))
 				{
 					this.Onlast_nameChanging(value);
 					this.SendPropertyChanging();
-					this._last_name = value;
+					this._last_name.Value = value;
 					this.SendPropertyChanged("last_name");
 					this.Onlast_nameChanged();
 				}

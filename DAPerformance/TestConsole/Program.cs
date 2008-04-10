@@ -26,8 +26,7 @@ using NHibernate.Linq;
 using NHibernate.Hql;
 using NHibernate.Expression;
 using NHibernate.Cfg;
-
-
+using Common.Runnable;
 
 namespace TestConsole
 {
@@ -70,13 +69,39 @@ namespace TestConsole
             AppDomain.CurrentDomain.SetData("DataDirectory", Path.GetFullPath(_executingPath.Substring(6) + @"..\..\..\..\DB"));
         }
 
-        static void Main(string[] args)
+        private static void InitConnections()
         {
             SetDataDirectory();
             string connectionString = ConfigurationManager.ConnectionStrings["EntitiesConnection"].ToString();
             BaseEntityConnection = new EntityConnection(connectionString);
             BaseEntityConnection.Open();
             BaseSqlConnection = (SqlConnection)BaseEntityConnection.StoreConnection;
+        }
+
+        static void Main(string[] args)
+        {
+            InitConnections();
+            HiPerfTimer performer = new HiPerfTimer();
+            DSTestTime dsTestTime = new DSTestTime();
+            IRunnable run = new AdoProvider(BaseSqlConnection);
+            foreach (RunningInfo runningInfo in run.FuncCollection)
+            {
+                performer.Start();
+                runningInfo.FuncDelegate.DynamicInvoke(null);
+                performer.Stop();
+                string typeInfo = TypeInfo.Types[runningInfo.FuncType];
+                dsTestTime.Time.AddTimeRow(runningInfo.FuncDelegate.Method.ReflectedType.Name, runningInfo.FuncType.ToString(), runningInfo.FuncDelegate.Method.Name, performer.Duration, typeInfo, "");
+            }
+
+            ReportCreator.Write(dsTestTime);
+            BaseEntityConnection.Close();
+            BaseEntityConnection.Dispose();
+        }
+        
+        /*
+        static void Main(string[] args)
+        {
+            InitConnections();
 
             adoEFProvider = new AdoEFProvider(ConfigurationManager.ConnectionStrings["TestDAEntities"].ToString());
             adoProvider = new AdoProvider(BaseSqlConnection);
@@ -107,17 +132,17 @@ namespace TestConsole
             //LargeCollectionWithChildrenByIdArrayWorm();
             //Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayWorm");
 
-            //LargeCollectionWithChildrenByIdArrayNH();
-            //Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayNH");
+            LargeCollectionWithChildrenByIdArrayNH();
+            Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayNH");
 
            /// FFF1();
            // Console.WriteLine(performer.Duration.ToString() + " FFF");
            // ZZZ1();
            // Console.WriteLine(performer.Duration.ToString() + " ZZZ");
-            LargeCollectionDataset();
+           //LargeCollectionDataset();
             Console.WriteLine(performer.Duration.ToString() + " ZZZ");
         }
-
+        */
         private static void InitUserIds()
         {
             GetIdsArray(Constants.Small, smallUserIds);
@@ -202,11 +227,18 @@ namespace TestConsole
 
         public static void LargeCollectionWithChildrenByIdArrayNH()
         {
+            //session = factory.OpenSession();
+            //performer.Start();
+            //IList users = session.CreateCriteria(typeof(FullUser))
+            //  .Add(Expression.In("UserId", largeUserIds)).List();
+            //performer.Stop();
+           
             session = factory.OpenSession();
-            performer.Start();
-            IList users = session.CreateCriteria(typeof(FullUser))
-              .Add(Expression.In("UserId", largeUserIds)).List();
-            performer.Stop();
+            foreach (int id in mediumUserIds)
+            {
+                LazyUser user = (LazyUser)session.Load(typeof(LazyUser), id);
+                string name = user.FirstName;
+            }
             session.Close();
         }
     }

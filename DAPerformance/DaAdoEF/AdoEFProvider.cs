@@ -142,9 +142,9 @@ namespace DaAdoEF
         {
             foreach (int id in userIds)
             {
-                var users = from e in entities.tbl_user
+                var users = (from e in entities.tbl_user
                             where e.user_id == id
-                            select e;
+                            select e).ToList();
                 foreach (var user in users)
                 {
                     string name = user.first_name;
