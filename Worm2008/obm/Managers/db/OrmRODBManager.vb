@@ -2212,7 +2212,7 @@ l1:
             End If
 
             Dim res As List(Of T) = Nothing
-            If fields IsNot Nothing AndAlso selectType Is type2search AndAlso sort Is Nothing Then
+            If fields IsNot Nothing AndAlso selectType Is type2search AndAlso sort Is Nothing AndAlso col.Count > 0 Then
                 Dim query As String, sb As New StringBuilder
                 For Each tk As String In tokens
                     sb.Append(tk).Append(" ")
