@@ -80,7 +80,7 @@ namespace Worm.Designer
 
                     foreach (Table childTable in tables)
                     {
-                        listBox.Items.Add(childTable.IdProperty);
+                        listBox.Items.Add(childTable.Name);
                     }
 
                     listBox.SelectedItem = value;

@@ -1129,16 +1129,16 @@ namespace Worm.Designer
 							DslModeling::SerializationUtilities.Skip(reader);  // Skip the close tag of </supressedProperties>
 						}
 						break;
-					case "selfTargetEntities":	// Relationship "EntityReferencesSelfTargetEntities"
+					case "selfRelations":	// Relationship "EntityHasSelfRelations"
 						if (reader.IsEmptyElement)
 						{	// No instance of this relationship, just skip
 							DslModeling::SerializationUtilities.Skip(reader);
 						}
 						else
 						{
-							DslModeling::SerializationUtilities.SkipToFirstChild(reader);  // Skip the open tag of <selfTargetEntities>
-							ReadEntityReferencesSelfTargetEntitiesInstances(serializationContext, element, reader);
-							DslModeling::SerializationUtilities.Skip(reader);  // Skip the close tag of </selfTargetEntities>
+							DslModeling::SerializationUtilities.SkipToFirstChild(reader);  // Skip the open tag of <selfRelations>
+							ReadEntityHasSelfRelationsInstances(serializationContext, element, reader);
+							DslModeling::SerializationUtilities.Skip(reader);  // Skip the close tag of </selfRelations>
 						}
 						break;
 					default:
@@ -1343,7 +1343,7 @@ namespace Worm.Designer
 		}
 	
 		/// <summary>
-		/// Reads all instances of relationship EntityReferencesSelfTargetEntities.
+		/// Reads all instances of relationship EntityHasSelfRelations.
 		/// </summary>
 		/// <remarks>
 		/// The caller will position the reader at the open tag of the first XML element inside the relationship tag, so it can be
@@ -1353,34 +1353,39 @@ namespace Worm.Designer
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="element">In-memory Entity instance that will get the deserialized data.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
-		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1806")]
-		private static void ReadEntityReferencesSelfTargetEntitiesInstances(DslModeling::SerializationContext serializationContext, Entity element, global::System.Xml.XmlReader reader)
+		private static void ReadEntityHasSelfRelationsInstances(DslModeling::SerializationContext serializationContext, Entity element, global::System.Xml.XmlReader reader)
 		{
 			while (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
 			{
-				DslModeling::DomainClassXmlSerializer newEntityReferencesSelfTargetEntitiesSerializer = serializationContext.Directory.GetSerializer(EntityReferencesSelfTargetEntities.DomainClassId);
-				global::System.Diagnostics.Debug.Assert(newEntityReferencesSelfTargetEntitiesSerializer != null, "Cannot find serializer for EntityReferencesSelfTargetEntities!");
-				EntityReferencesSelfTargetEntities newEntityReferencesSelfTargetEntities = newEntityReferencesSelfTargetEntitiesSerializer.TryCreateInstance (serializationContext, reader, element.Partition) as EntityReferencesSelfTargetEntities;
-				if (newEntityReferencesSelfTargetEntities != null)
+				DslModeling::DomainClassXmlSerializer newSelfRelationOfEntityHasSelfRelationsSerializer = serializationContext.Directory.GetSerializer(SelfRelation.DomainClassId);
+				global::System.Diagnostics.Debug.Assert(newSelfRelationOfEntityHasSelfRelationsSerializer != null, "Cannot find serializer for SelfRelation!");
+				SelfRelation newSelfRelationOfEntityHasSelfRelations = newSelfRelationOfEntityHasSelfRelationsSerializer.TryCreateInstance(serializationContext, reader, element.Partition) as SelfRelation;
+				if (newSelfRelationOfEntityHasSelfRelations != null)
 				{
-					DslModeling::DomainRoleInfo.SetRolePlayer (newEntityReferencesSelfTargetEntities, EntityReferencesSelfTargetEntities.SelfSourceEntityDomainRoleId, element);
-					DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer (newEntityReferencesSelfTargetEntities.GetDomainClass().Id);	
-					global::System.Diagnostics.Debug.Assert (targetSerializer != null, "Cannot find serializer for " + newEntityReferencesSelfTargetEntities.GetDomainClass().Name + "!");
-					targetSerializer.Read(serializationContext, newEntityReferencesSelfTargetEntities, reader);
+					element.SelfRelations.Add(newSelfRelationOfEntityHasSelfRelations);
+					DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer (newSelfRelationOfEntityHasSelfRelations.GetDomainClass().Id);	
+					global::System.Diagnostics.Debug.Assert (targetSerializer != null, "Cannot find serializer for " + newSelfRelationOfEntityHasSelfRelations.GetDomainClass().Name + "!");
+					targetSerializer.Read(serializationContext, newSelfRelationOfEntityHasSelfRelations, reader);
 				}
 				else
-				{	// Maybe the relationship is serialized in short-form by mistake.
-					DslModeling::DomainClassXmlSerializer newEntityMonikerOfEntityReferencesSelfTargetEntitiesSerializer = serializationContext.Directory.GetSerializer(Entity.DomainClassId);
-					global::System.Diagnostics.Debug.Assert(newEntityMonikerOfEntityReferencesSelfTargetEntitiesSerializer != null, "Cannot find serializer for Entity!");
-					DslModeling::Moniker newEntityMonikerOfEntityReferencesSelfTargetEntities = newEntityMonikerOfEntityReferencesSelfTargetEntitiesSerializer.TryCreateMonikerInstance(serializationContext, reader, element, EntityReferencesSelfTargetEntities.DomainClassId, element.Partition);
-					if (newEntityMonikerOfEntityReferencesSelfTargetEntities != null)
+				{
+					global::System.Type typeofEntityHasSelfRelations = typeof(EntityHasSelfRelations);
+					DslModeling::DomainRelationshipXmlSerializer newEntityHasSelfRelationsSerializer = serializationContext.Directory.GetSerializer(EntityHasSelfRelations.DomainClassId) as DslModeling::DomainRelationshipXmlSerializer;
+					global::System.Diagnostics.Debug.Assert(newEntityHasSelfRelationsSerializer != null, "Cannot find serializer for EntityHasSelfRelations!");
+					EntityHasSelfRelations newEntityHasSelfRelations = newEntityHasSelfRelationsSerializer.TryCreateInstance (serializationContext, reader, element.Partition) as EntityHasSelfRelations;
+					if (newEntityHasSelfRelations != null)
 					{
-						DesignerSerializationBehaviorSerializationMessages.ExpectingFullFormRelationship(serializationContext, reader, typeof(EntityReferencesSelfTargetEntities));
-						new EntityReferencesSelfTargetEntities(element.Partition, new DslModeling::RoleAssignment(EntityReferencesSelfTargetEntities.SelfSourceEntityDomainRoleId, element), new DslModeling::RoleAssignment(EntityReferencesSelfTargetEntities.SelfTargetEntityDomainRoleId, newEntityMonikerOfEntityReferencesSelfTargetEntities));
-						DslModeling::SerializationUtilities.Skip(reader);	// Moniker contains no child XML elements, so just skip.
+						if (newEntityHasSelfRelations.GetType() == typeofEntityHasSelfRelations)
+						{	// The relationship should be serialized in short-form.
+							DesignerSerializationBehaviorSerializationMessages.ExpectingShortFormRelationship(serializationContext, reader, typeof(EntityHasSelfRelations));
+						}
+						DslModeling::DomainRoleInfo.SetRolePlayer (newEntityHasSelfRelations, EntityHasSelfRelations.EntityDomainRoleId, element);
+						DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer (newEntityHasSelfRelations.GetDomainClass().Id);	
+						global::System.Diagnostics.Debug.Assert (targetSerializer != null, "Cannot find serializer for " + newEntityHasSelfRelations.GetDomainClass().Name + "!");
+						targetSerializer.Read(serializationContext, newEntityHasSelfRelations, reader);
 					}
 					else
-					{	// Unknown element, skip.
+					{	// Unknown element, skip
 						DslModeling::SerializationUtilities.Skip(reader);
 					}
 				}
@@ -1973,19 +1978,30 @@ namespace Worm.Designer
 				writer.WriteEndElement();
 			}
 	
-			// EntityReferencesSelfTargetEntities
-			global::System.Collections.ObjectModel.ReadOnlyCollection<EntityReferencesSelfTargetEntities> allEntityReferencesSelfTargetEntitiesInstances = EntityReferencesSelfTargetEntities.GetLinksToSelfTargetEntities(element);
-			if (!serializationContext.Result.Failed && allEntityReferencesSelfTargetEntitiesInstances.Count > 0)
+			// EntityHasSelfRelations
+			global::System.Collections.ObjectModel.ReadOnlyCollection<EntityHasSelfRelations> allEntityHasSelfRelationsInstances = EntityHasSelfRelations.GetLinksToSelfRelations(element);
+			if (!serializationContext.Result.Failed && allEntityHasSelfRelationsInstances.Count > 0)
 			{
-				writer.WriteStartElement("selfTargetEntities");
-				foreach (EntityReferencesSelfTargetEntities eachEntityReferencesSelfTargetEntitiesInstance in allEntityReferencesSelfTargetEntitiesInstances)
+				writer.WriteStartElement("selfRelations");
+				global::System.Type typeofEntityHasSelfRelations = typeof(EntityHasSelfRelations);
+				foreach (EntityHasSelfRelations eachEntityHasSelfRelationsInstance in allEntityHasSelfRelationsInstances)
 				{
 					if (serializationContext.Result.Failed)
 						break;
 	
-					DslModeling::DomainClassXmlSerializer relSerializer = serializationContext.Directory.GetSerializer(eachEntityReferencesSelfTargetEntitiesInstance.GetDomainClass().Id);
-					global::System.Diagnostics.Debug.Assert(relSerializer != null, "Cannot find serializer for " + eachEntityReferencesSelfTargetEntitiesInstance.GetDomainClass().Name + "!");
-					relSerializer.Write(serializationContext, eachEntityReferencesSelfTargetEntitiesInstance, writer);
+					if (eachEntityHasSelfRelationsInstance.GetType() != typeofEntityHasSelfRelations)
+					{	// Derived relationships will be serialized in full-form.
+						DslModeling::DomainClassXmlSerializer derivedRelSerializer = serializationContext.Directory.GetSerializer(eachEntityHasSelfRelationsInstance.GetDomainClass().Id);
+						global::System.Diagnostics.Debug.Assert(derivedRelSerializer != null, "Cannot find serializer for " + eachEntityHasSelfRelationsInstance.GetDomainClass().Name + "!");			
+						derivedRelSerializer.Write(serializationContext, eachEntityHasSelfRelationsInstance, writer);
+					}
+					else
+					{	// No need to serialize the relationship itself, just serialize the role-player directly.
+						DslModeling::ModelElement targetElement = eachEntityHasSelfRelationsInstance.SelfRelation;
+						DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer(targetElement.GetDomainClass().Id);
+						global::System.Diagnostics.Debug.Assert(targetSerializer != null, "Cannot find serializer for " + targetElement.GetDomainClass().Name + "!");			
+						targetSerializer.Write(serializationContext, targetElement, writer);
+					}
 				}
 				writer.WriteEndElement();
 			}
@@ -3986,6 +4002,863 @@ namespace Worm.Designer
 			
 			SupressedProperty instance = element as SupressedProperty;
 			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of SupressedProperty!");
+			DslModeling::ModelElement container = instance.Entity;
+			if(container != null)
+			{
+				DslModeling::DomainClassXmlSerializer containerSerializer = directory.GetSerializer(container.GetDomainClass().Id);
+				global::System.Diagnostics.Debug.Assert(containerSerializer != null, "Cannot find serializer for " + container.GetDomainClass().Name + "!");
+				return containerSerializer.GetMonikerQualifier(directory, container);
+			}
+			else
+			{
+				return string.Empty;
+			}
+		}
+		#endregion
+	}
+}
+
+namespace Worm.Designer
+{
+	/// <summary>
+	/// Serializer SelfRelationSerializer for DomainClass SelfRelation.
+	/// </summary>
+	public partial class SelfRelationSerializer : DslModeling::DomainClassXmlSerializer
+	{
+		#region Constructor
+		/// <summary>
+		/// SelfRelationSerializer Constructor
+		/// </summary>
+		public SelfRelationSerializer ()
+			: base ()
+		{
+		}
+		#endregion
+	
+		#region Public Properties
+		/// <summary>
+		/// This is the XML tag name used to serialize an instance of SelfRelation.
+		/// </summary>
+		public override string XmlTagName
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get { return @"selfRelation"; }
+		}
+	
+		/// <summary>
+		/// Cannot be monikerized.
+		/// </summary>
+		public override string MonikerTagName
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get { return string.Empty; }
+		}
+		
+		/// <summary>
+		/// Cannot be monikerized.
+		/// </summary>
+		public override string MonikerAttributeName
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get { return string.Empty; }
+		}
+		#endregion
+	
+		#region Read Methods
+		/// <summary>
+		/// Public Read() method that deserializes one SelfRelation instance from XML.
+		/// </summary>
+		/// <remarks>
+		/// When this method is called, caller guarantees that the passed-in XML reader is positioned at the open XML tag
+		/// of the SelfRelation element that is about to be deserialized. 
+		/// The method needs to ensure that when it returns, the reader is positioned at the open XML tag of the next sibling element,
+		/// or the close tag of the parent element (or EOF).
+		/// </remarks>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="element">In-memory SelfRelation instance that will get the deserialized data.</param>
+		/// <param name="reader">XmlReader to read serialized data from.</param>
+		public override void Read(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
+		{
+			#region Check Parameters
+			global::System.Diagnostics.Debug.Assert (serializationContext != null);
+			if (serializationContext == null)
+				throw new global::System.ArgumentNullException ("serializationContext");
+			global::System.Diagnostics.Debug.Assert (element != null);
+			if (element == null)
+				throw new global::System.ArgumentNullException ("element");
+			global::System.Diagnostics.Debug.Assert (reader != null);
+			if (reader == null)
+				throw new global::System.ArgumentNullException ("reader");
+			#endregion
+			
+			// Read properties serialized as XML attributes.
+			ReadPropertiesFromAttributes(serializationContext, element, reader);
+	
+			// Read nested XML elements.
+			if (!serializationContext.Result.Failed)
+			{
+				if (!reader.IsEmptyElement)
+				{
+					// Read to the start of the first child element.
+					DslModeling::SerializationUtilities.SkipToFirstChild(reader);
+					
+					// Read nested XML elements, they can be either properties serialized as XML elements, or child 
+					// model elements.
+					while (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
+					{
+						ReadElements(serializationContext, element, reader);
+						if (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
+						{
+							// Encountered one unknown XML element, skip it and keep reading.
+							DesignerSerializationBehaviorSerializationMessages.UnexpectedXmlElement(serializationContext, reader);
+							DslModeling::SerializationUtilities.Skip(reader);
+						}
+					}
+				}
+			}
+	
+			// Advance the reader to the next element (open tag of the next sibling, end tag of the parent, or EOF)
+			DslModeling::SerializationUtilities.Skip(reader);
+		}
+	
+		/// <summary>
+		/// This method deserializes all properties that are serialized as XML attributes.
+		/// </summary>
+		/// <remarks>
+		/// Because this method only handles properties serialized as XML attributes, the passed-in reader shouldn't be moved inside this method.
+		/// The caller will guarantee that the reader is positioned on the open XML tag of the current element being deserialized.
+		/// </remarks>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="element">In-memory SelfRelation instance that will get the deserialized data.</param>
+		/// <param name="reader">XmlReader to read serialized data from.</param>
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Generated code.")]
+		protected virtual void ReadPropertiesFromAttributes(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
+		{
+			SelfRelation instanceOfSelfRelation = element as SelfRelation;
+			global::System.Diagnostics.Debug.Assert(instanceOfSelfRelation != null, "Expecting an instance of SelfRelation");
+	
+			// DirectAccessor
+			if (!serializationContext.Result.Failed)
+			{
+				string attribDirectAccessor = reader.GetAttribute("directAccessor");
+				if (attribDirectAccessor != null)
+				{
+					global::System.String valueOfDirectAccessor;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectAccessor), out valueOfDirectAccessor))
+					{
+						instanceOfSelfRelation.DirectAccessor = valueOfDirectAccessor;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directAccessor", typeof(global::System.String), attribDirectAccessor);
+					}
+				}
+			}
+			// DirectCascadeDelete
+			if (!serializationContext.Result.Failed)
+			{
+				string attribDirectCascadeDelete = reader.GetAttribute("directCascadeDelete");
+				if (attribDirectCascadeDelete != null)
+				{
+					global::System.Boolean valueOfDirectCascadeDelete;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectCascadeDelete), out valueOfDirectCascadeDelete))
+					{
+						instanceOfSelfRelation.DirectCascadeDelete = valueOfDirectCascadeDelete;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directCascadeDelete", typeof(global::System.Boolean), attribDirectCascadeDelete);
+					}
+				}
+			}
+			// DirectFieldName
+			if (!serializationContext.Result.Failed)
+			{
+				string attribDirectFieldName = reader.GetAttribute("directFieldName");
+				if (attribDirectFieldName != null)
+				{
+					global::System.String valueOfDirectFieldName;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectFieldName), out valueOfDirectFieldName))
+					{
+						instanceOfSelfRelation.DirectFieldName = valueOfDirectFieldName;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directFieldName", typeof(global::System.String), attribDirectFieldName);
+					}
+				}
+			}
+			// Disabled
+			if (!serializationContext.Result.Failed)
+			{
+				string attribDisabled = reader.GetAttribute("disabled");
+				if (attribDisabled != null)
+				{
+					global::System.Boolean valueOfDisabled;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
+					{
+						instanceOfSelfRelation.Disabled = valueOfDisabled;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.Boolean), attribDisabled);
+					}
+				}
+			}
+			// ReverseAccessor
+			if (!serializationContext.Result.Failed)
+			{
+				string attribReverseAccessor = reader.GetAttribute("reverseAccessor");
+				if (attribReverseAccessor != null)
+				{
+					global::System.String valueOfReverseAccessor;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseAccessor), out valueOfReverseAccessor))
+					{
+						instanceOfSelfRelation.ReverseAccessor = valueOfReverseAccessor;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseAccessor", typeof(global::System.String), attribReverseAccessor);
+					}
+				}
+			}
+			// ReverseCascadeDelete
+			if (!serializationContext.Result.Failed)
+			{
+				string attribReverseCascadeDelete = reader.GetAttribute("reverseCascadeDelete");
+				if (attribReverseCascadeDelete != null)
+				{
+					global::System.Boolean valueOfReverseCascadeDelete;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseCascadeDelete), out valueOfReverseCascadeDelete))
+					{
+						instanceOfSelfRelation.ReverseCascadeDelete = valueOfReverseCascadeDelete;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseCascadeDelete", typeof(global::System.Boolean), attribReverseCascadeDelete);
+					}
+				}
+			}
+			// ReverseFieldName
+			if (!serializationContext.Result.Failed)
+			{
+				string attribReverseFieldName = reader.GetAttribute("reverseFieldName");
+				if (attribReverseFieldName != null)
+				{
+					global::System.String valueOfReverseFieldName;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseFieldName), out valueOfReverseFieldName))
+					{
+						instanceOfSelfRelation.ReverseFieldName = valueOfReverseFieldName;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseFieldName", typeof(global::System.String), attribReverseFieldName);
+					}
+				}
+			}
+			// Table
+			if (!serializationContext.Result.Failed)
+			{
+				string attribTable = reader.GetAttribute("table");
+				if (attribTable != null)
+				{
+					global::System.String valueOfTable;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribTable), out valueOfTable))
+					{
+						instanceOfSelfRelation.Table = valueOfTable;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "table", typeof(global::System.String), attribTable);
+					}
+				}
+			}
+			// UnderlyingEntity
+			if (!serializationContext.Result.Failed)
+			{
+				string attribUnderlyingEntity = reader.GetAttribute("underlyingEntity");
+				if (attribUnderlyingEntity != null)
+				{
+					global::System.String valueOfUnderlyingEntity;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribUnderlyingEntity), out valueOfUnderlyingEntity))
+					{
+						instanceOfSelfRelation.UnderlyingEntity = valueOfUnderlyingEntity;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "underlyingEntity", typeof(global::System.String), attribUnderlyingEntity);
+					}
+				}
+			}
+			// DirectAccessedEntityType
+			if (!serializationContext.Result.Failed)
+			{
+				string attribDirectAccessedEntityType = reader.GetAttribute("directAccessedEntityType");
+				if (attribDirectAccessedEntityType != null)
+				{
+					global::System.String valueOfDirectAccessedEntityType;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectAccessedEntityType), out valueOfDirectAccessedEntityType))
+					{
+						instanceOfSelfRelation.DirectAccessedEntityType = valueOfDirectAccessedEntityType;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directAccessedEntityType", typeof(global::System.String), attribDirectAccessedEntityType);
+					}
+				}
+			}
+			// ReverseAccessedEntityType
+			if (!serializationContext.Result.Failed)
+			{
+				string attribReverseAccessedEntityType = reader.GetAttribute("reverseAccessedEntityType");
+				if (attribReverseAccessedEntityType != null)
+				{
+					global::System.String valueOfReverseAccessedEntityType;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseAccessedEntityType), out valueOfReverseAccessedEntityType))
+					{
+						instanceOfSelfRelation.ReverseAccessedEntityType = valueOfReverseAccessedEntityType;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseAccessedEntityType", typeof(global::System.String), attribReverseAccessedEntityType);
+					}
+				}
+			}
+			// Name
+			if (!serializationContext.Result.Failed)
+			{
+				string attribName = reader.GetAttribute("name");
+				if (attribName != null)
+				{
+					global::System.String valueOfName;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribName), out valueOfName))
+					{
+						instanceOfSelfRelation.Name = valueOfName;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "name", typeof(global::System.String), attribName);
+					}
+				}
+			}
+		}
+	
+		/// <summary>
+		/// This methods deserializes nested XML elements inside the passed-in element.
+		/// </summary>
+		/// <remarks>
+		/// The caller will guarantee that the current element does have nested XML elements, and the call will position the 
+		/// reader at the open tag of the first child XML element.
+		/// This method will read as many child XML elements as it can. It returns under three circumstances:
+		/// 1) When an unknown child XML element is encountered. In this case, this method will position the reader at the open 
+		///    tag of the unknown element. This implies the if the first child XML element is unknown, this method should return 
+		///    immediately and do nothing.
+		/// 2) When all child XML elemnets are read. In this case, the reader will be positioned at the end tag of the parent element.
+		/// 3) EOF.
+		/// </remarks>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="element">In-memory SelfRelation instance that will get the deserialized data.</param>
+		/// <param name="reader">XmlReader to read serialized data from.</param>
+		protected virtual void ReadElements(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
+		{
+		}
+	
+		#region TryCreateInstance
+		/// <summary>
+		/// This method creates a correct instance of SelfRelation based on the tag currently pointed by the reader. If the reader
+		/// is positioned at a serialized SelfRelation, a new SelfRelation instance will be created in the given partition, otherwise 
+		/// null is returned.
+		/// </summary>
+		/// <remarks>
+		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
+		/// not move the reader; the reader should remain at the same position when this method returns.
+		/// </remarks>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="reader">XmlReader to read serialized data from.</param>
+		/// <param name="partition">Partition in which new elements should be created.</param>	
+		/// <returns>Created SelfRelation instance, or null if the reader is not pointing to a serialized SelfRelation instance.</returns>
+		public override DslModeling::ModelElement TryCreateInstance(DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::Partition partition)
+		{
+			#region Check Parameters
+			global::System.Diagnostics.Debug.Assert (serializationContext != null);
+			if (serializationContext == null)
+				throw new global::System.ArgumentNullException ("serializationContext");
+			global::System.Diagnostics.Debug.Assert (reader != null);
+			if (reader == null)
+				throw new global::System.ArgumentNullException ("reader");
+			global::System.Diagnostics.Debug.Assert (partition != null);
+			if (partition == null)
+				throw new global::System.ArgumentNullException ("partition");
+			#endregion
+	
+			DslModeling::ModelElement result = null;
+			if (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
+			{
+				string localName = reader.LocalName;
+				if (string.Compare (localName, this.XmlTagName, global::System.StringComparison.CurrentCulture) == 0)
+				{	// New "SelfRelation" instance.
+					result = this.CreateInstance(serializationContext, reader, partition);
+				}
+				else
+				{	// Check for derived classes of "SelfRelation".
+					if (this.derivedClasses == null)
+						this.ConstructDerivedClassesLookupTable(serializationContext, partition.DomainDataDirectory);
+					global::System.Diagnostics.Debug.Assert (this.derivedClasses != null);
+					DslModeling::DomainClassInfo derivedClass = null;
+					if (this.derivedClasses.TryGetValue (localName, out derivedClass) && derivedClass != null)
+					{	// New derived class instance.
+						SelfRelationSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as SelfRelationSerializer;
+						global::System.Diagnostics.Debug.Assert(derivedSerializer != null, "Cannot find serializer for " + derivedClass.Name + "!");
+						result = derivedSerializer.CreateInstance(serializationContext, reader, partition);
+					}
+				}
+			}
+	
+			return result;
+		}
+	
+		/// <summary>
+		/// This method creates an instance of SelfRelation based on the tag currently pointed by the reader. The reader is guaranteed (by the caller)
+		/// to be pointed at a serialized instance of SelfRelation.
+		/// </summary>
+		/// <remarks>
+		/// The caller will guarantee that the reader is positioned at open XML tag of the ModelRoot instance being read. This method should
+		/// not move the reader; the reader should remain at the same position when this method returns.
+		/// </remarks>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="reader">XmlReader to read serialized data from.</param>
+		/// <param name="partition">Partition in which new SelfRelation instance should be created.</param>	
+		/// <returns>Created SelfRelation instance.</returns>
+		protected override DslModeling::ModelElement CreateInstance(DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::Partition partition)
+		{
+			return new SelfRelation(partition);
+		}
+	
+		/// <summary>
+		/// Stores a mapping from XmlTagName to DomainClassInfo that derives from SelfRelation, created on demand.
+		/// </summary>
+		private global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> derivedClasses;
+	
+		/// <summary>
+		/// Construct the apping from XmlTagName to DomainClassInfo that derives from SelfRelation.
+		/// </summary>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="domainDataDirectory">DomainDataDirectory to be used to discover all derived classes.</param>
+		private void ConstructDerivedClassesLookupTable(DslModeling::SerializationContext serializationContext, DslModeling::DomainDataDirectory domainDataDirectory)
+		{
+			global::System.Diagnostics.Debug.Assert(this.derivedClasses == null); // Shouldn't construct the table more than once.
+			this.derivedClasses = new global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> (global::System.StringComparer.CurrentCulture);
+	
+			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(SelfRelation.DomainClassId);
+			global::System.Diagnostics.Debug.Assert(thisClass != null, "Cannot find DomainClassInfo for ModelRoot!");
+	
+			global::System.Collections.ObjectModel.ReadOnlyCollection<DslModeling::DomainClassInfo> descendents = thisClass.AllDescendants;
+			if (descendents != null)
+			{
+				foreach (DslModeling::DomainClassInfo descendent in descendents)
+				{
+					global::System.Type descendentType = descendent.ImplementationClass;
+					if (!descendentType.IsAbstract)
+					{
+						DslModeling::DomainClassXmlSerializer descendentSerializer = serializationContext.Directory.GetSerializer(descendent.Id);
+						if (descendentSerializer != null)
+						{
+							string descendentXmlTagName = descendentSerializer.XmlTagName;
+							if (!string.IsNullOrEmpty (descendentXmlTagName))
+							{
+								global::System.Diagnostics.Debug.Assert(!this.derivedClasses.ContainsKey (descendentXmlTagName));
+								this.derivedClasses.Add (descendentXmlTagName, descendent);
+							}
+						}
+					}
+					else
+					{   // Ignore abstract derived classes because they cannot be instantiated directly.
+					}
+				}
+			}
+		}
+		#endregion
+	
+		#region TryCreateMonikerInstance
+		/// <summary>
+		/// This method creates a Moniker of the correct derived (including SelfRelation itself) instance of SelfRelation based on the tag currently pointed by the reader.
+		/// </summary>
+		/// <remarks>
+		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
+		/// not move the reader; the reader should remain at the same position when this method returns.
+		/// </remarks>		
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="reader">XmlReader to read serialized data from.</param>
+		/// <param name="sourceRolePlayer">The source role-player instance from which the moniker being created is referenced.</param>
+		/// <param name="relDomainClassId">The DomainClass Id of the relationship that connects the sourceRolePlayer to the moniker being created.</param>
+		/// <param name="partition">The new Moniker should be created in the Store associated with this partition.</param>			
+		/// <returns>Created ModelRoot instance, or null if the reader is not pointing to a correct monikerized instance.</returns>
+		public override DslModeling::Moniker TryCreateMonikerInstance (DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::ModelElement sourceRolePlayer, global::System.Guid relDomainClassId, DslModeling::Partition partition)
+		{
+			#region Check Parameters
+			global::System.Diagnostics.Debug.Assert (serializationContext != null);
+			if (serializationContext == null)
+				throw new global::System.ArgumentNullException ("serializationContext");
+			global::System.Diagnostics.Debug.Assert (reader != null);
+			if (reader == null)
+				throw new global::System.ArgumentNullException ("reader");
+			global::System.Diagnostics.Debug.Assert (sourceRolePlayer != null);
+			if (sourceRolePlayer == null)
+				throw new global::System.ArgumentNullException ("sourceRolePlayer");
+			global::System.Diagnostics.Debug.Assert (partition != null);
+			if (partition == null)
+				throw new global::System.ArgumentNullException ("partition");
+			#endregion
+	
+			DslModeling::Moniker result = null;
+			if (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
+			{
+				string localName = reader.LocalName;
+				if (string.Compare (localName, this.MonikerTagName, global::System.StringComparison.CurrentCulture) == 0)
+				{	// New "SelfRelation" moniker instance.
+					result = this.CreateMonikerInstance(serializationContext, reader, sourceRolePlayer, relDomainClassId, partition);
+				}
+				else
+				{	// Check for derived classes of "SelfRelation".
+					if (this.derivedClassMonikers == null)
+						this.ConstructDerivedClassMonikersLookupTable(serializationContext, partition.DomainDataDirectory);
+					global::System.Diagnostics.Debug.Assert(this.derivedClassMonikers != null);
+					DslModeling::DomainClassInfo derivedClass = null;
+					if (this.derivedClassMonikers.TryGetValue (localName, out derivedClass) && derivedClass != null)
+					{	// New derived class moniker instance.
+						SelfRelationSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as SelfRelationSerializer;
+						global::System.Diagnostics.Debug.Assert(derivedSerializer != null, "Cannot find serializer for " + derivedClass.Name + "!");
+						result = derivedSerializer.CreateMonikerInstance(serializationContext, reader, sourceRolePlayer, relDomainClassId, partition);
+					}
+				}
+			}
+	
+			return result;
+		}
+		
+		/// <summary>
+		/// This method creates a Moniker of SelfRelation based on the tag currently pointed by the reader.
+		/// </summary>
+		/// <remarks>
+		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
+		/// not move the reader; the reader should remain at the same position when this method returns.
+		/// </remarks>		
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="reader">XmlReader to read serialized data from.</param>
+		/// <param name="sourceRolePlayer">The source role-player instance from which the moniker being created is referenced.</param>
+		/// <param name="relDomainClassId">The DomainClass Id of the relationship that connects the sourceRolePlayer to the moniker being created.</param>
+		/// <param name="partition">The new Moniker should be created in the Store associated with this partition.</param>			
+		/// <returns>Created ModelRoot instance, or null if the reader is not pointing to a correct monikerized instance.</returns>
+		protected override DslModeling::Moniker CreateMonikerInstance (DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::ModelElement sourceRolePlayer, global::System.Guid relDomainClassId, DslModeling::Partition partition)
+		{
+			// Cannot be monikerized.
+			throw new global::System.NotSupportedException();
+		}
+	
+		/// <summary>
+		/// Stores a mapping from Moniker Xml tag name to DomainClassInfo that derives from SelfRelation, created on demand.
+		/// </summary>
+		private global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> derivedClassMonikers;
+	
+		/// <summary>
+		/// Construct the mapping from Moniker Xml tag name to DomainClassInfo that derives from SelfRelation.
+		/// </summary>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="domainDataDirectory">DomainDataDirectory to be used to discover all derived classes.</param>
+		private void ConstructDerivedClassMonikersLookupTable(DslModeling::SerializationContext serializationContext, DslModeling::DomainDataDirectory domainDataDirectory)
+		{
+			global::System.Diagnostics.Debug.Assert(this.derivedClassMonikers == null); // Shouldn't construct the table more than once.
+			this.derivedClassMonikers = new global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> (global::System.StringComparer.CurrentCulture);
+	
+			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(SelfRelation.DomainClassId);
+			global::System.Diagnostics.Debug.Assert(thisClass != null, "Cannot find DomainClassInfo for ModelRoot!");
+	
+			global::System.Collections.ObjectModel.ReadOnlyCollection<DslModeling::DomainClassInfo> descendents = thisClass.AllDescendants;
+			if (descendents != null)
+			{
+				foreach (DslModeling::DomainClassInfo descendent in descendents)
+				{
+					DslModeling::DomainClassXmlSerializer descendentSerializer = serializationContext.Directory.GetSerializer(descendent.Id);
+					if (descendentSerializer != null)
+					{
+						string descendentMonikerTagName = descendentSerializer.MonikerTagName;
+						if (!string.IsNullOrEmpty (descendentMonikerTagName))
+						{
+							global::System.Diagnostics.Debug.Assert(!this.derivedClassMonikers.ContainsKey (descendentMonikerTagName));
+							this.derivedClassMonikers.Add (descendentMonikerTagName, descendent);
+						}
+					}
+				}
+			}
+		}
+		#endregion
+		#endregion
+	
+		#region Write Methods
+		/// <summary>
+		/// Public WriteMoniker() method that writes a monikerized SelfRelation instance into XML.
+		/// </summary>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="element">SelfRelation instance to be monikerized.</param>
+		/// <param name="writer">XmlWriter to write serialized data to.</param>
+		/// <param name="sourceRolePlayer">Source element that references the SelfRelation instance being monikerized.</param>
+		/// <param name="relSerializer">Serializer that handles the relationship connecting the source element to the SelfRelation instance being monikerized.</param>
+		public override void WriteMoniker(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer, DslModeling::ModelElement sourceRolePlayer, DslModeling::DomainRelationshipXmlSerializer relSerializer)
+		{
+			// Instance of SelfRelation cannot be monikerized.
+			DesignerSerializationBehaviorSerializationMessages.CannotMonikerizeElement(serializationContext, "SelfRelation");
+		}
+		
+		/// <summary>
+		/// Public Write() method that serializes one SelfRelation instance into XML.
+		/// </summary>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="element">SelfRelation instance to be serialized.</param>
+		/// <param name="writer">XmlWriter to write serialized data to.</param>
+		/// <param name="rootElementSettings">
+		/// The root element settings if the passed in element is serialized as a root element in the XML. The root element contains additional
+		/// information like schema target namespace, version, etc.
+		/// This should only be passed for root-level elements. Null should be passed for rest elements (and ideally call the Write() method 
+		/// without this parameter).
+		/// </param>
+		public override void Write(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer, DslModeling::RootElementSettings rootElementSettings)
+		{
+			#region Check Parameters
+			global::System.Diagnostics.Debug.Assert (serializationContext != null);
+			if (serializationContext == null)
+				throw new global::System.ArgumentNullException ("serializationContext");
+			global::System.Diagnostics.Debug.Assert (element != null);
+			if (element == null)
+				throw new global::System.ArgumentNullException ("element");
+			global::System.Diagnostics.Debug.Assert (writer != null);
+			if (writer == null)
+				throw new global::System.ArgumentNullException ("writer");
+			#endregion
+	
+			// Write start of element, including schema target namespace if specified.
+			if (rootElementSettings != null && !string.IsNullOrEmpty(rootElementSettings.SchemaTargetNamespace))
+				writer.WriteStartElement(this.XmlTagName, rootElementSettings.SchemaTargetNamespace);
+			else
+				writer.WriteStartElement(this.XmlTagName);
+				
+			// Write version info (in the format 1.2.3.4), if necessary
+			if (rootElementSettings != null && rootElementSettings.Version != null)
+				writer.WriteAttributeString("dslVersion", rootElementSettings.Version.ToString(4));
+	
+			WritePropertiesAsAttributes(serializationContext, element, writer);
+	
+			if (!serializationContext.Result.Failed)
+			{
+				// Write 1) properties serialized as nested XML elements and 2) child model elements into XML.
+				WriteElements(serializationContext, element, writer);
+			}
+	
+			writer.WriteEndElement();
+		}
+	
+		/// <summary>
+		/// Write all properties that need to be serialized as XML attributes.
+		/// </summary>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="element">SelfRelation instance to be serialized.</param>
+		/// <param name="writer">XmlWriter to write serialized data to.</param> 
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Generated code.")]
+		protected virtual void WritePropertiesAsAttributes(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer)
+		{
+			SelfRelation instanceOfSelfRelation = element as SelfRelation;
+			global::System.Diagnostics.Debug.Assert(instanceOfSelfRelation != null, "Expecting an instance of SelfRelation");
+	
+			// DirectAccessor
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfSelfRelation.DirectAccessor;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("directAccessor", propValue);
+				}
+			}
+			// DirectCascadeDelete
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.Boolean propValue = instanceOfSelfRelation.DirectCascadeDelete;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				if (!serializationContext.Result.Failed)
+				{
+					writer.WriteAttributeString("directCascadeDelete", serializedPropValue);
+				}
+			}
+			// DirectFieldName
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfSelfRelation.DirectFieldName;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("directFieldName", propValue);
+				}
+			}
+			// Disabled
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.Boolean propValue = instanceOfSelfRelation.Disabled;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				if (!serializationContext.Result.Failed)
+				{
+					writer.WriteAttributeString("disabled", serializedPropValue);
+				}
+			}
+			// ReverseAccessor
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfSelfRelation.ReverseAccessor;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("reverseAccessor", propValue);
+				}
+			}
+			// ReverseCascadeDelete
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.Boolean propValue = instanceOfSelfRelation.ReverseCascadeDelete;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				if (!serializationContext.Result.Failed)
+				{
+					writer.WriteAttributeString("reverseCascadeDelete", serializedPropValue);
+				}
+			}
+			// ReverseFieldName
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfSelfRelation.ReverseFieldName;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("reverseFieldName", propValue);
+				}
+			}
+			// Table
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfSelfRelation.Table;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("table", propValue);
+				}
+			}
+			// UnderlyingEntity
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfSelfRelation.UnderlyingEntity;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("underlyingEntity", propValue);
+				}
+			}
+			// DirectAccessedEntityType
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfSelfRelation.DirectAccessedEntityType;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("directAccessedEntityType", propValue);
+				}
+			}
+			// ReverseAccessedEntityType
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfSelfRelation.ReverseAccessedEntityType;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("reverseAccessedEntityType", propValue);
+				}
+			}
+			// Name
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfSelfRelation.Name;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("name", propValue);
+				}
+			}
+		}
+	
+		/// <summary>
+		/// This methods serializes 1) properties serialized as nested XML elements and 2) child model elements into XML. 
+		/// </summary>
+		/// <param name="serializationContext">Serialization context.</param>
+		/// <param name="element">SelfRelation instance to be serialized.</param>
+		/// <param name="writer">XmlWriter to write serialized data to.</param>        
+		protected virtual void WriteElements(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer)
+		{
+		}
+		#endregion
+	
+		#region Moniker Support
+		/// <summary>
+		/// This method calculates a moniker to a given SelfRelation instance.
+		/// </summary>
+		/// <param name="directory">Directory to look up serializer based on model element type.</param>
+		/// <param name="element">SelfRelation instance to calculate qualified name for.</param>
+		/// <returns>A fully qualified string moniker to the SelfRelation instance.</returns>
+		public override string CalculateQualifiedName(DslModeling::DomainXmlSerializerDirectory directory, DslModeling::ModelElement element)
+		{
+			#region Check Parameters
+			global::System.Diagnostics.Debug.Assert (directory != null);
+			if (directory == null)
+				throw new global::System.ArgumentNullException ("directory");
+			global::System.Diagnostics.Debug.Assert(element != null);
+			if (element == null)
+				throw new global::System.ArgumentNullException("element");
+			#endregion	
+			
+			SelfRelation instance = element as SelfRelation;
+			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of SelfRelation!");
+	
+			DslModeling::ModelElement container = instance.Entity;
+			if(container != null)
+			{
+				DslModeling::DomainClassXmlSerializer containerSerializer = directory.GetSerializer(container.GetDomainClass().Id);
+				global::System.Diagnostics.Debug.Assert(containerSerializer != null, "Cannot find serializer for " + container.GetDomainClass().Name + "!");
+				return containerSerializer.CalculateQualifiedName(directory, container);
+			}
+			else
+			{
+				return string.Empty;
+			}
+		}
+	
+		/// <summary>
+		/// A domain class can be monikerized in different ways: standard /qualifier/key mechanism, custom moniker, or element ID. If the domain class is serialized
+		/// using standard /qualifier/key mechanism, this method returns the qualifier of the moniker; if the domain class uses other ways for monikerization, this method
+		/// returns empty string.
+		/// </summary>
+		/// <param name="directory">Directory to look up serializer based on model element type.</param>
+		/// <param name="element">SelfRelation instance to get moniker qualifier from.</param>
+		/// <returns>
+		/// Value of this element's moniker qualifier property, if it has one, or the value of the container's moniker qualifier property. Or empty string if this
+		/// element is not monikerized using standard /qualifier/key mechanism.
+		/// </returns>
+		public override string GetMonikerQualifier(DslModeling::DomainXmlSerializerDirectory directory, DslModeling::ModelElement element)
+		{
+			#region Check Parameters
+			global::System.Diagnostics.Debug.Assert (directory != null);
+			if (directory == null)
+				throw new global::System.ArgumentNullException ("directory");
+			global::System.Diagnostics.Debug.Assert(element != null);
+			if (element == null)
+				throw new global::System.ArgumentNullException("element");
+			#endregion	
+			
+			SelfRelation instance = element as SelfRelation;
+			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of SelfRelation!");
 			DslModeling::ModelElement container = instance.Entity;
 			if(container != null)
 			{
@@ -7668,15 +8541,15 @@ namespace Worm.Designer
 namespace Worm.Designer
 {
 	/// <summary>
-	/// Serializer EntityReferencesSelfTargetEntitiesSerializer for DomainClass EntityReferencesSelfTargetEntities.
+	/// Serializer EntityHasSelfRelationsSerializer for DomainClass EntityHasSelfRelations.
 	/// </summary>
-	public partial class EntityReferencesSelfTargetEntitiesSerializer : DslModeling::DomainRelationshipXmlSerializer
+	public partial class EntityHasSelfRelationsSerializer : DslModeling::DomainRelationshipXmlSerializer
 	{
 		#region Constructor
 		/// <summary>
-		/// EntityReferencesSelfTargetEntitiesSerializer Constructor
+		/// EntityHasSelfRelationsSerializer Constructor
 		/// </summary>
-		public EntityReferencesSelfTargetEntitiesSerializer ()
+		public EntityHasSelfRelationsSerializer ()
 			: base ()
 		{
 		}
@@ -7684,12 +8557,12 @@ namespace Worm.Designer
 	
 		#region Public Properties
 		/// <summary>
-		/// This is the XML tag name used to serialize an instance of EntityReferencesSelfTargetEntities.
+		/// This is the XML tag name used to serialize an instance of EntityHasSelfRelations.
 		/// </summary>
 		public override string XmlTagName
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
-			get { return @"entityReferencesSelfTargetEntities"; }
+			get { return @"entityHasSelfRelations"; }
 		}
 	
 		/// <summary>
@@ -7713,16 +8586,16 @@ namespace Worm.Designer
 	
 		#region Read Methods
 		/// <summary>
-		/// Public Read() method that deserializes one EntityReferencesSelfTargetEntities instance from XML.
+		/// Public Read() method that deserializes one EntityHasSelfRelations instance from XML.
 		/// </summary>
 		/// <remarks>
 		/// When this method is called, caller guarantees that the passed-in XML reader is positioned at the open XML tag
-		/// of the EntityReferencesSelfTargetEntities element that is about to be deserialized. 
+		/// of the EntityHasSelfRelations element that is about to be deserialized. 
 		/// The method needs to ensure that when it returns, the reader is positioned at the open XML tag of the next sibling element,
 		/// or the close tag of the parent element (or EOF).
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">In-memory EntityReferencesSelfTargetEntities instance that will get the deserialized data.</param>
+		/// <param name="element">In-memory EntityHasSelfRelations instance that will get the deserialized data.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		public override void Read(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
 		{
@@ -7740,8 +8613,8 @@ namespace Worm.Designer
 			
 			// Read properties serialized as XML attributes.
 			ReadPropertiesFromAttributes(serializationContext, element, reader);
-	
-			// Read nested XML elements, which include at least the monikerized instance of target role-player SelfTargetEntity
+				
+			// Read nested XML elements, which include at least the instance of target role-player SelfRelation
 			if (!serializationContext.Result.Failed)
 			{
 				if (!reader.IsEmptyElement)
@@ -7749,7 +8622,7 @@ namespace Worm.Designer
 					// Read to the start of the first child element.
 					DslModeling::SerializationUtilities.SkipToFirstChild(reader);
 					
-					// Read target role-player SelfTargetEntity.
+					// Read target role-player SelfRelation.
 					ReadTargetRolePlayer(serializationContext, element, reader);
 	
 					// Read nested XML elements, they can be either properties serialized as XML elements, or child 
@@ -7767,7 +8640,7 @@ namespace Worm.Designer
 				}
 				else
 				{
-					DesignerSerializationBehaviorSerializationMessages.DanglingRelationship(serializationContext, reader, "EntityReferencesSelfTargetEntities");
+					DesignerSerializationBehaviorSerializationMessages.DanglingRelationship(serializationContext, reader, "EntityHasSelfRelations");
 				}
 			}
 	
@@ -7776,7 +8649,7 @@ namespace Worm.Designer
 		}
 	
 		/// <summary>
-		/// This method reads the target role player SelfTargetEntity.
+		/// This method reads the target role player SelfRelation.
 		/// </summary>
 		/// <remarks>
 		/// The caller will guarantee that the reader is positioned at the open tag of the first child XML element.
@@ -7790,7 +8663,7 @@ namespace Worm.Designer
 		/// 3) EOF.
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">In-memory EntityReferencesSelfTargetEntities instance that will link to the target Entity instance.</param>
+		/// <param name="element">In-memory EntityHasSelfRelations instance that will link to the target SelfRelation instance.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		protected virtual void ReadTargetRolePlayer(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
 		{
@@ -7806,29 +8679,31 @@ namespace Worm.Designer
 				throw new global::System.ArgumentNullException ("reader");
 			#endregion
 	
-			// Read the monikerized instance of target role-player SelfTargetEntity
-			DslModeling::Moniker targetRoleMoniker = null;
-			DslModeling::DomainClassXmlSerializer targetRoleSerializer = serializationContext.Directory.GetSerializer(Entity.DomainClassId);
-			global::System.Diagnostics.Debug.Assert(targetRoleSerializer != null, "Cannot find serializer for Entity!");
+			// Read the instance of target role-player SelfRelation
+			DslModeling::ModelElement targetRolePlayer = null;
+			DslModeling::DomainClassXmlSerializer targetRoleSerializer = serializationContext.Directory.GetSerializer(SelfRelation.DomainClassId);
+			global::System.Diagnostics.Debug.Assert(targetRoleSerializer != null, "Cannot find serializer for SelfRelation!");
 	
 			while (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
 			{
-				targetRoleMoniker = targetRoleSerializer.TryCreateMonikerInstance(serializationContext, reader, ((EntityReferencesSelfTargetEntities)element).SelfSourceEntity, EntityReferencesSelfTargetEntities.DomainClassId, element.Partition);
-				if (targetRoleMoniker != null)
+				targetRolePlayer = targetRoleSerializer.TryCreateInstance(serializationContext, reader, element.Partition);
+				if (targetRolePlayer != null)
 				{
-					// Attach the target role-player moniker.
-					DslModeling::DomainRoleInfo.SetRolePlayerMoniker (element as DslModeling::ElementLink, EntityReferencesSelfTargetEntities.SelfTargetEntityDomainRoleId, targetRoleMoniker);
-					// Moniker tag has no child XML elements in it, so just skip to the next element.
-					DslModeling::SerializationUtilities.Skip(reader);
+					// Attach the target role-player.
+					DslModeling::DomainRoleInfo.SetRolePlayer(element as DslModeling::ElementLink, EntityHasSelfRelations.SelfRelationDomainRoleId, targetRolePlayer);
+					// Read target role-player.
+					DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer (targetRolePlayer.GetDomainClass().Id);	
+					global::System.Diagnostics.Debug.Assert (targetSerializer != null, "Cannot find serializer for " + targetRolePlayer.GetDomainClass().Name + "!");
+					targetSerializer.Read(serializationContext, targetRolePlayer, reader);
 					break;
 				}
 				// Encountered one unknown XML element, skip it and keep reading.
 				DesignerSerializationBehaviorSerializationMessages.UnexpectedXmlElement(serializationContext, reader);
 				DslModeling::SerializationUtilities.Skip(reader);
 			}
-			if (targetRoleMoniker == null)
+			if (targetRolePlayer == null)
 			{
-				DesignerSerializationBehaviorSerializationMessages.DanglingRelationship(serializationContext, reader, "EntityReferencesSelfTargetEntities");
+				DesignerSerializationBehaviorSerializationMessages.DanglingRelationship(serializationContext, reader, "EntityHasSelfRelations");
 			}
 		}
 	
@@ -7840,167 +8715,12 @@ namespace Worm.Designer
 		/// The caller will guarantee that the reader is positioned on the open XML tag of the current element being deserialized.
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">In-memory EntityReferencesSelfTargetEntities instance that will get the deserialized data.</param>
+		/// <param name="element">In-memory EntityHasSelfRelations instance that will get the deserialized data.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Generated code.")]
 		protected virtual void ReadPropertiesFromAttributes(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
 		{
-			EntityReferencesSelfTargetEntities instanceOfEntityReferencesSelfTargetEntities = element as EntityReferencesSelfTargetEntities;
-			global::System.Diagnostics.Debug.Assert(instanceOfEntityReferencesSelfTargetEntities != null, "Expecting an instance of EntityReferencesSelfTargetEntities");
-	
-			// DirectFieldName
-			if (!serializationContext.Result.Failed)
-			{
-				string attribDirectFieldName = reader.GetAttribute("directFieldName");
-				if (attribDirectFieldName != null)
-				{
-					global::System.String valueOfDirectFieldName;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectFieldName), out valueOfDirectFieldName))
-					{
-						instanceOfEntityReferencesSelfTargetEntities.DirectFieldName = valueOfDirectFieldName;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directFieldName", typeof(global::System.String), attribDirectFieldName);
-					}
-				}
-			}
-			// DirectAccessor
-			if (!serializationContext.Result.Failed)
-			{
-				string attribDirectAccessor = reader.GetAttribute("directAccessor");
-				if (attribDirectAccessor != null)
-				{
-					global::System.String valueOfDirectAccessor;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectAccessor), out valueOfDirectAccessor))
-					{
-						instanceOfEntityReferencesSelfTargetEntities.DirectAccessor = valueOfDirectAccessor;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directAccessor", typeof(global::System.String), attribDirectAccessor);
-					}
-				}
-			}
-			// DirectCascadeDelete
-			if (!serializationContext.Result.Failed)
-			{
-				string attribDirectCascadeDelete = reader.GetAttribute("directCascadeDelete");
-				if (attribDirectCascadeDelete != null)
-				{
-					global::System.Boolean valueOfDirectCascadeDelete;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectCascadeDelete), out valueOfDirectCascadeDelete))
-					{
-						instanceOfEntityReferencesSelfTargetEntities.DirectCascadeDelete = valueOfDirectCascadeDelete;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directCascadeDelete", typeof(global::System.Boolean), attribDirectCascadeDelete);
-					}
-				}
-			}
-			// ReverseFieldName
-			if (!serializationContext.Result.Failed)
-			{
-				string attribReverseFieldName = reader.GetAttribute("reverseFieldName");
-				if (attribReverseFieldName != null)
-				{
-					global::System.String valueOfReverseFieldName;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseFieldName), out valueOfReverseFieldName))
-					{
-						instanceOfEntityReferencesSelfTargetEntities.ReverseFieldName = valueOfReverseFieldName;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseFieldName", typeof(global::System.String), attribReverseFieldName);
-					}
-				}
-			}
-			// ReverseAccessor
-			if (!serializationContext.Result.Failed)
-			{
-				string attribReverseAccessor = reader.GetAttribute("reverseAccessor");
-				if (attribReverseAccessor != null)
-				{
-					global::System.String valueOfReverseAccessor;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseAccessor), out valueOfReverseAccessor))
-					{
-						instanceOfEntityReferencesSelfTargetEntities.ReverseAccessor = valueOfReverseAccessor;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseAccessor", typeof(global::System.String), attribReverseAccessor);
-					}
-				}
-			}
-			// ReverseCascadeDelete
-			if (!serializationContext.Result.Failed)
-			{
-				string attribReverseCascadeDelete = reader.GetAttribute("reverseCascadeDelete");
-				if (attribReverseCascadeDelete != null)
-				{
-					global::System.Boolean valueOfReverseCascadeDelete;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseCascadeDelete), out valueOfReverseCascadeDelete))
-					{
-						instanceOfEntityReferencesSelfTargetEntities.ReverseCascadeDelete = valueOfReverseCascadeDelete;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseCascadeDelete", typeof(global::System.Boolean), attribReverseCascadeDelete);
-					}
-				}
-			}
-			// Table
-			if (!serializationContext.Result.Failed)
-			{
-				string attribTable = reader.GetAttribute("table");
-				if (attribTable != null)
-				{
-					global::System.String valueOfTable;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribTable), out valueOfTable))
-					{
-						instanceOfEntityReferencesSelfTargetEntities.Table = valueOfTable;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "table", typeof(global::System.String), attribTable);
-					}
-				}
-			}
-			// UnderlyingEntity
-			if (!serializationContext.Result.Failed)
-			{
-				string attribUnderlyingEntity = reader.GetAttribute("underlyingEntity");
-				if (attribUnderlyingEntity != null)
-				{
-					global::System.String valueOfUnderlyingEntity;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribUnderlyingEntity), out valueOfUnderlyingEntity))
-					{
-						instanceOfEntityReferencesSelfTargetEntities.UnderlyingEntity = valueOfUnderlyingEntity;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "underlyingEntity", typeof(global::System.String), attribUnderlyingEntity);
-					}
-				}
-			}
-			// Disabled
-			if (!serializationContext.Result.Failed)
-			{
-				string attribDisabled = reader.GetAttribute("disabled");
-				if (attribDisabled != null)
-				{
-					global::System.Boolean valueOfDisabled;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
-					{
-						instanceOfEntityReferencesSelfTargetEntities.Disabled = valueOfDisabled;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.Boolean), attribDisabled);
-					}
-				}
-			}
+			// There is no property to read; do nothing
 		}
 	
 		/// <summary>
@@ -8017,7 +8737,7 @@ namespace Worm.Designer
 		/// 3) EOF.
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">In-memory EntityReferencesSelfTargetEntities instance that will get the deserialized data.</param>
+		/// <param name="element">In-memory EntityHasSelfRelations instance that will get the deserialized data.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		protected virtual void ReadElements(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
 		{
@@ -8025,8 +8745,8 @@ namespace Worm.Designer
 	
 		#region TryCreateInstance & TryCreateDerivedInstance
 		/// <summary>
-		/// This method creates a correct instance of EntityReferencesSelfTargetEntities based on the tag currently pointed by the reader. If the reader
-		/// is positioned at a serialized EntityReferencesSelfTargetEntities, a new EntityReferencesSelfTargetEntities instance will be created in the given partition, otherwise 
+		/// This method creates a correct instance of EntityHasSelfRelations based on the tag currently pointed by the reader. If the reader
+		/// is positioned at a serialized EntityHasSelfRelations, a new EntityHasSelfRelations instance will be created in the given partition, otherwise 
 		/// null is returned.
 		/// </summary>
 		/// <remarks>
@@ -8036,7 +8756,7 @@ namespace Worm.Designer
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		/// <param name="partition">Partition in which new elements should be created.</param>	
-		/// <returns>Created EntityReferencesSelfTargetEntities instance, or null if the reader is not pointing to a serialized EntityReferencesSelfTargetEntities instance.</returns>
+		/// <returns>Created EntityHasSelfRelations instance, or null if the reader is not pointing to a serialized EntityHasSelfRelations instance.</returns>
 		public override DslModeling::ModelElement TryCreateInstance(DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::Partition partition)
 		{
 			#region Check Parameters
@@ -8055,9 +8775,9 @@ namespace Worm.Designer
 		}
 	
 		/// <summary>
-		/// This method creates a correct derived instance of EntityReferencesSelfTargetEntities based on the tag currently pointed by the reader.
+		/// This method creates a correct derived instance of EntityHasSelfRelations based on the tag currently pointed by the reader.
 		/// Note that the difference between this method and the above one is that this method will never create an instance of the
-		/// EntityReferencesSelfTargetEntities type itself, only derived types are checked.
+		/// EntityHasSelfRelations type itself, only derived types are checked.
 		/// </summary>
 		/// <remarks>
 		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
@@ -8066,7 +8786,7 @@ namespace Worm.Designer
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		/// <param name="partition">Partition in which new elements should be created.</param>
-		/// <returns>Created instance that derives from EntityReferencesSelfTargetEntities, or null if the reader is not pointing to such a serialized instance.</returns>
+		/// <returns>Created instance that derives from EntityHasSelfRelations, or null if the reader is not pointing to such a serialized instance.</returns>
 		public override DslModeling::ElementLink TryCreateDerivedInstance (DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::Partition partition)
 		{
 			#region Check Parameters
@@ -8098,18 +8818,18 @@ namespace Worm.Designer
 			{
 				string localName = reader.LocalName;
 				if (!derivedTypesOnly && string.Compare (localName, this.XmlTagName, global::System.StringComparison.CurrentCulture) == 0)
-				{	// New "EntityReferencesSelfTargetEntities" instance.
+				{	// New "EntityHasSelfRelations" instance.
 					result = this.CreateInstance(serializationContext, reader, partition);
 				}
 				else
-				{	// Check for derived classes of "EntityReferencesSelfTargetEntities".
+				{	// Check for derived classes of "EntityHasSelfRelations".
 					if (this.derivedClasses == null)
 						this.ConstructDerivedClassesLookupTable(serializationContext, partition.DomainDataDirectory);
 					global::System.Diagnostics.Debug.Assert (this.derivedClasses != null);
 					DslModeling::DomainClassInfo derivedClass = null;
 					if (this.derivedClasses.TryGetValue (localName, out derivedClass) && derivedClass != null)
 					{	// New derived relationship instance.
-						EntityReferencesSelfTargetEntitiesSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as EntityReferencesSelfTargetEntitiesSerializer;
+						EntityHasSelfRelationsSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as EntityHasSelfRelationsSerializer;
 						global::System.Diagnostics.Debug.Assert(derivedSerializer != null, "Cannot find serializer for " + derivedClass.Name + "!");
 						result = derivedSerializer.CreateInstance(serializationContext, reader, partition);
 					}
@@ -8120,8 +8840,8 @@ namespace Worm.Designer
 		}
 	
 		/// <summary>
-		/// This method creates an instance of EntityReferencesSelfTargetEntities based on the tag currently pointed by the reader. The reader is guaranteed (by the caller)
-		/// to be pointed at a serialized instance of EntityReferencesSelfTargetEntities.
+		/// This method creates an instance of EntityHasSelfRelations based on the tag currently pointed by the reader. The reader is guaranteed (by the caller)
+		/// to be pointed at a serialized instance of EntityHasSelfRelations.
 		/// </summary>
 		/// <remarks>
 		/// The caller will guarantee that the reader is positioned at open XML tag of the ModelRoot instance being read. This method should
@@ -8129,25 +8849,25 @@ namespace Worm.Designer
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
-		/// <param name="partition">Partition in which new EntityReferencesSelfTargetEntities instance should be created.</param>	
-		/// <returns>Created EntityReferencesSelfTargetEntities instance.</returns>
+		/// <param name="partition">Partition in which new EntityHasSelfRelations instance should be created.</param>	
+		/// <returns>Created EntityHasSelfRelations instance.</returns>
 		protected override DslModeling::ModelElement CreateInstance(DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::Partition partition)
 		{
 			// Create the link with place-holder role-players.
-			return new EntityReferencesSelfTargetEntities(
+			return new EntityHasSelfRelations(
 				partition,
-				DslModeling::RoleAssignment.CreatePlaceholderRoleAssignment (EntityReferencesSelfTargetEntities.SelfSourceEntityDomainRoleId), 
-				DslModeling::RoleAssignment.CreatePlaceholderRoleAssignment (EntityReferencesSelfTargetEntities.SelfTargetEntityDomainRoleId)
+				DslModeling::RoleAssignment.CreatePlaceholderRoleAssignment (EntityHasSelfRelations.EntityDomainRoleId), 
+				DslModeling::RoleAssignment.CreatePlaceholderRoleAssignment (EntityHasSelfRelations.SelfRelationDomainRoleId)
 			);
 		}
 	
 		/// <summary>
-		/// Stores a mapping from XmlTagName to DomainClassInfo that derives from EntityReferencesSelfTargetEntities, created on demand.
+		/// Stores a mapping from XmlTagName to DomainClassInfo that derives from EntityHasSelfRelations, created on demand.
 		/// </summary>
 		private global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> derivedClasses;
 	
 		/// <summary>
-		/// Construct the apping from XmlTagName to DomainClassInfo that derives from EntityReferencesSelfTargetEntities.
+		/// Construct the apping from XmlTagName to DomainClassInfo that derives from EntityHasSelfRelations.
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="domainDataDirectory">DomainDataDirectory to be used to discover all derived classes.</param>
@@ -8156,7 +8876,7 @@ namespace Worm.Designer
 			global::System.Diagnostics.Debug.Assert(this.derivedClasses == null); // Shouldn't construct the table more than once.
 			this.derivedClasses = new global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> (global::System.StringComparer.CurrentCulture);
 	
-			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(EntityReferencesSelfTargetEntities.DomainClassId);
+			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(EntityHasSelfRelations.DomainClassId);
 			global::System.Diagnostics.Debug.Assert(thisClass != null, "Cannot find DomainClassInfo for ModelRoot!");
 	
 			global::System.Collections.ObjectModel.ReadOnlyCollection<DslModeling::DomainClassInfo> descendents = thisClass.AllDescendants;
@@ -8188,7 +8908,7 @@ namespace Worm.Designer
 	
 		#region TryCreateMonikerInstance
 		/// <summary>
-		/// This method creates a Moniker of the correct derived (including EntityReferencesSelfTargetEntities itself) instance of EntityReferencesSelfTargetEntities based on the tag currently pointed by the reader.
+		/// This method creates a Moniker of the correct derived (including EntityHasSelfRelations itself) instance of EntityHasSelfRelations based on the tag currently pointed by the reader.
 		/// </summary>
 		/// <remarks>
 		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
@@ -8222,18 +8942,18 @@ namespace Worm.Designer
 			{
 				string localName = reader.LocalName;
 				if (string.Compare (localName, this.MonikerTagName, global::System.StringComparison.CurrentCulture) == 0)
-				{	// New "EntityReferencesSelfTargetEntities" moniker instance.
+				{	// New "EntityHasSelfRelations" moniker instance.
 					result = this.CreateMonikerInstance(serializationContext, reader, sourceRolePlayer, relDomainClassId, partition);
 				}
 				else
-				{	// Check for derived classes of "EntityReferencesSelfTargetEntities".
+				{	// Check for derived classes of "EntityHasSelfRelations".
 					if (this.derivedClassMonikers == null)
 						this.ConstructDerivedClassMonikersLookupTable(serializationContext, partition.DomainDataDirectory);
 					global::System.Diagnostics.Debug.Assert(this.derivedClassMonikers != null);
 					DslModeling::DomainClassInfo derivedClass = null;
 					if (this.derivedClassMonikers.TryGetValue (localName, out derivedClass) && derivedClass != null)
 					{	// New derived class moniker instance.
-						EntityReferencesSelfTargetEntitiesSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as EntityReferencesSelfTargetEntitiesSerializer;
+						EntityHasSelfRelationsSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as EntityHasSelfRelationsSerializer;
 						global::System.Diagnostics.Debug.Assert(derivedSerializer != null, "Cannot find serializer for " + derivedClass.Name + "!");
 						result = derivedSerializer.CreateMonikerInstance(serializationContext, reader, sourceRolePlayer, relDomainClassId, partition);
 					}
@@ -8244,7 +8964,7 @@ namespace Worm.Designer
 		}
 		
 		/// <summary>
-		/// This method creates a Moniker of EntityReferencesSelfTargetEntities based on the tag currently pointed by the reader.
+		/// This method creates a Moniker of EntityHasSelfRelations based on the tag currently pointed by the reader.
 		/// </summary>
 		/// <remarks>
 		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
@@ -8263,12 +8983,12 @@ namespace Worm.Designer
 		}
 	
 		/// <summary>
-		/// Stores a mapping from Moniker Xml tag name to DomainClassInfo that derives from EntityReferencesSelfTargetEntities, created on demand.
+		/// Stores a mapping from Moniker Xml tag name to DomainClassInfo that derives from EntityHasSelfRelations, created on demand.
 		/// </summary>
 		private global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> derivedClassMonikers;
 	
 		/// <summary>
-		/// Construct the mapping from Moniker Xml tag name to DomainClassInfo that derives from EntityReferencesSelfTargetEntities.
+		/// Construct the mapping from Moniker Xml tag name to DomainClassInfo that derives from EntityHasSelfRelations.
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="domainDataDirectory">DomainDataDirectory to be used to discover all derived classes.</param>
@@ -8277,7 +8997,7 @@ namespace Worm.Designer
 			global::System.Diagnostics.Debug.Assert(this.derivedClassMonikers == null); // Shouldn't construct the table more than once.
 			this.derivedClassMonikers = new global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> (global::System.StringComparer.CurrentCulture);
 	
-			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(EntityReferencesSelfTargetEntities.DomainClassId);
+			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(EntityHasSelfRelations.DomainClassId);
 			global::System.Diagnostics.Debug.Assert(thisClass != null, "Cannot find DomainClassInfo for ModelRoot!");
 	
 			global::System.Collections.ObjectModel.ReadOnlyCollection<DslModeling::DomainClassInfo> descendents = thisClass.AllDescendants;
@@ -8303,24 +9023,24 @@ namespace Worm.Designer
 	
 		#region Write Methods
 		/// <summary>
-		/// Public WriteMoniker() method that writes a monikerized EntityReferencesSelfTargetEntities instance into XML.
+		/// Public WriteMoniker() method that writes a monikerized EntityHasSelfRelations instance into XML.
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">EntityReferencesSelfTargetEntities instance to be monikerized.</param>
+		/// <param name="element">EntityHasSelfRelations instance to be monikerized.</param>
 		/// <param name="writer">XmlWriter to write serialized data to.</param>
-		/// <param name="sourceRolePlayer">Source element that references the EntityReferencesSelfTargetEntities instance being monikerized.</param>
-		/// <param name="relSerializer">Serializer that handles the relationship connecting the source element to the EntityReferencesSelfTargetEntities instance being monikerized.</param>
+		/// <param name="sourceRolePlayer">Source element that references the EntityHasSelfRelations instance being monikerized.</param>
+		/// <param name="relSerializer">Serializer that handles the relationship connecting the source element to the EntityHasSelfRelations instance being monikerized.</param>
 		public override void WriteMoniker(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer, DslModeling::ModelElement sourceRolePlayer, DslModeling::DomainRelationshipXmlSerializer relSerializer)
 		{
-			// Instance of EntityReferencesSelfTargetEntities cannot be monikerized.
-			DesignerSerializationBehaviorSerializationMessages.CannotMonikerizeElement(serializationContext, "EntityReferencesSelfTargetEntities");
+			// Instance of EntityHasSelfRelations cannot be monikerized.
+			DesignerSerializationBehaviorSerializationMessages.CannotMonikerizeElement(serializationContext, "EntityHasSelfRelations");
 		}
 		
 		/// <summary>
-		/// Public Write() method that serializes one EntityReferencesSelfTargetEntities instance into XML.
+		/// Public Write() method that serializes one EntityHasSelfRelations instance into XML.
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">EntityReferencesSelfTargetEntities instance to be serialized.</param>
+		/// <param name="element">EntityHasSelfRelations instance to be serialized.</param>
 		/// <param name="writer">XmlWriter to write serialized data to.</param>
 		/// <param name="rootElementSettings">
 		/// The root element settings if the passed in element is serialized as a root element in the XML. The root element contains additional
@@ -8330,157 +9050,26 @@ namespace Worm.Designer
 		/// </param>
 		public override void Write(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer, DslModeling::RootElementSettings rootElementSettings)
 		{
-			#region Check Parameters
-			global::System.Diagnostics.Debug.Assert (serializationContext != null);
-			if (serializationContext == null)
-				throw new global::System.ArgumentNullException ("serializationContext");
-			global::System.Diagnostics.Debug.Assert (element != null);
-			if (element == null)
-				throw new global::System.ArgumentNullException ("element");
-			global::System.Diagnostics.Debug.Assert (writer != null);
-			if (writer == null)
-				throw new global::System.ArgumentNullException ("writer");
-			#endregion
-	
-			// Write start of element, including schema target namespace if specified.
-			if (rootElementSettings != null && !string.IsNullOrEmpty(rootElementSettings.SchemaTargetNamespace))
-				writer.WriteStartElement(this.XmlTagName, rootElementSettings.SchemaTargetNamespace);
-			else
-				writer.WriteStartElement(this.XmlTagName);
-				
-			// Write version info (in the format 1.2.3.4), if necessary
-			if (rootElementSettings != null && rootElementSettings.Version != null)
-				writer.WriteAttributeString("dslVersion", rootElementSettings.Version.ToString(4));
-	
-			WritePropertiesAsAttributes(serializationContext, element, writer);
-	
-			// Write the target role-player instance.
-			EntityReferencesSelfTargetEntities instance = element as EntityReferencesSelfTargetEntities;
-			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of EntityReferencesSelfTargetEntities!");
-	
-			DslModeling::ModelElement targetElement = instance.SelfTargetEntity;
-			DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer(targetElement.GetDomainClass().Id);
-			global::System.Diagnostics.Debug.Assert(targetSerializer != null, "Cannot find serializer for " + targetElement.GetDomainClass().Name + "!");
-			targetSerializer.WriteMoniker(serializationContext, targetElement, writer, instance.SelfSourceEntity, this);
-	
-			if (!serializationContext.Result.Failed)
-			{
-				// Write 1) properties serialized as nested XML elements and 2) child model elements into XML.
-				WriteElements(serializationContext, element, writer);
-			}
-	
-			writer.WriteEndElement();
+			throw new global::System.NotSupportedException();
 		}
 	
 		/// <summary>
 		/// Write all properties that need to be serialized as XML attributes.
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">EntityReferencesSelfTargetEntities instance to be serialized.</param>
+		/// <param name="element">EntityHasSelfRelations instance to be serialized.</param>
 		/// <param name="writer">XmlWriter to write serialized data to.</param> 
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Generated code.")]
 		protected virtual void WritePropertiesAsAttributes(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer)
 		{
-			EntityReferencesSelfTargetEntities instanceOfEntityReferencesSelfTargetEntities = element as EntityReferencesSelfTargetEntities;
-			global::System.Diagnostics.Debug.Assert(instanceOfEntityReferencesSelfTargetEntities != null, "Expecting an instance of EntityReferencesSelfTargetEntities");
-	
-			// DirectFieldName
-			if (!serializationContext.Result.Failed)
-			{
-				global::System.String propValue = instanceOfEntityReferencesSelfTargetEntities.DirectFieldName;
-				if (!serializationContext.Result.Failed)
-				{
-					if (!string.IsNullOrEmpty(propValue))
-						writer.WriteAttributeString("directFieldName", propValue);
-				}
-			}
-			// DirectAccessor
-			if (!serializationContext.Result.Failed)
-			{
-				global::System.String propValue = instanceOfEntityReferencesSelfTargetEntities.DirectAccessor;
-				if (!serializationContext.Result.Failed)
-				{
-					if (!string.IsNullOrEmpty(propValue))
-						writer.WriteAttributeString("directAccessor", propValue);
-				}
-			}
-			// DirectCascadeDelete
-			if (!serializationContext.Result.Failed)
-			{
-				global::System.Boolean propValue = instanceOfEntityReferencesSelfTargetEntities.DirectCascadeDelete;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
-				if (!serializationContext.Result.Failed)
-				{
-					writer.WriteAttributeString("directCascadeDelete", serializedPropValue);
-				}
-			}
-			// ReverseFieldName
-			if (!serializationContext.Result.Failed)
-			{
-				global::System.String propValue = instanceOfEntityReferencesSelfTargetEntities.ReverseFieldName;
-				if (!serializationContext.Result.Failed)
-				{
-					if (!string.IsNullOrEmpty(propValue))
-						writer.WriteAttributeString("reverseFieldName", propValue);
-				}
-			}
-			// ReverseAccessor
-			if (!serializationContext.Result.Failed)
-			{
-				global::System.String propValue = instanceOfEntityReferencesSelfTargetEntities.ReverseAccessor;
-				if (!serializationContext.Result.Failed)
-				{
-					if (!string.IsNullOrEmpty(propValue))
-						writer.WriteAttributeString("reverseAccessor", propValue);
-				}
-			}
-			// ReverseCascadeDelete
-			if (!serializationContext.Result.Failed)
-			{
-				global::System.Boolean propValue = instanceOfEntityReferencesSelfTargetEntities.ReverseCascadeDelete;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
-				if (!serializationContext.Result.Failed)
-				{
-					writer.WriteAttributeString("reverseCascadeDelete", serializedPropValue);
-				}
-			}
-			// Table
-			if (!serializationContext.Result.Failed)
-			{
-				global::System.String propValue = instanceOfEntityReferencesSelfTargetEntities.Table;
-				if (!serializationContext.Result.Failed)
-				{
-					if (!string.IsNullOrEmpty(propValue))
-						writer.WriteAttributeString("table", propValue);
-				}
-			}
-			// UnderlyingEntity
-			if (!serializationContext.Result.Failed)
-			{
-				global::System.String propValue = instanceOfEntityReferencesSelfTargetEntities.UnderlyingEntity;
-				if (!serializationContext.Result.Failed)
-				{
-					if (!string.IsNullOrEmpty(propValue))
-						writer.WriteAttributeString("underlyingEntity", propValue);
-				}
-			}
-			// Disabled
-			if (!serializationContext.Result.Failed)
-			{
-				global::System.Boolean propValue = instanceOfEntityReferencesSelfTargetEntities.Disabled;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
-				if (!serializationContext.Result.Failed)
-				{
-					writer.WriteAttributeString("disabled", serializedPropValue);
-				}
-			}
+			// There are no properties; do nothing
 		}
 	
 		/// <summary>
 		/// This methods serializes 1) properties serialized as nested XML elements and 2) child model elements into XML. 
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">EntityReferencesSelfTargetEntities instance to be serialized.</param>
+		/// <param name="element">EntityHasSelfRelations instance to be serialized.</param>
 		/// <param name="writer">XmlWriter to write serialized data to.</param>        
 		protected virtual void WriteElements(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer)
 		{
@@ -8489,11 +9078,11 @@ namespace Worm.Designer
 	
 		#region Moniker Support
 		/// <summary>
-		/// This method calculates a moniker to a given EntityReferencesSelfTargetEntities instance.
+		/// This method calculates a moniker to a given EntityHasSelfRelations instance.
 		/// </summary>
 		/// <param name="directory">Directory to look up serializer based on model element type.</param>
-		/// <param name="element">EntityReferencesSelfTargetEntities instance to calculate qualified name for.</param>
-		/// <returns>A fully qualified string moniker to the EntityReferencesSelfTargetEntities instance.</returns>
+		/// <param name="element">EntityHasSelfRelations instance to calculate qualified name for.</param>
+		/// <returns>A fully qualified string moniker to the EntityHasSelfRelations instance.</returns>
 		public override string CalculateQualifiedName(DslModeling::DomainXmlSerializerDirectory directory, DslModeling::ModelElement element)
 		{
 			#region Check Parameters
@@ -8505,10 +9094,10 @@ namespace Worm.Designer
 				throw new global::System.ArgumentNullException("element");
 			#endregion	
 			
-			EntityReferencesSelfTargetEntities instance = element as EntityReferencesSelfTargetEntities;
-			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of EntityReferencesSelfTargetEntities!");
+			EntityHasSelfRelations instance = element as EntityHasSelfRelations;
+			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of EntityHasSelfRelations!");
 	
-			DslModeling::ModelElement container = instance.SelfSourceEntity;
+			DslModeling::ModelElement container = instance.Entity;
 			if(container != null)
 			{
 				DslModeling::DomainClassXmlSerializer containerSerializer = directory.GetSerializer(container.GetDomainClass().Id);
@@ -8527,7 +9116,7 @@ namespace Worm.Designer
 		/// returns empty string.
 		/// </summary>
 		/// <param name="directory">Directory to look up serializer based on model element type.</param>
-		/// <param name="element">EntityReferencesSelfTargetEntities instance to get moniker qualifier from.</param>
+		/// <param name="element">EntityHasSelfRelations instance to get moniker qualifier from.</param>
 		/// <returns>
 		/// Value of this element's moniker qualifier property, if it has one, or the value of the container's moniker qualifier property. Or empty string if this
 		/// element is not monikerized using standard /qualifier/key mechanism.
@@ -8543,9 +9132,9 @@ namespace Worm.Designer
 				throw new global::System.ArgumentNullException("element");
 			#endregion	
 			
-			EntityReferencesSelfTargetEntities instance = element as EntityReferencesSelfTargetEntities;
-			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of EntityReferencesSelfTargetEntities!");
-			DslModeling::ModelElement container = instance.SelfSourceEntity;
+			EntityHasSelfRelations instance = element as EntityHasSelfRelations;
+			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of EntityHasSelfRelations!");
+			DslModeling::ModelElement container = instance.Entity;
 			if(container != null)
 			{
 				DslModeling::DomainClassXmlSerializer containerSerializer = directory.GetSerializer(container.GetDomainClass().Id);
@@ -8556,97 +9145,6 @@ namespace Worm.Designer
 			{
 				return string.Empty;
 			}
-		}
-		#endregion
-	
-		#region Monikerization Support
-		/// <summary>
-		/// Calculates a Moniker, given a reference to a Entity
-		/// </summary>
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="sourceElement">Instance of Entity that contains the given serialized reference</param>
-		/// <param name="domainClassId">DomainClassId of the model element that the given moniker string will be resolved to.</param>
-		/// <param name="monikerString">Serialized string reference to an instance of Entity</param>
-		/// <param name="store">Store where the Moniker will be created</param>
-		/// <returns>A Moniker encapsulating the serialized string reference of Entity instance</returns>
-		public override DslModeling::Moniker MonikerizeReference(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement sourceElement, global::System.Guid domainClassId, string monikerString, DslModeling::Store store)
-		{
-			#region Check Parameters
-			global::System.Diagnostics.Debug.Assert(serializationContext != null);
-			if (serializationContext == null)
-				throw new global::System.ArgumentNullException("serializationContext");
-			global::System.Diagnostics.Debug.Assert(sourceElement != null);
-			if (sourceElement == null)
-				throw new global::System.ArgumentNullException ("sourceElement");
-			global::System.Diagnostics.Debug.Assert (sourceElement is Entity, "Expecting an instance of Entity!");
-			global::System.Diagnostics.Debug.Assert (!string.IsNullOrEmpty (monikerString));
-			if (string.IsNullOrEmpty (monikerString))
-				throw new global::System.ArgumentNullException ("monikerString");
-			global::System.Diagnostics.Debug.Assert(store != null);
-			if (store == null)
-				throw new global::System.ArgumentNullException ("store");
-			#endregion
-			
-			DslModeling::MonikerKey key = null;
-			if (DslModeling::SimpleMonikerResolver.IsFullyQualified(monikerString))
-			{
-				key = new DslModeling::MonikerKey(monikerString, EntityReferencesSelfTargetEntities.DomainClassId, domainClassId, store);
-			}
-			else
-			{
-				DslModeling::DomainClassXmlSerializer sourceSerializer = serializationContext.Directory.GetSerializer(sourceElement.GetDomainClass().Id);
-				global::System.Diagnostics.Debug.Assert(sourceSerializer != null, "Cannot find serializer for " + sourceElement.GetDomainClass().Name + "!");
-				string sourceQualifier = sourceSerializer.GetMonikerQualifier(serializationContext.Directory, sourceElement);
-				key = new DslModeling::MonikerKey(string.Format(global::System.Globalization.CultureInfo.CurrentCulture, "{0}/{1}", sourceQualifier, monikerString), EntityReferencesSelfTargetEntities.DomainClassId, domainClassId, store);
-			}
-			return new DslModeling::Moniker(key, store);
-		}
-	
-		/// <summary>
-		/// Calculates a monikerized string reference to a Entity.
-		/// </summary>
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="sourceElement">Source side of reference relationship. The referenced target element will be serialized.</param>
-		/// <param name="targetElement">Target side of relationship that will be serialized.</param>
-		/// <returns>A monikerized string reference to target element.</returns>		
-		public override string SerializeReference(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement sourceElement, DslModeling::ModelElement targetElement)
-		{
-			#region Check Parameters
-			global::System.Diagnostics.Debug.Assert(serializationContext != null);
-			if (serializationContext == null)
-				throw new global::System.ArgumentNullException("serializationContext");
-			global::System.Diagnostics.Debug.Assert(sourceElement != null);
-			if (sourceElement == null)
-				throw new global::System.ArgumentNullException ("sourceElement");
-			global::System.Diagnostics.Debug.Assert (sourceElement is Entity, "Expecting an instance of Entity!");
-			global::System.Diagnostics.Debug.Assert(targetElement != null);
-			if (targetElement == null)
-				throw new global::System.ArgumentNullException ("targetElement");
-			global::System.Diagnostics.Debug.Assert (targetElement is Entity, "Expecting an instance of Entity!");
-			#endregion
-			
-			// full form reference
-			DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer(targetElement.GetDomainClass().Id);
-			global::System.Diagnostics.Debug.Assert(targetSerializer != null, "Cannot find serializer for " + targetElement.GetDomainClass().Name + "!");
-			string targetMoniker = targetSerializer.CalculateQualifiedName(serializationContext.Directory, targetElement);
-			string targetQualifier = targetSerializer.GetMonikerQualifier(serializationContext.Directory, targetElement);
-			
-			if (!string.IsNullOrEmpty(targetQualifier))
-			{
-				DslModeling::DomainClassXmlSerializer sourceSerializer = serializationContext.Directory.GetSerializer(sourceElement.GetDomainClass().Id);
-				global::System.Diagnostics.Debug.Assert(sourceSerializer != null, "Cannot find serializer for " + sourceElement.GetDomainClass().Name + "!");
-				string sourceQualifier = sourceSerializer.GetMonikerQualifier(serializationContext.Directory, sourceElement);
-				if (string.Compare(targetQualifier, sourceQualifier, global::System.StringComparison.CurrentCulture) == 0)
-				{
-					// See if we can create a short form reference by omitting the qualifier
-					global::System.Diagnostics.Debug.Assert(targetMoniker.StartsWith(targetQualifier + "/", global::System.StringComparison.CurrentCulture));
-					string shortFormTargetMoniker = targetMoniker.Substring(targetQualifier.Length + 1);
-					if (!DslModeling::SimpleMonikerResolver.IsFullyQualified(shortFormTargetMoniker))
-						targetMoniker = shortFormTargetMoniker;
-				}
-			}
-	
-			return targetMoniker;
 		}
 		#endregion
 		
@@ -8669,7 +9167,7 @@ namespace Worm.Designer
 		{
 			get
 			{
-				return true;
+				return false;
 			}
 		}
 		#endregion
@@ -9679,477 +10177,6 @@ namespace Worm.Designer
 namespace Worm.Designer
 {
 	/// <summary>
-	/// Serializer SelfConnectorSerializer for DomainClass SelfConnector.
-	/// </summary>
-	public partial class SelfConnectorSerializer : DslDiagrams::BinaryLinkShapeSerializer
-	{
-		#region Constructor
-		/// <summary>
-		/// SelfConnectorSerializer Constructor
-		/// </summary>
-		public SelfConnectorSerializer ()
-			: base ()
-		{
-		}
-		#endregion
-	
-		#region Public Properties
-		/// <summary>
-		/// This is the XML tag name used to serialize an instance of SelfConnector.
-		/// </summary>
-		public override string XmlTagName
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get { return @"selfConnector"; }
-		}
-	
-		/// <summary>
-		/// Cannot be monikerized.
-		/// </summary>
-		public override string MonikerTagName
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get { return string.Empty; }
-		}
-		
-		/// <summary>
-		/// Cannot be monikerized.
-		/// </summary>
-		public override string MonikerAttributeName
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get { return string.Empty; }
-		}
-		#endregion
-	
-		#region Read Methods
-		/// <summary>
-		/// Public Read() method that deserializes one SelfConnector instance from XML.
-		/// </summary>
-		/// <remarks>
-		/// When this method is called, caller guarantees that the passed-in XML reader is positioned at the open XML tag
-		/// of the SelfConnector element that is about to be deserialized. 
-		/// The method needs to ensure that when it returns, the reader is positioned at the open XML tag of the next sibling element,
-		/// or the close tag of the parent element (or EOF).
-		/// </remarks>
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">In-memory SelfConnector instance that will get the deserialized data.</param>
-		/// <param name="reader">XmlReader to read serialized data from.</param>
-		public override void Read(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
-		{
-			#region Check Parameters
-			global::System.Diagnostics.Debug.Assert (serializationContext != null);
-			if (serializationContext == null)
-				throw new global::System.ArgumentNullException ("serializationContext");
-			global::System.Diagnostics.Debug.Assert (element != null);
-			if (element == null)
-				throw new global::System.ArgumentNullException ("element");
-			global::System.Diagnostics.Debug.Assert (reader != null);
-			if (reader == null)
-				throw new global::System.ArgumentNullException ("reader");
-			#endregion
-			
-			// Read properties serialized as XML attributes.
-			base.ReadPropertiesFromAttributes(serializationContext, element, reader);
-	
-			// Read nested XML elements.
-			if (!serializationContext.Result.Failed)
-			{
-				if (!reader.IsEmptyElement)
-				{
-					// Read to the start of the first child element.
-					DslModeling::SerializationUtilities.SkipToFirstChild(reader);
-					
-					// Read nested XML elements, they can be either properties serialized as XML elements, or child 
-					// model elements.
-					while (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
-					{
-						base.ReadElements(serializationContext, element, reader);
-						if (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
-						{
-							// Encountered one unknown XML element, skip it and keep reading.
-							DesignerSerializationBehaviorSerializationMessages.UnexpectedXmlElement(serializationContext, reader);
-							DslModeling::SerializationUtilities.Skip(reader);
-						}
-					}
-				}
-			}
-	
-			// Advance the reader to the next element (open tag of the next sibling, end tag of the parent, or EOF)
-			DslModeling::SerializationUtilities.Skip(reader);
-		}
-	
-		#region TryCreateInstance
-		/// <summary>
-		/// This method creates a correct instance of SelfConnector based on the tag currently pointed by the reader. If the reader
-		/// is positioned at a serialized SelfConnector, a new SelfConnector instance will be created in the given partition, otherwise 
-		/// null is returned.
-		/// </summary>
-		/// <remarks>
-		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
-		/// not move the reader; the reader should remain at the same position when this method returns.
-		/// </remarks>
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="reader">XmlReader to read serialized data from.</param>
-		/// <param name="partition">Partition in which new elements should be created.</param>	
-		/// <returns>Created SelfConnector instance, or null if the reader is not pointing to a serialized SelfConnector instance.</returns>
-		public override DslModeling::ModelElement TryCreateInstance(DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::Partition partition)
-		{
-			#region Check Parameters
-			global::System.Diagnostics.Debug.Assert (serializationContext != null);
-			if (serializationContext == null)
-				throw new global::System.ArgumentNullException ("serializationContext");
-			global::System.Diagnostics.Debug.Assert (reader != null);
-			if (reader == null)
-				throw new global::System.ArgumentNullException ("reader");
-			global::System.Diagnostics.Debug.Assert (partition != null);
-			if (partition == null)
-				throw new global::System.ArgumentNullException ("partition");
-			#endregion
-	
-			DslModeling::ModelElement result = null;
-			if (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
-			{
-				string localName = reader.LocalName;
-				if (string.Compare (localName, this.XmlTagName, global::System.StringComparison.CurrentCulture) == 0)
-				{	// New "SelfConnector" instance.
-					result = this.CreateInstance(serializationContext, reader, partition);
-				}
-				else
-				{	// Check for derived classes of "SelfConnector".
-					if (this.derivedClasses == null)
-						this.ConstructDerivedClassesLookupTable(serializationContext, partition.DomainDataDirectory);
-					global::System.Diagnostics.Debug.Assert (this.derivedClasses != null);
-					DslModeling::DomainClassInfo derivedClass = null;
-					if (this.derivedClasses.TryGetValue (localName, out derivedClass) && derivedClass != null)
-					{	// New derived class instance.
-						SelfConnectorSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as SelfConnectorSerializer;
-						global::System.Diagnostics.Debug.Assert(derivedSerializer != null, "Cannot find serializer for " + derivedClass.Name + "!");
-						result = derivedSerializer.CreateInstance(serializationContext, reader, partition);
-					}
-				}
-			}
-	
-			return result;
-		}
-	
-		/// <summary>
-		/// This method creates an instance of SelfConnector based on the tag currently pointed by the reader. The reader is guaranteed (by the caller)
-		/// to be pointed at a serialized instance of SelfConnector.
-		/// </summary>
-		/// <remarks>
-		/// The caller will guarantee that the reader is positioned at open XML tag of the ModelRoot instance being read. This method should
-		/// not move the reader; the reader should remain at the same position when this method returns.
-		/// </remarks>
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="reader">XmlReader to read serialized data from.</param>
-		/// <param name="partition">Partition in which new SelfConnector instance should be created.</param>	
-		/// <returns>Created SelfConnector instance.</returns>
-		protected override DslModeling::ModelElement CreateInstance(DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::Partition partition)
-		{
-			return new SelfConnector(partition);
-		}
-	
-		/// <summary>
-		/// Stores a mapping from XmlTagName to DomainClassInfo that derives from SelfConnector, created on demand.
-		/// </summary>
-		private global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> derivedClasses;
-	
-		/// <summary>
-		/// Construct the apping from XmlTagName to DomainClassInfo that derives from SelfConnector.
-		/// </summary>
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="domainDataDirectory">DomainDataDirectory to be used to discover all derived classes.</param>
-		private void ConstructDerivedClassesLookupTable(DslModeling::SerializationContext serializationContext, DslModeling::DomainDataDirectory domainDataDirectory)
-		{
-			global::System.Diagnostics.Debug.Assert(this.derivedClasses == null); // Shouldn't construct the table more than once.
-			this.derivedClasses = new global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> (global::System.StringComparer.CurrentCulture);
-	
-			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(SelfConnector.DomainClassId);
-			global::System.Diagnostics.Debug.Assert(thisClass != null, "Cannot find DomainClassInfo for ModelRoot!");
-	
-			global::System.Collections.ObjectModel.ReadOnlyCollection<DslModeling::DomainClassInfo> descendents = thisClass.AllDescendants;
-			if (descendents != null)
-			{
-				foreach (DslModeling::DomainClassInfo descendent in descendents)
-				{
-					global::System.Type descendentType = descendent.ImplementationClass;
-					if (!descendentType.IsAbstract)
-					{
-						DslModeling::DomainClassXmlSerializer descendentSerializer = serializationContext.Directory.GetSerializer(descendent.Id);
-						if (descendentSerializer != null)
-						{
-							string descendentXmlTagName = descendentSerializer.XmlTagName;
-							if (!string.IsNullOrEmpty (descendentXmlTagName))
-							{
-								global::System.Diagnostics.Debug.Assert(!this.derivedClasses.ContainsKey (descendentXmlTagName));
-								this.derivedClasses.Add (descendentXmlTagName, descendent);
-							}
-						}
-					}
-					else
-					{   // Ignore abstract derived classes because they cannot be instantiated directly.
-					}
-				}
-			}
-		}
-		#endregion
-	
-		#region TryCreateMonikerInstance
-		/// <summary>
-		/// This method creates a Moniker of the correct derived (including SelfConnector itself) instance of SelfConnector based on the tag currently pointed by the reader.
-		/// </summary>
-		/// <remarks>
-		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
-		/// not move the reader; the reader should remain at the same position when this method returns.
-		/// </remarks>		
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="reader">XmlReader to read serialized data from.</param>
-		/// <param name="sourceRolePlayer">The source role-player instance from which the moniker being created is referenced.</param>
-		/// <param name="relDomainClassId">The DomainClass Id of the relationship that connects the sourceRolePlayer to the moniker being created.</param>
-		/// <param name="partition">The new Moniker should be created in the Store associated with this partition.</param>			
-		/// <returns>Created ModelRoot instance, or null if the reader is not pointing to a correct monikerized instance.</returns>
-		public override DslModeling::Moniker TryCreateMonikerInstance (DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::ModelElement sourceRolePlayer, global::System.Guid relDomainClassId, DslModeling::Partition partition)
-		{
-			#region Check Parameters
-			global::System.Diagnostics.Debug.Assert (serializationContext != null);
-			if (serializationContext == null)
-				throw new global::System.ArgumentNullException ("serializationContext");
-			global::System.Diagnostics.Debug.Assert (reader != null);
-			if (reader == null)
-				throw new global::System.ArgumentNullException ("reader");
-			global::System.Diagnostics.Debug.Assert (sourceRolePlayer != null);
-			if (sourceRolePlayer == null)
-				throw new global::System.ArgumentNullException ("sourceRolePlayer");
-			global::System.Diagnostics.Debug.Assert (partition != null);
-			if (partition == null)
-				throw new global::System.ArgumentNullException ("partition");
-			#endregion
-	
-			DslModeling::Moniker result = null;
-			if (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
-			{
-				string localName = reader.LocalName;
-				if (string.Compare (localName, this.MonikerTagName, global::System.StringComparison.CurrentCulture) == 0)
-				{	// New "SelfConnector" moniker instance.
-					result = this.CreateMonikerInstance(serializationContext, reader, sourceRolePlayer, relDomainClassId, partition);
-				}
-				else
-				{	// Check for derived classes of "SelfConnector".
-					if (this.derivedClassMonikers == null)
-						this.ConstructDerivedClassMonikersLookupTable(serializationContext, partition.DomainDataDirectory);
-					global::System.Diagnostics.Debug.Assert(this.derivedClassMonikers != null);
-					DslModeling::DomainClassInfo derivedClass = null;
-					if (this.derivedClassMonikers.TryGetValue (localName, out derivedClass) && derivedClass != null)
-					{	// New derived class moniker instance.
-						SelfConnectorSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as SelfConnectorSerializer;
-						global::System.Diagnostics.Debug.Assert(derivedSerializer != null, "Cannot find serializer for " + derivedClass.Name + "!");
-						result = derivedSerializer.CreateMonikerInstance(serializationContext, reader, sourceRolePlayer, relDomainClassId, partition);
-					}
-				}
-			}
-	
-			return result;
-		}
-		
-		/// <summary>
-		/// This method creates a Moniker of SelfConnector based on the tag currently pointed by the reader.
-		/// </summary>
-		/// <remarks>
-		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
-		/// not move the reader; the reader should remain at the same position when this method returns.
-		/// </remarks>		
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="reader">XmlReader to read serialized data from.</param>
-		/// <param name="sourceRolePlayer">The source role-player instance from which the moniker being created is referenced.</param>
-		/// <param name="relDomainClassId">The DomainClass Id of the relationship that connects the sourceRolePlayer to the moniker being created.</param>
-		/// <param name="partition">The new Moniker should be created in the Store associated with this partition.</param>			
-		/// <returns>Created ModelRoot instance, or null if the reader is not pointing to a correct monikerized instance.</returns>
-		protected override DslModeling::Moniker CreateMonikerInstance (DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::ModelElement sourceRolePlayer, global::System.Guid relDomainClassId, DslModeling::Partition partition)
-		{
-			// Cannot be monikerized.
-			throw new global::System.NotSupportedException();
-		}
-	
-		/// <summary>
-		/// Stores a mapping from Moniker Xml tag name to DomainClassInfo that derives from SelfConnector, created on demand.
-		/// </summary>
-		private global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> derivedClassMonikers;
-	
-		/// <summary>
-		/// Construct the mapping from Moniker Xml tag name to DomainClassInfo that derives from SelfConnector.
-		/// </summary>
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="domainDataDirectory">DomainDataDirectory to be used to discover all derived classes.</param>
-		private void ConstructDerivedClassMonikersLookupTable(DslModeling::SerializationContext serializationContext, DslModeling::DomainDataDirectory domainDataDirectory)
-		{
-			global::System.Diagnostics.Debug.Assert(this.derivedClassMonikers == null); // Shouldn't construct the table more than once.
-			this.derivedClassMonikers = new global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> (global::System.StringComparer.CurrentCulture);
-	
-			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(SelfConnector.DomainClassId);
-			global::System.Diagnostics.Debug.Assert(thisClass != null, "Cannot find DomainClassInfo for ModelRoot!");
-	
-			global::System.Collections.ObjectModel.ReadOnlyCollection<DslModeling::DomainClassInfo> descendents = thisClass.AllDescendants;
-			if (descendents != null)
-			{
-				foreach (DslModeling::DomainClassInfo descendent in descendents)
-				{
-					DslModeling::DomainClassXmlSerializer descendentSerializer = serializationContext.Directory.GetSerializer(descendent.Id);
-					if (descendentSerializer != null)
-					{
-						string descendentMonikerTagName = descendentSerializer.MonikerTagName;
-						if (!string.IsNullOrEmpty (descendentMonikerTagName))
-						{
-							global::System.Diagnostics.Debug.Assert(!this.derivedClassMonikers.ContainsKey (descendentMonikerTagName));
-							this.derivedClassMonikers.Add (descendentMonikerTagName, descendent);
-						}
-					}
-				}
-			}
-		}
-		#endregion
-		#endregion
-	
-		#region Write Methods
-		/// <summary>
-		/// Public WriteMoniker() method that writes a monikerized SelfConnector instance into XML.
-		/// </summary>
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">SelfConnector instance to be monikerized.</param>
-		/// <param name="writer">XmlWriter to write serialized data to.</param>
-		/// <param name="sourceRolePlayer">Source element that references the SelfConnector instance being monikerized.</param>
-		/// <param name="relSerializer">Serializer that handles the relationship connecting the source element to the SelfConnector instance being monikerized.</param>
-		public override void WriteMoniker(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer, DslModeling::ModelElement sourceRolePlayer, DslModeling::DomainRelationshipXmlSerializer relSerializer)
-		{
-			// Instance of SelfConnector cannot be monikerized.
-			DesignerSerializationBehaviorSerializationMessages.CannotMonikerizeElement(serializationContext, "SelfConnector");
-		}
-		
-		/// <summary>
-		/// Public Write() method that serializes one SelfConnector instance into XML.
-		/// </summary>
-		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">SelfConnector instance to be serialized.</param>
-		/// <param name="writer">XmlWriter to write serialized data to.</param>
-		/// <param name="rootElementSettings">
-		/// The root element settings if the passed in element is serialized as a root element in the XML. The root element contains additional
-		/// information like schema target namespace, version, etc.
-		/// This should only be passed for root-level elements. Null should be passed for rest elements (and ideally call the Write() method 
-		/// without this parameter).
-		/// </param>
-		public override void Write(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer, DslModeling::RootElementSettings rootElementSettings)
-		{
-			#region Check Parameters
-			global::System.Diagnostics.Debug.Assert (serializationContext != null);
-			if (serializationContext == null)
-				throw new global::System.ArgumentNullException ("serializationContext");
-			global::System.Diagnostics.Debug.Assert (element != null);
-			if (element == null)
-				throw new global::System.ArgumentNullException ("element");
-			global::System.Diagnostics.Debug.Assert (writer != null);
-			if (writer == null)
-				throw new global::System.ArgumentNullException ("writer");
-			#endregion
-	
-			// Write start of element, including schema target namespace if specified.
-			if (rootElementSettings != null && !string.IsNullOrEmpty(rootElementSettings.SchemaTargetNamespace))
-				writer.WriteStartElement(this.XmlTagName, rootElementSettings.SchemaTargetNamespace);
-			else
-				writer.WriteStartElement(this.XmlTagName);
-				
-			// Write version info (in the format 1.2.3.4), if necessary
-			if (rootElementSettings != null && rootElementSettings.Version != null)
-				writer.WriteAttributeString("dslVersion", rootElementSettings.Version.ToString(4));
-	
-			base.WritePropertiesAsAttributes(serializationContext, element, writer);
-	
-			if (!serializationContext.Result.Failed)
-			{
-				// Write 1) properties serialized as nested XML elements and 2) child model elements into XML.
-				base.WriteElements(serializationContext, element, writer);
-			}
-	
-			writer.WriteEndElement();
-		}
-		#endregion
-	
-		#region Moniker Support
-		/// <summary>
-		/// This method calculates a moniker to a given SelfConnector instance.
-		/// </summary>
-		/// <param name="directory">Directory to look up serializer based on model element type.</param>
-		/// <param name="element">SelfConnector instance to calculate qualified name for.</param>
-		/// <returns>A fully qualified string moniker to the SelfConnector instance.</returns>
-		public override string CalculateQualifiedName(DslModeling::DomainXmlSerializerDirectory directory, DslModeling::ModelElement element)
-		{
-			#region Check Parameters
-			global::System.Diagnostics.Debug.Assert (directory != null);
-			if (directory == null)
-				throw new global::System.ArgumentNullException ("directory");
-			global::System.Diagnostics.Debug.Assert(element != null);
-			if (element == null)
-				throw new global::System.ArgumentNullException("element");
-			#endregion	
-			
-			SelfConnector instance = element as SelfConnector;
-			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of SelfConnector!");
-	
-			DslModeling::ModelElement container = DslModeling::DomainClassInfo.FindEmbeddingElement(instance);
-			if(container != null)
-			{
-				DslModeling::DomainClassXmlSerializer containerSerializer = directory.GetSerializer(container.GetDomainClass().Id);
-				global::System.Diagnostics.Debug.Assert(containerSerializer != null, "Cannot find serializer for " + container.GetDomainClass().Name + "!");
-				return containerSerializer.CalculateQualifiedName(directory, container);
-			}
-			else
-			{
-				return string.Empty;
-			}
-		}
-	
-		/// <summary>
-		/// A domain class can be monikerized in different ways: standard /qualifier/key mechanism, custom moniker, or element ID. If the domain class is serialized
-		/// using standard /qualifier/key mechanism, this method returns the qualifier of the moniker; if the domain class uses other ways for monikerization, this method
-		/// returns empty string.
-		/// </summary>
-		/// <param name="directory">Directory to look up serializer based on model element type.</param>
-		/// <param name="element">SelfConnector instance to get moniker qualifier from.</param>
-		/// <returns>
-		/// Value of this element's moniker qualifier property, if it has one, or the value of the container's moniker qualifier property. Or empty string if this
-		/// element is not monikerized using standard /qualifier/key mechanism.
-		/// </returns>
-		public override string GetMonikerQualifier(DslModeling::DomainXmlSerializerDirectory directory, DslModeling::ModelElement element)
-		{
-			#region Check Parameters
-			global::System.Diagnostics.Debug.Assert (directory != null);
-			if (directory == null)
-				throw new global::System.ArgumentNullException ("directory");
-			global::System.Diagnostics.Debug.Assert(element != null);
-			if (element == null)
-				throw new global::System.ArgumentNullException("element");
-			#endregion	
-			
-			SelfConnector instance = element as SelfConnector;
-			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of SelfConnector!");
-			DslModeling::ModelElement container = DslModeling::DomainClassInfo.FindEmbeddingElement(instance);
-			if(container != null)
-			{
-				DslModeling::DomainClassXmlSerializer containerSerializer = directory.GetSerializer(container.GetDomainClass().Id);
-				global::System.Diagnostics.Debug.Assert(containerSerializer != null, "Cannot find serializer for " + container.GetDomainClass().Name + "!");
-				return containerSerializer.GetMonikerQualifier(directory, container);
-			}
-			else
-			{
-				return string.Empty;
-			}
-		}
-		#endregion
-	}
-}
-
-namespace Worm.Designer
-{
-	/// <summary>
 	/// Serializer DesignerDiagramSerializer for DomainClass DesignerDiagram.
 	/// </summary>
 	public partial class DesignerDiagramSerializer : DslDiagrams::DiagramSerializer
@@ -10677,15 +10704,15 @@ namespace Worm.Designer
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(Table.DomainClassId, typeof(TableSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(Property.DomainClassId, typeof(PropertySerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(SupressedProperty.DomainClassId, typeof(SupressedPropertySerializer)));
+					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(SelfRelation.DomainClassId, typeof(SelfRelationSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(WormModelHasEntities.DomainClassId, typeof(WormModelHasEntitiesSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityHasTables.DomainClassId, typeof(EntityHasTablesSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityHasProperties.DomainClassId, typeof(EntityHasPropertiesSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityReferencesTargetEntities.DomainClassId, typeof(EntityReferencesTargetEntitiesSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityHasSupressedProperties.DomainClassId, typeof(EntityHasSupressedPropertiesSerializer)));
-					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityReferencesSelfTargetEntities.DomainClassId, typeof(EntityReferencesSelfTargetEntitiesSerializer)));
+					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityHasSelfRelations.DomainClassId, typeof(EntityHasSelfRelationsSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityShape.DomainClassId, typeof(EntityShapeSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityConnector.DomainClassId, typeof(EntityConnectorSerializer)));
-					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(SelfConnector.DomainClassId, typeof(SelfConnectorSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(DesignerDiagram.DomainClassId, typeof(DesignerDiagramSerializer)));
 					#endregion
 					

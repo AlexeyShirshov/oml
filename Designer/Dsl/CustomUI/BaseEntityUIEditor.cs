@@ -84,7 +84,7 @@ namespace Worm.Designer
                 {
                     if (entityName != en.Name)
                     {
-                        listBox.Items.Add(en.IdProperty);
+                        listBox.Items.Add(en.Name);
                     }
                 }
 

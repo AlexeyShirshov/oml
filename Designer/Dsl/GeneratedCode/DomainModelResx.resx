@@ -150,7 +150,7 @@
     <comment>DisplayName for DomainProperty &apos;SchemaVersion&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity.Description" xml:space="preserve">
-    <value>Entity</value>
+    <value>Сущность</value>
     <comment>Description for DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity.DisplayName" xml:space="preserve">
@@ -158,7 +158,7 @@
     <comment>DisplayName for DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/IdProperty.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.Entity.Id</value>
+    <value>Идентификатор сущности</value>
     <comment>Description for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/IdProperty.DisplayName" xml:space="preserve">
@@ -166,7 +166,7 @@
     <comment>DisplayName for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/Name.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.Entity.Name</value>
+    <value>Наименование сущности</value>
     <comment>Description for DomainProperty &apos;Name&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/Name.DisplayName" xml:space="preserve">
@@ -174,7 +174,7 @@
     <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/Namespace.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.Entity.Namespace</value>
+    <value>Пространство имен для сущности</value>
     <comment>Description for DomainProperty &apos;Namespace&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/Namespace.DisplayName" xml:space="preserve">
@@ -182,7 +182,7 @@
     <comment>DisplayName for DomainProperty &apos;Namespace&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/Behaviour.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.Entity.Behaviour</value>
+    <value>Entity generator behaviour</value>
     <comment>Description for DomainProperty &apos;Behaviour&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/Behaviour.DisplayName" xml:space="preserve">
@@ -190,7 +190,7 @@
     <comment>DisplayName for DomainProperty &apos;Behaviour&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/Description.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.Entity.Description</value>
+    <value>Описание сущности</value>
     <comment>Description for DomainProperty &apos;Description&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/Description.DisplayName" xml:space="preserve">
@@ -198,7 +198,7 @@
     <comment>DisplayName for DomainProperty &apos;Description&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/UseGenerics.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.Entity.Use Generics</value>
+    <value>Определяет генерировать generic или строго типизированные методы</value>
     <comment>Description for DomainProperty &apos;UseGenerics&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/UseGenerics.DisplayName" xml:space="preserve">
@@ -206,7 +206,7 @@
     <comment>DisplayName for DomainProperty &apos;UseGenerics&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/MakeInterface.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.Entity.Make Interface</value>
+    <value>Определяет генерировать интерфейс для сущности</value>
     <comment>Description for DomainProperty &apos;MakeInterface&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/MakeInterface.DisplayName" xml:space="preserve">
@@ -214,7 +214,7 @@
     <comment>DisplayName for DomainProperty &apos;MakeInterface&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/BaseEntity.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.Entity.Base Entity</value>
+    <value>ИД базовой сущности</value>
     <comment>Description for DomainProperty &apos;BaseEntity&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/BaseEntity.DisplayName" xml:space="preserve">
@@ -356,6 +356,110 @@
   <data name="Worm.Designer.SupressedProperty/Name.DisplayName" xml:space="preserve">
     <value>Name</value>
     <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;SupressedProperty&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation.Description" xml:space="preserve">
+    <value>Связь сущности самой с собой</value>
+    <comment>Description for DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation.DisplayName" xml:space="preserve">
+    <value>Self Relation</value>
+    <comment>DisplayName for DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectAccessor.Description" xml:space="preserve">
+    <value>Имя связанной сущности для генерации методов</value>
+    <comment>Description for DomainProperty &apos;DirectAccessor&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectAccessor.DisplayName" xml:space="preserve">
+    <value>Direct Accessor</value>
+    <comment>DisplayName for DomainProperty &apos;DirectAccessor&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectCascadeDelete.Description" xml:space="preserve">
+    <value>аскадное удаление</value>
+    <comment>Description for DomainProperty &apos;DirectCascadeDelete&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectCascadeDelete.DisplayName" xml:space="preserve">
+    <value>Direct Cascade Delete</value>
+    <comment>DisplayName for DomainProperty &apos;DirectCascadeDelete&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectFieldName.Description" xml:space="preserve">
+    <value>Имя поля таблицы связи</value>
+    <comment>Description for DomainProperty &apos;DirectFieldName&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectFieldName.DisplayName" xml:space="preserve">
+    <value>Direct Field Name</value>
+    <comment>DisplayName for DomainProperty &apos;DirectFieldName&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/Disabled.Description" xml:space="preserve">
+    <value>Disable relation</value>
+    <comment>Description for DomainProperty &apos;Disabled&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/Disabled.DisplayName" xml:space="preserve">
+    <value>Disabled</value>
+    <comment>DisplayName for DomainProperty &apos;Disabled&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseAccessor.Description" xml:space="preserve">
+    <value>Имя связанной сущности для генерации методов</value>
+    <comment>Description for DomainProperty &apos;ReverseAccessor&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseAccessor.DisplayName" xml:space="preserve">
+    <value>Reverse Accessor</value>
+    <comment>DisplayName for DomainProperty &apos;ReverseAccessor&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseCascadeDelete.Description" xml:space="preserve">
+    <value>аскадное удаление</value>
+    <comment>Description for DomainProperty &apos;ReverseCascadeDelete&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseCascadeDelete.DisplayName" xml:space="preserve">
+    <value>Reverse Cascade Delete</value>
+    <comment>DisplayName for DomainProperty &apos;ReverseCascadeDelete&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseFieldName.Description" xml:space="preserve">
+    <value>Имя поля таблицы связи</value>
+    <comment>Description for DomainProperty &apos;ReverseFieldName&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseFieldName.DisplayName" xml:space="preserve">
+    <value>Reverse Field Name</value>
+    <comment>DisplayName for DomainProperty &apos;ReverseFieldName&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/Table.Description" xml:space="preserve">
+    <value>Имя таблицы связи</value>
+    <comment>Description for DomainProperty &apos;Table&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/Table.DisplayName" xml:space="preserve">
+    <value>Table</value>
+    <comment>DisplayName for DomainProperty &apos;Table&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/UnderlyingEntity.Description" xml:space="preserve">
+    <value>Сущность реализующая связь</value>
+    <comment>Description for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/UnderlyingEntity.DisplayName" xml:space="preserve">
+    <value>Underlying Entity</value>
+    <comment>DisplayName for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectAccessedEntityType.Description" xml:space="preserve">
+    <value>&gt;Тип связанной сущности для генерации методов</value>
+    <comment>Description for DomainProperty &apos;DirectAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectAccessedEntityType.DisplayName" xml:space="preserve">
+    <value>Direct Accessed Entity Type</value>
+    <comment>DisplayName for DomainProperty &apos;DirectAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseAccessedEntityType.Description" xml:space="preserve">
+    <value>&gt;Тип связанной сущности для генерации методов</value>
+    <comment>Description for DomainProperty &apos;ReverseAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseAccessedEntityType.DisplayName" xml:space="preserve">
+    <value>Reverse Accessed Entity Type</value>
+    <comment>DisplayName for DomainProperty &apos;ReverseAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/Name.Description" xml:space="preserve">
+    <value>Name</value>
+    <comment>Description for DomainProperty &apos;Name&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/Name.DisplayName" xml:space="preserve">
+    <value>Name</value>
+    <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModelHasEntities.Description" xml:space="preserve">
     <value>Description for Worm.Designer.WormModelHasEntities</value>
@@ -621,109 +725,37 @@
     <value>Entity</value>
     <comment>PropertyDisplayName for DomainRole &apos;SupressedProperty&apos; on DomainRelationship &apos;EntityHasSupressedProperties&apos;</comment>
   </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities</value>
-    <comment>Description for DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  <data name="Worm.Designer.EntityHasSelfRelations.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasSelfRelations</value>
+    <comment>Description for DomainClass &apos;EntityHasSelfRelations&apos;</comment>
   </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities.DisplayName" xml:space="preserve">
-    <value>Entity References Self Target Entities</value>
-    <comment>DisplayName for DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  <data name="Worm.Designer.EntityHasSelfRelations.DisplayName" xml:space="preserve">
+    <value>Entity Has Self Relations</value>
+    <comment>DisplayName for DomainClass &apos;EntityHasSelfRelations&apos;</comment>
   </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectFieldName.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Direct Field Name</value>
-    <comment>Description for DomainProperty &apos;DirectFieldName&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  <data name="Worm.Designer.EntityHasSelfRelations/Entity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasSelfRelations.Entity</value>
+    <comment>Description for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasSelfRelations&apos;</comment>
   </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectFieldName.DisplayName" xml:space="preserve">
-    <value>Direct Field Name</value>
-    <comment>DisplayName for DomainProperty &apos;DirectFieldName&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  <data name="Worm.Designer.EntityHasSelfRelations/Entity.DisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>DisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasSelfRelations&apos;</comment>
   </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectAccessor.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Direct Accessor</value>
-    <comment>Description for DomainProperty &apos;DirectAccessor&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  <data name="Worm.Designer.EntityHasSelfRelations/Entity.PropertyDisplayName" xml:space="preserve">
+    <value>Self Relations</value>
+    <comment>PropertyDisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasSelfRelations&apos;</comment>
   </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectAccessor.DisplayName" xml:space="preserve">
-    <value>Direct Accessor</value>
-    <comment>DisplayName for DomainProperty &apos;DirectAccessor&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  <data name="Worm.Designer.EntityHasSelfRelations/SelfRelation.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.EntityHasSelfRelations.SelfRelation</value>
+    <comment>Description for DomainRole &apos;SelfRelation&apos; on DomainRelationship &apos;EntityHasSelfRelations&apos;</comment>
   </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectCascadeDelete.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Direct Cascade Delete</value>
-    <comment>Description for DomainProperty &apos;DirectCascadeDelete&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  <data name="Worm.Designer.EntityHasSelfRelations/SelfRelation.DisplayName" xml:space="preserve">
+    <value>Self Relation</value>
+    <comment>DisplayName for DomainRole &apos;SelfRelation&apos; on DomainRelationship &apos;EntityHasSelfRelations&apos;</comment>
   </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/DirectCascadeDelete.DisplayName" xml:space="preserve">
-    <value>Direct Cascade Delete</value>
-    <comment>DisplayName for DomainProperty &apos;DirectCascadeDelete&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseFieldName.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Reverse Field Name</value>
-    <comment>Description for DomainProperty &apos;ReverseFieldName&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseFieldName.DisplayName" xml:space="preserve">
-    <value>Reverse Field Name</value>
-    <comment>DisplayName for DomainProperty &apos;ReverseFieldName&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseAccessor.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Reverse Accessor</value>
-    <comment>Description for DomainProperty &apos;ReverseAccessor&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseAccessor.DisplayName" xml:space="preserve">
-    <value>Reverse Accessor</value>
-    <comment>DisplayName for DomainProperty &apos;ReverseAccessor&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseCascadeDelete.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Reverse Cascade Delete</value>
-    <comment>Description for DomainProperty &apos;ReverseCascadeDelete&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/ReverseCascadeDelete.DisplayName" xml:space="preserve">
-    <value>Reverse Cascade Delete</value>
-    <comment>DisplayName for DomainProperty &apos;ReverseCascadeDelete&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/Table.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Table</value>
-    <comment>Description for DomainProperty &apos;Table&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/Table.DisplayName" xml:space="preserve">
-    <value>Table</value>
-    <comment>DisplayName for DomainProperty &apos;Table&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/UnderlyingEntity.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Underlying Entity</value>
-    <comment>Description for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/UnderlyingEntity.DisplayName" xml:space="preserve">
-    <value>Underlying Entity</value>
-    <comment>DisplayName for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/Disabled.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.Disabled</value>
-    <comment>Description for DomainProperty &apos;Disabled&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/Disabled.DisplayName" xml:space="preserve">
-    <value>Disabled</value>
-    <comment>DisplayName for DomainProperty &apos;Disabled&apos; on DomainClass &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfSourceEntity.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.SelfSourceEntity</value>
-    <comment>Description for DomainRole &apos;SelfSourceEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfSourceEntity.DisplayName" xml:space="preserve">
-    <value>Self Source Entity</value>
-    <comment>DisplayName for DomainRole &apos;SelfSourceEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfSourceEntity.PropertyDisplayName" xml:space="preserve">
-    <value>Self Target Entities</value>
-    <comment>PropertyDisplayName for DomainRole &apos;SelfSourceEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfTargetEntity.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.EntityReferencesSelfTargetEntities.SelfTargetEntity</value>
-    <comment>Description for DomainRole &apos;SelfTargetEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfTargetEntity.DisplayName" xml:space="preserve">
-    <value>Self Target Entity</value>
-    <comment>DisplayName for DomainRole &apos;SelfTargetEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
-  </data>
-  <data name="Worm.Designer.EntityReferencesSelfTargetEntities/SelfTargetEntity.PropertyDisplayName" xml:space="preserve">
-    <value>Self Source Entities</value>
-    <comment>PropertyDisplayName for DomainRole &apos;SelfTargetEntity&apos; on DomainRelationship &apos;EntityReferencesSelfTargetEntities&apos;</comment>
+  <data name="Worm.Designer.EntityHasSelfRelations/SelfRelation.PropertyDisplayName" xml:space="preserve">
+    <value>Entity</value>
+    <comment>PropertyDisplayName for DomainRole &apos;SelfRelation&apos; on DomainRelationship &apos;EntityHasSelfRelations&apos;</comment>
   </data>
   <data name="Worm.Designer.PropertyAttribute/PK.DisplayName" xml:space="preserve">
     <value>PK</value>
@@ -833,6 +865,10 @@
     <value>SupressedProperties</value>
     <comment>Compartment title</comment>
   </data>
+  <data name="EntityShapeSelfRelationTitle" xml:space="preserve">
+    <value>Self Relation</value>
+    <comment>Compartment title</comment>
+  </data>
   <data name="EntityShapeNameDefaultText" xml:space="preserve">
     <value>Name</value>
     <comment>Text decorator default text</comment>
@@ -844,14 +880,6 @@
   <data name="Worm.Designer.EntityConnector.DisplayName" xml:space="preserve">
     <value>Entity Connector</value>
     <comment>DisplayName for DomainClass &apos;EntityConnector&apos;</comment>
-  </data>
-  <data name="Worm.Designer.SelfConnector.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.SelfConnector</value>
-    <comment>Description for DomainClass &apos;SelfConnector&apos;</comment>
-  </data>
-  <data name="Worm.Designer.SelfConnector.DisplayName" xml:space="preserve">
-    <value>Self Connector</value>
-    <comment>DisplayName for DomainClass &apos;SelfConnector&apos;</comment>
   </data>
   <data name="FormatList" xml:space="preserve">
     <value>Designer (*.wxml)|*.wxml</value>
@@ -887,14 +915,6 @@
   </data>
   <data name="RelationToolboxTooltip" xml:space="preserve">
     <value>Relation</value>
-    <comment>Toolbox tooltip text</comment>
-  </data>
-  <data name="SelfRelationToolboxItem" xml:space="preserve">
-    <value>SelfRelation</value>
-    <comment>Toolbox item name</comment>
-  </data>
-  <data name="SelfRelationToolboxTooltip" xml:space="preserve">
-    <value>Self Relation</value>
     <comment>Toolbox tooltip text</comment>
   </data>
   <data name="UnrecognizedElementType" xml:space="preserve">
@@ -1007,10 +1027,6 @@ A DomainClass can be serialized as a moniker only if
   </data>
   <data name="RelationToolboxBitmap" type="System.Resources.ResXFileRef, System.Windows.Forms" xml:space="preserve">
     <value>..\Resources\ExampleConnectorToolBitmap.bmp;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-    <comment>Toolbox item image</comment>
-  </data>
-  <data name="SelfRelationToolboxBitmap" type="System.Resources.ResXFileRef, System.Windows.Forms" xml:space="preserve">
-    <value>..\Resources\GeneralizationTool.bmp;System.Byte[], mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
     <comment>Toolbox item image</comment>
   </data>
 </root>

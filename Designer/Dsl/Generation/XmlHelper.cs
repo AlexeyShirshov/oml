@@ -71,8 +71,8 @@ namespace Worm.Designer
                     TypeDescription type = GetClrType(property.Type, property.Nullable, ormObjectsDef);
                     entityDescription.Properties.Add(new PropertyDescription
                         (property.Name, property.Alias, property.Attributes.Split(new char[] { '|' }),
-                        property.Description, type, property.FieldName, 
-                        entityDescription.Tables.Find(t => t.Identifier == property.Table), 
+                        property.Description, type, property.FieldName,
+                        entityDescription.Tables.Find(t => t.Name == GetTableName(entity.Tables[0].Schema, property.Table)), 
                         property.FieldAccessLevel, property.AccessLevel));                    
                     
                 }
@@ -83,29 +83,48 @@ namespace Worm.Designer
                     prop.IsSuppressed = true;
                     entityDescription.SuppressedProperties.Add(prop);
                 }
+
                
-                ormObjectsDef.Entities.Add(entityDescription);                  
+               
+                ormObjectsDef.Entities.Add(entityDescription);
+
+              
+            
             }
 
-
-            ReadOnlyCollection<Microsoft.VisualStudio.Modeling.ModelElement> selfRelations = (
-             (model.Store.ElementDirectory.FindElements(Worm.Designer.EntityReferencesSelfTargetEntities.DomainClassId)));
-            foreach (Worm.Designer.EntityReferencesSelfTargetEntities selfRelation in selfRelations)
+            //Second loop to fill base entities and underlying entities
+            foreach (Entity entity in model.Entities)
             {
-                if (selfRelation.SelfTargetEntity == selfRelation.SelfSourceEntity)
+                EntityDescription entityDescription = ormObjectsDef.Entities.Find(e => e.Name == entity.Name);
+                if (!string.IsNullOrEmpty(entity.BaseEntity))
                 {
-                    EntityDescription selfEntity = ormObjectsDef.Entities.Find(e => e.Identifier == selfRelation.SelfTargetEntity.IdProperty);
-                    SelfRelationDescription self = new SelfRelationDescription(selfEntity,
-                        new SelfRelationTarget(selfRelation.DirectFieldName, selfRelation.DirectCascadeDelete, selfRelation.DirectAccessor),
-                        new SelfRelationTarget(selfRelation.ReverseFieldName, selfRelation.ReverseCascadeDelete, selfRelation.ReverseAccessor),
-                        selfEntity.Tables.Find(t => t.Name == GetTableName(selfRelation.SelfTargetEntity.Tables[0].Schema, selfRelation.Table)),
-                        ormObjectsDef.Entities.Find(e => e.Identifier == selfRelation.UnderlyingEntity),
-                        selfRelation.Disabled);
+                    EntityDescription baseEntity = ormObjectsDef.Entities.Find(e => e.Name == entity.BaseEntity);
+                    entityDescription.BaseEntity = baseEntity;
+                }
+                
+                foreach (SelfRelation selfRelation in entity.SelfRelations)
+                {
+                    SelfRelationDescription self = new SelfRelationDescription(entityDescription,
+                         new SelfRelationTarget(selfRelation.DirectFieldName, selfRelation.DirectCascadeDelete, selfRelation.DirectAccessor),
+                         new SelfRelationTarget(selfRelation.ReverseFieldName, selfRelation.ReverseCascadeDelete, selfRelation.ReverseAccessor),
+                         entityDescription.Tables.Find(t => t.Name == GetTableName(entity.Tables[0].Schema, selfRelation.Table)),
+                         ormObjectsDef.Entities.Find(e => e.Name == selfRelation.UnderlyingEntity),
+                         selfRelation.Disabled);
+                    if (!string.IsNullOrEmpty(selfRelation.ReverseAccessedEntityType))
+                    {
+                        TypeDescription typeReverse = GetClrType(selfRelation.ReverseAccessedEntityType, false, ormObjectsDef);                        
+                        self.Reverse.AccessedEntityType = typeReverse;
+                    }
+                    if (!string.IsNullOrEmpty(selfRelation.ReverseAccessedEntityType))
+                    {
+                        TypeDescription typeDirect = GetClrType(selfRelation.DirectAccessedEntityType, false, ormObjectsDef);
+                        self.Direct.AccessedEntityType = typeDirect;
+                    }
                     ormObjectsDef.Relations.Add(self);
                 }
 
             }
-
+           
             ReadOnlyCollection<Microsoft.VisualStudio.Modeling.ModelElement> relations = (
             (model.Store.ElementDirectory.FindElements(Worm.Designer.EntityReferencesTargetEntities.DomainClassId)));
             foreach (Worm.Designer.EntityReferencesTargetEntities relation in relations)

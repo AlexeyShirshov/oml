@@ -58,15 +58,15 @@ namespace Worm.Designer
 				typeof(Table),
 				typeof(Property),
 				typeof(SupressedProperty),
+				typeof(SelfRelation),
 				typeof(WormModelHasEntities),
 				typeof(EntityHasTables),
 				typeof(EntityHasProperties),
 				typeof(EntityReferencesTargetEntities),
 				typeof(EntityHasSupressedProperties),
-				typeof(EntityReferencesSelfTargetEntities),
+				typeof(EntityHasSelfRelations),
 				typeof(DesignerDiagram),
 				typeof(EntityConnector),
-				typeof(SelfConnector),
 				typeof(EntityShape),
 				typeof(global::Worm.Designer.FixUpDiagram),
 				typeof(global::Worm.Designer.ConnectorRolePlayerChanged),
@@ -110,6 +110,18 @@ namespace Worm.Designer
 				new DomainMemberInfo(typeof(Property), "Nullable", Property.NullableDomainPropertyId, typeof(Property.NullablePropertyHandler)),
 				new DomainMemberInfo(typeof(Property), "Attributes", Property.AttributesDomainPropertyId, typeof(Property.AttributesPropertyHandler)),
 				new DomainMemberInfo(typeof(SupressedProperty), "Name", SupressedProperty.NameDomainPropertyId, typeof(SupressedProperty.NamePropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "DirectAccessor", SelfRelation.DirectAccessorDomainPropertyId, typeof(SelfRelation.DirectAccessorPropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "DirectCascadeDelete", SelfRelation.DirectCascadeDeleteDomainPropertyId, typeof(SelfRelation.DirectCascadeDeletePropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "DirectFieldName", SelfRelation.DirectFieldNameDomainPropertyId, typeof(SelfRelation.DirectFieldNamePropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "Disabled", SelfRelation.DisabledDomainPropertyId, typeof(SelfRelation.DisabledPropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "ReverseAccessor", SelfRelation.ReverseAccessorDomainPropertyId, typeof(SelfRelation.ReverseAccessorPropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "ReverseCascadeDelete", SelfRelation.ReverseCascadeDeleteDomainPropertyId, typeof(SelfRelation.ReverseCascadeDeletePropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "ReverseFieldName", SelfRelation.ReverseFieldNameDomainPropertyId, typeof(SelfRelation.ReverseFieldNamePropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "Table", SelfRelation.TableDomainPropertyId, typeof(SelfRelation.TablePropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "UnderlyingEntity", SelfRelation.UnderlyingEntityDomainPropertyId, typeof(SelfRelation.UnderlyingEntityPropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "DirectAccessedEntityType", SelfRelation.DirectAccessedEntityTypeDomainPropertyId, typeof(SelfRelation.DirectAccessedEntityTypePropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "ReverseAccessedEntityType", SelfRelation.ReverseAccessedEntityTypeDomainPropertyId, typeof(SelfRelation.ReverseAccessedEntityTypePropertyHandler)),
+				new DomainMemberInfo(typeof(SelfRelation), "Name", SelfRelation.NameDomainPropertyId, typeof(SelfRelation.NamePropertyHandler)),
 				new DomainMemberInfo(typeof(EntityReferencesTargetEntities), "UndelyingEntity", EntityReferencesTargetEntities.UndelyingEntityDomainPropertyId, typeof(EntityReferencesTargetEntities.UndelyingEntityPropertyHandler)),
 				new DomainMemberInfo(typeof(EntityReferencesTargetEntities), "LeftCascadeDelete", EntityReferencesTargetEntities.LeftCascadeDeleteDomainPropertyId, typeof(EntityReferencesTargetEntities.LeftCascadeDeletePropertyHandler)),
 				new DomainMemberInfo(typeof(EntityReferencesTargetEntities), "LeftFieldName", EntityReferencesTargetEntities.LeftFieldNameDomainPropertyId, typeof(EntityReferencesTargetEntities.LeftFieldNamePropertyHandler)),
@@ -123,15 +135,6 @@ namespace Worm.Designer
 				new DomainMemberInfo(typeof(EntityReferencesTargetEntities), "RightCascadeDelete", EntityReferencesTargetEntities.RightCascadeDeleteDomainPropertyId, typeof(EntityReferencesTargetEntities.RightCascadeDeletePropertyHandler)),
 				new DomainMemberInfo(typeof(EntityReferencesTargetEntities), "RightAccessorName", EntityReferencesTargetEntities.RightAccessorNameDomainPropertyId, typeof(EntityReferencesTargetEntities.RightAccessorNamePropertyHandler)),
 				new DomainMemberInfo(typeof(EntityReferencesTargetEntities), "RightEntity", EntityReferencesTargetEntities.RightEntityDomainPropertyId, typeof(EntityReferencesTargetEntities.RightEntityPropertyHandler)),
-				new DomainMemberInfo(typeof(EntityReferencesSelfTargetEntities), "DirectFieldName", EntityReferencesSelfTargetEntities.DirectFieldNameDomainPropertyId, typeof(EntityReferencesSelfTargetEntities.DirectFieldNamePropertyHandler)),
-				new DomainMemberInfo(typeof(EntityReferencesSelfTargetEntities), "DirectAccessor", EntityReferencesSelfTargetEntities.DirectAccessorDomainPropertyId, typeof(EntityReferencesSelfTargetEntities.DirectAccessorPropertyHandler)),
-				new DomainMemberInfo(typeof(EntityReferencesSelfTargetEntities), "DirectCascadeDelete", EntityReferencesSelfTargetEntities.DirectCascadeDeleteDomainPropertyId, typeof(EntityReferencesSelfTargetEntities.DirectCascadeDeletePropertyHandler)),
-				new DomainMemberInfo(typeof(EntityReferencesSelfTargetEntities), "ReverseFieldName", EntityReferencesSelfTargetEntities.ReverseFieldNameDomainPropertyId, typeof(EntityReferencesSelfTargetEntities.ReverseFieldNamePropertyHandler)),
-				new DomainMemberInfo(typeof(EntityReferencesSelfTargetEntities), "ReverseAccessor", EntityReferencesSelfTargetEntities.ReverseAccessorDomainPropertyId, typeof(EntityReferencesSelfTargetEntities.ReverseAccessorPropertyHandler)),
-				new DomainMemberInfo(typeof(EntityReferencesSelfTargetEntities), "ReverseCascadeDelete", EntityReferencesSelfTargetEntities.ReverseCascadeDeleteDomainPropertyId, typeof(EntityReferencesSelfTargetEntities.ReverseCascadeDeletePropertyHandler)),
-				new DomainMemberInfo(typeof(EntityReferencesSelfTargetEntities), "Table", EntityReferencesSelfTargetEntities.TableDomainPropertyId, typeof(EntityReferencesSelfTargetEntities.TablePropertyHandler)),
-				new DomainMemberInfo(typeof(EntityReferencesSelfTargetEntities), "UnderlyingEntity", EntityReferencesSelfTargetEntities.UnderlyingEntityDomainPropertyId, typeof(EntityReferencesSelfTargetEntities.UnderlyingEntityPropertyHandler)),
-				new DomainMemberInfo(typeof(EntityReferencesSelfTargetEntities), "Disabled", EntityReferencesSelfTargetEntities.DisabledDomainPropertyId, typeof(EntityReferencesSelfTargetEntities.DisabledPropertyHandler)),
 			};
 		}
 		/// <summary>
@@ -152,8 +155,8 @@ namespace Worm.Designer
 				new DomainRolePlayerInfo(typeof(EntityReferencesTargetEntities), "TargetEntity", EntityReferencesTargetEntities.TargetEntityDomainRoleId),
 				new DomainRolePlayerInfo(typeof(EntityHasSupressedProperties), "Entity", EntityHasSupressedProperties.EntityDomainRoleId),
 				new DomainRolePlayerInfo(typeof(EntityHasSupressedProperties), "SupressedProperty", EntityHasSupressedProperties.SupressedPropertyDomainRoleId),
-				new DomainRolePlayerInfo(typeof(EntityReferencesSelfTargetEntities), "SelfSourceEntity", EntityReferencesSelfTargetEntities.SelfSourceEntityDomainRoleId),
-				new DomainRolePlayerInfo(typeof(EntityReferencesSelfTargetEntities), "SelfTargetEntity", EntityReferencesSelfTargetEntities.SelfTargetEntityDomainRoleId),
+				new DomainRolePlayerInfo(typeof(EntityHasSelfRelations), "Entity", EntityHasSelfRelations.EntityDomainRoleId),
+				new DomainRolePlayerInfo(typeof(EntityHasSelfRelations), "SelfRelation", EntityHasSelfRelations.SelfRelationDomainRoleId),
 			};
 		}
 		#endregion
@@ -181,9 +184,9 @@ namespace Worm.Designer
 				createElementMap.Add(typeof(Table), 2);
 				createElementMap.Add(typeof(Property), 3);
 				createElementMap.Add(typeof(SupressedProperty), 4);
-				createElementMap.Add(typeof(DesignerDiagram), 5);
-				createElementMap.Add(typeof(EntityConnector), 6);
-				createElementMap.Add(typeof(SelfConnector), 7);
+				createElementMap.Add(typeof(SelfRelation), 5);
+				createElementMap.Add(typeof(DesignerDiagram), 6);
+				createElementMap.Add(typeof(EntityConnector), 7);
 				createElementMap.Add(typeof(EntityShape), 8);
 			}
 			int index;
@@ -203,9 +206,9 @@ namespace Worm.Designer
 				case 2: return new Table(partition, propertyAssignments);
 				case 3: return new Property(partition, propertyAssignments);
 				case 4: return new SupressedProperty(partition, propertyAssignments);
-				case 5: return new DesignerDiagram(partition, propertyAssignments);
-				case 6: return new EntityConnector(partition, propertyAssignments);
-				case 7: return new SelfConnector(partition, propertyAssignments);
+				case 5: return new SelfRelation(partition, propertyAssignments);
+				case 6: return new DesignerDiagram(partition, propertyAssignments);
+				case 7: return new EntityConnector(partition, propertyAssignments);
 				case 8: return new EntityShape(partition, propertyAssignments);
 				default: return null;
 			}
@@ -235,7 +238,7 @@ namespace Worm.Designer
 				createElementLinkMap.Add(typeof(EntityHasProperties), 2);
 				createElementLinkMap.Add(typeof(EntityReferencesTargetEntities), 3);
 				createElementLinkMap.Add(typeof(EntityHasSupressedProperties), 4);
-				createElementLinkMap.Add(typeof(EntityReferencesSelfTargetEntities), 5);
+				createElementLinkMap.Add(typeof(EntityHasSelfRelations), 5);
 			}
 			int index;
 			if (!createElementLinkMap.TryGetValue(elementLinkType, out index))
@@ -255,7 +258,7 @@ namespace Worm.Designer
 				case 2: return new EntityHasProperties(partition, roleAssignments, propertyAssignments);
 				case 3: return new EntityReferencesTargetEntities(partition, roleAssignments, propertyAssignments);
 				case 4: return new EntityHasSupressedProperties(partition, roleAssignments, propertyAssignments);
-				case 5: return new EntityReferencesSelfTargetEntities(partition, roleAssignments, propertyAssignments);
+				case 5: return new EntityHasSelfRelations(partition, roleAssignments, propertyAssignments);
 				default: return null;
 			}
 		}
@@ -435,6 +438,7 @@ namespace Worm.Designer
 			DomainRoles.Add(global::Worm.Designer.EntityHasTables.TableDomainRoleId, true);
 			DomainRoles.Add(global::Worm.Designer.EntityHasProperties.PropertyDomainRoleId, true);
 			DomainRoles.Add(global::Worm.Designer.EntityHasSupressedProperties.SupressedPropertyDomainRoleId, true);
+			DomainRoles.Add(global::Worm.Designer.EntityHasSelfRelations.SelfRelationDomainRoleId, true);
 			#endregion
 		}
 		/// <summary>
@@ -512,6 +516,7 @@ namespace Worm.Designer
 			DomainRoles.Add(global::Worm.Designer.EntityHasTables.TableDomainRoleId, true);
 			DomainRoles.Add(global::Worm.Designer.EntityHasProperties.PropertyDomainRoleId, true);
 			DomainRoles.Add(global::Worm.Designer.EntityHasSupressedProperties.SupressedPropertyDomainRoleId, true);
+			DomainRoles.Add(global::Worm.Designer.EntityHasSelfRelations.SelfRelationDomainRoleId, true);
 			#endregion
 		}
 		/// <summary>

@@ -277,11 +277,6 @@ namespace Worm.Designer
 				global::Worm.Designer.EntityConnector newShape = new global::Worm.Designer.EntityConnector(this.Partition);
 				return newShape;
 			}
-			if(element is global::Worm.Designer.EntityReferencesSelfTargetEntities)
-			{
-				global::Worm.Designer.SelfConnector newShape = new global::Worm.Designer.SelfConnector(this.Partition);
-				return newShape;
-			}
 			return base.CreateChildShape(element);
 		}
 		#endregion
@@ -317,7 +312,6 @@ namespace Worm.Designer
 		#endregion
 		#region Connect actions
 		private global::Worm.Designer.RelationConnectAction relationConnectAction;
-		private global::Worm.Designer.SelfRelationConnectAction selfRelationConnectAction;
 		/// <summary>
 		/// Override to provide the right mouse action when trying
 		/// to create links on the diagram
@@ -339,15 +333,6 @@ namespace Worm.Designer
 						this.relationConnectAction.MouseActionDeactivated += new DslDiagrams::MouseAction.MouseActionDeactivatedEventHandler(OnConnectActionDeactivated);
 					}
 					action = this.relationConnectAction;
-				} 
-				else if (activeView.SelectedToolboxItemSupportsFilterString(global::Worm.Designer.DesignerToolboxHelper.SelfRelationFilterString))
-				{
-					if (this.selfRelationConnectAction == null)
-					{
-						this.selfRelationConnectAction = new global::Worm.Designer.SelfRelationConnectAction(this);
-						this.selfRelationConnectAction.MouseActionDeactivated += new DslDiagrams::MouseAction.MouseActionDeactivatedEventHandler(OnConnectActionDeactivated);
-					}
-					action = this.selfRelationConnectAction;
 				} 
 				else
 				{
@@ -387,11 +372,6 @@ namespace Worm.Designer
 					{
 						this.relationConnectAction.Dispose();
 						this.relationConnectAction = null;
-					}
-					if(this.selfRelationConnectAction != null)
-					{
-						this.selfRelationConnectAction.Dispose();
-						this.selfRelationConnectAction = null;
 					}
 					this.UnsubscribeCompartmentItemsEvents();
 				}
@@ -435,7 +415,6 @@ namespace Worm.Designer
 		/// <summary>
 		/// Rule that initiates view fixup when an element that has an associated shape is added to the model. 
 		/// </summary>
-		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityReferencesSelfTargetEntities), FireTime = DslModeling::TimeToFire.TopLevelCommit, Priority = DslDiagrams::DiagramFixupConstants.AddConnectionRulePriority, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityReferencesTargetEntities), FireTime = DslModeling::TimeToFire.TopLevelCommit, Priority = DslDiagrams::DiagramFixupConstants.AddConnectionRulePriority, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.Entity), FireTime = DslModeling::TimeToFire.TopLevelCommit, Priority = DslDiagrams::DiagramFixupConstants.AddShapeParentExistRulePriority, InitiallyDisabled=true)]
 		internal sealed partial class FixUpDiagram : DslModeling::AddRule
@@ -564,6 +543,7 @@ namespace Worm.Designer
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasTables), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSupressedProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
+		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSelfRelations), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		internal sealed class CompartmentItemAddRule : DslModeling::AddRule
 		{
 			/// <summary>
@@ -594,6 +574,11 @@ namespace Worm.Designer
 				{
 					global::System.Collections.IEnumerable elements = GetEntityForEntityShapeSupressedPropertiesFromLastLink((global::Worm.Designer.EntityHasSupressedProperties)e.ModelElement);
 					UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SupressedProperties", repaintOnly);
+				}
+				if(e.ModelElement is global::Worm.Designer.EntityHasSelfRelations)
+				{
+					global::System.Collections.IEnumerable elements = GetEntityForEntityShapeSelfRelationFromLastLink((global::Worm.Designer.EntityHasSelfRelations)e.ModelElement);
+					UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SelfRelation", repaintOnly);
 				}
 			}
 			
@@ -634,6 +619,20 @@ namespace Worm.Designer
 				return new DslModeling::ModelElement[] {result};
 			}
 			internal static global::System.Collections.ICollection GetEntityForEntityShapeSupressedProperties(global::Worm.Designer.SupressedProperty root)
+			{
+				// Segments 1 and 0
+				global::Worm.Designer.Entity result = root.Entity;
+				if ( result == null ) return new DslModeling::ModelElement[0];
+				return new DslModeling::ModelElement[] {result};
+			}
+			internal static global::System.Collections.ICollection GetEntityForEntityShapeSelfRelationFromLastLink(global::Worm.Designer.EntityHasSelfRelations root)
+			{
+				// Segment 0
+				global::Worm.Designer.Entity result = root.Entity;
+				if ( result == null ) return new DslModeling::ModelElement[0];
+				return new DslModeling::ModelElement[] {result};
+			}
+			internal static global::System.Collections.ICollection GetEntityForEntityShapeSelfRelation(global::Worm.Designer.SelfRelation root)
 			{
 				// Segments 1 and 0
 				global::Worm.Designer.Entity result = root.Entity;
@@ -688,6 +687,7 @@ namespace Worm.Designer
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasTables), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSupressedProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
+		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSelfRelations), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		internal sealed class CompartmentItemDeleteRule : DslModeling::DeleteRule
 		{
 			/// <summary>
@@ -717,6 +717,11 @@ namespace Worm.Designer
 					global::System.Collections.ICollection elements = CompartmentItemAddRule.GetEntityForEntityShapeSupressedPropertiesFromLastLink((global::Worm.Designer.EntityHasSupressedProperties)e.ModelElement);
 					CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SupressedProperties", repaintOnly);
 				}
+				if(e.ModelElement is global::Worm.Designer.EntityHasSelfRelations)
+				{
+					global::System.Collections.ICollection elements = CompartmentItemAddRule.GetEntityForEntityShapeSelfRelationFromLastLink((global::Worm.Designer.EntityHasSelfRelations)e.ModelElement);
+					CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SelfRelation", repaintOnly);
+				}
 			}
 		}
 		
@@ -726,6 +731,7 @@ namespace Worm.Designer
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.Table), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.Property), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.SupressedProperty), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
+		[DslModeling::RuleOn(typeof(global::Worm.Designer.SelfRelation), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		internal sealed class CompartmentItemChangeRule : DslModeling::ChangeRule 
 		{
 			/// <summary>
@@ -755,6 +761,11 @@ namespace Worm.Designer
 					global::System.Collections.IEnumerable elements = CompartmentItemAddRule.GetEntityForEntityShapeSupressedProperties((global::Worm.Designer.SupressedProperty)e.ModelElement);
 					CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SupressedProperties", repaintOnly);
 				}
+				if(e.ModelElement is global::Worm.Designer.SelfRelation && e.DomainProperty.Id == global::Worm.Designer.SelfRelation.NameDomainPropertyId)
+				{
+					global::System.Collections.IEnumerable elements = CompartmentItemAddRule.GetEntityForEntityShapeSelfRelation((global::Worm.Designer.SelfRelation)e.ModelElement);
+					CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SelfRelation", repaintOnly);
+				}
 			}
 		}
 		
@@ -764,6 +775,7 @@ namespace Worm.Designer
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasTables), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSupressedProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
+		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSelfRelations), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		internal sealed class CompartmentItemRolePlayerChangeRule : DslModeling::RolePlayerChangeRule 
 		{
 			/// <summary>
@@ -859,6 +871,33 @@ namespace Worm.Designer
 						CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SupressedProperties", repaintOnly);
 					}
 				}
+				if(typeof(global::Worm.Designer.EntityHasSelfRelations).IsAssignableFrom(e.DomainRelationship.ImplementationClass))
+				{
+					if(e.DomainRole.IsSource)
+					{
+						//global::System.Collections.IEnumerable oldElements = CompartmentItemAddRule.GetEntityForEntityShapeSelfRelationFromLastLink((global::Worm.Designer.SelfRelation)e.OldRolePlayer);
+						//foreach(DslModeling::ModelElement element in oldElements)
+						//{
+						//	DslModeling::LinkedElementCollection<DslDiagrams::PresentationElement> pels = DslDiagrams::PresentationViewsSubject.GetPresentation(element);
+						//	foreach(DslDiagrams::PresentationElement pel in pels)
+						//	{
+						//		global::Worm.Designer.EntityShape compartmentShape = pel as global::Worm.Designer.EntityShape;
+						//		if(compartmentShape != null)
+						//		{
+						//			compartmentShape.GetCompartmentMappings()[3].InitializeCompartmentShape(compartmentShape);
+						//		}
+						//	}
+						//}
+						
+						global::System.Collections.IEnumerable elements = CompartmentItemAddRule.GetEntityForEntityShapeSelfRelationFromLastLink((global::Worm.Designer.EntityHasSelfRelations)e.ElementLink);
+						CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SelfRelation", repaintOnly);
+					}
+					else 
+					{
+						global::System.Collections.IEnumerable elements = CompartmentItemAddRule.GetEntityForEntityShapeSelfRelation((global::Worm.Designer.SelfRelation)e.NewRolePlayer);
+						CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SelfRelation", repaintOnly);
+					}
+				}
 			}
 		}
 	
@@ -868,6 +907,7 @@ namespace Worm.Designer
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasTables), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSupressedProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
+		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSelfRelations), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		internal sealed class CompartmentItemRolePlayerPositionChangeRule : DslModeling::RolePlayerPositionChangeRule 
 		{
 			/// <summary>
@@ -906,6 +946,14 @@ namespace Worm.Designer
 						CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SupressedProperties", repaintOnly);
 					}
 				}
+				if(typeof(global::Worm.Designer.EntityHasSelfRelations).IsAssignableFrom(e.DomainRelationship.ImplementationClass))
+				{
+					if(!e.CounterpartDomainRole.IsSource)
+					{
+						global::System.Collections.IEnumerable elements = CompartmentItemAddRule.GetEntityForEntityShapeSelfRelation((global::Worm.Designer.SelfRelation)e.CounterpartRolePlayer);
+						CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "SelfRelation", repaintOnly);
+					}
+				}
 			}
 		}
 	
@@ -913,7 +961,6 @@ namespace Worm.Designer
 		/// Reroute a connector when the role players of its underlying relationship change
 		/// </summary>
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityReferencesTargetEntities), FireTime = DslModeling::TimeToFire.TopLevelCommit, Priority = DslDiagrams::DiagramFixupConstants.AddConnectionRulePriority, InitiallyDisabled=true)]
-		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityReferencesSelfTargetEntities), FireTime = DslModeling::TimeToFire.TopLevelCommit, Priority = DslDiagrams::DiagramFixupConstants.AddConnectionRulePriority, InitiallyDisabled=true)]
 		internal sealed class ConnectorRolePlayerChanged : DslModeling::RolePlayerChangeRule
 		{
 			/// <summary>

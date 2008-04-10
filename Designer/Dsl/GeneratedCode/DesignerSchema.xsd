@@ -73,7 +73,7 @@
   <xsd:element name="entity" type="Entity" />
   <xsd:complexType name="Entity">
     <xsd:annotation>
-      <xsd:documentation>Entity</xsd:documentation>
+      <xsd:documentation>Сущность</xsd:documentation>
     </xsd:annotation>
     <xsd:sequence minOccurs="0" maxOccurs="1">
       <!-- Relationship: EntityHasTables -->
@@ -157,18 +157,25 @@
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
-      <!-- Relationship: EntityReferencesSelfTargetEntities -->
-      <xsd:element name="selfTargetEntities" minOccurs="0" maxOccurs="1">
+      <!-- Relationship: EntityHasSelfRelations -->
+      <xsd:element name="selfRelations" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
-          <xsd:documentation>Instances of EntityReferencesSelfTargetEntities</xsd:documentation>
+          <xsd:documentation>Instances of EntityHasSelfRelations</xsd:documentation>
         </xsd:annotation>
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:element ref="entityReferencesSelfTargetEntities" minOccurs="0" maxOccurs="unbounded">
-              <xsd:annotation>
-                <xsd:documentation>[Instance of EntityReferencesSelfTargetEntities needs to be serialized in full-form]</xsd:documentation>
-              </xsd:annotation>
-            </xsd:element>
+            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
+              <xsd:element ref="entityHasSelfRelations">
+                <xsd:annotation>
+                  <xsd:documentation>[Relationship deriving from EntityHasSelfRelations needs to be serialized in full-form]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element ref="selfRelation" >
+                <xsd:annotation>
+                  <xsd:documentation>[Target role-player]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:choice>
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
@@ -180,19 +187,47 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Name -->
-    <xsd:attribute name="name" type="xsd:string" />
+    <xsd:attribute name="name" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Наименование сущности</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: Namespace -->
-    <xsd:attribute name="namespace" type="xsd:string" />
+    <xsd:attribute name="namespace" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Пространство имен для сущности</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: Behaviour -->
-    <xsd:attribute name="behaviour" type="xsd:string" />
+    <xsd:attribute name="behaviour" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Entity generator behaviour</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: Description -->
-    <xsd:attribute name="description" type="xsd:string" />
+    <xsd:attribute name="description" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Описание сущности</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: UseGenerics -->
-    <xsd:attribute name="useGenerics" type="xsd:boolean" />
+    <xsd:attribute name="useGenerics" type="xsd:boolean" >
+      <xsd:annotation>
+        <xsd:documentation>Определяет генерировать generic или строго типизированные методы</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: MakeInterface -->
-    <xsd:attribute name="makeInterface" type="xsd:boolean" />
+    <xsd:attribute name="makeInterface" type="xsd:boolean" >
+      <xsd:annotation>
+        <xsd:documentation>Определяет генерировать интерфейс для сущности</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: BaseEntity -->
-    <xsd:attribute name="baseEntity" type="xsd:string" />
+    <xsd:attribute name="baseEntity" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>ИД базовой сущности</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
   
   <!-- Entity Moniker -->
@@ -317,6 +352,94 @@
   <xsd:complexType name="SupressedPropertyMoniker">
     <xsd:annotation>
       <xsd:documentation>Moniker for SupressedProperty instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- SelfRelation -->
+  <xsd:element name="selfRelation" type="SelfRelation" />
+  <xsd:complexType name="SelfRelation">
+    <xsd:annotation>
+      <xsd:documentation>Связь сущности самой с собой</xsd:documentation>
+    </xsd:annotation>
+    <!-- Property: DirectAccessor -->
+    <xsd:attribute name="directAccessor" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Имя связанной сущности для генерации методов</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: DirectCascadeDelete -->
+    <xsd:attribute name="directCascadeDelete" type="xsd:boolean" >
+      <xsd:annotation>
+        <xsd:documentation>аскадное удаление</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: DirectFieldName -->
+    <xsd:attribute name="directFieldName" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Имя поля таблицы связи</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Disabled -->
+    <xsd:attribute name="disabled" type="xsd:boolean" >
+      <xsd:annotation>
+        <xsd:documentation>Disable relation</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: ReverseAccessor -->
+    <xsd:attribute name="reverseAccessor" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Имя связанной сущности для генерации методов</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: ReverseCascadeDelete -->
+    <xsd:attribute name="reverseCascadeDelete" type="xsd:boolean" >
+      <xsd:annotation>
+        <xsd:documentation>аскадное удаление</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: ReverseFieldName -->
+    <xsd:attribute name="reverseFieldName" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Имя поля таблицы связи</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Table -->
+    <xsd:attribute name="table" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Имя таблицы связи</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: UnderlyingEntity -->
+    <xsd:attribute name="underlyingEntity" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Сущность реализующая связь</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: DirectAccessedEntityType -->
+    <xsd:attribute name="directAccessedEntityType" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>&gt;Тип связанной сущности для генерации методов</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: ReverseAccessedEntityType -->
+    <xsd:attribute name="reverseAccessedEntityType" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>&gt;Тип связанной сущности для генерации методов</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Name -->
+    <xsd:attribute name="name" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Name</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+  
+  <!-- SelfRelation Moniker -->
+  <xsd:element name="selfRelationMoniker" abstract="true" type="SelfRelationMoniker" />
+  <xsd:complexType name="SelfRelationMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for SelfRelation instance.</xsd:documentation>
     </xsd:annotation>
   </xsd:complexType>
   
@@ -451,42 +574,24 @@
     </xsd:annotation>
   </xsd:complexType>
   
-  <!-- EntityReferencesSelfTargetEntities -->
-  <xsd:element name="entityReferencesSelfTargetEntities" type="EntityReferencesSelfTargetEntities" />
-  <xsd:complexType name="EntityReferencesSelfTargetEntities">
+  <!-- EntityHasSelfRelations -->
+  <xsd:element name="entityHasSelfRelations" abstract="true" type="EntityHasSelfRelations" />
+  <xsd:complexType name="EntityHasSelfRelations" abstract="true" >
     <xsd:sequence minOccurs="0" maxOccurs="1">
-      <!-- Target end Entity -->
-      <xsd:element ref="entityMoniker" minOccurs="1" maxOccurs="1">
+      <!-- Target end SelfRelation -->
+      <xsd:element ref="selfRelation" minOccurs="1" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>[Target role-player]</xsd:documentation>
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
-    <!-- Property: DirectFieldName -->
-    <xsd:attribute name="directFieldName" type="xsd:string" />
-    <!-- Property: DirectAccessor -->
-    <xsd:attribute name="directAccessor" type="xsd:string" />
-    <!-- Property: DirectCascadeDelete -->
-    <xsd:attribute name="directCascadeDelete" type="xsd:boolean" />
-    <!-- Property: ReverseFieldName -->
-    <xsd:attribute name="reverseFieldName" type="xsd:string" />
-    <!-- Property: ReverseAccessor -->
-    <xsd:attribute name="reverseAccessor" type="xsd:string" />
-    <!-- Property: ReverseCascadeDelete -->
-    <xsd:attribute name="reverseCascadeDelete" type="xsd:boolean" />
-    <!-- Property: Table -->
-    <xsd:attribute name="table" type="xsd:string" />
-    <!-- Property: UnderlyingEntity -->
-    <xsd:attribute name="underlyingEntity" type="xsd:string" />
-    <!-- Property: Disabled -->
-    <xsd:attribute name="disabled" type="xsd:boolean" />
   </xsd:complexType>
   
-  <!-- EntityReferencesSelfTargetEntities Moniker -->
-  <xsd:element name="entityReferencesSelfTargetEntitiesMoniker" abstract="true" type="EntityReferencesSelfTargetEntitiesMoniker" />
-  <xsd:complexType name="EntityReferencesSelfTargetEntitiesMoniker">
+  <!-- EntityHasSelfRelations Moniker -->
+  <xsd:element name="entityHasSelfRelationsMoniker" abstract="true" type="EntityHasSelfRelationsMoniker" />
+  <xsd:complexType name="EntityHasSelfRelationsMoniker">
     <xsd:annotation>
-      <xsd:documentation>Moniker for EntityReferencesSelfTargetEntities instance.</xsd:documentation>
+      <xsd:documentation>Moniker for EntityHasSelfRelations instance.</xsd:documentation>
     </xsd:annotation>
   </xsd:complexType>
   

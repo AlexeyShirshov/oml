@@ -300,7 +300,7 @@ namespace Worm.Designer
 				{
 					localCompartmentsOffset = baseCompartmentDescriptions.Length;
 				}
-				compartmentDescriptions = new DslDiagrams::ElementListCompartmentDescription[3+localCompartmentsOffset];
+				compartmentDescriptions = new DslDiagrams::ElementListCompartmentDescription[4+localCompartmentsOffset];
 				
 				if(baseCompartmentDescriptions!=null)
 				{
@@ -332,6 +332,15 @@ namespace Worm.Designer
 						null, null,
 						false);
 					compartmentDescriptions[localCompartmentsOffset+2] = descriptor;
+				}
+				{
+					string title = global::Worm.Designer.DesignerDomainModel.SingletonResourceManager.GetString("EntityShapeSelfRelationTitle");
+					DslDiagrams::ElementListCompartmentDescription descriptor = new DslDiagrams::ElementListCompartmentDescription("SelfRelation", title, 
+						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.Honeydew), false, 
+						global::System.Drawing.Color.FromKnownColor(global::System.Drawing.KnownColor.Window), false,
+						null, null,
+						false);
+					compartmentDescriptions[localCompartmentsOffset+3] = descriptor;
 				}
 			}
 			
@@ -365,7 +374,7 @@ namespace Worm.Designer
 					{
 						localCompartmentMappingsOffset = baseMappings.Length;
 					}
-					DslDiagrams::CompartmentMapping[] mappings = new DslDiagrams::CompartmentMapping[3+localCompartmentMappingsOffset];
+					DslDiagrams::CompartmentMapping[] mappings = new DslDiagrams::CompartmentMapping[4+localCompartmentMappingsOffset];
 					
 					if(baseMappings!=null)
 					{
@@ -392,6 +401,14 @@ namespace Worm.Designer
 																				global::Worm.Designer.SupressedProperty.NameDomainPropertyId, 
 																				global::Worm.Designer.SupressedProperty.DomainClassId, 
 																				GetElementsFromEntityForSupressedProperties,
+																				null,
+																				null,
+																				null);
+					mappings[localCompartmentMappingsOffset+3] = new DslDiagrams::ElementListCompartmentMapping(
+																				"SelfRelation", 
+																				global::Worm.Designer.SelfRelation.NameDomainPropertyId, 
+																				global::Worm.Designer.SelfRelation.DomainClassId, 
+																				GetElementsFromEntityForSelfRelation,
 																				null,
 																				null,
 																				null);
@@ -443,6 +460,13 @@ namespace Worm.Designer
 				global::Worm.Designer.Entity root = (global::Worm.Designer.Entity)element;
 					// Segments 0 and 1
 					DslModeling::LinkedElementCollection<global::Worm.Designer.SupressedProperty> result = root.SupressedProperties;
+				return result;
+			}
+			internal static global::System.Collections.IList GetElementsFromEntityForSelfRelation(DslModeling::ModelElement element)
+			{
+				global::Worm.Designer.Entity root = (global::Worm.Designer.Entity)element;
+					// Segments 0 and 1
+					DslModeling::LinkedElementCollection<global::Worm.Designer.SelfRelation> result = root.SelfRelations;
 				return result;
 			}
 			#endregion

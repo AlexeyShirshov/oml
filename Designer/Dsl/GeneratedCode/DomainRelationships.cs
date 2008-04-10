@@ -2317,32 +2317,32 @@ namespace Worm.Designer
 namespace Worm.Designer
 {
 	/// <summary>
-	/// DomainRelationship EntityReferencesSelfTargetEntities
-	/// Description for Worm.Designer.EntityReferencesSelfTargetEntities
+	/// DomainRelationship EntityHasSelfRelations
+	/// Description for Worm.Designer.EntityHasSelfRelations
 	/// </summary>
-	[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-	[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+	[DslDesign::DisplayNameResource("Worm.Designer.EntityHasSelfRelations.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+	[DslDesign::DescriptionResource("Worm.Designer.EntityHasSelfRelations.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 	[global::System.CLSCompliant(true)]
-	[DslModeling::DomainRelationship()]
-	[DslModeling::DomainObjectId("d4b8b7b2-7579-4a08-8ed5-8b59567ee4ae")]
-	public partial class EntityReferencesSelfTargetEntities : DslModeling::ElementLink
+	[DslModeling::DomainRelationship(IsEmbedding=true)]
+	[DslModeling::DomainObjectId("074a5c18-b357-40b1-851f-8a5ba4062473")]
+	public partial class EntityHasSelfRelations : DslModeling::ElementLink
 	{
 		#region Constructors, domain class Id
 		
 		/// <summary>
-		/// EntityReferencesSelfTargetEntities domain class Id.
+		/// EntityHasSelfRelations domain class Id.
 		/// </summary>
-		public static readonly new global::System.Guid DomainClassId = new global::System.Guid(0xd4b8b7b2, 0x7579, 0x4a08, 0x8e, 0xd5, 0x8b, 0x59, 0x56, 0x7e, 0xe4, 0xae);
+		public static readonly new global::System.Guid DomainClassId = new global::System.Guid(0x074a5c18, 0xb357, 0x40b1, 0x85, 0x1f, 0x8a, 0x5b, 0xa4, 0x06, 0x24, 0x73);
 	
 				
 		/// <summary>
 		/// Constructor
-		/// Creates a EntityReferencesSelfTargetEntities link in the same Partition as the given Entity
+		/// Creates a EntityHasSelfRelations link in the same Partition as the given Entity
 		/// </summary>
 		/// <param name="source">Entity to use as the source of the relationship.</param>
-		/// <param name="target">Entity to use as the target of the relationship.</param>
-		public EntityReferencesSelfTargetEntities(Entity source, Entity target)
-			: base((source != null ? source.Partition : null), new DslModeling::RoleAssignment[]{new DslModeling::RoleAssignment(EntityReferencesSelfTargetEntities.SelfSourceEntityDomainRoleId, source), new DslModeling::RoleAssignment(EntityReferencesSelfTargetEntities.SelfTargetEntityDomainRoleId, target)}, null)
+		/// <param name="target">SelfRelation to use as the target of the relationship.</param>
+		public EntityHasSelfRelations(Entity source, SelfRelation target)
+			: base((source != null ? source.Partition : null), new DslModeling::RoleAssignment[]{new DslModeling::RoleAssignment(EntityHasSelfRelations.EntityDomainRoleId, source), new DslModeling::RoleAssignment(EntityHasSelfRelations.SelfRelationDomainRoleId, target)}, null)
 		{
 		}
 		
@@ -2351,7 +2351,7 @@ namespace Worm.Designer
 		/// </summary>
 		/// <param name="store">Store where new link is to be created.</param>
 		/// <param name="roleAssignments">List of relationship role assignments.</param>
-		public EntityReferencesSelfTargetEntities(DslModeling::Store store, params DslModeling::RoleAssignment[] roleAssignments)
+		public EntityHasSelfRelations(DslModeling::Store store, params DslModeling::RoleAssignment[] roleAssignments)
 			: base(store != null ? store.DefaultPartition : null, roleAssignments, null)
 		{
 		}
@@ -2362,7 +2362,7 @@ namespace Worm.Designer
 		/// <param name="store">Store where new link is to be created.</param>
 		/// <param name="roleAssignments">List of relationship role assignments.</param>
 		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
-		public EntityReferencesSelfTargetEntities(DslModeling::Store store, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
+		public EntityHasSelfRelations(DslModeling::Store store, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
 			: base(store != null ? store.DefaultPartition : null, roleAssignments, propertyAssignments)
 		{
 		}
@@ -2372,7 +2372,7 @@ namespace Worm.Designer
 		/// </summary>
 		/// <param name="partition">Partition where new link is to be created.</param>
 		/// <param name="roleAssignments">List of relationship role assignments.</param>
-		public EntityReferencesSelfTargetEntities(DslModeling::Partition partition, params DslModeling::RoleAssignment[] roleAssignments)
+		public EntityHasSelfRelations(DslModeling::Partition partition, params DslModeling::RoleAssignment[] roleAssignments)
 			: base(partition, roleAssignments, null)
 		{
 		}
@@ -2383,920 +2383,148 @@ namespace Worm.Designer
 		/// <param name="partition">Partition where new link is to be created.</param>
 		/// <param name="roleAssignments">List of relationship role assignments.</param>
 		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
-		public EntityReferencesSelfTargetEntities(DslModeling::Partition partition, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
+		public EntityHasSelfRelations(DslModeling::Partition partition, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
 			: base(partition, roleAssignments, propertyAssignments)
 		{
 		}
 		#endregion
-		#region SelfSourceEntity domain role code
+		#region Entity domain role code
 		
 		/// <summary>
-		/// SelfSourceEntity domain role Id.
+		/// Entity domain role Id.
 		/// </summary>
-		public static readonly global::System.Guid SelfSourceEntityDomainRoleId = new global::System.Guid(0xa3d10102, 0xc8f5, 0x4e6a, 0x9f, 0xd7, 0xbe, 0xac, 0x49, 0x43, 0xe1, 0xe2);
+		public static readonly global::System.Guid EntityDomainRoleId = new global::System.Guid(0xa792cb12, 0x7597, 0x42ff, 0xac, 0x48, 0xed, 0x7c, 0xf0, 0xf2, 0xa8, 0x55);
 		
 		/// <summary>
-		/// DomainRole SelfSourceEntity
-		/// Description for
-		/// Worm.Designer.EntityReferencesSelfTargetEntities.SelfSourceEntity
+		/// DomainRole Entity
+		/// Description for Worm.Designer.EntityHasSelfRelations.Entity
 		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/SelfSourceEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/SelfSourceEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Source, PropertyName = "SelfTargetEntities", PropertyDisplayNameKey="Worm.Designer.EntityReferencesSelfTargetEntities/SelfSourceEntity.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.ZeroMany)]
-		[DslModeling::DomainObjectId("a3d10102-c8f5-4e6a-9fd7-beac4943e1e2")]
-		public virtual Entity SelfSourceEntity
+		[DslDesign::DisplayNameResource("Worm.Designer.EntityHasSelfRelations/Entity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.EntityHasSelfRelations/Entity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Source, PropertyName = "SelfRelations", PropertyDisplayNameKey="Worm.Designer.EntityHasSelfRelations/Entity.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.ZeroMany)]
+		[DslModeling::DomainObjectId("a792cb12-7597-42ff-ac48-ed7cf0f2a855")]
+		public virtual Entity Entity
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
 			{
-				return (Entity)DslModeling::DomainRoleInfo.GetRolePlayer(this, SelfSourceEntityDomainRoleId);
+				return (Entity)DslModeling::DomainRoleInfo.GetRolePlayer(this, EntityDomainRoleId);
 			}
 			[global::System.Diagnostics.DebuggerStepThrough]
 			set
 			{
-				DslModeling::DomainRoleInfo.SetRolePlayer(this, SelfSourceEntityDomainRoleId, value);
+				DslModeling::DomainRoleInfo.SetRolePlayer(this, EntityDomainRoleId, value);
 			}
 		}
 				
 		#endregion
-		#region Static methods to access SelfSourceEntities of a Entity
+		#region Static methods to access Entity of a SelfRelation
 		/// <summary>
-		/// Gets a list of SelfSourceEntities.
+		/// Gets Entity.
 		/// </summary>
 		[global::System.Diagnostics.DebuggerStepThrough]
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static DslModeling::LinkedElementCollection<Entity> GetSelfSourceEntities(Entity element)
+		public static Entity GetEntity(SelfRelation element)
 		{
-			return new DslModeling::LinkedElementCollection<Entity>(element, SelfTargetEntityDomainRoleId);
+			return DslModeling::DomainRoleInfo.GetLinkedElement(element, SelfRelationDomainRoleId) as Entity;
+		}
+		
+		/// <summary>
+		/// Sets Entity.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static void SetEntity(SelfRelation element, Entity newEntity)
+		{
+			DslModeling::DomainRoleInfo.SetLinkedElement(element, SelfRelationDomainRoleId, newEntity);
 		}
 		#endregion
-		#region SelfTargetEntity domain role code
+		#region SelfRelation domain role code
 		
 		/// <summary>
-		/// SelfTargetEntity domain role Id.
+		/// SelfRelation domain role Id.
 		/// </summary>
-		public static readonly global::System.Guid SelfTargetEntityDomainRoleId = new global::System.Guid(0x1bd6d634, 0x62dc, 0x4d98, 0x9d, 0x42, 0x8c, 0x4e, 0xc5, 0x93, 0x56, 0xc3);
+		public static readonly global::System.Guid SelfRelationDomainRoleId = new global::System.Guid(0x748e66b7, 0x2b0f, 0x4b00, 0xa3, 0x70, 0x8f, 0x75, 0xa5, 0x03, 0xbe, 0xc0);
 		
 		/// <summary>
-		/// DomainRole SelfTargetEntity
-		/// Description for
-		/// Worm.Designer.EntityReferencesSelfTargetEntities.SelfTargetEntity
+		/// DomainRole SelfRelation
+		/// Description for Worm.Designer.EntityHasSelfRelations.SelfRelation
 		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/SelfTargetEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/SelfTargetEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Target, PropertyName = "SelfSourceEntities", PropertyDisplayNameKey="Worm.Designer.EntityReferencesSelfTargetEntities/SelfTargetEntity.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.ZeroMany)]
-		[DslModeling::DomainObjectId("1bd6d634-62dc-4d98-9d42-8c4ec59356c3")]
-		public virtual Entity SelfTargetEntity
+		[DslDesign::DisplayNameResource("Worm.Designer.EntityHasSelfRelations/SelfRelation.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.EntityHasSelfRelations/SelfRelation.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Target, PropertyName = "Entity", PropertyDisplayNameKey="Worm.Designer.EntityHasSelfRelations/SelfRelation.PropertyDisplayName", PropagatesDelete = true, PropagatesCopy = true, Multiplicity = DslModeling::Multiplicity.One)]
+		[DslModeling::DomainObjectId("748e66b7-2b0f-4b00-a370-8f75a503bec0")]
+		public virtual SelfRelation SelfRelation
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
 			{
-				return (Entity)DslModeling::DomainRoleInfo.GetRolePlayer(this, SelfTargetEntityDomainRoleId);
+				return (SelfRelation)DslModeling::DomainRoleInfo.GetRolePlayer(this, SelfRelationDomainRoleId);
 			}
 			[global::System.Diagnostics.DebuggerStepThrough]
 			set
 			{
-				DslModeling::DomainRoleInfo.SetRolePlayer(this, SelfTargetEntityDomainRoleId, value);
+				DslModeling::DomainRoleInfo.SetRolePlayer(this, SelfRelationDomainRoleId, value);
 			}
 		}
 				
 		#endregion
-		#region Static methods to access SelfTargetEntities of a Entity
+		#region Static methods to access SelfRelations of a Entity
 		/// <summary>
-		/// Gets a list of SelfTargetEntities.
+		/// Gets a list of SelfRelations.
 		/// </summary>
 		[global::System.Diagnostics.DebuggerStepThrough]
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static DslModeling::LinkedElementCollection<Entity> GetSelfTargetEntities(Entity element)
+		public static DslModeling::LinkedElementCollection<SelfRelation> GetSelfRelations(Entity element)
 		{
-			return new DslModeling::LinkedElementCollection<Entity>(element, SelfSourceEntityDomainRoleId);
+			return new DslModeling::LinkedElementCollection<SelfRelation>(element, EntityDomainRoleId);
 		}
 		#endregion
-		#region DirectFieldName domain property code
-		
+		#region Entity link accessor
 		/// <summary>
-		/// DirectFieldName domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid DirectFieldNameDomainPropertyId = new global::System.Guid(0xd817536f, 0x07ca, 0x433f, 0xb4, 0x79, 0x44, 0x22, 0x4d, 0x99, 0x5b, 0x0e);
-		
-		/// <summary>
-		/// Storage for DirectFieldName
-		/// </summary>
-		private global::System.String directFieldNamePropertyStorage = string.Empty;
-		
-		/// <summary>
-		/// Gets or sets the value of DirectFieldName domain property.
-		/// Description for Worm.Designer.EntityReferencesSelfTargetEntities.Direct Field
-		/// Name
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/DirectFieldName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/DirectFieldName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("d817536f-07ca-433f-b479-44224d995b0e")]
-		public global::System.String DirectFieldName
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return directFieldNamePropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				DirectFieldNamePropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the EntityReferencesSelfTargetEntities.DirectFieldName domain property.
-		/// </summary>
-		internal sealed partial class DirectFieldNamePropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesSelfTargetEntities, global::System.String>
-		{
-			private DirectFieldNamePropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the EntityReferencesSelfTargetEntities.DirectFieldName domain property value handler.
-			/// </summary>
-			public static readonly DirectFieldNamePropertyHandler Instance = new DirectFieldNamePropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the EntityReferencesSelfTargetEntities.DirectFieldName domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return DirectFieldNameDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(EntityReferencesSelfTargetEntities element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.directFieldNamePropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesSelfTargetEntities element, global::System.String newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::System.String oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.directFieldNamePropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
-		#region DirectAccessor domain property code
-		
-		/// <summary>
-		/// DirectAccessor domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid DirectAccessorDomainPropertyId = new global::System.Guid(0x12cf3bf5, 0xcb38, 0x4cd6, 0xb4, 0x83, 0x3d, 0xcd, 0xff, 0x9b, 0xae, 0x85);
-		
-		/// <summary>
-		/// Storage for DirectAccessor
-		/// </summary>
-		private global::System.String directAccessorPropertyStorage = string.Empty;
-		
-		/// <summary>
-		/// Gets or sets the value of DirectAccessor domain property.
-		/// Description for Worm.Designer.EntityReferencesSelfTargetEntities.Direct Accessor
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/DirectAccessor.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/DirectAccessor.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("12cf3bf5-cb38-4cd6-b483-3dcdff9bae85")]
-		public global::System.String DirectAccessor
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return directAccessorPropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				DirectAccessorPropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the EntityReferencesSelfTargetEntities.DirectAccessor domain property.
-		/// </summary>
-		internal sealed partial class DirectAccessorPropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesSelfTargetEntities, global::System.String>
-		{
-			private DirectAccessorPropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the EntityReferencesSelfTargetEntities.DirectAccessor domain property value handler.
-			/// </summary>
-			public static readonly DirectAccessorPropertyHandler Instance = new DirectAccessorPropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the EntityReferencesSelfTargetEntities.DirectAccessor domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return DirectAccessorDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(EntityReferencesSelfTargetEntities element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.directAccessorPropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesSelfTargetEntities element, global::System.String newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::System.String oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.directAccessorPropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
-		#region DirectCascadeDelete domain property code
-		
-		/// <summary>
-		/// DirectCascadeDelete domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid DirectCascadeDeleteDomainPropertyId = new global::System.Guid(0x3042c498, 0x34d4, 0x499c, 0xb1, 0x84, 0xd5, 0xc7, 0xc6, 0xa0, 0xd2, 0x94);
-		
-		/// <summary>
-		/// Storage for DirectCascadeDelete
-		/// </summary>
-		private global::System.Boolean directCascadeDeletePropertyStorage;
-		
-		/// <summary>
-		/// Gets or sets the value of DirectCascadeDelete domain property.
-		/// Description for Worm.Designer.EntityReferencesSelfTargetEntities.Direct Cascade
-		/// Delete
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/DirectCascadeDelete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/DirectCascadeDelete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("3042c498-34d4-499c-b184-d5c7c6a0d294")]
-		public global::System.Boolean DirectCascadeDelete
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return directCascadeDeletePropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				DirectCascadeDeletePropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the EntityReferencesSelfTargetEntities.DirectCascadeDelete domain property.
-		/// </summary>
-		internal sealed partial class DirectCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesSelfTargetEntities, global::System.Boolean>
-		{
-			private DirectCascadeDeletePropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the EntityReferencesSelfTargetEntities.DirectCascadeDelete domain property value handler.
-			/// </summary>
-			public static readonly DirectCascadeDeletePropertyHandler Instance = new DirectCascadeDeletePropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the EntityReferencesSelfTargetEntities.DirectCascadeDelete domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return DirectCascadeDeleteDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(EntityReferencesSelfTargetEntities element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.directCascadeDeletePropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesSelfTargetEntities element, global::System.Boolean newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::System.Boolean oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.directCascadeDeletePropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
-		#region ReverseFieldName domain property code
-		
-		/// <summary>
-		/// ReverseFieldName domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid ReverseFieldNameDomainPropertyId = new global::System.Guid(0xc19ae98c, 0x5ce3, 0x4009, 0x89, 0x99, 0xd4, 0xf7, 0x0d, 0x9d, 0xc9, 0xb0);
-		
-		/// <summary>
-		/// Storage for ReverseFieldName
-		/// </summary>
-		private global::System.String reverseFieldNamePropertyStorage = string.Empty;
-		
-		/// <summary>
-		/// Gets or sets the value of ReverseFieldName domain property.
-		/// Description for Worm.Designer.EntityReferencesSelfTargetEntities.Reverse Field
-		/// Name
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/ReverseFieldName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/ReverseFieldName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("c19ae98c-5ce3-4009-8999-d4f70d9dc9b0")]
-		public global::System.String ReverseFieldName
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return reverseFieldNamePropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				ReverseFieldNamePropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the EntityReferencesSelfTargetEntities.ReverseFieldName domain property.
-		/// </summary>
-		internal sealed partial class ReverseFieldNamePropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesSelfTargetEntities, global::System.String>
-		{
-			private ReverseFieldNamePropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the EntityReferencesSelfTargetEntities.ReverseFieldName domain property value handler.
-			/// </summary>
-			public static readonly ReverseFieldNamePropertyHandler Instance = new ReverseFieldNamePropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the EntityReferencesSelfTargetEntities.ReverseFieldName domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return ReverseFieldNameDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(EntityReferencesSelfTargetEntities element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.reverseFieldNamePropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesSelfTargetEntities element, global::System.String newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::System.String oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.reverseFieldNamePropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
-		#region ReverseAccessor domain property code
-		
-		/// <summary>
-		/// ReverseAccessor domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid ReverseAccessorDomainPropertyId = new global::System.Guid(0xecf05264, 0xd18b, 0x4531, 0xbc, 0x69, 0x5f, 0x9e, 0x58, 0xdd, 0xe5, 0x81);
-		
-		/// <summary>
-		/// Storage for ReverseAccessor
-		/// </summary>
-		private global::System.String reverseAccessorPropertyStorage = string.Empty;
-		
-		/// <summary>
-		/// Gets or sets the value of ReverseAccessor domain property.
-		/// Description for Worm.Designer.EntityReferencesSelfTargetEntities.Reverse
-		/// Accessor
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/ReverseAccessor.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/ReverseAccessor.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("ecf05264-d18b-4531-bc69-5f9e58dde581")]
-		public global::System.String ReverseAccessor
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return reverseAccessorPropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				ReverseAccessorPropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the EntityReferencesSelfTargetEntities.ReverseAccessor domain property.
-		/// </summary>
-		internal sealed partial class ReverseAccessorPropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesSelfTargetEntities, global::System.String>
-		{
-			private ReverseAccessorPropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the EntityReferencesSelfTargetEntities.ReverseAccessor domain property value handler.
-			/// </summary>
-			public static readonly ReverseAccessorPropertyHandler Instance = new ReverseAccessorPropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the EntityReferencesSelfTargetEntities.ReverseAccessor domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return ReverseAccessorDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(EntityReferencesSelfTargetEntities element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.reverseAccessorPropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesSelfTargetEntities element, global::System.String newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::System.String oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.reverseAccessorPropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
-		#region ReverseCascadeDelete domain property code
-		
-		/// <summary>
-		/// ReverseCascadeDelete domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid ReverseCascadeDeleteDomainPropertyId = new global::System.Guid(0x3cd9c5c8, 0xee13, 0x40ca, 0x95, 0x47, 0xe5, 0x54, 0x59, 0x9c, 0xd6, 0x0f);
-		
-		/// <summary>
-		/// Storage for ReverseCascadeDelete
-		/// </summary>
-		private global::System.Boolean reverseCascadeDeletePropertyStorage;
-		
-		/// <summary>
-		/// Gets or sets the value of ReverseCascadeDelete domain property.
-		/// Description for Worm.Designer.EntityReferencesSelfTargetEntities.Reverse Cascade
-		/// Delete
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/ReverseCascadeDelete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/ReverseCascadeDelete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("3cd9c5c8-ee13-40ca-9547-e554599cd60f")]
-		public global::System.Boolean ReverseCascadeDelete
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return reverseCascadeDeletePropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				ReverseCascadeDeletePropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the EntityReferencesSelfTargetEntities.ReverseCascadeDelete domain property.
-		/// </summary>
-		internal sealed partial class ReverseCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesSelfTargetEntities, global::System.Boolean>
-		{
-			private ReverseCascadeDeletePropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the EntityReferencesSelfTargetEntities.ReverseCascadeDelete domain property value handler.
-			/// </summary>
-			public static readonly ReverseCascadeDeletePropertyHandler Instance = new ReverseCascadeDeletePropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the EntityReferencesSelfTargetEntities.ReverseCascadeDelete domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return ReverseCascadeDeleteDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(EntityReferencesSelfTargetEntities element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.reverseCascadeDeletePropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesSelfTargetEntities element, global::System.Boolean newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::System.Boolean oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.reverseCascadeDeletePropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
-		#region Table domain property code
-		
-		/// <summary>
-		/// Table domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid TableDomainPropertyId = new global::System.Guid(0x335d6f0d, 0x32b6, 0x44d4, 0xbd, 0xe2, 0x91, 0x4e, 0x05, 0x60, 0x71, 0xc5);
-		
-		/// <summary>
-		/// Storage for Table
-		/// </summary>
-		private global::System.String tablePropertyStorage = string.Empty;
-		
-		/// <summary>
-		/// Gets or sets the value of Table domain property.
-		/// Description for Worm.Designer.EntityReferencesSelfTargetEntities.Table
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/Table.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/Table.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("335d6f0d-32b6-44d4-bde2-914e056071c5")]
-		public global::System.String Table
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return tablePropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				TablePropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the EntityReferencesSelfTargetEntities.Table domain property.
-		/// </summary>
-		internal sealed partial class TablePropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesSelfTargetEntities, global::System.String>
-		{
-			private TablePropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the EntityReferencesSelfTargetEntities.Table domain property value handler.
-			/// </summary>
-			public static readonly TablePropertyHandler Instance = new TablePropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the EntityReferencesSelfTargetEntities.Table domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return TableDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(EntityReferencesSelfTargetEntities element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.tablePropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesSelfTargetEntities element, global::System.String newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::System.String oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.tablePropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
-		#region UnderlyingEntity domain property code
-		
-		/// <summary>
-		/// UnderlyingEntity domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid UnderlyingEntityDomainPropertyId = new global::System.Guid(0xf22b07ba, 0x7d2b, 0x483e, 0xbd, 0x82, 0xc7, 0x52, 0x07, 0xee, 0x64, 0x00);
-		
-		/// <summary>
-		/// Storage for UnderlyingEntity
-		/// </summary>
-		private global::System.String underlyingEntityPropertyStorage = string.Empty;
-		
-		/// <summary>
-		/// Gets or sets the value of UnderlyingEntity domain property.
-		/// Description for Worm.Designer.EntityReferencesSelfTargetEntities.Underlying
-		/// Entity
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/UnderlyingEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/UnderlyingEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("f22b07ba-7d2b-483e-bd82-c75207ee6400")]
-		public global::System.String UnderlyingEntity
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return underlyingEntityPropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				UnderlyingEntityPropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the EntityReferencesSelfTargetEntities.UnderlyingEntity domain property.
-		/// </summary>
-		internal sealed partial class UnderlyingEntityPropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesSelfTargetEntities, global::System.String>
-		{
-			private UnderlyingEntityPropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the EntityReferencesSelfTargetEntities.UnderlyingEntity domain property value handler.
-			/// </summary>
-			public static readonly UnderlyingEntityPropertyHandler Instance = new UnderlyingEntityPropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the EntityReferencesSelfTargetEntities.UnderlyingEntity domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return UnderlyingEntityDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(EntityReferencesSelfTargetEntities element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.underlyingEntityPropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesSelfTargetEntities element, global::System.String newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::System.String oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.underlyingEntityPropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
-		#region Disabled domain property code
-		
-		/// <summary>
-		/// Disabled domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid DisabledDomainPropertyId = new global::System.Guid(0xaeb95925, 0xaee5, 0x4c25, 0x99, 0x61, 0xf1, 0xbb, 0x58, 0xa0, 0x80, 0x40);
-		
-		/// <summary>
-		/// Storage for Disabled
-		/// </summary>
-		private global::System.Boolean disabledPropertyStorage;
-		
-		/// <summary>
-		/// Gets or sets the value of Disabled domain property.
-		/// Description for Worm.Designer.EntityReferencesSelfTargetEntities.Disabled
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesSelfTargetEntities/Disabled.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesSelfTargetEntities/Disabled.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("aeb95925-aee5-4c25-9961-f1bb58a08040")]
-		public global::System.Boolean Disabled
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return disabledPropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				DisabledPropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the EntityReferencesSelfTargetEntities.Disabled domain property.
-		/// </summary>
-		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesSelfTargetEntities, global::System.Boolean>
-		{
-			private DisabledPropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the EntityReferencesSelfTargetEntities.Disabled domain property value handler.
-			/// </summary>
-			public static readonly DisabledPropertyHandler Instance = new DisabledPropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the EntityReferencesSelfTargetEntities.Disabled domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return DisabledDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(EntityReferencesSelfTargetEntities element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.disabledPropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesSelfTargetEntities element, global::System.Boolean newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::System.Boolean oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.disabledPropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
-		#region SelfSourceEntity link accessor
-		/// <summary>
-		/// Get the list of EntityReferencesSelfTargetEntities links to a Entity.
+		/// Get the list of EntityHasSelfRelations links to a Entity.
 		/// </summary>
 		[global::System.Diagnostics.DebuggerStepThrough]
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.EntityReferencesSelfTargetEntities> GetLinksToSelfTargetEntities ( global::Worm.Designer.Entity selfSourceEntityInstance )
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.EntityHasSelfRelations> GetLinksToSelfRelations ( global::Worm.Designer.Entity entityInstance )
 		{
-			return DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityReferencesSelfTargetEntities>(selfSourceEntityInstance, global::Worm.Designer.EntityReferencesSelfTargetEntities.SelfSourceEntityDomainRoleId);
+			return DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityHasSelfRelations>(entityInstance, global::Worm.Designer.EntityHasSelfRelations.EntityDomainRoleId);
 		}
 		#endregion
-		#region SelfTargetEntity link accessor
+		#region SelfRelation link accessor
 		/// <summary>
-		/// Get the list of EntityReferencesSelfTargetEntities links to a Entity.
+		/// Get the EntityHasSelfRelations link to a SelfRelation.
 		/// </summary>
 		[global::System.Diagnostics.DebuggerStepThrough]
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.EntityReferencesSelfTargetEntities> GetLinksToSelfSourceEntities ( global::Worm.Designer.Entity selfTargetEntityInstance )
+		public static global::Worm.Designer.EntityHasSelfRelations GetLinkToEntity (global::Worm.Designer.SelfRelation selfRelationInstance)
 		{
-			return DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityReferencesSelfTargetEntities>(selfTargetEntityInstance, global::Worm.Designer.EntityReferencesSelfTargetEntities.SelfTargetEntityDomainRoleId);
+			global::System.Collections.Generic.IList<global::Worm.Designer.EntityHasSelfRelations> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityHasSelfRelations>(selfRelationInstance, global::Worm.Designer.EntityHasSelfRelations.SelfRelationDomainRoleId);
+			global::System.Diagnostics.Debug.Assert(links.Count <= 1, "Multiplicity of SelfRelation not obeyed.");
+			if ( links.Count == 0 )
+			{
+				return null;
+			}
+			else
+			{
+				return links[0];
+			}
 		}
 		#endregion
-		#region EntityReferencesSelfTargetEntities instance accessors
+		#region EntityHasSelfRelations instance accessors
 		
 		/// <summary>
-		/// Get any EntityReferencesSelfTargetEntities links between a given Entity and a Entity.
+		/// Get any EntityHasSelfRelations links between a given Entity and a SelfRelation.
 		/// </summary>
 		[global::System.Diagnostics.DebuggerStepThrough]
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.EntityReferencesSelfTargetEntities> GetLinks( global::Worm.Designer.Entity source, global::Worm.Designer.Entity target )
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.EntityHasSelfRelations> GetLinks( global::Worm.Designer.Entity source, global::Worm.Designer.SelfRelation target )
 		{
-			global::System.Collections.Generic.List<global::Worm.Designer.EntityReferencesSelfTargetEntities> outLinks = new global::System.Collections.Generic.List<global::Worm.Designer.EntityReferencesSelfTargetEntities>();
-			global::System.Collections.Generic.IList<global::Worm.Designer.EntityReferencesSelfTargetEntities> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityReferencesSelfTargetEntities>(source, global::Worm.Designer.EntityReferencesSelfTargetEntities.SelfSourceEntityDomainRoleId);
-			foreach ( global::Worm.Designer.EntityReferencesSelfTargetEntities link in links )
+			global::System.Collections.Generic.List<global::Worm.Designer.EntityHasSelfRelations> outLinks = new global::System.Collections.Generic.List<global::Worm.Designer.EntityHasSelfRelations>();
+			global::System.Collections.Generic.IList<global::Worm.Designer.EntityHasSelfRelations> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityHasSelfRelations>(source, global::Worm.Designer.EntityHasSelfRelations.EntityDomainRoleId);
+			foreach ( global::Worm.Designer.EntityHasSelfRelations link in links )
 			{
-				if ( target.Equals(link.SelfTargetEntity) )
+				if ( target.Equals(link.SelfRelation) )
 				{
 					outLinks.Add(link);
 				}
@@ -3304,16 +2532,16 @@ namespace Worm.Designer
 			return outLinks.AsReadOnly();
 		}
 		/// <summary>
-		/// Get the one EntityReferencesSelfTargetEntities link between a given Entityand a Entity.
+		/// Get the one EntityHasSelfRelations link between a given Entityand a SelfRelation.
 		/// </summary>
 		[global::System.Diagnostics.DebuggerStepThrough]
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static global::Worm.Designer.EntityReferencesSelfTargetEntities GetLink( global::Worm.Designer.Entity source, global::Worm.Designer.Entity target )
+		public static global::Worm.Designer.EntityHasSelfRelations GetLink( global::Worm.Designer.Entity source, global::Worm.Designer.SelfRelation target )
 		{
-			global::System.Collections.Generic.IList<global::Worm.Designer.EntityReferencesSelfTargetEntities> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityReferencesSelfTargetEntities>(source, global::Worm.Designer.EntityReferencesSelfTargetEntities.SelfSourceEntityDomainRoleId);
-			foreach ( global::Worm.Designer.EntityReferencesSelfTargetEntities link in links )
+			global::System.Collections.Generic.IList<global::Worm.Designer.EntityHasSelfRelations> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityHasSelfRelations>(source, global::Worm.Designer.EntityHasSelfRelations.EntityDomainRoleId);
+			foreach ( global::Worm.Designer.EntityHasSelfRelations link in links )
 			{
-				if ( target.Equals(link.SelfTargetEntity) )
+				if ( target.Equals(link.SelfRelation) )
 				{
 					return link;
 				}

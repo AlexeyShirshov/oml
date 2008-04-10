@@ -45,10 +45,6 @@ namespace Worm.Designer
 		/// Toolbox item filter string used to identify Relation connector tool.
 		/// </summary>
 		public const string RelationFilterString = "Relation.1.0";
-		/// <summary>
-		/// Toolbox item filter string used to identify SelfRelation connector tool.
-		/// </summary>
-		public const string SelfRelationFilterString = "SelfRelation.1.0";
 
 		private global::System.IServiceProvider sp;
 		
@@ -92,7 +88,7 @@ namespace Worm.Designer
 		{
 			get
 			{
-				return 3;
+				return 2;
 			}
 		}
 		
@@ -145,22 +141,6 @@ namespace Worm.Designer
 						new global::System.ComponentModel.ToolboxItemFilterAttribute[] { // Collection of ToolboxItemFilterAttribute objects that determine visibility of the toolbox item.
 							new global::System.ComponentModel.ToolboxItemFilterAttribute(ToolboxFilterString, global::System.ComponentModel.ToolboxItemFilterType.Require), 
 							new global::System.ComponentModel.ToolboxItemFilterAttribute(RelationFilterString)
-						}));
-
-					// Add SelfRelation connector tool.
-					toolboxItems.Add(new DslDesign::ModelingToolboxItem(
-						"SelfRelationToolboxItem", // Unique identifier (non-localized) for the toolbox item.
-						3, // Position relative to other items in the same toolbox tab.
-						resourceManager.GetString("SelfRelationToolboxItem", resourceCulture), // Localized display name for the item.
-						(global::System.Drawing.Bitmap)DslDiagrams::ImageHelper.GetImage(resourceManager.GetObject("SelfRelationToolboxBitmap", resourceCulture)), // Image displayed next to the toolbox item.				
-						"Worm DesignerToolboxTab", // Unique identifier (non-localized) for the toolbox item tab.
-						resourceManager.GetString("Worm DesignerToolboxTab", resourceCulture), // Localized display name for the toolbox tab.
-						"SelfRelation", // F1 help keyword for the toolbox item.
-						resourceManager.GetString("SelfRelationToolboxTooltip", resourceCulture), // Localized tooltip text for the toolbox item.
-						null, // Connector toolbox items do not have an underlying data object.
-						new global::System.ComponentModel.ToolboxItemFilterAttribute[] { // Collection of ToolboxItemFilterAttribute objects that determine visibility of the toolbox item.
-							new global::System.ComponentModel.ToolboxItemFilterAttribute(ToolboxFilterString, global::System.ComponentModel.ToolboxItemFilterType.Require), 
-							new global::System.ComponentModel.ToolboxItemFilterAttribute(SelfRelationFilterString)
 						}));
 
 					t.Rollback();
