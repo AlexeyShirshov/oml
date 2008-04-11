@@ -78,7 +78,8 @@ namespace Tests
         {
             foreach (int id in mediumUserIds)
             {
-                LazyUser user = (LazyUser)session.Load(typeof(LazyUser), id);
+                LazyUser user = new LazyUser();
+                Phone p = (Phone)session.Load(typeof(Phone), id);
                 string name = user.FirstName;
             }
         }
@@ -129,14 +130,14 @@ namespace Tests
               .Add(Expression.In("UserId", largeUserIds)).List();
         }
 
-        [Ignore]
         [TestMethod]
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
         public void CollectionByPredicateWithoutLoad()
         {
             for (int i = 0; i < Constants.LargeIteration; i++)
             {
-                IList users1 = session.CreateCriteria(typeof(LazyUser)).
+                IList users1 = session.CreateCriteria(typeof(Phone)).
+                 //   .SetFetchMode("Phones", FetchMode.Lazy).
                     CreateCriteria("Phones").
                     Add(Expression.Like("PhoneNumber", (i + 1) + "%")).List();
             }

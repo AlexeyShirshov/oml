@@ -90,6 +90,12 @@
   <ItemGroup>
     <Content Include="TestDA.xml" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Helper\Common.csproj">
+      <Project>{F5F9FF51-D529-410E-BFD3-26BC1D32C7A1}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

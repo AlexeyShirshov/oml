@@ -7,36 +7,30 @@ using Common.Runnable;
 
 namespace DAAdo
 {
-    public class AdoProvider : IRunnable
+    public class AdoProvider// : IRunnable
     {
         private SqlConnection conn;
         private string _connectionString = null;
+         int[] smallUserIds;
+         int[] mediumUserIds;
+         int[] largeUserIds;
 
-        public IList<RunningInfo> FuncCollection
-        {
-            get { return funcCollection; }
-        }
-
-        private List<RunningInfo> funcCollection;
-
-        public AdoProvider(SqlConnection connection)
+        public AdoProvider(SqlConnection connection, int[] smallUserIds, int[] mediumUserIds, int[] largeUserIds)
         {
             this.conn = connection;
-            InitRunnableFunctions();
+            this.smallUserIds = smallUserIds;
+            this.mediumUserIds = mediumUserIds;
+            this.largeUserIds = largeUserIds;
+
+            CollectionDataset(Constants.Small);
         }
 
-        private void InitRunnableFunctions()
-        {
-            funcCollection = new List<RunningInfo>();
-            funcCollection.Add(new RunningInfo(new RunnableFunc(CollectionByPredicateWithLoad), QueryType.CollectionByPredicateWithLoad));
-            funcCollection.Add(new RunningInfo(new RunnableFunc(ObjectsWithLoadWithPropertiesAccess), QueryType.ObjectsWithLoadWithPropertiesAccess));
-            funcCollection.Add(new RunningInfo(new RunnableFunc(SelectBySamePredicateDataset), QueryType.SelectBySamePredicate));
-        }
         
         #region New
-        public void TypeCycleWithLoad(int[] userIds)
+        [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
+        public void TypeCycleWithLoad()
         {
-            foreach (int id in userIds)
+            foreach (int id in mediumUserIds)
             {
                 SqlCommand command = new SqlCommand(
                     "select * from tbl_user where user_id=" + id, conn);
@@ -51,7 +45,65 @@ namespace DAAdo
             }
         }
 
-   
+
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
+        public void SmallCollectionByIdArray()
+        {
+            CollectionByIdArray(smallUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void SmallCollection()
+        {
+            Collection(Constants.Small);
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
+        public void SmallCollectionWithChildrenByIdArray()
+        {
+            CollectionWithChildrenByIdArray(smallUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
+        public void LargeCollectionByIdArray()
+        {
+            CollectionByIdArray(largeUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollection)]
+        public void LargeCollection()
+        {
+            Collection(Constants.Large);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
+        public void LargeCollectionWithChildrenByIdArray()
+        {
+            CollectionWithChildrenByIdArray(largeUserIds);
+        }
+
+
+        
+
+        [QueryTypeAttribute(QueryType.SelectLargeCollection)]
+        public void SelectLargeCollection()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                Collection(Constants.Large);
+            }
+        }
+
+        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
+        public void SameObjectInCycleLoad()
+        {
+            SameObjectInCycleLoad(smallUserIds[0]);
+        }
+
+      
+
+
+       
         public void Collection(int count)
         {
             SqlCommand command = new SqlCommand(
@@ -85,7 +137,7 @@ namespace DAAdo
             reader.Close();
         }
 
-        public void CollectionByIdArray(int[] userIds)
+         void CollectionByIdArray(int[] userIds)
         {
             SqlCommand command = new SqlCommand(
               "select * from tbl_user where [user_id] in (" + Helper.Convert(userIds, ",") + ")", conn);
@@ -100,8 +152,8 @@ namespace DAAdo
             reader.Close();
         }
 
-    
 
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
         public void CollectionByPredicateWithLoad()
         {
             for (int i = 0; i < Constants.LargeIteration; i++)
@@ -138,7 +190,7 @@ namespace DAAdo
                 reader.Close();
             }
         }
-
+        [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
         public void SelectBySamePredicate()
         {
             for (int i = 0; i < Constants.SmallIteration; i++)
@@ -156,7 +208,7 @@ namespace DAAdo
                 reader.Close();
             }
         }
-
+        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
         public void ObjectsWithLoadWithPropertiesAccess()
         {
             SqlCommand command = new SqlCommand(
@@ -171,6 +223,114 @@ namespace DAAdo
             reader.Close();
         }
         #endregion New
+
+        #region Dataset
+        [QueryTypeAttribute(QueryType.TypeCycleWithLoad, Syntax.Dataset)]
+        public void TypeCycleWithLoadDataset()
+        {         
+            foreach (int id in mediumUserIds)
+            {
+                SqlCommand command = new SqlCommand(
+                    "select * from tbl_user where user_id=" + id, conn);
+
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                DataSet ds = new DataSet();
+                adapter.Fill(ds);
+            }
+        }
+
+
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray, Syntax.Dataset)]
+        public void SmallCollectionByIdArrayDataset()
+        {
+            CollectionByIdArrayDataset(smallUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollection, Syntax.Dataset)]
+        public void SmallCollectionDataset()
+        {
+            CollectionDataset(Constants.Small);
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray, Syntax.Dataset)]
+        public void SmallCollectionWithChildrenByIdArrayDataset()
+        {
+            CollectionWithChildrenByIdArrayDataset(smallUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray, Syntax.Dataset)]
+        public void LargeCollectionByIdArrayDataset()
+        {
+            CollectionByIdArrayDataset(largeUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollection, Syntax.Dataset)]
+        public void LargeCollectionDataset()
+        {
+            CollectionDataset(Constants.Large);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray, Syntax.Dataset)]
+        public void LargeCollectionWithChildrenByIdArrayDataset()
+        {
+            CollectionWithChildrenByIdArrayDataset(largeUserIds);
+        }
+
+
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad, Syntax.Dataset)]
+        public void CollectionByPredicateWithLoadDataset()
+        {
+            for (int i = 0; i < Constants.LargeIteration; i++)
+            {
+                SqlCommand command = new SqlCommand(
+               "select distinct tbl_user.user_id, first_name, last_name from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" +
+               " where phone_number like '" + (i + 1).ToString() + "%'", conn);
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                DataSet ds = new DataSet();
+                adapter.Fill(ds);
+            }
+        }
+
+        [QueryTypeAttribute(QueryType.SelectLargeCollection, Syntax.Dataset)]
+        public void SelectLargeCollectionDataset()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                CollectionDataset(Constants.Large);
+            }
+        }
+
+        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad, Syntax.Dataset)]
+        public void SameObjectInCycleLoadDataset()
+        {
+            SameObjectInCycleLoadDataset(smallUserIds[0]);
+        }
+
+        [QueryTypeAttribute(QueryType.SelectBySamePredicate, Syntax.Dataset)]
+        public void SelectBySamePredicateDataset()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                SqlCommand command = new SqlCommand(
+            "select distinct tbl_user.user_id, first_name, last_name  from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" +
+            " where phone_number like '1%'", conn);
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                DataSet ds = new DataSet();
+                adapter.Fill(ds);
+            }
+        }
+
+        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess, Syntax.Dataset)]
+        public void ObjectsWithLoadWithPropertiesAccessDataset()
+        {
+            SqlCommand command = new SqlCommand(
+            "select * from tbl_user", conn);
+            SqlDataAdapter adapter = new SqlDataAdapter(command);
+            DataSet ds = new DataSet();
+            adapter.Fill(ds);
+        }
+
+        #endregion Dataset
 
         #region Dataset
         public void TypeCycleWithLoadDataset(int[] userIds)
@@ -219,18 +379,7 @@ namespace DAAdo
 
 
 
-        public void CollectionByPredicateWithLoadDataset()
-        {
-            for (int i = 0; i < Constants.LargeIteration; i++)
-            {
-                SqlCommand command = new SqlCommand(
-               "select distinct tbl_user.user_id, first_name, last_name from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" +
-               " where phone_number like '" + (i + 1).ToString() + "%'", conn);
-                SqlDataAdapter adapter = new SqlDataAdapter(command);
-                DataSet ds = new DataSet();
-                adapter.Fill(ds);
-            }
-        }
+       
 
 
 
@@ -246,27 +395,7 @@ namespace DAAdo
             }
         }
 
-        public void SelectBySamePredicateDataset()
-        {
-            for (int i = 0; i < Constants.SmallIteration; i++)
-            {
-                SqlCommand command = new SqlCommand(
-            "select distinct tbl_user.user_id, first_name, last_name  from tbl_user inner join tbl_phone on tbl_user.user_id=tbl_phone.user_id" +
-            " where phone_number like '1%'", conn);
-                SqlDataAdapter adapter = new SqlDataAdapter(command);
-                DataSet ds = new DataSet();
-                adapter.Fill(ds);
-            }
-        }
-
-        public void ObjectsWithLoadWithPropertiesAccessDataset()
-        {
-            SqlCommand command = new SqlCommand(
-            "select * from tbl_user", conn);
-            SqlDataAdapter adapter = new SqlDataAdapter(command);
-            DataSet ds = new DataSet();
-            adapter.Fill(ds);
-        }
+     
         #endregion Dataset
  
     }

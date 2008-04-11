@@ -11,10 +11,22 @@ namespace DALinq
     {
         DatabaseDataContext db;
         System.Data.IDbConnection connection;
+        
+         int[] smallUserIds;
+         int[] mediumUserIds;
+         int[] largeUserIds;
 
-        public LinqProvider(System.Data.IDbConnection connection)
+        public LinqProvider(System.Data.IDbConnection connection, int[] smallUserIds, int[] mediumUserIds, int[] largeUserIds)
         {
             this.connection = connection;
+            this.smallUserIds = smallUserIds;
+            this.mediumUserIds = mediumUserIds;
+            this.largeUserIds = largeUserIds;
+
+            CreateNewDatabaseDataContext();
+            var users = (from e in db.tbl_users
+                         where e.user_id == 1
+                         select e).ToList();
         }
 
         public void CreateNewDatabaseDataContext()
@@ -26,6 +38,137 @@ namespace DALinq
         {
             get { return db.DeferredLoadingEnabled; }
             set { db.DeferredLoadingEnabled = value; }
+        }
+
+        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
+        public void TypeCycleWithoutLoad()
+        {
+            LoadingEnabled = true;
+            TypeCycleWithoutLoad(mediumUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
+        public void TypeCycleWithLoad()
+        {
+            LoadingEnabled = false;
+            TypeCycleWithLoad(mediumUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
+        public void TypeCycleLazyLoad()
+        {
+            LoadingEnabled = true;
+            TypeCycleLazyLoad(mediumUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
+        public void SmallCollectionByIdArray()
+        {
+            LoadingEnabled = false;
+            CollectionByIdArray(smallUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void SmallCollection()
+        {
+            LoadingEnabled = false;
+            GetCollection(Constants.Small);
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
+        public void SmallCollectionWithChildrenByIdArray()
+        {
+            LoadingEnabled = false;
+            CollectionWithChildrenByIdArray(smallUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
+        public void LargeCollectionByIdArray()
+        {
+            LoadingEnabled = false;
+            CollectionByIdArray(largeUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollection)]
+        public void LargeCollection()
+        {
+            LoadingEnabled = false;
+            GetCollection(Constants.Large);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
+        public void LargeCollectionWithChildrenByIdArray()
+        {
+            LoadingEnabled = false;
+            CollectionWithChildrenByIdArray(largeUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
+        public void CollectionByPredicateWithoutLoad()
+        {
+            LoadingEnabled = true;
+            for (int i = 0; i < Constants.LargeIteration; i++)
+            {
+                var users = (from u in db.tbl_users
+                             from p in u.tbl_phones
+                             where p.phone_number.StartsWith((i + 1).ToString())
+                             select u.user_id).ToList();
+            }
+        }
+
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
+        public void CollectionByPredicateWithLoad()
+        {
+            LoadingEnabled = false;
+            for (int i = 0; i < Constants.LargeIteration; i++)
+            {
+                var users = (from u in db.tbl_users
+                             from p in u.tbl_phones
+                             where p.phone_number.StartsWith((i + 1).ToString())
+                             select u)./*Distinct().*/ToList();
+            }
+        }
+
+        [QueryTypeAttribute(QueryType.SelectLargeCollection)]
+        public void SelectLargeCollection()
+        {
+            LoadingEnabled = false;
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                GetCollection(Constants.Large);
+            }
+        }
+
+        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
+        public void SameObjectInCycleLoad()
+        {
+            LoadingEnabled = false;
+            SameObjectInCycleLoad(smallUserIds[0]);
+        }
+
+        [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
+        public void SelectBySamePredicate()
+        {
+            LoadingEnabled = true;
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                var users = (from u in db.tbl_users
+                             from p in u.tbl_phones
+                             where p.phone_number.StartsWith("1")
+                             select u).ToList();
+            }
+        }
+
+        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
+        public void ObjectsWithLoadWithPropertiesAccess()
+        {
+            LoadingEnabled = false;
+            var users = (from u in db.tbl_users
+                         select u).ToList();
+            foreach (var user in users)
+            {
+                string name = user.first_name;
+            }
         }
         
         public void TypeCycleWithoutLoad(int[] userIds)
@@ -84,28 +227,7 @@ namespace DALinq
                          select e).ToList();
         }
 
-        public void CollectionByPredicateWithoutLoad()
-        {
-            for (int i = 0; i < Constants.LargeIteration; i++)
-            {
-                var users = (from u in db.tbl_users
-                             from p in u.tbl_phones
-                             where p.phone_number.StartsWith((i + 1).ToString())
-                             select u.user_id).ToList();
-            }
-        }
-
-        public void CollectionByPredicateWithLoad()
-        {
-            for (int i = 0; i < Constants.LargeIteration; i++)
-            {
-                var users = (from u in db.tbl_users
-                             from p in u.tbl_phones
-                             where p.phone_number.StartsWith((i + 1).ToString())
-                             select u)./*Distinct().*/ToList();
-            }
-        }
-
+    
         public void SameObjectInCycleLoad(int userId)
         {
            for (int i = 0; i < Constants.SmallIteration; i++)
@@ -116,25 +238,8 @@ namespace DALinq
             }
         }
 
-        public void SelectBySamePredicate()
-        {
-            for (int i = 0; i < Constants.SmallIteration; i++)
-            {
-                var users = (from u in db.tbl_users
-                             from p in u.tbl_phones
-                             where p.phone_number.StartsWith("1")
-                             select u).ToList();
-            }
-        }
+      
 
-        public void ObjectsWithLoadWithPropertiesAccess()
-        {
-            var users = (from u in db.tbl_users
-                          select u).ToList();
-            foreach (var user in users)
-            {
-                string name = user.first_name;
-            }
-        }
+    
     }
 }

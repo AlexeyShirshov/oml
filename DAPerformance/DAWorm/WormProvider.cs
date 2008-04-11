@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Text;
 
 using Worm.Cache;
@@ -8,27 +9,154 @@ using Worm.Database.Criteria.Joins;
 using Worm.Orm;
 using Worm.Orm.Meta;
 
+using Common;
+
 namespace DAWorm
 {
     public class WormProvider
     {
+         static SQLGenerator _schema;
+        static WormProvider wormProvider;
+        int[] smallUserIds;
+        int[] mediumUserIds;
+        int[] largeUserIds;
+
+        protected static SQLGenerator GetSchema()
+        {
+            if (_schema == null)
+                _schema = new SQLGenerator("1");
+            return _schema;
+        }
+
+        protected static OrmCache GetCache()
+        {
+            return new OrmCache();
+        }
+
+
         OrmReadOnlyDBManager manager;       
 
-        public WormProvider(OrmReadOnlyDBManager manager)
+        public WormProvider(int[] smallUserIds, int[] mediumUserIds, int[] largeUserIds)
         {
-            this.manager = manager;
-           
-            // Opens connection ?
+            this.smallUserIds = smallUserIds;
+            this.mediumUserIds = mediumUserIds;
+            this.largeUserIds = largeUserIds;
+
+            manager = new OrmDBManager(GetCache(), GetSchema(), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
+            // Opens connection 
             ICollection<User> users = manager.FindTop<User>(10000, null, null, false);
         }
 
-        public OrmReadOnlyDBManager Manager
+
+        public void SetDefaultContext()
         {
-            get { return manager;  }
-            set { manager = value;  }
+             manager = new OrmDBManager(GetCache(), GetSchema(), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
+        }
+
+        public void ClearContext()
+        {
+            manager.Dispose();
+            manager = null;
         }
      
         #region new
+        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
+        public void TypeCycleWithoutLoad()
+        {
+            TypeCycleWithoutLoad(mediumUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
+        public void TypeCycleWithLoad()
+        {
+            TypeCycleWithLoad(mediumUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
+        public void TypeCycleLazyLoad()
+        {
+            TypeCycleLazyLoad(mediumUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
+        public void SmallCollectionByIdArray()
+        {
+            CollectionByIdArray(smallUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollection)]
+        public void SmallCollection()
+        {
+            GetCollection(Constants.Small);
+        }
+
+        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
+        public void SmallCollectionWithChildrenByIdArray()
+        {
+            CollectionWithChildrenByIdArray(smallUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
+        public void LargeCollectionByIdArray()
+        {
+            CollectionByIdArray(largeUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollection)]
+        public void LargeCollection()
+        {
+            GetCollection(Constants.Large);
+        }
+
+        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
+        public void LargeCollectionWithChildrenByIdArray()
+        {
+            CollectionWithChildrenByIdArray(largeUserIds);
+        }
+
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
+        public void CollectionByPredicateWithoutLoad()
+        {
+            CollectionByPredicateWithoutLoad(Constants.LargeIteration);
+        }
+
+        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
+        public void CollectionByPredicateWithLoad()
+        {
+            CollectionByPredicateWithLoad(Constants.LargeIteration);
+        }
+
+        [QueryTypeAttribute(QueryType.SelectLargeCollection)]
+        public void SelectLargeCollection()
+        {
+            for (int i = 0; i < Constants.SmallIteration; i++)
+            {
+                GetCollection(Constants.Large);
+            }
+        }
+
+        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
+        public void SameObjectInCycleLoad()
+        {
+            SameObjectInCycleLoad(Constants.SmallIteration, smallUserIds[0]);
+        }
+
+        [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
+        public void SelectBySamePredicate()
+        {
+            SelectBySamePredicate(Constants.SmallIteration);
+        }
+
+        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
+        public void ObjectsWithLoadWithPropertiesAccess()
+        {
+            ICollection<User> users = manager.FindTop<User>(10000, null, null, true);
+            foreach (User user in users)
+            {
+                string name = user.First_name;
+            }
+        }
+
         public void TypeCycleWithoutLoad(int[] userIds)
         {
             foreach (int id in userIds)
@@ -117,15 +245,7 @@ namespace DAWorm
             }
         }
 
-        public void ObjectsWithLoadWithPropertiesAccess()
-        {
-            ICollection<User> users = manager.FindTop<User>(10000, null, null, true);
-            foreach (User user in users)
-            {
-                string name = user.First_name;
-            }
-        }
-
+       
         #endregion new
 
         #region old

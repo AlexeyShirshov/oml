@@ -1,9 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <hibernate-mapping xmlns="urn:nhibernate-mapping-2.2"
                    assembly="DANHibernate" namespace="DANHibernate">
-  <class name="LazyUser" table="tbl_user" lazy="true">
-
-    <id name="UserId" column="user_id" type="integer">
+  <class name="LazyUser" table="tbl_user" lazy="true" proxy="LazyUser">    
+      <id name="UserId" column="user_id" type="integer">
       <generator class="identity" />
     </id>
 

@@ -13,6 +13,7 @@ using System.Text;
 using DAAdo;
 using DAWorm;
 using DaAdoEF;
+using DALinq;
 using Common;
 using Tests;
 
@@ -40,9 +41,9 @@ namespace TestConsole
 
         static DSTestTime dsTestTime = new DSTestTime();
         static HiPerfTimer performer = new HiPerfTimer();
-        protected static int[] smallUserIds = new int[Constants.Small];
-        protected static int[] mediumUserIds = new int[Constants.Medium];
-        protected static int[] largeUserIds = new int[Constants.Large];
+        static int[] smallUserIds = new int[Constants.Small];
+        static int[] mediumUserIds = new int[Constants.Medium];
+        static int[] largeUserIds = new int[Constants.Large];
         public static  EntityConnection BaseEntityConnection;
         public static  SqlConnection BaseSqlConnection;
 
@@ -83,21 +84,75 @@ namespace TestConsole
             InitConnections();
             HiPerfTimer performer = new HiPerfTimer();
             DSTestTime dsTestTime = new DSTestTime();
-            IRunnable run = new AdoProvider(BaseSqlConnection);
-            foreach (RunningInfo runningInfo in run.FuncCollection)
-            {
-                performer.Start();
-                runningInfo.FuncDelegate.DynamicInvoke(null);
-                performer.Stop();
-                string typeInfo = TypeInfo.Types[runningInfo.FuncType];
-                dsTestTime.Time.AddTimeRow(runningInfo.FuncDelegate.Method.ReflectedType.Name, runningInfo.FuncType.ToString(), runningInfo.FuncDelegate.Method.Name, performer.Duration, typeInfo, "");
-            }
+            AdoProvider adoProvider = new AdoProvider(BaseSqlConnection, smallUserIds, mediumUserIds, largeUserIds);
+            LinqProvider linqProvider = new LinqProvider(BaseSqlConnection, smallUserIds, mediumUserIds, largeUserIds);
+            WormProvider wormProvider = new WormProvider( smallUserIds, mediumUserIds, largeUserIds);
+            Run("ADO", performer, dsTestTime, adoProvider);
+            RunLinq("Linq", performer, dsTestTime, linqProvider);
+            RunWorm("Worm", performer, dsTestTime, wormProvider);
 
             ReportCreator.Write(dsTestTime);
             BaseEntityConnection.Close();
             BaseEntityConnection.Dispose();
         }
-        
+
+        private static void Run(string providerName, HiPerfTimer performer, DSTestTime dsTestTime, object provider)
+        {
+            IEnumerable<MethodInfo> methodInfos = provider.GetType().GetMethods()
+                .Where(m => m.GetCustomAttributes(false).Count() > 0);
+            foreach (MethodInfo methodInfo in methodInfos)
+            {
+                performer.Start();
+                methodInfo.Invoke(provider, new object[] { });
+                performer.Stop();
+                object[] attrs = methodInfo.GetCustomAttributes(typeof(QueryTypeAttribute), false);
+                QueryTypeAttribute attr = (QueryTypeAttribute)attrs[0];
+                string typeInfo = TypeInfo.Types[attr.QueryType];
+                dsTestTime.Time.AddTimeRow(providerName, attr.QueryType.ToString(),
+                    methodInfo.Name, performer.Duration, typeInfo, attr.SyntaxType.ToString());
+
+            }
+        }
+
+        private static void RunLinq(string providerName, HiPerfTimer performer, DSTestTime dsTestTime, object provider)
+        {
+            IEnumerable<MethodInfo> methodInfos = provider.GetType().GetMethods()
+                .Where(m => m.GetCustomAttributes(false).Count() > 0);
+            foreach (MethodInfo methodInfo in methodInfos)
+            {
+                ((LinqProvider)provider).CreateNewDatabaseDataContext();
+                performer.Start();
+                methodInfo.Invoke(provider, new object[] { });
+                performer.Stop();
+                object[] attrs = methodInfo.GetCustomAttributes(typeof(QueryTypeAttribute), false);
+                QueryTypeAttribute attr = (QueryTypeAttribute)attrs[0];
+                string typeInfo = TypeInfo.Types[attr.QueryType];
+                dsTestTime.Time.AddTimeRow(providerName, attr.QueryType.ToString(),
+                    methodInfo.Name, performer.Duration, typeInfo, attr.SyntaxType.ToString());
+
+            }
+        }
+
+        private static void RunWorm(string providerName, HiPerfTimer performer, DSTestTime dsTestTime, object provider)
+        {
+            IEnumerable<MethodInfo> methodInfos = provider.GetType().GetMethods()
+                .Where(m => m.GetCustomAttributes(false).Count() > 0);
+            foreach (MethodInfo methodInfo in methodInfos)
+            {
+                ((WormProvider)provider).SetDefaultContext();
+                performer.Start();
+                methodInfo.Invoke(provider, new object[] { });
+                performer.Stop();
+                ((WormProvider)provider).ClearContext();
+                object[] attrs = methodInfo.GetCustomAttributes(typeof(QueryTypeAttribute), false);
+                QueryTypeAttribute attr = (QueryTypeAttribute)attrs[0];
+                string typeInfo = TypeInfo.Types[attr.QueryType];
+                dsTestTime.Time.AddTimeRow(providerName, attr.QueryType.ToString(),
+                    methodInfo.Name, performer.Duration, typeInfo, attr.SyntaxType.ToString());
+
+            }
+        }
+
         /*
         static void Main(string[] args)
         {

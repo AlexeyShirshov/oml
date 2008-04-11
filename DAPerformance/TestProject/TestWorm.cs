@@ -36,136 +36,136 @@ namespace Tests
             set { context = value; }
         }
 
-        static TestWorm()
-        {
-            TestBase.classType = typeof(TestWorm);
-            using (OrmDBManager manager = new OrmDBManager(GetCache(), GetSchema(), ConfigurationSettings.AppSettings["ConnectionStringBase"]))
-            {
-                wormProvider = new WormProvider(manager);
-            }
-        }
+        //static TestWorm()
+        //{
+        //    TestBase.classType = typeof(TestWorm);
+        //    using (OrmDBManager manager = new OrmDBManager(GetCache(), GetSchema(), ConfigurationSettings.AppSettings["ConnectionStringBase"]))
+        //    {
+        //        wormProvider = new WormProvider(manager);
+        //    }
+        //}
 
-        [TestInitialize]
-        public override void TestInitialize()
-        {
-            wormProvider.Manager = new OrmDBManager(GetCache(), GetSchema(), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
-            base.TestInitialize();
-        }
+        //[TestInitialize]
+        //public override void TestInitialize()
+        //{
+        //    wormProvider.Manager = new OrmDBManager(GetCache(), GetSchema(), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
+        //    base.TestInitialize();
+        //}
 
-        [TestCleanup]
-        public override void TestCleanup()
-        {
-            base.TestCleanup();
-            wormProvider.Manager.Dispose();
-            wormProvider.Manager = null;
-        }
+        //[TestCleanup]
+        //public override void TestCleanup()
+        //{
+        //    base.TestCleanup();
+        //    wormProvider.Manager.Dispose();
+        //    wormProvider.Manager = null;
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
-        public void TypeCycleWithoutLoad()
-        {
-            wormProvider.TypeCycleWithoutLoad(mediumUserIds);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
+        //public void TypeCycleWithoutLoad()
+        //{
+        //    wormProvider.TypeCycleWithoutLoad(mediumUserIds);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
-        public void TypeCycleWithLoad()
-        {
-            wormProvider.TypeCycleWithLoad(mediumUserIds);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.TypeCycleWithLoad)]
+        //public void TypeCycleWithLoad()
+        //{
+        //    wormProvider.TypeCycleWithLoad(mediumUserIds);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
-        public void TypeCycleLazyLoad()
-        {
-            wormProvider.TypeCycleLazyLoad(mediumUserIds);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
+        //public void TypeCycleLazyLoad()
+        //{
+        //    wormProvider.TypeCycleLazyLoad(mediumUserIds);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
-        public void SmallCollectionByIdArray()
-        {
-            wormProvider.CollectionByIdArray(smallUserIds);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
+        //public void SmallCollectionByIdArray()
+        //{
+        //    wormProvider.CollectionByIdArray(smallUserIds);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollection)]
-        public void SmallCollection()
-        {
-            wormProvider.GetCollection(Constants.Small);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.SmallCollection)]
+        //public void SmallCollection()
+        //{
+        //    wormProvider.GetCollection(Constants.Small);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
-        public void SmallCollectionWithChildrenByIdArray()
-        {
-            wormProvider.CollectionWithChildrenByIdArray(smallUserIds);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray)]
+        //public void SmallCollectionWithChildrenByIdArray()
+        //{
+        //    wormProvider.CollectionWithChildrenByIdArray(smallUserIds);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
-        public void LargeCollectionByIdArray()
-        {
-            wormProvider.CollectionByIdArray(largeUserIds);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.LargeCollectionByIdArray)]
+        //public void LargeCollectionByIdArray()
+        //{
+        //    wormProvider.CollectionByIdArray(largeUserIds);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.LargeCollection)]
-        public void LargeCollection()
-        {
-            wormProvider.GetCollection(Constants.Large);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.LargeCollection)]
+        //public void LargeCollection()
+        //{
+        //    wormProvider.GetCollection(Constants.Large);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
-        public void LargeCollectionWithChildrenByIdArray()
-        {
-            wormProvider.CollectionWithChildrenByIdArray(largeUserIds);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray)]
+        //public void LargeCollectionWithChildrenByIdArray()
+        //{
+        //    wormProvider.CollectionWithChildrenByIdArray(largeUserIds);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
-        public void CollectionByPredicateWithoutLoad()
-        {
-            wormProvider.CollectionByPredicateWithoutLoad(Constants.LargeIteration);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad)]
+        //public void CollectionByPredicateWithoutLoad()
+        //{
+        //    wormProvider.CollectionByPredicateWithoutLoad(Constants.LargeIteration);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
-        public void CollectionByPredicateWithLoad()
-        {
-            wormProvider.CollectionByPredicateWithLoad(Constants.LargeIteration);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad)]
+        //public void CollectionByPredicateWithLoad()
+        //{
+        //    wormProvider.CollectionByPredicateWithLoad(Constants.LargeIteration);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SelectLargeCollection)]
-        public void SelectLargeCollection()
-        {
-            for (int i = 0; i < Constants.SmallIteration; i++)
-            {
-                wormProvider.GetCollection(Constants.Large);
-            }
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.SelectLargeCollection)]
+        //public void SelectLargeCollection()
+        //{
+        //    for (int i = 0; i < Constants.SmallIteration; i++)
+        //    {
+        //        wormProvider.GetCollection(Constants.Large);
+        //    }
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
-        public void SameObjectInCycleLoad()
-        {
-            wormProvider.SameObjectInCycleLoad(Constants.SmallIteration, smallUserIds[0]);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.SameObjectInCycleLoad)]
+        //public void SameObjectInCycleLoad()
+        //{
+        //    wormProvider.SameObjectInCycleLoad(Constants.SmallIteration, smallUserIds[0]);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.SelectBySamePredicate)]
-        public void SelectBySamePredicate()
-        {
-            wormProvider.SelectBySamePredicate(Constants.SmallIteration);
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.SelectBySamePredicate)]
+        //public void SelectBySamePredicate()
+        //{
+        //    wormProvider.SelectBySamePredicate(Constants.SmallIteration);
+        //}
 
-        [TestMethod]
-        [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
-        public void ObjectsWithLoadWithPropertiesAccess()
-        {
-            wormProvider.ObjectsWithLoadWithPropertiesAccess();
-        }
+        //[TestMethod]
+        //[QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess)]
+        //public void ObjectsWithLoadWithPropertiesAccess()
+        //{
+        //    wormProvider.ObjectsWithLoadWithPropertiesAccess();
+        //}
     }
 }
