@@ -603,7 +603,7 @@ l1:
                             If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
                                 (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse obj.ForseUpdate(c) Then
 
-                                If GetType(OrmBase).IsAssignableFrom(current.GetType) Then
+                                If current IsNot Nothing AndAlso GetType(OrmBase).IsAssignableFrom(current.GetType) Then
                                     If CType(current, OrmBase).ObjectState = ObjectState.Created Then
                                         Throw New OrmSchemaException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, OrmBase).ObjName)
                                     End If
