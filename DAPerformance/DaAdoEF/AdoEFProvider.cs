@@ -170,7 +170,6 @@ namespace DaAdoEF
         [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad, Syntax.Linq)]
         public void TypeCycleWithoutLoadLinq()
         {
-
             foreach (int id in mediumUserIds)
             {
                 var users = (from e in entities.tbl_user
@@ -182,7 +181,6 @@ namespace DaAdoEF
                     string name = user.first_name;
                 }
             }
-
         }
         [QueryTypeAttribute(QueryType.TypeCycleWithLoad, Syntax.Linq)]
         public void TypeCycleWithLoadLinq()
@@ -240,6 +238,7 @@ namespace DaAdoEF
                 }
             }
         }
+
         [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad, Syntax.Linq)]
         public void CollectionByPredicateWithLoadLinq()
         {
@@ -256,10 +255,11 @@ namespace DaAdoEF
         [QueryTypeAttribute(QueryType.SameObjectInCycleLoad, Syntax.Linq)]
         public void SameObjectInCycleLoadLinq()
         {
+            int userId = smallUserIds[0];
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
                 var users = (from e in entities.tbl_user
-                             where e.user_id == smallUserIds[0]
+                             where e.user_id == userId
                              select e).ToList();
             }
         }

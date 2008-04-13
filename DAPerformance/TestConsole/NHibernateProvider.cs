@@ -133,7 +133,7 @@ namespace TestConsole
             {
                 IList users1 = session.CreateCriteria(typeof(Phone)).
                     //   .SetFetchMode("Phones", FetchMode.Lazy).
-                    CreateCriteria("Phones").
+                    //CreateCriteria("Phones").
                     Add(Expression.Like("PhoneNumber", (i + 1) + "%")).List();
             }
         }
@@ -197,21 +197,33 @@ namespace TestConsole
 
         #endregion Default syntax
 
+
         #region Linq syntax
 
-        
-        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad, Syntax.Dataset)]
+
+        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad, Syntax.Linq)]
         public void TypeCycleWithoutLoadLinq()
         {
             foreach (int id in mediumUserIds)
             {
                 var users = (from e in session.Linq<User>()
                              where e.UserId == id
-                             select e);
+                             select e).ToList();
+                foreach (var userId in users)
+                {
+                    var user = users.Single();
+                    string name = user.FirstName;
+                }
             }
+            //foreach (int id in mediumUserIds)
+            //{
+            //    var users = (from e in session.Linq<User>()
+            //                 where e.UserId == id
+            //                 select e);
+            //}
         }
 
-        
+
         [QueryTypeAttribute(QueryType.TypeCycleWithLoad, Syntax.Linq)]
         public void TypeCycleWithLoadLinq()
         {
@@ -221,150 +233,92 @@ namespace TestConsole
                              where e.UserId == id
                              select e).ToList();
             }
+            //foreach (int id in mediumUserIds)
+            //{
+            //    var users = (from e in session.Linq<User>()
+            //                 where e.UserId == id
+            //                 select e).ToList();
+            //}
         }
 
-        
+
         [QueryTypeAttribute(QueryType.TypeCycleLazyLoad, Syntax.Linq)]
         public void TypeCycleLazyLoadLinq()
         {
             foreach (int id in mediumUserIds)
             {
-                var users = from e in session.Linq<LazyUser>()
-                            where e.UserId == id
-                            select e;
+                var users = (from e in session.Linq<LazyUser>()
+                             where e.UserId == id
+                             select e).ToList();
                 foreach (var user in users)
                 {
-                    string name = user.FirstName;
+                    string first_name = user.FirstName;
                 }
             }
+            //foreach (int id in mediumUserIds)
+            //{
+            //    var users = from e in session.Linq<LazyUser>()
+            //                where e.UserId == id
+            //                select e;
+            //    foreach (var user in users)
+            //    {
+            //        string name = user.FirstName;
+            //    }
+            //}
         }
 
-        
+
         [QueryTypeAttribute(QueryType.SmallCollection, Syntax.Linq)]
         public void SmallCollectionLinq()
         {
             var users = (from e in session.Linq<User>()
                          select e).Take(Constants.Small).ToList();
+            //var users = (from e in session.Linq<User>()
+            //             select e).Take(Constants.Small).ToList();
         }
-
-        //[Ignore]//("Contains()" method in Linq to Entities)
-        
-        [QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray, Syntax.Linq)]
-        public void SmallCollectionWithChildrenByIdArrayLinq()
-        {
-            //var users = (from e in db.tbl_users
-            //             where userIds.Contains<int>(e.user_id)
-            //             from o in e.tbl_phones
-            //             select new { e.user_id, e.first_name, e.last_name, o.phone_id, o.phone_number }).ToList();
-
-        }
-
-        //[Ignore]//("Contains()" method in Linq to Entities)
-        
-        [QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray, Syntax.Linq)]
-        public void LargeCollectionWithChildrenByIdArrayLinq()
-        {
-            //var users = (from e in db.tbl_users
-            //             where userIds.Contains<int>(e.user_id)
-            //             from o in e.tbl_phones
-            //             select new { e.user_id, e.first_name, e.last_name, o.phone_id, o.phone_number }).ToList();
-
-        }
-
-        //[Ignore]//("Contains()" method in Linq to Entities)
-        [QueryTypeAttribute(QueryType.SmallCollectionByIdArray, Syntax.Linq)]
-        public void SmallCollectionByIdArrayLinq()
-        {
-            var users = (from e in session.Linq<User>()
-                         where smallUserIds.Contains<int>(e.UserId)
-                         select e).ToList();
-        }
-
-        //[Ignore]//("Contains()" method in Linq to Entities)
-        
-        [QueryTypeAttribute(QueryType.LargeCollectionByIdArray, Syntax.Linq)]
-        public void LargeCollectionByIdArrayLinq()
-        {
-            var users = (from e in session.Linq<User>()
-                         where largeUserIds.Contains<int>(e.UserId)
-                         select e).ToList();
-        }
-
-        
+  
         [QueryTypeAttribute(QueryType.LargeCollection, Syntax.Linq)]
         public void LargeCollectionLinq()
         {
             var users = (from e in session.Linq<User>()
                          select e).Take(Constants.Large).ToList();
+            //var users = (from e in session.Linq<User>()
+            //             select e).Take(Constants.Large).ToList();
         }
 
-        //[Ignore]//Join is not implemanted
-        
-        [QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad, Syntax.Linq)]
-        public void CollectionByPredicateWithoutLoadLinq()
-        {
-            for (int i = 0; i < Constants.LargeIteration; i++)
-            {
-                var users = (from u in session.Linq<LazyUser>()
-                             from p in session.Linq<LazyPhone>()
-                             where p.PhoneNumber.StartsWith((i + 1).ToString())
-                             select u);
-            }
-        }
-
-        //[Ignore]//Join is not implemanted
-        
-        [QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad, Syntax.Linq)]
-        public void CollectionByPredicateWithLoadLinq()
-        {
-            for (int i = 0; i < Constants.LargeIteration; i++)
-            {
-                var users = (from u in session.Linq<User>()
-                             from p in session.Linq<Phone>()
-                             where p.PhoneNumber.StartsWith((i + 1).ToString())
-                             select u).ToList();
-            }
-        }
-
-        
         [QueryTypeAttribute(QueryType.SameObjectInCycleLoad, Syntax.Linq)]
         public void SameObjectInCycleLoadLinq()
         {
-            int userId = smallUserIds[0];
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
                 var users = (from e in session.Linq<User>()
-                             where e.UserId == userId
+                             where e.UserId == smallUserIds[0]
                              select e).ToList();
             }
+            //for (int i = 0; i < Constants.SmallIteration; i++)
+            //{
+            //    var users = (from e in session.Linq<User>()
+            //                 where e.UserId == smallUserIds[0]
+            //                 select e).ToList();
+            //}
         }
 
-        
+
         [QueryTypeAttribute(QueryType.SelectLargeCollection, Syntax.Linq)]
         public void SelectLargeCollectionLinq()
         {
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
-                var users = (from e in session.Linq<User>()
-                             select e).Take(Constants.Large).ToList();
+                var users = (from e in session.Linq<User>() select e).
+                    Take(Constants.Large).ToList();
             }
+            //for (int i = 0; i < Constants.SmallIteration; i++)
+            //{
+            //    var users = (from e in session.Linq<User>()
+            //                 select e).Take(Constants.Large).ToList();
+            //}
         }
 
-        //[Ignore]//Join is not implemanted
-        
-        [QueryTypeAttribute(QueryType.SelectBySamePredicate, Syntax.Linq)]
-        public void SelectBySamePredicateLinq()
-        {
-            for (int i = 0; i < Constants.SmallIteration; i++)
-            {
-                var users = (from u in session.Linq<User>()
-                             join p in session.Linq<Phone>() on u.UserId equals p.UserId
-                             where p.PhoneNumber.StartsWith("1")
-                             select u);
-            }
-        }
-
-        
         [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess, Syntax.Linq)]
         public void ObjectsWithLoadWithPropertiesAccessLinq()
         {
@@ -374,7 +328,193 @@ namespace TestConsole
             {
                 string name = user.FirstName;
             }
+            //var users = (from u in session.Linq<User>()
+            //             select u).ToList();
+            //foreach (var user in users)
+            //{
+            //    string name = user.FirstName;
+            //}
         }
         #endregion Linq syntax
+
+        //#region Linq syntax
+
+        
+        //[QueryTypeAttribute(QueryType.TypeCycleWithoutLoad, Syntax.Linq)]
+        //public void TypeCycleWithoutLoadLinq()
+        //{
+        //    foreach (int id in mediumUserIds)
+        //    {
+        //        var users = (from e in session.Linq<User>()
+        //                     where e.UserId == id
+        //                     select e);
+        //    }
+        //}
+
+        
+        //[QueryTypeAttribute(QueryType.TypeCycleWithLoad, Syntax.Linq)]
+        //public void TypeCycleWithLoadLinq()
+        //{
+        //    foreach (int id in mediumUserIds)
+        //    {
+        //        var users = (from e in session.Linq<User>()
+        //                     where e.UserId == id
+        //                     select e).ToList();
+        //    }
+        //}
+
+        
+        //[QueryTypeAttribute(QueryType.TypeCycleLazyLoad, Syntax.Linq)]
+        //public void TypeCycleLazyLoadLinq()
+        //{
+        //    foreach (int id in mediumUserIds)
+        //    {
+        //        var users = from e in session.Linq<LazyUser>()
+        //                    where e.UserId == id
+        //                    select e;
+        //        foreach (var user in users)
+        //        {
+        //            string name = user.FirstName;
+        //        }
+        //    }
+        //}
+
+        
+        //[QueryTypeAttribute(QueryType.SmallCollection, Syntax.Linq)]
+        //public void SmallCollectionLinq()
+        //{
+        //    var users = (from e in session.Linq<User>()
+        //                 select e).Take(Constants.Small).ToList();
+        //}
+
+        ////[Ignore]//("Contains()" method in Linq to Entities)
+        
+        //[QueryTypeAttribute(QueryType.SmallCollectionWithChildrenByIdArray, Syntax.Linq)]
+        //public void SmallCollectionWithChildrenByIdArrayLinq()
+        //{
+        //    //var users = (from e in db.tbl_users
+        //    //             where userIds.Contains<int>(e.user_id)
+        //    //             from o in e.tbl_phones
+        //    //             select new { e.user_id, e.first_name, e.last_name, o.phone_id, o.phone_number }).ToList();
+
+        //}
+
+        ////[Ignore]//("Contains()" method in Linq to Entities)
+        
+        //[QueryTypeAttribute(QueryType.LargeCollectionWithChildrenByIdArray, Syntax.Linq)]
+        //public void LargeCollectionWithChildrenByIdArrayLinq()
+        //{
+        //    //var users = (from e in db.tbl_users
+        //    //             where userIds.Contains<int>(e.user_id)
+        //    //             from o in e.tbl_phones
+        //    //             select new { e.user_id, e.first_name, e.last_name, o.phone_id, o.phone_number }).ToList();
+
+        //}
+
+        ////[Ignore]//("Contains()" method in Linq to Entities)
+        //[QueryTypeAttribute(QueryType.SmallCollectionByIdArray, Syntax.Linq)]
+        //public void SmallCollectionByIdArrayLinq()
+        //{
+        //    var users = (from e in session.Linq<User>()
+        //                 where smallUserIds.Contains<int>(e.UserId)
+        //                 select e).ToList();
+        //}
+
+        ////[Ignore]//("Contains()" method in Linq to Entities)
+        
+        //[QueryTypeAttribute(QueryType.LargeCollectionByIdArray, Syntax.Linq)]
+        //public void LargeCollectionByIdArrayLinq()
+        //{
+        //    var users = (from e in session.Linq<User>()
+        //                 where largeUserIds.Contains<int>(e.UserId)
+        //                 select e).ToList();
+        //}
+
+        
+        //[QueryTypeAttribute(QueryType.LargeCollection, Syntax.Linq)]
+        //public void LargeCollectionLinq()
+        //{
+        //    var users = (from e in session.Linq<User>()
+        //                 select e).Take(Constants.Large).ToList();
+        //}
+
+        ////[Ignore]//Join is not implemanted
+        
+        //[QueryTypeAttribute(QueryType.CollectionByPredicateWithoutLoad, Syntax.Linq)]
+        //public void CollectionByPredicateWithoutLoadLinq()
+        //{
+        //    for (int i = 0; i < Constants.LargeIteration; i++)
+        //    {
+        //        var users = (from u in session.Linq<LazyUser>()
+        //                     from p in session.Linq<LazyPhone>()
+        //                     where p.PhoneNumber.StartsWith((i + 1).ToString())
+        //                     select u);
+        //    }
+        //}
+
+        ////[Ignore]//Join is not implemanted
+        
+        //[QueryTypeAttribute(QueryType.CollectionByPredicateWithLoad, Syntax.Linq)]
+        //public void CollectionByPredicateWithLoadLinq()
+        //{
+        //    for (int i = 0; i < Constants.LargeIteration; i++)
+        //    {
+        //        var users = (from u in session.Linq<User>()
+        //                     from p in session.Linq<Phone>()
+        //                     where p.PhoneNumber.StartsWith((i + 1).ToString())
+        //                     select u).ToList();
+        //    }
+        //}
+
+        
+        //[QueryTypeAttribute(QueryType.SameObjectInCycleLoad, Syntax.Linq)]
+        //public void SameObjectInCycleLoadLinq()
+        //{
+        //    int userId = smallUserIds[0];
+        //    for (int i = 0; i < Constants.SmallIteration; i++)
+        //    {
+        //        var users = (from e in session.Linq<User>()
+        //                     where e.UserId == userId
+        //                     select e).ToList();
+        //    }
+        //}
+
+        
+        //[QueryTypeAttribute(QueryType.SelectLargeCollection, Syntax.Linq)]
+        //public void SelectLargeCollectionLinq()
+        //{
+        //    for (int i = 0; i < Constants.SmallIteration; i++)
+        //    {
+        //        var users = (from e in session.Linq<User>()
+        //                     select e).Take(Constants.Large).ToList();
+        //    }
+        //}
+
+        ////[Ignore]//Join is not implemanted
+        
+        //[QueryTypeAttribute(QueryType.SelectBySamePredicate, Syntax.Linq)]
+        //public void SelectBySamePredicateLinq()
+        //{
+        //    for (int i = 0; i < Constants.SmallIteration; i++)
+        //    {
+        //        var users = (from u in session.Linq<User>()
+        //                     join p in session.Linq<Phone>() on u.UserId equals p.UserId
+        //                     where p.PhoneNumber.StartsWith("1")
+        //                     select u);
+        //    }
+        //}
+
+        
+        //[QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess, Syntax.Linq)]
+        //public void ObjectsWithLoadWithPropertiesAccessLinq()
+        //{
+        //    var users = (from u in session.Linq<User>()
+        //                 select u).ToList();
+        //    foreach (var user in users)
+        //    {
+        //        string name = user.FirstName;
+        //    }
+        //}
+        //#endregion Linq syntax
     }
 }
