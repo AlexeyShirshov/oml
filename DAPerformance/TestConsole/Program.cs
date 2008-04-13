@@ -33,9 +33,6 @@ namespace TestConsole
 {
     class Program
     {
-        private static AdoProvider adoProvider;
-        static AdoEFProvider adoEFProvider;
-
         static SQLGenerator _schema;
         static WormProvider wormProvider;
 
@@ -73,22 +70,40 @@ namespace TestConsole
         private static void InitConnections()
         {
             SetDataDirectory();
-            string connectionString = ConfigurationManager.ConnectionStrings["EntitiesConnection"].ToString();
+            string connectionString = ConfigurationManager.ConnectionStrings["TestDAEntities"].ToString();
             BaseEntityConnection = new EntityConnection(connectionString);
-            BaseEntityConnection.Open();
+            //BaseEntityConnection.Open();
             BaseSqlConnection = (SqlConnection)BaseEntityConnection.StoreConnection;
         }
 
         static void Main(string[] args)
         {
             InitConnections();
+            InitUserIds();
             HiPerfTimer performer = new HiPerfTimer();
             DSTestTime dsTestTime = new DSTestTime();
+
+            BaseSqlConnection.Open();
             AdoProvider adoProvider = new AdoProvider(BaseSqlConnection, smallUserIds, mediumUserIds, largeUserIds);
-            LinqProvider linqProvider = new LinqProvider(BaseSqlConnection, smallUserIds, mediumUserIds, largeUserIds);
-            WormProvider wormProvider = new WormProvider( smallUserIds, mediumUserIds, largeUserIds);
             Run("ADO", performer, dsTestTime, adoProvider);
+            BaseSqlConnection.Close();
+
+            BaseSqlConnection.Open();
+            LinqProvider linqProvider = new LinqProvider(BaseSqlConnection, smallUserIds, mediumUserIds, largeUserIds);
             RunLinq("Linq", performer, dsTestTime, linqProvider);
+            BaseSqlConnection.Close();
+
+            BaseEntityConnection.Open();
+            AdoEFProvider adoEFProvider = new AdoEFProvider(BaseEntityConnection, smallUserIds, mediumUserIds, largeUserIds);
+            Run("ADO EF", performer, dsTestTime, adoEFProvider);
+            BaseEntityConnection.Close();
+
+            //NHibernateProvider nHibProvider = new NHibernateProvider(smallUserIds, mediumUserIds, largeUserIds);
+            //RunnableFunc beforeFunc = new RunnableFunc(nHibProvider.OpenSession);
+            //RunnableFunc afterFunc = new RunnableFunc(nHibProvider.CloseSession);
+            //Run("NHibernate", performer, dsTestTime, nHibProvider, beforeFunc, afterFunc);
+
+            WormProvider wormProvider = new WormProvider(smallUserIds, mediumUserIds, largeUserIds);
             RunWorm("Worm", performer, dsTestTime, wormProvider);
 
             ReportCreator.Write(dsTestTime);
@@ -96,15 +111,18 @@ namespace TestConsole
             BaseEntityConnection.Dispose();
         }
 
-        private static void Run(string providerName, HiPerfTimer performer, DSTestTime dsTestTime, object provider)
+        private static void Run(string providerName, HiPerfTimer performer, DSTestTime dsTestTime, 
+            object provider, RunnableFunc beforeRun, RunnableFunc afterRun)
         {
             IEnumerable<MethodInfo> methodInfos = provider.GetType().GetMethods()
                 .Where(m => m.GetCustomAttributes(false).Count() > 0);
             foreach (MethodInfo methodInfo in methodInfos)
             {
+                if (beforeRun != null) { beforeRun.Invoke(); }
                 performer.Start();
                 methodInfo.Invoke(provider, new object[] { });
                 performer.Stop();
+                if (afterRun != null) { afterRun.Invoke(); }
                 object[] attrs = methodInfo.GetCustomAttributes(typeof(QueryTypeAttribute), false);
                 QueryTypeAttribute attr = (QueryTypeAttribute)attrs[0];
                 string typeInfo = TypeInfo.Types[attr.QueryType];
@@ -112,6 +130,11 @@ namespace TestConsole
                     methodInfo.Name, performer.Duration, typeInfo, attr.SyntaxType.ToString());
 
             }
+        }
+
+        private static void Run(string providerName, HiPerfTimer performer, DSTestTime dsTestTime, object provider)
+        {
+            Run(providerName, performer, dsTestTime, provider, null, null);
         }
 
         private static void RunLinq(string providerName, HiPerfTimer performer, DSTestTime dsTestTime, object provider)
@@ -153,51 +176,6 @@ namespace TestConsole
             }
         }
 
-        /*
-        static void Main(string[] args)
-        {
-            InitConnections();
-
-            adoEFProvider = new AdoEFProvider(ConfigurationManager.ConnectionStrings["TestDAEntities"].ToString());
-            adoProvider = new AdoProvider(BaseSqlConnection);
-            using (OrmDBManager manager = new OrmDBManager(GetCache(), GetSchema(), ConfigurationSettings.AppSettings["ConnectionStringBase"]))
-            {
-                wormProvider = new WormProvider(manager);
-            }
-            wormProvider.Manager = new OrmDBManager(GetCache(), GetSchema(), ConfigurationSettings.AppSettings["ConnectionStringBase"]);
-
-            cfg = new NHibernate.Cfg.Configuration();
-            cfg.AddAssembly("DANHibernate");
-            factory = cfg.BuildSessionFactory();
-
-            InitUserIds();
-
-            //TypeCycleWithLoad();
-            //Console.WriteLine(performer.Duration.ToString() + " TypeCycleWithLoad");
-
-            //TypeCycleWithLoadLinq();
-            //Console.WriteLine(performer.Duration.ToString() + " TypeCycleWithLoadLinq");
-
-            //TypeCycleWithLoadWorm();
-            //Console.WriteLine(performer.Duration.ToString() + " TypeCycleWithLoadWorm");
-
-            //LargeCollectionWithChildrenByIdArrayDataset();
-            //Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayDataset");
-            
-            //LargeCollectionWithChildrenByIdArrayWorm();
-            //Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayWorm");
-
-            LargeCollectionWithChildrenByIdArrayNH();
-            Console.WriteLine(performer.Duration.ToString() + " LargeCollectionWithChildrenByIdArrayNH");
-
-           /// FFF1();
-           // Console.WriteLine(performer.Duration.ToString() + " FFF");
-           // ZZZ1();
-           // Console.WriteLine(performer.Duration.ToString() + " ZZZ");
-           //LargeCollectionDataset();
-            Console.WriteLine(performer.Duration.ToString() + " ZZZ");
-        }
-        */
         private static void InitUserIds()
         {
             GetIdsArray(Constants.Small, smallUserIds);
@@ -216,85 +194,6 @@ namespace TestConsole
                 DataRow row = ds.Tables[0].Rows[i];
                 idsArray[i] = (int)row["user_id"];
             }
-        }
-
-        [QueryTypeAttribute(QueryType.SmallCollection)]
-        public static void FFF1()
-        {
-            performer.Start();
-            for (ulong i = 0; i < 1000000; i++)
-            {
-            }
-            performer.Stop();
-        }
-
-        [QueryTypeAttribute(QueryType.SmallCollection)]
-        public static void ZZZ1()
-        {
-            performer.Start();
-            for (ulong i = 0; i < 1000000; i++)
-            {
-            }
-            performer.Stop();
-        }
-
-        public static void LargeCollectionDataset()
-        {
-            performer.Start();
-            adoProvider.CollectionDataset(Constants.Large);
-            performer.Stop();
-        }
-
-        public static void TypeCycleWithLoad()
-        {
-            performer.Start();
-            adoProvider.TypeCycleWithLoadDataset(mediumUserIds);
-            performer.Stop();
-        }
-
-        public static void TypeCycleWithLoadLinq()
-        {
-            performer.Start();
-            adoEFProvider.TypeCycleWithLoadLinq(mediumUserIds);
-            performer.Stop();
-        }
-
-        public static void TypeCycleWithLoadWorm()
-        {
-            performer.Start();
-            wormProvider.TypeCycleWithLoad(mediumUserIds);
-            performer.Stop();
-        }
-
-        public static void LargeCollectionWithChildrenByIdArrayDataset()
-        {
-            performer.Start();
-            adoProvider.CollectionWithChildrenByIdArrayDataset(largeUserIds);
-            performer.Stop();
-        }
-
-        public static void LargeCollectionWithChildrenByIdArrayWorm()
-        {
-            performer.Start();
-            wormProvider.CollectionWithChildrenByIdArray(largeUserIds);
-            performer.Stop();
-        }
-
-        public static void LargeCollectionWithChildrenByIdArrayNH()
-        {
-            //session = factory.OpenSession();
-            //performer.Start();
-            //IList users = session.CreateCriteria(typeof(FullUser))
-            //  .Add(Expression.In("UserId", largeUserIds)).List();
-            //performer.Stop();
-           
-            session = factory.OpenSession();
-            foreach (int id in mediumUserIds)
-            {
-                LazyUser user = (LazyUser)session.Load(typeof(LazyUser), id);
-                string name = user.FirstName;
-            }
-            session.Close();
         }
     }
 }

@@ -59,7 +59,6 @@ namespace DAWorm
             manager = null;
         }
      
-        #region new
         [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
         public void TypeCycleWithoutLoad()
         {
@@ -244,88 +243,5 @@ namespace DAWorm
                     Worm.Database.Criteria.Ctor.Field(tp, Phone.Properties.Phone_number).Like("1%"), null, false); 
             }
         }
-
-       
-        #endregion new
-
-        #region old
-        //public void SelectWithoutLoad()
-        //{
-        //    OrmCache cache = new OrmCache();
-        //    using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, schema, _connectionString))
-        //    {
-        //        //User user = new User(1, cache, schema);
-        //        //user.Load();
-        //        User user = manager.Find<User>(1);
-        //       // ICollection<User> users = manager.FindTop<User>(10000, null, null, false);
-        //    }
-        //}
-
-
-        //public void SelectCollectionWithoutLoad()
-        //{
-        //    Worm.PerfCounter p = new Worm.PerfCounter();
-        //    OrmCache cache = new OrmCache();
-        //    using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, Schema, _connectionString))
-        //    {
-        //        ICollection<User> users = manager.FindTop<User>(10000, null, null, false);
-        //    }
-        //    System.Diagnostics.Debug.WriteLine(p.GetTime());
-        //}
-
-        //public void SelectWithLoad()
-        //{
-        //    OrmCache cache = new OrmCache();
-        //    using (OrmReadOnlyDBManager manager = new OrmDBManager(new OrmCache(), Schema, _connectionString))
-        //    {
-        //        User user = new User(1, cache, Schema);
-        //        user.Load();
-        //    }
-        //}
-
-        //public void SelectCollectionWithLoad()
-        //{
-        //    using (OrmReadOnlyDBManager manager = new OrmDBManager(new OrmCache(), Schema, _connectionString))
-        //    {
-        //        ICollection<User> users = manager.FindTop<User>(10000, null, null, true);
-        //    }
-        //}
-
-        //public void SelectSmallWithoutLoad()
-        //{
-        //    OrmCache cache = new OrmCache();
-        //    using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, Schema, _connectionString))
-        //    {
-        //        Phone phone = manager.Find<Phone>(1);
-        //    }
-        //}
-
-        //public void SelectSmallCollectionWithoutLoad()
-        //{
-        //    OrmCache cache = new OrmCache();
-        //    using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, Schema, _connectionString))
-        //    {
-        //        ICollection<Phone> phones = manager.FindTop<Phone>(1000, null, null, false);
-        //    }
-        //}
-
-        //public void SelectSmallWithLoad()
-        //{
-        //    OrmCache cache = new OrmCache();
-        //    using (OrmReadOnlyDBManager manager = new OrmDBManager(cache, Schema, _connectionString))
-        //    {
-        //        Phone phone = new Phone(1, cache, Schema);
-        //        phone.Load();
-        //    }
-        //}
-
-        //public void SelectSmallCollectionWithLoad()
-        //{
-        //    using (OrmReadOnlyDBManager manager = new OrmDBManager(new OrmCache(), Schema, _connectionString))
-        //    {
-        //        ICollection<Phone> phones = manager.FindTop<Phone>(1000, null, null, true);
-        //    }
-        //}
-        #endregion old
     }
 }

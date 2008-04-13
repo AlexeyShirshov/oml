@@ -109,10 +109,16 @@ namespace DALinq
             LoadingEnabled = true;
             for (int i = 0; i < Constants.LargeIteration; i++)
             {
+                string id = (i + 1).ToString();
                 var users = (from u in db.tbl_users
                              from p in u.tbl_phones
-                             where p.phone_number.StartsWith((i + 1).ToString())
+                             where p.phone_number.StartsWith(id)
                              select u.user_id).ToList();
+                foreach (var userId in users)
+                {
+                    var user = db.tbl_users.First(u => u.user_id == userId);
+                    string name = user.first_name;
+                }
             }
         }
 
@@ -173,17 +179,22 @@ namespace DALinq
         
         public void TypeCycleWithoutLoad(int[] userIds)
         {
-            foreach (int id in userIds)
+            foreach (int id in mediumUserIds)
             {
                 var users = (from e in db.tbl_users
                              where e.user_id == id
-                             select e).ToList() ;
+                             select e).ToList();
+                foreach (var userId in users)
+                {
+                    var user = users.Single();
+                    string name = user.first_name;
+                }
             }
         }
 
         public void TypeCycleWithLoad(int[] userIds)
         {
-            foreach (int id in userIds)
+            foreach (int id in mediumUserIds)
             {
                 var users = (from e in db.tbl_users
                              where e.user_id == id
@@ -193,14 +204,14 @@ namespace DALinq
 
         public void TypeCycleLazyLoad(int[] userIds)
         {
-            foreach (int id in userIds)
+            foreach (int id in mediumUserIds)
             {
                 var users = (from e in db.tbl_users
                              where e.user_id == id
-                            select e).ToList();
-                foreach (var user in users)
+                             select e).ToList();
+                foreach (tbl_user user in users)
                 {
-                    string name = user.first_name;
+                    string first_name = user.first_name;
                 }
             }
         }
@@ -226,7 +237,6 @@ namespace DALinq
                          where userIds.Contains<int>(e.user_id)
                          select e).ToList();
         }
-
     
         public void SameObjectInCycleLoad(int userId)
         {
@@ -237,9 +247,5 @@ namespace DALinq
                              select e).ToList();
             }
         }
-
-      
-
-    
     }
 }
