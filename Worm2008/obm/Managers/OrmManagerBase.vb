@@ -3828,8 +3828,8 @@ l1:
 
 #End Region
 
-    Protected MustOverride Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
-    Protected MustOverride Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+    Protected MustOverride Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As OrmJoin) As DicIndex(Of T)
+    Protected MustOverride Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
 
     Protected Friend Sub RegisterInCashe(ByVal obj As OrmBase)
         If Not IsInCache(obj) Then
@@ -3840,21 +3840,21 @@ l1:
         End If
     End Sub
 
-    Public Function BuildObjDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal criteria As IGetFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+    Public Function BuildObjDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal criteria As IGetFilter, ByVal join() As OrmJoin) As DicIndex(Of T)
         Return BuildObjDic(Of T)(level, criteria, join, AddressOf (New clsDic(Of T)).f)
     End Function
 
     Public Function BuildObjDictionary(Of T As {New, OrmBase})(ByVal level As Integer, _
-        ByVal criteria As IGetFilter, ByVal join As OrmJoin, ByVal field As String) As DicIndex(Of T)
+        ByVal criteria As IGetFilter, ByVal join() As OrmJoin, ByVal field As String) As DicIndex(Of T)
         Return BuildObjDic(Of T)(level, criteria, join, AddressOf (New clsDic(Of T)(field)).f)
     End Function
 
     Public Function BuildObjDictionary(Of T As {New, OrmBase})(ByVal level As Integer, _
-        ByVal criteria As IGetFilter, ByVal join As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+        ByVal criteria As IGetFilter, ByVal join() As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
         Return BuildObjDic(Of T)(level, criteria, join, AddressOf (New clsDic(Of T)(firstField, secondField)).f)
     End Function
 
-    Protected Delegate Function GetRootsDelegate(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase, ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+    Protected Delegate Function GetRootsDelegate(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase, ByVal level As Integer, ByVal filter As IFilter, ByVal join() As OrmJoin) As DicIndex(Of T)
 
     Private Class clsDic(Of T As {New, OrmBase})
         Private _f As String
@@ -3872,7 +3872,7 @@ l1:
             _f = f
             _s = s
         End Sub
-        Public Function f(ByVal mgr As OrmManagerBase, ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+        Public Function f(ByVal mgr As OrmManagerBase, ByVal level As Integer, ByVal filter As IFilter, ByVal join() As OrmJoin) As DicIndex(Of T)
             If String.IsNullOrEmpty(_f) Then
                 Return mgr.BuildDictionary(Of T)(level, filter, join)
             Else
@@ -3882,7 +3882,7 @@ l1:
     End Class
 
     Protected Function BuildObjDic(Of T As {New, OrmBase})(ByVal level As Integer, ByVal criteria As IGetFilter, _
-        ByVal join As OrmJoin, ByVal getRoots As GetRootsDelegate(Of T)) As DicIndex(Of T)
+        ByVal join() As OrmJoin, ByVal getRoots As GetRootsDelegate(Of T)) As DicIndex(Of T)
         Dim key As String = String.Empty
 
         Dim tt As System.Type = GetType(T)

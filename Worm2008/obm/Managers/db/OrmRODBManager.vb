@@ -2569,18 +2569,18 @@ l2:
             Return cnt < _length
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal join As OrmJoin) As DicIndex(Of T)
+        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As OrmJoin) As DicIndex(Of T)
             Invariant()
             Dim params As New ParamMgr(DbSchema, "p")
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
-                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), GetFilterInfo)
+                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), joins, GetFilterInfo)
                 cmd.CommandType = System.Data.CommandType.Text
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)
                 Try
                     Dim root As DicIndex(Of T) = BuildDictionaryInternal(Of T)(cmd, level, Me, Nothing, Nothing)
                     root.Filter = filter
-                    root.Join = join
+                    root.Join = joins
                     Return root
                 Finally
                     CloseConn(b)
@@ -2589,18 +2589,18 @@ l2:
         End Function
 
         Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, _
-            ByVal filter As IFilter, ByVal join As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+            ByVal filter As IFilter, ByVal joins() As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
             Invariant()
             Dim params As New ParamMgr(DbSchema, "p")
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
-                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), GetFilterInfo, firstField, secondField)
+                cmd.CommandText = DbSchema.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), joins, GetFilterInfo, firstField, secondField)
                 cmd.CommandType = System.Data.CommandType.Text
                 params.AppendParams(cmd.Parameters)
                 Dim b As ConnAction = TestConn(cmd)
                 Try
                     Dim root As DicIndex(Of T) = BuildDictionaryInternal(Of T)(cmd, level, Me, firstField, secondField)
                     root.Filter = filter
-                    root.Join = join
+                    root.Join = joins
                     Return root
                 Finally
                     CloseConn(b)

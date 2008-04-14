@@ -1954,7 +1954,7 @@ l1:
         'End Function
 
         Public Function GetDictionarySelect(ByVal type As Type, ByVal level As Integer, _
-            ByVal params As ParamMgr, ByVal filter As IFilter, ByVal filter_info As Object) As String
+            ByVal params As ParamMgr, ByVal filter As IFilter, ByVal joins() As Worm.Criteria.Joins.OrmJoin, ByVal filter_info As Object) As String
 
             Dim odic As IOrmDictionary = TryCast(GetObjectSchema(type), IOrmDictionary)
             If odic Is Nothing OrElse String.IsNullOrEmpty(odic.GetFirstDicField) Then
@@ -1965,12 +1965,12 @@ l1:
             Dim almgr As AliasMgr = AliasMgr.Create
 
             If String.IsNullOrEmpty(odic.GetSecondDicField) Then
-                sb.Append(GetDicStmt(type, CType(odic, IOrmObjectSchema), odic.GetFirstDicField, level, almgr, params, filter, filter_info, True))
+                sb.Append(GetDicStmt(type, CType(odic, IOrmObjectSchema), odic.GetFirstDicField, level, almgr, params, filter, joins, filter_info, True))
             Else
                 sb.Append("select name,sum(cnt) from (")
-                sb.Append(GetDicStmt(type, CType(odic, IOrmObjectSchema), odic.GetFirstDicField, level, almgr, params, filter, filter_info, False))
+                sb.Append(GetDicStmt(type, CType(odic, IOrmObjectSchema), odic.GetFirstDicField, level, almgr, params, filter, joins, filter_info, False))
                 sb.Append(" union ")
-                sb.Append(GetDicStmt(type, CType(odic, IOrmObjectSchema), odic.GetSecondDicField, level, almgr, params, filter, filter_info, False))
+                sb.Append(GetDicStmt(type, CType(odic, IOrmObjectSchema), odic.GetSecondDicField, level, almgr, params, filter, joins, filter_info, False))
                 sb.Append(") sd group by name order by name")
             End If
 
@@ -1978,7 +1978,7 @@ l1:
         End Function
 
         Public Function GetDictionarySelect(ByVal type As Type, ByVal level As Integer, _
-            ByVal params As ParamMgr, ByVal filter As IFilter, ByVal filter_info As Object, _
+            ByVal params As ParamMgr, ByVal filter As IFilter, ByVal joins() As Worm.Criteria.Joins.OrmJoin, ByVal filter_info As Object, _
             ByVal firstField As String, ByVal secField As String) As String
 
             If String.IsNullOrEmpty(firstField) Then
@@ -1991,12 +1991,12 @@ l1:
             Dim almgr As AliasMgr = AliasMgr.Create
 
             If String.IsNullOrEmpty(secField) Then
-                sb.Append(GetDicStmt(type, s, firstField, level, almgr, params, filter, filter_info, True))
+                sb.Append(GetDicStmt(type, s, firstField, level, almgr, params, filter, Joins, filter_info, True))
             Else
                 sb.Append("select name,sum(cnt) from (")
-                sb.Append(GetDicStmt(type, s, firstField, level, almgr, params, filter, filter_info, False))
+                sb.Append(GetDicStmt(type, s, firstField, level, almgr, params, filter, joins, filter_info, False))
                 sb.Append(" union ")
-                sb.Append(GetDicStmt(type, s, secField, level, almgr, params, filter, filter_info, False))
+                sb.Append(GetDicStmt(type, s, secField, level, almgr, params, filter, Joins, filter_info, False))
                 sb.Append(") sd group by name order by name")
             End If
 
@@ -2004,7 +2004,7 @@ l1:
         End Function
 
         Protected Function GetDicStmt(ByVal t As Type, ByVal schema As IOrmObjectSchema, ByVal field As String, ByVal level As Integer, _
-            ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filter As IFilter, _
+            ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filter As IFilter, ByVal joins() As Worm.Criteria.Joins.OrmJoin, _
             ByVal filter_info As Object, ByVal appendOrder As Boolean) As String
             Dim sb As New StringBuilder
             Dim tbl As OrmTable = GetTables(schema)(0)
@@ -2020,6 +2020,16 @@ l1:
             sb.Append(al).Append(".").Append(n)
             sb.Append(",").Append(level).Append(") name,count(*) cnt from ")
             AppendFrom(almgr, filter_info, GetTables(t), sb, params, schema)
+            If joins IsNot Nothing Then
+                For i As Integer = 0 To joins.Length - 1
+                    Dim join As OrmJoin = CType(joins(i), OrmJoin)
+
+                    If Not OrmJoin.IsEmpty(join) Then
+                        almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
+                        sb.Append(join.MakeSQLStmt(Me, almgr, params))
+                    End If
+                Next
+            End If
 
             AppendWhere(t, filter, almgr, sb, filter_info, params)
 

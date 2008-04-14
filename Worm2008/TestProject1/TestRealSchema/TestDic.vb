@@ -14,11 +14,11 @@ Public Class TestDic
 
         Dim s As New SQLGenerator("1")
         Dim p As New ParamMgr(s, "p")
-        Dim stmt As String = s.GetDictionarySelect(GetType(Table1), 1, p, Nothing, Nothing)
+        Dim stmt As String = s.GetDictionarySelect(GetType(Table1), 1, p, Nothing, Nothing, Nothing)
         Dim checkedStmt As String = "select left(t1.name,1) name,count(*) cnt from dbo.Table1 t1 group by left(t1.name,1) order by left(t1.name,1)"
         Assert.AreEqual(checkedStmt, stmt)
 
-        stmt = s.GetDictionarySelect(GetType(Table1), 1, p, Nothing, Nothing, "Title", Nothing)
+        stmt = s.GetDictionarySelect(GetType(Table1), 1, p, Nothing, Nothing, Nothing, "Title", Nothing)
 
         Assert.AreEqual(checkedStmt, stmt)
     End Sub
