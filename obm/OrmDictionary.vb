@@ -52,7 +52,7 @@ Namespace Orm
         Protected childs As ArrayList
         Protected _filter As IFilter
         Protected _root As DicIndexBase
-        Protected _join As OrmJoin
+        Protected _joins() As OrmJoin
         'Protected _complex As Boolean
 
         'Protected Friend Property Complex() As Boolean
@@ -209,12 +209,12 @@ Namespace Orm
             End Set
         End Property
 
-        Public Property Join() As OrmJoin
+        Public Property Join() As OrmJoin()
             Get
-                Return _join
+                Return _joins
             End Get
-            Protected Friend Set(ByVal value As OrmJoin)
-                _join = value
+            Protected Friend Set(ByVal value() As OrmJoin)
+                _joins = value
             End Set
         End Property
     End Class
@@ -271,7 +271,7 @@ Namespace Orm
 
             Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
 			con.AddFilter(cr.Filter(GetType(T))).AddFilter(Root.Filter)
-			Return mgr.FindWithJoins(Of T)(Nothing, New OrmJoin() {Root.Join}, con.Condition, sort, False)
+            Return mgr.FindWithJoins(Of T)(Nothing, Root.Join, con.Condition, sort, False)
         End Function
 
         Private Function FindObjects(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, _
@@ -292,9 +292,9 @@ Namespace Orm
             End If
 
             If loadName Then
-				col = mgr.FindWithJoins(Of T)(Nothing, New OrmJoin() {Root.Join}, con.Condition, Nothing, True, New String() {field})
+                col = mgr.FindWithJoins(Of T)(Nothing, Root.Join, con.Condition, Nothing, True, New String() {field})
             Else
-				col = mgr.FindWithJoins(Of T)(Nothing, New OrmJoin() {Root.Join}, con.Condition, Nothing, False)
+                col = mgr.FindWithJoins(Of T)(Nothing, Root.Join, con.Condition, Nothing, False)
             End If
 
             Return col
