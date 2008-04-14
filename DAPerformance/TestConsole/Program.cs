@@ -27,7 +27,6 @@ using NHibernate.Linq;
 using NHibernate.Hql;
 using NHibernate.Expression;
 using NHibernate.Cfg;
-using Common.Runnable;
 
 namespace TestConsole
 {
@@ -35,7 +34,7 @@ namespace TestConsole
     {
         static void Main(string[] args)
         {
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 4; i++)
             {
                 TestRunner runner = new TestRunner();
                 runner.Start();

@@ -27,11 +27,12 @@ using NHibernate.Linq;
 using NHibernate.Hql;
 using NHibernate.Expression;
 using NHibernate.Cfg;
-using Common.Runnable;
 namespace TestConsole
 {
     class TestRunner
     {
+        delegate void RunnableFunc();
+
         SQLGenerator _schema;
 
         DSTestTime dsTestTime;
