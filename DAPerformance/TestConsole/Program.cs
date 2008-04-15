@@ -34,8 +34,8 @@ namespace TestConsole
     {
         static void Main(string[] args)
         {
-            for (int i = 0; i < 4; i++)
-            {
+            //for (int i = 0; i < 4; i++)
+            //{
                 TestRunner runner = new TestRunner();
                 runner.Start();
                 runner.RunAdo();
@@ -44,7 +44,7 @@ namespace TestConsole
                 runner.RunWorm();
                 runner.RunAdoEF();
                 runner.End();
-            }
+            //}
         }
     }
 }

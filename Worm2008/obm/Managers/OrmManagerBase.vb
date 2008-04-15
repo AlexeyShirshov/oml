@@ -3882,22 +3882,32 @@ l1:
     End Class
 
     Protected Function BuildObjDic(Of T As {New, OrmBase})(ByVal level As Integer, ByVal criteria As IGetFilter, _
-        ByVal join() As OrmJoin, ByVal getRoots As GetRootsDelegate(Of T)) As DicIndex(Of T)
+        ByVal joins() As OrmJoin, ByVal getRoots As GetRootsDelegate(Of T)) As DicIndex(Of T)
+        Dim tt As System.Type = GetType(T)
+
         Dim key As String = String.Empty
 
-        Dim tt As System.Type = GetType(T)
+        Dim f As String = String.Empty
+        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+            f = criteria.Filter(tt).ToString
+        End If
+
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
             key = criteria.Filter(tt).ToStaticString & _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
         Else
             key = _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
         End If
 
-        Dim dic As IDictionary = GetDic(_cache, key)
-
-        Dim f As String = String.Empty
-        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            f = criteria.Filter(tt).ToString
+        If joins IsNot Nothing Then
+            For Each join As OrmJoin In joins
+                If Not OrmJoin.IsEmpty(join) Then
+                    key &= join.ToString
+                    f &= join.ToString
+                End If
+            Next
         End If
+
+        Dim dic As IDictionary = GetDic(_cache, key)
 
         Dim id As String = f & " - dics - "
         Dim sync As String = id & GetStaticKey() & "--level" & level
@@ -3909,7 +3919,7 @@ l1:
             Using SyncHelper.AcquireDynamicLock(sync)
                 roots = CType(dic(id), DicIndex(Of T))
                 If roots Is Nothing Then
-                    roots = getRoots(Me, level, GetFilter(criteria, tt), join)
+                    roots = getRoots(Me, level, GetFilter(criteria, tt), joins)
                     dic.Add(id, roots)
                 End If
             End Using
