@@ -55,7 +55,6 @@ namespace DaAdoEF
         {
             foreach (int id in mediumUserIds)
             {
-                //var users = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", id)).ToList();
                 var users = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", id)).Select(t => t.user_id).ToList();               
                 foreach (var userId in users)
                 {
@@ -115,16 +114,7 @@ namespace DaAdoEF
         {
             for (int i = 0; i < Constants.LargeIteration; i++)
             {
-                string id = (i + 1).ToString();
-                var users = entities.tbl_user.Join(entities.tbl_phone,
-                    u => u.user_id, p => p.user_id, (u, p) => new {U = u, P = p}).
-                        Where(jn => jn.P.phone_number.StartsWith(id)).
-                        Select(jn => jn.U.user_id).ToList();
-                foreach (var userId in users)
-                {
-                    var user = entities.tbl_user.First(u => u.user_id == userId);
-                    string name = user.first_name;
-                }
+                var users = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", i)).Select(t => t.user_id).ToList();
             }
         }
         
@@ -133,11 +123,7 @@ namespace DaAdoEF
         {
             for (int i = 0; i < Constants.LargeIteration; i++)
             {
-                string id = (i + 1).ToString();
-                var users = entities.tbl_user.Join(entities.tbl_phone,
-                    u => u.user_id, p => p.user_id, (u, p) => new { U = u, P = p }).
-                        Where(jn => jn.P.phone_number.StartsWith(id)).
-                        Select(jn => jn.U).ToList();
+                var users = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", i)).ToList();
             }
         }
 
@@ -147,10 +133,7 @@ namespace DaAdoEF
         {
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
-                var users = entities.tbl_user.Join(entities.tbl_phone,
-                    u => u.user_id, p => p.user_id, (u, p) => new { U = u, P = p }).
-                        Where(jn => jn.P.phone_number.StartsWith("1")).
-                        Select(jn => jn.U).ToList();
+                var users = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", 1)).Select(t => t.user_id).ToList();
             }
         }
 
@@ -226,16 +209,7 @@ namespace DaAdoEF
         {
             for (int i = 0; i < Constants.LargeIteration; i++)
             {
-                string id = (i + 1).ToString();
-                var users = (from u in entities.tbl_user
-                             from p in u.tbl_phone
-                             where p.phone_number.StartsWith(id)
-                             select u.user_id).ToList();
-                foreach (var userId in users)
-                {
-                    var user = entities.tbl_user.First(u => u.user_id == userId);
-                    string name = user.first_name;
-                }
+                var users = (from u in entities.tbl_user where u.user_id == i select u.user_id).ToList();
             }
         }
 
@@ -244,11 +218,7 @@ namespace DaAdoEF
         {
             for (int i = 0; i < Constants.LargeIteration; i++)
             {
-                string id = (i + 1).ToString();
-                var users = (from u in entities.tbl_user
-                             from p in u.tbl_phone
-                             where p.phone_number.StartsWith(id)
-                             select u).ToList();
+                var users = (from u in entities.tbl_user where u.user_id == i select u).ToList();
             }
         }
 
@@ -268,10 +238,7 @@ namespace DaAdoEF
         {
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
-                var users = (from u in entities.tbl_user
-                             from p in u.tbl_phone
-                             where p.phone_number.StartsWith("1")
-                             select u).ToList();
+                var users = (from u in entities.tbl_user where u.user_id == 1 select u.user_id).ToList();
             }
         }
         [QueryTypeAttribute(QueryType.ObjectsWithLoadWithPropertiesAccess, Syntax.Linq)]

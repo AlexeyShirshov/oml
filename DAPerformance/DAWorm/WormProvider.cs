@@ -203,25 +203,19 @@ namespace DAWorm
 
         public void CollectionByPredicateWithoutLoad(int iterationCount)
         {
+            Type tu = typeof(User);
             for (int i = 0; i < iterationCount; i++)
             {
-                string id = (i + 1).ToString() + "%";
-                Type tp = typeof(Phone);
-                ICollection<User> users = manager.FindJoin<User>(tp, "ID",
-                    Worm.Database.Criteria.Ctor.Field(tp, Phone.Properties.Phone_number).Like(id), null, false);   
+                var users = manager.Find<User>(Worm.Database.Criteria.Ctor.Field(tu, User.Properties.ID).Eq(i), null, false);
             }
         }
 
         public void CollectionByPredicateWithLoad(int iterationCount)
         {
+            Type tu = typeof(User);
             for (int i = 0; i < iterationCount; i++)
             {
-                string id = (i + 1).ToString() + "%";
-                Type tp = typeof(Phone);
-                ICollection<User> users = manager.FindJoin<User>(tp, "ID",
-                    Worm.Database.Criteria.Ctor.Field(tp, Phone.Properties.Phone_number).Like(id), null, true);   
-
-                //manager.Find<User>(Worm.Database.Criteria.Ctor.Field(tp,Phone.Properties.Phone_number).Like("1%"), null, false);
+                var users = manager.Find<User>(Worm.Database.Criteria.Ctor.Field(tu, User.Properties.ID).Eq(i), null, true);
             }
         }
 
@@ -236,11 +230,10 @@ namespace DAWorm
 
         public void SelectBySamePredicate(int iterationCount)
         {
+            Type tu = typeof(User);
             for (int i = 0; i < iterationCount; i++)
             {
-                Type tp = typeof(Phone);
-                ICollection<User> users = manager.FindJoin<User>(tp, "ID",
-                    Worm.Database.Criteria.Ctor.Field(tp, Phone.Properties.Phone_number).Like("1%"), null, false); 
+                var users = manager.Find<User>(Worm.Database.Criteria.Ctor.Field(tu, User.Properties.ID).Eq(i), null, false);
             }
         }
     }

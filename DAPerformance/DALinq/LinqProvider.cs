@@ -107,18 +107,9 @@ namespace DALinq
         public void CollectionByPredicateWithoutLoad()
         {
             LoadingEnabled = true;
-            for (int i = 0; i < Constants.LargeIteration; i++)
+            for(int i = 0; i < Constants.LargeIteration; i++)
             {
-                string id = (i + 1).ToString();
-                var users = (from u in db.tbl_users
-                             from p in u.tbl_phones
-                             where p.phone_number.StartsWith(id)
-                             select u.user_id).ToList();
-                foreach (var userId in users)
-                {
-                    var user = db.tbl_users.First(u => u.user_id == userId);
-                    string name = user.first_name;
-                }
+                var users = (from u in db.tbl_users where u.user_id == i select u.user_id).ToList();
             }
         }
 
@@ -128,10 +119,7 @@ namespace DALinq
             LoadingEnabled = false;
             for (int i = 0; i < Constants.LargeIteration; i++)
             {
-                var users = (from u in db.tbl_users
-                             from p in u.tbl_phones
-                             where p.phone_number.StartsWith((i + 1).ToString())
-                             select u)./*Distinct().*/ToList();
+                var users = (from u in db.tbl_users where u.user_id == i select u).ToList();
             }
         }
 
@@ -158,10 +146,7 @@ namespace DALinq
             LoadingEnabled = true;
             for (int i = 0; i < Constants.SmallIteration; i++)
             {
-                var users = (from u in db.tbl_users
-                             from p in u.tbl_phones
-                             where p.phone_number.StartsWith("1")
-                             select u).ToList();
+                var users = (from u in db.tbl_users where u.user_id == 1 select u.user_id).ToList();
             }
         }
 
