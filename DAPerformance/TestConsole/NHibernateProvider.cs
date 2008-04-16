@@ -53,7 +53,10 @@ namespace TestConsole
         {
             foreach (int id in mediumUserIds)
             {
-                LazyUser user = (LazyUser)session.Load(typeof(LazyUser), id);
+                IList results = session.CreateCriteria(typeof(User))
+                    .SetProjection(Projections.Property("UserId"))
+                    .Add(Expression.Eq("UserId", id))
+                    .List();
             }
         }
 
@@ -73,7 +76,17 @@ namespace TestConsole
         {
             foreach (int id in mediumUserIds)
             {
-                LazyUser user = (LazyUser)session.Load(typeof(LazyUser), id);
+                IList results = session.CreateCriteria(typeof(User))
+                   .SetProjection(Projections.Property("UserId"))
+                   .Add(Expression.Eq("UserId", id))
+                   .List();
+                foreach (int userId in results)
+                {
+                    IList name = session.CreateCriteria(typeof(User))
+                    .SetProjection(Projections.Property("FirstName"))
+                    .Add(Expression.Eq("UserId", userId))
+                    .List();
+                }
             }
         }
 
@@ -202,14 +215,9 @@ namespace TestConsole
         {
             foreach (int id in mediumUserIds)
             {
-                var users = (from e in session.Linq<User>()
-                             where e.UserId == id
-                             select e).ToList();
-                foreach (var userId in users)
-                {
-                    var user = users.Single();
-                    string name = user.FirstName;
-                }
+                var ids = (from e in session.Linq<LazyUser>()
+                           where e.UserId == id
+                           select e.UserId).ToList();
             }
         }
 
@@ -231,12 +239,14 @@ namespace TestConsole
         {
             foreach (int id in mediumUserIds)
             {
-                var users = (from e in session.Linq<LazyUser>()
-                             where e.UserId == id
-                             select e).ToList();
-                foreach (var user in users)
+                var ids = (from e in session.Linq<LazyUser>()
+                           where e.UserId == id
+                           select e.UserId).ToList();
+                foreach (int userId in ids)
                 {
-                    string first_name = user.FirstName;
+                    var first_name = (from e in session.Linq<LazyUser>()
+                                      where e.UserId == userId
+                                      select e.FirstName).ToList();
                 }
             }
         }

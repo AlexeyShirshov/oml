@@ -46,7 +46,8 @@ namespace DaAdoEF
         {
             foreach (int id in mediumUserIds)
             {
-                var users = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", id)).ToList();
+                var users = entities.tbl_user.Where("it.user_id = @user_id", 
+                    new ObjectParameter("user_id", id)).ToList();
             }
         }
 
@@ -55,12 +56,8 @@ namespace DaAdoEF
         {
             foreach (int id in mediumUserIds)
             {
-                var users = entities.tbl_user.Where("it.user_id = @user_id", new ObjectParameter("user_id", id)).Select(t => t.user_id).ToList();               
-                foreach (var userId in users)
-                {
-                    var user = entities.tbl_user.First(u => u.user_id == userId);
-                    string name = user.first_name;
-                }
+                var ids = entities.tbl_user.Where("it.user_id = @user_id", 
+                    new ObjectParameter("user_id", id)).Select(t => t.user_id).ToList();
             }
         }
 
@@ -69,11 +66,12 @@ namespace DaAdoEF
         {
             foreach (int id in mediumUserIds)
             {
-                var users = entities.tbl_user.Where("it.user_id = @user_id",
-                    new ObjectParameter("user_id", id)).ToList();
-                foreach (tbl_user user in users)
+                var ids = entities.tbl_user.Where("it.user_id = @user_id",
+                    new ObjectParameter("user_id", id)).Select(t => t.user_id).ToList();
+                foreach (int userId in ids)
                 {
-                    string first_name = user.first_name;
+                    var first_name =  entities.tbl_user.Where("it.user_id = @user_id",
+                    new ObjectParameter("user_id", userId)).Select(t => t.first_name).ToList();
                 }
             }
         }
@@ -155,14 +153,9 @@ namespace DaAdoEF
         {
             foreach (int id in mediumUserIds)
             {
-                var users = (from e in entities.tbl_user
-                             where e.user_id == id
-                             select e).ToList();
-                foreach (var userId in users)
-                {
-                    var user = users.Single();
-                    string name = user.first_name;
-                }
+                var ids = (from e in entities.tbl_user
+                           where e.user_id == id
+                           select e.user_id).ToList();
             }
         }
         [QueryTypeAttribute(QueryType.TypeCycleWithLoad, Syntax.Linq)]
@@ -180,12 +173,14 @@ namespace DaAdoEF
         {
             foreach (int id in mediumUserIds)
             {
-                var users = (from e in entities.tbl_user
-                             where e.user_id == id
-                             select e).ToList();
-                foreach (tbl_user user in users)
+                var ids = (from e in entities.tbl_user
+                           where e.user_id == id
+                           select e.user_id).ToList();
+                foreach (int userId in ids)
                 {
-                    string first_name = user.first_name;
+                    var first_name = (from e in entities.tbl_user
+                                      where e.user_id == userId
+                                      select e.first_name).ToList();
                 }
             }
         }

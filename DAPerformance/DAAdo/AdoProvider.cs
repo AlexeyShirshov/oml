@@ -44,6 +44,22 @@ namespace DAAdo
             }
         }
 
+         [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad)]
+        public void TypeCycleWithoutLoad()
+        {
+            foreach (int id in mediumUserIds)
+            {
+                SqlCommand command = new SqlCommand(
+                    "select user_id from tbl_user where user_id=" + id, conn);
+                SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    int userId = reader.GetInt32(0);
+                }
+                reader.Close();
+            }
+        }
+
 
         [QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
         public void SmallCollectionByIdArray()
@@ -227,6 +243,22 @@ namespace DAAdo
                 SqlDataAdapter adapter = new SqlDataAdapter(command);
                 DataSet ds = new DataSet();
                 adapter.Fill(ds);
+            }
+        }
+
+        [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad, Syntax.Dataset)]
+        public void TypeCycleWithoutLoadLinq()
+        {
+            foreach (int id in mediumUserIds)
+            {
+                SqlCommand command = new SqlCommand(
+                    "select user_id from tbl_user where user_id=" + id, conn);
+                SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    int userId = reader.GetInt32(0);                   
+                }
+                reader.Close();
             }
         }
 

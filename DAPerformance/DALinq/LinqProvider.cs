@@ -166,14 +166,9 @@ namespace DALinq
         {
             foreach (int id in mediumUserIds)
             {
-                var users = (from e in db.tbl_users
-                             where e.user_id == id
-                             select e).ToList();
-                foreach (var userId in users)
-                {
-                    var user = users.Single();
-                    string name = user.first_name;
-                }
+                var ids = (from e in db.tbl_users
+                           where e.user_id == id
+                           select e.user_id).ToList();
             }
         }
 
@@ -191,12 +186,14 @@ namespace DALinq
         {
             foreach (int id in mediumUserIds)
             {
-                var users = (from e in db.tbl_users
-                             where e.user_id == id
-                             select e).ToList();
-                foreach (tbl_user user in users)
+                var ids = (from e in db.tbl_users
+                           where e.user_id == id
+                           select e.user_id).ToList();
+                foreach (int userId in ids)
                 {
-                    string first_name = user.first_name;
+                    var first_name = (from e in db.tbl_users
+                                      where e.user_id == userId
+                                      select e.first_name).ToList();
                 }
             }
         }
