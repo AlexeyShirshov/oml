@@ -1833,7 +1833,7 @@ l1:
             End Select
         End Sub
 
-        <Conditional("TRACE")> _
+        '<Conditional("TRACE")> _
         Protected Sub TraceStmt(ByVal cmd As System.Data.Common.DbCommand)
             If _tsStmt.Switch.ShouldTrace(TraceEventType.Information) Then
                 For Each p As System.Data.Common.DbParameter In cmd.Parameters
