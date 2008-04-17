@@ -1345,19 +1345,25 @@ Public Module helper
 
     Public Sub WriteInfo(ByVal _tsStmt As TraceSource, ByVal str As String)
         If _tsStmt.Switch.ShouldTrace(TraceEventType.Information) Then
-            For Each l As TraceListener In _tsStmt.Listeners
-                l.Write(str)
-                If Trace.AutoFlush Then _tsStmt.Flush()
-            Next
+            Try
+                For Each l As TraceListener In _tsStmt.Listeners
+                    l.Write(str)
+                    If Trace.AutoFlush Then _tsStmt.Flush()
+                Next
+            Catch ex As InvalidOperationException
+            End Try
         End If
     End Sub
 
     Public Sub WriteLineInfo(ByVal _tsStmt As TraceSource, ByVal str As String)
         If _tsStmt.Switch.ShouldTrace(TraceEventType.Information) Then
-            For Each l As TraceListener In _tsStmt.Listeners
-                l.WriteLine(str)
-                If Trace.AutoFlush Then _tsStmt.Flush()
-            Next
+            Try
+                For Each l As TraceListener In _tsStmt.Listeners
+                    l.WriteLine(str)
+                    If Trace.AutoFlush Then _tsStmt.Flush()
+                Next
+            Catch ex As InvalidOperationException
+            End Try
         End If
     End Sub
 
