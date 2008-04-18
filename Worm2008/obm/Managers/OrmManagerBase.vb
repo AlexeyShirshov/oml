@@ -360,7 +360,7 @@ Public MustInherit Class OrmManagerBase
         'End Function
 
         Public Overridable Function GetCount(ByVal mgr As OrmManagerBase) As Integer
-            Return mgr._list_converter.GetCount(_obj)
+            Return _cache.ListConverter.GetCount(_obj)
         End Function
 
         Public Sub Expire()
@@ -834,7 +834,7 @@ Public MustInherit Class OrmManagerBase
     '    _get_cur = getLocalStorage
     '    Return i
     'End Function
-    Private _list_converter As IListObjectConverter
+    'Private _list_converter As IListObjectConverter
     Protected Friend _dont_cache_lists As Boolean
     Private _newMgr As INewObjects
     Private _expiresPattern As Date
@@ -893,7 +893,7 @@ Public MustInherit Class OrmManagerBase
         _schema = schema
         '_check_on_find = True
 
-        _list_converter = CreateListConverter()
+        '_list_converter = CreateListConverter()
         CreateInternal()
     End Sub
 
@@ -902,14 +902,9 @@ Public MustInherit Class OrmManagerBase
         '_dispose_cash = True
         _cache = New OrmCache
         _schema = schema
-        _list_converter = CreateListConverter()
         '_check_on_find = True
         CreateInternal()
     End Sub
-
-    Protected Overridable Function CreateListConverter() As IListObjectConverter
-        Return New FakeListConverter
-    End Function
 
     Protected Friend Overridable ReadOnly Property IdentityString() As String
         Get
@@ -980,7 +975,7 @@ _callstack = environment.StackTrace
 
     Public ReadOnly Property ListConverter() As IListObjectConverter
         Get
-            Return _list_converter
+            Return Cache.ListConverter
         End Get
         'Set(ByVal value As IListObjectConverter)
         '    _list_converter = value
