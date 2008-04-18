@@ -1,3 +1,4 @@
+<%@ Page ValidateRequest="false" %>
 <%@ Assembly Name="Worm.Orm" %>
 <%@ Import Namespace="Worm.Orm" %>
 
@@ -19,7 +20,7 @@
         'End Function
     
         Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs)
-
+            Dim s As String = Encoding.UTF8.GetString(Request.BinaryRead(Request.TotalBytes))
         End Sub
 </script>
 </head>

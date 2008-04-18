@@ -6,6 +6,7 @@ Public Class ASPNetHost
     Private _phisicalPath As String
     Private _virtualPath As String
     Private _proxy As ASPNetProxy
+    Private _encoding As System.Text.Encoding = System.Text.Encoding.UTF8
 
     Public Sub New(ByVal phisicalPath As String, ByVal virtualPath As String)
         If Not phisicalPath.EndsWith("\") Then
@@ -39,6 +40,16 @@ Public Class ASPNetHost
         End If
 
         _proxy = ASPNetProxy.CreateAppHost(_virtualPath, _phisicalPath)
+    End Sub
+
+    Public Sub AddPost(ByVal data As String)
+        AddPost(_encoding.GetBytes(data))
+    End Sub
+
+    Public Sub AddPost(ByVal data() As Byte)
+        If _proxy IsNot Nothing Then
+            _proxy.AddPost(data)
+        End If
     End Sub
 
     Public Sub ProcessRequest(ByVal page As String, ByVal query As String, ByVal output As IO.TextWriter)
