@@ -236,6 +236,8 @@ Namespace Cache
         Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
         Private _jt As New Dictionary(Of Type, List(Of Type))
 
+        Private _list_converter As IListObjectConverter
+
         Public Event CacheHasModification As EventHandler
 
         Public Event CacheHasnotModification As EventHandler
@@ -265,6 +267,7 @@ Namespace Cache
             _filters = Hashtable.Synchronized(New Hashtable)
             DateTimeCreated = Now
             _modifiedobjects = Hashtable.Synchronized(New Hashtable)
+            _list_converter = CreateListConverter()
         End Sub
 
 #Region " general routines "
@@ -416,6 +419,16 @@ Namespace Cache
         End Sub
 
         Public MustOverride Sub Reset()
+
+        Protected Overridable Function CreateListConverter() As IListObjectConverter
+            Return New FakeListConverter
+        End Function
+
+        Public ReadOnly Property ListConverter() As IListObjectConverter
+            Get
+                Return _list_converter
+            End Get
+        End Property
 
         Public Overridable Sub RegisterCreationCacheItem(ByVal t As Type)
             RaiseEvent RegisterCollectionCreation(t)
@@ -1305,5 +1318,8 @@ l1:
 
         Protected MustOverride Function GetPolicy(ByVal t As Type) As DictionatyCachePolicy
 
+        Protected Overrides Function CreateListConverter() As IListObjectConverter
+            Return New ListConverter
+        End Function
     End Class
 End Namespace
