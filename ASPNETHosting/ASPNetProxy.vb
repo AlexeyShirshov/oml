@@ -9,6 +9,7 @@ Public Class ASPNetProxy
     Implements IRegisteredObject
 
     'Private _appDomain As AppDomain
+    Private _post() As Byte
 
     Public Sub New()
 
@@ -41,11 +42,16 @@ Public Class ASPNetProxy
     Public Sub ProcessRequest(ByVal page As String, ByVal query As String, ByVal output As IO.TextWriter)
         'Dim wr As New ASPNetWorkerRequest(_virtualPath, _phisicalPath, page, query, output)
         Dim wr As New ASPNetWorkerRequest(page, query, output)
+        wr.PostData = _post
         'Dim wr As New SimpleWorkerRequest(page, query, output)
         HttpRuntime.ProcessRequest(wr)
     End Sub
 
     Public Sub [Stop](ByVal immediate As Boolean) Implements System.Web.Hosting.IRegisteredObject.Stop
         HostingEnvironment.UnregisterObject(Me)
+    End Sub
+
+    Public Sub AddPost(ByVal data() As Byte)
+        _post = data
     End Sub
 End Class
