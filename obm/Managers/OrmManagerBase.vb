@@ -637,6 +637,7 @@ Public MustInherit Class OrmManagerBase
         Private _oldStart As Integer
         Private _oldLength As Integer
         Private _mgr As OrmManagerBase
+        Private _p As Web.IPager
 
         Public Sub New(ByVal mgr As OrmManagerBase, ByVal start As Integer, ByVal length As Integer)
             _mgr = mgr
@@ -646,17 +647,30 @@ Public MustInherit Class OrmManagerBase
             mgr._length = length
         End Sub
 
+        Public Sub New(ByVal mgr As OrmManagerBase, ByVal pager As Web.IPager)
+            _mgr = mgr
+            _p = pager
+            AddHandler mgr.DataAvailable, AddressOf OnDataAvailable
+        End Sub
+
         Public Sub New(ByVal start As Integer, ByVal length As Integer)
             MyClass.new(OrmManagerBase.CurrentManager, start, length)
+        End Sub
+
+        Protected Sub OnDataAvailable(ByVal mgr As OrmManagerBase, ByVal er As ExecutionResult)
+            _p.SetTotalCount(er.Count)
+            _oldStart = mgr._start
+            mgr._start = _p.GetCurrentPageOffset
+            _oldLength = mgr._length
+            mgr._length = _p.GetPageSize
         End Sub
 
         ' IDisposable
         Protected Overridable Sub Dispose(ByVal disposing As Boolean)
             If Not Me._disposedValue Then
-                If disposing Then
-                    _mgr._length = _oldLength
-                    _mgr._start = _oldStart
-                End If
+                _mgr._length = _oldLength
+                _mgr._start = _oldStart
+                RemoveHandler _mgr.DataAvailable, AddressOf OnDataAvailable
             End If
             Me._disposedValue = True
         End Sub
@@ -869,6 +883,7 @@ Public MustInherit Class OrmManagerBase
 
     Public Event BeginUpdate(ByVal o As OrmBase)
     Public Event BeginDelete(ByVal o As OrmBase)
+    Public Event DataAvailable(ByVal mgr As OrmManagerBase, ByVal r As ExecutionResult)
 
     Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport, ByVal contextKey As Object) As String
 
@@ -1549,10 +1564,20 @@ _callstack = environment.StackTrace
         Return id & GetType(T).ToString
     End Function
 
+    Protected Sub RaiseOnDataAvailable()
+        RaiseEvent DataAvailable(Me, _er)
+    End Sub
+
+    Protected Friend Sub RaiseOnDataAvailable(ByVal count As Integer, ByVal execTime As TimeSpan, ByVal fetchTime As TimeSpan, _
+            ByVal hit As Boolean)
+        RaiseEvent DataAvailable(Me, New ExecutionResult(count, execTime, fetchTime, hit, Nothing))
+    End Sub
+
     Private Function GetResultset(Of T As {OrmBase, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, _
         ByVal id As String, ByVal sync As String, ByVal del As ICustDelegate(Of T), ByRef succeeded As Boolean) As ReadOnlyList(Of T)
         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
         Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
+        RaiseOnDataAvailable()
         Dim s As IListObjectConverter.ExtractListResult
         Dim r As ReadOnlyList(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.Created, s)
         succeeded = True

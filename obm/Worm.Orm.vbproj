@@ -170,6 +170,7 @@
     <Compile Include="search.vb" />
     <Compile Include="Schema\SQL2005Schema.vb" />
     <Compile Include="storedprocs.vb" />
+    <Compile Include="Web\IPager.vb" />
     <Compile Include="Web\Listener.vb" />
     <Compile Include="Web\Management.vb" />
     <Compile Include="Web\Membership.vb" />
