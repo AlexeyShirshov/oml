@@ -2276,6 +2276,9 @@ l1:
                 Next
                 Dim cnt As Integer = full.Count
                 _er = New ExecutionResult(cnt + full_part1.Count + full_part.Count + starts.Count + other.Count, Nothing, Nothing, False, 0)
+
+                RaiseOnDataAvailable()
+
                 Dim rf As Integer = Math.Max(0, _start - cnt)
                 full.RemoveRange(0, Math.Min(_start, cnt))
                 cnt = full.Count
@@ -2304,6 +2307,8 @@ l2:
                 res = full
             Else
                 _er = New ExecutionResult(col.Count, Nothing, Nothing, False, 0)
+                RaiseOnDataAvailable()
+
                 If _length = Integer.MaxValue AndAlso _start = 0 Then
                     res = New List(Of T)(col)
                 Else
