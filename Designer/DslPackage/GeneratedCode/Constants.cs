@@ -48,5 +48,7 @@ namespace Worm.Designer
 	{
 		// Menu identifier
 		public const string DesignerCommandSetId = "2aa98873-88d9-4e58-9fa7-ac354f280a2c";
+		public const string WormToolWindowId = "E0249AC2-8C20-4923-AB12-CD35A57D92C7";
+		public static readonly global::System.ComponentModel.Design.CommandID ViewClassDetailsCommand = new global::System.ComponentModel.Design.CommandID(new global::System.Guid(DesignerCommandSetId), 0x10002);
 	}
 }

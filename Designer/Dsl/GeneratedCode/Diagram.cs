@@ -540,7 +540,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Rule to update compartments when an item is added to the list
 		/// </summary>
-		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasTables), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
+		[DslModeling::RuleOn(typeof(global::Worm.Designer.TableReferencesEntity), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSupressedProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSelfRelations), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
@@ -560,9 +560,9 @@ namespace Worm.Designer
 				if(e==null) throw new global::System.ArgumentNullException("e");
 				if (e.ModelElement.IsDeleted)
 					return;
-				if(e.ModelElement is global::Worm.Designer.EntityHasTables)
+				if(e.ModelElement is global::Worm.Designer.TableReferencesEntity)
 				{
-					global::System.Collections.IEnumerable elements = GetEntityForEntityShapeTablesFromLastLink((global::Worm.Designer.EntityHasTables)e.ModelElement);
+					global::System.Collections.IEnumerable elements = GetEntityForEntityShapeTablesFromLastLink((global::Worm.Designer.TableReferencesEntity)e.ModelElement);
 					UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "Tables", repaintOnly);
 				}
 				if(e.ModelElement is global::Worm.Designer.EntityHasProperties)
@@ -583,7 +583,7 @@ namespace Worm.Designer
 			}
 			
 			#region static DomainPath traversal methods to get the list of compartments to update
-			internal static global::System.Collections.ICollection GetEntityForEntityShapeTablesFromLastLink(global::Worm.Designer.EntityHasTables root)
+			internal static global::System.Collections.ICollection GetEntityForEntityShapeTablesFromLastLink(global::Worm.Designer.TableReferencesEntity root)
 			{
 				// Segment 0
 				global::Worm.Designer.Entity result = root.Entity;
@@ -684,7 +684,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Rule to update compartments when an items is removed from the list
 		/// </summary>
-		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasTables), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
+		[DslModeling::RuleOn(typeof(global::Worm.Designer.TableReferencesEntity), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSupressedProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSelfRelations), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
@@ -702,9 +702,9 @@ namespace Worm.Designer
 			internal static void ElementDeleted(DslModeling::ElementDeletedEventArgs e, bool repaintOnly)
 			{
 				if(e==null) throw new global::System.ArgumentNullException("e");
-				if(e.ModelElement is global::Worm.Designer.EntityHasTables)
+				if(e.ModelElement is global::Worm.Designer.TableReferencesEntity)
 				{
-					global::System.Collections.ICollection elements = CompartmentItemAddRule.GetEntityForEntityShapeTablesFromLastLink((global::Worm.Designer.EntityHasTables)e.ModelElement);
+					global::System.Collections.ICollection elements = CompartmentItemAddRule.GetEntityForEntityShapeTablesFromLastLink((global::Worm.Designer.TableReferencesEntity)e.ModelElement);
 					CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "Tables", repaintOnly);
 				}
 				if(e.ModelElement is global::Worm.Designer.EntityHasProperties)
@@ -772,7 +772,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Rule to update compartments when a roleplayer change happens
 		/// </summary>
-		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasTables), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
+		[DslModeling::RuleOn(typeof(global::Worm.Designer.TableReferencesEntity), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSupressedProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSelfRelations), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
@@ -790,9 +790,9 @@ namespace Worm.Designer
 			internal static void RolePlayerChanged(DslModeling::RolePlayerChangedEventArgs e, bool repaintOnly)
 			{
 				if(e==null) throw new global::System.ArgumentNullException("e");
-				if(typeof(global::Worm.Designer.EntityHasTables).IsAssignableFrom(e.DomainRelationship.ImplementationClass))
+				if(typeof(global::Worm.Designer.TableReferencesEntity).IsAssignableFrom(e.DomainRelationship.ImplementationClass))
 				{
-					if(e.DomainRole.IsSource)
+					if(!e.DomainRole.IsSource)
 					{
 						//global::System.Collections.IEnumerable oldElements = CompartmentItemAddRule.GetEntityForEntityShapeTablesFromLastLink((global::Worm.Designer.Table)e.OldRolePlayer);
 						//foreach(DslModeling::ModelElement element in oldElements)
@@ -808,7 +808,7 @@ namespace Worm.Designer
 						//	}
 						//}
 						
-						global::System.Collections.IEnumerable elements = CompartmentItemAddRule.GetEntityForEntityShapeTablesFromLastLink((global::Worm.Designer.EntityHasTables)e.ElementLink);
+						global::System.Collections.IEnumerable elements = CompartmentItemAddRule.GetEntityForEntityShapeTablesFromLastLink((global::Worm.Designer.TableReferencesEntity)e.ElementLink);
 						CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "Tables", repaintOnly);
 					}
 					else 
@@ -904,7 +904,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Rule to update compartments when the order of items in the list changes.
 		/// </summary>
-		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasTables), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
+		[DslModeling::RuleOn(typeof(global::Worm.Designer.TableReferencesEntity), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSupressedProperties), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
 		[DslModeling::RuleOn(typeof(global::Worm.Designer.EntityHasSelfRelations), FireTime=DslModeling::TimeToFire.TopLevelCommit, InitiallyDisabled=true)]
@@ -922,11 +922,11 @@ namespace Worm.Designer
 			internal static void RolePlayerPositionChanged(DslModeling::RolePlayerOrderChangedEventArgs e, bool repaintOnly)
 			{
 				if(e==null) throw new global::System.ArgumentNullException("e");
-				if(typeof(global::Worm.Designer.EntityHasTables).IsAssignableFrom(e.DomainRelationship.ImplementationClass))
+				if(typeof(global::Worm.Designer.TableReferencesEntity).IsAssignableFrom(e.DomainRelationship.ImplementationClass))
 				{
-					if(!e.CounterpartDomainRole.IsSource)
+					if(e.CounterpartDomainRole.IsSource)
 					{
-						global::System.Collections.IEnumerable elements = CompartmentItemAddRule.GetEntityForEntityShapeTables((global::Worm.Designer.Table)e.CounterpartRolePlayer);
+						global::System.Collections.IEnumerable elements = CompartmentItemAddRule.GetEntityForEntityShapeTables((global::Worm.Designer.Table)e.SourceElement);
 						CompartmentItemAddRule.UpdateCompartments(elements, typeof(global::Worm.Designer.EntityShape), "Tables", repaintOnly);
 					}
 				}

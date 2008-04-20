@@ -93,7 +93,9 @@ namespace Worm.Designer
 
     [ProvideCodeGenerator(typeof(WormCodeGenerator), "WormCodeGenerator", "Code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.CSharpProjectGuid)]
     [ProvideCodeGenerator(typeof(WormCodeGenerator), "WormCodeGenerator", "Code generator for .wxml files", true, ProjectSystem = ProvideCodeGeneratorAttribute.VisualBasicProjectGuid)]
-	[VSShell::ProvideMenuResource("1000.ctmenu", 4)]
+	[ProvideToolWindow(typeof(WormToolWindow), MultiInstances = false, Style = VSShell::VsDockStyle.Tabbed, Orientation = ToolWindowOrientation.Bottom)]
+	[ProvideToolWindowVisibility(typeof(WormToolWindow), Constants.DesignerEditorFactoryId )]
+	[VSShell::ProvideMenuResource("1000.ctmenu", 6)]
 	[VSShell::ProvideToolboxItems(1)]
 	[VSTextTemplatingHost::ProvideDirectiveProcessor(typeof(global::Worm.Designer.DesignerDirectiveProcessor), global::Worm.Designer.DesignerDirectiveProcessor.DesignerDirectiveProcessorName, "A directive processor that provides access to Designer files")]
 	[global::System.Runtime.InteropServices.Guid(Constants.DesignerPackageId)]
@@ -103,7 +105,7 @@ namespace Worm.Designer
 		{
 			base.Initialize();
 			
-		//	this.AddToolWindow(typeof(Worm.Designer.ToolWindow.ActiveWriterClassDetailsToolWindow));
+			this.AddToolWindow(typeof(Worm.Designer.WormToolWindow));
 		}
 	}
 }

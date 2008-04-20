@@ -72,6 +72,10 @@
     <Reference Include="Microsoft.VisualStudio.TextManager.Interop, Version=7.1.40304.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.TextTemplating, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.TextTemplating.VSHost, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
+    <Reference Include="Microsoft.VisualStudio.VirtualTreeGrid, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Microsoft.VisualStudio.VirtualTreeGrid.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -95,7 +99,19 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommandSet.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="DesignerEditorFactory.cs" />
+    <Compile Include="ToolWindow\WormToolWindow.cs" />
+    <Compile Include="ToolWindow\ClassDetailsControl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="ToolWindow\ClassDetailsControl.Designer.cs">
+      <DependentUpon>ClassDetailsControl.cs</DependentUpon>
+    </Compile>
+    <Compile Include="ToolWindow\ColumnTypeComboBoxCell.cs" />
+    <Compile Include="ToolWindow\KeyTypeComboBoxCell.cs" />
     <Compile Include="WormCodeGenerator.cs" />
     <Compile Include="GeneratedCode\CommandSet.cs">
       <AutoGen>True</AutoGen>
@@ -173,11 +189,19 @@
       <Project>{c1b046ff-8d49-4e28-a107-c85cef1c8d09}</Project>
       <Name>Dsl</Name>
     </ProjectReference>
+    <ProjectReference Include="..\ExtendedListViews\ExtendedListViews.csproj">
+      <Project>{36202DE0-590A-43D4-A99D-55412CAD71C8}</Project>
+      <Name>ExtendedListViews</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{B4F97281-0DBD-4835-9ED8-7DFB966E87FF}" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="ToolWindow\ClassDetailsControl.resx">
+      <DependentUpon>ClassDetailsControl.cs</DependentUpon>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="VSPackage.resx">
       <SubType>Designer</SubType>
     </EmbeddedResource>
@@ -239,6 +263,13 @@
     <CodeAnalysisDictionary Include="..\CodeAnalysisDictionary.xml">
       <Link>CodeAnalysisDictionary.xml</Link>
     </CodeAnalysisDictionary>
+    <Content Include="grey.bmp" />
+    <Content Include="Resources\2022.ico" />
+    <Content Include="Resources\2601.ico" />
+    <Content Include="Resources\2621.ico" />
+    <Content Include="Resources\2651.ico" />
+    <Content Include="Resources\2671.ico" />
+    <None Include="Resources\5293.ico" />
     <Content Include="Resources\ModelExplorerToolWindowBitmaps.bmp" />
   </ItemGroup>
 </Project>

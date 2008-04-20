@@ -59,12 +59,332 @@ namespace Worm.Designer
                 {
                     property.FieldName = property.Name;
                 }
+
+                if (property.Entity.WormModel.Types.FindAll(t => t.Name == property.Type).Count == 0)
+                {
+                    using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+                        WormType type = new WormType(property.Entity.WormModel.Store);
+                        type.WormModel = property.Entity.WormModel;
+                        type.Name = property.Type;
+                        string idProperty = GetIdProperty(property);
+                        if (idProperty != null && property.Nullable)
+                        {
+                            idProperty += "nullable";
+                        }
+                        type.IdProperty = idProperty ?? "t" + property.Type;
+                       
+                       
+                        txAdd.Commit();
+                    }
+                }
             }
         }
+        private static string GetIdProperty(Property property)
+        {
+            string idProperty = null;
+            switch (property.Type)
+            {
+                case "System.Byte[]":
+                    idProperty = "tBytes";
+                    break;
+                case "System.String":
+                    idProperty = "tString";
+                    break;
+                case "System.Int32":
+                    idProperty = "tInt32";
+                    break;
+                case "System.Int16":
+                    idProperty = "tInt16";
+                    break;
+                case "System.Int64":
+                    idProperty = "tInt64";
+                    break;
+                case "System.Byte":
+                    idProperty = "tByte";
+                    break;
+                case "System.DateTime":
+                    idProperty = "tDateTime";
+                    break;
+                case "System.Decimal":
+                    idProperty = "tDecimal";
+                    break;
+                case "System.Double":
+                    idProperty = "tDouble";
+                    break;
+                case "System.Single":
+                    idProperty = "tSingle";
+                    break;
 
+                case "System.Boolean":
+                    idProperty = "tBoolean";
+                    break;
+                case "System.Xml.XmlDocument":
+                    idProperty = "tXML";
+                    break;
+                case "System.Guid":
+                    idProperty = "tGUID";
+                    break;
+
+            }
+            return idProperty;
+        }
+  
 
     }
 
+    /// <summary>
+    /// Implements one add rule for the Property domain class.
+    /// </summary>
+    [RuleOn(typeof(Property), FireTime = TimeToFire.TopLevelCommit)]
+    public class PropertyChangeRule : ChangeRule
+    {
+        public override void ElementPropertyChanged(ElementPropertyChangedEventArgs e)
+        {
+            if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+            Property property = e.ModelElement as Property;
+            if (property != null)
+            {
+                if (property.Entity.WormModel.Types.FindAll(t => t.Name == property.Type).Count == 0)
+                {
+                    using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+                        WormType type = new WormType(property.Entity.WormModel.Store);
+                        type.WormModel = property.Entity.WormModel;
+                        type.Name = property.Type;
+                        string idProperty =  GetIdProperty(property);
+                        if (idProperty != null && property.Nullable)
+                        {
+                            idProperty += "nullable";
+                        }
+                        type.IdProperty = idProperty ?? "t" + property.Type;
+
+
+                        txAdd.Commit();
+                    }
+                }
+            }
+            base.ElementPropertyChanged(e);
+        }
+        private static string GetIdProperty(Property property)
+        {
+            string idProperty = null;
+            switch (property.Type)
+            {
+                case "System.Byte[]":
+                    idProperty = "tBytes";
+                    break;
+                case "System.String":
+                    idProperty = "tString";
+                    break;
+                case "System.Int32":
+                    idProperty = "tInt32";
+                    break;
+                case "System.Int16":
+                    idProperty = "tInt16";
+                    break;
+                case "System.Int64":
+                    idProperty = "tInt64";
+                    break;
+                case "System.Byte":
+                    idProperty = "tByte";
+                    break;
+                case "System.DateTime":
+                    idProperty = "tDateTime";
+                    break;
+                case "System.Decimal":
+                    idProperty = "tDecimal";
+                    break;
+                case "System.Double":
+                    idProperty = "tDouble";
+                    break;
+                case "System.Single":
+                    idProperty = "tSingle";
+                    break;
+
+                case "System.Boolean":
+                    idProperty = "tBoolean";
+                    break;
+                case "System.Xml.XmlDocument":
+                    idProperty = "tXML";
+                    break;
+                case "System.Guid":
+                    idProperty = "tGUID";
+                    break;
+
+            }
+            return idProperty;
+        }
+    }
+
+    [RuleOn(typeof(SupressedProperty), FireTime = TimeToFire.TopLevelCommit)]
+    public class SupressedPropertyAddRule : AddRule
+    {
+
+        public override void ElementAdded(ElementAddedEventArgs e)
+        {
+            if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+
+
+
+            SupressedProperty property = e.ModelElement as SupressedProperty;
+            if (property != null)
+            {
+
+                if (property.Entity.WormModel.Types.FindAll(t => t.Name == property.Type).Count == 0)
+                {
+                    using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+                        WormType type = new WormType(property.Entity.WormModel.Store);
+                        type.WormModel = property.Entity.WormModel;
+                        type.Name = property.Type;
+                        string idProperty = GetIdProperty(property);
+                      
+                        type.IdProperty = idProperty ?? "t" + property.Type;
+
+
+                        txAdd.Commit();
+                    }
+                }
+            }
+        }
+        private static string GetIdProperty(SupressedProperty property)
+        {
+            string idProperty = null;
+            switch (property.Type)
+            {
+                case "System.Byte[]":
+                    idProperty = "tBytes";
+                    break;
+                case "System.String":
+                    idProperty = "tString";
+                    break;
+                case "System.Int32":
+                    idProperty = "tInt32";
+                    break;
+                case "System.Int16":
+                    idProperty = "tInt16";
+                    break;
+                case "System.Int64":
+                    idProperty = "tInt64";
+                    break;
+                case "System.Byte":
+                    idProperty = "tByte";
+                    break;
+                case "System.DateTime":
+                    idProperty = "tDateTime";
+                    break;
+                case "System.Decimal":
+                    idProperty = "tDecimal";
+                    break;
+                case "System.Double":
+                    idProperty = "tDouble";
+                    break;
+                case "System.Single":
+                    idProperty = "tSingle";
+                    break;
+
+                case "System.Boolean":
+                    idProperty = "tBoolean";
+                    break;
+                case "System.Xml.XmlDocument":
+                    idProperty = "tXML";
+                    break;
+                case "System.Guid":
+                    idProperty = "tGUID";
+                    break;
+
+            }
+            return idProperty;
+        }
+  
+    }
+ [RuleOn(typeof(SupressedProperty), FireTime = TimeToFire.TopLevelCommit)]
+    public class SupressedPropertyChangeRule : ChangeRule
+    {
+        public override void ElementPropertyChanged(ElementPropertyChangedEventArgs e)
+        {
+            if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+            SupressedProperty property = e.ModelElement as SupressedProperty;
+            if (property != null)
+            {
+                if (property.Entity.WormModel.Types.FindAll(t => t.Name == property.Type).Count == 0)
+                {
+                    using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+                        WormType type = new WormType(property.Entity.WormModel.Store);
+                        type.WormModel = property.Entity.WormModel;
+                        type.Name = property.Type;
+                        string idProperty =  GetIdProperty(property);
+                        
+                        type.IdProperty = idProperty ?? "t" + property.Type;
+
+
+                        txAdd.Commit();
+                    }
+                }
+            }
+            base.ElementPropertyChanged(e);
+        }
+        private static string GetIdProperty(SupressedProperty property)
+        {
+            string idProperty = null;
+            switch (property.Type)
+            {
+                case "System.Byte[]":
+                    idProperty = "tBytes";
+                    break;
+                case "System.String":
+                    idProperty = "tString";
+                    break;
+                case "System.Int32":
+                    idProperty = "tInt32";
+                    break;
+                case "System.Int16":
+                    idProperty = "tInt16";
+                    break;
+                case "System.Int64":
+                    idProperty = "tInt64";
+                    break;
+                case "System.Byte":
+                    idProperty = "tByte";
+                    break;
+                case "System.DateTime":
+                    idProperty = "tDateTime";
+                    break;
+                case "System.Decimal":
+                    idProperty = "tDecimal";
+                    break;
+                case "System.Double":
+                    idProperty = "tDouble";
+                    break;
+                case "System.Single":
+                    idProperty = "tSingle";
+                    break;
+
+                case "System.Boolean":
+                    idProperty = "tBoolean";
+                    break;
+                case "System.Xml.XmlDocument":
+                    idProperty = "tXML";
+                    break;
+                case "System.Guid":
+                    idProperty = "tGUID";
+                    break;
+
+            }
+            return idProperty;
+        }
+    }
     /// <summary>
     /// Implements one add rule for the Property domain class.
     /// </summary>
@@ -80,40 +400,79 @@ namespace Worm.Designer
             }
 
 
-
             Entity entity = e.ModelElement as Entity;
             if (entity != null)
             {
+                //entity.WormModel.Store.
                 System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
 
                 DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
-
-
-                EnvDTE.CodeModel cm;
-
-                EnvDTE.ProjectItem item;
-                EnvDTE.Project project = dte.Solution.Projects.Item(1);
-
-                for (int i = 1; i < project.ProjectItems.Count; i++)
+                if (dte.ActiveDocument != null)
                 {
-                    item = project.ProjectItems.Item(i);
-                    if (item.FileCodeModel != null)
+                    string defaultNamespace = (string)(dte.ActiveDocument.ProjectItem.ContainingProject.Properties.Item("DefaultNamespace").Value);
+                    if (string.IsNullOrEmpty(entity.WormModel.DefaultNamespace))
                     {
-                        // do stuff
+                        entity.WormModel.DefaultNamespace = defaultNamespace;
                     }
+                    if (string.IsNullOrEmpty(entity.Namespace))
+                    {
+                        entity.Namespace = defaultNamespace;
+                    }
+
+                    
                 }
 
+                if (entity.WormModel.Types.FindAll(t => t.Name == entity.Name).Count == 0)
+                {
+                    using (Transaction txAdd = entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
 
-                //if (string.IsNullOrEmpty(property.Table) && property.Entity.Tables.Count == 1)
-                //{
-                //    property.Table = property.Entity.Tables[0].Name;
-                //}
+                        WormType type = new WormType(entity.WormModel.Store);
+                        type.WormModel = entity.WormModel;
+                        type.Name = entity.Name;
+                        type.IdProperty = "t" + entity.Name;
+                        txAdd.Commit();
+
+                    }
+                }
             }
         }
 
 
     }
 
+    [RuleOn(typeof(Entity), FireTime = TimeToFire.TopLevelCommit)]
+    public class EntityChangeRule : ChangeRule
+    {
+        public override void ElementPropertyChanged(ElementPropertyChangedEventArgs e)
+        {
+            if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+
+
+            Entity entity = e.ModelElement as Entity;
+            if (entity != null)
+            {
+                if (entity.WormModel.Types.FindAll(t => t.Name == entity.Name).Count == 0)
+                {
+                    using (Transaction txAdd = entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+
+                        WormType type = new WormType(entity.WormModel.Store);
+                        type.WormModel = entity.WormModel;
+                        type.Name = entity.Name;
+                        type.IdProperty = "t" + entity.Name;
+                        txAdd.Commit();
+
+                    }
+                }
+            }
+            base.ElementPropertyChanged(e);
+        }
+      
+    }
 
     /// <summary>
     /// Implements one add rule for the Property domain class.
@@ -129,23 +488,278 @@ namespace Worm.Designer
                 throw new ArgumentNullException("e");
             }
 
-            //if (GeneralHelper.IgnoreChange(e.ModelElement)) return;
-
-            SelfRelation selfRelation = e.ModelElement as SelfRelation;
-            if (selfRelation != null)
+            SelfRelation relation = e.ModelElement as SelfRelation;
+            if (relation != null)
             {
-                if (string.IsNullOrEmpty(selfRelation.Table) && selfRelation.Entity.Tables.Count == 1)
+                if (string.IsNullOrEmpty(relation.Table) && relation.Entity.Tables.Count == 1)
                 {
-                    selfRelation.Table = selfRelation.Entity.Tables[0].Name;
+                    relation.Table = relation.Entity.Tables[0].Name;
                 }
+                 relation.DirectAccessedEntityType = relation.Entity.Name;
+                 relation.ReverseAccessedEntityType = relation.Entity.Name;
+
+
             }
 
-  
+        }
+        private static string GetIdProperty(Property property)
+        {
+            string idProperty = null;
+            switch (property.Type)
+            {
+                case "System.Byte[]":
+                    idProperty = "tBytes";
+                    break;
+                case "System.String":
+                    idProperty = "tString";
+                    break;
+                case "System.Int32":
+                    idProperty = "tInt32";
+                    break;
+                case "System.Int16":
+                    idProperty = "tInt16";
+                    break;
+                case "System.Int64":
+                    idProperty = "tInt64";
+                    break;
+                case "System.Byte":
+                    idProperty = "tByte";
+                    break;
+                case "System.DateTime":
+                    idProperty = "tDateTime";
+                    break;
+                case "System.Decimal":
+                    idProperty = "tDecimal";
+                    break;
+                case "System.Double":
+                    idProperty = "tDouble";
+                    break;
+                case "System.Single":
+                    idProperty = "tSingle";
+                    break;
+
+                case "System.Boolean":
+                    idProperty = "tBoolean";
+                    break;
+                case "System.Xml.XmlDocument":
+                    idProperty = "tXML";
+                    break;
+                case "System.Guid":
+                    idProperty = "tGUID";
+                    break;
+
+            }
+            return idProperty;
+        }
+
+    }
+
+    [RuleOn(typeof(SelfRelation), FireTime = TimeToFire.TopLevelCommit)]
+    public class SelfRelationChangeRule : ChangeRule
+    {
+        public override void ElementPropertyChanged(ElementPropertyChangedEventArgs e)
+        {
+            if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+
+
+            SelfRelation relation = e.ModelElement as SelfRelation;
+            if (relation != null)
+            {
+                if (relation.Entity.WormModel.Types.FindAll(t => t.Name == relation.DirectAccessedEntityType).Count == 0)
+                {
+                    using (Transaction txAdd = relation.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+
+                        WormType type = new WormType(relation.Entity.WormModel.Store);
+                        type.WormModel = relation.Entity.WormModel;
+                        type.Name = relation.DirectAccessedEntityType;
+                        type.IdProperty = "t" + type.Name;
+                        txAdd.Commit();
+
+                    }
+                }
+                if (relation.Entity.WormModel.Types.FindAll(t => t.Name == relation.ReverseAccessedEntityType).Count == 0)
+                {
+                    using (Transaction txAdd = relation.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+
+                        WormType type = new WormType(relation.Entity.WormModel.Store);
+                        type.WormModel = relation.Entity.WormModel;
+                        type.Name = relation.ReverseAccessedEntityType;
+                        type.IdProperty = "t" + type.Name;
+                        txAdd.Commit();
+
+                    }
+                }
+            }
+            base.ElementPropertyChanged(e);
+        }
+        private static string GetIdProperty(Property property)
+        {
+            string idProperty = null;
+            switch (property.Type)
+            {
+                case "System.Byte[]":
+                    idProperty = "tBytes";
+                    break;
+                case "System.String":
+                    idProperty = "tString";
+                    break;
+                case "System.Int32":
+                    idProperty = "tInt32";
+                    break;
+                case "System.Int16":
+                    idProperty = "tInt16";
+                    break;
+                case "System.Int64":
+                    idProperty = "tInt64";
+                    break;
+                case "System.Byte":
+                    idProperty = "tByte";
+                    break;
+                case "System.DateTime":
+                    idProperty = "tDateTime";
+                    break;
+                case "System.Decimal":
+                    idProperty = "tDecimal";
+                    break;
+                case "System.Double":
+                    idProperty = "tDouble";
+                    break;
+                case "System.Single":
+                    idProperty = "tSingle";
+                    break;
+
+                case "System.Boolean":
+                    idProperty = "tBoolean";
+                    break;
+                case "System.Xml.XmlDocument":
+                    idProperty = "tXML";
+                    break;
+                case "System.Guid":
+                    idProperty = "tGUID";
+                    break;
+
+            }
+            return idProperty;
+        }
+    }
+
+
+
+
+    [RuleOn(typeof(EntityReferencesTargetEntities), FireTime = TimeToFire.TopLevelCommit)]
+    public class EntityReferencesTargetEntitiesAddRule : AddRule
+    {
+
+        public override void ElementAdded(ElementAddedEventArgs e)
+        {
+            if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+
+
+            EntityReferencesTargetEntities relation = e.ModelElement as EntityReferencesTargetEntities;
+            if (relation != null)
+            {
+                if (string.IsNullOrEmpty(relation.LeftEntity))
+                {
+                    relation.LeftEntity = relation.SourceEntity.Name;
+                }
+                if (string.IsNullOrEmpty(relation.RightEntity))
+                {
+                    relation.RightEntity = relation.TargetEntity.Name;
+                }
+                if (string.IsNullOrEmpty(relation.LeftAccessedEntityType))
+                {
+                    relation.LeftAccessedEntityType = relation.SourceEntity.Name;
+                }
+                if (string.IsNullOrEmpty(relation.RightAccessedEntityType))
+                {
+                    relation.RightAccessedEntityType = relation.TargetEntity.Name;
+                }
+
+                if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.LeftAccessedEntityType).Count == 0)
+                {
+                    using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+
+                        WormType type = new WormType(relation.TargetEntity.WormModel.Store);
+                        type.WormModel = relation.TargetEntity.WormModel;
+                        type.Name = relation.LeftAccessedEntityType;
+                        type.IdProperty = "t" + relation.SourceEntity.Name;
+                        txAdd.Commit();
+
+                    }
+                }
+                if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.RightAccessedEntityType).Count == 0)
+                {
+                    using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+
+                        WormType type = new WormType(relation.TargetEntity.WormModel.Store);
+                        type.WormModel = relation.TargetEntity.WormModel;
+                        type.Name = relation.RightAccessedEntityType;
+                        type.IdProperty = "t" + relation.TargetEntity.Name;
+                        txAdd.Commit();
+
+                    }
+                }
+            }
         }
 
 
     }
 
+    [RuleOn(typeof(EntityReferencesTargetEntities), FireTime = TimeToFire.TopLevelCommit)]
+    public class EntityReferencesTargetEntitiesChangeRule : ChangeRule
+    {
+        public override void ElementPropertyChanged(ElementPropertyChangedEventArgs e)
+        {
+            if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+
+            EntityReferencesTargetEntities relation = e.ModelElement as EntityReferencesTargetEntities;
+            if (relation != null)
+            {
+                if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.LeftAccessedEntityType).Count == 0)
+                {
+                    using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+
+                        WormType type = new WormType(relation.TargetEntity.WormModel.Store);
+                        type.WormModel = relation.TargetEntity.WormModel;
+                        type.Name = relation.LeftAccessedEntityType;
+                        type.IdProperty = "t" + relation.SourceEntity.Name;
+                        txAdd.Commit();
+
+                    }
+                }
+                if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.RightAccessedEntityType).Count == 0)
+                {
+                    using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+
+                        WormType type = new WormType(relation.TargetEntity.WormModel.Store);
+                        type.WormModel = relation.TargetEntity.WormModel;
+                        type.Name = relation.RightAccessedEntityType;
+                        type.IdProperty = "t" + relation.TargetEntity.Name;
+                        txAdd.Commit();
+
+                    }
+                }
+            }
+            base.ElementPropertyChanged(e);
+        }
+
+    }
+   
   
 
     /// <summary>
@@ -162,9 +776,60 @@ namespace Worm.Designer
 
 
             return new System.Type[] { typeof(PropertyAddRule), typeof(SelfRelationAddRule)
-            , typeof(EntityAddRule)};
+            , typeof(EntityAddRule), typeof(SupressedPropertyAddRule),  typeof( EntityReferencesTargetEntitiesAddRule),
+            typeof(PropertyChangeRule), typeof(SelfRelationChangeRule)
+            , typeof(EntityChangeRule), typeof(SupressedPropertyChangeRule),  
+            typeof( EntityReferencesTargetEntitiesChangeRule)};
         }
+
+       
     }
 
-  
+    
+    public delegate void ModelPropertyAddedHandler(ElementAddedEventArgs e);
+    public delegate void ModelPropertyDeletedHandler(ElementDeletedEventArgs e);
+    public delegate void ModelPropertyChangedHandler(ElementPropertyChangedEventArgs e);
+
+    public delegate void ModelSelfRelationAddedHandler(ElementAddedEventArgs e);
+    public delegate void ModelSelfRelationDeletedHandler(ElementDeletedEventArgs e);
+    public delegate void ModelSelfRelationChangedHandler(ElementPropertyChangedEventArgs e);
+
+    public delegate void ModelRelationAddedHandler(ElementAddedEventArgs e);
+    public delegate void ModelRelationDeletedHandler(ElementDeletedEventArgs e);
+    public delegate void ModelRelationChangedHandler(ElementPropertyChangedEventArgs e);
+
+    public partial class WormModel : ModelElement
+    {
+        public event ModelPropertyAddedHandler ModelPropertyAdded;
+        public event ModelPropertyDeletedHandler ModelPropertyDeleted;
+        public event ModelPropertyChangedHandler ModelPropertyChanged;
+
+        public event ModelSelfRelationAddedHandler ModelSelfRelationAdded;
+        public event ModelSelfRelationDeletedHandler ModelSelfRelationDeleted;
+        public event ModelSelfRelationChangedHandler ModelSelfRelationChanged;
+
+        public event ModelRelationAddedHandler ModelRelationAdded;
+        public event ModelRelationDeletedHandler ModelRelationDeleted;
+        public event ModelRelationChangedHandler ModelRelationChanged;
+        
+        public void OnModelPropertyAdded(ElementAddedEventArgs e)
+        {
+            if (ModelPropertyAdded != null)
+                ModelPropertyAdded(e);
+        }
+
+        public void OnModelPropertyDeleted(ElementDeletedEventArgs e)
+        {
+            if (ModelPropertyDeleted != null)
+                ModelPropertyDeleted(e);
+        }
+        
+        public void OnModelPropertyChanged(ElementPropertyChangedEventArgs e)
+        {
+            if (ModelPropertyChanged != null)
+                ModelPropertyChanged(e);
+        }
+
+       
+    }
 }

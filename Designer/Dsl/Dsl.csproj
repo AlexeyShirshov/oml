@@ -87,6 +87,7 @@
     <Compile Include="CustomUI\Accessors.cs" />
     <Compile Include="CustomUI\CalculatedProperties.cs" />
     <Compile Include="CustomUI\BaseEntityUIEditor.cs" />
+    <Compile Include="CustomUI\BoolUIEditor.cs" />
     <Compile Include="CustomUI\FlagEnumEditor.cs">
     </Compile>
     <Compile Include="CustomUI\SelfConnector.cs" />
@@ -266,11 +267,14 @@
     <CodeAnalysisDictionary Include="..\CodeAnalysisDictionary.xml">
       <Link>CodeAnalysisDictionary.xml</Link>
     </CodeAnalysisDictionary>
+    <Content Include="Resources\2651.bmp" />
+    <Content Include="Resources\2671.bmp" />
     <Content Include="Resources\ClassTool.bmp" />
     <Content Include="Resources\ExampleConnectorToolBitmap.bmp" />
     <Content Include="Resources\ExampleShapeToolBitmap.bmp" />
     <Content Include="Resources\GeneralizationTool.bmp" />
     <Content Include="Resources\InterfaceTool.bmp" />
+    <Content Include="Resources\tool.bmp" />
     <EmbeddedResource Include="Resources\ConnectorSourceSearch.cur" />
     <EmbeddedResource Include="Resources\ConnectorTargetSearch.cur" />
   </ItemGroup>

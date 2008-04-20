@@ -38,6 +38,19 @@ namespace Worm.Designer
 		protected DesignerExplorerBase(global::System.IServiceProvider serviceProvider) : base(serviceProvider)
 		{
 			
+			
+			// Adds custom tree node settings...
+			global::System.Resources.ResourceManager resourceManager = global::Worm.Designer.DesignerDomainModel.SingletonResourceManager;
+			
+			this.AddExplorerNodeCustomSetting(global::Worm.Designer.Table.DomainClassId, 
+							DslDiagrams::ImageHelper.GetImage(resourceManager.GetObject("TableExplorerImage")), 
+							true); 
+			this.AddExplorerNodeCustomSetting(global::Worm.Designer.WormModel.DomainClassId, 
+							DslDiagrams::ImageHelper.GetImage(resourceManager.GetObject("WormModelExplorerImage")), 
+							true); 
+			
+			// Add a call back to provide ModelElementTreeNode TreeNode name in the Model Explorer
+			this.GetModelElementDisplayNameEventHandler = new DslShell.GetModelElementDisplayNameEventHandler(GetModelElementDisplayName);
 		}
 	
 	
@@ -76,6 +89,43 @@ namespace Worm.Designer
 		protected override global::System.Collections.IList FindRootElements(DslModeling::Store store)
 		{
 			return store.ElementDirectory.FindElements( this.RootElementDomainClassId);
+		}
+			
+		/// <summary>
+		/// Method to supply the name for ModelElementTreeNode object in the TreeView.
+		/// </summary>
+		/// <param name="modelElement">Element to be displayed in the tree node</param>
+		/// <returns>Name shown in the Model Explorer</returns>
+		private string GetModelElementDisplayName(DslModeling::ModelElement modelElement)
+		{
+			string treeNodeDisplayName = null;
+			DslModeling::DomainDataDirectory directory = modelElement.Store.DomainDataDirectory;
+			DslModeling::DomainPropertyInfo domainPropertyInfo = null;
+			DslModeling::ModelElement redirectedElement = null;
+			
+			switch ( modelElement.GetDomainClass().Id.ToString( "D", System.Globalization.CultureInfo.InvariantCulture) )
+			{
+				case "d8167da3-fa3f-4ed4-8a42-1e613b5f9902":	// Table.DomainClassId
+				{
+					domainPropertyInfo = directory.FindDomainProperty( global::Worm.Designer.Table.NameDomainPropertyId);
+					redirectedElement = modelElement;
+				}			
+				break;
+				
+		
+			}
+			
+			if (domainPropertyInfo != null && redirectedElement != null)
+			{
+				// Get the name based on the designated domian property
+				treeNodeDisplayName = domainPropertyInfo.GetValue(redirectedElement) as string;
+			}
+			else
+			{
+				// The passed in modelElement does not have a DomainPath specified. Try access the default name from the element.
+				DslModeling::DomainClassInfo.TryGetName(modelElement, out treeNodeDisplayName);
+			}
+			return treeNodeDisplayName;
 		}
 	}
 }

@@ -29,6 +29,50 @@
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>
+      <!-- Relationship: WormModelHasTables -->
+      <xsd:element name="tables" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Instances of WormModelHasTables</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
+              <xsd:element ref="wormModelHasTables">
+                <xsd:annotation>
+                  <xsd:documentation>[Relationship deriving from WormModelHasTables needs to be serialized in full-form]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element ref="table" >
+                <xsd:annotation>
+                  <xsd:documentation>[Target role-player]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:choice>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <!-- Relationship: WormModelHasTypes -->
+      <xsd:element name="types" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Instances of WormModelHasTypes</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
+              <xsd:element ref="wormModelHasTypes">
+                <xsd:annotation>
+                  <xsd:documentation>[Relationship deriving from WormModelHasTypes needs to be serialized in full-form]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element ref="wormType" >
+                <xsd:annotation>
+                  <xsd:documentation>[Target role-player]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:choice>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
     </xsd:sequence>
     <!-- Id -->
     <xsd:attribute name="Id" type="xsd:string">
@@ -76,28 +120,6 @@
       <xsd:documentation>Сущность</xsd:documentation>
     </xsd:annotation>
     <xsd:sequence minOccurs="0" maxOccurs="1">
-      <!-- Relationship: EntityHasTables -->
-      <xsd:element name="tables" minOccurs="0" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>Instances of EntityHasTables</xsd:documentation>
-        </xsd:annotation>
-        <xsd:complexType>
-          <xsd:sequence>
-            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
-              <xsd:element ref="entityHasTables">
-                <xsd:annotation>
-                  <xsd:documentation>[Relationship deriving from EntityHasTables needs to be serialized in full-form]</xsd:documentation>
-                </xsd:annotation>
-              </xsd:element>
-              <xsd:element ref="table" >
-                <xsd:annotation>
-                  <xsd:documentation>[Target role-player]</xsd:documentation>
-                </xsd:annotation>
-              </xsd:element>
-            </xsd:choice>
-          </xsd:sequence>
-        </xsd:complexType>
-      </xsd:element>
       <!-- Relationship: EntityHasProperties -->
       <xsd:element name="properties" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
@@ -246,10 +268,37 @@
   <!-- Table -->
   <xsd:element name="table" type="Table" />
   <xsd:complexType name="Table">
+    <xsd:annotation>
+      <xsd:documentation>Tаблицa БД</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Relationship: TableReferencesEntity -->
+      <xsd:element name="entity" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Instance of TableReferencesEntity</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:choice minOccurs="1" maxOccurs="1" >
+              <xsd:element ref="tableReferencesEntity">
+                <xsd:annotation>
+                  <xsd:documentation>[Relationship deriving from TableReferencesEntity needs to be serialized in full-form]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element ref="entityMoniker" >
+                <xsd:annotation>
+                  <xsd:documentation>[Target role-player]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:choice>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
     <!-- Property: Name -->
     <xsd:attribute name="name" type="xsd:string" >
       <xsd:annotation>
-        <xsd:documentation>Table name</xsd:documentation>
+        <xsd:documentation>Имя таблицы</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Schema -->
@@ -271,40 +320,43 @@
   <!-- Property -->
   <xsd:element name="property" type="Property" />
   <xsd:complexType name="Property">
+    <xsd:annotation>
+      <xsd:documentation>Свойство сущности</xsd:documentation>
+    </xsd:annotation>
     <!-- Property: Name -->
     <xsd:attribute name="name" type="xsd:string" >
       <xsd:annotation>
-        <xsd:documentation>Property name</xsd:documentation>
+        <xsd:documentation>Имя свойства</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Type -->
     <xsd:attribute name="type" type="xsd:string" >
       <xsd:annotation>
-        <xsd:documentation>Property type</xsd:documentation>
+        <xsd:documentation>Тип свойства (возможна ссылка на сущность)</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Description -->
     <xsd:attribute name="description" type="xsd:string" >
       <xsd:annotation>
-        <xsd:documentation>Property description</xsd:documentation>
+        <xsd:documentation>Описание свойства</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: FieldName -->
     <xsd:attribute name="fieldName" type="xsd:string" >
       <xsd:annotation>
-        <xsd:documentation>Field name</xsd:documentation>
+        <xsd:documentation>Наименование колонки из БД</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Table -->
     <xsd:attribute name="table" type="xsd:string" >
       <xsd:annotation>
-        <xsd:documentation>Property table</xsd:documentation>
+        <xsd:documentation>Ссылка на таблицу БД</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: FieldAccessLevel -->
     <xsd:attribute name="fieldAccessLevel" type="xsd:string" >
       <xsd:annotation>
-        <xsd:documentation>Field access level</xsd:documentation>
+        <xsd:documentation>Уровень доступа к полю класса</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Alias -->
@@ -316,7 +368,7 @@
     <!-- Property: AccessLevel -->
     <xsd:attribute name="accessLevel" type="xsd:string" >
       <xsd:annotation>
-        <xsd:documentation>Access Level</xsd:documentation>
+        <xsd:documentation>Уровень доступа к полю класса</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Nullable -->
@@ -326,7 +378,35 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Attributes -->
-    <xsd:attribute name="attributes" type="xsd:string" />
+    <xsd:attribute name="attributes" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Атрибуты свойства</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Disabled -->
+    <xsd:attribute name="disabled" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Признак отключения проперти</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Obsolete -->
+    <xsd:attribute name="obsolete" type="Obsolete" >
+      <xsd:annotation>
+        <xsd:documentation>Make property obsolete</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: ObsoleteDescription -->
+    <xsd:attribute name="obsoleteDescription" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Description for obsolete property</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: EnablePropertyChanged -->
+    <xsd:attribute name="enablePropertyChanged" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Включает для свойства поднятие события PropertyChanged, при этом реализация идет на уровне конкретной сущности. При этом в целом для сущности отключается общий механизм этого события.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
   
   <!-- Property Moniker -->
@@ -341,10 +421,20 @@
   <xsd:element name="supressedProperty" type="SupressedProperty" />
   <xsd:complexType name="SupressedProperty">
     <xsd:annotation>
-      <xsd:documentation>SupressedProperty</xsd:documentation>
+      <xsd:documentation>Supressed Property</xsd:documentation>
     </xsd:annotation>
     <!-- Property: Name -->
-    <xsd:attribute name="name" type="xsd:string" />
+    <xsd:attribute name="name" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Property name</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Type -->
+    <xsd:attribute name="type" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Suppressed property type</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
   
   <!-- SupressedProperty Moniker -->
@@ -370,7 +460,7 @@
     <!-- Property: DirectCascadeDelete -->
     <xsd:attribute name="directCascadeDelete" type="xsd:boolean" >
       <xsd:annotation>
-        <xsd:documentation>аскадное удаление</xsd:documentation>
+        <xsd:documentation>Kаскадное удаление</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: DirectFieldName -->
@@ -394,7 +484,7 @@
     <!-- Property: ReverseCascadeDelete -->
     <xsd:attribute name="reverseCascadeDelete" type="xsd:boolean" >
       <xsd:annotation>
-        <xsd:documentation>аскадное удаление</xsd:documentation>
+        <xsd:documentation>Каскадное удаление</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: ReverseFieldName -->
@@ -424,7 +514,7 @@
     <!-- Property: ReverseAccessedEntityType -->
     <xsd:attribute name="reverseAccessedEntityType" type="xsd:string" >
       <xsd:annotation>
-        <xsd:documentation>&gt;Тип связанной сущности для генерации методов</xsd:documentation>
+        <xsd:documentation>Тип связанной сущности для генерации методов</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Name -->
@@ -440,6 +530,47 @@
   <xsd:complexType name="SelfRelationMoniker">
     <xsd:annotation>
       <xsd:documentation>Moniker for SelfRelation instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- WormType -->
+  <xsd:element name="wormType" type="WormType" />
+  <xsd:complexType name="WormType">
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Relationship: WormTypeReferencesEntities -->
+      <xsd:element name="entities" minOccurs="0" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>Instances of WormTypeReferencesEntities</xsd:documentation>
+        </xsd:annotation>
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
+              <xsd:element ref="wormTypeReferencesEntities">
+                <xsd:annotation>
+                  <xsd:documentation>[Relationship deriving from WormTypeReferencesEntities needs to be serialized in full-form]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+              <xsd:element ref="entityMoniker" >
+                <xsd:annotation>
+                  <xsd:documentation>[Target role-player]</xsd:documentation>
+                </xsd:annotation>
+              </xsd:element>
+            </xsd:choice>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:sequence>
+    <!-- Property: Name -->
+    <xsd:attribute name="name" type="xsd:string" />
+    <!-- Property: IdProperty -->
+    <xsd:attribute name="idProperty" type="xsd:string" />
+  </xsd:complexType>
+  
+  <!-- WormType Moniker -->
+  <xsd:element name="wormTypeMoniker" abstract="true" type="WormTypeMoniker" />
+  <xsd:complexType name="WormTypeMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for WormType instance.</xsd:documentation>
     </xsd:annotation>
   </xsd:complexType>
   
@@ -461,27 +592,6 @@
   <xsd:complexType name="WormModelHasEntitiesMoniker">
     <xsd:annotation>
       <xsd:documentation>Moniker for WormModelHasEntities instance.</xsd:documentation>
-    </xsd:annotation>
-  </xsd:complexType>
-  
-  <!-- EntityHasTables -->
-  <xsd:element name="entityHasTables" abstract="true" type="EntityHasTables" />
-  <xsd:complexType name="EntityHasTables" abstract="true" >
-    <xsd:sequence minOccurs="0" maxOccurs="1">
-      <!-- Target end Table -->
-      <xsd:element ref="table" minOccurs="1" maxOccurs="1">
-        <xsd:annotation>
-          <xsd:documentation>[Target role-player]</xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-    </xsd:sequence>
-  </xsd:complexType>
-  
-  <!-- EntityHasTables Moniker -->
-  <xsd:element name="entityHasTablesMoniker" abstract="true" type="EntityHasTablesMoniker" />
-  <xsd:complexType name="EntityHasTablesMoniker">
-    <xsd:annotation>
-      <xsd:documentation>Moniker for EntityHasTables instance.</xsd:documentation>
     </xsd:annotation>
   </xsd:complexType>
   
@@ -517,32 +627,76 @@
         </xsd:annotation>
       </xsd:element>
     </xsd:sequence>
-    <!-- Property: UndelyingEntity -->
-    <xsd:attribute name="undelyingEntity" type="xsd:string" />
+    <!-- Property: UnderlyingEntity -->
+    <xsd:attribute name="underlyingEntity" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Underlying entity</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: LeftCascadeDelete -->
-    <xsd:attribute name="leftCascadeDelete" type="xsd:boolean" />
+    <xsd:attribute name="leftCascadeDelete" type="xsd:boolean" >
+      <xsd:annotation>
+        <xsd:documentation>Каскадное удаление</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: LeftFieldName -->
-    <xsd:attribute name="leftFieldName" type="xsd:string" />
+    <xsd:attribute name="leftFieldName" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Имя поля таблицы связи</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: LeftAccessorName -->
-    <xsd:attribute name="leftAccessorName" type="xsd:string" />
+    <xsd:attribute name="leftAccessorName" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Имя связанной сущности для генерации методов</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: Disabled -->
     <xsd:attribute name="disabled" type="xsd:boolean" />
     <!-- Property: Table -->
     <xsd:attribute name="table" type="xsd:string" />
     <!-- Property: LeftEntity -->
-    <xsd:attribute name="leftEntity" type="xsd:string" />
+    <xsd:attribute name="leftEntity" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Сущность</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: LeftAccessedEntityType -->
-    <xsd:attribute name="leftAccessedEntityType" type="xsd:string" />
+    <xsd:attribute name="leftAccessedEntityType" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Тип связанной сущности для генерации методов</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: RightAccessedEntityType -->
-    <xsd:attribute name="rightAccessedEntityType" type="xsd:string" />
+    <xsd:attribute name="rightAccessedEntityType" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Тип связанной сущности для генерации методов</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: RightFieldName -->
-    <xsd:attribute name="rightFieldName" type="xsd:string" />
+    <xsd:attribute name="rightFieldName" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Имя поля таблицы связи</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: RightCascadeDelete -->
-    <xsd:attribute name="rightCascadeDelete" type="xsd:boolean" />
+    <xsd:attribute name="rightCascadeDelete" type="xsd:boolean" >
+      <xsd:annotation>
+        <xsd:documentation>Каскадное удаление</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: RightAccessorName -->
-    <xsd:attribute name="rightAccessorName" type="xsd:string" />
+    <xsd:attribute name="rightAccessorName" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Имя связанной сущности для генерации методов</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: RightEntity -->
-    <xsd:attribute name="rightEntity" type="xsd:string" />
+    <xsd:attribute name="rightEntity" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Сущность</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
   
   <!-- EntityReferencesTargetEntities Moniker -->
@@ -595,6 +749,93 @@
     </xsd:annotation>
   </xsd:complexType>
   
+  <!-- WormModelHasTables -->
+  <xsd:element name="wormModelHasTables" abstract="true" type="WormModelHasTables" />
+  <xsd:complexType name="WormModelHasTables" abstract="true" >
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Target end Table -->
+      <xsd:element ref="table" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>[Target role-player]</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  
+  <!-- WormModelHasTables Moniker -->
+  <xsd:element name="wormModelHasTablesMoniker" abstract="true" type="WormModelHasTablesMoniker" />
+  <xsd:complexType name="WormModelHasTablesMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for WormModelHasTables instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- TableReferencesEntity -->
+  <xsd:element name="tableReferencesEntity" abstract="true" type="TableReferencesEntity" />
+  <xsd:complexType name="TableReferencesEntity" abstract="true" >
+    <xsd:annotation>
+      <xsd:documentation>Список используемых таблиц</xsd:documentation>
+    </xsd:annotation>
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Target end Entity -->
+      <xsd:element ref="entityMoniker" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>[Target role-player]</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  
+  <!-- TableReferencesEntity Moniker -->
+  <xsd:element name="tableReferencesEntityMoniker" abstract="true" type="TableReferencesEntityMoniker" />
+  <xsd:complexType name="TableReferencesEntityMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for TableReferencesEntity instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- WormModelHasTypes -->
+  <xsd:element name="wormModelHasTypes" abstract="true" type="WormModelHasTypes" />
+  <xsd:complexType name="WormModelHasTypes" abstract="true" >
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Target end WormType -->
+      <xsd:element ref="wormType" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>[Target role-player]</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  
+  <!-- WormModelHasTypes Moniker -->
+  <xsd:element name="wormModelHasTypesMoniker" abstract="true" type="WormModelHasTypesMoniker" />
+  <xsd:complexType name="WormModelHasTypesMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for WormModelHasTypes instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
+  <!-- WormTypeReferencesEntities -->
+  <xsd:element name="wormTypeReferencesEntities" abstract="true" type="WormTypeReferencesEntities" />
+  <xsd:complexType name="WormTypeReferencesEntities" abstract="true" >
+    <xsd:sequence minOccurs="0" maxOccurs="1">
+      <!-- Target end Entity -->
+      <xsd:element ref="entityMoniker" minOccurs="1" maxOccurs="1">
+        <xsd:annotation>
+          <xsd:documentation>[Target role-player]</xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:sequence>
+  </xsd:complexType>
+  
+  <!-- WormTypeReferencesEntities Moniker -->
+  <xsd:element name="wormTypeReferencesEntitiesMoniker" abstract="true" type="WormTypeReferencesEntitiesMoniker" />
+  <xsd:complexType name="WormTypeReferencesEntitiesMoniker">
+    <xsd:annotation>
+      <xsd:documentation>Moniker for WormTypeReferencesEntities instance.</xsd:documentation>
+    </xsd:annotation>
+  </xsd:complexType>
+  
   <!-- Enum PropertyAttribute -->
   <xsd:simpleType name="PropertyAttribute">
     <xsd:restriction base="xsd:string">
@@ -643,6 +884,30 @@
       <xsd:enumeration value="Factory">
         <xsd:annotation>
           <xsd:documentation>Factory</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!-- Enum Obsolete -->
+  <xsd:simpleType name="Obsolete">
+    <xsd:annotation>
+      <xsd:documentation>Obsolete</xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="None">
+        <xsd:annotation>
+          <xsd:documentation>None obsolete</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Warning">
+        <xsd:annotation>
+          <xsd:documentation>Make obsolete with warning</xsd:documentation>
+        </xsd:annotation>
+      </xsd:enumeration>
+      <xsd:enumeration value="Error">
+        <xsd:annotation>
+          <xsd:documentation>Make obsolete with error</xsd:documentation>
         </xsd:annotation>
       </xsd:enumeration>
     </xsd:restriction>

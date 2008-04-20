@@ -117,41 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="101" xml:space="preserve">
-    <value>Designer</value>
-  </data>
-  <data name="102" xml:space="preserve">
-    <value>Adds a Designer file to the project.</value>
-  </data>
-  <data name="103" xml:space="preserve">
-    <value>Designer</value>
-  </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="104" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\ModelExplorerToolWindowBitmaps.bmp;System.Drawing.Bitmap, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="201" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\File.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="2022" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\2022.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="2601" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\2601.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="2621" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\2621.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="2651" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\2651.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="2671" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\2671.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="5293" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\5293.ico;System.Drawing.Icon, System.Drawing, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
-  <data name="XmlGeneratorTemplate" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>Resources\WormGeneratorTemplate.tt;System.String, mscorlib, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
-  </data>
 </root>

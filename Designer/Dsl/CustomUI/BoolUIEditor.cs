@@ -12,7 +12,7 @@ namespace Worm.Designer
     /// Implements the Table domain attribute property 
     /// editor. 
     /// </summary> 
-    public class TypeUIEditor : UITypeEditor
+    public class BoolUIEditor : UITypeEditor
     {
         #region Members
         private IWindowsFormsEditorService formsEditorService;
@@ -61,71 +61,21 @@ namespace Worm.Designer
                 (provider == null) || (context.Instance == null))
             {
                 return base.EditValue(context, provider, value);
-            }
-
-
+            } // Get current entity 
+           
+           
+            // Build list box 
             ListBox listBox = new ListBox();
             listBox.Sorted = true;
             listBox.Click += new EventHandler(listBox_Click);
             listBox.BorderStyle = BorderStyle.None;
-            listBox.Items.Add("System.Byte[]");
-            listBox.Items.Add("System.String");
-            listBox.Items.Add("System.Int32");
-            listBox.Items.Add("System.Int16");
-            listBox.Items.Add("System.Int64");
-            listBox.Items.Add("System.Byte");
-            listBox.Items.Add("System.DateTime");
-            listBox.Items.Add("System.Decimal");
-            listBox.Items.Add("System.Double");
-            listBox.Items.Add("System.Boolean");
-            listBox.Items.Add("System.Xml.XmlDocument");
-             listBox.Items.Add("System.Guid");
-            listBox.Items.Add("System.Single");
+
            
-            WormModel model = null;
+                listBox.Items.Add("False");
+                listBox.Items.Add("True");
+            
+            listBox.SelectedItem = value;
 
-            Entity entity = context.Instance as Entity;
-            if (entity != null)
-            {
-                model = entity.WormModel;
-            }
-
-            Property property = context.Instance as Property;
-            if (property != null)
-            {
-                model = property.Entity.WormModel;
-            }
-
-            SupressedProperty supressedProperty = context.Instance as SupressedProperty;
-            if (supressedProperty != null)
-            {
-                model = supressedProperty.Entity.WormModel;
-            }
-
-            Table table = context.Instance as Table;
-            if (table != null)
-            {
-                model = table.Entity.WormModel;
-            }
-
-            SelfRelation selfRelation = context.Instance as SelfRelation;
-            if (selfRelation != null)
-            {
-                model = selfRelation.Entity.WormModel;
-            }
-            if (model != null)
-            {
-                foreach (WormType type in model.Types)
-                {
-                    if (listBox.Items.IndexOf(type.Name) == -1)
-                    {
-                        listBox.Items.Add(type.Name);
-                    }
-                }
-            }
-                         
-            listBox.SelectedItem = value;			
-			
             // Handle the service 
             this.formsEditorService =
                 (IWindowsFormsEditorService)provider.
@@ -133,11 +83,12 @@ namespace Worm.Designer
             this.formsEditorService.DropDownControl(listBox);
 
             // Result 
-           // return listBox.SelectedItem;
-     
-            // Default behavior 
             return listBox.SelectedItem;
+              
+
         }
+
+        
         #endregion
 
         #region Private Methods

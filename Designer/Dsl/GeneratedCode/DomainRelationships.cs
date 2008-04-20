@@ -250,244 +250,6 @@ namespace Worm.Designer
 namespace Worm.Designer
 {
 	/// <summary>
-	/// DomainRelationship EntityHasTables
-	/// Description for Worm.Designer.EntityHasTables
-	/// </summary>
-	[DslDesign::DisplayNameResource("Worm.Designer.EntityHasTables.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-	[DslDesign::DescriptionResource("Worm.Designer.EntityHasTables.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-	[global::System.CLSCompliant(true)]
-	[DslModeling::DomainRelationship(IsEmbedding=true)]
-	[DslModeling::DomainObjectId("f86803b8-bf84-45dc-8ee2-7443df861052")]
-	public partial class EntityHasTables : DslModeling::ElementLink
-	{
-		#region Constructors, domain class Id
-		
-		/// <summary>
-		/// EntityHasTables domain class Id.
-		/// </summary>
-		public static readonly new global::System.Guid DomainClassId = new global::System.Guid(0xf86803b8, 0xbf84, 0x45dc, 0x8e, 0xe2, 0x74, 0x43, 0xdf, 0x86, 0x10, 0x52);
-	
-				
-		/// <summary>
-		/// Constructor
-		/// Creates a EntityHasTables link in the same Partition as the given Entity
-		/// </summary>
-		/// <param name="source">Entity to use as the source of the relationship.</param>
-		/// <param name="target">Table to use as the target of the relationship.</param>
-		public EntityHasTables(Entity source, Table target)
-			: base((source != null ? source.Partition : null), new DslModeling::RoleAssignment[]{new DslModeling::RoleAssignment(EntityHasTables.EntityDomainRoleId, source), new DslModeling::RoleAssignment(EntityHasTables.TableDomainRoleId, target)}, null)
-		{
-		}
-		
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <param name="store">Store where new link is to be created.</param>
-		/// <param name="roleAssignments">List of relationship role assignments.</param>
-		public EntityHasTables(DslModeling::Store store, params DslModeling::RoleAssignment[] roleAssignments)
-			: base(store != null ? store.DefaultPartition : null, roleAssignments, null)
-		{
-		}
-		
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <param name="store">Store where new link is to be created.</param>
-		/// <param name="roleAssignments">List of relationship role assignments.</param>
-		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
-		public EntityHasTables(DslModeling::Store store, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
-			: base(store != null ? store.DefaultPartition : null, roleAssignments, propertyAssignments)
-		{
-		}
-		
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <param name="partition">Partition where new link is to be created.</param>
-		/// <param name="roleAssignments">List of relationship role assignments.</param>
-		public EntityHasTables(DslModeling::Partition partition, params DslModeling::RoleAssignment[] roleAssignments)
-			: base(partition, roleAssignments, null)
-		{
-		}
-		
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <param name="partition">Partition where new link is to be created.</param>
-		/// <param name="roleAssignments">List of relationship role assignments.</param>
-		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
-		public EntityHasTables(DslModeling::Partition partition, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
-			: base(partition, roleAssignments, propertyAssignments)
-		{
-		}
-		#endregion
-		#region Entity domain role code
-		
-		/// <summary>
-		/// Entity domain role Id.
-		/// </summary>
-		public static readonly global::System.Guid EntityDomainRoleId = new global::System.Guid(0xa188ebf0, 0x1dce, 0x4405, 0xb3, 0x55, 0x2d, 0xe9, 0x7a, 0x96, 0x03, 0xda);
-		
-		/// <summary>
-		/// DomainRole Entity
-		/// Description for Worm.Designer.EntityHasTables.Entity
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityHasTables/Entity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityHasTables/Entity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Source, PropertyName = "Tables", PropertyDisplayNameKey="Worm.Designer.EntityHasTables/Entity.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.ZeroMany)]
-		[DslModeling::DomainObjectId("a188ebf0-1dce-4405-b355-2de97a9603da")]
-		public virtual Entity Entity
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return (Entity)DslModeling::DomainRoleInfo.GetRolePlayer(this, EntityDomainRoleId);
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				DslModeling::DomainRoleInfo.SetRolePlayer(this, EntityDomainRoleId, value);
-			}
-		}
-				
-		#endregion
-		#region Static methods to access Entity of a Table
-		/// <summary>
-		/// Gets Entity.
-		/// </summary>
-		[global::System.Diagnostics.DebuggerStepThrough]
-		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static Entity GetEntity(Table element)
-		{
-			return DslModeling::DomainRoleInfo.GetLinkedElement(element, TableDomainRoleId) as Entity;
-		}
-		
-		/// <summary>
-		/// Sets Entity.
-		/// </summary>
-		[global::System.Diagnostics.DebuggerStepThrough]
-		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static void SetEntity(Table element, Entity newEntity)
-		{
-			DslModeling::DomainRoleInfo.SetLinkedElement(element, TableDomainRoleId, newEntity);
-		}
-		#endregion
-		#region Table domain role code
-		
-		/// <summary>
-		/// Table domain role Id.
-		/// </summary>
-		public static readonly global::System.Guid TableDomainRoleId = new global::System.Guid(0xdb03c26a, 0x9456, 0x4f67, 0x8f, 0x06, 0x53, 0x84, 0x37, 0x7d, 0x2d, 0x98);
-		
-		/// <summary>
-		/// DomainRole Table
-		/// Description for Worm.Designer.EntityHasTables.Table
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityHasTables/Table.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityHasTables/Table.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Target, PropertyName = "Entity", PropertyDisplayNameKey="Worm.Designer.EntityHasTables/Table.PropertyDisplayName", PropagatesDelete = true, PropagatesCopy = true, Multiplicity = DslModeling::Multiplicity.ZeroOne)]
-		[DslModeling::DomainObjectId("db03c26a-9456-4f67-8f06-5384377d2d98")]
-		public virtual Table Table
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return (Table)DslModeling::DomainRoleInfo.GetRolePlayer(this, TableDomainRoleId);
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				DslModeling::DomainRoleInfo.SetRolePlayer(this, TableDomainRoleId, value);
-			}
-		}
-				
-		#endregion
-		#region Static methods to access Tables of a Entity
-		/// <summary>
-		/// Gets a list of Tables.
-		/// </summary>
-		[global::System.Diagnostics.DebuggerStepThrough]
-		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static DslModeling::LinkedElementCollection<Table> GetTables(Entity element)
-		{
-			return new DslModeling::LinkedElementCollection<Table>(element, EntityDomainRoleId);
-		}
-		#endregion
-		#region Entity link accessor
-		/// <summary>
-		/// Get the list of EntityHasTables links to a Entity.
-		/// </summary>
-		[global::System.Diagnostics.DebuggerStepThrough]
-		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.EntityHasTables> GetLinksToTables ( global::Worm.Designer.Entity entityInstance )
-		{
-			return DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityHasTables>(entityInstance, global::Worm.Designer.EntityHasTables.EntityDomainRoleId);
-		}
-		#endregion
-		#region Table link accessor
-		/// <summary>
-		/// Get the EntityHasTables link to a Table.
-		/// </summary>
-		[global::System.Diagnostics.DebuggerStepThrough]
-		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static global::Worm.Designer.EntityHasTables GetLinkToEntity (global::Worm.Designer.Table tableInstance)
-		{
-			global::System.Collections.Generic.IList<global::Worm.Designer.EntityHasTables> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityHasTables>(tableInstance, global::Worm.Designer.EntityHasTables.TableDomainRoleId);
-			global::System.Diagnostics.Debug.Assert(links.Count <= 1, "Multiplicity of Table not obeyed.");
-			if ( links.Count == 0 )
-			{
-				return null;
-			}
-			else
-			{
-				return links[0];
-			}
-		}
-		#endregion
-		#region EntityHasTables instance accessors
-		
-		/// <summary>
-		/// Get any EntityHasTables links between a given Entity and a Table.
-		/// </summary>
-		[global::System.Diagnostics.DebuggerStepThrough]
-		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.EntityHasTables> GetLinks( global::Worm.Designer.Entity source, global::Worm.Designer.Table target )
-		{
-			global::System.Collections.Generic.List<global::Worm.Designer.EntityHasTables> outLinks = new global::System.Collections.Generic.List<global::Worm.Designer.EntityHasTables>();
-			global::System.Collections.Generic.IList<global::Worm.Designer.EntityHasTables> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityHasTables>(source, global::Worm.Designer.EntityHasTables.EntityDomainRoleId);
-			foreach ( global::Worm.Designer.EntityHasTables link in links )
-			{
-				if ( target.Equals(link.Table) )
-				{
-					outLinks.Add(link);
-				}
-			}
-			return outLinks.AsReadOnly();
-		}
-		/// <summary>
-		/// Get the one EntityHasTables link between a given Entityand a Table.
-		/// </summary>
-		[global::System.Diagnostics.DebuggerStepThrough]
-		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
-		public static global::Worm.Designer.EntityHasTables GetLink( global::Worm.Designer.Entity source, global::Worm.Designer.Table target )
-		{
-			global::System.Collections.Generic.IList<global::Worm.Designer.EntityHasTables> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.EntityHasTables>(source, global::Worm.Designer.EntityHasTables.EntityDomainRoleId);
-			foreach ( global::Worm.Designer.EntityHasTables link in links )
-			{
-				if ( target.Equals(link.Table) )
-				{
-					return link;
-				}
-			}
-			return null;
-		}
-		
-		#endregion
-	}
-}
-namespace Worm.Designer
-{
-	/// <summary>
 	/// DomainRelationship EntityHasProperties
 	/// Description for Worm.Designer.EntityHasProperties
 	/// </summary>
@@ -879,59 +641,59 @@ namespace Worm.Designer
 			return new DslModeling::LinkedElementCollection<Entity>(element, SourceEntityDomainRoleId);
 		}
 		#endregion
-		#region UndelyingEntity domain property code
+		#region UnderlyingEntity domain property code
 		
 		/// <summary>
-		/// UndelyingEntity domain property Id.
+		/// UnderlyingEntity domain property Id.
 		/// </summary>
-		public static readonly global::System.Guid UndelyingEntityDomainPropertyId = new global::System.Guid(0x6bd17a24, 0xe3bd, 0x4412, 0xa6, 0xc6, 0x2c, 0x00, 0xb7, 0x82, 0x46, 0x78);
+		public static readonly global::System.Guid UnderlyingEntityDomainPropertyId = new global::System.Guid(0x6bd17a24, 0xe3bd, 0x4412, 0xa6, 0xc6, 0x2c, 0x00, 0xb7, 0x82, 0x46, 0x78);
 		
 		/// <summary>
-		/// Storage for UndelyingEntity
+		/// Storage for UnderlyingEntity
 		/// </summary>
-		private global::System.String undelyingEntityPropertyStorage = string.Empty;
+		private global::System.String underlyingEntityPropertyStorage = string.Empty;
 		
 		/// <summary>
-		/// Gets or sets the value of UndelyingEntity domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Undelying entity
+		/// Gets or sets the value of UnderlyingEntity domain property.
+		/// Underlying entity
 		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/UndelyingEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/UndelyingEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/UnderlyingEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/UnderlyingEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("6bd17a24-e3bd-4412-a6c6-2c00b7824678")]
-		public global::System.String UndelyingEntity
+		public global::System.String UnderlyingEntity
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
 			{
-				return undelyingEntityPropertyStorage;
+				return underlyingEntityPropertyStorage;
 			}
 			[global::System.Diagnostics.DebuggerStepThrough]
 			set
 			{
-				UndelyingEntityPropertyHandler.Instance.SetValue(this, value);
+				UnderlyingEntityPropertyHandler.Instance.SetValue(this, value);
 			}
 		}
 		/// <summary>
-		/// Value handler for the EntityReferencesTargetEntities.UndelyingEntity domain property.
+		/// Value handler for the EntityReferencesTargetEntities.UnderlyingEntity domain property.
 		/// </summary>
-		internal sealed partial class UndelyingEntityPropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesTargetEntities, global::System.String>
+		internal sealed partial class UnderlyingEntityPropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesTargetEntities, global::System.String>
 		{
-			private UndelyingEntityPropertyHandler() { }
+			private UnderlyingEntityPropertyHandler() { }
 		
 			/// <summary>
-			/// Gets the singleton instance of the EntityReferencesTargetEntities.UndelyingEntity domain property value handler.
+			/// Gets the singleton instance of the EntityReferencesTargetEntities.UnderlyingEntity domain property value handler.
 			/// </summary>
-			public static readonly UndelyingEntityPropertyHandler Instance = new UndelyingEntityPropertyHandler();
+			public static readonly UnderlyingEntityPropertyHandler Instance = new UnderlyingEntityPropertyHandler();
 		
 			/// <summary>
-			/// Gets the Id of the EntityReferencesTargetEntities.UndelyingEntity domain property.
+			/// Gets the Id of the EntityReferencesTargetEntities.UnderlyingEntity domain property.
 			/// </summary>
 			public sealed override global::System.Guid DomainPropertyId
 			{
 				[global::System.Diagnostics.DebuggerStepThrough]
 				get
 				{
-					return UndelyingEntityDomainPropertyId;
+					return UnderlyingEntityDomainPropertyId;
 				}
 			}
 			
@@ -943,7 +705,7 @@ namespace Worm.Designer
 			public override sealed global::System.String GetValue(EntityReferencesTargetEntities element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.undelyingEntityPropertyStorage;
+				return element.underlyingEntityPropertyStorage;
 			}
 		
 			/// <summary>
@@ -959,7 +721,7 @@ namespace Worm.Designer
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
-					element.undelyingEntityPropertyStorage = newValue;
+					element.underlyingEntityPropertyStorage = newValue;
 					ValueChanged(element, oldValue, newValue);
 				}
 			}
@@ -976,14 +738,16 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for LeftCascadeDelete
 		/// </summary>
-		private global::System.Boolean leftCascadeDeletePropertyStorage;
+		private global::System.Boolean leftCascadeDeletePropertyStorage = true;
 		
 		/// <summary>
 		/// Gets or sets the value of LeftCascadeDelete domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Left Cascade Delete
+		/// Каскадное удаление
 		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue(true)]
 		[DslModeling::DomainObjectId("ecd23e88-6e56-438b-9f10-c56c1aba7cbf")]
 		public global::System.Boolean LeftCascadeDelete
 		{
@@ -1067,7 +831,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of LeftFieldName domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Left Field Name
+		/// Имя поля таблицы связи
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -1154,7 +918,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of LeftAccessorName domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Left Accessor Name
+		/// Имя связанной сущности для генерации методов
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/LeftAccessorName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/LeftAccessorName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -1243,6 +1007,7 @@ namespace Worm.Designer
 		/// Gets or sets the value of Disabled domain property.
 		/// Description for Worm.Designer.EntityReferencesTargetEntities.Disabled
 		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/Disabled.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/Disabled.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("8c000c96-92a2-4eeb-871b-a09fd6a2e10d")]
@@ -1415,7 +1180,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of LeftEntity domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Left Entity
+		/// Сущность
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/LeftEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/LeftEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -1502,8 +1267,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of LeftAccessedEntityType domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Left Accessed
-		/// Entity Type
+		/// Тип связанной сущности для генерации методов
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/LeftAccessedEntityType.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/LeftAccessedEntityType.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -1590,8 +1354,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of RightAccessedEntityType domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Right Accessed
-		/// Entity Type
+		/// Тип связанной сущности для генерации методов
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/RightAccessedEntityType.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/RightAccessedEntityType.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -1678,7 +1441,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of RightFieldName domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Right Field Name
+		/// Имя поля таблицы связи
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/RightFieldName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/RightFieldName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -1761,15 +1524,16 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for RightCascadeDelete
 		/// </summary>
-		private global::System.Boolean rightCascadeDeletePropertyStorage;
+		private global::System.Boolean rightCascadeDeletePropertyStorage = true;
 		
 		/// <summary>
 		/// Gets or sets the value of RightCascadeDelete domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Right Cascade
-		/// Delete
+		/// Каскадное удаление
 		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/RightCascadeDelete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/RightCascadeDelete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue(true)]
 		[DslModeling::DomainObjectId("7c7b3972-2e7d-4b2c-bee9-49cb3c2d8742")]
 		public global::System.Boolean RightCascadeDelete
 		{
@@ -1853,7 +1617,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of RightAccessorName domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Right Accessor Name
+		/// Имя связанной сущности для генерации методов
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/RightAccessorName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/RightAccessorName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -1940,7 +1704,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of RightEntity domain property.
-		/// Description for Worm.Designer.EntityReferencesTargetEntities.Right Entity
+		/// Сущность
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/RightEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/RightEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -2542,6 +2306,939 @@ namespace Worm.Designer
 			foreach ( global::Worm.Designer.EntityHasSelfRelations link in links )
 			{
 				if ( target.Equals(link.SelfRelation) )
+				{
+					return link;
+				}
+			}
+			return null;
+		}
+		
+		#endregion
+	}
+}
+namespace Worm.Designer
+{
+	/// <summary>
+	/// DomainRelationship WormModelHasTables
+	/// Description for Worm.Designer.WormModelHasTables
+	/// </summary>
+	[DslDesign::DisplayNameResource("Worm.Designer.WormModelHasTables.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+	[DslDesign::DescriptionResource("Worm.Designer.WormModelHasTables.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+	[global::System.CLSCompliant(true)]
+	[DslModeling::DomainRelationship(IsEmbedding=true)]
+	[DslModeling::DomainObjectId("f050e584-1dff-48c9-bf23-50a32237e54b")]
+	public partial class WormModelHasTables : DslModeling::ElementLink
+	{
+		#region Constructors, domain class Id
+		
+		/// <summary>
+		/// WormModelHasTables domain class Id.
+		/// </summary>
+		public static readonly new global::System.Guid DomainClassId = new global::System.Guid(0xf050e584, 0x1dff, 0x48c9, 0xbf, 0x23, 0x50, 0xa3, 0x22, 0x37, 0xe5, 0x4b);
+	
+				
+		/// <summary>
+		/// Constructor
+		/// Creates a WormModelHasTables link in the same Partition as the given WormModel
+		/// </summary>
+		/// <param name="source">WormModel to use as the source of the relationship.</param>
+		/// <param name="target">Table to use as the target of the relationship.</param>
+		public WormModelHasTables(WormModel source, Table target)
+			: base((source != null ? source.Partition : null), new DslModeling::RoleAssignment[]{new DslModeling::RoleAssignment(WormModelHasTables.WormModelDomainRoleId, source), new DslModeling::RoleAssignment(WormModelHasTables.TableDomainRoleId, target)}, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="store">Store where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		public WormModelHasTables(DslModeling::Store store, params DslModeling::RoleAssignment[] roleAssignments)
+			: base(store != null ? store.DefaultPartition : null, roleAssignments, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="store">Store where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
+		public WormModelHasTables(DslModeling::Store store, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
+			: base(store != null ? store.DefaultPartition : null, roleAssignments, propertyAssignments)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="partition">Partition where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		public WormModelHasTables(DslModeling::Partition partition, params DslModeling::RoleAssignment[] roleAssignments)
+			: base(partition, roleAssignments, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="partition">Partition where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
+		public WormModelHasTables(DslModeling::Partition partition, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
+			: base(partition, roleAssignments, propertyAssignments)
+		{
+		}
+		#endregion
+		#region WormModel domain role code
+		
+		/// <summary>
+		/// WormModel domain role Id.
+		/// </summary>
+		public static readonly global::System.Guid WormModelDomainRoleId = new global::System.Guid(0x0d1c34b6, 0xd715, 0x40c9, 0x89, 0x7d, 0xbc, 0x4e, 0x82, 0x77, 0xa2, 0x97);
+		
+		/// <summary>
+		/// DomainRole WormModel
+		/// Description for Worm.Designer.WormModelHasTables.WormModel
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModelHasTables/WormModel.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModelHasTables/WormModel.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Source, PropertyName = "Tables", PropertyDisplayNameKey="Worm.Designer.WormModelHasTables/WormModel.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.ZeroMany)]
+		[DslModeling::DomainObjectId("0d1c34b6-d715-40c9-897d-bc4e8277a297")]
+		public virtual WormModel WormModel
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return (WormModel)DslModeling::DomainRoleInfo.GetRolePlayer(this, WormModelDomainRoleId);
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				DslModeling::DomainRoleInfo.SetRolePlayer(this, WormModelDomainRoleId, value);
+			}
+		}
+				
+		#endregion
+		#region Static methods to access WormModel of a Table
+		/// <summary>
+		/// Gets WormModel.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static WormModel GetWormModel(Table element)
+		{
+			return DslModeling::DomainRoleInfo.GetLinkedElement(element, TableDomainRoleId) as WormModel;
+		}
+		
+		/// <summary>
+		/// Sets WormModel.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static void SetWormModel(Table element, WormModel newWormModel)
+		{
+			DslModeling::DomainRoleInfo.SetLinkedElement(element, TableDomainRoleId, newWormModel);
+		}
+		#endregion
+		#region Table domain role code
+		
+		/// <summary>
+		/// Table domain role Id.
+		/// </summary>
+		public static readonly global::System.Guid TableDomainRoleId = new global::System.Guid(0x62720051, 0xa6bb, 0x4384, 0xb7, 0x9a, 0x07, 0x2d, 0x92, 0x06, 0xa4, 0xaa);
+		
+		/// <summary>
+		/// DomainRole Table
+		/// Description for Worm.Designer.WormModelHasTables.Table
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModelHasTables/Table.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModelHasTables/Table.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Target, PropertyName = "WormModel", PropertyDisplayNameKey="Worm.Designer.WormModelHasTables/Table.PropertyDisplayName", PropagatesDelete = true, PropagatesCopy = true, Multiplicity = DslModeling::Multiplicity.One)]
+		[DslModeling::DomainObjectId("62720051-a6bb-4384-b79a-072d9206a4aa")]
+		public virtual Table Table
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return (Table)DslModeling::DomainRoleInfo.GetRolePlayer(this, TableDomainRoleId);
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				DslModeling::DomainRoleInfo.SetRolePlayer(this, TableDomainRoleId, value);
+			}
+		}
+				
+		#endregion
+		#region Static methods to access Tables of a WormModel
+		/// <summary>
+		/// Gets a list of Tables.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static DslModeling::LinkedElementCollection<Table> GetTables(WormModel element)
+		{
+			return new DslModeling::LinkedElementCollection<Table>(element, WormModelDomainRoleId);
+		}
+		#endregion
+		#region WormModel link accessor
+		/// <summary>
+		/// Get the list of WormModelHasTables links to a WormModel.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.WormModelHasTables> GetLinksToTables ( global::Worm.Designer.WormModel wormModelInstance )
+		{
+			return DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormModelHasTables>(wormModelInstance, global::Worm.Designer.WormModelHasTables.WormModelDomainRoleId);
+		}
+		#endregion
+		#region Table link accessor
+		/// <summary>
+		/// Get the WormModelHasTables link to a Table.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::Worm.Designer.WormModelHasTables GetLinkToWormModel (global::Worm.Designer.Table tableInstance)
+		{
+			global::System.Collections.Generic.IList<global::Worm.Designer.WormModelHasTables> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormModelHasTables>(tableInstance, global::Worm.Designer.WormModelHasTables.TableDomainRoleId);
+			global::System.Diagnostics.Debug.Assert(links.Count <= 1, "Multiplicity of Table not obeyed.");
+			if ( links.Count == 0 )
+			{
+				return null;
+			}
+			else
+			{
+				return links[0];
+			}
+		}
+		#endregion
+		#region WormModelHasTables instance accessors
+		
+		/// <summary>
+		/// Get any WormModelHasTables links between a given WormModel and a Table.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.WormModelHasTables> GetLinks( global::Worm.Designer.WormModel source, global::Worm.Designer.Table target )
+		{
+			global::System.Collections.Generic.List<global::Worm.Designer.WormModelHasTables> outLinks = new global::System.Collections.Generic.List<global::Worm.Designer.WormModelHasTables>();
+			global::System.Collections.Generic.IList<global::Worm.Designer.WormModelHasTables> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormModelHasTables>(source, global::Worm.Designer.WormModelHasTables.WormModelDomainRoleId);
+			foreach ( global::Worm.Designer.WormModelHasTables link in links )
+			{
+				if ( target.Equals(link.Table) )
+				{
+					outLinks.Add(link);
+				}
+			}
+			return outLinks.AsReadOnly();
+		}
+		/// <summary>
+		/// Get the one WormModelHasTables link between a given WormModeland a Table.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::Worm.Designer.WormModelHasTables GetLink( global::Worm.Designer.WormModel source, global::Worm.Designer.Table target )
+		{
+			global::System.Collections.Generic.IList<global::Worm.Designer.WormModelHasTables> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormModelHasTables>(source, global::Worm.Designer.WormModelHasTables.WormModelDomainRoleId);
+			foreach ( global::Worm.Designer.WormModelHasTables link in links )
+			{
+				if ( target.Equals(link.Table) )
+				{
+					return link;
+				}
+			}
+			return null;
+		}
+		
+		#endregion
+	}
+}
+namespace Worm.Designer
+{
+	/// <summary>
+	/// DomainRelationship TableReferencesEntity
+	/// Список используемых таблиц
+	/// </summary>
+	[DslDesign::DisplayNameResource("Worm.Designer.TableReferencesEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+	[DslDesign::DescriptionResource("Worm.Designer.TableReferencesEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+	[global::System.CLSCompliant(true)]
+	[DslModeling::DomainRelationship()]
+	[DslModeling::DomainObjectId("02763e91-46a7-468a-9cb0-6d88cdede236")]
+	public partial class TableReferencesEntity : DslModeling::ElementLink
+	{
+		#region Constructors, domain class Id
+		
+		/// <summary>
+		/// TableReferencesEntity domain class Id.
+		/// </summary>
+		public static readonly new global::System.Guid DomainClassId = new global::System.Guid(0x02763e91, 0x46a7, 0x468a, 0x9c, 0xb0, 0x6d, 0x88, 0xcd, 0xed, 0xe2, 0x36);
+	
+				
+		/// <summary>
+		/// Constructor
+		/// Creates a TableReferencesEntity link in the same Partition as the given Table
+		/// </summary>
+		/// <param name="source">Table to use as the source of the relationship.</param>
+		/// <param name="target">Entity to use as the target of the relationship.</param>
+		public TableReferencesEntity(Table source, Entity target)
+			: base((source != null ? source.Partition : null), new DslModeling::RoleAssignment[]{new DslModeling::RoleAssignment(TableReferencesEntity.TableDomainRoleId, source), new DslModeling::RoleAssignment(TableReferencesEntity.EntityDomainRoleId, target)}, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="store">Store where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		public TableReferencesEntity(DslModeling::Store store, params DslModeling::RoleAssignment[] roleAssignments)
+			: base(store != null ? store.DefaultPartition : null, roleAssignments, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="store">Store where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
+		public TableReferencesEntity(DslModeling::Store store, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
+			: base(store != null ? store.DefaultPartition : null, roleAssignments, propertyAssignments)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="partition">Partition where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		public TableReferencesEntity(DslModeling::Partition partition, params DslModeling::RoleAssignment[] roleAssignments)
+			: base(partition, roleAssignments, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="partition">Partition where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
+		public TableReferencesEntity(DslModeling::Partition partition, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
+			: base(partition, roleAssignments, propertyAssignments)
+		{
+		}
+		#endregion
+		#region Table domain role code
+		
+		/// <summary>
+		/// Table domain role Id.
+		/// </summary>
+		public static readonly global::System.Guid TableDomainRoleId = new global::System.Guid(0xfed3349d, 0x8eb3, 0x4b10, 0xb3, 0x41, 0xb6, 0x18, 0xf1, 0xe9, 0xf1, 0xc6);
+		
+		/// <summary>
+		/// DomainRole Table
+		/// Description for Worm.Designer.TableReferencesEntity.Table
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.TableReferencesEntity/Table.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.TableReferencesEntity/Table.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Source, PropertyName = "Entity", PropertyDisplayNameKey="Worm.Designer.TableReferencesEntity/Table.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.One)]
+		[DslModeling::DomainObjectId("fed3349d-8eb3-4b10-b341-b618f1e9f1c6")]
+		public virtual Table Table
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return (Table)DslModeling::DomainRoleInfo.GetRolePlayer(this, TableDomainRoleId);
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				DslModeling::DomainRoleInfo.SetRolePlayer(this, TableDomainRoleId, value);
+			}
+		}
+				
+		#endregion
+		#region Static methods to access Tables of a Entity
+		/// <summary>
+		/// Gets a list of Tables.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static DslModeling::LinkedElementCollection<Table> GetTables(Entity element)
+		{
+			return new DslModeling::LinkedElementCollection<Table>(element, EntityDomainRoleId);
+		}
+		#endregion
+		#region Entity domain role code
+		
+		/// <summary>
+		/// Entity domain role Id.
+		/// </summary>
+		public static readonly global::System.Guid EntityDomainRoleId = new global::System.Guid(0xb738fc99, 0x9cc0, 0x4a55, 0xbd, 0xe2, 0x53, 0x5c, 0x48, 0xa0, 0x91, 0xb8);
+		
+		/// <summary>
+		/// DomainRole Entity
+		/// Description for Worm.Designer.TableReferencesEntity.Entity
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.TableReferencesEntity/Entity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.TableReferencesEntity/Entity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Target, PropertyName = "Tables", PropertyDisplayNameKey="Worm.Designer.TableReferencesEntity/Entity.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.ZeroMany)]
+		[DslModeling::DomainObjectId("b738fc99-9cc0-4a55-bde2-535c48a091b8")]
+		public virtual Entity Entity
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return (Entity)DslModeling::DomainRoleInfo.GetRolePlayer(this, EntityDomainRoleId);
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				DslModeling::DomainRoleInfo.SetRolePlayer(this, EntityDomainRoleId, value);
+			}
+		}
+				
+		#endregion
+		#region Static methods to access Entity of a Table
+		/// <summary>
+		/// Gets Entity.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static Entity GetEntity(Table element)
+		{
+			return DslModeling::DomainRoleInfo.GetLinkedElement(element, TableDomainRoleId) as Entity;
+		}
+		
+		/// <summary>
+		/// Sets Entity.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static void SetEntity(Table element, Entity newEntity)
+		{
+			DslModeling::DomainRoleInfo.SetLinkedElement(element, TableDomainRoleId, newEntity);
+		}
+		#endregion
+		#region Table link accessor
+		/// <summary>
+		/// Get the TableReferencesEntity link to a Table.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::Worm.Designer.TableReferencesEntity GetLinkToEntity (global::Worm.Designer.Table tableInstance)
+		{
+			global::System.Collections.Generic.IList<global::Worm.Designer.TableReferencesEntity> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.TableReferencesEntity>(tableInstance, global::Worm.Designer.TableReferencesEntity.TableDomainRoleId);
+			global::System.Diagnostics.Debug.Assert(links.Count <= 1, "Multiplicity of Table not obeyed.");
+			if ( links.Count == 0 )
+			{
+				return null;
+			}
+			else
+			{
+				return links[0];
+			}
+		}
+		#endregion
+		#region Entity link accessor
+		/// <summary>
+		/// Get the list of TableReferencesEntity links to a Entity.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.TableReferencesEntity> GetLinksToTables ( global::Worm.Designer.Entity entityInstance )
+		{
+			return DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.TableReferencesEntity>(entityInstance, global::Worm.Designer.TableReferencesEntity.EntityDomainRoleId);
+		}
+		#endregion
+		#region TableReferencesEntity instance accessors
+		
+		/// <summary>
+		/// Get any TableReferencesEntity links between a given Table and a Entity.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.TableReferencesEntity> GetLinks( global::Worm.Designer.Table source, global::Worm.Designer.Entity target )
+		{
+			global::System.Collections.Generic.List<global::Worm.Designer.TableReferencesEntity> outLinks = new global::System.Collections.Generic.List<global::Worm.Designer.TableReferencesEntity>();
+			global::System.Collections.Generic.IList<global::Worm.Designer.TableReferencesEntity> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.TableReferencesEntity>(source, global::Worm.Designer.TableReferencesEntity.TableDomainRoleId);
+			foreach ( global::Worm.Designer.TableReferencesEntity link in links )
+			{
+				if ( target.Equals(link.Entity) )
+				{
+					outLinks.Add(link);
+				}
+			}
+			return outLinks.AsReadOnly();
+		}
+		/// <summary>
+		/// Get the one TableReferencesEntity link between a given Tableand a Entity.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::Worm.Designer.TableReferencesEntity GetLink( global::Worm.Designer.Table source, global::Worm.Designer.Entity target )
+		{
+			global::System.Collections.Generic.IList<global::Worm.Designer.TableReferencesEntity> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.TableReferencesEntity>(source, global::Worm.Designer.TableReferencesEntity.TableDomainRoleId);
+			foreach ( global::Worm.Designer.TableReferencesEntity link in links )
+			{
+				if ( target.Equals(link.Entity) )
+				{
+					return link;
+				}
+			}
+			return null;
+		}
+		
+		#endregion
+	}
+}
+namespace Worm.Designer
+{
+	/// <summary>
+	/// DomainRelationship WormModelHasTypes
+	/// Description for Worm.Designer.WormModelHasTypes
+	/// </summary>
+	[DslDesign::DisplayNameResource("Worm.Designer.WormModelHasTypes.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+	[DslDesign::DescriptionResource("Worm.Designer.WormModelHasTypes.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+	[global::System.CLSCompliant(true)]
+	[DslModeling::DomainRelationship(IsEmbedding=true)]
+	[DslModeling::DomainObjectId("ac0a301c-7199-4ffd-bd46-9737ed195836")]
+	public partial class WormModelHasTypes : DslModeling::ElementLink
+	{
+		#region Constructors, domain class Id
+		
+		/// <summary>
+		/// WormModelHasTypes domain class Id.
+		/// </summary>
+		public static readonly new global::System.Guid DomainClassId = new global::System.Guid(0xac0a301c, 0x7199, 0x4ffd, 0xbd, 0x46, 0x97, 0x37, 0xed, 0x19, 0x58, 0x36);
+	
+				
+		/// <summary>
+		/// Constructor
+		/// Creates a WormModelHasTypes link in the same Partition as the given WormModel
+		/// </summary>
+		/// <param name="source">WormModel to use as the source of the relationship.</param>
+		/// <param name="target">WormType to use as the target of the relationship.</param>
+		public WormModelHasTypes(WormModel source, WormType target)
+			: base((source != null ? source.Partition : null), new DslModeling::RoleAssignment[]{new DslModeling::RoleAssignment(WormModelHasTypes.WormModelDomainRoleId, source), new DslModeling::RoleAssignment(WormModelHasTypes.WormTypeDomainRoleId, target)}, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="store">Store where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		public WormModelHasTypes(DslModeling::Store store, params DslModeling::RoleAssignment[] roleAssignments)
+			: base(store != null ? store.DefaultPartition : null, roleAssignments, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="store">Store where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
+		public WormModelHasTypes(DslModeling::Store store, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
+			: base(store != null ? store.DefaultPartition : null, roleAssignments, propertyAssignments)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="partition">Partition where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		public WormModelHasTypes(DslModeling::Partition partition, params DslModeling::RoleAssignment[] roleAssignments)
+			: base(partition, roleAssignments, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="partition">Partition where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
+		public WormModelHasTypes(DslModeling::Partition partition, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
+			: base(partition, roleAssignments, propertyAssignments)
+		{
+		}
+		#endregion
+		#region WormModel domain role code
+		
+		/// <summary>
+		/// WormModel domain role Id.
+		/// </summary>
+		public static readonly global::System.Guid WormModelDomainRoleId = new global::System.Guid(0x8229f74e, 0xa29f, 0x4395, 0xb1, 0xf3, 0x3b, 0x6b, 0x14, 0x28, 0xa4, 0xaa);
+		
+		/// <summary>
+		/// DomainRole WormModel
+		/// Description for Worm.Designer.WormModelHasTypes.WormModel
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModelHasTypes/WormModel.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModelHasTypes/WormModel.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Source, PropertyName = "Types", PropertyDisplayNameKey="Worm.Designer.WormModelHasTypes/WormModel.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.ZeroMany)]
+		[DslModeling::DomainObjectId("8229f74e-a29f-4395-b1f3-3b6b1428a4aa")]
+		public virtual WormModel WormModel
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return (WormModel)DslModeling::DomainRoleInfo.GetRolePlayer(this, WormModelDomainRoleId);
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				DslModeling::DomainRoleInfo.SetRolePlayer(this, WormModelDomainRoleId, value);
+			}
+		}
+				
+		#endregion
+		#region Static methods to access WormModel of a WormType
+		/// <summary>
+		/// Gets WormModel.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static WormModel GetWormModel(WormType element)
+		{
+			return DslModeling::DomainRoleInfo.GetLinkedElement(element, WormTypeDomainRoleId) as WormModel;
+		}
+		
+		/// <summary>
+		/// Sets WormModel.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static void SetWormModel(WormType element, WormModel newWormModel)
+		{
+			DslModeling::DomainRoleInfo.SetLinkedElement(element, WormTypeDomainRoleId, newWormModel);
+		}
+		#endregion
+		#region WormType domain role code
+		
+		/// <summary>
+		/// WormType domain role Id.
+		/// </summary>
+		public static readonly global::System.Guid WormTypeDomainRoleId = new global::System.Guid(0x7cad8dfc, 0x2796, 0x453c, 0xbf, 0x45, 0xdf, 0xe3, 0x2d, 0x71, 0x30, 0x02);
+		
+		/// <summary>
+		/// DomainRole WormType
+		/// Description for Worm.Designer.WormModelHasTypes.WormType
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModelHasTypes/WormType.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModelHasTypes/WormType.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Target, PropertyName = "WormModel", PropertyDisplayNameKey="Worm.Designer.WormModelHasTypes/WormType.PropertyDisplayName", PropagatesDelete = true, PropagatesCopy = true, Multiplicity = DslModeling::Multiplicity.One)]
+		[DslModeling::DomainObjectId("7cad8dfc-2796-453c-bf45-dfe32d713002")]
+		public virtual WormType WormType
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return (WormType)DslModeling::DomainRoleInfo.GetRolePlayer(this, WormTypeDomainRoleId);
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				DslModeling::DomainRoleInfo.SetRolePlayer(this, WormTypeDomainRoleId, value);
+			}
+		}
+				
+		#endregion
+		#region Static methods to access Types of a WormModel
+		/// <summary>
+		/// Gets a list of Types.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static DslModeling::LinkedElementCollection<WormType> GetTypes(WormModel element)
+		{
+			return new DslModeling::LinkedElementCollection<WormType>(element, WormModelDomainRoleId);
+		}
+		#endregion
+		#region WormModel link accessor
+		/// <summary>
+		/// Get the list of WormModelHasTypes links to a WormModel.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.WormModelHasTypes> GetLinksToTypes ( global::Worm.Designer.WormModel wormModelInstance )
+		{
+			return DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormModelHasTypes>(wormModelInstance, global::Worm.Designer.WormModelHasTypes.WormModelDomainRoleId);
+		}
+		#endregion
+		#region WormType link accessor
+		/// <summary>
+		/// Get the WormModelHasTypes link to a WormType.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::Worm.Designer.WormModelHasTypes GetLinkToWormModel (global::Worm.Designer.WormType wormTypeInstance)
+		{
+			global::System.Collections.Generic.IList<global::Worm.Designer.WormModelHasTypes> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormModelHasTypes>(wormTypeInstance, global::Worm.Designer.WormModelHasTypes.WormTypeDomainRoleId);
+			global::System.Diagnostics.Debug.Assert(links.Count <= 1, "Multiplicity of WormType not obeyed.");
+			if ( links.Count == 0 )
+			{
+				return null;
+			}
+			else
+			{
+				return links[0];
+			}
+		}
+		#endregion
+		#region WormModelHasTypes instance accessors
+		
+		/// <summary>
+		/// Get any WormModelHasTypes links between a given WormModel and a WormType.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.WormModelHasTypes> GetLinks( global::Worm.Designer.WormModel source, global::Worm.Designer.WormType target )
+		{
+			global::System.Collections.Generic.List<global::Worm.Designer.WormModelHasTypes> outLinks = new global::System.Collections.Generic.List<global::Worm.Designer.WormModelHasTypes>();
+			global::System.Collections.Generic.IList<global::Worm.Designer.WormModelHasTypes> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormModelHasTypes>(source, global::Worm.Designer.WormModelHasTypes.WormModelDomainRoleId);
+			foreach ( global::Worm.Designer.WormModelHasTypes link in links )
+			{
+				if ( target.Equals(link.WormType) )
+				{
+					outLinks.Add(link);
+				}
+			}
+			return outLinks.AsReadOnly();
+		}
+		/// <summary>
+		/// Get the one WormModelHasTypes link between a given WormModeland a WormType.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::Worm.Designer.WormModelHasTypes GetLink( global::Worm.Designer.WormModel source, global::Worm.Designer.WormType target )
+		{
+			global::System.Collections.Generic.IList<global::Worm.Designer.WormModelHasTypes> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormModelHasTypes>(source, global::Worm.Designer.WormModelHasTypes.WormModelDomainRoleId);
+			foreach ( global::Worm.Designer.WormModelHasTypes link in links )
+			{
+				if ( target.Equals(link.WormType) )
+				{
+					return link;
+				}
+			}
+			return null;
+		}
+		
+		#endregion
+	}
+}
+namespace Worm.Designer
+{
+	/// <summary>
+	/// DomainRelationship WormTypeReferencesEntities
+	/// Description for Worm.Designer.WormTypeReferencesEntities
+	/// </summary>
+	[DslDesign::DisplayNameResource("Worm.Designer.WormTypeReferencesEntities.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+	[DslDesign::DescriptionResource("Worm.Designer.WormTypeReferencesEntities.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+	[global::System.CLSCompliant(true)]
+	[DslModeling::DomainRelationship()]
+	[DslModeling::DomainObjectId("e2d4852f-d222-461e-acac-9703336a5ccb")]
+	public partial class WormTypeReferencesEntities : DslModeling::ElementLink
+	{
+		#region Constructors, domain class Id
+		
+		/// <summary>
+		/// WormTypeReferencesEntities domain class Id.
+		/// </summary>
+		public static readonly new global::System.Guid DomainClassId = new global::System.Guid(0xe2d4852f, 0xd222, 0x461e, 0xac, 0xac, 0x97, 0x03, 0x33, 0x6a, 0x5c, 0xcb);
+	
+				
+		/// <summary>
+		/// Constructor
+		/// Creates a WormTypeReferencesEntities link in the same Partition as the given WormType
+		/// </summary>
+		/// <param name="source">WormType to use as the source of the relationship.</param>
+		/// <param name="target">Entity to use as the target of the relationship.</param>
+		public WormTypeReferencesEntities(WormType source, Entity target)
+			: base((source != null ? source.Partition : null), new DslModeling::RoleAssignment[]{new DslModeling::RoleAssignment(WormTypeReferencesEntities.WormTypeDomainRoleId, source), new DslModeling::RoleAssignment(WormTypeReferencesEntities.EntityDomainRoleId, target)}, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="store">Store where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		public WormTypeReferencesEntities(DslModeling::Store store, params DslModeling::RoleAssignment[] roleAssignments)
+			: base(store != null ? store.DefaultPartition : null, roleAssignments, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="store">Store where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
+		public WormTypeReferencesEntities(DslModeling::Store store, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
+			: base(store != null ? store.DefaultPartition : null, roleAssignments, propertyAssignments)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="partition">Partition where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		public WormTypeReferencesEntities(DslModeling::Partition partition, params DslModeling::RoleAssignment[] roleAssignments)
+			: base(partition, roleAssignments, null)
+		{
+		}
+		
+		/// <summary>
+		/// Constructor
+		/// </summary>
+		/// <param name="partition">Partition where new link is to be created.</param>
+		/// <param name="roleAssignments">List of relationship role assignments.</param>
+		/// <param name="propertyAssignments">List of properties assignments to set on the new link.</param>
+		public WormTypeReferencesEntities(DslModeling::Partition partition, DslModeling::RoleAssignment[] roleAssignments, DslModeling::PropertyAssignment[] propertyAssignments)
+			: base(partition, roleAssignments, propertyAssignments)
+		{
+		}
+		#endregion
+		#region WormType domain role code
+		
+		/// <summary>
+		/// WormType domain role Id.
+		/// </summary>
+		public static readonly global::System.Guid WormTypeDomainRoleId = new global::System.Guid(0x9cac9e2c, 0x3e59, 0x4ec8, 0x8c, 0xa5, 0x7a, 0xc0, 0x88, 0xf9, 0xa4, 0xe6);
+		
+		/// <summary>
+		/// DomainRole WormType
+		/// Description for Worm.Designer.WormTypeReferencesEntities.WormType
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormTypeReferencesEntities/WormType.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormTypeReferencesEntities/WormType.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Source, PropertyName = "Entities", PropertyDisplayNameKey="Worm.Designer.WormTypeReferencesEntities/WormType.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.ZeroMany)]
+		[DslModeling::DomainObjectId("9cac9e2c-3e59-4ec8-8ca5-7ac088f9a4e6")]
+		public virtual WormType WormType
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return (WormType)DslModeling::DomainRoleInfo.GetRolePlayer(this, WormTypeDomainRoleId);
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				DslModeling::DomainRoleInfo.SetRolePlayer(this, WormTypeDomainRoleId, value);
+			}
+		}
+				
+		#endregion
+		#region Static methods to access WormTypes of a Entity
+		/// <summary>
+		/// Gets a list of WormTypes.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static DslModeling::LinkedElementCollection<WormType> GetWormTypes(Entity element)
+		{
+			return new DslModeling::LinkedElementCollection<WormType>(element, EntityDomainRoleId);
+		}
+		#endregion
+		#region Entity domain role code
+		
+		/// <summary>
+		/// Entity domain role Id.
+		/// </summary>
+		public static readonly global::System.Guid EntityDomainRoleId = new global::System.Guid(0x4073219f, 0x14b4, 0x413c, 0x9a, 0x59, 0x2a, 0x80, 0xaf, 0xde, 0xe0, 0xb1);
+		
+		/// <summary>
+		/// DomainRole Entity
+		/// Description for Worm.Designer.WormTypeReferencesEntities.Entity
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormTypeReferencesEntities/Entity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormTypeReferencesEntities/Entity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Target, PropertyName = "WormTypes", PropertyDisplayNameKey="Worm.Designer.WormTypeReferencesEntities/Entity.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.ZeroMany)]
+		[DslModeling::DomainObjectId("4073219f-14b4-413c-9a59-2a80afdee0b1")]
+		public virtual Entity Entity
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return (Entity)DslModeling::DomainRoleInfo.GetRolePlayer(this, EntityDomainRoleId);
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				DslModeling::DomainRoleInfo.SetRolePlayer(this, EntityDomainRoleId, value);
+			}
+		}
+				
+		#endregion
+		#region Static methods to access Entities of a WormType
+		/// <summary>
+		/// Gets a list of Entities.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static DslModeling::LinkedElementCollection<Entity> GetEntities(WormType element)
+		{
+			return new DslModeling::LinkedElementCollection<Entity>(element, WormTypeDomainRoleId);
+		}
+		#endregion
+		#region WormType link accessor
+		/// <summary>
+		/// Get the list of WormTypeReferencesEntities links to a WormType.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.WormTypeReferencesEntities> GetLinksToEntities ( global::Worm.Designer.WormType wormTypeInstance )
+		{
+			return DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormTypeReferencesEntities>(wormTypeInstance, global::Worm.Designer.WormTypeReferencesEntities.WormTypeDomainRoleId);
+		}
+		#endregion
+		#region Entity link accessor
+		/// <summary>
+		/// Get the list of WormTypeReferencesEntities links to a Entity.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.WormTypeReferencesEntities> GetLinksToWormTypes ( global::Worm.Designer.Entity entityInstance )
+		{
+			return DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormTypeReferencesEntities>(entityInstance, global::Worm.Designer.WormTypeReferencesEntities.EntityDomainRoleId);
+		}
+		#endregion
+		#region WormTypeReferencesEntities instance accessors
+		
+		/// <summary>
+		/// Get any WormTypeReferencesEntities links between a given WormType and a Entity.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::System.Collections.ObjectModel.ReadOnlyCollection<global::Worm.Designer.WormTypeReferencesEntities> GetLinks( global::Worm.Designer.WormType source, global::Worm.Designer.Entity target )
+		{
+			global::System.Collections.Generic.List<global::Worm.Designer.WormTypeReferencesEntities> outLinks = new global::System.Collections.Generic.List<global::Worm.Designer.WormTypeReferencesEntities>();
+			global::System.Collections.Generic.IList<global::Worm.Designer.WormTypeReferencesEntities> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormTypeReferencesEntities>(source, global::Worm.Designer.WormTypeReferencesEntities.WormTypeDomainRoleId);
+			foreach ( global::Worm.Designer.WormTypeReferencesEntities link in links )
+			{
+				if ( target.Equals(link.Entity) )
+				{
+					outLinks.Add(link);
+				}
+			}
+			return outLinks.AsReadOnly();
+		}
+		/// <summary>
+		/// Get the one WormTypeReferencesEntities link between a given WormTypeand a Entity.
+		/// </summary>
+		[global::System.Diagnostics.DebuggerStepThrough]
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")]
+		public static global::Worm.Designer.WormTypeReferencesEntities GetLink( global::Worm.Designer.WormType source, global::Worm.Designer.Entity target )
+		{
+			global::System.Collections.Generic.IList<global::Worm.Designer.WormTypeReferencesEntities> links = DslModeling::DomainRoleInfo.GetElementLinks<global::Worm.Designer.WormTypeReferencesEntities>(source, global::Worm.Designer.WormTypeReferencesEntities.WormTypeDomainRoleId);
+			foreach ( global::Worm.Designer.WormTypeReferencesEntities link in links )
+			{
+				if ( target.Equals(link.Entity) )
 				{
 					return link;
 				}

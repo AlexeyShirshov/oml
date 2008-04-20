@@ -45,7 +45,9 @@ namespace Worm.Designer
             OrmObjectsDef ormObjectsDef = new OrmObjectsDef();
             ormObjectsDef.Namespace = model.DefaultNamespace;
             ormObjectsDef.SchemaVersion = model.SchemaVersion;
-          
+
+        
+
             foreach (Entity entity in model.Entities)
             {
                 EntityDescription entityDescription = new EntityDescription(
@@ -53,7 +55,9 @@ namespace Worm.Designer
                    null, entity.Behaviour);
                 entityDescription.MakeInterface = entity.MakeInterface;
                 entityDescription.UseGenerics = entityDescription.UseGenerics;
-                //todo base entity
+                
+                SetEntityType(model, entityDescription, entity.Name, ormObjectsDef);
+                
 
                 foreach (Table table in entity.Tables)
                 {
@@ -68,13 +72,12 @@ namespace Worm.Designer
                 
                 foreach (Property property in entity.Properties)
                 {
-                    TypeDescription type = GetClrType(property.Type, property.Nullable, ormObjectsDef);
+                    TypeDescription type = GetType(model, property.Type, ormObjectsDef);
                     entityDescription.Properties.Add(new PropertyDescription
                         (property.Name, property.Alias, property.Attributes.Split(new char[] { '|' }),
                         property.Description, type, property.FieldName,
                         entityDescription.Tables.Find(t => t.Name == GetTableName(entity.Tables[0].Schema, property.Table)), 
                         property.FieldAccessLevel, property.AccessLevel));                    
-                    
                 }
 
                 foreach (SupressedProperty sproperty in entity.SupressedProperties)
@@ -112,12 +115,12 @@ namespace Worm.Designer
                          selfRelation.Disabled);
                     if (!string.IsNullOrEmpty(selfRelation.ReverseAccessedEntityType))
                     {
-                        TypeDescription typeReverse = GetClrType(selfRelation.ReverseAccessedEntityType, false, ormObjectsDef);                        
+                        TypeDescription typeReverse = GetType(model, selfRelation.ReverseAccessedEntityType, ormObjectsDef);
                         self.Reverse.AccessedEntityType = typeReverse;
                     }
                     if (!string.IsNullOrEmpty(selfRelation.ReverseAccessedEntityType))
                     {
-                        TypeDescription typeDirect = GetClrType(selfRelation.DirectAccessedEntityType, false, ormObjectsDef);
+                        TypeDescription typeDirect = GetType(model, selfRelation.DirectAccessedEntityType, ormObjectsDef);
                         self.Direct.AccessedEntityType = typeDirect;
                     }
                     ormObjectsDef.Relations.Add(self);
@@ -137,7 +140,7 @@ namespace Worm.Designer
                         new LinkTarget(leftEntity, relation.LeftFieldName, relation.LeftCascadeDelete),
                         new LinkTarget(rightEntity, relation.RightFieldName, relation.RightCascadeDelete),
                         ormObjectsDef.Tables.Find(t => t.Name == GetTableName(relation.TargetEntity.Tables[0].Schema, relation.Table)),
-                        ormObjectsDef.Entities.Find(e => e.Identifier == relation.UndelyingEntity),
+                        ormObjectsDef.Entities.Find(e => e.Identifier == relation.UnderlyingEntity),
                         relation.Disabled);
                     ormObjectsDef.Relations.Add(self);
                 }
@@ -168,108 +171,46 @@ namespace Worm.Designer
 
           }
 
+        private static TypeDescription SetEntityType(WormModel model, EntityDescription entity, string name, OrmObjectsDef ormObjectsDef)
+        {
+            WormType wormType = model.Types.Find(t => t.Name == name);
+            string propertyTypeName = wormType.IdProperty;
+            TypeDescription type = null;
+            if (ormObjectsDef.Types.Find(t => t.Identifier == propertyTypeName) == null)
+            {
+                type = new TypeDescription(wormType.IdProperty, entity);
+                ormObjectsDef.Types.Add(type);
+            }
+            else
+            {
+                type = ormObjectsDef.Types.Find(t => t.Identifier == propertyTypeName);
+            }
+            return type;
+        }
+
+        private static TypeDescription GetType(WormModel model, string name, OrmObjectsDef ormObjectsDef)
+        {
+             WormType wormType = model.Types.Find(t => t.Name == name);
+            string propertyTypeName = wormType.IdProperty;
+            TypeDescription type = null;
+            if (ormObjectsDef.Types.Find(t => t.Identifier == propertyTypeName) == null)
+            {
+                type = new TypeDescription(wormType.IdProperty, wormType.Name);
+                ormObjectsDef.Types.Add(type);
+            }
+            else
+            {
+                type = ormObjectsDef.Types.Find(t => t.Identifier == propertyTypeName);
+            }
+            return type;
+        }
+
         private static string GetTableName(string schema, string table)
         {
             return "[" + schema + "].[" + table + "]";
         }
 
-        private static TypeDescription GetClrType(string dbType, bool nullable, OrmObjectsDef odef)
-        {
-            TypeDescription t = null;
-            string id = null;
-            string type = null;
-
-            switch (dbType)
-            {
-                case "rowversion":
-                case "timestamp":
-                    id = "tBytes";
-                    type = "System.Byte[]";
-                    break;
-                case "varchar":
-                case "nvarchar":
-                case "char":
-                case "nchar":
-                case "text":
-                case "ntext":
-                    id = "tString";
-                    type = "System.String";
-                    break;
-                case "int":
-                    id = "tInt32";
-                    type = "System.Int32";
-                    break;
-                case "smallint":
-                    id = "tInt16";
-                    type = "System.Int16";
-                    break;
-                case "bigint":
-                    id = "tInt64";
-                    type = "System.Int64";
-                    break;
-                case "tinyint":
-                    id = "tByte";
-                    type = "System.Byte";
-                    break;
-                case "datetime":
-                case "smalldatetime":
-                    id = "tDateTime";
-                    type = "System.DateTime";
-                    break;
-                case "money":
-                case "numeric":
-                case "decimal":
-                    id = "tDecimal";
-                    type = "System.Decimal";
-                    break;
-                case "float":
-                    id = "tDouble";
-                    type = "System.Double";
-                    break;
-                case "real":
-                    id = "tSingle";
-                    type = "System.Single";
-                    break;
-                case "varbinary":
-                case "binary":
-                    id = "tBytes";
-                    type = "System.Byte[]";
-                    break;
-                case "bit":
-                    id = "tBoolean";
-                    type = "System.Boolean";
-                    break;
-                case "xml":
-                    id = "tXML";
-                    type = "System.Xml.XmlDocument";
-                    break;
-                case "uniqueidentifier":
-                    id = "tGUID";
-                    type = "System.Guid";
-                    break;
-                case "image":
-                    id = "tBytes";
-                    type = "System.Byte[]";
-                    break;
-                default:
-                    throw new ArgumentException("Unknown database type " + dbType);
-            }
-
-            if (nullable)
-                id += "nullable";
-
-            t = odef.GetType(id, false);
-            if (t == null)
-            {
-                Type tp = GetTypeByName(type);
-                if (nullable && tp.IsValueType)
-                    type = String.Format("System.Nullable`1[{0}]", type);
-
-                t = new TypeDescription(id, type);
-                odef.Types.Add(t);
-            }
-            return t;
-        }
+        
         private static Type GetTypeByName(string type)
         {
             foreach (System.Reflection.Assembly a in AppDomain.CurrentDomain.GetAssemblies())
