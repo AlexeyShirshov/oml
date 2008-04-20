@@ -43,16 +43,16 @@ Namespace Database
                 If cmdtext.Length > 0 Then
                     If DbSchema.SupportMultiline Then
                         Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                            With cmd
+                                .CommandType = System.Data.CommandType.Text
+                                .CommandText = cmdtext
+                                For Each p As System.Data.Common.DbParameter In params
+                                    .Parameters.Add(p)
+                                Next
+                            End With
+
                             Dim b As ConnAction = TestConn(cmd)
                             Try
-                                With cmd
-                                    .CommandType = System.Data.CommandType.Text
-                                    .CommandText = cmdtext
-                                    For Each p As System.Data.Common.DbParameter In params
-                                        .Parameters.Add(p)
-                                    Next
-                                End With
-
                                 LoadSingleObject(cmd, cols, obj, False, False, False)
 
                                 inv = True
@@ -69,31 +69,30 @@ Namespace Database
                             For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, DbSchema.EndLine)
                                 If stmt = String.Empty Then Continue For
                                 Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                                    Dim sel As Boolean = stmt.IndexOf("select") >= 0
+                                    With cmd
+                                        .CommandType = System.Data.CommandType.Text
+                                        .CommandText = stmt
+                                        Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
+                                        For i As Integer = 0 To ExtractParamsCount(stmt) - 1
+                                            .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
+                                            p.RemoveAt(0)
+                                        Next
+                                    End With
+
+                                    If stmt.StartsWith("{{error}}") Then
+                                        If prev_error Then
+                                            cmd.CommandText = stmt.Remove(0, 9).Trim
+                                        Else
+                                            Continue For
+                                        End If
+                                    ElseIf prev_error Then
+                                        Throw DbSchema.PrepareConcurrencyException(obj)
+                                    End If
+
+                                    prev_error = False
                                     Dim b As ConnAction = TestConn(cmd)
                                     Try
-                                        Dim sel As Boolean = stmt.IndexOf("select") >= 0
-                                        With cmd
-                                            .CommandType = System.Data.CommandType.Text
-                                            .CommandText = stmt
-                                            Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
-                                            For i As Integer = 0 To ExtractParamsCount(stmt) - 1
-                                                .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
-                                                p.RemoveAt(0)
-                                            Next
-                                        End With
-
-                                        If stmt.StartsWith("{{error}}") Then
-                                            If prev_error Then
-                                                cmd.CommandText = stmt.Remove(0, 9).Trim
-                                            Else
-                                                Continue For
-                                            End If
-                                        ElseIf prev_error Then
-                                            Throw DbSchema.PrepareConcurrencyException(obj)
-                                        End If
-
-                                        prev_error = False
-
                                         If sel Then
                                             LoadSingleObject(cmd, cols, obj, False, False, False)
                                         Else
@@ -161,16 +160,16 @@ Namespace Database
                         Try
                             If DbSchema.SupportMultiline Then
                                 Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                                    With cmd
+                                        .CommandType = System.Data.CommandType.Text
+                                        .CommandText = cmdtext
+                                        For Each p As System.Data.IDataParameter In params
+                                            .Parameters.Add(p)
+                                        Next
+                                    End With
+
                                     Dim b As ConnAction = TestConn(cmd)
                                     Try
-                                        With cmd
-                                            .CommandType = System.Data.CommandType.Text
-                                            .CommandText = cmdtext
-                                            For Each p As System.Data.IDataParameter In params
-                                                .Parameters.Add(p)
-                                            Next
-                                        End With
-
                                         LoadSingleObject(cmd, cols, obj, False, False, True)
                                     Finally
                                         CloseConn(b)
@@ -181,19 +180,19 @@ Namespace Database
                                 For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, DbSchema.EndLine)
                                     If stmt = "" Then Continue For
                                     Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                                        Dim sel As Boolean = stmt.IndexOf("select") >= 0
+                                        With cmd
+                                            .CommandType = System.Data.CommandType.Text
+                                            .CommandText = stmt
+                                            Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
+                                            For i As Integer = 0 To ExtractParamsCount(stmt) - 1
+                                                .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
+                                                p.RemoveAt(0)
+                                            Next
+                                        End With
+
                                         Dim b As ConnAction = TestConn(cmd)
                                         Try
-                                            Dim sel As Boolean = stmt.IndexOf("select") >= 0
-                                            With cmd
-                                                .CommandType = System.Data.CommandType.Text
-                                                .CommandText = stmt
-                                                Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
-                                                For i As Integer = 0 To ExtractParamsCount(stmt) - 1
-                                                    .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
-                                                    p.RemoveAt(0)
-                                                Next
-                                            End With
-
                                             If sel Then
                                                 LoadSingleObject(cmd, cols, obj, False, False, True)
                                             Else
@@ -239,14 +238,13 @@ Namespace Database
                 BeginTransaction()
                 Try
                     Using cmd As New System.Data.SqlClient.SqlCommand(cmd_text)
+                        With cmd
+                            .CommandType = System.Data.CommandType.Text
+                            p.AppendParams(.Parameters)
+                        End With
 
                         Dim r As ConnAction = TestConn(cmd)
                         Try
-                            With cmd
-                                .CommandType = System.Data.CommandType.Text
-                                p.AppendParams(.Parameters)
-                            End With
-
                             Dim i As Integer = cmd.ExecuteNonQuery()
                             [error] = i = 0
                         Finally
@@ -346,16 +344,16 @@ Namespace Database
                     Try
                         If DbSchema.SupportMultiline Then
                             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                                With cmd
+                                    .CommandType = System.Data.CommandType.Text
+                                    .CommandText = cmdtext
+                                    For Each p As System.Data.Common.DbParameter In params
+                                        .Parameters.Add(p)
+                                    Next
+                                End With
+
                                 Dim b As ConnAction = TestConn(cmd)
                                 Try
-                                    With cmd
-                                        .CommandType = System.Data.CommandType.Text
-                                        .CommandText = cmdtext
-                                        For Each p As System.Data.Common.DbParameter In params
-                                            .Parameters.Add(p)
-                                        Next
-                                    End With
-
                                     Dim i As Integer = cmd.ExecuteNonQuery
 
                                     [error] = i = 0
@@ -367,18 +365,18 @@ Namespace Database
                             For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, DbSchema.EndLine)
                                 If stmt = "" Then Continue For
                                 Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                                    With cmd
+                                        .CommandType = System.Data.CommandType.Text
+                                        .CommandText = stmt
+                                        Dim p As IList(Of System.Data.Common.DbParameter) = Nothing
+                                        For j As Integer = 0 To ExtractParamsCount(stmt) - 1
+                                            .Parameters.Add(CType(p(0), System.Data.IDataParameter))
+                                            p.RemoveAt(0)
+                                        Next
+                                    End With
+
                                     Dim b As ConnAction = TestConn(cmd)
                                     Try
-                                        With cmd
-                                            .CommandType = System.Data.CommandType.Text
-                                            .CommandText = stmt
-                                            Dim p As IList(Of System.Data.Common.DbParameter) = Nothing
-                                            For j As Integer = 0 To ExtractParamsCount(stmt) - 1
-                                                .Parameters.Add(CType(p(0), System.Data.IDataParameter))
-                                                p.RemoveAt(0)
-                                            Next
-                                        End With
-
                                         Dim i As Integer = cmd.ExecuteNonQuery()
                                         If Not stmt.StartsWith("set") Then [error] = i = 0
                                     Finally
@@ -618,15 +616,16 @@ Namespace Database
             Next
 #End If
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                Dim params As New ParamMgr(DbSchema, "p")
+                With cmd
+                    .CommandText = DbSchema.Delete(t, f, params)
+                    .CommandType = System.Data.CommandType.Text
+                    params.AppendParams(.Parameters)
+                End With
+
                 Dim r As ConnAction = TestConn(cmd)
                 Try
-                    Dim params As New ParamMgr(DbSchema, "p")
-                    With cmd
-                        .CommandText = DbSchema.Delete(t, f, params)
-                        .CommandType = System.Data.CommandType.Text
-                        params.AppendParams(.Parameters)
-                        Return .ExecuteNonQuery()
-                    End With
+                    Return cmd.ExecuteNonQuery()
                 Finally
                     CloseConn(r)
                 End Try

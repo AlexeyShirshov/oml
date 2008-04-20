@@ -237,6 +237,7 @@ Namespace Cache
         Private _jt As New Dictionary(Of Type, List(Of Type))
 
         Private _list_converter As IListObjectConverter
+        Private _trackDelete As New Dictionary(Of Type, Pair(Of Integer, List(Of Integer)))
 
         Public Event CacheHasModification As EventHandler
 
@@ -417,6 +418,69 @@ Namespace Cache
             obj.RemoveFromCache(Me)
             RemoveDepends(obj)
         End Sub
+
+        Friend Sub BeginTrackDelete(ByVal t As Type)
+            Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
+                Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
+                If Not _trackDelete.TryGetValue(t, p) Then
+                    _trackDelete(t) = New Pair(Of Integer, List(Of Integer))(0, New List(Of Integer))
+                Else
+                    _trackDelete(t) = New Pair(Of Integer, List(Of Integer))(p.First + 1, p.Second)
+                End If
+            End Using
+        End Sub
+
+        Friend Sub EndTrackDelete(ByVal t As Type)
+            Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
+                Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
+                If _trackDelete.TryGetValue(t, p) Then
+                    If p.First = 0 Then
+                        _trackDelete.Remove(t)
+                    Else
+                        _trackDelete(t) = New Pair(Of Integer, List(Of Integer))(p.First - 1, p.Second)
+                    End If
+                End If
+            End Using
+        End Sub
+
+        Friend Sub RegisterDelete(ByVal obj As OrmBase)
+            If obj Is Nothing Then
+                Throw New ArgumentNullException("obj")
+            End If
+
+            Dim t As Type = obj.GetType
+
+            Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
+                Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
+                If _trackDelete.TryGetValue(t, p) Then 'AndAlso Not p.Second.Contains(obj.Identifier)
+                    p.Second.Add(obj.Identifier)
+                    'Else
+                    '    Throw New OrmCacheException("I have to call BeginTrackDelete")
+                End If
+            End Using
+
+        End Sub
+
+        Friend Function IsDeleted(ByVal obj As OrmBase) As Boolean
+            If obj Is Nothing Then
+                Throw New ArgumentNullException("obj")
+            End If
+
+            Dim t As Type = obj.GetType
+
+            Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
+                Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
+                If _trackDelete.TryGetValue(t, p) Then
+                    Dim idx As Integer = p.Second.IndexOf(obj.Identifier)
+                    'If idx >= 0 Then
+                    '    l.RemoveAt(idx)
+                    'End If
+                    Return idx >= 0
+                    'Else
+                    '    Throw New OrmCacheException("I have to call BeginTrackDelete")
+                End If
+            End Using
+        End Function
 
         Public MustOverride Sub Reset()
 
@@ -1190,6 +1254,7 @@ l1:
             End If
             Throw New NotImplementedException(String.Format("Mark {0} is not supported", mark))
         End Function
+
     End Class
 
     Public Class OrmCache
@@ -1257,10 +1322,16 @@ l1:
         Public ReadOnly Obj As OrmBase
         Public ReadOnly DateTime As Date
 
+#If DEBUG Then
+        Protected _stack As String
+#End If
         Sub New(ByVal obj As OrmBase, ByVal user As Object)
             DateTime = Now
             Me.Obj = obj
             Me.User = user
+#If DEBUG Then
+            _stack = Environment.StackTrace
+#End If
         End Sub
 
     End Class

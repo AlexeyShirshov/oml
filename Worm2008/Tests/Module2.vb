@@ -10,12 +10,31 @@ Module Module2
         Inherits Orm.OrmBaseT(Of TestEditTable)
         Implements Orm.Meta.IOrmEditable(Of TestEditTable)
 
+        Private _dt As Date
+        Public ReadOnly Property Dt() As Date
+            Get
+                Return _dt
+            End Get
+        End Property
+
+        Private _stack As String
+        Public ReadOnly Property StackTrace() As String
+            Get
+                Return _stack
+            End Get
+        End Property
+
         Public Sub New()
 
         End Sub
 
         Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
             MyBase.New(id, cache, schema)
+        End Sub
+
+        Protected Overrides Sub Init()
+            _stack = Environment.StackTrace
+            _dt = Now
         End Sub
 
         Private _name As String
@@ -57,12 +76,13 @@ Module Module2
     Private _cache As New OrmCache
     Private _schema As New Database.SQLGenerator("1")
     Private _exCount As Integer
-    Private _identity As Integer = 100
+    Private _identity As Integer = -100
+    Private _deleted As ArrayList = ArrayList.Synchronized(New ArrayList)
 
     <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
     Function GetIdentity() As Integer
         Dim i As Integer = _identity
-        _identity += 1
+        _identity -= 1
         Return i
     End Function
 
@@ -76,7 +96,7 @@ Module Module2
         Dim n As Date = Now
         Dim trd As New List(Of Threading.Thread)
         Randomize()
-        For i As Integer = 0 To 50
+        For i As Integer = 0 To 14
             Dim t As New Threading.Thread(AddressOf EditSub)
             trd.Add(t)
             t = New Threading.Thread(AddressOf QuerySub)
@@ -86,6 +106,10 @@ Module Module2
             t = New Threading.Thread(AddressOf Load)
             trd.Add(t)
             t = New Threading.Thread(AddressOf Unload)
+            trd.Add(t)
+            t = New Threading.Thread(AddressOf DeleteSub)
+            trd.Add(t)
+            t = New Threading.Thread(AddressOf AddSub)
             trd.Add(t)
         Next
         For i As Integer = 0 To trd.Count - 1
@@ -173,7 +197,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("edit sub done")
         'e.Set()
-        For i As Integer = 0 To 1000
+        For i As Integer = 0 To 2000
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -185,11 +209,16 @@ Module Module2
                         If t IsNot Nothing Then
                             Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                                 Using t.BeginAlter
-                                    t.Delete()
+                                    done = t.Delete()
                                 End Using
                                 st.Commit()
                             End Using
-                            done = True
+                            If done Then
+                                Debug.Assert(t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                _deleted.Add(t)
+                                Dim b As Boolean = mgr.IsInCachePrecise(t)
+                                Debug.Assert(Not b)
+                            End If
                         End If
                     Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
                         Threading.Interlocked.Increment(_exCount)
@@ -210,7 +239,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("edit sub done")
         'e.Set()
-        For i As Integer = 0 To 1000
+        For i As Integer = 0 To 300
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -362,6 +391,6 @@ Module Module2
 
     Public Function CreateManager() As OrmDBManager
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-        Return New OrmDBManager(_cache, _schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Return New OrmDBManager(_cache, _schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;Connection timeout=60;")
     End Function
 End Module

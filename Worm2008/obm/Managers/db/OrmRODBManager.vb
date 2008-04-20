@@ -1445,7 +1445,7 @@ Namespace Database
 
                         If Not obj.IsLoaded Then
                             If load Then
-                                obj.ObjectState = ObjectState.NotFoundInDB
+                                obj.ObjectState = ObjectState.NotFoundInSource
                                 RemoveObjectFromCache(obj)
                             End If
                         Else
@@ -1476,6 +1476,9 @@ Namespace Database
             Dim original_type As Type = GetType(T)
             Try
                 _loadedInLastFetch = 0
+                If withLoad Then
+                    _cache.BeginTrackDelete(original_type)
+                End If
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
@@ -1508,6 +1511,9 @@ Namespace Database
                     Return values
                 End Using
             Finally
+                If withLoad Then
+                    _cache.EndTrackDelete(original_type)
+                End If
                 CloseConn(b)
             End Try
         End Function
@@ -1536,7 +1542,7 @@ Namespace Database
             Dim id As Integer = CInt(dr.GetValue(idx))
             Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
             If obj IsNot Nothing Then
-                If withLoad Then
+                If withLoad AndAlso Not _cache.IsDeleted(obj) Then
                     Using obj.GetSyncRoot()
                         If obj.ObjectState <> ObjectState.Modified AndAlso obj.ObjectState <> ObjectState.Deleted Then
                             'If obj.IsLoaded Then obj.IsLoaded = False
@@ -1569,6 +1575,8 @@ l1:
 
         Protected Sub LoadFromDataReader(ByVal obj As OrmBase, ByVal dr As System.Data.IDataReader, _
             ByVal arr As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, Optional ByVal displacement As Integer = 0)
+
+            Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
 
             Dim original_type As Type = obj.GetType
             Dim oschema As IOrmObjectSchema = DbSchema.GetObjectSchema(original_type)
@@ -1836,6 +1844,7 @@ l1:
         '<Conditional("TRACE")> _
         Protected Sub TraceStmt(ByVal cmd As System.Data.Common.DbCommand)
             If _tsStmt.Switch.ShouldTrace(TraceEventType.Information) Then
+                'SyncLock _tsStmt
                 For Each p As System.Data.Common.DbParameter In cmd.Parameters
                     With p
                         Dim t As Type = GetType(DBNull)
@@ -1854,6 +1863,7 @@ l1:
                     End With
                 Next
                 WriteLineInfo(_tsStmt, cmd.CommandText)
+                'End SyncLock
             End If
         End Sub
 
