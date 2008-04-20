@@ -629,12 +629,12 @@ Namespace Database.Storedprocs
             Dim ce As New OrmManagerBase.CachedItem(Nothing, New ReadOnlyList(Of T)(mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
             _exec = ce.ExecutionTime
             _fecth = ce.FetchTime
-            _count = ce.GetCount(mgr)
             Return ce
         End Function
 
         Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ReadOnlyList(Of T)
             Dim ce As OrmManagerBase.CachedItem = CType(MyBase.GetResult(mgr), OrmManagerBase.CachedItem)
+            _count = ce.GetCount(mgr)
             mgr.RaiseOnDataAvailable(_count, _exec, _fecth, Not _donthit)
             Dim s As IListObjectConverter.ExtractListResult
             Dim r As ReadOnlyList(Of T) = ce.GetObjectList(Of T)(mgr, GetWithLoad, Not CacheHit, s)

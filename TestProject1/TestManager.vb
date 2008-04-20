@@ -667,11 +667,11 @@ Imports Worm.Orm
             e2.Delete()
             mgr.BeginTransaction()
             Try
-                Assert.IsTrue(mgr.IsInCache(e2))
+                Assert.IsTrue(mgr.IsInCachePrecise(e2))
 
                 e2.SaveChanges(True)
 
-                Assert.IsFalse(mgr.IsInCache(e2))
+                Assert.IsFalse(mgr.IsInCachePrecise(e2))
 
                 e2 = mgr.Find(Of Entity4)(11)
 
@@ -690,7 +690,7 @@ Imports Worm.Orm
             e2.Delete()
             mgr.BeginTransaction()
             Try
-                Assert.IsTrue(mgr.IsInCache(e2))
+                Assert.IsTrue(mgr.IsInCachePrecise(e2))
 
                 Dim c2 As ICollection(Of Entity) = e2.M2M.Find(Of Entity)(Nothing, Nothing, False)
 
@@ -698,7 +698,7 @@ Imports Worm.Orm
 
                 e2.SaveChanges(True)
 
-                Assert.IsFalse(mgr.IsInCache(e2))
+                Assert.IsFalse(mgr.IsInCachePrecise(e2))
 
                 e2 = mgr.Find(Of Entity4)(11)
 
@@ -747,7 +747,7 @@ Imports Worm.Orm
             Try
                 e.SaveChanges(True)
 
-                Assert.IsFalse(mgr.IsInCache(e))
+                Assert.IsFalse(mgr.IsInCachePrecise(e))
 
                 e = mgr.Find(Of Entity2)(10)
 

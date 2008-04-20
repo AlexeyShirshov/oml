@@ -399,14 +399,15 @@ Namespace Orm
                     Return _o._state
                 End Get
                 Protected Friend Set(ByVal value As ObjectState)
-                    Using _o.SyncHelper(False)
-                        _o._state = value
-                        Debug.Assert(_o._state = value)
-                        Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
-                        If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
-                            Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
-                        End If
-                    End Using
+                    _o.ObjectState = value
+                    'Using _o.SyncHelper(False)
+                    '    _o._state = value
+                    '    Debug.Assert(_o._state = value)
+                    '    Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
+                    '    If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
+                    '        Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
+                    '    End If
+                    'End Using
                 End Set
             End Property
 
@@ -679,12 +680,18 @@ Namespace Orm
             End Get
             Set(ByVal value As ObjectState)
                 Using SyncHelper(False)
-                    _state = value
-                    Debug.Assert(_state = value)
+                    Debug.Assert(Not _needDelete)
+                    If _needDelete Then
+                        Throw New OrmObjectException(String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
+                    End If
+
                     Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
                     If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
                         Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
                     End If
+
+                    _state = value
+                    Debug.Assert(_state = value)
                 End Using
             End Set
         End Property
@@ -787,7 +794,7 @@ Namespace Orm
             ObjectState = Orm.ObjectState.NotLoaded
         End Sub
 
-        Protected Sub Init()
+        Protected Overridable Sub Init()
             'If OrmManagerBase.CurrentManager IsNot Nothing Then
             '    _mgrStr = OrmManagerBase.CurrentManager.IdentityString
             'End If
@@ -890,7 +897,7 @@ Namespace Orm
             Dim r As Boolean = True
             If _state = Orm.ObjectState.Modified Then
                 r = mc.UpdateObject(Me)
-            ElseIf _state = Orm.ObjectState.Created OrElse _state = Orm.ObjectState.NotFoundInDB Then
+            ElseIf _state = Orm.ObjectState.Created OrElse _state = Orm.ObjectState.NotFoundInSource Then
                 If OriginalCopy IsNot Nothing Then
                     Throw New OrmObjectException(ObjName & "Object with identifier " & Identifier & " already exists.")
                 End If
@@ -1039,6 +1046,7 @@ Namespace Orm
 
         Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As OrmBase, ByVal mc As OrmManagerBase)
             mc._RemoveObjectFromCache(obj)
+            mc.Cache.RegisterDelete(obj)
             'obj._needDelete = False
         End Sub
 
@@ -1081,6 +1089,9 @@ Namespace Orm
 
                     If _state = Orm.ObjectState.NotLoaded Then
                         Load()
+                        If _state = Orm.ObjectState.NotFoundInSource Then
+                            Throw New OrmObjectException(ObjName & "Object is not editable 'cause it is not found in source")
+                        End If
                     Else
                         Return
                     End If
@@ -1244,11 +1255,13 @@ Namespace Orm
             End Get
             Protected Friend Set(ByVal value As Integer)
                 Using SyncHelper(False)
+                    'If _id <> value Then
                     If _state = Orm.ObjectState.Created Then
                         CreateModified(value)
                     End If
                     _id = value
                     Debug.Assert(_id = value)
+                    'End If
                 End Using
             End Set
         End Property
@@ -1370,7 +1383,13 @@ Namespace Orm
 
         Public ReadOnly Property CanEdit() As Boolean
             Get
-                Return _state <> Orm.ObjectState.Deleted
+                If _state = Orm.ObjectState.Deleted Then 'OrElse _state = Orm.ObjectState.NotFoundInSource Then
+                    Return False
+                End If
+                If _state = Orm.ObjectState.NotLoaded Then
+                    Load()
+                End If
+                Return _state <> Orm.ObjectState.NotFoundInSource
             End Get
         End Property
 
@@ -1455,7 +1474,7 @@ Namespace Orm
                     End If
 
                     If OriginalCopy Is Nothing Then
-                        If _state <> Orm.ObjectState.Created Then
+                        If _state <> Orm.ObjectState.Created AndAlso _state <> Orm.ObjectState.Deleted Then
                             Throw New OrmObjectException(ObjName & ": When object is in modified state it has to have an original copy")
                         End If
                         Return
@@ -1474,7 +1493,7 @@ Namespace Orm
                         RevertToOriginalVersion()
                         RemoveVersionData(False)
                     End If
-                    Identifier = newid
+                    _id = newid
                     ObjectState = olds
                     If _state = Orm.ObjectState.Created Then
                         Dim name As String = Me.GetType.Name
@@ -1505,7 +1524,7 @@ Namespace Orm
         End Sub
 
         Public Sub AcceptChanges()
-            AcceptChanges(True, True)
+            AcceptChanges(True, IsGoodState(_state))
         End Sub
 
         Public Function IsFieldLoaded(ByVal fieldName As String) As Boolean
@@ -1528,9 +1547,9 @@ Namespace Orm
         '    End If
         'End Sub
 
-        Public Overridable Sub Delete()
+        Public Overridable Function Delete() As Boolean
             Using SyncHelper(False)
-                If _state = Orm.ObjectState.Deleted Then Return
+                If _state = Orm.ObjectState.Deleted Then Return False
 
                 If _state = Orm.ObjectState.Clone Then
                     Throw New OrmObjectException(ObjName & "Deleting clone is not allowed")
@@ -1547,6 +1566,9 @@ Namespace Orm
                 Else
                     If _state = Orm.ObjectState.NotLoaded Then
                         Load()
+                        If _state = Orm.ObjectState.NotFoundInSource Then
+                            Return False
+                        End If
                     End If
 
                     CreateModified(Identifier)
@@ -1558,7 +1580,9 @@ Namespace Orm
                 ObjectState = ObjectState.Deleted
                 GetMgr.RaiseBeginDelete(Me)
             End Using
-        End Sub
+
+            Return True
+        End Function
 
         <EditorBrowsable(EditorBrowsableState.Never)> _
         <Conditional("DEBUG")> _
@@ -1916,7 +1940,7 @@ l1:
         ''' <summary>
         ''' Попытка загрузить данный обьект из БД не удалась. Это может быть из-за того, что, например, он был удален.
         ''' </summary>
-        NotFoundInDB
+        NotFoundInSource
         ''' <summary>
         ''' Объект является копией редактируемого объекта
         ''' </summary>

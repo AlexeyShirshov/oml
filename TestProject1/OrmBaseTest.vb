@@ -217,7 +217,7 @@ Imports Worm.Database.Criteria.Core
 
             o.Load()
 
-            Assert.AreEqual(ObjectState.NotFoundInDB, o.InternalProperties.ObjectState)
+            Assert.AreEqual(ObjectState.NotFoundInSource, o.InternalProperties.ObjectState)
             Dim params As IEnumerable(Of Data.Common.DbParameter) = Nothing
 
             o.Delete()

@@ -785,7 +785,7 @@ Public Class TestManagerRS
             Try
                 e.SaveChanges(True)
 
-                Assert.IsFalse(mgr.IsInCache(e))
+                Assert.IsFalse(mgr.IsInCachePrecise(e))
 
                 e = mgr.Find(Of Composite)(1)
 

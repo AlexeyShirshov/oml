@@ -2187,26 +2187,6 @@ l1:
     '    RemoveFromCache(_cache.Filters, filter_key)
     'End Sub
 
-    Public Function IsInCache(ByVal obj As OrmBase) As Boolean
-        If obj Is Nothing Then
-            Throw New ArgumentNullException("obj")
-        End If
-
-        Return IsInCache(obj.Identifier, obj.GetType)
-    End Function
-
-    Public Function IsInCache(ByVal id As Integer, ByVal t As Type) As Boolean
-        Dim dic As IDictionary = GetDictionary(t)
-
-        If dic Is Nothing Then
-            ''todo: throw an exception when all collections will be implemented
-            'Return
-            Throw New OrmManagerException("Collection for " & t.Name & " not exists")
-        End If
-
-        Return dic.Contains(id)
-    End Function
-
 #End Region
 
 #Region " Object support "
@@ -2245,6 +2225,7 @@ l1:
         Dim sync_key As String = "LoadType" & id & type.ToString
         If a Is Nothing Then
             Using SyncHelper.AcquireDynamicLock(sync_key)
+                'Using 
                 If Not dic.TryGetValue(id, a) Then
                     If QueryGenerator.GetUnions(type) IsNot Nothing Then
                         Throw New NotSupportedException
@@ -2264,7 +2245,7 @@ l1:
                         'checked = True
                         If Not a.IsLoaded Then
                             a.Load()
-                            If a.ObjectState = ObjectState.NotFoundInDB Then
+                            If a.ObjectState = ObjectState.NotFoundInSource Then
                                 a = Nothing
                             End If
                         End If
@@ -2336,7 +2317,7 @@ l1:
                         'checked = True
                         If Not a.IsLoaded Then
                             a.Load()
-                            If a.ObjectState = ObjectState.NotFoundInDB Then
+                            If a.ObjectState = ObjectState.NotFoundInSource Then
                                 a = Nothing
                             End If
                         End If
@@ -2480,7 +2461,38 @@ l1:
             mdic.Remove(o.Second.Second)
         Next
 
+        _cache.RegisterRemoval(obj)
         Return True
+    End Function
+
+    Public Function IsInCachePrecise(ByVal obj As OrmBase) As Boolean
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
+
+        Dim t As Type = obj.GetType
+
+        Dim dic As IDictionary = GetDictionary(t)
+
+        If dic Is Nothing Then
+            ''todo: throw an exception when all collections will be implemented
+            'Return
+            Throw New OrmManagerException("Collection for " & t.Name & " not exists")
+        End If
+
+        Return ReferenceEquals(dic(obj.Identifier), obj)
+    End Function
+
+    Public Function IsInCache(ByVal id As Integer, ByVal t As Type) As Boolean
+        Dim dic As IDictionary = GetDictionary(t)
+
+        If dic Is Nothing Then
+            ''todo: throw an exception when all collections will be implemented
+            'Return
+            Throw New OrmManagerException("Collection for " & t.Name & " not exists")
+        End If
+
+        Return dic.Contains(id)
     End Function
 #End Region
 
@@ -2521,7 +2533,7 @@ l1:
 
     Private Shared Sub InsertObject(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Integer), ByVal o As OrmBase)
         If o IsNot Nothing Then
-            If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
+            If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
                 If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
                     Dim idx As Integer = l.BinarySearch(o.Identifier)
                     If idx < 0 Then
@@ -3747,7 +3759,7 @@ l1:
         End If
 
         Using obj.GetSyncRoot()
-            If obj.ObjectState = ObjectState.Created OrElse obj.ObjectState = ObjectState.NotFoundInDB Then
+            If obj.ObjectState = ObjectState.Created OrElse obj.ObjectState = ObjectState.NotFoundInSource Then
                 If Not InsertObject(obj) Then
                     Return Nothing
                 End If
@@ -3852,7 +3864,7 @@ l1:
     Protected MustOverride Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
 
     Protected Friend Sub RegisterInCashe(ByVal obj As OrmBase)
-        If Not IsInCache(obj) Then
+        If Not IsInCachePrecise(obj) Then
             Add2Cache(obj)
             If obj.OriginalCopy IsNot Nothing Then
                 Me.Cache.RegisterExistingModification(obj, obj.Identifier)
