@@ -952,6 +952,9 @@ Namespace Database
 
             Dim b As ConnAction = TestConn(cmd)
             Try
+                _cache.BeginTrackDelete(firstType)
+                _cache.BeginTrackDelete(secondType)
+
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
@@ -982,10 +985,8 @@ Namespace Database
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         Dim id1 As Integer = CInt(dr.GetValue(firstidx))
-                        Dim id2 As Integer = CInt(dr.GetValue(secidx))
                         Dim obj1 As OrmBase = CreateDBObject(id1, firstType)
-                        Dim obj2 As OrmBase = CreateDBObject(id2, secondType)
-                        If obj1.ObjectState <> ObjectState.Modified Then
+                        If Not _cache.IsDeleted(firstType, id1) AndAlso obj1.ObjectState <> ObjectState.Modified Then
                             Using obj1.GetSyncRoot()
                                 'If obj1.IsLoaded Then obj1.IsLoaded = False
                                 LoadFromDataReader(obj1, dr, first_cols, False)
@@ -996,12 +997,16 @@ Namespace Database
                             values.Add(obj1)
                         End If
 
-                        If obj2.ObjectState <> ObjectState.Modified Then
-                            Using obj2.GetSyncRoot()
-                                'If obj2.IsLoaded Then obj2.IsLoaded = False
-                                LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count)
-                                If obj2.ObjectState = ObjectState.NotLoaded AndAlso obj2.IsLoaded Then obj2.ObjectState = ObjectState.None
-                            End Using
+                        Dim id2 As Integer = CInt(dr.GetValue(secidx))
+                        If Not _cache.IsDeleted(secondType, id2) Then
+                            Dim obj2 As OrmBase = CreateDBObject(id2, secondType)
+                            If obj2.ObjectState <> ObjectState.Modified Then
+                                Using obj2.GetSyncRoot()
+                                    'If obj2.IsLoaded Then obj2.IsLoaded = False
+                                    LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count)
+                                    If obj2.ObjectState = ObjectState.NotLoaded AndAlso obj2.IsLoaded Then obj2.ObjectState = ObjectState.None
+                                End Using
+                            End If
                         End If
                     Loop
                     _fetch = ft.GetTime
@@ -1009,6 +1014,8 @@ Namespace Database
                     Return values
                 End Using
             Finally
+                _cache.EndTrackDelete(secondType)
+                _cache.EndTrackDelete(firstType)
                 CloseConn(b)
             End Try
 
@@ -1207,6 +1214,9 @@ Namespace Database
                         End If
                         Dim b As ConnAction = TestConn(cmd)
                         Try
+                            If withLoad Then
+                                _cache.BeginTrackDelete(type2load)
+                            End If
                             Dim et As New PerfCounter
                             Using dr As System.Data.IDataReader = cmd.ExecuteReader
                                 _exec = et.GetTime
@@ -1224,7 +1234,7 @@ Namespace Database
                                         el = New EditableList(id1, l, type, type2load, Nothing)
                                         edic.Add(id1, el)
                                     End If
-                                    If withLoad Then
+                                    If withLoad AndAlso Not _cache.IsDeleted(type2load, id2) Then
                                         Dim obj As T = CreateDBObject(Of T)(id2)
                                         If obj.ObjectState <> ObjectState.Modified Then
                                             Using obj.GetSyncRoot()
@@ -1238,6 +1248,9 @@ Namespace Database
                                 _fetch = ft.GetTime
                             End Using
                         Finally
+                            If withLoad Then
+                                _cache.EndTrackDelete(type2load)
+                            End If
                             CloseConn(b)
                         End Try
                     End Using
@@ -1424,7 +1437,9 @@ Namespace Database
 
             Dim b As ConnAction = TestConn(cmd)
             Try
-                'Debug.WriteLine(cmd.CommandText)
+                If load Then
+                    _cache.BeginTrackDelete(obj.GetType)
+                End If
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     Using obj.GetSyncRoot()
@@ -1436,7 +1451,9 @@ Namespace Database
                             If loaded Then
                                 Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
                             End If
-                            LoadFromDataReader(obj, dr, arr, check_pk)
+                            If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse Not _cache.IsDeleted(obj)) Then
+                                LoadFromDataReader(obj, dr, arr, check_pk)
+                            End If
                             loaded = True
                         Loop
                         If dr.RecordsAffected = 0 Then
@@ -1460,6 +1477,9 @@ Namespace Database
                 End Using
                 _cache.LogLoadTime(obj, et.GetTime)
             Finally
+                If load Then
+                    _cache.EndTrackDelete(obj.GetType)
+                End If
                 CloseConn(b)
             End Try
 
@@ -1658,6 +1678,7 @@ l1:
                             Throw New OrmManagerException("PK is not loaded")
                         Else
                             obj.CreateModified(obj.Identifier)
+                            Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                         End If
                     End If
 
@@ -1843,6 +1864,7 @@ l1:
 
         '<Conditional("TRACE")> _
         Protected Sub TraceStmt(ByVal cmd As System.Data.Common.DbCommand)
+            Dim sb As New StringBuilder
             If _tsStmt.Switch.ShouldTrace(TraceEventType.Information) Then
                 'SyncLock _tsStmt
                 For Each p As System.Data.Common.DbParameter In cmd.Parameters
@@ -1858,13 +1880,15 @@ l1:
                             End If
                             tp = DbTypeConvertor.ToSqlDbType(p.DbType).ToString
                         End If
-                        WriteInfo(_tsStmt, DbSchema.DeclareVariable(p.ParameterName, tp))
-                        WriteLineInfo(_tsStmt, ";set " & p.ParameterName & " = " & val)
+                        sb.Append(DbSchema.DeclareVariable(p.ParameterName, tp))
+                        sb.AppendLine(";set " & p.ParameterName & " = " & val)
                     End With
                 Next
-                WriteLineInfo(_tsStmt, cmd.CommandText)
+                sb.AppendLine(cmd.CommandText)
                 'End SyncLock
             End If
+            helper.WriteInfo(_tsStmt, sb.ToString)
+            WriteLineInfo(sb.ToString)
         End Sub
 
         Protected Friend Overrides Function LoadObjectsInternal(Of T As {OrmBase, New})( _
@@ -1978,17 +2002,17 @@ l1:
                 End Using
             Next
 
-            values.Clear()
+			Dim result As New ReadOnlyList(Of T)
             Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
             If remove_not_found Then
                 For Each o As T In objs
                     If o.IsLoaded Then
-                        values.Add(o)
+						result.Add(o)
                     ElseIf ListConverter.IsWeak Then
                         Dim obj As T = Nothing
-                        If dic.TryGetValue(o.Identifier, obj) AndAlso obj.IsLoaded Then
-                            values.Add(obj)
-                        End If
+						If dic.TryGetValue(o.Identifier, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
+							result.Add(obj)
+						End If
                     End If
                 Next
             Else
@@ -1996,16 +2020,17 @@ l1:
                     For Each o As T In objs
                         Dim obj As T = Nothing
                         If dic.TryGetValue(o.Identifier, obj) Then
-                            values.Add(obj)
+							result.Add(obj)
                         Else
-                            values.Add(o)
+							result.Add(o)
                         End If
                     Next
                 Else
                     Return objs
                 End If
-            End If
-            Return New ReadOnlyList(Of T)(values)
+			End If
+			Return result
+			'Return New ReadOnlyList(Of T)(values)
         End Function
 
         Protected Function GetFilters(ByVal ids As Generic.List(Of Integer), ByVal fieldName As String, _

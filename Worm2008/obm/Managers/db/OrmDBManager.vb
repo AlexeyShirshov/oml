@@ -230,7 +230,7 @@ Namespace Database
 
             Dim tt As Type = obj.GetType
             Dim p As New ParamMgr(DbSchema, "p")
-            Dim cmd_text As String = DbSchema.SaveM2M(obj, DbSchema.GetM2MRelation(tt, t, Not direct), el, p)
+            Dim cmd_text As String = DbSchema.SaveM2M(obj, DbSchema.GetM2MRelationForEdit(tt, t, Not direct), el, p)
 
             If Not String.IsNullOrEmpty(cmd_text) Then
                 Dim [error] As Boolean = True

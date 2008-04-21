@@ -459,6 +459,10 @@ Public Class MultiR
         Public Sub EndProcess(ByVal mgr As Worm.OrmManagerBase) Implements MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.EndProcess
 
         End Sub
+
+        Public Sub BeginProcess(ByVal mgr As Worm.OrmManagerBase) Implements Worm.Database.Storedprocs.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.BeginProcess
+
+        End Sub
     End Class
 
     Public Sub New()

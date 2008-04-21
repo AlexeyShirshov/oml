@@ -468,10 +468,14 @@ Namespace Cache
 
             Dim t As Type = obj.GetType
 
+            Return IsDeleted(t, obj.Identifier)
+        End Function
+
+        Friend Function IsDeleted(ByVal t As Type, ByVal id As Integer) As Boolean
             Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
                 Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
                 If _trackDelete.TryGetValue(t, p) Then
-                    Dim idx As Integer = p.Second.IndexOf(obj.Identifier)
+                    Dim idx As Integer = p.Second.IndexOf(id)
                     'If idx >= 0 Then
                     '    l.RemoveAt(idx)
                     'End If
@@ -1317,10 +1321,19 @@ l1:
 
     <Serializable()> _
     Public Class ModifiedObject
+        Public Enum ReasonEnum
+            Unknown
+            Delete
+            Edit
+            SaveNew
+        End Enum
+
         Public ReadOnly User As Object
         <CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104")> _
         Public ReadOnly Obj As OrmBase
         Public ReadOnly DateTime As Date
+
+        Public Reason As ReasonEnum
 
 #If DEBUG Then
         Protected _stack As String

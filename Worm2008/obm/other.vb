@@ -161,7 +161,7 @@ Public Class ReadOnlyList(Of T As {Orm.OrmBase, New})
     End Sub
 
     Public Sub New(ByVal col As IEnumerable(Of T))
-        MyBase.New(New List(Of T)(col))
+		MyClass.New(New List(Of T)(col))
     End Sub
 
     Public Sub New(ByVal list As List(Of T))
@@ -238,7 +238,16 @@ Public Class ReadOnlyList(Of T As {Orm.OrmBase, New})
 
     Public Function ApplySort(ByVal s As Sorting.Sort) As ICollection(Of T)
         Return OrmManagerBase.ApplySort(Of T)(Me, s)
-    End Function
+	End Function
+
+	Public Function GetRange(ByVal index As Integer, ByVal count As Integer) As ReadOnlyList(Of T)
+		If _l.Count > 0 Then
+			Dim lst As List(Of T) = _l.GetRange(index, count)
+			Return New ReadOnlyList(Of T)(lst)
+		Else
+			Return Me
+		End If
+	End Function
 End Class
 
 Namespace Collections

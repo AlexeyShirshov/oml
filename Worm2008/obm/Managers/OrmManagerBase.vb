@@ -504,6 +504,19 @@ Public MustInherit Class OrmManagerBase
         '    End Get
         'End Property
 
+        Public Function GetObjectListNonGeneric(ByVal mgr As OrmManagerBase, _
+            ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ICollection
+
+            Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
+
+            Dim types As Type() = New Type() {GetType(OrmManagerBase), GetType(Boolean), GetType(Boolean), GetType(IListObjectConverter.ExtractListResult)}
+
+            Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("GetObjectList", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
+            Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {Entry.SubType})
+
+            Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {mgr, withLoad, created, New IListObjectConverter.ExtractListResult}, Nothing), System.Collections.ICollection)
+        End Function
+
         Public Overrides Function GetObjectList(Of T As {New, OrmBase})(ByVal mgr As OrmManagerBase, _
             ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyList(Of T)
             successed = IListObjectConverter.ExtractListResult.Successed
@@ -602,7 +615,7 @@ Public MustInherit Class OrmManagerBase
             Me.CacheHit = hit
             Me.LoadedInResultset = loaded
             If _tsExec.Switch.ShouldTrace(TraceEventType.Information) Then
-                WriteLineInfo(_tsExec, GetTraceStr)
+                helper.WriteLineInfo(_tsExec, GetTraceStr)
             End If
         End Sub
 
@@ -858,6 +871,8 @@ Public MustInherit Class OrmManagerBase
     Friend _externalFilter As IFilter
     Protected Friend _loadedInLastFetch As Integer
     Private _list As String
+    Private _listeners As New List(Of TraceListener)
+
 #If TraceManagerCreation Then
         private _callstack as string
 #End If
@@ -1016,6 +1031,21 @@ _callstack = environment.StackTrace
             _cur = value
         End Set
     End Property
+
+    Public Sub AddListener(ByVal l As TraceListener)
+        _listeners.Add(l)
+    End Sub
+
+    Public Sub RemoveListener(ByVal l As TraceListener)
+        _listeners.Remove(l)
+    End Sub
+
+    Protected Sub WriteLineInfo(ByVal str As String)
+        For Each l As TraceListener In _listeners
+            l.WriteLine(Str)
+            If Trace.AutoFlush Then l.Flush()
+        Next
+    End Sub
 
     Public Overridable ReadOnly Property CurrentUser() As Object
         Get
@@ -2663,7 +2693,11 @@ l1:
         End If
 
         If relation IsNot Nothing Then
-            key &= relation.Table.RawName & relation.Column
+            If relation.ConnectedType IsNot Nothing Then
+                key &= relation.ConnectedType.ToString & relation.Column
+            Else
+                key &= relation.Table.RawName & relation.Column
+            End If
         End If
 
         key &= GetStaticKey()
@@ -2675,9 +2709,9 @@ l1:
             id &= criteria.Filter(GetType(T)).ToString
         End If
 
-        If relation IsNot Nothing Then
-            id &= relation.Table.RawName & relation.Column
-        End If
+        'If relation IsNot Nothing Then
+        '    id &= relation.Table.RawName & relation.Column
+        'End If
 
         Dim sync As String = id & GetStaticKey()
 

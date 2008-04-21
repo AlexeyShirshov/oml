@@ -371,7 +371,7 @@ Namespace Database
                                         Throw New OrmSchemaException("DefaultValue required for operation")
                                     End If
                                 ElseIf v Is DBNull.Value AndAlso pkt IsNot tb AndAlso js IsNot Nothing Then
-									Dim j As OrmJoin = CType(GetJoins(js, pkt, tb, filterInfo), OrmJoin)
+                                    Dim j As OrmJoin = CType(GetJoins(js, pkt, tb, filterInfo), OrmJoin)
                                     If j.JoinType = Joins.JoinType.Join Then
                                         GoTo l1
                                     End If
@@ -1098,6 +1098,14 @@ l1:
 
                 Dim r2 As M2MRelation = GetM2MRelation(relation.Type, original_type, True)
                 Dim tbl As OrmTable = relation.Table
+                If tbl Is Nothing Then
+                    If relation.ConnectedType IsNot Nothing Then
+                        tbl = GetTables(relation.ConnectedType)(0)
+                    Else
+                        Throw New InvalidOperationException(String.Format("Relation from type {0} to {1} has not table", original_type, relation.Type))
+                    End If
+                End If
+
                 Dim f As New JoinFilter(tbl, r2.Column, original_type, "ID", FilterOperation.Equal)
                 Dim join As New OrmJoin(tbl, Joins.JoinType.Join, f)
 
@@ -1991,12 +1999,12 @@ l1:
             Dim almgr As AliasMgr = AliasMgr.Create
 
             If String.IsNullOrEmpty(secField) Then
-                sb.Append(GetDicStmt(type, s, firstField, level, almgr, params, filter, Joins, filter_info, True))
+                sb.Append(GetDicStmt(type, s, firstField, level, almgr, params, filter, joins, filter_info, True))
             Else
                 sb.Append("select name,sum(cnt) from (")
                 sb.Append(GetDicStmt(type, s, firstField, level, almgr, params, filter, joins, filter_info, False))
                 sb.Append(" union ")
-                sb.Append(GetDicStmt(type, s, secField, level, almgr, params, filter, Joins, filter_info, False))
+                sb.Append(GetDicStmt(type, s, secField, level, almgr, params, filter, joins, filter_info, False))
                 sb.Append(") sd group by name order by name")
             End If
 

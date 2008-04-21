@@ -247,12 +247,16 @@ Namespace Orm
                 Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {criteria, sort, withLoad}, Nothing), IList)
             End Function
 
-            Public Function FindDistinct(Of T As {New, OrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
-                Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, True, withLoad)
-            End Function
+			Public Function FindDistinct(Of T As {New, OrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+				'Dim rel As M2MRelation = GetMgr.ObjectSchema.GetM2MRelation(Me.GetType, GetType(T), True)
+				'Return GetMgr.FindDistinct(Of T)(rel, criteria, sort, withLoad)
+				Return FindDistinct(Of T)(criteria, sort, True, withLoad)
+			End Function
 
             Public Function FindDistinct(Of T As {New, OrmBase})(ByVal criteria As IGetFilter, ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
-                Return GetMgr.FindMany2Many2(Of T)(_o, criteria, sort, direct, withLoad)
+				Dim rel As M2MRelation = GetMgr.ObjectSchema.GetM2MRelation(GetType(T), _o.GetType, direct)
+				Dim crit As CriteriaLink = GetMgr.ObjectSchema.CreateCriteria(_o.GetType, "ID").Eq(_o).And(CType(criteria, CriteriaLink))
+				Return GetMgr.FindDistinct(Of T)(rel, crit, sort, withLoad)
             End Function
 
             Public Sub Add(ByVal obj As OrmBase)
@@ -495,6 +499,40 @@ Namespace Orm
                     Return sb.ToString
                 End Get
             End Property
+
+            Public ReadOnly Property HasBodyChanges() As Boolean
+                Get
+                    Return _o.HasBodyChanges
+                End Get
+            End Property
+
+            Public ReadOnly Property HasM2MChanges() As Boolean
+                Get
+                    Return _o.HasM2MChanges
+                End Get
+            End Property
+
+            Public ReadOnly Property HasChanges() As Boolean
+                Get
+                    Return _o.HasChanges
+                End Get
+            End Property
+
+            Public Function GetM2MRelatedChangedObjects() As List(Of OrmBase)
+                Return _o.GetM2MRelatedChangedObjects
+            End Function
+
+            Public Function GetRelatedChangedObjects() As List(Of OrmBase)
+                Return _o.GetRelatedChangedObjects
+            End Function
+
+            Public Function GetChangedObjectGraph() As List(Of OrmBase)
+                Return _o.GetChangedObjectGraph
+            End Function
+
+            Public Function GetChangedObjectGraphWithSelf() As List(Of OrmBase)
+                Return _o.GetChangedObjectGraphWithSelf
+            End Function
         End Class
 
         Public Class PropertyChangedEventArgs
@@ -600,6 +638,9 @@ Namespace Orm
         Public Event Updated(ByVal sender As OrmBase, ByVal args As EventArgs)
         Public Event PropertyChanged(ByVal sender As OrmBase, ByVal args As PropertyChangedEventArgs)
 
+#If DEBUG Then
+        Protected Event ObjectStateChanged(ByVal oldState As ObjectState)
+#End If
         'for xml serialization
         Public Sub New()
             'Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
@@ -609,6 +650,79 @@ Namespace Orm
         End Sub
 
 #Region " Protected functions "
+        Protected Friend ReadOnly Property HasBodyChanges() As Boolean
+            Get
+                Return _state = Orm.ObjectState.Modified OrElse _state = Orm.ObjectState.Deleted OrElse _state = Orm.ObjectState.Created
+            End Get
+        End Property
+
+        Protected Friend ReadOnly Property HasM2MChanges() As Boolean
+            Get
+                Return _needAccept IsNot Nothing AndAlso _needAccept.Count > 0
+            End Get
+        End Property
+
+        Protected Friend ReadOnly Property HasChanges() As Boolean
+            Get
+                Return HasBodyChanges OrElse HasM2MChanges
+            End Get
+        End Property
+
+        Protected Friend Function GetM2MRelatedChangedObjects() As List(Of OrmBase)
+            Dim l As New List(Of OrmBase)
+            For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In OrmCache.GetM2MEntries(Me, Nothing)
+                Dim s As IListObjectConverter.ExtractListResult
+                For Each obj As OrmBase In o.First.GetObjectListNonGeneric(GetMgr, False, False, s)
+                    If obj.HasChanges Then
+                        l.Add(obj)
+                    End If
+                Next
+            Next
+            Return l
+        End Function
+
+        Protected Friend Function GetRelatedChangedObjects() As List(Of OrmBase)
+            Dim l As New List(Of OrmBase)
+            For Each kv As DictionaryEntry In GetMgr.ObjectSchema.GetProperties(Me.GetType)
+                Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+                If GetType(OrmBase).IsAssignableFrom(pi.PropertyType) Then
+                    Dim o As OrmBase = CType(GetValue(CType(kv.Key, ColumnAttribute).FieldName), OrmBase)
+                    If o.HasChanges Then
+                        l.Add(o)
+                    End If
+                End If
+            Next
+            Return l
+        End Function
+
+        Protected Friend Function GetChangedObjectGraph() As List(Of OrmBase)
+            Dim l As New List(Of OrmBase)
+            l.AddRange(GetRelatedChangedObjects())
+            For Each o As OrmBase In GetM2MRelatedChangedObjects()
+                If Not l.Contains(o) Then
+                    l.Add(o)
+                End If
+            Next
+
+            For Each o As OrmBase In l
+                For Each innerObj As OrmBase In o.GetChangedObjectGraph()
+                    If Not l.Contains(innerObj) Then
+                        l.Add(innerObj)
+                    End If
+                Next
+            Next
+
+            Return l
+        End Function
+
+        Protected Friend Function GetChangedObjectGraphWithSelf() As List(Of OrmBase)
+            Dim l As List(Of OrmBase) = GetChangedObjectGraph()
+            If HasChanges AndAlso Not l.Contains(Me) Then
+                l.Add(Me)
+            End If
+            Return l
+        End Function
+
         Friend Overridable ReadOnly Property ChangeDescription() As String
             Get
                 Dim sb As New StringBuilder
@@ -680,6 +794,11 @@ Namespace Orm
             End Get
             Set(ByVal value As ObjectState)
                 Using SyncHelper(False)
+                    Debug.Assert(_state <> Orm.ObjectState.Deleted)
+                    If _state = Orm.ObjectState.Deleted Then
+                        Throw New OrmObjectException(String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
+                    End If
+
                     Debug.Assert(Not _needDelete)
                     If _needDelete Then
                         Throw New OrmObjectException(String.Format("Cannot set state while object {0} is in the middle of saving changes", ObjName))
@@ -690,8 +809,13 @@ Namespace Orm
                         Throw New OrmObjectException(String.Format("Cannot set state none while object {0} is not loaded", ObjName))
                     End If
 
+                    Dim olds As ObjectState = _state
                     _state = value
                     Debug.Assert(_state = value)
+
+#If DEBUG Then
+                    RaiseEvent ObjectStateChanged(olds)
+#End If
                 End Using
             End Set
         End Property
@@ -1158,7 +1282,7 @@ Namespace Orm
         Protected Sub CreateModified()
             Dim modified As OrmBase = CreateOriginalVersion()
             ObjectState = Orm.ObjectState.Modified
-            OrmCache.RegisterModification(modified)
+            OrmCache.RegisterModification(modified).Reason = ModifiedObject.ReasonEnum.Edit
             If Not _loading Then
                 GetMgr.RaiseBeginUpdate(Me)
             End If
@@ -1480,6 +1604,15 @@ Namespace Orm
                         Return
                     End If
 
+                    Dim mo As ModifiedObject = OrmCache.Modified(Me)
+                    If _state = Orm.ObjectState.Deleted AndAlso mo.Reason <> ModifiedObject.ReasonEnum.Delete Then
+                        Throw New OrmObjectException
+                    End If
+
+                    If _state = Orm.ObjectState.Modified AndAlso (mo.Reason = ModifiedObject.ReasonEnum.Delete) Then
+                        Throw New OrmObjectException
+                    End If
+
                     'Debug.WriteLine(Environment.StackTrace)
                     _needAdd = False
                     _needDelete = False
@@ -1494,7 +1627,7 @@ Namespace Orm
                         RemoveVersionData(False)
                     End If
                     _id = newid
-                    ObjectState = olds
+                    SetObjectState(olds)
                     If _state = Orm.ObjectState.Created Then
                         Dim name As String = Me.GetType.Name
                         Dim mc As OrmManagerBase = GetMgr()
@@ -1549,7 +1682,7 @@ Namespace Orm
 
         Public Overridable Function Delete() As Boolean
             Using SyncHelper(False)
-                If _state = Orm.ObjectState.Deleted Then Return False
+                If _state = Orm.ObjectState.Deleted OrElse _state = Orm.ObjectState.Modified Then Return False
 
                 If _state = Orm.ObjectState.Clone Then
                     Throw New OrmObjectException(ObjName & "Deleting clone is not allowed")
@@ -1572,6 +1705,7 @@ Namespace Orm
                     End If
 
                     CreateModified(Identifier)
+                    OrmCache.Modified(Me).Reason = ModifiedObject.ReasonEnum.Delete
                     'Dim modified As OrmBase = CloneMe()
                     'modified._old_state = modified.ObjectState
                     'modified.ObjectState = ObjectState.Clone
