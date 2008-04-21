@@ -825,6 +825,7 @@ Namespace Database.Storedprocs
 
         Public Interface IResultSetDescriptor
             Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String)
+            Sub BeginProcess(ByVal mgr As OrmManagerBase)
             Sub EndProcess(ByVal mgr As OrmManagerBase)
         End Interface
 
@@ -837,7 +838,7 @@ Namespace Database.Storedprocs
             Private _count As Integer
             Private _loaded As Integer
 
-            Public Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
+            Public Overridable Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
                 'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
                 If mgr._externalFilter IsNot Nothing Then
                     Throw New InvalidOperationException("External filter is not applicable for store procedures")
@@ -880,9 +881,13 @@ Namespace Database.Storedprocs
                 End Get
             End Property
 
-            Public Sub EndProcess(ByVal mgr As OrmManagerBase) Implements IResultSetDescriptor.EndProcess
+            Public Overridable Sub EndProcess(ByVal mgr As OrmManagerBase) Implements IResultSetDescriptor.EndProcess
                 _ce = New OrmManagerBase.CachedItem(Nothing, New ReadOnlyList(Of T)(_l), mgr)
                 _l = Nothing
+            End Sub
+
+            Public Overridable Sub BeginProcess(ByVal mgr As OrmManagerBase) Implements IResultSetDescriptor.BeginProcess
+
             End Sub
         End Class
 
@@ -907,6 +912,7 @@ Namespace Database.Storedprocs
             Dim rd As IResultSetDescriptor = Nothing
             If desc.Count - 1 < resultSet Then
                 rd = CreateDescriptor(resultSet)
+                rd.BeginProcess(mgr)
                 desc.Add(rd)
             Else
                 rd = desc(resultSet)

@@ -400,6 +400,9 @@ Namespace Database
                     End If
                     Dim b As ConnAction = _mgr.TestConn(cmd)
                     Try
+                        If withLoad Then
+                            _mgr._cache.BeginTrackDelete(t)
+                        End If
                         _mgr._loadedInLastFetch = 0
                         Dim et As New PerfCounter
                         Using dr As System.Data.IDataReader = cmd.ExecuteReader
@@ -413,7 +416,7 @@ Namespace Database
                                 End If
                                 Dim id2 As Integer = CInt(dr.GetValue(1))
                                 l.Add(id2)
-                                If withLoad Then
+                                If withLoad AndAlso Not _mgr._cache.IsDeleted(t, id2) Then
                                     Dim obj As T = _mgr.CreateDBObject(Of T)(id2)
                                     If obj.ObjectState <> ObjectState.Modified Then
                                         Using obj.GetSyncRoot()
@@ -437,6 +440,9 @@ Namespace Database
                             Return l
                         End Using
                     Finally
+                        If withLoad Then
+                            _mgr._cache.EndTrackDelete(t)
+                        End If
                         _mgr.CloseConn(b)
                     End Try
                 End Using

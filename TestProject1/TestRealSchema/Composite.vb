@@ -121,4 +121,8 @@ Public Class CompositeEditableSchema
     Public Function GetTables() As OrmTable() Implements IRelMapObjectSchema.GetTables
         Return _tables
     End Function
+
+    Public Function GetM2MRelations() As Worm.Orm.Meta.M2MRelation() Implements Worm.Orm.Meta.IOrmRelationalSchemaWithM2M.GetM2MRelations
+        Return Nothing
+    End Function
 End Class

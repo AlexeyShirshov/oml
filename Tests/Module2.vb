@@ -2,6 +2,8 @@
 Imports Worm.Cache
 Imports Worm
 Imports Worm.Database.Criteria
+Imports Worm.Database.OrmReadOnlyDBManager
+Imports Worm.Database.OrmReadOnlyDBManager.BatchSaver
 
 Module Module2
 
@@ -24,6 +26,39 @@ Module Module2
             End Get
         End Property
 
+        Private _changes As New List(Of Pair(Of Date, Worm.Orm.ObjectState))
+        Public ReadOnly Property StateChanges() As List(Of Pair(Of Date, Worm.Orm.ObjectState))
+            Get
+                Return _changes
+            End Get
+        End Property
+
+        Protected Sub ChangeState(ByVal state As Worm.Orm.ObjectState)
+            _changes.Add(New Pair(Of Date, Worm.Orm.ObjectState)(Now, state))
+        End Sub
+
+        Protected _deleted As Boolean
+        Public ReadOnly Property ObjectDeleted() As Boolean
+            Get
+                Return _deleted
+            End Get
+        End Property
+
+        Protected Sub OnDeleted(ByVal o As Orm.OrmBase, ByVal e As EventArgs)
+            _deleted = True
+        End Sub
+
+        Protected _s As Orm.ObjectState
+        Public ReadOnly Property SavingState() As Orm.ObjectState
+            Get
+                Return _s
+            End Get
+        End Property
+
+        Public Sub ObjectSaving(ByVal sender As BatchSaver, ByVal args As CancelEventArgs)
+            _s = args.SavedObject.InternalProperties.ObjectState
+        End Sub
+
         Public Sub New()
 
         End Sub
@@ -35,6 +70,7 @@ Module Module2
         Protected Overrides Sub Init()
             _stack = Environment.StackTrace
             _dt = Now
+            AddHandler ObjectStateChanged, AddressOf ChangeState
         End Sub
 
         Private _name As String
@@ -96,7 +132,7 @@ Module Module2
         Dim n As Date = Now
         Dim trd As New List(Of Threading.Thread)
         Randomize()
-        For i As Integer = 0 To 14
+        For i As Integer = 0 To 20
             Dim t As New Threading.Thread(AddressOf EditSub)
             trd.Add(t)
             t = New Threading.Thread(AddressOf QuerySub)
@@ -207,19 +243,36 @@ Module Module2
                         GetMinMax(mgr, min, max)
                         Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
                         If t IsNot Nothing Then
-                            Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
-                                Using t.BeginAlter
-                                    done = t.Delete()
-                                End Using
-                                st.Commit()
+                            Using sw As New IO.StringWriter
+                                Dim ls As New TextWriterTraceListener(sw)
+                                mgr.AddListener(ls)
+                                Try
+                                    Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                                        Using t.BeginAlter
+                                            done = t.Delete()
+                                            Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                        End Using
+                                        Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                        st.Commit()
+                                        Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                        AddHandler st.Saver.ObjectSaving, AddressOf t.ObjectSaving
+                                    End Using
+                                    If done Then
+                                        Dim s, s2, s3 As String
+                                        If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
+                                            s = sw.GetStringBuilder.ToString
+                                        End If
+                                        Debug.Assert(t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                        _deleted.Add(t)
+                                        Dim b As Boolean = mgr.IsInCachePrecise(t)
+                                        Debug.Assert(Not b)
+                                    End If
+                                Finally
+                                    mgr.RemoveListener(ls)
+                                End Try
                             End Using
-                            If done Then
-                                Debug.Assert(t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
-                                _deleted.Add(t)
-                                Dim b As Boolean = mgr.IsInCachePrecise(t)
-                                Debug.Assert(Not b)
-                            End If
                         End If
+                        done = False
                     Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
                         Threading.Interlocked.Increment(_exCount)
                     Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")

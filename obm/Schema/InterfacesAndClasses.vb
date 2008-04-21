@@ -70,7 +70,7 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface IRelMapObjectSchema
-        Inherits IOrmRelationalSchema, IObjectSchemaBase
+        Inherits IOrmRelationalSchemaWithM2M, IObjectSchemaBase
     End Interface
 
     Public Interface IOrmObjectSchema

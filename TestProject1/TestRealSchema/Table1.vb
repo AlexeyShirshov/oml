@@ -227,8 +227,9 @@ Public Class Table1Implementation
         End If
 
         If _rels Is Nothing Then
+            Dim t1to3 As OrmTable = Nothing 'TablesImplementation._tables(0)
             _rels = New M2MRelation() { _
-                New M2MRelation(t, TablesImplementation._tables(0), "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
+                New M2MRelation(t, t1to3, "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
                 New M2MRelation(_objectType, Tables1to1.TablesImplementation._tables(0), "table1", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), False), _
                 New M2MRelation(_objectType, Tables1to1.TablesImplementation._tables(0), "table1_back", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), True) _
             }

@@ -718,26 +718,33 @@ namespace Worm.CodeGen.Core
 
 					#region ColumnAttribute[] GetSuppressedColumns()
 
-					if (entity.Behaviour != EntityBehaviuor.PartialObjects && entity.BaseEntity == null)
+					if (entity.Behaviour != EntityBehaviuor.PartialObjects)
 					{
+
 						method = new CodeMemberMethod();
 						entitySchemaDefClass.Members.Add(method);
 						method.Name = "GetSuppressedColumns";
 						// тип возвращаемого значения
-						method.ReturnType = new CodeTypeReference(typeof (ColumnAttribute[]));
+						method.ReturnType = new CodeTypeReference(typeof(ColumnAttribute[]));
 						// модификаторы доступа
 						method.Attributes = MemberAttributes.Public;
 						// реализует метод базового класса
-						method.ImplementationTypes.Add(typeof (IOrmObjectSchema));
+						method.ImplementationTypes.Add(typeof(IOrmObjectSchema));
 						CodeArrayCreateExpression arrayExpression = new CodeArrayCreateExpression(
-							new CodeTypeReference(typeof (ColumnAttribute[]))
+							new CodeTypeReference(typeof(ColumnAttribute[]))
 							);
-						foreach (PropertyDescription suppressedProperty in entity.SuppressedProperties)
-						{
-							arrayExpression.Initializers.Add(
-								new CodeObjectCreateExpression(typeof (ColumnAttribute),
-								                               new CodePrimitiveExpression(suppressedProperty.PropertyAlias)));
-						}
+
+						
+							foreach (PropertyDescription suppressedProperty in entity.SuppressedProperties)
+							{
+								arrayExpression.Initializers.Add(
+									new CodeObjectCreateExpression(typeof(ColumnAttribute),
+																   new CodePrimitiveExpression(suppressedProperty.PropertyAlias)));
+							}
+						
+					
+
+						
 						method.Statements.Add(new CodeMethodReturnStatement(arrayExpression));
 					}
 
@@ -2434,25 +2441,51 @@ namespace Worm.CodeGen.Core
                         OrmCodeGenNameHelper.GetEntitySchemaDefClassQualifiedName(entity) + ".TablesLink"), "tbl"
                     )
                 );
-            // return (OrmTable)this.GetTables().GetValue((int)tbl)
+            //	return (OrmTable)this.GetTables().GetValue((int)tbl)
+
+			//	OrmTable[] tables = this.GetTables();
+			//	OrmTable table = null;
+			//	int tblIndex = (int)tbl;
+			//	if(tables.Length > tblIndex)
+			//		table = tables[tblIndex];
+			//	return table;
+			string[] strs;
             method.Statements.Add(
-                new CodeMethodReturnStatement(
-                    new CodeCastExpression(
-                        new CodeTypeReference(typeof(OrmTable)),
-                        new CodeMethodInvokeExpression(
-                            new CodeMethodInvokeExpression(
-                                new CodeThisReferenceExpression(),
-                                "GetTables"
-                                ),
-                            "GetValue",
-                            new CodeCastExpression(
+				new CodeVariableDeclarationStatement(
+					new CodeTypeReference(typeof(OrmTable[])), 
+					"tables", 
+					new CodeMethodInvokeExpression(
+                        new CodeThisReferenceExpression(),
+                        "GetTables"
+                        )));
+			method.Statements.Add(new CodeVariableDeclarationStatement(new CodeTypeReference(typeof(OrmTable)), "table", new CodePrimitiveExpression(null)));
+			method.Statements.Add(new CodeVariableDeclarationStatement(
+						new CodeTypeReference(typeof(int)), 
+						"tblIndex", 
+						new CodeCastExpression(
                                 new CodeTypeReference(typeof(int)),
                                 new CodeArgumentReferenceExpression("tbl")
                                 )
-                            )
-                        )
-                    )
-                );
+						));
+			method.Statements.Add(new CodeConditionStatement(
+						new CodeBinaryOperatorExpression(
+							new CodePropertyReferenceExpression(
+								new CodeVariableReferenceExpression("tables"),
+								"Length"
+								),
+							CodeBinaryOperatorType.GreaterThan,
+							new CodeVariableReferenceExpression("tblIndex")
+						),
+						new CodeAssignStatement(
+							new CodeVariableReferenceExpression("table"), 
+							new CodeIndexerExpression(
+								new CodeVariableReferenceExpression("tables"),
+								new CodeVariableReferenceExpression("tblIndex")
+							))));
+			method.Statements.Add(						
+                new CodeMethodReturnStatement(
+					new CodeVariableReferenceExpression("table")                    
+                ));
         }
 
         private static void CreateGetTablesMethod(EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass)

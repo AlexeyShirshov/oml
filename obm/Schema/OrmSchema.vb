@@ -307,8 +307,45 @@ Public MustInherit Class QueryGenerator
         End If
     End Function
 
+    Public Function GetM2MRelationsForEdit(ByVal maintype As Type) As M2MRelation()
+        If maintype Is Nothing Then
+            Throw New ArgumentNullException("maintype")
+        End If
+
+        Dim sch As IObjectSchemaBase = GetObjectSchema(maintype)
+        Dim editable As IReadonlyObjectSchema = TryCast(sch, IReadonlyObjectSchema)
+        Dim schema As IOrmRelationalSchemaWithM2M = Nothing
+        If editable IsNot Nothing Then
+            schema = editable.GetEditableSchema
+        Else
+            schema = TryCast(sch, IOrmRelationalSchemaWithM2M)
+        End If
+        If schema IsNot Nothing Then
+            Dim m As M2MRelation() = schema.GetM2MRelations
+            If m Is Nothing AndAlso editable IsNot Nothing Then
+                schema = TryCast(sch, IOrmRelationalSchemaWithM2M)
+                If schema IsNot Nothing Then
+                    m = schema.GetM2MRelations
+                End If
+            End If
+            Return m
+        Else
+            Return Nothing
+        End If
+    End Function
+
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As Boolean) As M2MRelation
         For Each r As M2MRelation In GetM2MRelations(maintype)
+            If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
+                Return r
+            End If
+        Next
+
+        Return Nothing
+    End Function
+
+    Public Function GetM2MRelationForEdit(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As Boolean) As M2MRelation
+        For Each r As M2MRelation In GetM2MRelationsForEdit(maintype)
             If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
                 Return r
             End If

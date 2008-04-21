@@ -189,7 +189,7 @@ namespace Worm.CodeGen.Core.Descriptors
 		private static EntityDescription MergeEntities(EntityDescription oldOne, EntityDescription newOne)
 		{
 			EntityDescription resultOne =
-				new EntityDescription(newOne.Identifier, newOne.Name, newOne.Namespace, newOne.Description,
+				new EntityDescription(newOne.Identifier, newOne.Name, newOne.Namespace, newOne.Description ?? oldOne.Description,
 									  newOne.OrmObjectsDef);
 
 			//добавляем новые таблички
@@ -219,7 +219,7 @@ namespace Worm.CodeGen.Core.Descriptors
 					foreach (TableDescription oldTable in oldOne.Tables)
 					{
 						if (!resultOne.Tables.Exists(delegate(TableDescription tableMatch) { return oldTable.Name == tableMatch.Name; }))
-							resultOne.Tables.Add(oldTable);
+							resultOne.Tables.Insert(oldOne.Tables.IndexOf(oldTable), oldTable);
 					}
 
 				foreach (PropertyDescription oldProperty in oldOne.SuppressedProperties)
@@ -234,7 +234,9 @@ namespace Worm.CodeGen.Core.Descriptors
 					PropertyDescription newProperty = resultOne.GetProperty(oldProperty.Name);
 					if (newProperty == null)
 					{
-						TableDescription newTable = resultOne.GetTable(oldProperty.Table.Identifier);
+						TableDescription newTable = null; 
+						if(oldProperty.Table != null)
+							newTable = resultOne.GetTable(oldProperty.Table.Identifier);
 						TypeDescription newType = oldProperty.PropertyType;
 						bool isSuppressed =
 							resultOne.SuppressedProperties.Exists(delegate(PropertyDescription match) { return match.Name == oldProperty.Name; });
