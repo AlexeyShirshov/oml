@@ -143,8 +143,13 @@ Public MustInherit Class QueryGenerator
     '    Return GetProperties(t, schema)
     'End Function
 
-    Public Shared Function GetColumnProperties(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As IDictionary
-        Dim h As New Hashtable
+	Public Shared Function GetColumnProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase) As IDictionary
+		Dim h As New Hashtable
+
+        Dim sup As Array = Nothing
+        If schema IsNot Nothing Then
+            sup = schema.GetSuppressedColumns()
+        End If
 
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
             Dim cl As ColumnAttribute = Nothing
@@ -154,7 +159,8 @@ Public MustInherit Class QueryGenerator
                 If String.IsNullOrEmpty(cl.FieldName) Then
                     cl.FieldName = pi.Name
                 End If
-                If schema Is Nothing OrElse Array.IndexOf(schema.GetSuppressedColumns(), cl) < 0 Then
+
+                If sup Is Nothing OrElse Array.IndexOf(sup, cl) < 0 Then
                     h.Add(cl, pi)
                 End If
             End If
@@ -168,7 +174,7 @@ Public MustInherit Class QueryGenerator
                 If String.IsNullOrEmpty(cl.FieldName) Then
                     cl.FieldName = pi.Name
                 End If
-                If Not h.Contains(cl) AndAlso (schema Is Nothing OrElse Array.IndexOf(schema.GetSuppressedColumns(), cl) < 0) Then
+                If Not h.Contains(cl) AndAlso (sup Is Nothing OrElse Array.IndexOf(sup, cl) < 0) Then
                     h.Add(cl, pi)
                 End If
             End If
@@ -176,23 +182,28 @@ Public MustInherit Class QueryGenerator
         Return h
     End Function
 
-    Public Function GetProperties(ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As IDictionary
-        If t Is Nothing Then Throw New ArgumentNullException("original_type")
+	Public Function GetProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase) As IDictionary
+		If t Is Nothing Then Throw New ArgumentNullException("original_type")
+		Dim s As String = Nothing
+		If schema Is Nothing Then
+			s = t.ToString
+		Else
+			s = schema.GetType().ToString
+		End If
+		Dim key As String = "properties" & s
+		Dim h As IDictionary = CType(map(key), IDictionary)
+		If h Is Nothing Then
+			SyncLock String.Intern(key)
+				h = CType(map(key), IDictionary)
+				If h Is Nothing Then
+					h = GetColumnProperties(t, schema)
 
-        Dim key As String = "properties" & t.ToString
-        Dim h As IDictionary = CType(map(key), IDictionary)
-        If h Is Nothing Then
-            SyncLock String.Intern(key)
-                h = CType(map(key), IDictionary)
-                If h Is Nothing Then
-                    h = GetColumnProperties(t, schema)
-
-                    map(key) = h
-                End If
-            End SyncLock
-        End If
-        Return h
-    End Function
+					map(key) = h
+				End If
+			End SyncLock
+		End If
+		Return h
+	End Function
 
 #End Region
 
@@ -240,7 +251,7 @@ Public MustInherit Class QueryGenerator
 
         If String.IsNullOrEmpty(columnName) Then Throw New ArgumentNullException("columnName")
 
-        Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
+        Dim schema As IObjectSchemaBase = GetObjectSchema(type)
 
         Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
@@ -253,10 +264,8 @@ Public MustInherit Class QueryGenerator
         Throw New OrmSchemaException("Cannot find column: " & columnName)
     End Function
 
-    Protected Friend Function GetColumnNameByFieldNameInternal(ByVal type As Type, ByVal field As String, Optional ByVal add_alias As Boolean = True) As String
+    Private Function GetColumnNameByFieldNameInternal(ByVal schema As IObjectSchemaBase, ByVal field As String, Optional ByVal add_alias As Boolean = True) As String
         If String.IsNullOrEmpty(field) Then Throw New ArgumentNullException("field")
-
-        Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
 
         Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
@@ -270,6 +279,14 @@ Public MustInherit Class QueryGenerator
         End If
 
         Throw New OrmSchemaException("Cannot find property: " & field)
+    End Function
+
+    Protected Friend Function GetColumnNameByFieldNameInternal(ByVal type As Type, ByVal field As String, Optional ByVal add_alias As Boolean = True) As String
+        If String.IsNullOrEmpty(field) Then Throw New ArgumentNullException("field")
+
+        Dim schema As IObjectSchemaBase = GetObjectSchema(type)
+
+        Return GetColumnNameByFieldNameInternal(schema, field, add_alias)
     End Function
 
     '<CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")> _
@@ -438,7 +455,7 @@ Public MustInherit Class QueryGenerator
         Return ChangeValueType(GetObjectSchema(type), c, o)
     End Function
 
-    Public Function ChangeValueType(ByVal schema As IOrmObjectSchemaBase, ByVal c As ColumnAttribute, ByVal o As Object) As Object
+    Public Function ChangeValueType(ByVal schema As IObjectSchemaBase, ByVal c As ColumnAttribute, ByVal o As Object) As Object
         If schema Is Nothing Then
             Throw New ArgumentNullException("schema")
         End If
@@ -850,9 +867,12 @@ Public MustInherit Class QueryGenerator
         Return r
     End Function
 
-
     Protected Function GetColumnNameByFieldName(ByVal type As Type, ByVal field As String) As String
         Return GetColumnNameByFieldNameInternal(type, field)
+    End Function
+
+    Protected Function GetColumnNameByFieldName(ByVal os As IObjectSchemaBase, ByVal field As String) As String
+        Return GetColumnNameByFieldNameInternal(os, field)
     End Function
 
     Public Function GetFieldTypeByName(ByVal type As Type, ByVal field As String) As Type

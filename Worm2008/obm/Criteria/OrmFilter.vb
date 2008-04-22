@@ -203,7 +203,7 @@ Namespace Criteria.Core
 
         'Private _templ As OrmFilterTemplate
         Private _str As String
-        Protected _oschema As IOrmObjectSchemaBase
+        Protected _oschema As IObjectSchemaBase
 
         Public Const EmptyHash As String = "fd_empty_hash_aldf"
 
@@ -294,7 +294,13 @@ Namespace Criteria.Core
         '    Return _str.GetHashCode
         'End Function
 
-        Public Overrides Function MakeSingleQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
+        Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+
+        Public Overridable Overloads Function MakeSingleQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
+            If _oschema Is Nothing Then
+                _oschema = oschema
+            End If
+
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -303,13 +309,9 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("pname")
             End If
 
-            If _oschema Is Nothing Then
-                _oschema = schema.GetObjectSchema(Template.Type)
-            End If
-
             Dim prname As String = ParamValue.GetParam(schema, pname, Nothing)
 
-            Dim map As MapField2Column = _oschema.GetFieldColumnMap()(Template.FieldName)
+            Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.FieldName)
 
             Dim v As IEvaluableValue = TryCast(val, IEvaluableValue)
             If v IsNot Nothing AndAlso v.Value Is DBNull.Value Then
@@ -321,6 +323,18 @@ Namespace Criteria.Core
             End If
 
             Return New Pair(Of String)(map._columnName, prname)
+        End Function
+
+        Public Overrides Function MakeSingleQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
+            If schema Is Nothing Then
+                Throw New ArgumentNullException("schema")
+            End If
+
+            If _oschema Is Nothing Then
+                _oschema = schema.GetObjectSchema(Template.Type)
+            End If
+
+            Return MakeSingleQueryStmt(_oschema, schema, almgr, pname)
         End Function
 
         Public Function MakeHash() As String Implements IEntityFilter.MakeHash

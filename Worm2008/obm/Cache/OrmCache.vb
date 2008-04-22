@@ -310,6 +310,7 @@ Namespace Cache
                 Dim name As String = obj.GetType().Name & ":" & obj.Identifier
                 'Using SyncHelper.AcquireDynamicLock(name)
                 Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
+                Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
                 mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser)
                 _modifiedobjects.Add(name, mo)
                 'End Using
@@ -350,6 +351,7 @@ Namespace Cache
                 Dim name As String = obj.GetType().Name & ":" & id
                 'Using SyncHelper.AcquireDynamicLock(name)
                 Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
+                Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
                 mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser)
                 _modifiedobjects.Add(name, mo)
                 'End Using

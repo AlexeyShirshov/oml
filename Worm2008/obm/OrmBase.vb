@@ -1020,6 +1020,10 @@ Namespace Orm
 
             Dim r As Boolean = True
             If _state = Orm.ObjectState.Modified Then
+                Dim mo As ModifiedObject = mc.Cache.Modified(Me)
+                If mo Is Nothing OrElse mo.Reason = ModifiedObject.ReasonEnum.Delete Then
+                    Throw New OrmObjectException
+                End If
                 r = mc.UpdateObject(Me)
             ElseIf _state = Orm.ObjectState.Created OrElse _state = Orm.ObjectState.NotFoundInSource Then
                 If OriginalCopy IsNot Nothing Then
@@ -1033,6 +1037,10 @@ Namespace Orm
                     _needAdd = True
                 End If
             ElseIf _state = Orm.ObjectState.Deleted Then
+                Dim mo As ModifiedObject = mc.Cache.Modified(Me)
+                If mo Is Nothing OrElse mo.Reason <> ModifiedObject.ReasonEnum.Delete Then
+                    Throw New OrmObjectException
+                End If
                 mc.DeleteObject(Me)
                 _needDelete = True
             End If
