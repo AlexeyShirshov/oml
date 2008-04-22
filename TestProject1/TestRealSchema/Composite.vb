@@ -125,4 +125,13 @@ Public Class CompositeEditableSchema
     Public Function GetM2MRelations() As Worm.Orm.Meta.M2MRelation() Implements Worm.Orm.Meta.IOrmRelationalSchemaWithM2M.GetM2MRelations
         Return Nothing
     End Function
+
+    Public Function GetSuppressedColumns() As Worm.Orm.Meta.ColumnAttribute() Implements Worm.Orm.Meta.IObjectSchemaBase.GetSuppressedColumns
+        Return Nothing
+    End Function
+
+    Public Function ChangeValueType(ByVal c As Worm.Orm.Meta.ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements Worm.Orm.Meta.IObjectSchemaBase.ChangeValueType
+        newvalue = value
+        Return False
+    End Function
 End Class

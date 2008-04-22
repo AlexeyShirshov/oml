@@ -40,13 +40,13 @@ Namespace Orm.Meta
     Public Interface IObjectSchemaBase
         Inherits IOrmPropertyMap
         Function GetTables() As OrmTable()
+		Function GetSuppressedColumns() As ColumnAttribute()
+        Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
     End Interface
 
     Public Interface IOrmObjectSchemaBase
         Inherits IObjectSchemaBase
         Function GetFilter(ByVal filter_info As Object) As IFilter
-        Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
-        Function GetSuppressedColumns() As ColumnAttribute()
     End Interface
 
     Public Interface IOrmSorting
@@ -70,7 +70,7 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface IRelMapObjectSchema
-        Inherits IOrmRelationalSchemaWithM2M, IObjectSchemaBase
+		Inherits IOrmRelationalSchemaWithM2M, IObjectSchemaBase
     End Interface
 
     Public Interface IOrmObjectSchema
@@ -365,7 +365,8 @@ Namespace Orm.Meta
         End Function
 
         Public Function GetSuppressedColumns() As ColumnAttribute() Implements IOrmObjectSchemaBase.GetSuppressedColumns
-            Throw New NotSupportedException("GetSuppressedColumns relations is not supported in simple mode")
+            'Throw New NotSupportedException("GetSuppressedColumns relations is not supported in simple mode")
+            Return Nothing
         End Function
     End Class
 

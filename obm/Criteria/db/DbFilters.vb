@@ -330,7 +330,11 @@ Namespace Database
             '    End If
             'End Function
 
-            Public Overloads Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+                If _oschema Is Nothing Then
+                    _oschema = oschema
+                End If
+
                 Dim pv As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
                 If pv Is Nothing OrElse ParamValue.ShouldUse Then
@@ -344,11 +348,7 @@ Namespace Database
                         Throw New ArgumentNullException("schema")
                     End If
 
-                    If _oschema Is Nothing Then
-                        _oschema = schema.GetObjectSchema(Template.Type)
-                    End If
-
-                    Dim map As MapField2Column = _oschema.GetFieldColumnMap()(Template.FieldName)
+                    Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.FieldName)
                     Dim [alias] As String = String.Empty
 
                     If tableAliases IsNot Nothing Then
@@ -363,6 +363,18 @@ Namespace Database
                 Else
                     Return String.Empty
                 End If
+            End Function
+
+            Public Overloads Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+                If schema Is Nothing Then
+                    Throw New ArgumentNullException("schema")
+                End If
+
+                If _oschema Is Nothing Then
+                    _oschema = schema.GetObjectSchema(Template.Type)
+                End If
+
+                Return MakeQueryStmt(_oschema, schema, almgr, pname)
             End Function
 
             Protected Overrides Function GetParam(ByVal schema As QueryGenerator, ByVal pmgr As ICreateParam) As String

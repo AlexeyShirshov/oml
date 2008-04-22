@@ -52,21 +52,25 @@ Namespace Xml
             End Sub
 
             Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
-                If schema Is Nothing Then
-                    Throw New ArgumentNullException("schema")
-                End If
-
                 If _oschema Is Nothing Then
                     _oschema = schema.GetObjectSchema(Template.Type)
                 End If
 
-                Dim map As MapField2Column = _oschema.GetFieldColumnMap()(Template.FieldName)
-
-                Return map._columnName & Template.OperToStmt & "'" & val._ToString & "'"
+                Return MakeQueryStmt(_oschema, schema, almgr, pname)
             End Function
 
             Protected Overrides Function _Clone() As Object
                 Return New XmlEntityFilter(val, CType(Template, XmlEntityTemplate))
+            End Function
+
+            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As Orm.Meta.IObjectSchemaBase, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+                If schema Is Nothing Then
+                    Throw New ArgumentNullException("schema")
+                End If
+
+                Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.FieldName)
+
+                Return map._columnName & Template.OperToStmt & "'" & val._ToString & "'"
             End Function
         End Class
     End Namespace
