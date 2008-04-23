@@ -170,15 +170,15 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, Orm.OrmBase})( _
-            ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
-            Throw New NotImplementedException
-        End Function
+        'Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, Orm.OrmBase})( _
+        '    ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+        '    ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
+        '    Throw New NotImplementedException
+        'End Function
 
         Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, Orm.OrmBase})( _
             ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute)) As ReadOnlyList(Of T)
+            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 

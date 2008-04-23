@@ -396,6 +396,7 @@ Namespace Database
                     End Try
 
                     If [error] Then
+                        Debug.Assert(False)
                         Throw DbSchema.PrepareConcurrencyException(obj)
                     End If
                 End If

@@ -142,6 +142,26 @@ Public Class TestSchema
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestLoadObjectsOnlyID()
+        Dim schema As New SQLGenerator("1")
+
+        Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
+            Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.ObjectSchema), New Table1(11, mgr.Cache, mgr.ObjectSchema), New Table1(15, mgr.Cache, mgr.ObjectSchema)}
+            Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
+            col = mgr.LoadObjects(col, 0, col.Count, New List(Of Meta.ColumnAttribute)(New Meta.ColumnAttribute() {New Meta.ColumnAttribute("ID")}))
+            Assert.AreEqual(0, col.Count)
+
+            col = mgr.ConvertIds2Objects(Of Table1)(New Integer() {1, 2, 10, 11, 34, 45, 20}, True)
+
+            Assert.AreEqual(2, col.Count)
+
+            For Each c As Table1 In col
+                Assert.IsFalse(c.InternalProperties.IsLoaded)
+            Next
+        End Using
+    End Sub
+
     <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
     Public Sub TestOrderWrong()
         Dim schema As New SQLGenerator("1")

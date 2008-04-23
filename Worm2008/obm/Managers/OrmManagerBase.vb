@@ -11,7 +11,7 @@ Imports System.Collections.Generic
 
 #Const DontUseStringIntern = True
 #Const TraceM2M = False
-#Const TraceCreation = False
+#Const TraceCreation = True
 
 'Namespace Managers
 
@@ -2411,6 +2411,7 @@ l1:
     End Sub
 
     Protected Sub AddObjectInternal(ByVal obj As OrmBase, ByVal dic As IDictionary)
+        Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
         Dim trace As Boolean = False
         Dim id As Integer = obj.Identifier
         SyncLock dic.SyncRoot
@@ -3525,6 +3526,10 @@ l1:
         Return col
     End Function
 
+    Public Function LoadObjects(Of T As {OrmBase, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal columns As List(Of ColumnAttribute)) As ReadOnlyList(Of T)
+        Return LoadObjectsInternal(objs, start, length, True, columns, _schema.GetSortedFieldList(GetType(T)).Count = columns.Count)
+    End Function
+
     Public Function LoadObjects(Of T As {OrmBase, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T)
         Return LoadObjectsInternal(objs, start, length, True)
     End Function
@@ -3556,40 +3561,14 @@ l1:
     Public Overridable Function ConvertIds2Objects(Of T As {OrmBase, New})(ByVal ids As ICollection(Of Integer), ByVal check As Boolean) As ReadOnlyList(Of T)
         Dim arr As New ReadOnlyList(Of T)
 
-        Dim type As Type = GetType(T)
-        For Each id As Integer In ids
-            Dim obj As T = Nothing
-            If Not check Then
-                obj = CreateDBObject(Of T)(id)
-            Else
-                obj = LoadType(Of T)(id, False, check)
-            End If
-
-            If obj IsNot Nothing Then
-                arr.Add(obj)
-            ElseIf _newMgr IsNot Nothing Then
-                obj = CType(_newMgr.GetNew(type, id), T)
-                If obj IsNot Nothing Then arr.Add(obj)
-            End If
-        Next
-        Return arr
-    End Function
-
-    Public Overridable Function ConvertIds2Objects(Of T As {OrmBase, New})(ByVal ids As IList(Of Integer), _
-        ByVal start As Integer, ByVal length As Integer, ByVal check As Boolean) As ReadOnlyList(Of T)
-
-        Dim arr As New ReadOnlyList(Of T)
-        If start < ids.Count Then
+        
+        If Not check Then
             Dim type As Type = GetType(T)
-            length = Math.Min(length + start, ids.Count)
-            For i As Integer = start To length - 1
-                Dim id As Integer = ids(i)
+
+            For Each id As Integer In ids
                 Dim obj As T = Nothing
-                If Not check Then
-                    obj = CreateDBObject(Of T)(id)
-                Else
-                    obj = LoadType(Of T)(id, False, check)
-                End If
+
+                obj = CreateDBObject(Of T)(id)
 
                 If obj IsNot Nothing Then
                     arr.Add(obj)
@@ -3598,12 +3577,41 @@ l1:
                     If obj IsNot Nothing Then arr.Add(obj)
                 End If
             Next
+        Else
+            Dim r As ReadOnlyList(Of T) = ConvertIds2Objects(Of T)(ids, False)
+            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() {New ColumnAttribute("ID")}))
         End If
-        'Try
         Return arr
-        'Catch ex As InvalidCastException
-        'Throw New OrmManagerException("Error converting type " & type.ToString, ex)
-        'End Try
+    End Function
+
+    Public Overridable Function ConvertIds2Objects(Of T As {OrmBase, New})(ByVal ids As IList(Of Integer), _
+        ByVal start As Integer, ByVal length As Integer, ByVal check As Boolean) As ReadOnlyList(Of T)
+
+        Dim arr As New ReadOnlyList(Of T)
+
+        If Not check Then
+            If start < ids.Count Then
+                Dim type As Type = GetType(T)
+                length = Math.Min(length + start, ids.Count)
+                For i As Integer = start To length - 1
+                    Dim id As Integer = ids(i)
+                    Dim obj As T = Nothing
+
+                    obj = CreateDBObject(Of T)(id)
+
+                    If obj IsNot Nothing Then
+                        arr.Add(obj)
+                    ElseIf _newMgr IsNot Nothing Then
+                        obj = CType(_newMgr.GetNew(type, id), T)
+                        If obj IsNot Nothing Then arr.Add(obj)
+                    End If
+                Next
+            End If
+        Else
+            Dim r As ReadOnlyList(Of T) = ConvertIds2Objects(Of T)(ids, start, length, False)
+            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() {New ColumnAttribute("ID")}))
+        End If
+        Return arr
     End Function
 
     Public Function LoadObjectsIds(Of T As {OrmBase, New})(ByVal ids As ICollection(Of Integer)) As ReadOnlyList(Of T)
@@ -3859,8 +3867,7 @@ l1:
 
     Protected Friend MustOverride Sub LoadObject(ByVal obj As OrmBase)
 
-    Protected Friend MustOverride Function LoadObjectsInternal(Of T As {OrmBase, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute)) As ReadOnlyList(Of T)
-    Protected Friend MustOverride Function LoadObjectsInternal(Of T As {OrmBase, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
+    Protected Friend MustOverride Function LoadObjectsInternal(Of T As {OrmBase, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
     'Protected MustOverride Overloads Sub FindObjects(ByVal t As Type, ByVal WithLoad As Boolean, ByVal arr As System.Collections.ArrayList, ByVal sort As String, ByVal sort_type As SortType)
 
@@ -3896,6 +3903,15 @@ l1:
 
     Protected MustOverride Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As OrmJoin) As DicIndex(Of T)
     Protected MustOverride Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
+
+    Protected Friend Function LoadObjectsInternal(Of T As {OrmBase, New})( _
+            ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+            ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
+        Dim original_type As Type = GetType(T)
+        Dim columns As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
+
+        Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
+    End Function
 
     Protected Friend Sub RegisterInCashe(ByVal obj As OrmBase)
         If Not IsInCachePrecise(obj) Then
@@ -4123,13 +4139,19 @@ l1:
 
                         Dim ts As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2join), IOrmObjectSchema)
                         Dim pk_table As OrmTable = ts.GetTables(0)
-                        For i As Integer = 1 To ts.GetTables.Length - 1
-                            Dim join As OrmJoin = ts.GetJoins(pk_table, ts.GetTables(i))
+						For i As Integer = 1 To ts.GetTables.Length - 1
+							Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
+							Dim join As OrmJoin = Nothing
+							If joinableTs IsNot Nothing Then
+								join = joinableTs.GetJoins(pk_table, ts.GetTables(i), GetFilterInfo)
+							Else
+								join = ts.GetJoins(pk_table, ts.GetTables(i))
+							End If
 
-                            If Not OrmJoin.IsEmpty(join) Then
-                                l.Add(join)
-                            End If
-                        Next
+							If Not OrmJoin.IsEmpty(join) Then
+								l.Add(join)
+							End If
+						Next
 
                         Dim newfl As IFilter = ts.GetFilter(GetFilterInfo)
                         If newfl IsNot Nothing Then

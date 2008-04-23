@@ -560,7 +560,7 @@ l1:
                             Throw New NotImplementedException
                             'ins_cmd.Append(GetColumnNameByFieldName(type, "ID", pk_table)).Append(" = @id")
                         Else
-                            ins_cmd.Append(GetColumnNameByFieldName(type, "ID")).Append(" = @id")
+							ins_cmd.Append(GetColumnNameByFieldName(os, "ID")).Append(" = @id")
                         End If
                     End If
                 End If
@@ -680,66 +680,69 @@ l1:
 			Next
         End Sub
 
-        Protected Sub GetUpdateConditions(ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchema, _
-            ByVal updated_tables As IDictionary(Of OrmTable, TableUpdate), ByVal unions() As String, ByVal filterInfo As Object)
+		Protected Sub GetUpdateConditions(ByVal obj As OrmBase, ByVal oschema As IObjectSchemaBase, _
+			ByVal updated_tables As IDictionary(Of OrmTable, TableUpdate), ByVal unions() As String, ByVal filterInfo As Object)
 
-            Dim rt As Type = obj.GetType
+			Dim rt As Type = obj.GetType
 
-            For Each de As DictionaryEntry In GetProperties(rt, oschema)
-                'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
-                Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-                Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                If c IsNot Nothing Then
-                    Dim att As Field2DbRelations = GetAttributes(rt, c)
-                    If (att And Field2DbRelations.PK) = Field2DbRelations.PK OrElse _
-                        (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
+			For Each de As DictionaryEntry In GetProperties(rt, oschema)
+				'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
+				Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+				Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+				If c IsNot Nothing Then
+					Dim att As Field2DbRelations = GetAttributes(rt, c)
+					If (att And Field2DbRelations.PK) = Field2DbRelations.PK OrElse _
+						(att And Field2DbRelations.RV) = Field2DbRelations.RV Then
 
-                        Dim original As Object = pi.GetValue(obj, Nothing)
-                        'Dim original As Object = pi.GetValue(obj.ModifiedObject, Nothing)
-                        'If obj.ModifiedObject.old_state = ObjectState.Created Then
-                        'original = pi.GetValue(obj, Nothing)
-                        'End If
+						Dim original As Object = pi.GetValue(obj, Nothing)
+						'Dim original As Object = pi.GetValue(obj.ModifiedObject, Nothing)
+						'If obj.ModifiedObject.old_state = ObjectState.Created Then
+						'original = pi.GetValue(obj, Nothing)
+						'End If
 
-                        Dim tb As OrmTable = GetFieldTable(oschema, c.FieldName)
-                        If unions IsNot Nothing Then
-                            Throw New NotImplementedException
-                            'tb = MapUnionType2Table(rt, uniontype)
-                        End If
-                        'If pk_table Is Nothing Then pk_table = tb
-                        'If Not tables_filter.Contains(tb) Then
-                        '    tables_filter.Add(tb, New StringBuilder)
-                        'End If
-                        'Dim tb_sb As StringBuilder = CType(tables_filter(tb), StringBuilder)
-                        'Dim pname As String = "pk"
-                        'If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
-                        '    pname = "rv"
-                        'End If
-                        'Dim add_param As Boolean = False
+						Dim tb As OrmTable = GetFieldTable(oschema, c.FieldName)
+						If unions IsNot Nothing Then
+							Throw New NotImplementedException
+							'tb = MapUnionType2Table(rt, uniontype)
+						End If
+						'If pk_table Is Nothing Then pk_table = tb
+						'If Not tables_filter.Contains(tb) Then
+						'    tables_filter.Add(tb, New StringBuilder)
+						'End If
+						'Dim tb_sb As StringBuilder = CType(tables_filter(tb), StringBuilder)
+						'Dim pname As String = "pk"
+						'If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
+						'    pname = "rv"
+						'End If
+						'Dim add_param As Boolean = False
 
 
-                        For Each de_table As Generic.KeyValuePair(Of OrmTable, TableUpdate) In updated_tables 'In New Generic.List(Of Generic.KeyValuePair(Of String, TableUpdate))(CType(updated_tables, Generic.ICollection(Of Generic.KeyValuePair(Of String, TableUpdate))))
-                            'Dim de_table As TableUpdate = updated_tables(tb)
-                            If de_table.Key.Equals(tb) Then
-                                'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
-                                de_table.Value._where4update.AddFilter(New dc.EntityFilter(rt, c.FieldName, New ScalarValue(original), FilterOperation.Equal))
-                            Else
-                                Dim join As OrmJoin = CType(GetJoins(oschema, tb, de_table.Key, filterInfo), OrmJoin)
-                                If Not OrmJoin.IsEmpty(join) Then
-                                    Dim f As IFilter = JoinFilter.ChangeEntityJoinToParam(join.Condition, rt, c.FieldName, New TypeWrap(Of Object)(original))
+						For Each de_table As Generic.KeyValuePair(Of OrmTable, TableUpdate) In updated_tables 'In New Generic.List(Of Generic.KeyValuePair(Of String, TableUpdate))(CType(updated_tables, Generic.ICollection(Of Generic.KeyValuePair(Of String, TableUpdate))))
+							'Dim de_table As TableUpdate = updated_tables(tb)
+							If de_table.Key.Equals(tb) Then
+								'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
+								de_table.Value._where4update.AddFilter(New dc.EntityFilter(rt, c.FieldName, New ScalarValue(original), FilterOperation.Equal))
+							Else
+								Dim joinableSchema As IOrmObjectSchema = TryCast(oschema, IOrmObjectSchema)
+								If joinableSchema IsNot Nothing Then
+									Dim join As OrmJoin = CType(GetJoins(joinableSchema, tb, de_table.Key, filterInfo), OrmJoin)
+									If Not OrmJoin.IsEmpty(join) Then
+										Dim f As IFilter = JoinFilter.ChangeEntityJoinToParam(join.Condition, rt, c.FieldName, New TypeWrap(Of Object)(original))
 
-                                    If f Is Nothing Then
-                                        Throw New OrmSchemaException("Cannot replace join")
-                                    End If
+										If f Is Nothing Then
+											Throw New OrmSchemaException("Cannot replace join")
+										End If
 
-                                    'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(f))
-                                    de_table.Value._where4update.AddFilter(f)
-                                End If
-                            End If
-                        Next
-                    End If
-                End If
-            Next
-        End Sub
+										'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(f))
+										de_table.Value._where4update.AddFilter(f)
+									End If
+								End If
+							End If
+						Next
+					End If
+				End If
+			Next
+		End Sub
 
         Public Overridable Function Update(ByVal obj As OrmBase, ByVal filterInfo As Object, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
             ByRef select_columns As Generic.IList(Of ColumnAttribute), ByRef updated_fields As IList(Of EntityFilterBase)) As String
@@ -786,7 +789,7 @@ l1:
                     Next
                     updated_fields = l
 
-                    GetUpdateConditions(obj, oschema, updated_tables, unions, filterInfo)
+					GetUpdateConditions(obj, esch, updated_tables, unions, filterInfo)
 
                     select_columns = sel_columns
 
@@ -813,13 +816,20 @@ l1:
                             Next
                             upd_cmd.Length -= 1
                             upd_cmd.Append(" from ").Append(GetTableName(tbl)).Append(" ").Append([alias])
-                            upd_cmd.Append(" where ").Append(CType(item.Value._where4update.Condition, IFilter).MakeQueryStmt(Me, amgr, params))
-                            If Not item.Key.Equals(pk_table) Then
-                                'Dim pcnt As Integer = 0
-                                'If Not named_params Then pcnt = XMedia.Framework.Data.DBA.ExtractParamsCount(upd_cmd.ToString)
-                                CorrectUpdateWithInsert(oschema, tbl, item.Value, upd_cmd, obj, params)
-                                'FormInsert(,upd_cmd,
-                            End If
+							upd_cmd.Append(" where ")
+							Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
+							Dim ef As EntityFilterBase = TryCast(fl, EntityFilterBase)
+							If ef IsNot Nothing Then
+								upd_cmd.Append(ef.MakeQueryStmt(esch, Me, amgr, params))
+							Else
+								upd_cmd.Append(fl.MakeQueryStmt(Me, amgr, params))
+							End If
+							If Not item.Key.Equals(pk_table) Then
+								'Dim pcnt As Integer = 0
+								'If Not named_params Then pcnt = XMedia.Framework.Data.DBA.ExtractParamsCount(upd_cmd.ToString)
+								CorrectUpdateWithInsert(oschema, tbl, item.Value, upd_cmd, obj, params)
+								'FormInsert(,upd_cmd,
+							End If
                         Next
 
                         If sel_columns.Count > 0 Then
@@ -865,7 +875,7 @@ l1:
                                 amgr.Replace(Me, pk_table, sel_sb)
                                 sel_sb.Append(" from ").Append(GetTableName(pk_table)).Append(" ").Append([alias]).Append(" where ")
                                 'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
-                                sel_sb.Append(New dc.EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeQueryStmt(Me, amgr, params))
+								sel_sb.Append(New dc.EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeQueryStmt(esch, Me, amgr, params))
 
                                 upd_cmd.Append(sel_sb)
                             End If
