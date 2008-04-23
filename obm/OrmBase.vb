@@ -640,6 +640,7 @@ Namespace Orm
 
 #If DEBUG Then
         Protected Event ObjectStateChanged(ByVal oldState As ObjectState)
+        Protected Event ObjectRejected(ByVal oldState As ObjectState)
 #End If
         'for xml serialization
         Public Sub New()
@@ -1043,6 +1044,8 @@ Namespace Orm
                 End If
                 mc.DeleteObject(Me)
                 _needDelete = True
+            Else
+                Debug.Assert(False)
             End If
             Return r
         End Function
@@ -1629,6 +1632,9 @@ Namespace Orm
                     Dim oldid As Integer = Identifier
                     Dim olds As ObjectState = OriginalCopy._old_state
                     Dim newid As Integer = OriginalCopy.Identifier
+#If DEBUG Then
+                    RaiseEvent ObjectRejected(olds)
+#End If
                     If olds <> Orm.ObjectState.Created Then
                         '_loaded_members = 
                         RevertToOriginalVersion()

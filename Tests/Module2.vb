@@ -59,6 +59,17 @@ Module Module2
             _s = args.SavedObject.InternalProperties.ObjectState
         End Sub
 
+        Protected _rs As Orm.ObjectState
+        Public ReadOnly Property RejectedState() As Orm.ObjectState
+            Get
+                Return _rs
+            End Get
+        End Property
+
+        Protected Sub Rejected(ByVal state As Worm.Orm.ObjectState)
+            _rs = state
+        End Sub
+
         Public Sub New()
 
         End Sub
@@ -71,6 +82,7 @@ Module Module2
             _stack = Environment.StackTrace
             _dt = Now
             AddHandler ObjectStateChanged, AddressOf ChangeState
+            AddHandler ObjectRejected, AddressOf Rejected
         End Sub
 
         Private _name As String
@@ -233,7 +245,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("edit sub done")
         'e.Set()
-        For i As Integer = 0 To 2000
+        For i As Integer = 0 To 1500
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -258,6 +270,7 @@ Module Module2
                                         AddHandler st.Saver.ObjectSaving, AddressOf t.ObjectSaving
                                     End Using
                                     If done Then
+                                        Debug.Assert(t.InternalProperties.OriginalCopy Is Nothing)
                                         Dim s, s2, s3 As String
                                         If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
                                             s = sw.GetStringBuilder.ToString
@@ -292,7 +305,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("edit sub done")
         'e.Set()
-        For i As Integer = 0 To 300
+        For i As Integer = 0 To 1000
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -395,6 +408,7 @@ Module Module2
                                 mgr.FindTop(Of TestEditTable)(100, Nothing, Nothing, True)
                             End If
                             done = True
+                            Threading.Thread.Sleep(0)
                         Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
                             Threading.Interlocked.Increment(_exCount)
                         Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")
@@ -428,6 +442,7 @@ Module Module2
                                 mgr.Find(Of TestEditTable)(Ctor.AutoTypeField("Name").Like("e%"), Nothing, True)
                             End If
                             done = True
+                            Threading.Thread.Sleep(0)
                         Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
                             Threading.Interlocked.Increment(_exCount)
                         Catch ex As SqlClient.SqlException When ex.Message.Contains("Timeout expired")

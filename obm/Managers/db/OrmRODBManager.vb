@@ -311,6 +311,7 @@ Namespace Database
                                         Dim o As OrmBase = p.Second
                                         RaiseEvent ObjectAccepting(o)
                                         Dim mo As OrmBase = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
+                                        Debug.Assert(_mgr.Cache.Modified(o) Is Nothing)
                                         'l.Add(o, mo)
                                         RaiseEvent ObjectAccepted(o)
                                         If o._upd IsNot Nothing OrElse o._valProcs Then
@@ -339,6 +340,7 @@ Namespace Database
                                         Dim o As OrmBase = p.Second
                                         RaiseEvent ObjectAccepting(o)
                                         o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
+                                        Debug.Assert(_mgr.Cache.Modified(o) Is Nothing)
                                         RaiseEvent ObjectAccepted(o)
                                     Next
                                     For Each p As Pair(Of ObjectState, OrmBase) In saved
@@ -1891,67 +1893,72 @@ l1:
             WriteLineInfo(sb.ToString)
         End Sub
 
+        'Protected Friend Overrides Function LoadObjectsInternal(Of T As {OrmBase, New})( _
+        '    ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+        '    ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
+
+        '    'Invariant()
+
+        '    'If objs.Count < 1 Then
+        '    '    Return objs
+        '    'End If
+
+        '    'If start > objs.Count Then
+        '    '    Throw New ArgumentException(String.Format("The range {0},{1} is greater than array length: " & objs.Count, start, length))
+        '    'End If
+
+        '    'length = Math.Min(length, objs.Count - start)
+
+        '    'Dim ids As Generic.List(Of Integer) = FormPKValues(Of T)(Me, objs, start, length, True, columns)
+        '    'If ids.Count < 1 Then
+        '    '    Return objs
+        '    'End If
+
+        '    'Dim original_type As Type = GetType(T)
+        '    'Dim almgr As AliasMgr = AliasMgr.Create
+        '    'Dim params As New ParamMgr(DbSchema, "p")
+        '    'Dim sb As New StringBuilder
+        '    'sb.Append(DbSchema.Select(original_type, almgr, params, columns, Nothing, GetFilterInfo))
+        '    'If Not DbSchema.AppendWhere(original_type, Nothing, almgr, sb, GetFilterInfo, params) Then
+        '    '    sb.Append(" where 1=1 ")
+        '    'End If
+        '    'Dim values As New Generic.List(Of T)
+        '    'Dim pcnt As Integer = params.Params.Count
+        '    'Dim nextp As Integer = pcnt
+        '    'For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, "ID", almgr, params, original_type, True)
+        '    '    Dim sb_cmd As New StringBuilder
+        '    '    sb_cmd.Append(sb.ToString).Append(cmd_str.First)
+
+        '    '    Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+        '    '        With cmd
+        '    '            .CommandType = System.Data.CommandType.Text
+        '    '            .CommandText = sb_cmd.ToString
+        '    '            params.AppendParams(.Parameters, 0, pcnt)
+        '    '            params.AppendParams(.Parameters, nextp, cmd_str.Second - nextp)
+        '    '            nextp = cmd_str.Second
+        '    '        End With
+        '    '        LoadMultipleObjects(Of T)(cmd, True, values, columns)
+        '    '    End Using
+        '    'Next
+
+        '    'values.Clear()
+        '    'For Each o As T In objs
+        '    '    If o.IsLoaded Then
+        '    '        values.Add(o)
+        '    '    End If
+        '    'Next
+        '    'Return New ReadOnlyList(Of T)(values)
+
+        '    Dim original_type As Type = GetType(T)
+        '    Dim columns As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
+
+        '    Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
+        'End Function
+
         Protected Friend Overrides Function LoadObjectsInternal(Of T As {OrmBase, New})( _
             ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute)) As ReadOnlyList(Of T)
-
-            Invariant()
-
-            If objs.Count < 1 Then
-                Return objs
-            End If
-
-            If start > objs.Count Then
-                Throw New ArgumentException(String.Format("The range {0},{1} is greater than array length: " & objs.Count, start, length))
-            End If
-
-            length = Math.Min(length, objs.Count - start)
-
-            Dim ids As Generic.List(Of Integer) = FormPKValues(Of T)(Me, objs, start, length, True, columns)
-            If ids.Count < 1 Then
-                Return objs
-            End If
-
-            Dim original_type As Type = GetType(T)
-            Dim almgr As AliasMgr = AliasMgr.Create
-            Dim params As New ParamMgr(DbSchema, "p")
-            Dim sb As New StringBuilder
-            sb.Append(DbSchema.Select(original_type, almgr, params, columns, Nothing, GetFilterInfo))
-            If Not DbSchema.AppendWhere(original_type, Nothing, almgr, sb, GetFilterInfo, params) Then
-                sb.Append(" where 1=1 ")
-            End If
-            Dim values As New Generic.List(Of T)
-            Dim pcnt As Integer = params.Params.Count
-            Dim nextp As Integer = pcnt
-            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, "ID", almgr, params, original_type, True)
-                Dim sb_cmd As New StringBuilder
-                sb_cmd.Append(sb.ToString).Append(cmd_str.First)
-
-                Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
-                    With cmd
-                        .CommandType = System.Data.CommandType.Text
-                        .CommandText = sb_cmd.ToString
-                        params.AppendParams(.Parameters, 0, pcnt)
-                        params.AppendParams(.Parameters, nextp, cmd_str.Second - nextp)
-                        nextp = cmd_str.Second
-                    End With
-                    LoadMultipleObjects(Of T)(cmd, True, values, columns)
-                End Using
-            Next
-
-            values.Clear()
-            For Each o As T In objs
-                If o.IsLoaded Then
-                    values.Add(o)
-                End If
-            Next
-            Return New ReadOnlyList(Of T)(values)
-
-        End Function
-
-        Protected Friend Overrides Function LoadObjectsInternal(Of T As {OrmBase, New})( _
-            ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean) As ReadOnlyList(Of T)
+            ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), _
+            ByVal withLoad As Boolean) As ReadOnlyList(Of T)
             Invariant()
 
             If objs.Count < 1 Then
@@ -1977,7 +1984,6 @@ l1:
             Dim original_type As Type = GetType(T)
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim params As New ParamMgr(DbSchema, "p")
-            Dim columns As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
             Dim sb As New StringBuilder
             sb.Append(DbSchema.Select(original_type, almgr, params, columns, Nothing, GetFilterInfo))
             If Not DbSchema.AppendWhere(original_type, Nothing, almgr, sb, GetFilterInfo, params) Then
@@ -2002,17 +2008,25 @@ l1:
                 End Using
             Next
 
-			Dim result As New ReadOnlyList(Of T)
+            Dim result As New ReadOnlyList(Of T)
             Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
             If remove_not_found Then
                 For Each o As T In objs
-                    If o.IsLoaded Then
-						result.Add(o)
-                    ElseIf ListConverter.IsWeak Then
-                        Dim obj As T = Nothing
-						If dic.TryGetValue(o.Identifier, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
-							result.Add(obj)
-						End If
+                    If Not withLoad Then
+                        If values.Contains(o) Then
+                            result.Add(o)
+                        Else
+                            o.ObjectState = ObjectState.NotFoundInSource
+                        End If
+                    Else
+                        If o.IsLoaded Then
+                            result.Add(o)
+                        ElseIf ListConverter.IsWeak Then
+                            Dim obj As T = Nothing
+                            If dic.TryGetValue(o.Identifier, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
+                                result.Add(obj)
+                            End If
+                        End If
                     End If
                 Next
             Else
@@ -2020,17 +2034,17 @@ l1:
                     For Each o As T In objs
                         Dim obj As T = Nothing
                         If dic.TryGetValue(o.Identifier, obj) Then
-							result.Add(obj)
+                            result.Add(obj)
                         Else
-							result.Add(o)
+                            result.Add(o)
                         End If
                     Next
                 Else
                     Return objs
                 End If
-			End If
-			Return result
-			'Return New ReadOnlyList(Of T)(values)
+            End If
+            Return result
+            'Return New ReadOnlyList(Of T)(values)
         End Function
 
         Protected Function GetFilters(ByVal ids As Generic.List(Of Integer), ByVal fieldName As String, _
