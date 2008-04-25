@@ -1044,8 +1044,8 @@ Namespace Orm
                 End If
                 mc.DeleteObject(Me)
                 _needDelete = True
-                'Else
-                '    Debug.Assert(False)
+            Else
+                Debug.Assert(False)
             End If
             Return r
         End Function
@@ -1696,7 +1696,7 @@ Namespace Orm
 
         Public Overridable Function Delete() As Boolean
             Using SyncHelper(False)
-                If _state = Orm.ObjectState.Deleted OrElse _state = Orm.ObjectState.Modified Then Return False
+                If _state = Orm.ObjectState.Deleted Then Return False
 
                 If _state = Orm.ObjectState.Clone Then
                     Throw New OrmObjectException(ObjName & "Deleting clone is not allowed")

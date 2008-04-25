@@ -126,6 +126,7 @@ Module Module2
     Private _exCount As Integer
     Private _identity As Integer = -100
     Private _deleted As ArrayList = ArrayList.Synchronized(New ArrayList)
+    Private _gdeleted As ArrayList = ArrayList.Synchronized(New ArrayList)
 
     <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
     Function GetIdentity() As Integer
@@ -261,25 +262,37 @@ Module Module2
                                 Try
                                     Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                                         Using t.BeginAlter
-                                            done = t.Delete()
-                                            Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                            If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
+                                                done = t.Delete()
+                                                Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                                If Not done Then
+                                                    Debug.Assert(st.Saver.AffectedObjects.Count = 0)
+                                                    Dim oc As ModifiedObject = mgr.Cache.Modified(t)
+                                                    Debug.Assert(oc Is Nothing)
+                                                End If
+                                            End If
                                         End Using
-                                        Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                        If done Then
+                                            Debug.Assert(st.Saver.AffectedObjects.Count > 0)
+                                            Debug.Assert(t.InternalProperties.OriginalCopy IsNot Nothing)
+                                        End If
+                                        'Debug.Assert(Not done OrElse st.Saver.AffectedObjects.Count > 0)
+                                        'Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
                                         st.Commit()
                                         Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
                                         AddHandler st.Saver.ObjectSaving, AddressOf t.ObjectSaving
                                     End Using
-                                    If done Then
-                                        Debug.Assert(t.InternalProperties.OriginalCopy Is Nothing)
-                                        Dim s, s2, s3 As String
-                                        If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
-                                            s = sw.GetStringBuilder.ToString
+                                        If done Then
+                                            Debug.Assert(t.InternalProperties.OriginalCopy Is Nothing)
+                                            Dim s, s2, s3 As String
+                                            If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
+                                                s = sw.GetStringBuilder.ToString
+                                            End If
+                                            Debug.Assert(t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                            _deleted.Add(t)
+                                            Dim b As Boolean = mgr.IsInCachePrecise(t)
+                                            Debug.Assert(Not b)
                                         End If
-                                        Debug.Assert(t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
-                                        _deleted.Add(t)
-                                        Dim b As Boolean = mgr.IsInCachePrecise(t)
-                                        Debug.Assert(Not b)
-                                    End If
                                 Finally
                                     mgr.RemoveListener(ls)
                                 End Try
