@@ -2013,7 +2013,7 @@ l1:
             If remove_not_found Then
                 For Each o As T In objs
                     If Not withLoad Then
-                        If values.Contains(o) Then
+                        If values.Contains(o) OrElse Not ids.Contains(o.Identifier) Then
                             result.Add(o)
                         Else
                             o.ObjectState = ObjectState.NotFoundInSource
@@ -2025,6 +2025,14 @@ l1:
                             Dim obj As T = Nothing
                             If dic.TryGetValue(o.Identifier, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
                                 result.Add(obj)
+                            Else
+                                Dim idx As Integer = values.IndexOf(o)
+                                If idx >= 0 Then
+                                    Dim ro As T = values(idx)
+                                    Debug.Assert(ro.IsLoaded)
+                                    Add2Cache(ro)
+                                    result.Add(ro)
+                                End If
                             End If
                         End If
                     End If
