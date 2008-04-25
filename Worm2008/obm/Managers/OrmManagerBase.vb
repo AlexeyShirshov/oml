@@ -11,7 +11,7 @@ Imports System.Collections.Generic
 
 #Const DontUseStringIntern = True
 #Const TraceM2M = False
-#Const TraceCreation = True
+#Const TraceCreation = False
 
 'Namespace Managers
 
@@ -1386,28 +1386,29 @@ _callstack = environment.StackTrace
                                 target.Add(CreateDBObject(Of T)(id))
                             End If
                         Next
+						'Cache.AddRelationValue(o.GetType, type2load)
+					Else
+						el = New EditableList(o.Identifier, New List(Of Integer), type, type2load, Nothing)
+					End If
 
-                        If Not _dont_cache_lists Then
-                            Dim tt1 As Type = o.GetType
-                            Dim key As String = GetM2MKey(tt1, type2load, direct)
-                            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                                key &= criteria.Filter(type2load).ToStaticString
-                            End If
+					If Not _dont_cache_lists Then
+						Dim tt1 As Type = o.GetType
+						Dim key As String = GetM2MKey(tt1, type2load, direct)
+						If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+							key &= criteria.Filter(type2load).ToStaticString
+						End If
 
-                            Dim dic As IDictionary = GetDic(_cache, key)
+						Dim dic As IDictionary = GetDic(_cache, key)
 
-                            Dim id As String = o.Identifier.ToString
-                            If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                                id &= criteria.Filter(type2load).ToString
-                            End If
+						Dim id As String = o.Identifier.ToString
+						If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+							id &= criteria.Filter(type2load).ToString
+						End If
 
-                            'Dim sync As String = GetSync(key, id)
-                            el.Accept(Nothing)
-                            dic(id) = New M2MCache(Nothing, GetFilter(criteria, type2load), el, Me)
-                        End If
-
-                        'Cache.AddRelationValue(o.GetType, type2load)
-                    End If
+						'Dim sync As String = GetSync(key, id)
+						el.Accept(Nothing)
+						dic(id) = New M2MCache(Nothing, GetFilter(criteria, type2load), el, Me)
+					End If
                 Next
             End If
         End Using
@@ -2734,7 +2735,7 @@ l1:
     End Function
 
     Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As Boolean) As String
-        Return tt1.Name & Const_JoinStaticString & direct & " - new version - " & tt2.Name & GetStaticKey()
+		Return tt1.Name & Const_JoinStaticString & direct & " - new version - " & tt2.Name & "$" & GetStaticKey()
     End Function
 
     Protected Friend Function FindMany2Many2(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal criteria As IGetFilter, _

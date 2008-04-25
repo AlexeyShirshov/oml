@@ -1044,8 +1044,8 @@ Namespace Orm
                 End If
                 mc.DeleteObject(Me)
                 _needDelete = True
-            Else
-                Debug.Assert(False)
+                'Else
+                '    Debug.Assert(False)
             End If
             Return r
         End Function

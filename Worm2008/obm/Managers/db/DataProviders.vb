@@ -404,10 +404,10 @@ Namespace Database
                             _mgr._cache.BeginTrackDelete(t)
                         End If
                         _mgr._loadedInLastFetch = 0
-                        Dim et As New PerfCounter
+						Dim et As New PerfCounter
+						Dim l As New List(Of Integer)
                         Using dr As System.Data.IDataReader = cmd.ExecuteReader
-                            _mgr._exec = et.GetTime
-                            Dim l As New List(Of Integer)
+                            _mgr._exec = et.GetTime                            
                             Dim ft As New PerfCounter
                             Do While dr.Read
                                 Dim id1 As Integer = CInt(dr.GetValue(0))
@@ -429,16 +429,16 @@ Namespace Database
                                 End If
                             Loop
                             _mgr._fetch = ft.GetTime
-
-                            If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-                                Dim l2 As New List(Of Integer)
-                                For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False))
-                                    l2.Add(o.Identifier)
-                                Next
-                                l = l2
-                            End If
-                            Return l
                         End Using
+
+						If _sort IsNot Nothing AndAlso _sort.IsExternal Then
+							Dim l2 As New List(Of Integer)
+							For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False))
+								l2.Add(o.Identifier)
+							Next
+							l = l2
+						End If
+						Return l
                     Finally
                         If withLoad Then
                             _mgr._cache.EndTrackDelete(t)
