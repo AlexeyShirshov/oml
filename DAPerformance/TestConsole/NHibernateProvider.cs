@@ -53,10 +53,11 @@ namespace TestConsole
         {
             foreach (int id in mediumUserIds)
             {
-                IList results = session.CreateCriteria(typeof(User))
-                    .SetProjection(Projections.Property("UserId"))
-                    .Add(Expression.Eq("UserId", id))
-                    .List();
+                User u = session.Get<User>(id);
+                //IList results = session.CreateCriteria(typeof(User))
+                //    .SetProjection(Projections.Property("UserId"))
+                //    .Add(Expression.Eq("UserId", id))
+                //    .List();
             }
         }
 
@@ -215,9 +216,10 @@ namespace TestConsole
         {
             foreach (int id in mediumUserIds)
             {
-                var ids = (from e in session.Linq<LazyUser>()
-                           where e.UserId == id
-                           select e.UserId).ToList();
+                //var ids = (from e in session.Linq<LazyUser>()
+                //           where e.UserId == id
+                //           select e.UserId).ToList();
+                LazyUser ur = session.Linq<LazyUser>().Single<LazyUser>(u => u.UserId == id);
             }
         }
 
