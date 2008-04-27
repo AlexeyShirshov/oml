@@ -46,7 +46,7 @@ namespace DaAdoEF
         {
             foreach (int id in mediumUserIds)
             {
-                IEnumerable<entities.tbl_user> users = entities.tbl_user.Where("it.user_id = @user_id", 
+                IEnumerable<tbl_user> users = entities.tbl_user.Where("it.user_id = @user_id", 
                     new ObjectParameter("user_id", id)).ToList();
             }
         }
