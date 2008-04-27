@@ -247,18 +247,15 @@ namespace DAAdo
         }
 
         [QueryTypeAttribute(QueryType.TypeCycleWithoutLoad, Syntax.Dataset)]
-        public void TypeCycleWithoutLoadLinq()
+        public void TypeCycleWithoutLoadDataset()
         {
             foreach (int id in mediumUserIds)
             {
                 SqlCommand command = new SqlCommand(
                     "select user_id from tbl_user where user_id=" + id, conn);
-                SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    int userId = reader.GetInt32(0);                   
-                }
-                reader.Close();
+                SqlDataAdapter adapter = new SqlDataAdapter(command);
+                DataSet ds = new DataSet();
+                adapter.Fill(ds);
             }
         }
 
@@ -355,7 +352,6 @@ namespace DAAdo
 
         #endregion Dataset
 
-        #region Dataset
         public void TypeCycleWithLoadDataset(int[] userIds)
         {
             foreach (int id in userIds)
@@ -368,7 +364,6 @@ namespace DAAdo
                 adapter.Fill(ds);
             }
         }
-
 
         public void CollectionDataset(int count)
         {
@@ -400,12 +395,6 @@ namespace DAAdo
             adapter.Fill(ds);
         }
 
-
-
-       
-
-
-
         public void SameObjectInCycleLoadDataset(int userId)
         {
             for (int i = 0; i < Constants.SmallIteration; i++)
@@ -417,9 +406,6 @@ namespace DAAdo
                 adapter.Fill(ds);
             }
         }
-
      
-        #endregion Dataset
- 
     }
 }

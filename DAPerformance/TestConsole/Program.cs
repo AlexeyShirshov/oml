@@ -38,10 +38,10 @@ namespace TestConsole
             //{
                 TestRunner runner = new TestRunner();
                 runner.Start();
-                runner.RunAdo();
-                runner.RunLinq();
-                runner.RunNHibernate();
-                runner.RunWorm();
+                //runner.RunAdo();
+                //runner.RunLinq();
+                //runner.RunNHibernate();
+                //runner.RunWorm();
                 runner.RunAdoEF();
                 runner.End();
             //}
