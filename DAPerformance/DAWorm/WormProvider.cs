@@ -160,7 +160,8 @@ namespace DAWorm
         {
             foreach (int id in userIds)
             {
-                User user = new User(id, manager.Cache, manager.DbSchema);
+                //User user = new User(id, manager.Cache, manager.DbSchema);
+                User user = manager.CreateObject<User>(id);
             }
         }
 
@@ -168,8 +169,9 @@ namespace DAWorm
         {
             foreach (int id in userIds)
             {
-                User user = new User(id, manager.Cache, manager.DbSchema);
-                user.Load();
+                //User user = new User(id, manager.Cache, manager.DbSchema);
+                //user.Load();
+                User user = manager.Find<User>(id);
             }
         }
 
@@ -177,7 +179,8 @@ namespace DAWorm
         {
             foreach (int id in userIds)
             {
-                User user = new User(id, manager.Cache, manager.DbSchema);
+                //User user = new User(id, manager.Cache, manager.DbSchema);
+                User user = manager.CreateObject<User>(id);
                 string name = user.First_name;
             }
         }

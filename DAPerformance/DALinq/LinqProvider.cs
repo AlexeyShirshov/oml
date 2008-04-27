@@ -191,9 +191,10 @@ namespace DALinq
                            select e.user_id).ToList();
                 foreach (int userId in ids)
                 {
-                    var first_name = (from e in db.tbl_users
-                                      where e.user_id == userId
-                                      select e.first_name).ToList();
+                    //var first_name = (from e in db.tbl_users
+                    //                  where e.user_id == userId
+                    //                  select e.first_name).ToList();
+                    string first_name = db.tbl_users.Single<tbl_user>(u => u.user_id == userId).first_name;
                 }
             }
         }
