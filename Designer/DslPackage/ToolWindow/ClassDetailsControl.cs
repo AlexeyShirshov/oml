@@ -319,6 +319,8 @@ namespace Worm.Designer
                     }
 
                     table.Name = name;
+
+                    entity.WormModel.Tables.Add(table);
                     txAdd.Commit();
                     
                 }

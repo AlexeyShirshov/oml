@@ -235,12 +235,12 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/String" />
+            <ExternalTypeMoniker Name="/System/Boolean" />
           </Type>
         </DomainProperty>
         <DomainProperty Id="53125034-447a-4175-b30d-a6ea4885f846" Description="Make property obsolete" Name="Obsolete" DisplayName="Obsolete" DefaultValue="None">
           <Type>
-            <DomainEnumerationMoniker Name="Obsolete" />
+            <ExternalTypeMoniker Name="/Worm.CodeGen.Core.Descriptors/ObsoleteType" />
           </Type>
         </DomainProperty>
         <DomainProperty Id="c71cec64-dbd4-4be1-9e67-c9416fbd8978" Description="Description for obsolete property" Name="ObsoleteDescription" DisplayName="Obsolete Description">
@@ -257,7 +257,7 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/String" />
+            <ExternalTypeMoniker Name="/System/Boolean" />
           </Type>
         </DomainProperty>
       </Properties>
@@ -276,7 +276,7 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="35a5eac0-bf5d-4f0e-b6e0-9b24c77a01d7" Description="Suppressed property type" Name="Type" DisplayName="Type" DefaultValue="String">
+        <DomainProperty Id="35a5eac0-bf5d-4f0e-b6e0-9b24c77a01d7" Description="Suppressed property type" Name="Type" DisplayName="Type" DefaultValue="System.String">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -365,7 +365,7 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="9c577e94-1d95-40ab-af19-34949cd8de47" Description="&gt;Тип связанной сущности для генерации методов" Name="DirectAccessedEntityType" DisplayName="Direct Accessed Entity Type">
+        <DomainProperty Id="9c577e94-1d95-40ab-af19-34949cd8de47" Description="Тип связанной сущности для генерации методов" Name="DirectAccessedEntityType" DisplayName="Direct Accessed Entity Type">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -678,13 +678,7 @@
         <EnumerationLiteral Description="Factory" Name="Factory" Value="" />
       </Literals>
     </DomainEnumeration>
-    <DomainEnumeration Name="Obsolete" Namespace="Worm.Designer" Description="Obsolete">
-      <Literals>
-        <EnumerationLiteral Description="None obsolete" Name="None" Value="" />
-        <EnumerationLiteral Description="Make obsolete with warning" Name="Warning" Value="" />
-        <EnumerationLiteral Description="Make obsolete with error" Name="Error" Value="" />
-      </Literals>
-    </DomainEnumeration>
+    <ExternalType Name="ObsoleteType" Namespace="Worm.CodeGen.Core.Descriptors" />
   </Types>
   <Shapes>
     <CompartmentShape Id="1ac7c68e-23be-47ec-a6fe-2ece8f63e49c" Description="Entity" Name="EntityShape" DisplayName="Entity" Namespace="Worm.Designer" FixedTooltipText="Entity Shape" FillColor="PaleGreen" InitialHeight="0.5" OutlineThickness="0.01125" HasDefaultConnectionPoints="true" Geometry="RoundedRectangle">

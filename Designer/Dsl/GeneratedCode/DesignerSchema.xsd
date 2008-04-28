@@ -384,13 +384,13 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Disabled -->
-    <xsd:attribute name="disabled" type="xsd:string" >
+    <xsd:attribute name="disabled" type="xsd:boolean" >
       <xsd:annotation>
         <xsd:documentation>Признак отключения проперти</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Obsolete -->
-    <xsd:attribute name="obsolete" type="Obsolete" >
+    <xsd:attribute name="obsolete" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Make property obsolete</xsd:documentation>
       </xsd:annotation>
@@ -402,7 +402,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: EnablePropertyChanged -->
-    <xsd:attribute name="enablePropertyChanged" type="xsd:string" >
+    <xsd:attribute name="enablePropertyChanged" type="xsd:boolean" >
       <xsd:annotation>
         <xsd:documentation>Включает для свойства поднятие события PropertyChanged, при этом реализация идет на уровне конкретной сущности. При этом в целом для сущности отключается общий механизм этого события.</xsd:documentation>
       </xsd:annotation>
@@ -508,7 +508,7 @@
     <!-- Property: DirectAccessedEntityType -->
     <xsd:attribute name="directAccessedEntityType" type="xsd:string" >
       <xsd:annotation>
-        <xsd:documentation>&gt;Тип связанной сущности для генерации методов</xsd:documentation>
+        <xsd:documentation>Тип связанной сущности для генерации методов</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: ReverseAccessedEntityType -->
@@ -884,30 +884,6 @@
       <xsd:enumeration value="Factory">
         <xsd:annotation>
           <xsd:documentation>Factory</xsd:documentation>
-        </xsd:annotation>
-      </xsd:enumeration>
-    </xsd:restriction>
-  </xsd:simpleType>
-  
-  <!-- Enum Obsolete -->
-  <xsd:simpleType name="Obsolete">
-    <xsd:annotation>
-      <xsd:documentation>Obsolete</xsd:documentation>
-    </xsd:annotation>
-    <xsd:restriction base="xsd:string">
-      <xsd:enumeration value="None">
-        <xsd:annotation>
-          <xsd:documentation>None obsolete</xsd:documentation>
-        </xsd:annotation>
-      </xsd:enumeration>
-      <xsd:enumeration value="Warning">
-        <xsd:annotation>
-          <xsd:documentation>Make obsolete with warning</xsd:documentation>
-        </xsd:annotation>
-      </xsd:enumeration>
-      <xsd:enumeration value="Error">
-        <xsd:annotation>
-          <xsd:documentation>Make obsolete with error</xsd:documentation>
         </xsd:annotation>
       </xsd:enumeration>
     </xsd:restriction>

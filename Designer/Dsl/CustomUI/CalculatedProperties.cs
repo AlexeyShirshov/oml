@@ -23,11 +23,13 @@ namespace Worm.Designer
         {
             if (this.Tables.Count > 0)
             {
+
                 return "e_" + this.Tables[0].Schema + "_" + this.Name;
+
             }
-            else 
+            else
             {
-                return string.Empty;
+                return "e_" + this.Name;
             }
         }
     }
@@ -67,7 +69,7 @@ namespace Worm.Designer
                         WormType type = new WormType(property.Entity.WormModel.Store);
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
-                        string idProperty = GetIdProperty(property);
+                        string idProperty = Utils.GetIdProperty(property.Type);
                         if (idProperty != null && property.Nullable)
                         {
                             idProperty += "nullable";
@@ -80,56 +82,7 @@ namespace Worm.Designer
                 }
             }
         }
-        private static string GetIdProperty(Property property)
-        {
-            string idProperty = null;
-            switch (property.Type)
-            {
-                case "System.Byte[]":
-                    idProperty = "tBytes";
-                    break;
-                case "System.String":
-                    idProperty = "tString";
-                    break;
-                case "System.Int32":
-                    idProperty = "tInt32";
-                    break;
-                case "System.Int16":
-                    idProperty = "tInt16";
-                    break;
-                case "System.Int64":
-                    idProperty = "tInt64";
-                    break;
-                case "System.Byte":
-                    idProperty = "tByte";
-                    break;
-                case "System.DateTime":
-                    idProperty = "tDateTime";
-                    break;
-                case "System.Decimal":
-                    idProperty = "tDecimal";
-                    break;
-                case "System.Double":
-                    idProperty = "tDouble";
-                    break;
-                case "System.Single":
-                    idProperty = "tSingle";
-                    break;
-
-                case "System.Boolean":
-                    idProperty = "tBoolean";
-                    break;
-                case "System.Xml.XmlDocument":
-                    idProperty = "tXML";
-                    break;
-                case "System.Guid":
-                    idProperty = "tGUID";
-                    break;
-
-            }
-            return idProperty;
-        }
-  
+       
 
     }
 
@@ -155,7 +108,7 @@ namespace Worm.Designer
                         WormType type = new WormType(property.Entity.WormModel.Store);
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
-                        string idProperty =  GetIdProperty(property);
+                        string idProperty =  Utils.GetIdProperty(property.Type);
                         if (idProperty != null && property.Nullable)
                         {
                             idProperty += "nullable";
@@ -169,54 +122,43 @@ namespace Worm.Designer
             }
             base.ElementPropertyChanged(e);
         }
-        private static string GetIdProperty(Property property)
+   
+    }
+
+    /// <summary>
+    /// Implements one add rule for the Property domain class.
+    /// </summary>
+    [RuleOn(typeof(Property), FireTime = TimeToFire.TopLevelCommit)]
+    public class PropertyDeleteRule : DeletingRule
+    {
+
+        public override void ElementDeleting(ElementDeletingEventArgs e)
         {
-            string idProperty = null;
-            switch (property.Type)
+         
+            if (e == null)
             {
-                case "System.Byte[]":
-                    idProperty = "tBytes";
-                    break;
-                case "System.String":
-                    idProperty = "tString";
-                    break;
-                case "System.Int32":
-                    idProperty = "tInt32";
-                    break;
-                case "System.Int16":
-                    idProperty = "tInt16";
-                    break;
-                case "System.Int64":
-                    idProperty = "tInt64";
-                    break;
-                case "System.Byte":
-                    idProperty = "tByte";
-                    break;
-                case "System.DateTime":
-                    idProperty = "tDateTime";
-                    break;
-                case "System.Decimal":
-                    idProperty = "tDecimal";
-                    break;
-                case "System.Double":
-                    idProperty = "tDouble";
-                    break;
-                case "System.Single":
-                    idProperty = "tSingle";
-                    break;
-
-                case "System.Boolean":
-                    idProperty = "tBoolean";
-                    break;
-                case "System.Xml.XmlDocument":
-                    idProperty = "tXML";
-                    break;
-                case "System.Guid":
-                    idProperty = "tGUID";
-                    break;
-
+                throw new ArgumentNullException("e");
             }
-            return idProperty;
+            Property property = e.ModelElement as Property;
+            if (property != null)
+            {
+                using (Transaction txAdd = e.ModelElement.Store.TransactionManager.BeginTransaction("Add property"))
+                    {
+                        int count = 0;
+                        foreach (Entity entity in property.Entity.WormModel.Entities)
+                        {
+                            count += entity.Properties.FindAll(p => p.Type == property.Type).Count;
+                            count += entity.SupressedProperties.FindAll(p => p.Type == property.Type).Count;
+                        }
+                        if (count == 1)
+                        {
+                            property.Entity.WormModel.Types.Find(t => t.Name == property.Type).Delete();
+                        }
+                      txAdd.Commit();
+                    }
+            }
+
+            base.ElementDeleting(e);
         }
     }
 
@@ -244,7 +186,7 @@ namespace Worm.Designer
                         WormType type = new WormType(property.Entity.WormModel.Store);
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
-                        string idProperty = GetIdProperty(property);
+                        string idProperty = Utils.GetIdProperty(property.Type);
                       
                         type.IdProperty = idProperty ?? "t" + property.Type;
 
@@ -254,58 +196,10 @@ namespace Worm.Designer
                 }
             }
         }
-        private static string GetIdProperty(SupressedProperty property)
-        {
-            string idProperty = null;
-            switch (property.Type)
-            {
-                case "System.Byte[]":
-                    idProperty = "tBytes";
-                    break;
-                case "System.String":
-                    idProperty = "tString";
-                    break;
-                case "System.Int32":
-                    idProperty = "tInt32";
-                    break;
-                case "System.Int16":
-                    idProperty = "tInt16";
-                    break;
-                case "System.Int64":
-                    idProperty = "tInt64";
-                    break;
-                case "System.Byte":
-                    idProperty = "tByte";
-                    break;
-                case "System.DateTime":
-                    idProperty = "tDateTime";
-                    break;
-                case "System.Decimal":
-                    idProperty = "tDecimal";
-                    break;
-                case "System.Double":
-                    idProperty = "tDouble";
-                    break;
-                case "System.Single":
-                    idProperty = "tSingle";
-                    break;
-
-                case "System.Boolean":
-                    idProperty = "tBoolean";
-                    break;
-                case "System.Xml.XmlDocument":
-                    idProperty = "tXML";
-                    break;
-                case "System.Guid":
-                    idProperty = "tGUID";
-                    break;
-
-            }
-            return idProperty;
-        }
+       
   
     }
- [RuleOn(typeof(SupressedProperty), FireTime = TimeToFire.TopLevelCommit)]
+    [RuleOn(typeof(SupressedProperty), FireTime = TimeToFire.TopLevelCommit)]
     public class SupressedPropertyChangeRule : ChangeRule
     {
         public override void ElementPropertyChanged(ElementPropertyChangedEventArgs e)
@@ -324,8 +218,8 @@ namespace Worm.Designer
                         WormType type = new WormType(property.Entity.WormModel.Store);
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
-                        string idProperty =  GetIdProperty(property);
-                        
+                        string idProperty = Utils.GetIdProperty(property.Type);
+
                         type.IdProperty = idProperty ?? "t" + property.Type;
 
 
@@ -335,56 +229,46 @@ namespace Worm.Designer
             }
             base.ElementPropertyChanged(e);
         }
-        private static string GetIdProperty(SupressedProperty property)
-        {
-            string idProperty = null;
-            switch (property.Type)
-            {
-                case "System.Byte[]":
-                    idProperty = "tBytes";
-                    break;
-                case "System.String":
-                    idProperty = "tString";
-                    break;
-                case "System.Int32":
-                    idProperty = "tInt32";
-                    break;
-                case "System.Int16":
-                    idProperty = "tInt16";
-                    break;
-                case "System.Int64":
-                    idProperty = "tInt64";
-                    break;
-                case "System.Byte":
-                    idProperty = "tByte";
-                    break;
-                case "System.DateTime":
-                    idProperty = "tDateTime";
-                    break;
-                case "System.Decimal":
-                    idProperty = "tDecimal";
-                    break;
-                case "System.Double":
-                    idProperty = "tDouble";
-                    break;
-                case "System.Single":
-                    idProperty = "tSingle";
-                    break;
-
-                case "System.Boolean":
-                    idProperty = "tBoolean";
-                    break;
-                case "System.Xml.XmlDocument":
-                    idProperty = "tXML";
-                    break;
-                case "System.Guid":
-                    idProperty = "tGUID";
-                    break;
-
-            }
-            return idProperty;
-        }
     }
+        
+
+ /// <summary>
+ /// Implements one add rule for the Property domain class.
+ /// </summary>
+ [RuleOn(typeof(SupressedProperty), FireTime = TimeToFire.TopLevelCommit)]
+    public class SupressedPropertyDeleteRule : DeletingRule
+ {
+
+     public override void ElementDeleting(ElementDeletingEventArgs e)
+     {
+         
+         if (e == null)
+         {
+             throw new ArgumentNullException("e");
+         }
+         SupressedProperty property = e.ModelElement as SupressedProperty;
+         if (property != null)
+         {
+             using (Transaction txAdd = e.ModelElement.Store.TransactionManager.BeginTransaction("Add property"))
+             {
+                 int count = 0;
+                 foreach (Entity entity in property.Entity.WormModel.Entities)
+                 {
+                     count += entity.Properties.FindAll(p => p.Type == property.Type).Count;
+                     count += entity.SupressedProperties.FindAll(p => p.Type == property.Type).Count;
+                 }
+                 if (count == 1)
+                 {
+                     property.Entity.WormModel.Types.Find(t => t.Name == property.Type).Delete();
+                 }
+                 txAdd.Commit();
+             }
+         }
+
+         base.ElementDeleting(e);
+     }
+ }
+
     /// <summary>
     /// Implements one add rule for the Property domain class.
     /// </summary>
@@ -472,6 +356,63 @@ namespace Worm.Designer
             base.ElementPropertyChanged(e);
         }
       
+    }
+
+    /// <summary>
+    /// Implements one add rule for the Property domain class.
+    /// </summary>
+    [RuleOn(typeof(Entity), FireTime = TimeToFire.TopLevelCommit)]
+    public class EntityDeleteRule : DeletingRule
+    {
+     
+        public override void ElementDeleting(ElementDeletingEventArgs e)
+        {
+            if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+            Entity entity = e.ModelElement as Entity;
+            if (entity != null)
+            {
+                using (Transaction txAdd = e.ModelElement.Store.TransactionManager.BeginTransaction("Add property"))
+                {
+                    entity.WormModel.Types.Find(t => t.Name ==  entity.Name).Delete();
+                    List<Table> tables = entity.WormModel.Tables.FindAll(t => t.Entity == entity);
+                    foreach (Table table in tables)
+                    {
+                        table.Delete();
+                    }
+                    txAdd.Commit();
+                }
+            }
+
+            base.ElementDeleting(e);
+        }
+    }
+
+    [RuleOn(typeof(Table), FireTime = TimeToFire.TopLevelCommit)]
+    public class TableDeleteRule : DeletingRule
+    {
+       
+          public override void ElementDeleting(ElementDeletingEventArgs e)
+        {
+         
+            if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+            Table table = e.ModelElement as Table;
+            if (table != null)
+            {
+                using (Transaction txAdd = e.ModelElement.Store.TransactionManager.BeginTransaction("Add property"))
+                {
+                    table.Entity.WormModel.Tables.Find(t => t.Name == table.Name).Delete();                   
+                    txAdd.Commit();
+                }
+            }
+
+            base.ElementDeleting(e);
+        }
     }
 
     /// <summary>
@@ -779,7 +720,9 @@ namespace Worm.Designer
             , typeof(EntityAddRule), typeof(SupressedPropertyAddRule),  typeof( EntityReferencesTargetEntitiesAddRule),
             typeof(PropertyChangeRule), typeof(SelfRelationChangeRule)
             , typeof(EntityChangeRule), typeof(SupressedPropertyChangeRule),  
-            typeof( EntityReferencesTargetEntitiesChangeRule)};
+            typeof( EntityReferencesTargetEntitiesChangeRule),
+            typeof(EntityDeleteRule), typeof(PropertyDeleteRule), typeof(SupressedPropertyDeleteRule),
+            typeof(TableDeleteRule)};
         }
 
        
@@ -832,4 +775,57 @@ namespace Worm.Designer
 
        
     }
+    public class Utils
+    {
+        public static string GetIdProperty(string type)
+        {
+            string idProperty = null;
+            switch (type)
+            {
+                case "System.Byte[]":
+                    idProperty = "tBytes";
+                    break;
+                case "System.String":
+                    idProperty = "tString";
+                    break;
+                case "System.Int32":
+                    idProperty = "tInt32";
+                    break;
+                case "System.Int16":
+                    idProperty = "tInt16";
+                    break;
+                case "System.Int64":
+                    idProperty = "tInt64";
+                    break;
+                case "System.Byte":
+                    idProperty = "tByte";
+                    break;
+                case "System.DateTime":
+                    idProperty = "tDateTime";
+                    break;
+                case "System.Decimal":
+                    idProperty = "tDecimal";
+                    break;
+                case "System.Double":
+                    idProperty = "tDouble";
+                    break;
+                case "System.Single":
+                    idProperty = "tSingle";
+                    break;
+
+                case "System.Boolean":
+                    idProperty = "tBoolean";
+                    break;
+                case "System.Xml.XmlDocument":
+                    idProperty = "tXML";
+                    break;
+                case "System.Guid":
+                    idProperty = "tGUID";
+                    break;
+
+            }
+            return idProperty;
+        }
+    }
+
 }

@@ -3187,14 +3187,14 @@ namespace Worm.Designer
 				string attribDisabled = reader.GetAttribute("disabled");
 				if (attribDisabled != null)
 				{
-					global::System.String valueOfDisabled;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
+					global::System.Boolean valueOfDisabled;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
 					{
 						instanceOfProperty.Disabled = valueOfDisabled;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.String), attribDisabled);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.Boolean), attribDisabled);
 					}
 				}
 			}
@@ -3204,14 +3204,14 @@ namespace Worm.Designer
 				string attribObsolete = reader.GetAttribute("obsolete");
 				if (attribObsolete != null)
 				{
-					Obsolete valueOfObsolete;
-					if (DslModeling::SerializationUtilities.TryGetValue<Obsolete>(DslModeling::SerializationUtilities.UnescapeXmlString(attribObsolete), out valueOfObsolete))
+					global::Worm.CodeGen.Core.Descriptors.ObsoleteType valueOfObsolete;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::Worm.CodeGen.Core.Descriptors.ObsoleteType>(DslModeling::SerializationUtilities.UnescapeXmlString(attribObsolete), out valueOfObsolete))
 					{
 						instanceOfProperty.Obsolete = valueOfObsolete;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "obsolete", typeof(Obsolete), attribObsolete);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "obsolete", typeof(global::Worm.CodeGen.Core.Descriptors.ObsoleteType), attribObsolete);
 					}
 				}
 			}
@@ -3238,14 +3238,14 @@ namespace Worm.Designer
 				string attribEnablePropertyChanged = reader.GetAttribute("enablePropertyChanged");
 				if (attribEnablePropertyChanged != null)
 				{
-					global::System.String valueOfEnablePropertyChanged;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribEnablePropertyChanged), out valueOfEnablePropertyChanged))
+					global::System.Boolean valueOfEnablePropertyChanged;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribEnablePropertyChanged), out valueOfEnablePropertyChanged))
 					{
 						instanceOfProperty.EnablePropertyChanged = valueOfEnablePropertyChanged;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "enablePropertyChanged", typeof(global::System.String), attribEnablePropertyChanged);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "enablePropertyChanged", typeof(global::System.Boolean), attribEnablePropertyChanged);
 					}
 				}
 			}
@@ -3690,20 +3690,21 @@ namespace Worm.Designer
 			// Disabled
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.Disabled;
+				global::System.Boolean propValue = instanceOfProperty.Disabled;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "false") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "false") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("disabled", propValue);
+						writer.WriteAttributeString("disabled", serializedPropValue);
 					}
 				}
 			}
 			// Obsolete
 			if (!serializationContext.Result.Failed)
 			{
-				Obsolete propValue = instanceOfProperty.Obsolete;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<Obsolete>(serializationContext, propValue);
+				global::Worm.CodeGen.Core.Descriptors.ObsoleteType propValue = instanceOfProperty.Obsolete;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::Worm.CodeGen.Core.Descriptors.ObsoleteType>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
 					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "None") != 0)
@@ -3725,12 +3726,13 @@ namespace Worm.Designer
 			// EnablePropertyChanged
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.EnablePropertyChanged;
+				global::System.Boolean propValue = instanceOfProperty.EnablePropertyChanged;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("enablePropertyChanged", propValue);
+						writer.WriteAttributeString("enablePropertyChanged", serializedPropValue);
 					}
 				}
 			}
@@ -4317,7 +4319,7 @@ namespace Worm.Designer
 				global::System.String propValue = instanceOfSupressedProperty.Type;
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "String") != 0))
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "System.String") != 0))
 					{	// No need to write the value out if it's the same as default value.
 						writer.WriteAttributeString("type", propValue);
 					}

@@ -102,7 +102,7 @@
     <Compile Include="CommandSet.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="DesignerEditorFactory.cs" />
+    <Compile Include="ToolWindow\DesignerEditorFactory.cs" />
     <Compile Include="ToolWindow\WormToolWindow.cs" />
     <Compile Include="ToolWindow\ClassDetailsControl.cs">
       <SubType>UserControl</SubType>

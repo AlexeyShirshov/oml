@@ -16,7 +16,7 @@ namespace Worm.Designer
 {
 	/// <summary>
 	/// DomainModel DesignerDomainModel
-	/// Description for Worm.Designer.Designer
+	/// Designer
 	/// </summary>
 	[DslDesign::DisplayNameResource("Worm.Designer.DesignerDomainModel.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 	[DslDesign::DescriptionResource("Worm.Designer.DesignerDomainModel.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -668,35 +668,6 @@ namespace Worm.Designer
 		/// </summary>
 		[DslDesign::DescriptionResource("Worm.Designer.PropertyAttribute/Factory.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		Factory,
-	}
-}
-namespace Worm.Designer
-{
-	/// <summary>
-	/// DomainEnumeration: Obsolete
-	/// Obsolete
-	/// </summary>
-	[global::System.CLSCompliant(true)]
-	public enum Obsolete
-	{
-		/// <summary>
-		/// None
-		/// None obsolete
-		/// </summary>
-		[DslDesign::DescriptionResource("Worm.Designer.Obsolete/None.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		None,
-		/// <summary>
-		/// Warning
-		/// Make obsolete with warning
-		/// </summary>
-		[DslDesign::DescriptionResource("Worm.Designer.Obsolete/Warning.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		Warning,
-		/// <summary>
-		/// Error
-		/// Make obsolete with error
-		/// </summary>
-		[DslDesign::DescriptionResource("Worm.Designer.Obsolete/Error.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		Error,
 	}
 }
 

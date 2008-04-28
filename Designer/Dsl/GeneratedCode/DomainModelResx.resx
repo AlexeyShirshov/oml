@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Worm.Designer.DesignerDomainModel.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.Designer</value>
+    <value>Designer</value>
     <comment>Description for DslLibrary &apos;Designer&apos;</comment>
   </data>
   <data name="Worm.Designer.DesignerDomainModel.DisplayName" xml:space="preserve">
@@ -478,7 +478,7 @@
     <comment>DisplayName for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/DirectAccessedEntityType.Description" xml:space="preserve">
-    <value>&gt;Тип связанной сущности для генерации методов</value>
+    <value>Тип связанной сущности для генерации методов</value>
     <comment>Description for DomainProperty &apos;DirectAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/DirectAccessedEntityType.DisplayName" xml:space="preserve">
@@ -1004,30 +1004,6 @@
   <data name="Worm.Designer.PropertyAttribute/Factory.Description" xml:space="preserve">
     <value>Factory</value>
     <comment>Description for EnumerationLiteral &apos;Factory&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
-  </data>
-  <data name="Worm.Designer.Obsolete/None.DisplayName" xml:space="preserve">
-    <value>None</value>
-    <comment>Display name for EnumerationLiteral &apos;None&apos; on DomainEnumeration &apos;Obsolete&apos;</comment>
-  </data>
-  <data name="Worm.Designer.Obsolete/None.Description" xml:space="preserve">
-    <value>None obsolete</value>
-    <comment>Description for EnumerationLiteral &apos;None&apos; on DomainEnumeration &apos;Obsolete&apos;</comment>
-  </data>
-  <data name="Worm.Designer.Obsolete/Warning.DisplayName" xml:space="preserve">
-    <value>Warning</value>
-    <comment>Display name for EnumerationLiteral &apos;Warning&apos; on DomainEnumeration &apos;Obsolete&apos;</comment>
-  </data>
-  <data name="Worm.Designer.Obsolete/Warning.Description" xml:space="preserve">
-    <value>Make obsolete with warning</value>
-    <comment>Description for EnumerationLiteral &apos;Warning&apos; on DomainEnumeration &apos;Obsolete&apos;</comment>
-  </data>
-  <data name="Worm.Designer.Obsolete/Error.DisplayName" xml:space="preserve">
-    <value>Error</value>
-    <comment>Display name for EnumerationLiteral &apos;Error&apos; on DomainEnumeration &apos;Obsolete&apos;</comment>
-  </data>
-  <data name="Worm.Designer.Obsolete/Error.Description" xml:space="preserve">
-    <value>Make obsolete with error</value>
-    <comment>Description for EnumerationLiteral &apos;Error&apos; on DomainEnumeration &apos;Obsolete&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityShape.Description" xml:space="preserve">
     <value>Entity</value>

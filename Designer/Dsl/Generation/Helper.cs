@@ -51,5 +51,22 @@ namespace Worm.Designer
 
             return null;
         }
+
+        [CLSCompliant(false)]
+        public static string GetProjectLanguage(Project project)
+        {
+            switch (project.Kind)
+            {
+                case VSLangProj.PrjKind.prjKindCSharpProject:
+                    //case "{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}":
+                    return ".cs";
+                case VSLangProj.PrjKind.prjKindVBProject:
+                    //case "{164B10B9-B200-11D0-8C61-00A0C91E29D5}":
+                    return ".vb";
+                default:
+                    throw new ArgumentException(
+                        "Unsupported project type. ActiveWriter currently supports C# and Visual Basic.NET projects.");
+            }
+        }
     }
 }

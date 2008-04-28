@@ -73,11 +73,17 @@ namespace Worm.Designer
                 foreach (Property property in entity.Properties)
                 {
                     TypeDescription type = GetType(model, property.Type, ormObjectsDef);
-                    entityDescription.Properties.Add(new PropertyDescription
+                    PropertyDescription propertyDescription = new PropertyDescription
                         (property.Name, property.Alias, property.Attributes.Split(new char[] { '|' }),
                         property.Description, type, property.FieldName,
-                        entityDescription.Tables.Find(t => t.Name == GetTableName(entity.Tables[0].Schema, property.Table)), 
-                        property.FieldAccessLevel, property.AccessLevel));                    
+                        entityDescription.Tables.Find(t => t.Name == GetTableName(entity.Tables[0].Schema, property.Table)),
+                        property.FieldAccessLevel, property.AccessLevel);
+                    
+                    propertyDescription.Disabled = property.Disabled;
+                    propertyDescription.Obsolete = property.Obsolete;
+                    propertyDescription.ObsoleteDescripton = property.ObsoleteDescription;
+                    propertyDescription.EnablePropertyChanged = property.EnablePropertyChanged;
+                    entityDescription.Properties.Add(propertyDescription);
                 }
 
                 foreach (SupressedProperty sproperty in entity.SupressedProperties)

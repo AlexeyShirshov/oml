@@ -2684,7 +2684,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Disabled
 		/// </summary>
-		private global::System.String disabledPropertyStorage = "false";
+		private global::System.Boolean disabledPropertyStorage;
 		
 		/// <summary>
 		/// Gets or sets the value of Disabled domain property.
@@ -2693,9 +2693,8 @@ namespace Worm.Designer
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Disabled.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Disabled.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("false")]
 		[DslModeling::DomainObjectId("55b97295-ab7f-4ae8-b6a3-5cfee02b9be9")]
-		public global::System.String Disabled
+		public global::System.Boolean Disabled
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -2711,7 +2710,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.Disabled domain property.
 		/// </summary>
-		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.Boolean>
 		{
 			private DisabledPropertyHandler() { }
 		
@@ -2737,7 +2736,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed global::System.Boolean GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.disabledPropertyStorage;
@@ -2748,11 +2747,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, global::System.Boolean newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				global::System.Boolean oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -2773,7 +2772,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Obsolete
 		/// </summary>
-		private Obsolete obsoletePropertyStorage = Obsolete.None;
+		private global::Worm.CodeGen.Core.Descriptors.ObsoleteType obsoletePropertyStorage = DslModeling::SerializationUtilities.GetValue<global::Worm.CodeGen.Core.Descriptors.ObsoleteType>("None");
 		
 		/// <summary>
 		/// Gets or sets the value of Obsolete domain property.
@@ -2781,9 +2780,9 @@ namespace Worm.Designer
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Obsolete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Obsolete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue(Obsolete.None)]
+		[global::System.ComponentModel.DefaultValue(typeof(global::Worm.CodeGen.Core.Descriptors.ObsoleteType), "None")]
 		[DslModeling::DomainObjectId("53125034-447a-4175-b30d-a6ea4885f846")]
-		public Obsolete Obsolete
+		public global::Worm.CodeGen.Core.Descriptors.ObsoleteType Obsolete
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -2799,7 +2798,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.Obsolete domain property.
 		/// </summary>
-		internal sealed partial class ObsoletePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, Obsolete>
+		internal sealed partial class ObsoletePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::Worm.CodeGen.Core.Descriptors.ObsoleteType>
 		{
 			private ObsoletePropertyHandler() { }
 		
@@ -2825,7 +2824,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed Obsolete GetValue(Property element)
+			public override sealed global::Worm.CodeGen.Core.Descriptors.ObsoleteType GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.obsoletePropertyStorage;
@@ -2836,11 +2835,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, Obsolete newValue)
+			public override sealed void SetValue(Property element, global::Worm.CodeGen.Core.Descriptors.ObsoleteType newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				Obsolete oldValue = GetValue(element);
+				global::Worm.CodeGen.Core.Descriptors.ObsoleteType oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -2948,7 +2947,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for EnablePropertyChanged
 		/// </summary>
-		private global::System.String enablePropertyChangedPropertyStorage = "False";
+		private global::System.Boolean enablePropertyChangedPropertyStorage;
 		
 		/// <summary>
 		/// Gets or sets the value of EnablePropertyChanged domain property.
@@ -2959,9 +2958,8 @@ namespace Worm.Designer
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/EnablePropertyChanged.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/EnablePropertyChanged.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
 		[DslModeling::DomainObjectId("27b55a46-03a8-4f6d-96c8-df53b4fd52ab")]
-		public global::System.String EnablePropertyChanged
+		public global::System.Boolean EnablePropertyChanged
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -2977,7 +2975,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.EnablePropertyChanged domain property.
 		/// </summary>
-		internal sealed partial class EnablePropertyChangedPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class EnablePropertyChangedPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.Boolean>
 		{
 			private EnablePropertyChangedPropertyHandler() { }
 		
@@ -3003,7 +3001,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed global::System.Boolean GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.enablePropertyChangedPropertyStorage;
@@ -3014,11 +3012,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, global::System.Boolean newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				global::System.Boolean oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -3188,7 +3186,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Type
 		/// </summary>
-		private global::System.String typePropertyStorage = "String";
+		private global::System.String typePropertyStorage = "System.String";
 		
 		/// <summary>
 		/// Gets or sets the value of Type domain property.
@@ -3197,7 +3195,7 @@ namespace Worm.Designer
 		[System.ComponentModel.Editor(typeof(Worm.Designer.TypeUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SupressedProperty/Type.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SupressedProperty/Type.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("String")]
+		[global::System.ComponentModel.DefaultValue("System.String")]
 		[DslModeling::DomainObjectId("35a5eac0-bf5d-4f0e-b6e0-9b24c77a01d7")]
 		public global::System.String Type
 		{
@@ -4130,7 +4128,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of DirectAccessedEntityType domain property.
-		/// >Тип связанной сущности для генерации методов
+		/// Тип связанной сущности для генерации методов
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.TypeUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/DirectAccessedEntityType.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]

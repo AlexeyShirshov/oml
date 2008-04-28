@@ -28,7 +28,9 @@ namespace Worm.Designer
             string fileExtension = "cs";
 
             DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
-            switch (GetDefaultExtension())
+            ProjectItem projectItem = dte.Solution.FindProjectItem(inputFileName);
+
+            switch (Helper.GetProjectLanguage(projectItem.ContainingProject))
             {
                 case ".cs":
                     fileExtension = "cs";
@@ -40,7 +42,6 @@ namespace Worm.Designer
                     throw new ArgumentException(
                         "Unsupported project type. ActiveWriter currently supports C# and Visual Basic.NET projects.");
             }
-            ProjectItem projectItem = dte.Solution.FindProjectItem(inputFileName);
 
             
             ResourceManager manager =
