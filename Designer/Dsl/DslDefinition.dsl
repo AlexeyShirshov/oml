@@ -13,6 +13,48 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
+        <DomainProperty Id="5eb9368f-2c70-452b-b572-7a5ed9640999" Description="Class name prefix" Name="ClassNamePrefix" DisplayName="Class Name Prefix">
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="7c38f9f4-5d8a-4bfd-9112-fd7c9f96522c" Description="Class Name Suffix" Name="ClassNameSuffix" DisplayName="Class Name Suffix">
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="42926c46-a937-4b2c-acd1-76859bca5084" Description="File Name Suffix" Name="FileNameSuffix" DisplayName="File Name Suffix">
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="56a2b134-f643-45c6-9d9e-feb681a11e8c" Description="Split" Name="Split" DisplayName="Split" DefaultValue="False">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/Boolean" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="e3e5953c-14f7-4661-9915-4d4bba04a001" Description="Entity Schema Def Class Name Suffix" Name="EntitySchemaDefClassNameSuffix" DisplayName="Entity Schema Def Class Name Suffix" DefaultValue="SchemaDef">
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="7fa8a791-39c7-4fd2-b179-4634c72159f1" Description="Language Specific Hacks" Name="LanguageSpecificHacks" DisplayName="Language Specific Hacks">
+          <Type>
+            <ExternalTypeMoniker Name="/Worm.CodeGen.Core/LanguageSpecificHacks" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="a8bceba5-c8e5-4a7e-8f2b-0c4e32afde31" Description="Private Members Prefix" Name="PrivateMembersPrefix" DisplayName="Private Members Prefix" DefaultValue="m_">
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
       </Properties>
       <ElementMergeDirectives>
         <ElementMergeDirective>
@@ -693,6 +735,7 @@
       </Literals>
     </DomainEnumeration>
     <ExternalType Name="ObsoleteType" Namespace="Worm.CodeGen.Core.Descriptors" />
+    <ExternalType Name="LanguageSpecificHacks" Namespace="Worm.CodeGen.Core" />
   </Types>
   <Shapes>
     <CompartmentShape Id="1ac7c68e-23be-47ec-a6fe-2ece8f63e49c" Description="Entity" Name="EntityShape" DisplayName="Entity" Namespace="Worm.Designer" FixedTooltipText="Entity Shape" FillColor="PaleGreen" InitialHeight="0.5" OutlineThickness="0.01125" HasDefaultConnectionPoints="true" Geometry="RoundedRectangle">
@@ -735,6 +778,27 @@
           <XmlRelationshipData RoleElementName="types">
             <DomainRelationshipMoniker Name="WormModelHasTypes" />
           </XmlRelationshipData>
+          <XmlPropertyData XmlName="classNamePrefix">
+            <DomainPropertyMoniker Name="WormModel/ClassNamePrefix" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="classNameSuffix">
+            <DomainPropertyMoniker Name="WormModel/ClassNameSuffix" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="fileNameSuffix">
+            <DomainPropertyMoniker Name="WormModel/FileNameSuffix" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="split">
+            <DomainPropertyMoniker Name="WormModel/Split" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="entitySchemaDefClassNameSuffix">
+            <DomainPropertyMoniker Name="WormModel/EntitySchemaDefClassNameSuffix" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="languageSpecificHacks">
+            <DomainPropertyMoniker Name="WormModel/LanguageSpecificHacks" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="privateMembersPrefix">
+            <DomainPropertyMoniker Name="WormModel/PrivateMembersPrefix" />
+          </XmlPropertyData>
         </ElementData>
       </XmlClassData>
       <XmlClassData TypeName="EntityConnector" MonikerAttributeName="" MonikerElementName="entityConnectorMoniker" ElementName="entityConnector" MonikerTypeName="EntityConnectorMoniker">

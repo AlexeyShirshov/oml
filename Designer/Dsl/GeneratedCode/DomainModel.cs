@@ -92,6 +92,13 @@ namespace Worm.Designer
 			{
 				new DomainMemberInfo(typeof(WormModel), "DefaultNamespace", WormModel.DefaultNamespaceDomainPropertyId, typeof(WormModel.DefaultNamespacePropertyHandler)),
 				new DomainMemberInfo(typeof(WormModel), "SchemaVersion", WormModel.SchemaVersionDomainPropertyId, typeof(WormModel.SchemaVersionPropertyHandler)),
+				new DomainMemberInfo(typeof(WormModel), "ClassNamePrefix", WormModel.ClassNamePrefixDomainPropertyId, typeof(WormModel.ClassNamePrefixPropertyHandler)),
+				new DomainMemberInfo(typeof(WormModel), "ClassNameSuffix", WormModel.ClassNameSuffixDomainPropertyId, typeof(WormModel.ClassNameSuffixPropertyHandler)),
+				new DomainMemberInfo(typeof(WormModel), "FileNameSuffix", WormModel.FileNameSuffixDomainPropertyId, typeof(WormModel.FileNameSuffixPropertyHandler)),
+				new DomainMemberInfo(typeof(WormModel), "Split", WormModel.SplitDomainPropertyId, typeof(WormModel.SplitPropertyHandler)),
+				new DomainMemberInfo(typeof(WormModel), "EntitySchemaDefClassNameSuffix", WormModel.EntitySchemaDefClassNameSuffixDomainPropertyId, typeof(WormModel.EntitySchemaDefClassNameSuffixPropertyHandler)),
+				new DomainMemberInfo(typeof(WormModel), "LanguageSpecificHacks", WormModel.LanguageSpecificHacksDomainPropertyId, typeof(WormModel.LanguageSpecificHacksPropertyHandler)),
+				new DomainMemberInfo(typeof(WormModel), "PrivateMembersPrefix", WormModel.PrivateMembersPrefixDomainPropertyId, typeof(WormModel.PrivateMembersPrefixPropertyHandler)),
 				new DomainMemberInfo(typeof(Entity), "IdProperty", Entity.IdPropertyDomainPropertyId, typeof(Entity.IdPropertyPropertyHandler)),
 				new DomainMemberInfo(typeof(Entity), "Name", Entity.NameDomainPropertyId, typeof(Entity.NamePropertyHandler)),
 				new DomainMemberInfo(typeof(Entity), "Namespace", Entity.NamespaceDomainPropertyId, typeof(Entity.NamespacePropertyHandler)),

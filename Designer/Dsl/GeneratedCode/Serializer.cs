@@ -163,6 +163,125 @@ namespace Worm.Designer
 					}
 				}
 			}
+			// ClassNamePrefix
+			if (!serializationContext.Result.Failed)
+			{
+				string attribClassNamePrefix = reader.GetAttribute("classNamePrefix");
+				if (attribClassNamePrefix != null)
+				{
+					global::System.String valueOfClassNamePrefix;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribClassNamePrefix), out valueOfClassNamePrefix))
+					{
+						instanceOfWormModel.ClassNamePrefix = valueOfClassNamePrefix;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "classNamePrefix", typeof(global::System.String), attribClassNamePrefix);
+					}
+				}
+			}
+			// ClassNameSuffix
+			if (!serializationContext.Result.Failed)
+			{
+				string attribClassNameSuffix = reader.GetAttribute("classNameSuffix");
+				if (attribClassNameSuffix != null)
+				{
+					global::System.String valueOfClassNameSuffix;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribClassNameSuffix), out valueOfClassNameSuffix))
+					{
+						instanceOfWormModel.ClassNameSuffix = valueOfClassNameSuffix;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "classNameSuffix", typeof(global::System.String), attribClassNameSuffix);
+					}
+				}
+			}
+			// FileNameSuffix
+			if (!serializationContext.Result.Failed)
+			{
+				string attribFileNameSuffix = reader.GetAttribute("fileNameSuffix");
+				if (attribFileNameSuffix != null)
+				{
+					global::System.String valueOfFileNameSuffix;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribFileNameSuffix), out valueOfFileNameSuffix))
+					{
+						instanceOfWormModel.FileNameSuffix = valueOfFileNameSuffix;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "fileNameSuffix", typeof(global::System.String), attribFileNameSuffix);
+					}
+				}
+			}
+			// Split
+			if (!serializationContext.Result.Failed)
+			{
+				string attribSplit = reader.GetAttribute("split");
+				if (attribSplit != null)
+				{
+					global::System.Boolean valueOfSplit;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSplit), out valueOfSplit))
+					{
+						instanceOfWormModel.Split = valueOfSplit;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "split", typeof(global::System.Boolean), attribSplit);
+					}
+				}
+			}
+			// EntitySchemaDefClassNameSuffix
+			if (!serializationContext.Result.Failed)
+			{
+				string attribEntitySchemaDefClassNameSuffix = reader.GetAttribute("entitySchemaDefClassNameSuffix");
+				if (attribEntitySchemaDefClassNameSuffix != null)
+				{
+					global::System.String valueOfEntitySchemaDefClassNameSuffix;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribEntitySchemaDefClassNameSuffix), out valueOfEntitySchemaDefClassNameSuffix))
+					{
+						instanceOfWormModel.EntitySchemaDefClassNameSuffix = valueOfEntitySchemaDefClassNameSuffix;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "entitySchemaDefClassNameSuffix", typeof(global::System.String), attribEntitySchemaDefClassNameSuffix);
+					}
+				}
+			}
+			// LanguageSpecificHacks
+			if (!serializationContext.Result.Failed)
+			{
+				string attribLanguageSpecificHacks = reader.GetAttribute("languageSpecificHacks");
+				if (attribLanguageSpecificHacks != null)
+				{
+					global::Worm.CodeGen.Core.LanguageSpecificHacks valueOfLanguageSpecificHacks;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::Worm.CodeGen.Core.LanguageSpecificHacks>(DslModeling::SerializationUtilities.UnescapeXmlString(attribLanguageSpecificHacks), out valueOfLanguageSpecificHacks))
+					{
+						instanceOfWormModel.LanguageSpecificHacks = valueOfLanguageSpecificHacks;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "languageSpecificHacks", typeof(global::Worm.CodeGen.Core.LanguageSpecificHacks), attribLanguageSpecificHacks);
+					}
+				}
+			}
+			// PrivateMembersPrefix
+			if (!serializationContext.Result.Failed)
+			{
+				string attribPrivateMembersPrefix = reader.GetAttribute("privateMembersPrefix");
+				if (attribPrivateMembersPrefix != null)
+				{
+					global::System.String valueOfPrivateMembersPrefix;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribPrivateMembersPrefix), out valueOfPrivateMembersPrefix))
+					{
+						instanceOfWormModel.PrivateMembersPrefix = valueOfPrivateMembersPrefix;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "privateMembersPrefix", typeof(global::System.String), attribPrivateMembersPrefix);
+					}
+				}
+			}
 		}
 	
 		/// <summary>
@@ -808,6 +927,83 @@ namespace Worm.Designer
 					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "1") != 0))
 					{	// No need to write the value out if it's the same as default value.
 						writer.WriteAttributeString("schemaVersion", propValue);
+					}
+				}
+			}
+			// ClassNamePrefix
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.ClassNamePrefix;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("classNamePrefix", propValue);
+				}
+			}
+			// ClassNameSuffix
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.ClassNameSuffix;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("classNameSuffix", propValue);
+				}
+			}
+			// FileNameSuffix
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.FileNameSuffix;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("fileNameSuffix", propValue);
+				}
+			}
+			// Split
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.Boolean propValue = instanceOfWormModel.Split;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				if (!serializationContext.Result.Failed)
+				{
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("split", serializedPropValue);
+					}
+				}
+			}
+			// EntitySchemaDefClassNameSuffix
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.EntitySchemaDefClassNameSuffix;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "SchemaDef") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("entitySchemaDefClassNameSuffix", propValue);
+					}
+				}
+			}
+			// LanguageSpecificHacks
+			if (!serializationContext.Result.Failed)
+			{
+				global::Worm.CodeGen.Core.LanguageSpecificHacks propValue = instanceOfWormModel.LanguageSpecificHacks;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::Worm.CodeGen.Core.LanguageSpecificHacks>(serializationContext, propValue);
+				if (!serializationContext.Result.Failed)
+				{
+					writer.WriteAttributeString("languageSpecificHacks", serializedPropValue);
+				}
+			}
+			// PrivateMembersPrefix
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.PrivateMembersPrefix;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "m_") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("privateMembersPrefix", propValue);
 					}
 				}
 			}

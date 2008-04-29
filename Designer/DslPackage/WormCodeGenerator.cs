@@ -125,6 +125,8 @@ namespace Worm.Designer
                 settings.PrivateMembersPrefix = "m_";
                 settings.Split = false;
 
+               
+
                 CodeCompileUnit compileUnit = generator.GetFullSingleUnit(settings);
 
                 using (StringWriter writer = new StringWriter(new StringBuilder()))

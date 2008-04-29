@@ -149,6 +149,62 @@
     <value>Schema Version</value>
     <comment>DisplayName for DomainProperty &apos;SchemaVersion&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
+  <data name="Worm.Designer.WormModel/ClassNamePrefix.Description" xml:space="preserve">
+    <value>Class name prefix</value>
+    <comment>Description for DomainProperty &apos;ClassNamePrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/ClassNamePrefix.DisplayName" xml:space="preserve">
+    <value>Class Name Prefix</value>
+    <comment>DisplayName for DomainProperty &apos;ClassNamePrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/ClassNameSuffix.Description" xml:space="preserve">
+    <value>Class Name Suffix</value>
+    <comment>Description for DomainProperty &apos;ClassNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/ClassNameSuffix.DisplayName" xml:space="preserve">
+    <value>Class Name Suffix</value>
+    <comment>DisplayName for DomainProperty &apos;ClassNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/FileNameSuffix.Description" xml:space="preserve">
+    <value>File Name Suffix</value>
+    <comment>Description for DomainProperty &apos;FileNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/FileNameSuffix.DisplayName" xml:space="preserve">
+    <value>File Name Suffix</value>
+    <comment>DisplayName for DomainProperty &apos;FileNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/Split.Description" xml:space="preserve">
+    <value>Split</value>
+    <comment>Description for DomainProperty &apos;Split&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/Split.DisplayName" xml:space="preserve">
+    <value>Split</value>
+    <comment>DisplayName for DomainProperty &apos;Split&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/EntitySchemaDefClassNameSuffix.Description" xml:space="preserve">
+    <value>Entity Schema Def Class Name Suffix</value>
+    <comment>Description for DomainProperty &apos;EntitySchemaDefClassNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/EntitySchemaDefClassNameSuffix.DisplayName" xml:space="preserve">
+    <value>Entity Schema Def Class Name Suffix</value>
+    <comment>DisplayName for DomainProperty &apos;EntitySchemaDefClassNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/LanguageSpecificHacks.Description" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Description for DomainProperty &apos;LanguageSpecificHacks&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/LanguageSpecificHacks.DisplayName" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>DisplayName for DomainProperty &apos;LanguageSpecificHacks&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/PrivateMembersPrefix.Description" xml:space="preserve">
+    <value>Private Members Prefix</value>
+    <comment>Description for DomainProperty &apos;PrivateMembersPrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/PrivateMembersPrefix.DisplayName" xml:space="preserve">
+    <value>Private Members Prefix</value>
+    <comment>DisplayName for DomainProperty &apos;PrivateMembersPrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
   <data name="Worm.Designer.Entity.Description" xml:space="preserve">
     <value>Сущность</value>
     <comment>Description for DomainClass &apos;Entity&apos;</comment>

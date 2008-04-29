@@ -222,6 +222,618 @@ namespace Worm.Designer
 		}
 		
 		#endregion
+		#region ClassNamePrefix domain property code
+		
+		/// <summary>
+		/// ClassNamePrefix domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid ClassNamePrefixDomainPropertyId = new global::System.Guid(0x5eb9368f, 0x2c70, 0x452b, 0xb5, 0x72, 0x7a, 0x5e, 0xd9, 0x64, 0x09, 0x99);
+		
+		/// <summary>
+		/// Storage for ClassNamePrefix
+		/// </summary>
+		private global::System.String classNamePrefixPropertyStorage = string.Empty;
+		
+		/// <summary>
+		/// Gets or sets the value of ClassNamePrefix domain property.
+		/// Class name prefix
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/ClassNamePrefix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/ClassNamePrefix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainObjectId("5eb9368f-2c70-452b-b572-7a5ed9640999")]
+		public global::System.String ClassNamePrefix
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return classNamePrefixPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				ClassNamePrefixPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.ClassNamePrefix domain property.
+		/// </summary>
+		internal sealed partial class ClassNamePrefixPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private ClassNamePrefixPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.ClassNamePrefix domain property value handler.
+			/// </summary>
+			public static readonly ClassNamePrefixPropertyHandler Instance = new ClassNamePrefixPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.ClassNamePrefix domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return ClassNamePrefixDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.classNamePrefixPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.classNamePrefixPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region ClassNameSuffix domain property code
+		
+		/// <summary>
+		/// ClassNameSuffix domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid ClassNameSuffixDomainPropertyId = new global::System.Guid(0x7c38f9f4, 0x5d8a, 0x4bfd, 0x91, 0x12, 0xfd, 0x7c, 0x9f, 0x96, 0x52, 0x2c);
+		
+		/// <summary>
+		/// Storage for ClassNameSuffix
+		/// </summary>
+		private global::System.String classNameSuffixPropertyStorage = string.Empty;
+		
+		/// <summary>
+		/// Gets or sets the value of ClassNameSuffix domain property.
+		/// Class Name Suffix
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/ClassNameSuffix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/ClassNameSuffix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainObjectId("7c38f9f4-5d8a-4bfd-9112-fd7c9f96522c")]
+		public global::System.String ClassNameSuffix
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return classNameSuffixPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				ClassNameSuffixPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.ClassNameSuffix domain property.
+		/// </summary>
+		internal sealed partial class ClassNameSuffixPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private ClassNameSuffixPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.ClassNameSuffix domain property value handler.
+			/// </summary>
+			public static readonly ClassNameSuffixPropertyHandler Instance = new ClassNameSuffixPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.ClassNameSuffix domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return ClassNameSuffixDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.classNameSuffixPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.classNameSuffixPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region FileNameSuffix domain property code
+		
+		/// <summary>
+		/// FileNameSuffix domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid FileNameSuffixDomainPropertyId = new global::System.Guid(0x42926c46, 0xa937, 0x4b2c, 0xac, 0xd1, 0x76, 0x85, 0x9b, 0xca, 0x50, 0x84);
+		
+		/// <summary>
+		/// Storage for FileNameSuffix
+		/// </summary>
+		private global::System.String fileNameSuffixPropertyStorage = string.Empty;
+		
+		/// <summary>
+		/// Gets or sets the value of FileNameSuffix domain property.
+		/// File Name Suffix
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/FileNameSuffix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/FileNameSuffix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainObjectId("42926c46-a937-4b2c-acd1-76859bca5084")]
+		public global::System.String FileNameSuffix
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return fileNameSuffixPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				FileNameSuffixPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.FileNameSuffix domain property.
+		/// </summary>
+		internal sealed partial class FileNameSuffixPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private FileNameSuffixPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.FileNameSuffix domain property value handler.
+			/// </summary>
+			public static readonly FileNameSuffixPropertyHandler Instance = new FileNameSuffixPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.FileNameSuffix domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return FileNameSuffixDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.fileNameSuffixPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.fileNameSuffixPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region Split domain property code
+		
+		/// <summary>
+		/// Split domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid SplitDomainPropertyId = new global::System.Guid(0x56a2b134, 0xf643, 0x45c6, 0x9d, 0x9e, 0xfe, 0xb6, 0x81, 0xa1, 0x1e, 0x8c);
+		
+		/// <summary>
+		/// Storage for Split
+		/// </summary>
+		private global::System.Boolean splitPropertyStorage;
+		
+		/// <summary>
+		/// Gets or sets the value of Split domain property.
+		/// Split
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/Split.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/Split.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainObjectId("56a2b134-f643-45c6-9d9e-feb681a11e8c")]
+		public global::System.Boolean Split
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return splitPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				SplitPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.Split domain property.
+		/// </summary>
+		internal sealed partial class SplitPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.Boolean>
+		{
+			private SplitPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.Split domain property value handler.
+			/// </summary>
+			public static readonly SplitPropertyHandler Instance = new SplitPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.Split domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return SplitDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.Boolean GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.splitPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.Boolean newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.Boolean oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.splitPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region EntitySchemaDefClassNameSuffix domain property code
+		
+		/// <summary>
+		/// EntitySchemaDefClassNameSuffix domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid EntitySchemaDefClassNameSuffixDomainPropertyId = new global::System.Guid(0xe3e5953c, 0x14f7, 0x4661, 0x99, 0x15, 0x4d, 0x4b, 0xba, 0x04, 0xa0, 0x01);
+		
+		/// <summary>
+		/// Storage for EntitySchemaDefClassNameSuffix
+		/// </summary>
+		private global::System.String entitySchemaDefClassNameSuffixPropertyStorage = "SchemaDef";
+		
+		/// <summary>
+		/// Gets or sets the value of EntitySchemaDefClassNameSuffix domain property.
+		/// Entity Schema Def Class Name Suffix
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/EntitySchemaDefClassNameSuffix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/EntitySchemaDefClassNameSuffix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("SchemaDef")]
+		[DslModeling::DomainObjectId("e3e5953c-14f7-4661-9915-4d4bba04a001")]
+		public global::System.String EntitySchemaDefClassNameSuffix
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return entitySchemaDefClassNameSuffixPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				EntitySchemaDefClassNameSuffixPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.EntitySchemaDefClassNameSuffix domain property.
+		/// </summary>
+		internal sealed partial class EntitySchemaDefClassNameSuffixPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private EntitySchemaDefClassNameSuffixPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.EntitySchemaDefClassNameSuffix domain property value handler.
+			/// </summary>
+			public static readonly EntitySchemaDefClassNameSuffixPropertyHandler Instance = new EntitySchemaDefClassNameSuffixPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.EntitySchemaDefClassNameSuffix domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return EntitySchemaDefClassNameSuffixDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.entitySchemaDefClassNameSuffixPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.entitySchemaDefClassNameSuffixPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region LanguageSpecificHacks domain property code
+		
+		/// <summary>
+		/// LanguageSpecificHacks domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid LanguageSpecificHacksDomainPropertyId = new global::System.Guid(0x7fa8a791, 0x39c7, 0x4fd2, 0xb1, 0x79, 0x46, 0x34, 0xc7, 0x21, 0x59, 0xf1);
+		
+		/// <summary>
+		/// Storage for LanguageSpecificHacks
+		/// </summary>
+		private global::Worm.CodeGen.Core.LanguageSpecificHacks languageSpecificHacksPropertyStorage;
+		
+		/// <summary>
+		/// Gets or sets the value of LanguageSpecificHacks domain property.
+		/// Language Specific Hacks
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/LanguageSpecificHacks.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/LanguageSpecificHacks.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainObjectId("7fa8a791-39c7-4fd2-b179-4634c72159f1")]
+		public global::Worm.CodeGen.Core.LanguageSpecificHacks LanguageSpecificHacks
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return languageSpecificHacksPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				LanguageSpecificHacksPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.LanguageSpecificHacks domain property.
+		/// </summary>
+		internal sealed partial class LanguageSpecificHacksPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::Worm.CodeGen.Core.LanguageSpecificHacks>
+		{
+			private LanguageSpecificHacksPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.LanguageSpecificHacks domain property value handler.
+			/// </summary>
+			public static readonly LanguageSpecificHacksPropertyHandler Instance = new LanguageSpecificHacksPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.LanguageSpecificHacks domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return LanguageSpecificHacksDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::Worm.CodeGen.Core.LanguageSpecificHacks GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.languageSpecificHacksPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::Worm.CodeGen.Core.LanguageSpecificHacks newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::Worm.CodeGen.Core.LanguageSpecificHacks oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.languageSpecificHacksPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region PrivateMembersPrefix domain property code
+		
+		/// <summary>
+		/// PrivateMembersPrefix domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid PrivateMembersPrefixDomainPropertyId = new global::System.Guid(0xa8bceba5, 0xc8e5, 0x4a7e, 0x8f, 0x2b, 0x0c, 0x4e, 0x32, 0xaf, 0xde, 0x31);
+		
+		/// <summary>
+		/// Storage for PrivateMembersPrefix
+		/// </summary>
+		private global::System.String privateMembersPrefixPropertyStorage = "m_";
+		
+		/// <summary>
+		/// Gets or sets the value of PrivateMembersPrefix domain property.
+		/// Private Members Prefix
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/PrivateMembersPrefix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/PrivateMembersPrefix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("m_")]
+		[DslModeling::DomainObjectId("a8bceba5-c8e5-4a7e-8f2b-0c4e32afde31")]
+		public global::System.String PrivateMembersPrefix
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return privateMembersPrefixPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				PrivateMembersPrefixPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.PrivateMembersPrefix domain property.
+		/// </summary>
+		internal sealed partial class PrivateMembersPrefixPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private PrivateMembersPrefixPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.PrivateMembersPrefix domain property value handler.
+			/// </summary>
+			public static readonly PrivateMembersPrefixPropertyHandler Instance = new PrivateMembersPrefixPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.PrivateMembersPrefix domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return PrivateMembersPrefixDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.privateMembersPrefixPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.privateMembersPrefixPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
 		#region Entities opposite domain role accessor
 		/// <summary>
 		/// Gets a list of Entities.

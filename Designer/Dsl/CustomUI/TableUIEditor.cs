@@ -62,7 +62,16 @@ namespace Worm.Designer
             {
                 return base.EditValue(context, provider, value);
             } // Get current entity 
-            Entity entity = (context.Instance as Property).Entity;
+
+            Entity entity = null;
+            if (context.Instance is Property)
+            {
+                entity = (context.Instance as Property).Entity;
+            }
+            if (context.Instance is SelfRelation)
+            {
+                entity = (context.Instance as SelfRelation).Entity;
+            }
 
             if (entity != null)
             {

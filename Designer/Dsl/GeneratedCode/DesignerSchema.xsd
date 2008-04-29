@@ -98,6 +98,48 @@
         <xsd:documentation>Schema Version</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <!-- Property: ClassNamePrefix -->
+    <xsd:attribute name="classNamePrefix" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Class name prefix</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: ClassNameSuffix -->
+    <xsd:attribute name="classNameSuffix" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Class Name Suffix</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: FileNameSuffix -->
+    <xsd:attribute name="fileNameSuffix" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>File Name Suffix</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Split -->
+    <xsd:attribute name="split" type="xsd:boolean" >
+      <xsd:annotation>
+        <xsd:documentation>Split</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: EntitySchemaDefClassNameSuffix -->
+    <xsd:attribute name="entitySchemaDefClassNameSuffix" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Entity Schema Def Class Name Suffix</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: LanguageSpecificHacks -->
+    <xsd:attribute name="languageSpecificHacks" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Language Specific Hacks</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: PrivateMembersPrefix -->
+    <xsd:attribute name="privateMembersPrefix" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Private Members Prefix</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
   
   <!-- WormModel Moniker -->
