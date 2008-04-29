@@ -101,6 +101,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Worm.CodeGen.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Worm.Orm, Version=2.0.3007.2916, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Dll\Worm.Orm.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CommandSet.cs">
