@@ -33,6 +33,13 @@ Namespace Database
             'Private _disposeMgr As Boolean
             Private _commited As Boolean
             Private _lockList As New Dictionary(Of ObjectWrap(Of OrmBase), IDisposable)
+            Private _removed As New List(Of OrmBase)
+            Private _dontTrackRemoved As Boolean
+
+#If DEBUG Then
+            Friend _deleted As New List(Of OrmBase)
+            Friend _updated As New List(Of OrmBase)
+#End If
 
             Public Class CancelEventArgs
                 Inherits EventArgs
@@ -119,7 +126,11 @@ Namespace Database
 
             Public ReadOnly Property AffectedObjects() As ICollection(Of OrmBase)
                 Get
-                    Return _objects
+                    Dim l As New List(Of OrmBase)(_objects)
+                    For Each o As OrmBase In _removed
+                        l.Remove(o)
+                    Next
+                    Return l
                 End Get
             End Property
 
@@ -176,11 +187,34 @@ Namespace Database
             Public Sub Add(ByVal o As OrmBase)
                 If Not _objects.Contains(o) Then
                     _objects.Add(o)
+                    AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
+#If DEBUG Then
+                    Dim mo As ModifiedObject = _mgr.Cache.Modified(o)
+                    If o.ObjectState = ObjectState.Deleted Then
+                        _deleted.Add(o)
+                        Debug.Assert(mo IsNot Nothing)
+                        Debug.Assert(mo.Reason = ModifiedObject.ReasonEnum.Delete OrElse mo.Reason = ModifiedObject.ReasonEnum.Edit)
+                    ElseIf o.ObjectState = ObjectState.Modified Then
+                        _updated.Add(o)
+                        Debug.Assert(mo IsNot Nothing)
+                        Debug.Assert(mo.Reason = ModifiedObject.ReasonEnum.Edit)
+                    End If
+#End If
                 End If
             End Sub
 
             Public Sub AddRange(ByVal col As ICollection(Of OrmBase))
-                _objects.AddRange(col)
+                '_objects.AddRange(col)
+                'For Each o As OrmBase In col
+                '    AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
+                'Next
+                For Each o As OrmBase In col
+                    Add(o)
+                Next
+            End Sub
+
+            Protected Sub ObjRejected(ByVal o As OrmBase)
+                If Not _dontTrackRemoved Then _removed.Add(o)
             End Sub
 
             Protected Function GetObjWrap(ByVal obj As OrmBase) As ObjectWrap(Of OrmBase)
@@ -368,7 +402,9 @@ Namespace Database
             Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, OrmBase)), ByVal rejectList As List(Of OrmBase), ByVal copies As List(Of Pair(Of OrmBase)))
                 For Each o As OrmBase In rejectList
                     RaiseEvent ObjectRejecting(o)
+                    _dontTrackRemoved = True
                     o.RejectChanges()
+                    _dontTrackRemoved = False
                     RaiseEvent ObjectRejected(o)
                 Next
                 For Each o As Pair(Of OrmBase) In copies
@@ -427,6 +463,7 @@ Namespace Database
             Private _created As Boolean
 
             Public Event SaveComplete(ByVal logicalCommited As Boolean, ByVal dbCommit As Boolean)
+            Public Event BeginRollback(ByVal count As Integer)
 
             Public Sub New()
                 MyClass.New(CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager))
@@ -555,13 +592,30 @@ Namespace Database
 
             Protected Sub _Rollback()
                 If _rollbackChanges Then
+                    RaiseEvent BeginRollback(_saver.AffectedObjects.Count)
+                    'Debug.WriteLine("_rollback: " & _saver.AffectedObjects.Count)
                     For Each o As OrmBase In _saver.AffectedObjects
+                        'Debug.WriteLine("_rollback: " & o.ObjName)
                         If o.ObjectState = ObjectState.Created Then
                             If _mgr.NewObjectManager IsNot Nothing Then
                                 _mgr.NewObjectManager.RemoveNew(o)
                             End If
                         Else
+                            'If o.ObjectState <> ObjectState.None Then
+#If DEBUG Then
+                            Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
+                            If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
+                                Debug.Assert(_saver._deleted.Contains(o))
+                                Debug.Assert(Not _saver._updated.Contains(o))
+                            ElseIf _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Edit Then
+                                'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
+                                Debug.Assert(Not _saver._deleted.Contains(o))
+                                Debug.Assert(_saver._updated.Contains(o))
+                                'End If
+                            End If
+#End If
                             o.RejectChanges()
+                            'End If
                         End If
                     Next
                 End If
@@ -1679,8 +1733,8 @@ l1:
                         If has_pk Then
                             Throw New OrmManagerException("PK is not loaded")
                         Else
-                            obj.CreateModified(obj.Identifier)
-                            Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                            obj.CreateModified(obj.Identifier, ModifiedObject.ReasonEnum.Unknown)
+                            'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                         End If
                     End If
 

@@ -7,6 +7,8 @@ Imports Worm.Criteria.Core
 Imports Worm.Criteria.Values
 Imports Worm.Orm.Query
 
+#Const TraceCreation = False
+
 Namespace Cache
 
     <Serializable()> _
@@ -279,6 +281,13 @@ Namespace Cache
             End Get
         End Property
 
+        Public Function Modified(ByVal t As Type, ByVal id As Integer) As ModifiedObject
+            Using SyncRoot
+                Dim name As String = t.Name & ":" & id
+                Return CType(_modifiedobjects(name), ModifiedObject)
+            End Using
+        End Function
+
         Public Function Modified(ByVal obj As OrmBase) As ModifiedObject
             Using SyncRoot
                 If obj Is Nothing Then
@@ -300,7 +309,7 @@ Namespace Cache
             End Get
         End Property
 
-        Protected Friend Function RegisterModification(ByVal obj As OrmBase) As ModifiedObject
+        Protected Friend Function RegisterModification(ByVal obj As OrmBase, ByVal reason As ModifiedObject.ReasonEnum) As ModifiedObject
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
@@ -311,7 +320,7 @@ Namespace Cache
                 'Using SyncHelper.AcquireDynamicLock(name)
                 Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
                 Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
-                mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser)
+                mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser, reason)
                 _modifiedobjects.Add(name, mo)
                 'End Using
                 If _modifiedobjects.Count = 1 Then
@@ -341,7 +350,7 @@ Namespace Cache
             If Not condition Then Throw New OrmCacheException(message)
         End Sub
 
-        Protected Friend Function RegisterModification(ByVal obj As OrmBase, ByVal id As Integer) As ModifiedObject
+        Protected Friend Function RegisterModification(ByVal obj As OrmBase, ByVal id As Integer, ByVal reason As ModifiedObject.ReasonEnum) As ModifiedObject
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
@@ -352,7 +361,7 @@ Namespace Cache
                 'Using SyncHelper.AcquireDynamicLock(name)
                 Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
                 Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
-                mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser)
+                mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser, reason)
                 _modifiedobjects.Add(name, mo)
                 'End Using
                 If _modifiedobjects.Count = 1 Then
@@ -376,6 +385,16 @@ Namespace Cache
             End Using
         End Sub
 
+#If TraceCreation Then
+        Private _s As New List(Of Pair(Of String, OrmBase))
+        Public Function IndexOfUnreg(ByVal o As OrmBase) As Integer
+            For i As Integer = 0 To _s.Count - 1
+                If _s(i).Second = o Then
+                    Return i
+                End If
+            Next
+        End Function
+#End If
         Protected Friend Sub UnregisterModification(ByVal obj As OrmBase)
             Using SyncRoot
                 If obj Is Nothing Then
@@ -385,6 +404,10 @@ Namespace Cache
                 If _modifiedobjects.Count > 0 Then
                     Dim name As String = obj.GetType().Name & ":" & obj.Identifier
                     _modifiedobjects.Remove(name)
+                    obj.RaiseCopyRemoved()
+#If TraceCreation Then
+                    _s.Add(New Pair(Of String, OrmBase)(Environment.StackTrace, obj))
+#End If
                     If _modifiedobjects.Count = 0 Then 'AndAlso obj.old_state <> ObjectState.Created Then
                         RaiseEvent CacheHasnotModification(Me, EventArgs.Empty)
                     End If
@@ -411,14 +434,44 @@ Namespace Cache
 
         Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Integer, T)
 
+#If TraceCreation Then
+        Private _added As ArrayList = arraylist.Synchronized( New ArrayList)
+        Private _removed As ArrayList = ArrayList.Synchronized(New ArrayList)
+
+        Private Function IndexOfRemoved(ByVal obj As OrmBase) As Integer
+            For i As Integer = 0 To _removed.Count - 1
+                Dim r As Pair(Of Date, OrmBase) = CType(_removed(i), Global.CoreFramework.Structures.Pair(Of Date, Global.Worm.Orm.OrmBase))
+                If r.Second = obj Then
+                    Return i
+                End If
+            Next
+        End Function
+
+        Private Function IndexOfAdded(ByVal obj As OrmBase) As Integer
+            For i As Integer = 0 To _added.Count - 1
+                Dim r As Pair(Of Date, Pair(Of Type, Integer)) = CType(_added(i), Global.CoreFramework.Structures.Pair(Of Date, Global.CoreFramework.Structures.Pair(Of Global.System.Type, Integer)))
+                If r.Second.First.Equals(obj.GetType) AndAlso r.Second.Second = obj.Identifier Then
+                    Return i
+                End If
+            Next
+        End Function
+#End If
+
         Public Overridable Sub RegisterCreation(ByVal t As Type, ByVal id As Integer)
             RaiseEvent RegisterObjectCreation(t, id)
+#If TraceCreation Then
+            _added.add(new Pair(Of date,Pair(Of type,Integer))(Now,New Pair(Of type,Integer)(t,id)))
+#End If
         End Sub
 
         Public Overridable Sub RegisterRemoval(ByVal obj As OrmBase)
+            Debug.Assert(Modified(obj) Is Nothing)
             RaiseEvent RegisterObjectRemoval(obj)
             obj.RemoveFromCache(Me)
             RemoveDepends(obj)
+#If TraceCreation Then
+            _removed.add(new Pair(Of date,ormbase)(Now,obj))
+#End If
         End Sub
 
         Friend Sub BeginTrackDelete(ByVal t As Type)
@@ -1335,15 +1388,21 @@ l1:
         Public ReadOnly Obj As OrmBase
         Public ReadOnly DateTime As Date
 
-        Public Reason As ReasonEnum
+        Public ReadOnly Reason As ReasonEnum
 
 #If DEBUG Then
         Protected _stack As String
+        Public ReadOnly Property StackTrace() As String
+            Get
+                Return _stack
+            End Get
+        End Property
 #End If
-        Sub New(ByVal obj As OrmBase, ByVal user As Object)
+        Sub New(ByVal obj As OrmBase, ByVal user As Object, ByVal reason As ReasonEnum)
             DateTime = Now
             Me.Obj = obj
             Me.User = user
+            Me.Reason = reason
 #If DEBUG Then
             _stack = Environment.StackTrace
 #End If

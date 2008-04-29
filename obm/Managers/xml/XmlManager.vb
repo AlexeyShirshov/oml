@@ -242,7 +242,7 @@ Namespace Xml
                 obj = GetObjectFromCache(Of T)(obj, dic, False, False, True)
                 If obj.ObjectState = ObjectState.NotLoaded Then
                     Using obj.GetSyncRoot()
-                        obj.RaiseBeginModification()
+                        obj.RaiseBeginModification(ModifiedObject.ReasonEnum.Unknown)
                         'If obj.IsLoaded Then obj.IsLoaded = False
                         LoadData(oschema, node, obj)
                         If obj.ObjectState = ObjectState.Modified AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
