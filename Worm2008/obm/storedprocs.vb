@@ -439,6 +439,7 @@ Namespace Database.Storedprocs
 
         Private _exec As TimeSpan
         Private _fecth As TimeSpan
+        Private _out As Dictionary(Of String, Object)
 
         Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
@@ -452,11 +453,17 @@ Namespace Database.Storedprocs
             MyBase.new(True)
         End Sub
 
+        Public ReadOnly Property OutParams() As Dictionary(Of String, Object)
+            Get
+                Return _out
+            End Get
+        End Property
+
         Protected MustOverride Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Protected MustOverride Function InitResult() As Object
 
         Protected Overridable Sub EndProcess(ByVal result As Object, ByVal mgr As OrmManagerBase)
-
+            
         End Sub
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
@@ -477,6 +484,12 @@ Namespace Database.Storedprocs
                 Loop
                 _fecth = ft.GetTime
                 EndProcess(result, mgr)
+                For Each p As OutParam In GetOutParams()
+                    If _out Is Nothing Then
+                        _out = New Dictionary(Of String, Object)
+                    End If
+                    _out.Add(p.Name, cmd.Parameters(p.Name).Value)
+                Next
             End Using
             If result Is Nothing Then
                 Throw New InvalidOperationException("result must be filled")
@@ -604,6 +617,7 @@ Namespace Database.Storedprocs
         Private _fecth As TimeSpan
         Private _count As Integer
         Private _donthit As Boolean
+        Private _out As Dictionary(Of String, Object)
 
         Protected Sub New(ByVal cache As Boolean)
             MyBase.new(cache)
@@ -617,6 +631,12 @@ Namespace Database.Storedprocs
             MyBase.new(True)
         End Sub
 
+        Public ReadOnly Property OutParams() As Dictionary(Of String, Object)
+            Get
+                Return _out
+            End Get
+        End Property
+
         Protected MustOverride Function GetColumns() As List(Of ColumnAttribute)
         Protected MustOverride Function GetWithLoad() As Boolean
 
@@ -629,6 +649,12 @@ Namespace Database.Storedprocs
             Dim ce As New OrmManagerBase.CachedItem(Nothing, New ReadOnlyList(Of T)(mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
             _exec = ce.ExecutionTime
             _fecth = ce.FetchTime
+            For Each p As OutParam In GetOutParams()
+                If _out Is Nothing Then
+                    _out = New Dictionary(Of String, Object)
+                End If
+                _out.Add(p.Name, cmd.Parameters(p.Name).Value)
+            Next
             Return ce
         End Function
 

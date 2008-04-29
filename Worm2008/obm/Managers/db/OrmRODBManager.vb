@@ -35,6 +35,7 @@ Namespace Database
             Private _lockList As New Dictionary(Of ObjectWrap(Of OrmBase), IDisposable)
             Private _removed As New List(Of OrmBase)
             Private _dontTrackRemoved As Boolean
+            Private _startSave As Boolean
 
 #If DEBUG Then
             Friend _deleted As New List(Of OrmBase)
@@ -214,7 +215,7 @@ Namespace Database
             End Sub
 
             Protected Sub ObjRejected(ByVal o As OrmBase)
-                If Not _dontTrackRemoved Then _removed.Add(o)
+                If Not _startSave Then _removed.Add(o)
             End Sub
 
             Protected Function GetObjWrap(ByVal obj As OrmBase) As ObjectWrap(Of OrmBase)
@@ -265,7 +266,7 @@ Namespace Database
                 Dim [error] As Boolean = True
                 Dim saved As New List(Of Pair(Of ObjectState, OrmBase)), copies As New List(Of Pair(Of OrmBase))
                 Dim rejectList As New List(Of OrmBase), need2save As New List(Of OrmBase)
-
+                _startSave = True
 #If DebugLocks Then
                 Using New CSScopeMgr_Debug(_mgr.Cache, "d:\temp\")
 #Else
