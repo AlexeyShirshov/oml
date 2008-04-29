@@ -88,6 +88,7 @@
     <Compile Include="CustomUI\CalculatedProperties.cs" />
     <Compile Include="CustomUI\BaseEntityUIEditor.cs" />
     <Compile Include="CustomUI\BoolUIEditor.cs" />
+    <Compile Include="CustomUI\RelationUIEditor.cs" />
     <Compile Include="CustomUI\FlagEnumEditor.cs">
     </Compile>
     <Compile Include="CustomUI\SelfConnector.cs" />
@@ -172,6 +173,7 @@
     </Compile>
     <Compile Include="CustomUI\TableUIEditor.cs" />
     <Compile Include="Generation\XmlHelper.cs" />
+    <Compile Include="Validation\EntityRelation.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="DslDefinition.dsl.diagram">

@@ -47,15 +47,8 @@ namespace Worm.Designer
 
             if (string.IsNullOrEmpty(model.DefaultNamespace))
             {
-                System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
-
-                DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
-                if (dte.ActiveDocument != null)
-                {
-                    string defaultNamespace = (string)(dte.ActiveDocument.ProjectItem.ContainingProject.Properties.Item("DefaultNamespace").Value);
-
-                    ormObjectsDef.Namespace = defaultNamespace;
-                }
+                string defaultNamespace = ((string)propertyBag["Generic.ModelFileFullName"]).Replace(".wxml", "").Replace(".vb","");
+                ormObjectsDef.Namespace = defaultNamespace;
             }
             else
             {

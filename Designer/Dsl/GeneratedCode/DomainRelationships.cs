@@ -833,6 +833,7 @@ namespace Worm.Designer
 		/// Gets or sets the value of LeftFieldName domain property.
 		/// Имя поля таблицы связи
 		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.RelationUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("ec48a8e3-f1b3-4c88-bbd4-644451ce13b0")]
@@ -1443,6 +1444,7 @@ namespace Worm.Designer
 		/// Gets or sets the value of RightFieldName domain property.
 		/// Имя поля таблицы связи
 		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.RelationUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/RightFieldName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/RightFieldName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("2e71233d-d194-4929-bbb4-27cf3ae1d389")]

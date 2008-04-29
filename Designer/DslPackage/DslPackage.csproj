@@ -268,6 +268,8 @@
       <Link>CodeAnalysisDictionary.xml</Link>
     </CodeAnalysisDictionary>
     <Content Include="grey.bmp" />
+    <Content Include="ProjectItemTemplates\Mvp.Xml.dll" />
+    <Content Include="ProjectItemTemplates\Worm.CodeGen.Core.dll" />
     <Content Include="Resources\2022.ico" />
     <Content Include="Resources\2601.ico" />
     <Content Include="Resources\2621.ico" />

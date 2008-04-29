@@ -60,6 +60,17 @@ namespace Worm.Designer
 
 			commands.Add(menuCommand);
 
+			// Add handler for "Validate All" menu command (validates the entire model).
+			menuCommand = new DslShell::DynamicStatusMenuCommand(new global::System.EventHandler(OnStatusValidateModel), 
+				new global::System.EventHandler(OnMenuValidateModel),
+				DslShell::CommonModelingCommands.ValidateModel);
+			commands.Add(menuCommand);
+			// Add handler for "Validate" menu command (validates the current selection).
+			menuCommand = new DslShell::DynamicStatusMenuCommand(new global::System.EventHandler(OnStatusValidate), 
+				new global::System.EventHandler(OnMenuValidate),
+				DslShell::CommonModelingCommands.Validate);
+			commands.Add(menuCommand);
+
 			return commands;
 		}
 		/// <summary>
@@ -74,6 +85,126 @@ namespace Worm.Designer
 			}
 		}
 
+		/// <summary>
+		/// Status event handler for validating the model.
+		/// </summary>
+		internal virtual void OnStatusValidateModel(object sender, global::System.EventArgs e)
+		{
+			System.ComponentModel.Design.MenuCommand cmd = sender as System.ComponentModel.Design.MenuCommand;
+			cmd.Enabled = cmd.Visible = true;
+		}
+
+		/// <summary>
+		/// Handler for validating the model.
+		/// </summary>
+		internal virtual void OnMenuValidateModel(object sender, System.EventArgs e)
+		{
+			if (this.CurrentDesignerDocData != null && this.CurrentDesignerDocData.Store != null)
+			{
+				this.CurrentDesignerDocData.ValidationController.Validate(this.CurrentDesignerDocData.Store, DslValidation::ValidationCategories.Menu);
+			}
+		}
+		
+		/// <summary>
+		/// Status event handler for validating the current selection.
+		/// </summary>
+		internal virtual void OnStatusValidate(object sender, System.EventArgs e)
+		{
+			global::System.ComponentModel.Design.MenuCommand cmd = sender as global::System.ComponentModel.Design.MenuCommand;
+			cmd.Visible = cmd.Enabled = false;
+
+			foreach (object selectedObject in this.CurrentSelection)
+			{
+				DslModeling::ModelElement element = GetValidationTarget(selectedObject);
+					
+				if (element != null)
+				{
+					cmd.Visible = cmd.Enabled = true;
+					break;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Handler for validating the current selection.
+		/// </summary>
+		internal virtual void OnMenuValidate(object sender, global::System.EventArgs e)
+		{
+			if (this.CurrentDesignerDocData != null && this.CurrentDesignerDocData.Store != null)
+			{
+				System.Collections.Generic.List<DslModeling::ModelElement> elementList = new System.Collections.Generic.List<Microsoft.VisualStudio.Modeling.ModelElement>();
+				DslModeling::DepthFirstElementWalker elementWalker = new DslModeling::DepthFirstElementWalker(new ValidateCommandVisitor(elementList), new DslModeling::EmbeddingVisitorFilter(), true);
+				foreach (object selectedObject in this.CurrentSelection)
+				{
+					// Build list of elements embedded beneath the selected root.
+					DslModeling::ModelElement element = GetValidationTarget(selectedObject);
+					if (element != null && !elementList.Contains(element))
+					{
+						elementWalker.DoTraverse(element);
+					}
+				}
+
+				this.CurrentDesignerDocData.ValidationController.Validate(elementList, DslValidation::ValidationCategories.Menu);
+			}
+		}
+		
+		/// <summary>
+		/// Helper method to retrieve the target root element for validation from the selected object.
+		/// </summary>
+		private static DslModeling::ModelElement GetValidationTarget(object selectedObject)
+		{
+			DslModeling::ModelElement element = null;
+			DslDiagrams::PresentationElement presentation = selectedObject as DslDiagrams::PresentationElement;
+			if (presentation != null)
+			{
+				if (presentation.Subject != null)
+				{
+					element = presentation.Subject;
+				}
+			}
+			else
+			{
+				element = selectedObject as DslModeling::ModelElement;
+			}
+			return element;
+		}
+		
+		#region ValidateCommandVisitor
+		/// <summary>
+		/// Helper class for building the list of elements to validate when the Validate command is executed.
+		/// </summary>
+		private sealed class ValidateCommandVisitor : DslModeling::IElementVisitor
+		{
+			private System.Collections.Generic.IList<DslModeling::ModelElement> validationList;
+ 
+			/// <summary>
+			/// Construct a ValidateCommandVisitor that adds elements to be validated to the specified list.
+			/// </summary>
+			public ValidateCommandVisitor(System.Collections.Generic.IList<DslModeling::ModelElement> elementList)
+			{
+				this.validationList = elementList;
+			}
+
+			/// <summary>
+			/// Called when traversal begins. 
+			/// </summary>
+			public void StartTraverse(Microsoft.VisualStudio.Modeling.ElementWalker walker) { }
+
+			/// <summary>
+			/// Called when traversal ends. 
+			/// </summary>
+			public void EndTraverse(Microsoft.VisualStudio.Modeling.ElementWalker walker) { }
+			
+			/// <summary>
+			/// Called for each element in the traversal.
+			/// </summary>
+			public bool Visit(Microsoft.VisualStudio.Modeling.ElementWalker walker, Microsoft.VisualStudio.Modeling.ModelElement element)
+			{
+				this.validationList.Add(element);
+				return true;
+			}
+		}
+		#endregion
 
 		/// <summary>
 		/// Returns the currently focused document.

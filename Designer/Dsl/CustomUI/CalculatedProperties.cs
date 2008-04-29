@@ -269,6 +269,48 @@ namespace Worm.Designer
      }
  }
 
+     /// <summary>
+    /// Implements one add rule for the Property domain class.
+    /// </summary>
+ [RuleOn(typeof(WormModel), FireTime = TimeToFire.TopLevelCommit)]
+ public class WormModelAddRule : AddRule
+ {
+     public override void ElementAdded(ElementAddedEventArgs e)
+     { if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+
+
+            WormModel model = e.ModelElement as WormModel;
+            if (model != null)
+            {
+                //entity.WormModel.Store.
+                System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+
+                DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
+                if (dte.ActiveDocument != null)
+                {
+                    //string defaultNamespace = (string)(dte.ActiveDocument.ProjectItem.ContainingProject.Properties.Item("DefaultNamespace").Value);
+                    //if (string.IsNullOrEmpty(entity.WormModel.DefaultNamespace))
+                    //{
+                    //    entity.WormModel.DefaultNamespace = defaultNamespace;
+                    //}
+                    //if (string.IsNullOrEmpty(entity.Namespace))
+                    //{
+                    //    entity.Namespace = defaultNamespace;
+                    //}
+                    string defaultNamespace = dte.ActiveDocument.ProjectItem.Name.Replace(".wxml", "");
+                    if (string.IsNullOrEmpty(model.DefaultNamespace))
+                    {
+                      model.DefaultNamespace = defaultNamespace;
+                    }
+                      
+                }
+            }
+        }
+
+ }
     /// <summary>
     /// Implements one add rule for the Property domain class.
     /// </summary>
@@ -293,7 +335,16 @@ namespace Worm.Designer
                 DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
                 if (dte.ActiveDocument != null)
                 {
-                    string defaultNamespace = (string)(dte.ActiveDocument.ProjectItem.ContainingProject.Properties.Item("DefaultNamespace").Value);
+                    //string defaultNamespace = (string)(dte.ActiveDocument.ProjectItem.ContainingProject.Properties.Item("DefaultNamespace").Value);
+                    //if (string.IsNullOrEmpty(entity.WormModel.DefaultNamespace))
+                    //{
+                    //    entity.WormModel.DefaultNamespace = defaultNamespace;
+                    //}
+                    //if (string.IsNullOrEmpty(entity.Namespace))
+                    //{
+                    //    entity.Namespace = defaultNamespace;
+                    //}
+                    string defaultNamespace = dte.ActiveDocument.ProjectItem.Name.Replace(".wxml", "");
                     if (string.IsNullOrEmpty(entity.WormModel.DefaultNamespace))
                     {
                         entity.WormModel.DefaultNamespace = defaultNamespace;
@@ -302,7 +353,6 @@ namespace Worm.Designer
                     {
                         entity.Namespace = defaultNamespace;
                     }
-
                     
                 }
 
@@ -722,7 +772,7 @@ namespace Worm.Designer
             , typeof(EntityChangeRule), typeof(SupressedPropertyChangeRule),  
             typeof( EntityReferencesTargetEntitiesChangeRule),
             typeof(EntityDeleteRule), typeof(PropertyDeleteRule), typeof(SupressedPropertyDeleteRule),
-            typeof(TableDeleteRule)};
+            typeof(TableDeleteRule), typeof(WormModelAddRule)};
         }
 
        
