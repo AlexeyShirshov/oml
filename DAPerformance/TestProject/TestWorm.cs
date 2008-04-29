@@ -74,12 +74,12 @@ namespace Tests
         //    wormProvider.TypeCycleWithLoad(mediumUserIds);
         //}
 
-        //[TestMethod]
-        //[QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
-        //public void TypeCycleLazyLoad()
-        //{
-        //    wormProvider.TypeCycleLazyLoad(mediumUserIds);
-        //}
+        [TestMethod]
+        [QueryTypeAttribute(QueryType.TypeCycleLazyLoad)]
+        public void TypeCycleLazyLoad()
+        {
+            wormProvider.TypeCycleLazyLoad(mediumUserIds);
+        }
 
         //[TestMethod]
         //[QueryTypeAttribute(QueryType.SmallCollectionByIdArray)]
