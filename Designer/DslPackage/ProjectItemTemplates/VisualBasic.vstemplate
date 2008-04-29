@@ -12,7 +12,7 @@
 	</TemplateData>
 	<TemplateContent>
 		<ProjectItem ReplaceParameters="true" TargetFileName="$fileinputname$.wxml">wxml.wxml</ProjectItem>
-		<ProjectItem TargetFileName="$fileinputname$.wxml.diagram">wxml.diagram</ProjectItem>
+		<ProjectItem ReplaceParameters="true"  TargetFileName="$fileinputname$.wxml.diagram">wxml.diagram</ProjectItem>
 		<CustomParameters>
 	        <CustomParameter Name="$itemproperties$" Value="CustomTool" />
 	        <CustomParameter Name="$CustomTool$" Value="WormCodeGenerator" />

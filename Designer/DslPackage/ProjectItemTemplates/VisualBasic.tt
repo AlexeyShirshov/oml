@@ -15,7 +15,7 @@
 	</TemplateData>
 	<TemplateContent>
 		<ProjectItem ReplaceParameters="true" TargetFileName="$fileinputname$.<#=this.Dsl.Editor.FileExtension#>"><#=this.Dsl.Editor.FileExtension#>.<#=this.Dsl.Editor.FileExtension#></ProjectItem>
-		<ProjectItem TargetFileName="$fileinputname$.<#=this.Dsl.Editor.FileExtension#>.diagram"><#=this.Dsl.Editor.FileExtension#>.diagram</ProjectItem>
+		<ProjectItem ReplaceParameters="true"  TargetFileName="$fileinputname$.<#=this.Dsl.Editor.FileExtension#>.diagram"><#=this.Dsl.Editor.FileExtension#>.diagram</ProjectItem>
 		<CustomParameters>
 	        <CustomParameter Name="$itemproperties$" Value="CustomTool" />
 	        <CustomParameter Name="$CustomTool$" Value="WormCodeGenerator" />

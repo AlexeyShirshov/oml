@@ -42,11 +42,25 @@ namespace Worm.Designer
             _propertyBag = propertyBag;
             WormModel model = (WormModel)propertyBag["Generic.Model"];
 
-            OrmObjectsDef ormObjectsDef = new OrmObjectsDef();
-            ormObjectsDef.Namespace = model.DefaultNamespace;
+            OrmObjectsDef ormObjectsDef = new OrmObjectsDef();            
             ormObjectsDef.SchemaVersion = model.SchemaVersion;
 
-        
+            if (string.IsNullOrEmpty(model.DefaultNamespace))
+            {
+                System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+
+                DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
+                if (dte.ActiveDocument != null)
+                {
+                    string defaultNamespace = (string)(dte.ActiveDocument.ProjectItem.ContainingProject.Properties.Item("DefaultNamespace").Value);
+
+                    ormObjectsDef.Namespace = defaultNamespace;
+                }
+            }
+            else
+            {
+                ormObjectsDef.Namespace = model.DefaultNamespace;
+            }
 
             foreach (Entity entity in model.Entities)
             {

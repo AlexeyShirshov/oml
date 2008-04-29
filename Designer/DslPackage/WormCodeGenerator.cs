@@ -29,8 +29,8 @@ namespace Worm.Designer
 
             DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
             ProjectItem projectItem = dte.Solution.FindProjectItem(inputFileName);
-
-            switch (Helper.GetProjectLanguage(projectItem.ContainingProject))
+            string ext = Helper.GetProjectLanguage(projectItem.ContainingProject);
+            switch (ext)
             {
                 case ".cs":
                     fileExtension = "cs";
@@ -58,7 +58,7 @@ namespace Worm.Designer
 
                       
             byte[] data = base.GenerateCode(inputFileName, inputFileContent);
-            data = GenerateCode(data);
+            data = GenerateCode(data, ext);
             return data;
         }
 
@@ -67,7 +67,7 @@ namespace Worm.Designer
         /// </summary>
         /// <param name="inputFileContent">Content of the input file</param>
         /// <returns>Generated file as a byte array</returns>
-        protected byte[] GenerateCode(byte[] data)
+        protected byte[] GenerateCode(byte[] data, string ext)
         {
 
             MemoryStream stream = new MemoryStream();
@@ -86,17 +86,18 @@ namespace Worm.Designer
             OrmObjectsDef ormObjectsDef;
             using (StringReader contentReader = new StringReader(inputFileContent))
             {
-                try
-                {
+                //try
+                //{
                     using (XmlReader rdr = XmlReader.Create(contentReader))
                     {
                         ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new XmlUrlResolver());
                     }
-                }
-                catch
-                {
-                    return null;
-                }
+                //}
+                //catch (Exception ex)
+                //{
+                //    return null;
+                //}
+               
             }
 
             CodeDomProvider provider = GetCodeProvider();
@@ -109,7 +110,7 @@ namespace Worm.Designer
                 //Create the CodeCompileUnit from the passed-in XML file
                 OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
                 settings.EntitySchemaDefClassNameSuffix = "SchemaDef";
-                switch (GetDefaultExtension())
+                switch (ext)
                 {
                     case ".cs":
                         settings.LanguageSpecificHacks = LanguageSpecificHacks.CSharp;
