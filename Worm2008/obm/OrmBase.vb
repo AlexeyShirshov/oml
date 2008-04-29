@@ -7,6 +7,8 @@ Imports System.Collections.Generic
 Imports System.ComponentModel
 Imports Worm.Criteria.Core
 
+#Const TraceSetState = False
+
 Namespace Orm
 
     <Serializable()> _
@@ -637,10 +639,10 @@ Namespace Orm
         Public Event Deleted(ByVal sender As OrmBase, ByVal args As EventArgs)
         Public Event Updated(ByVal sender As OrmBase, ByVal args As EventArgs)
         Public Event PropertyChanged(ByVal sender As OrmBase, ByVal args As PropertyChangedEventArgs)
+        Public Event OriginalCopyRemoved(ByVal sender As OrmBase)
 
 #If DEBUG Then
         Protected Event ObjectStateChanged(ByVal oldState As ObjectState)
-        Protected Event ObjectRejected(ByVal oldState As ObjectState)
 #End If
         'for xml serialization
         Public Sub New()
@@ -1000,7 +1002,39 @@ Namespace Orm
             End Using
         End Function
 
+#If TraceSetState Then
+        Public Structure SetState
+            Private _dt As Date
+            Private _r As ModifiedObject.ReasonEnum
+            Private _modifiedStack As String
+            Private _stack As String
+            Private _oldState As ObjectState
+            Private _newState As ObjectState
+            Private _md As Date
+
+            Public Sub New(ByVal dt As Date, ByVal r As ModifiedObject.ReasonEnum, ByVal mstack As String, _
+                ByVal stack As String, ByVal os As ObjectState, ByVal ns As ObjectState, ByVal md As Date)
+                _dt = dt
+                _r = r
+                _modifiedStack = mstack
+                _stack = stack
+                _oldState = os
+                _newState = ns
+                _md = md
+            End Sub
+        End Structure
+
+        'Private _s As New List(Of Pair(Of Date, Pair(Of ModifiedObject.ReasonEnum, Pair(Of String, Pair(Of ObjectState, ObjectState)))))
+        Private _s As New List(Of SetState)
+#End If
+
+#If TraceSetState Then
+        Friend Sub SetObjectState(ByVal state As ObjectState, ByVal r As ModifiedObject.ReasonEnum, ByVal stack As String, ByVal md As Date)
+            '_s.Add(New Pair(Of Date, Pair(Of ModifiedObject.ReasonEnum, Pair(Of String, Pair(Of ObjectState, ObjectState))))(Now, New Pair(Of ModifiedObject.ReasonEnum, Pair(Of String, Pair(Of ObjectState, ObjectState)))(r, New Pair(Of String, Pair(Of ObjectState, ObjectState))(Environment.StackTrace, New Pair(Of ObjectState, ObjectState)(_state, state)))))
+            _s.Add(New SetState(Now, r, stack, Environment.StackTrace, _state, state, md))
+#Else
         Friend Sub SetObjectState(ByVal state As ObjectState)
+#End If
             _state = state
         End Sub
 
@@ -1021,10 +1055,13 @@ Namespace Orm
 
             Dim r As Boolean = True
             If _state = Orm.ObjectState.Modified Then
+#If TraceSetState Then
                 Dim mo As ModifiedObject = mc.Cache.Modified(Me)
                 If mo Is Nothing OrElse mo.Reason = ModifiedObject.ReasonEnum.Delete Then
+                    Debug.Assert(False)
                     Throw New OrmObjectException
                 End If
+#End If
                 r = mc.UpdateObject(Me)
             ElseIf _state = Orm.ObjectState.Created OrElse _state = Orm.ObjectState.NotFoundInSource Then
                 If OriginalCopy IsNot Nothing Then
@@ -1038,14 +1075,19 @@ Namespace Orm
                     _needAdd = True
                 End If
             ElseIf _state = Orm.ObjectState.Deleted Then
+#If TraceSetState Then
                 Dim mo As ModifiedObject = mc.Cache.Modified(Me)
-                If mo Is Nothing OrElse mo.Reason <> ModifiedObject.ReasonEnum.Delete Then
+                If mo Is Nothing OrElse (mo.Reason <> ModifiedObject.ReasonEnum.Delete AndAlso mo.Reason <> ModifiedObject.ReasonEnum.Edit) Then
+                    Debug.Assert(False)
                     Throw New OrmObjectException
                 End If
+#End If
                 mc.DeleteObject(Me)
                 _needDelete = True
+#If TraceSetState Then
             Else
                 Debug.Assert(False)
+#End If
             End If
             Return r
         End Function
@@ -1271,21 +1313,25 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Friend Sub RaiseBeginModification()
+        Protected Friend Sub RaiseCopyRemoved()
+            RaiseEvent OriginalCopyRemoved(Me)
+        End Sub
+
+        Protected Friend Sub RaiseBeginModification(ByVal reason As ModifiedObject.ReasonEnum)
             Dim modified As OrmBase = CreateOriginalVersion()
             ObjectState = Orm.ObjectState.Modified
-            OrmCache.RegisterModification(modified, Identifier)
+            OrmCache.RegisterModification(modified, Identifier, reason)
             If Not _loading Then
                 GetMgr.RaiseBeginUpdate(Me)
             End If
         End Sub
 
         <Obsolete()> _
-        Protected Friend Sub CreateModified(ByVal id As Integer)
+        Protected Friend Sub CreateModified(ByVal id As Integer, ByVal reason As ModifiedObject.ReasonEnum)
             Dim modified As OrmBase = CreateOriginalVersion()
             ObjectState = Orm.ObjectState.Modified
-            OrmCache.RegisterModification(modified, id)
-            If Not _loading Then
+            OrmCache.RegisterModification(modified, id, reason)
+            If Not _loading AndAlso reason <> ModifiedObject.ReasonEnum.Delete Then
                 GetMgr.RaiseBeginUpdate(Me)
             End If
         End Sub
@@ -1293,7 +1339,8 @@ Namespace Orm
         Protected Sub CreateModified()
             Dim modified As OrmBase = CreateOriginalVersion()
             ObjectState = Orm.ObjectState.Modified
-            OrmCache.RegisterModification(modified).Reason = ModifiedObject.ReasonEnum.Edit
+            OrmCache.RegisterModification(modified, ModifiedObject.ReasonEnum.Edit)
+            'OrmCache.RegisterModification(modified).Reason = ModifiedObject.ReasonEnum.Edit
             If Not _loading Then
                 GetMgr.RaiseBeginUpdate(Me)
             End If
@@ -1392,7 +1439,7 @@ Namespace Orm
                 Using SyncHelper(False)
                     'If _id <> value Then
                     If _state = Orm.ObjectState.Created Then
-                        CreateModified(value)
+                        CreateModified(value, ModifiedObject.ReasonEnum.Unknown)
                     End If
                     _id = value
                     Debug.Assert(_id = value)
@@ -1617,10 +1664,13 @@ Namespace Orm
 
                     Dim mo As ModifiedObject = OrmCache.Modified(Me)
                     If _state = Orm.ObjectState.Deleted AndAlso mo.Reason <> ModifiedObject.ReasonEnum.Delete Then
-                        Throw New OrmObjectException
+                        'Debug.Assert(False)
+                        'Throw New OrmObjectException
+                        Return
                     End If
 
                     If _state = Orm.ObjectState.Modified AndAlso (mo.Reason = ModifiedObject.ReasonEnum.Delete) Then
+                        Debug.Assert(False)
                         Throw New OrmObjectException
                     End If
 
@@ -1632,16 +1682,17 @@ Namespace Orm
                     Dim oldid As Integer = Identifier
                     Dim olds As ObjectState = OriginalCopy._old_state
                     Dim newid As Integer = OriginalCopy.Identifier
-#If DEBUG Then
-                    RaiseEvent ObjectRejected(olds)
-#End If
                     If olds <> Orm.ObjectState.Created Then
                         '_loaded_members = 
                         RevertToOriginalVersion()
                         RemoveVersionData(False)
                     End If
                     _id = newid
+#If TraceSetState Then
+                    SetObjectState(olds, mo.Reason, mo.StackTrace, mo.DateTime)
+#Else
                     SetObjectState(olds)
+#End If
                     If _state = Orm.ObjectState.Created Then
                         Dim name As String = Me.GetType.Name
                         Dim mc As OrmManagerBase = GetMgr()
@@ -1657,6 +1708,7 @@ Namespace Orm
                         _loaded = False
                         '_loaded_members = New BitArray(_loaded_members.Count)
                     End If
+
                     'ElseIf state = Obm.ObjectState.Deleted Then
                     '    CheckCash()
                     '    using SyncHelper(false)
@@ -1710,6 +1762,7 @@ Namespace Orm
                     If mo.User IsNot Nothing AndAlso Not mo.User.Equals(GetMgr.CurrentUser) Then
                         Throw New OrmObjectException(ObjName & "Object has already altered by user " & mo.User.ToString)
                     End If
+                    Debug.Assert(mo.Reason <> ModifiedObject.ReasonEnum.Delete)
                 Else
                     If _state = Orm.ObjectState.NotLoaded Then
                         Load()
@@ -1718,14 +1771,16 @@ Namespace Orm
                         End If
                     End If
 
-                    CreateModified(Identifier)
-                    OrmCache.Modified(Me).Reason = ModifiedObject.ReasonEnum.Delete
+                    Debug.Assert(_state <> Orm.ObjectState.Modified)
+                    CreateModified(Identifier, ModifiedObject.ReasonEnum.Delete)
+                    'OrmCache.Modified(Me).Reason = ModifiedObject.ReasonEnum.Delete
                     'Dim modified As OrmBase = CloneMe()
                     'modified._old_state = modified.ObjectState
                     'modified.ObjectState = ObjectState.Clone
                     'OrmCache.RegisterModification(modified)
                 End If
                 ObjectState = ObjectState.Deleted
+                EnsureInCache()
                 GetMgr.RaiseBeginDelete(Me)
             End Using
 
@@ -2065,7 +2120,11 @@ l1:
             Dim o As OrmBase = CType(Activator.CreateInstance(Me.GetType), OrmBase)
             o.Init(Identifier, OrmCache, OrmSchema)
             Using SyncHelper(True)
+#If TraceSetState Then
+                o.SetObjectState(ObjectState, ModifiedObject.ReasonEnum.Unknown, String.Empty, Nothing)
+#Else
                 o.SetObjectState(ObjectState)
+#End If
                 CopyBodyInternal(Me, o)
             End Using
             Return o

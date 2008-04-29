@@ -35,6 +35,7 @@ Public Class TestTracker
 
     Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Integer) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
         _new_objects.Remove(id)
+        Debug.WriteLine("removed: " & id)
     End Sub
 
     Public Sub RemoveNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
@@ -43,16 +44,29 @@ Public Class TestTracker
         End If
 
         _new_objects.Remove(obj.Identifier)
+        Debug.WriteLine("removed: " & obj.Identifier)
+    End Sub
+
+    Protected Sub Objr(ByVal o As OrmBase)
+        Debug.WriteLine(o.InternalProperties.ObjName)
+    End Sub
+
+    Protected Sub br(ByVal cnt As Integer)
+        Debug.WriteLine(cnt)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestCreateObjects()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+            _new_objects.Clear()
             mgr.NewObjectManager = Me
 
             mgr.BeginTransaction()
             Try
                 Using tracker As New OrmReadOnlyDBManager.OrmTransactionalScope
+                    AddHandler tracker.Saver.ObjectRejected, AddressOf Objr
+                    'AddHandler tracker.BeginRollback, AddressOf br
+
                     Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
                     t.CreatedAt = Now
 
@@ -77,12 +91,16 @@ Public Class TestTracker
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestUpdate()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+            _new_objects.Clear()
             mgr.NewObjectManager = Me
 
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()
             Try
                 Using tracker As New OrmReadOnlyDBManager.OrmTransactionalScope
+                    AddHandler tracker.Saver.ObjectRejected, AddressOf Objr
+                    'AddHandler tracker.BeginRollback, AddressOf br
+
                     Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
                     t.CreatedAt = Now
 

@@ -43,13 +43,21 @@ Public Class TestManagerRS
     End Function
 
     Public Shared Function CreateManagerShared(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
+#If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmDBManager(New OrmCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+#Else
+        Return New OrmDBManager(New OrmCache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+#End If
     End Function
 
     Public Function CreateManager(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
+#If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
         Dim mgr As New OrmDBManager(GetCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+#Else
+        Dim mgr as New OrmDBManager(getCache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+#End If
         mgr.NewObjectManager = Me
         Return mgr
     End Function

@@ -31,6 +31,7 @@
     <IncrementalBuild>true</IncrementalBuild>
     <OutputPath>bin\</OutputPath>
     <DocumentationFile>TestProject1.xml</DocumentationFile>
+    <DefineConstants>UseUserInstance</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugSymbols>false</DebugSymbols>
@@ -50,6 +51,19 @@
     <DebugType>full</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <CodeAnalysisRuleAssemblies>C:\Program Files\Microsoft Visual Studio 8\Team Tools\Static Analysis Tools\FxCop\\rules</CodeAnalysisRuleAssemblies>
+    <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
+    <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'DebugNonUserInstance|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\DebugNonUserInstance\</OutputPath>
+    <DefineConstants>
+    </DefineConstants>
+    <DocumentationFile>TestProject1.xml</DocumentationFile>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <CodeAnalysisUseTypeNameInSuppression>true</CodeAnalysisUseTypeNameInSuppression>
     <CodeAnalysisModuleSuppressionsFile>GlobalSuppressions.vb</CodeAnalysisModuleSuppressionsFile>
   </PropertyGroup>
@@ -152,7 +166,9 @@
     <Content Include="ASPHosting\Web\testobjects.aspx">
       <SubType>ASPXCodeBehind</SubType>
     </Content>
-    <Content Include="ASPHosting\Web\Testroles.aspx" />
+    <Content Include="ASPHosting\Web\Testroles.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
     <EmbeddedResource Include="XML\data.xml" />
   </ItemGroup>
   <ItemGroup>

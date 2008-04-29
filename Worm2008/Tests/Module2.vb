@@ -7,6 +7,24 @@ Imports Worm.Database.OrmReadOnlyDBManager.BatchSaver
 
 Module Module2
 
+    Public Class States
+        Public FromState As Orm.ObjectState
+        Public ToState As Orm.ObjectState
+        Public Dt As Date
+    End Class
+
+    Public Class StatesList
+        Inherits List(Of States)
+
+        Public Overloads Sub Add(ByVal oldState As Orm.ObjectState, ByVal newState As Orm.ObjectState)
+            Dim os As New States
+            os.Dt = Now
+            os.FromState = oldState
+            os.ToState = newState
+            Add(os)
+        End Sub
+    End Class
+
     <Orm.Meta.Entity("junk", "id", "1")> _
     Public Class TestEditTable
         Inherits Orm.OrmBaseT(Of TestEditTable)
@@ -26,15 +44,16 @@ Module Module2
             End Get
         End Property
 
-        Private _changes As New List(Of Pair(Of Date, Worm.Orm.ObjectState))
-        Public ReadOnly Property StateChanges() As List(Of Pair(Of Date, Worm.Orm.ObjectState))
+        Private _changes As New StatesList
+
+        Public ReadOnly Property StateChanges() As StatesList
             Get
                 Return _changes
             End Get
         End Property
 
         Protected Sub ChangeState(ByVal state As Worm.Orm.ObjectState)
-            _changes.Add(New Pair(Of Date, Worm.Orm.ObjectState)(Now, state))
+            _changes.Add(state, ObjectState)
         End Sub
 
         Protected _deleted As Boolean
@@ -59,16 +78,16 @@ Module Module2
             _s = args.SavedObject.InternalProperties.ObjectState
         End Sub
 
-        Protected _rs As Orm.ObjectState
-        Public ReadOnly Property RejectedState() As Orm.ObjectState
-            Get
-                Return _rs
-            End Get
-        End Property
+        'Protected _rs As Orm.ObjectState
+        'Public ReadOnly Property RejectedState() As Orm.ObjectState
+        '    Get
+        '        Return _rs
+        '    End Get
+        'End Property
 
-        Protected Sub Rejected(ByVal state As Worm.Orm.ObjectState)
-            _rs = state
-        End Sub
+        'Protected Sub Rejected(ByVal state As Worm.Orm.ObjectState)
+        '    _rs = state
+        'End Sub
 
         Public Sub New()
 
@@ -82,7 +101,7 @@ Module Module2
             _stack = Environment.StackTrace
             _dt = Now
             AddHandler ObjectStateChanged, AddressOf ChangeState
-            AddHandler ObjectRejected, AddressOf Rejected
+            'AddHandler ObjectRejected, AddressOf Rejected
         End Sub
 
         Private _name As String
@@ -128,6 +147,9 @@ Module Module2
     Private _deleted As ArrayList = ArrayList.Synchronized(New ArrayList)
     Private _gdeleted As ArrayList = ArrayList.Synchronized(New ArrayList)
 
+    Private Const iterCount As Integer = 1000
+    Private Const threadCount As Integer = 20
+
     <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
     Function GetIdentity() As Integer
         Dim i As Integer = _identity
@@ -145,7 +167,7 @@ Module Module2
         Dim n As Date = Now
         Dim trd As New List(Of Threading.Thread)
         Randomize()
-        For i As Integer = 0 To 20
+        For i As Integer = 0 To threadCount
             Dim t As New Threading.Thread(AddressOf EditSub)
             trd.Add(t)
             t = New Threading.Thread(AddressOf QuerySub)
@@ -179,7 +201,7 @@ Module Module2
     End Sub
 
     Sub Load(ByVal o As Object)
-        For i As Integer = 0 To 1000
+        For i As Integer = 0 To iterCount
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -211,7 +233,7 @@ Module Module2
     End Sub
 
     Sub Unload(ByVal o As Object)
-        For i As Integer = 0 To 1000
+        For i As Integer = 0 To iterCount
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -240,13 +262,18 @@ Module Module2
         Next
     End Sub
 
+    Private _saved As ArrayList = ArrayList.Synchronized(New ArrayList)
+    Sub ObjectSaved(ByVal o As Orm.OrmBase)
+        _saved.Add(o)
+    End Sub
+
     Sub DeleteSub(ByVal o As Object)
         'Dim arr As ArrayList = CType(o, ArrayList)
         'Dim e As New Threading.AutoResetEvent(False)
         'arr.Add(e)
         'Console.WriteLine("edit sub done")
         'e.Set()
-        For i As Integer = 0 To 1500
+        For i As Integer = 0 To CInt(iterCount * 1.5)
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -281,18 +308,19 @@ Module Module2
                                         st.Commit()
                                         Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
                                         AddHandler st.Saver.ObjectSaving, AddressOf t.ObjectSaving
+                                        AddHandler st.Saver.ObjectSaved, AddressOf ObjectSaved
                                     End Using
-                                        If done Then
-                                            Debug.Assert(t.InternalProperties.OriginalCopy Is Nothing)
-                                            Dim s, s2, s3 As String
-                                            If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
-                                                s = sw.GetStringBuilder.ToString
-                                            End If
-                                            Debug.Assert(t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
-                                            _deleted.Add(t)
-                                            Dim b As Boolean = mgr.IsInCachePrecise(t)
-                                            Debug.Assert(Not b)
+                                    If done Then
+                                        Debug.Assert(t.InternalProperties.OriginalCopy Is Nothing)
+                                        Dim s, s2, s3 As String
+                                        If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
+                                            s = sw.GetStringBuilder.ToString
                                         End If
+                                        Debug.Assert(t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                        _deleted.Add(t)
+                                        Dim b As Boolean = mgr.IsInCachePrecise(t)
+                                        Debug.Assert(Not b)
+                                    End If
                                 Finally
                                     mgr.RemoveListener(ls)
                                 End Try
@@ -318,7 +346,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("edit sub done")
         'e.Set()
-        For i As Integer = 0 To 1000
+        For i As Integer = 0 To CInt(iterCount * 0.5)
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -353,7 +381,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("edit sub done")
         'e.Set()
-        For i As Integer = 0 To 1000
+        For i As Integer = 0 To iterCount
             Using mgr As OrmDBManager = CreateManager()
                 Dim r As New Random
                 Dim done As Boolean
@@ -373,8 +401,11 @@ Module Module2
                                                     AddHandler st.Saver.ObjectSaved, AddressOf throwEx
                                                 End If
                                             Else
-                                                t.Name = Guid.NewGuid.ToString
-                                                t.SaveChanges(True)
+                                                Dim str As String = Guid.NewGuid.ToString
+                                                t.Name = str
+                                                If t.InternalProperties.HasBodyChanges Then
+                                                    t.SaveChanges(True)
+                                                End If
                                             End If
                                         End If
                                     End Using
@@ -408,7 +439,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("query sub done")
         'e.Set()
-        For i As Integer = 0 To 2000
+        For i As Integer = 0 To iterCount * 2
             Using mgr As OrmReadOnlyDBManager = CreateManager()
                 Using New OrmManagerBase.CacheListBehavior(mgr, False)
                     Dim r As New Random
@@ -442,7 +473,7 @@ Module Module2
         'arr.Add(e)
         'Console.WriteLine("query sub done")
         'e.Set()
-        For i As Integer = 0 To 2000
+        For i As Integer = 0 To iterCount * 2
             Using mgr As OrmReadOnlyDBManager = CreateManager()
                 Using New OrmManagerBase.CacheListBehavior(mgr, False)
                     Dim r As New Random
@@ -472,6 +503,7 @@ Module Module2
 
     Public Function CreateManager() As OrmDBManager
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-        Return New OrmDBManager(_cache, _schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;Connection timeout=60;")
+        'Return New OrmDBManager(_cache, _schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;Connection timeout=60;")
+        Return New OrmDBManager(_cache, _schema, "data source=.\sqlexpress;Initial catalog=test;Integrated security=true;Connection timeout=60;")
     End Function
 End Module

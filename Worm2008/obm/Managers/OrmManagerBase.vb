@@ -898,6 +898,7 @@ Public MustInherit Class OrmManagerBase
 
     Public Event BeginUpdate(ByVal o As OrmBase)
     Public Event BeginDelete(ByVal o As OrmBase)
+    'Public Event ObjectRejected(ByVal o As OrmBase)
     Public Event DataAvailable(ByVal mgr As OrmManagerBase, ByVal r As ExecutionResult)
 
     Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport, ByVal contextKey As Object) As String
@@ -2464,11 +2465,13 @@ l1:
             Throw New ArgumentNullException("obj parameter cannot be nothing")
         End If
 
-        If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
-            Return False
-        End If
+        Using obj.GetSyncRoot
+            If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                Return False
+            End If
 
-        Return _RemoveObjectFromCache(obj)
+            Return _RemoveObjectFromCache(obj)
+        End Using
     End Function
 
     Protected Friend Function _RemoveObjectFromCache(ByVal obj As OrmBase) As Boolean
@@ -2483,17 +2486,29 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        dic.Remove(obj.Identifier)
+        Dim id As Integer = obj.Identifier
+        Dim sync_key As String = "LoadType" & id & t.ToString
 
-        _cache.RemoveDepends(obj)
+        Using SyncHelper.AcquireDynamicLock(sync_key)
+            If Cache.Modified(t, id) IsNot Nothing Then
+                Return False
+            End If
 
-        'Dim l As List(Of Type) = Nothing
-        For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
-            Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
-            mdic.Remove(o.Second.Second)
-        Next
+            dic.Remove(obj.Identifier)
 
-        _cache.RegisterRemoval(obj)
+            _cache.RemoveDepends(obj)
+
+            'Dim l As List(Of Type) = Nothing
+            For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
+                Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
+                mdic.Remove(o.Second.Second)
+            Next
+
+            _cache.RegisterRemoval(obj)
+
+            Debug.Assert(Not IsInCachePrecise(obj))
+            Debug.Assert(Cache.Modified(t, id) Is Nothing)
+        End Using
         Return True
     End Function
 
