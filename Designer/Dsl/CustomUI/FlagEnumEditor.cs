@@ -65,32 +65,32 @@ namespace Worm.Designer
 				&& provider != null) 
 			{
 
-				IWindowsFormsEditorService edSvc = (IWindowsFormsEditorService)provider.GetService(typeof(IWindowsFormsEditorService));
-                string[] attributes = (context.Instance as Property).Attributes.Split(new char[] { '|' });
-                ArrayList list = new ArrayList(attributes);
+                //IWindowsFormsEditorService edSvc = (IWindowsFormsEditorService)provider.GetService(typeof(IWindowsFormsEditorService));
+                //string[] attributes = (context.Instance as Property).Attributes.Split(new char[] { '|' });
+                //ArrayList list = new ArrayList(attributes);
                
-                flagEnumCB = new CheckedListBox();
-                flagEnumCB.CheckOnClick = true;
-                foreach (int attributeValue in Enum.GetValues(typeof(PropertyAttribute)))
-                {
-                    string name = Enum.GetName(typeof(PropertyAttribute), attributeValue);
-                    FlagCheckedListBoxItem item = new FlagCheckedListBoxItem(attributeValue, name);
-                    flagEnumCB.Items.Add(item, list.Contains(name));
-                }
+                //flagEnumCB = new CheckedListBox();
+                //flagEnumCB.CheckOnClick = true;
+                //foreach (int attributeValue in Enum.GetValues(typeof(PropertyAttribute)))
+                //{
+                //    string name = Enum.GetName(typeof(PropertyAttribute), attributeValue);
+                //    FlagCheckedListBoxItem item = new FlagCheckedListBoxItem(attributeValue, name);
+                //    flagEnumCB.Items.Add(item, list.Contains(name));
+                //}
 
-                flagEnumCB.BorderStyle = BorderStyle.None;
+                //flagEnumCB.BorderStyle = BorderStyle.None;
 
-				if (edSvc != null) 
-				{					
-                    edSvc.DropDownControl(flagEnumCB);
-                    string result = string.Empty;
-                    foreach (FlagCheckedListBoxItem item in flagEnumCB.CheckedItems)
-                    {
-                        result += item.caption + "|";
-                    }
-                    return result.TrimEnd('|');
+                //if (edSvc != null) 
+                //{					
+                //    edSvc.DropDownControl(flagEnumCB);
+                //    string result = string.Empty;
+                //    foreach (FlagCheckedListBoxItem item in flagEnumCB.CheckedItems)
+                //    {
+                //        result += item.caption + "|";
+                //    }
+                //    return result.TrimEnd('|');
 
-				}
+                //}
 			}
 			return null;
 		}

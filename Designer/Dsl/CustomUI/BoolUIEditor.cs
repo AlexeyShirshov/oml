@@ -73,8 +73,8 @@ namespace Worm.Designer
            
                 listBox.Items.Add("False");
                 listBox.Items.Add("True");
-            
-            listBox.SelectedItem = value;
+
+                listBox.SelectedItem = value.ToString();
 
             // Handle the service 
             this.formsEditorService =

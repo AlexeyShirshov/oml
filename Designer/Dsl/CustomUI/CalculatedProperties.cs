@@ -70,7 +70,7 @@ namespace Worm.Designer
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
                         string idProperty = Utils.GetIdProperty(property.Type);
-                        if (idProperty != null && property.Nullable)
+                        if (idProperty != null && bool.Parse(property.Nullable))
                         {
                             idProperty += "nullable";
                         }
@@ -109,7 +109,7 @@ namespace Worm.Designer
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
                         string idProperty =  Utils.GetIdProperty(property.Type);
-                        if (idProperty != null && property.Nullable)
+                        if (idProperty != null && bool.Parse(property.Nullable))
                         {
                             idProperty += "nullable";
                         }
@@ -272,43 +272,35 @@ namespace Worm.Designer
      /// <summary>
     /// Implements one add rule for the Property domain class.
     /// </summary>
- [RuleOn(typeof(WormModel), FireTime = TimeToFire.TopLevelCommit)]
- public class WormModelAddRule : AddRule
+ [RuleOn(typeof(DesignerDiagram), FireTime = TimeToFire.TopLevelCommit)]
+ public class DesignerDiagramAddRule : AddRule
  {
      public override void ElementAdded(ElementAddedEventArgs e)
-     { if (e == null)
-            {
-                throw new ArgumentNullException("e");
-            }
+     {
+         if (e == null)
+         {
+             throw new ArgumentNullException("e");
+         }
+         DesignerDiagram d;
+
+         // string defaultNamespace = dte.ActiveDocument.ProjectItem.Name.Replace(".wxml", "");
+
+         //WormModel model = e.ModelElement as WormModel;
+         //if (model != null)
+         //{
+         //entity.WormModel.Store.
+         //System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+
+         //DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
+         //if (dte.ActiveDocument != null)
+         //{
+
+         //    string defaultNamespace = dte.ActiveDocument.ProjectItem.Name.Replace(".wxml", "");
 
 
-            WormModel model = e.ModelElement as WormModel;
-            if (model != null)
-            {
-                //entity.WormModel.Store.
-                System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
-
-                DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
-                if (dte.ActiveDocument != null)
-                {
-                    //string defaultNamespace = (string)(dte.ActiveDocument.ProjectItem.ContainingProject.Properties.Item("DefaultNamespace").Value);
-                    //if (string.IsNullOrEmpty(entity.WormModel.DefaultNamespace))
-                    //{
-                    //    entity.WormModel.DefaultNamespace = defaultNamespace;
-                    //}
-                    //if (string.IsNullOrEmpty(entity.Namespace))
-                    //{
-                    //    entity.Namespace = defaultNamespace;
-                    //}
-                    string defaultNamespace = dte.ActiveDocument.ProjectItem.Name.Replace(".wxml", "");
-                    if (string.IsNullOrEmpty(model.DefaultNamespace))
-                    {
-                      model.DefaultNamespace = defaultNamespace;
-                    }
-                      
-                }
-            }
-        }
+         //}
+         //}
+     }
 
  }
     /// <summary>
@@ -456,7 +448,7 @@ namespace Worm.Designer
             {
                 using (Transaction txAdd = e.ModelElement.Store.TransactionManager.BeginTransaction("Add property"))
                 {
-                    table.Entity.WormModel.Tables.Find(t => t.Name == table.Name).Delete();                   
+                    table.WormModel.Tables.Find(t => t.Name == table.Name).Delete();                   
                     txAdd.Commit();
                 }
             }
@@ -772,7 +764,7 @@ namespace Worm.Designer
             , typeof(EntityChangeRule), typeof(SupressedPropertyChangeRule),  
             typeof( EntityReferencesTargetEntitiesChangeRule),
             typeof(EntityDeleteRule), typeof(PropertyDeleteRule), typeof(SupressedPropertyDeleteRule),
-            typeof(TableDeleteRule), typeof(WormModelAddRule)};
+            typeof(TableDeleteRule), typeof(DesignerDiagramAddRule)};
         }
 
        
@@ -804,7 +796,7 @@ namespace Worm.Designer
         public event ModelRelationAddedHandler ModelRelationAdded;
         public event ModelRelationDeletedHandler ModelRelationDeleted;
         public event ModelRelationChangedHandler ModelRelationChanged;
-        
+    
         public void OnModelPropertyAdded(ElementAddedEventArgs e)
         {
             if (ModelPropertyAdded != null)

@@ -42,23 +42,12 @@ namespace Worm.Designer
         /// </summary>
         private void InitializeComponent()
         {
-            this.SuspendLayout();
-            // 
-            // ClassDetailsControl
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.AutoSize = true;
-            this.BackColor = System.Drawing.SystemColors.ControlLightLight;
-            this.Name = "ClassDetailsControl";
-            this.Size = new System.Drawing.Size(754, 153);
-            this.ResumeLayout(false);
-
-
+           
         }
 
         #endregion
 
+     
 
 
 

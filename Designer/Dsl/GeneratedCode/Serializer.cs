@@ -220,14 +220,14 @@ namespace Worm.Designer
 				string attribSplit = reader.GetAttribute("split");
 				if (attribSplit != null)
 				{
-					global::System.Boolean valueOfSplit;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSplit), out valueOfSplit))
+					global::System.String valueOfSplit;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSplit), out valueOfSplit))
 					{
 						instanceOfWormModel.Split = valueOfSplit;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "split", typeof(global::System.Boolean), attribSplit);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "split", typeof(global::System.String), attribSplit);
 					}
 				}
 			}
@@ -248,23 +248,6 @@ namespace Worm.Designer
 					}
 				}
 			}
-			// LanguageSpecificHacks
-			if (!serializationContext.Result.Failed)
-			{
-				string attribLanguageSpecificHacks = reader.GetAttribute("languageSpecificHacks");
-				if (attribLanguageSpecificHacks != null)
-				{
-					global::Worm.CodeGen.Core.LanguageSpecificHacks valueOfLanguageSpecificHacks;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::Worm.CodeGen.Core.LanguageSpecificHacks>(DslModeling::SerializationUtilities.UnescapeXmlString(attribLanguageSpecificHacks), out valueOfLanguageSpecificHacks))
-					{
-						instanceOfWormModel.LanguageSpecificHacks = valueOfLanguageSpecificHacks;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "languageSpecificHacks", typeof(global::Worm.CodeGen.Core.LanguageSpecificHacks), attribLanguageSpecificHacks);
-					}
-				}
-			}
 			// PrivateMembersPrefix
 			if (!serializationContext.Result.Failed)
 			{
@@ -279,6 +262,278 @@ namespace Worm.Designer
 					else
 					{	// Invalid property value, ignored.
 						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "privateMembersPrefix", typeof(global::System.String), attribPrivateMembersPrefix);
+					}
+				}
+			}
+			// FileNamePrefix
+			if (!serializationContext.Result.Failed)
+			{
+				string attribFileNamePrefix = reader.GetAttribute("fileNamePrefix");
+				if (attribFileNamePrefix != null)
+				{
+					global::System.String valueOfFileNamePrefix;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribFileNamePrefix), out valueOfFileNamePrefix))
+					{
+						instanceOfWormModel.FileNamePrefix = valueOfFileNamePrefix;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "fileNamePrefix", typeof(global::System.String), attribFileNamePrefix);
+					}
+				}
+			}
+			// DerivedGenericMembersRequireConstraits
+			if (!serializationContext.Result.Failed)
+			{
+				string attribDerivedGenericMembersRequireConstraits = reader.GetAttribute("derivedGenericMembersRequireConstraits");
+				if (attribDerivedGenericMembersRequireConstraits != null)
+				{
+					global::System.String valueOfDerivedGenericMembersRequireConstraits;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDerivedGenericMembersRequireConstraits), out valueOfDerivedGenericMembersRequireConstraits))
+					{
+						instanceOfWormModel.DerivedGenericMembersRequireConstraits = valueOfDerivedGenericMembersRequireConstraits;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "derivedGenericMembersRequireConstraits", typeof(global::System.String), attribDerivedGenericMembersRequireConstraits);
+					}
+				}
+			}
+			// MethodsInsteadParametrizedProperties
+			if (!serializationContext.Result.Failed)
+			{
+				string attribMethodsInsteadParametrizedProperties = reader.GetAttribute("methodsInsteadParametrizedProperties");
+				if (attribMethodsInsteadParametrizedProperties != null)
+				{
+					global::System.String valueOfMethodsInsteadParametrizedProperties;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribMethodsInsteadParametrizedProperties), out valueOfMethodsInsteadParametrizedProperties))
+					{
+						instanceOfWormModel.MethodsInsteadParametrizedProperties = valueOfMethodsInsteadParametrizedProperties;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "methodsInsteadParametrizedProperties", typeof(global::System.String), attribMethodsInsteadParametrizedProperties);
+					}
+				}
+			}
+			// AddOptionsStrict
+			if (!serializationContext.Result.Failed)
+			{
+				string attribAddOptionsStrict = reader.GetAttribute("addOptionsStrict");
+				if (attribAddOptionsStrict != null)
+				{
+					global::System.String valueOfAddOptionsStrict;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribAddOptionsStrict), out valueOfAddOptionsStrict))
+					{
+						instanceOfWormModel.AddOptionsStrict = valueOfAddOptionsStrict;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "addOptionsStrict", typeof(global::System.String), attribAddOptionsStrict);
+					}
+				}
+			}
+			// OptionsStrictOn
+			if (!serializationContext.Result.Failed)
+			{
+				string attribOptionsStrictOn = reader.GetAttribute("optionsStrictOn");
+				if (attribOptionsStrictOn != null)
+				{
+					global::System.String valueOfOptionsStrictOn;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribOptionsStrictOn), out valueOfOptionsStrictOn))
+					{
+						instanceOfWormModel.OptionsStrictOn = valueOfOptionsStrictOn;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "optionsStrictOn", typeof(global::System.String), attribOptionsStrictOn);
+					}
+				}
+			}
+			// AddOptionsExplicit
+			if (!serializationContext.Result.Failed)
+			{
+				string attribAddOptionsExplicit = reader.GetAttribute("addOptionsExplicit");
+				if (attribAddOptionsExplicit != null)
+				{
+					global::System.String valueOfAddOptionsExplicit;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribAddOptionsExplicit), out valueOfAddOptionsExplicit))
+					{
+						instanceOfWormModel.AddOptionsExplicit = valueOfAddOptionsExplicit;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "addOptionsExplicit", typeof(global::System.String), attribAddOptionsExplicit);
+					}
+				}
+			}
+			// OptionsExplicitOn
+			if (!serializationContext.Result.Failed)
+			{
+				string attribOptionsExplicitOn = reader.GetAttribute("optionsExplicitOn");
+				if (attribOptionsExplicitOn != null)
+				{
+					global::System.String valueOfOptionsExplicitOn;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribOptionsExplicitOn), out valueOfOptionsExplicitOn))
+					{
+						instanceOfWormModel.OptionsExplicitOn = valueOfOptionsExplicitOn;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "optionsExplicitOn", typeof(global::System.String), attribOptionsExplicitOn);
+					}
+				}
+			}
+			// GenerateCSUsingStatement
+			if (!serializationContext.Result.Failed)
+			{
+				string attribGenerateCSUsingStatement = reader.GetAttribute("generateCSUsingStatement");
+				if (attribGenerateCSUsingStatement != null)
+				{
+					global::System.String valueOfGenerateCSUsingStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCSUsingStatement), out valueOfGenerateCSUsingStatement))
+					{
+						instanceOfWormModel.GenerateCSUsingStatement = valueOfGenerateCSUsingStatement;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCSUsingStatement", typeof(global::System.String), attribGenerateCSUsingStatement);
+					}
+				}
+			}
+			// GenerateVBUsingStatement
+			if (!serializationContext.Result.Failed)
+			{
+				string attribGenerateVBUsingStatement = reader.GetAttribute("generateVBUsingStatement");
+				if (attribGenerateVBUsingStatement != null)
+				{
+					global::System.String valueOfGenerateVBUsingStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVBUsingStatement), out valueOfGenerateVBUsingStatement))
+					{
+						instanceOfWormModel.GenerateVBUsingStatement = valueOfGenerateVBUsingStatement;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVBUsingStatement", typeof(global::System.String), attribGenerateVBUsingStatement);
+					}
+				}
+			}
+			// SafeUnboxToEnum
+			if (!serializationContext.Result.Failed)
+			{
+				string attribSafeUnboxToEnum = reader.GetAttribute("safeUnboxToEnum");
+				if (attribSafeUnboxToEnum != null)
+				{
+					global::System.String valueOfSafeUnboxToEnum;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSafeUnboxToEnum), out valueOfSafeUnboxToEnum))
+					{
+						instanceOfWormModel.SafeUnboxToEnum = valueOfSafeUnboxToEnum;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "safeUnboxToEnum", typeof(global::System.String), attribSafeUnboxToEnum);
+					}
+				}
+			}
+			// GenerateCsIsStatement
+			if (!serializationContext.Result.Failed)
+			{
+				string attribGenerateCsIsStatement = reader.GetAttribute("generateCsIsStatement");
+				if (attribGenerateCsIsStatement != null)
+				{
+					global::System.String valueOfGenerateCsIsStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCsIsStatement), out valueOfGenerateCsIsStatement))
+					{
+						instanceOfWormModel.GenerateCsIsStatement = valueOfGenerateCsIsStatement;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCsIsStatement", typeof(global::System.String), attribGenerateCsIsStatement);
+					}
+				}
+			}
+			// GenerateVbTypeOfIsStatement
+			if (!serializationContext.Result.Failed)
+			{
+				string attribGenerateVbTypeOfIsStatement = reader.GetAttribute("generateVbTypeOfIsStatement");
+				if (attribGenerateVbTypeOfIsStatement != null)
+				{
+					global::System.String valueOfGenerateVbTypeOfIsStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVbTypeOfIsStatement), out valueOfGenerateVbTypeOfIsStatement))
+					{
+						instanceOfWormModel.GenerateVbTypeOfIsStatement = valueOfGenerateVbTypeOfIsStatement;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVbTypeOfIsStatement", typeof(global::System.String), attribGenerateVbTypeOfIsStatement);
+					}
+				}
+			}
+			// GenerateCsAsStatement
+			if (!serializationContext.Result.Failed)
+			{
+				string attribGenerateCsAsStatement = reader.GetAttribute("generateCsAsStatement");
+				if (attribGenerateCsAsStatement != null)
+				{
+					global::System.String valueOfGenerateCsAsStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCsAsStatement), out valueOfGenerateCsAsStatement))
+					{
+						instanceOfWormModel.GenerateCsAsStatement = valueOfGenerateCsAsStatement;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCsAsStatement", typeof(global::System.String), attribGenerateCsAsStatement);
+					}
+				}
+			}
+			// GenerateVbTryCastStatement
+			if (!serializationContext.Result.Failed)
+			{
+				string attribGenerateVbTryCastStatement = reader.GetAttribute("generateVbTryCastStatement");
+				if (attribGenerateVbTryCastStatement != null)
+				{
+					global::System.String valueOfGenerateVbTryCastStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVbTryCastStatement), out valueOfGenerateVbTryCastStatement))
+					{
+						instanceOfWormModel.GenerateVbTryCastStatement = valueOfGenerateVbTryCastStatement;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVbTryCastStatement", typeof(global::System.String), attribGenerateVbTryCastStatement);
+					}
+				}
+			}
+			// GenerateCsLockStatement
+			if (!serializationContext.Result.Failed)
+			{
+				string attribGenerateCsLockStatement = reader.GetAttribute("generateCsLockStatement");
+				if (attribGenerateCsLockStatement != null)
+				{
+					global::System.String valueOfGenerateCsLockStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCsLockStatement), out valueOfGenerateCsLockStatement))
+					{
+						instanceOfWormModel.GenerateCsLockStatement = valueOfGenerateCsLockStatement;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCsLockStatement", typeof(global::System.String), attribGenerateCsLockStatement);
+					}
+				}
+			}
+			// GenerateVbSyncLockStatement
+			if (!serializationContext.Result.Failed)
+			{
+				string attribGenerateVbSyncLockStatement = reader.GetAttribute("generateVbSyncLockStatement");
+				if (attribGenerateVbSyncLockStatement != null)
+				{
+					global::System.String valueOfGenerateVbSyncLockStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVbSyncLockStatement), out valueOfGenerateVbSyncLockStatement))
+					{
+						instanceOfWormModel.GenerateVbSyncLockStatement = valueOfGenerateVbSyncLockStatement;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVbSyncLockStatement", typeof(global::System.String), attribGenerateVbSyncLockStatement);
 					}
 				}
 			}
@@ -963,13 +1218,12 @@ namespace Worm.Designer
 			// Split
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfWormModel.Split;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfWormModel.Split;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("split", serializedPropValue);
+						writer.WriteAttributeString("split", propValue);
 					}
 				}
 			}
@@ -985,16 +1239,6 @@ namespace Worm.Designer
 					}
 				}
 			}
-			// LanguageSpecificHacks
-			if (!serializationContext.Result.Failed)
-			{
-				global::Worm.CodeGen.Core.LanguageSpecificHacks propValue = instanceOfWormModel.LanguageSpecificHacks;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::Worm.CodeGen.Core.LanguageSpecificHacks>(serializationContext, propValue);
-				if (!serializationContext.Result.Failed)
-				{
-					writer.WriteAttributeString("languageSpecificHacks", serializedPropValue);
-				}
-			}
 			// PrivateMembersPrefix
 			if (!serializationContext.Result.Failed)
 			{
@@ -1004,6 +1248,196 @@ namespace Worm.Designer
 					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "m_") != 0))
 					{	// No need to write the value out if it's the same as default value.
 						writer.WriteAttributeString("privateMembersPrefix", propValue);
+					}
+				}
+			}
+			// FileNamePrefix
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.FileNamePrefix;
+				if (!serializationContext.Result.Failed)
+				{
+					if (!string.IsNullOrEmpty(propValue))
+						writer.WriteAttributeString("fileNamePrefix", propValue);
+				}
+			}
+			// DerivedGenericMembersRequireConstraits
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.DerivedGenericMembersRequireConstraits;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("derivedGenericMembersRequireConstraits", propValue);
+					}
+				}
+			}
+			// MethodsInsteadParametrizedProperties
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.MethodsInsteadParametrizedProperties;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("methodsInsteadParametrizedProperties", propValue);
+					}
+				}
+			}
+			// AddOptionsStrict
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.AddOptionsStrict;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("addOptionsStrict", propValue);
+					}
+				}
+			}
+			// OptionsStrictOn
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.OptionsStrictOn;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("optionsStrictOn", propValue);
+					}
+				}
+			}
+			// AddOptionsExplicit
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.AddOptionsExplicit;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("addOptionsExplicit", propValue);
+					}
+				}
+			}
+			// OptionsExplicitOn
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.OptionsExplicitOn;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("optionsExplicitOn", propValue);
+					}
+				}
+			}
+			// GenerateCSUsingStatement
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.GenerateCSUsingStatement;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("generateCSUsingStatement", propValue);
+					}
+				}
+			}
+			// GenerateVBUsingStatement
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.GenerateVBUsingStatement;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("generateVBUsingStatement", propValue);
+					}
+				}
+			}
+			// SafeUnboxToEnum
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.SafeUnboxToEnum;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("safeUnboxToEnum", propValue);
+					}
+				}
+			}
+			// GenerateCsIsStatement
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.GenerateCsIsStatement;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("generateCsIsStatement", propValue);
+					}
+				}
+			}
+			// GenerateVbTypeOfIsStatement
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.GenerateVbTypeOfIsStatement;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("generateVbTypeOfIsStatement", propValue);
+					}
+				}
+			}
+			// GenerateCsAsStatement
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.GenerateCsAsStatement;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("generateCsAsStatement", propValue);
+					}
+				}
+			}
+			// GenerateVbTryCastStatement
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.GenerateVbTryCastStatement;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("generateVbTryCastStatement", propValue);
+					}
+				}
+			}
+			// GenerateCsLockStatement
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.GenerateCsLockStatement;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("generateCsLockStatement", propValue);
+					}
+				}
+			}
+			// GenerateVbSyncLockStatement
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfWormModel.GenerateVbSyncLockStatement;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("generateVbSyncLockStatement", propValue);
 					}
 				}
 			}
@@ -1367,14 +1801,14 @@ namespace Worm.Designer
 				string attribUseGenerics = reader.GetAttribute("useGenerics");
 				if (attribUseGenerics != null)
 				{
-					global::System.Boolean valueOfUseGenerics;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribUseGenerics), out valueOfUseGenerics))
+					global::System.String valueOfUseGenerics;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribUseGenerics), out valueOfUseGenerics))
 					{
 						instanceOfEntity.UseGenerics = valueOfUseGenerics;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "useGenerics", typeof(global::System.Boolean), attribUseGenerics);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "useGenerics", typeof(global::System.String), attribUseGenerics);
 					}
 				}
 			}
@@ -1384,14 +1818,14 @@ namespace Worm.Designer
 				string attribMakeInterface = reader.GetAttribute("makeInterface");
 				if (attribMakeInterface != null)
 				{
-					global::System.Boolean valueOfMakeInterface;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribMakeInterface), out valueOfMakeInterface))
+					global::System.String valueOfMakeInterface;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribMakeInterface), out valueOfMakeInterface))
 					{
 						instanceOfEntity.MakeInterface = valueOfMakeInterface;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "makeInterface", typeof(global::System.Boolean), attribMakeInterface);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "makeInterface", typeof(global::System.String), attribMakeInterface);
 					}
 				}
 			}
@@ -2143,24 +2577,25 @@ namespace Worm.Designer
 			// UseGenerics
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfEntity.UseGenerics;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfEntity.UseGenerics;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "false") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("useGenerics", serializedPropValue);
+						writer.WriteAttributeString("useGenerics", propValue);
 					}
 				}
 			}
 			// MakeInterface
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfEntity.MakeInterface;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfEntity.MakeInterface;
 				if (!serializationContext.Result.Failed)
 				{
-					writer.WriteAttributeString("makeInterface", serializedPropValue);
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("makeInterface", propValue);
+					}
 				}
 			}
 			// BaseEntity
@@ -3349,31 +3784,14 @@ namespace Worm.Designer
 				string attribNullable = reader.GetAttribute("nullable");
 				if (attribNullable != null)
 				{
-					global::System.Boolean valueOfNullable;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribNullable), out valueOfNullable))
+					global::System.String valueOfNullable;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribNullable), out valueOfNullable))
 					{
 						instanceOfProperty.Nullable = valueOfNullable;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "nullable", typeof(global::System.Boolean), attribNullable);
-					}
-				}
-			}
-			// Attributes
-			if (!serializationContext.Result.Failed)
-			{
-				string attribAttributes = reader.GetAttribute("attributes");
-				if (attribAttributes != null)
-				{
-					global::System.String valueOfAttributes;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribAttributes), out valueOfAttributes))
-					{
-						instanceOfProperty.Attributes = valueOfAttributes;
-					}
-					else
-					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "attributes", typeof(global::System.String), attribAttributes);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "nullable", typeof(global::System.String), attribNullable);
 					}
 				}
 			}
@@ -3383,14 +3801,14 @@ namespace Worm.Designer
 				string attribDisabled = reader.GetAttribute("disabled");
 				if (attribDisabled != null)
 				{
-					global::System.Boolean valueOfDisabled;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
+					global::System.String valueOfDisabled;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
 					{
 						instanceOfProperty.Disabled = valueOfDisabled;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.Boolean), attribDisabled);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.String), attribDisabled);
 					}
 				}
 			}
@@ -3434,14 +3852,184 @@ namespace Worm.Designer
 				string attribEnablePropertyChanged = reader.GetAttribute("enablePropertyChanged");
 				if (attribEnablePropertyChanged != null)
 				{
-					global::System.Boolean valueOfEnablePropertyChanged;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribEnablePropertyChanged), out valueOfEnablePropertyChanged))
+					global::System.String valueOfEnablePropertyChanged;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribEnablePropertyChanged), out valueOfEnablePropertyChanged))
 					{
 						instanceOfProperty.EnablePropertyChanged = valueOfEnablePropertyChanged;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "enablePropertyChanged", typeof(global::System.Boolean), attribEnablePropertyChanged);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "enablePropertyChanged", typeof(global::System.String), attribEnablePropertyChanged);
+					}
+				}
+			}
+			// PK
+			if (!serializationContext.Result.Failed)
+			{
+				string attribPK = reader.GetAttribute("pK");
+				if (attribPK != null)
+				{
+					global::System.String valueOfPK;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribPK), out valueOfPK))
+					{
+						instanceOfProperty.PK = valueOfPK;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "pK", typeof(global::System.String), attribPK);
+					}
+				}
+			}
+			// Factory
+			if (!serializationContext.Result.Failed)
+			{
+				string attribFactory = reader.GetAttribute("factory");
+				if (attribFactory != null)
+				{
+					global::System.String valueOfFactory;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribFactory), out valueOfFactory))
+					{
+						instanceOfProperty.Factory = valueOfFactory;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "factory", typeof(global::System.String), attribFactory);
+					}
+				}
+			}
+			// InsertDefault
+			if (!serializationContext.Result.Failed)
+			{
+				string attribInsertDefault = reader.GetAttribute("insertDefault");
+				if (attribInsertDefault != null)
+				{
+					global::System.String valueOfInsertDefault;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribInsertDefault), out valueOfInsertDefault))
+					{
+						instanceOfProperty.InsertDefault = valueOfInsertDefault;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "insertDefault", typeof(global::System.String), attribInsertDefault);
+					}
+				}
+			}
+			// PrimaryKey
+			if (!serializationContext.Result.Failed)
+			{
+				string attribPrimaryKey = reader.GetAttribute("primaryKey");
+				if (attribPrimaryKey != null)
+				{
+					global::System.String valueOfPrimaryKey;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribPrimaryKey), out valueOfPrimaryKey))
+					{
+						instanceOfProperty.PrimaryKey = valueOfPrimaryKey;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "primaryKey", typeof(global::System.String), attribPrimaryKey);
+					}
+				}
+			}
+			// Private
+			if (!serializationContext.Result.Failed)
+			{
+				string attribPrivate = reader.GetAttribute("private");
+				if (attribPrivate != null)
+				{
+					global::System.String valueOfPrivate;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribPrivate), out valueOfPrivate))
+					{
+						instanceOfProperty.Private = valueOfPrivate;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "private", typeof(global::System.String), attribPrivate);
+					}
+				}
+			}
+			// ReadOnly
+			if (!serializationContext.Result.Failed)
+			{
+				string attribReadOnly = reader.GetAttribute("readOnly");
+				if (attribReadOnly != null)
+				{
+					global::System.String valueOfReadOnly;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReadOnly), out valueOfReadOnly))
+					{
+						instanceOfProperty.ReadOnly = valueOfReadOnly;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "readOnly", typeof(global::System.String), attribReadOnly);
+					}
+				}
+			}
+			// RowVersion
+			if (!serializationContext.Result.Failed)
+			{
+				string attribRowVersion = reader.GetAttribute("rowVersion");
+				if (attribRowVersion != null)
+				{
+					global::System.String valueOfRowVersion;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribRowVersion), out valueOfRowVersion))
+					{
+						instanceOfProperty.RowVersion = valueOfRowVersion;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "rowVersion", typeof(global::System.String), attribRowVersion);
+					}
+				}
+			}
+			// RV
+			if (!serializationContext.Result.Failed)
+			{
+				string attribRV = reader.GetAttribute("rV");
+				if (attribRV != null)
+				{
+					global::System.String valueOfRV;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribRV), out valueOfRV))
+					{
+						instanceOfProperty.RV = valueOfRV;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "rV", typeof(global::System.String), attribRV);
+					}
+				}
+			}
+			// SyncInsert
+			if (!serializationContext.Result.Failed)
+			{
+				string attribSyncInsert = reader.GetAttribute("syncInsert");
+				if (attribSyncInsert != null)
+				{
+					global::System.String valueOfSyncInsert;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSyncInsert), out valueOfSyncInsert))
+					{
+						instanceOfProperty.SyncInsert = valueOfSyncInsert;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "syncInsert", typeof(global::System.String), attribSyncInsert);
+					}
+				}
+			}
+			// SyncUpdate
+			if (!serializationContext.Result.Failed)
+			{
+				string attribSyncUpdate = reader.GetAttribute("syncUpdate");
+				if (attribSyncUpdate != null)
+				{
+					global::System.String valueOfSyncUpdate;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSyncUpdate), out valueOfSyncUpdate))
+					{
+						instanceOfProperty.SyncUpdate = valueOfSyncUpdate;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "syncUpdate", typeof(global::System.String), attribSyncUpdate);
 					}
 				}
 			}
@@ -3863,36 +4451,24 @@ namespace Worm.Designer
 			// Nullable
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfProperty.Nullable;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfProperty.Nullable;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "true") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "True") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("nullable", serializedPropValue);
+						writer.WriteAttributeString("nullable", propValue);
 					}
-				}
-			}
-			// Attributes
-			if (!serializationContext.Result.Failed)
-			{
-				global::System.String propValue = instanceOfProperty.Attributes;
-				if (!serializationContext.Result.Failed)
-				{
-					if (!string.IsNullOrEmpty(propValue))
-						writer.WriteAttributeString("attributes", propValue);
 				}
 			}
 			// Disabled
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfProperty.Disabled;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfProperty.Disabled;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "false") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("disabled", serializedPropValue);
+						writer.WriteAttributeString("disabled", propValue);
 					}
 				}
 			}
@@ -3922,13 +4498,132 @@ namespace Worm.Designer
 			// EnablePropertyChanged
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfProperty.EnablePropertyChanged;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfProperty.EnablePropertyChanged;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("enablePropertyChanged", serializedPropValue);
+						writer.WriteAttributeString("enablePropertyChanged", propValue);
+					}
+				}
+			}
+			// PK
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.PK;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "false") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("pK", propValue);
+					}
+				}
+			}
+			// Factory
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.Factory;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("factory", propValue);
+					}
+				}
+			}
+			// InsertDefault
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.InsertDefault;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("insertDefault", propValue);
+					}
+				}
+			}
+			// PrimaryKey
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.PrimaryKey;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("primaryKey", propValue);
+					}
+				}
+			}
+			// Private
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.Private;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("private", propValue);
+					}
+				}
+			}
+			// ReadOnly
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.ReadOnly;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("readOnly", propValue);
+					}
+				}
+			}
+			// RowVersion
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.RowVersion;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("rowVersion", propValue);
+					}
+				}
+			}
+			// RV
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.RV;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("rV", propValue);
+					}
+				}
+			}
+			// SyncInsert
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.SyncInsert;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("syncInsert", propValue);
+					}
+				}
+			}
+			// SyncUpdate
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.SyncUpdate;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("syncUpdate", propValue);
 					}
 				}
 			}
@@ -4750,14 +5445,14 @@ namespace Worm.Designer
 				string attribDirectCascadeDelete = reader.GetAttribute("directCascadeDelete");
 				if (attribDirectCascadeDelete != null)
 				{
-					global::System.Boolean valueOfDirectCascadeDelete;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectCascadeDelete), out valueOfDirectCascadeDelete))
+					global::System.String valueOfDirectCascadeDelete;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectCascadeDelete), out valueOfDirectCascadeDelete))
 					{
 						instanceOfSelfRelation.DirectCascadeDelete = valueOfDirectCascadeDelete;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directCascadeDelete", typeof(global::System.Boolean), attribDirectCascadeDelete);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directCascadeDelete", typeof(global::System.String), attribDirectCascadeDelete);
 					}
 				}
 			}
@@ -4784,14 +5479,14 @@ namespace Worm.Designer
 				string attribDisabled = reader.GetAttribute("disabled");
 				if (attribDisabled != null)
 				{
-					global::System.Boolean valueOfDisabled;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
+					global::System.String valueOfDisabled;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
 					{
 						instanceOfSelfRelation.Disabled = valueOfDisabled;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.Boolean), attribDisabled);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.String), attribDisabled);
 					}
 				}
 			}
@@ -4818,14 +5513,14 @@ namespace Worm.Designer
 				string attribReverseCascadeDelete = reader.GetAttribute("reverseCascadeDelete");
 				if (attribReverseCascadeDelete != null)
 				{
-					global::System.Boolean valueOfReverseCascadeDelete;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseCascadeDelete), out valueOfReverseCascadeDelete))
+					global::System.String valueOfReverseCascadeDelete;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseCascadeDelete), out valueOfReverseCascadeDelete))
 					{
 						instanceOfSelfRelation.ReverseCascadeDelete = valueOfReverseCascadeDelete;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseCascadeDelete", typeof(global::System.Boolean), attribReverseCascadeDelete);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseCascadeDelete", typeof(global::System.String), attribReverseCascadeDelete);
 					}
 				}
 			}
@@ -5271,13 +5966,12 @@ namespace Worm.Designer
 			// DirectCascadeDelete
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfSelfRelation.DirectCascadeDelete;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfSelfRelation.DirectCascadeDelete;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "true") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "true") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("directCascadeDelete", serializedPropValue);
+						writer.WriteAttributeString("directCascadeDelete", propValue);
 					}
 				}
 			}
@@ -5294,13 +5988,12 @@ namespace Worm.Designer
 			// Disabled
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfSelfRelation.Disabled;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfSelfRelation.Disabled;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "false") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "false") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("disabled", serializedPropValue);
+						writer.WriteAttributeString("disabled", propValue);
 					}
 				}
 			}
@@ -5317,13 +6010,12 @@ namespace Worm.Designer
 			// ReverseCascadeDelete
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfSelfRelation.ReverseCascadeDelete;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfSelfRelation.ReverseCascadeDelete;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "true") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "true") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("reverseCascadeDelete", serializedPropValue);
+						writer.WriteAttributeString("reverseCascadeDelete", propValue);
 					}
 				}
 			}
@@ -7678,14 +8370,14 @@ namespace Worm.Designer
 				string attribLeftCascadeDelete = reader.GetAttribute("leftCascadeDelete");
 				if (attribLeftCascadeDelete != null)
 				{
-					global::System.Boolean valueOfLeftCascadeDelete;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribLeftCascadeDelete), out valueOfLeftCascadeDelete))
+					global::System.String valueOfLeftCascadeDelete;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribLeftCascadeDelete), out valueOfLeftCascadeDelete))
 					{
 						instanceOfEntityReferencesTargetEntities.LeftCascadeDelete = valueOfLeftCascadeDelete;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "leftCascadeDelete", typeof(global::System.Boolean), attribLeftCascadeDelete);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "leftCascadeDelete", typeof(global::System.String), attribLeftCascadeDelete);
 					}
 				}
 			}
@@ -7729,14 +8421,14 @@ namespace Worm.Designer
 				string attribDisabled = reader.GetAttribute("disabled");
 				if (attribDisabled != null)
 				{
-					global::System.Boolean valueOfDisabled;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
+					global::System.String valueOfDisabled;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
 					{
 						instanceOfEntityReferencesTargetEntities.Disabled = valueOfDisabled;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.Boolean), attribDisabled);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.String), attribDisabled);
 					}
 				}
 			}
@@ -7831,14 +8523,14 @@ namespace Worm.Designer
 				string attribRightCascadeDelete = reader.GetAttribute("rightCascadeDelete");
 				if (attribRightCascadeDelete != null)
 				{
-					global::System.Boolean valueOfRightCascadeDelete;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.Boolean>(DslModeling::SerializationUtilities.UnescapeXmlString(attribRightCascadeDelete), out valueOfRightCascadeDelete))
+					global::System.String valueOfRightCascadeDelete;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribRightCascadeDelete), out valueOfRightCascadeDelete))
 					{
 						instanceOfEntityReferencesTargetEntities.RightCascadeDelete = valueOfRightCascadeDelete;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "rightCascadeDelete", typeof(global::System.Boolean), attribRightCascadeDelete);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "rightCascadeDelete", typeof(global::System.String), attribRightCascadeDelete);
 					}
 				}
 			}
@@ -8272,13 +8964,12 @@ namespace Worm.Designer
 			// LeftCascadeDelete
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfEntityReferencesTargetEntities.LeftCascadeDelete;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfEntityReferencesTargetEntities.LeftCascadeDelete;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "true") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "true") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("leftCascadeDelete", serializedPropValue);
+						writer.WriteAttributeString("leftCascadeDelete", propValue);
 					}
 				}
 			}
@@ -8305,13 +8996,12 @@ namespace Worm.Designer
 			// Disabled
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfEntityReferencesTargetEntities.Disabled;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfEntityReferencesTargetEntities.Disabled;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "false") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "false") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("disabled", serializedPropValue);
+						writer.WriteAttributeString("disabled", propValue);
 					}
 				}
 			}
@@ -8368,13 +9058,12 @@ namespace Worm.Designer
 			// RightCascadeDelete
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.Boolean propValue = instanceOfEntityReferencesTargetEntities.RightCascadeDelete;
-				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::System.Boolean>(serializationContext, propValue);
+				global::System.String propValue = instanceOfEntityReferencesTargetEntities.RightCascadeDelete;
 				if (!serializationContext.Result.Failed)
 				{
-					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "true") != 0)
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "true") != 0))
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("rightCascadeDelete", serializedPropValue);
+						writer.WriteAttributeString("rightCascadeDelete", propValue);
 					}
 				}
 			}

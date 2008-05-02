@@ -27,12 +27,33 @@ namespace Worm.Designer
         private ModelElement modelElement;
         Size size = new Size(16, 16);
         ResourceManager manager;
-        TreeListView treeListView;
+        TreeListView treeListViewDiagram;
+        TreeListView treeListViewTable;
+        TreeListView treeListViewRelation;
+        TreeListView treeListViewSelfRelation;
         Label label;
- 
-        private ToggleColumnHeader containerListViewColumnHeader1;
-        private ToggleColumnHeader containerListViewColumnHeader2;
-        private ToggleColumnHeader containerListViewColumnHeader3;
+
+        private ToggleColumnHeader containerListViewColumnHeader1Diagram;
+        private ToggleColumnHeader containerListViewColumnHeader2Diagram;
+        private ToggleColumnHeader containerListViewColumnHeader3Diagram;
+
+        private ToggleColumnHeader containerListViewColumnHeader1Table;
+        private ToggleColumnHeader containerListViewColumnHeader2Table;
+        private ToggleColumnHeader containerListViewColumnHeader3Table;
+
+        private ToggleColumnHeader containerListViewColumnHeader1Relation;
+        private ToggleColumnHeader containerListViewColumnHeader2Relation;
+        private ToggleColumnHeader containerListViewColumnHeader3Relation;
+
+        private ToggleColumnHeader containerListViewColumnHeader1SelfRelation;
+        private ToggleColumnHeader containerListViewColumnHeader2SelfRelation;
+        private ToggleColumnHeader containerListViewColumnHeader3SelfRelation;
+
+        private System.Windows.Forms.TabControl tabControl;
+        private System.Windows.Forms.TabPage tabPageDiagram;
+        private System.Windows.Forms.TabPage tabPageTable;
+        private System.Windows.Forms.TabPage tabPageSelfRelation;
+        private System.Windows.Forms.TabPage tabPageRelation;
 
       
         private const string _addNewSelfRelation = "<Add New Self Relation>";
@@ -60,25 +81,55 @@ namespace Worm.Designer
         public void Clear()
         {
             modelElement = null;
-            treeListView.Nodes.Clear();
-            treeListView.Visible = false;
+            treeListViewDiagram.Nodes.Clear();
+            treeListViewDiagram.Visible = false;
+            treeListViewTable.Nodes.Clear();
+            treeListViewTable.Visible = false;
+            treeListViewSelfRelation.Nodes.Clear();
+            treeListViewSelfRelation.Visible = false;
+            treeListViewRelation.Nodes.Clear();
+            treeListViewRelation.Visible = false;
             
             this.BackColor = Color.FromArgb(212, 208, 200);
             label.Visible = true;
             
+        }
+        public void Display(Table table)
+        {
+            modelElement = table;
+            Display(table.Entity.WormModel);
+        }
+
+        public void Display(Property property)
+        {
+            modelElement = property;
+            Display(property.Entity.WormModel);
+        }
+
+        public void Display(SupressedProperty property)
+        {
+            modelElement = property;
+            Display(property.Entity.WormModel);
         }
 
         public void Display(WormModel diagram)
         {
             label.Visible = false;
             this.BackColor = Color.White;
-            treeListView.Nodes.Clear();
+            treeListViewDiagram.Nodes.Clear();
+            treeListViewDiagram.Visible = true;
+            treeListViewTable.Nodes.Clear();
+            treeListViewTable.Visible = true;
+            treeListViewSelfRelation.Nodes.Clear();
+            treeListViewSelfRelation.Visible = true;
+            treeListViewRelation.Nodes.Clear();
+            treeListViewRelation.Visible = true;
 
             modelElement = diagram;
             TreeListNode diagramNode = new TreeListNode();
             diagramNode.Text = "Worm Model";
             diagramNode.ImageIndex = 4;
-            treeListView.Nodes.Add(diagramNode);
+            treeListViewDiagram.Nodes.Add(diagramNode);
 
            
 
@@ -111,25 +162,10 @@ namespace Worm.Designer
             {
                 AddField(type.IdProperty, type.Name, typesNode, true);
             }
-           
-        }
-
-        public void Display(Table table)
-        {
-            modelElement = table;
-            Display(table.Entity);
-        }
-
-        public void Display(Property property)
-        {
-            modelElement = property;
-            Display(property.Entity);
-        }
-
-        public void Display(SupressedProperty property)
-        {
-            modelElement = property;
-            Display(property.Entity);
+            if (diagram.Entities.Count > 0)
+            {
+                Display(diagram.Entities[0]);
+            }
         }
 
         public void Display(EntityReferencesTargetEntities relation)
@@ -137,7 +173,7 @@ namespace Worm.Designer
             label.Visible = false;
             this.BackColor = Color.White;
             modelElement = relation;
-            treeListView.Nodes.Clear();
+            treeListViewRelation.Nodes.Clear();
             // modelClass = modelClassToHandle;
 
             if (relation != null)
@@ -146,7 +182,7 @@ namespace Worm.Designer
                 TreeListNode tablesNode = new TreeListNode();
                 tablesNode.Text = "Relation";
                 tablesNode.ImageIndex = 0;
-                treeListView.Nodes.Add(tablesNode);
+                treeListViewRelation.Nodes.Add(tablesNode);
 
                 TreeListNode mappingsNode = new TreeListNode();
                 mappingsNode.Text = "Maps to " + relation.Table;
@@ -183,8 +219,8 @@ namespace Worm.Designer
            
             //treeListView.Click += new System.EventHandler(treeListView_RelationClick);
             
-            treeListView.ExpandAll();
-            treeListView.Visible = true;
+            treeListViewRelation.ExpandAll();
+            treeListViewRelation.Visible = true;
         }
 
        
@@ -193,7 +229,7 @@ namespace Worm.Designer
             label.Visible = false;
             this.BackColor = Color.White;
             modelElement = relation;
-            treeListView.Nodes.Clear();
+            treeListViewSelfRelation.Nodes.Clear();
            // modelClass = modelClassToHandle;
 
             if (relation != null)
@@ -202,7 +238,7 @@ namespace Worm.Designer
                 TreeListNode tablesNode = new TreeListNode();
                 tablesNode.Text = "Self relation";
                 tablesNode.ImageIndex = 0;
-                treeListView.Nodes.Add(tablesNode);
+                treeListViewSelfRelation.Nodes.Add(tablesNode);
 
                 foreach (SelfRelation rel in relation.Entity.SelfRelations)
                 {
@@ -237,14 +273,14 @@ namespace Worm.Designer
                  newNode.ForeColor = Color.Gray;
                  tablesNode.Nodes.Add(newNode);
             }
-            treeListView.Click += new System.EventHandler(treeListView_SelfRelationClick);
-            treeListView.ExpandAll();
-            treeListView.Visible = true;
+            treeListViewSelfRelation.Click += new System.EventHandler(treeListView_SelfRelationClick);
+            treeListViewSelfRelation.ExpandAll();
+            treeListViewSelfRelation.Visible = true;
         }
 
         void treeListView_SelfRelationClick(object sender, System.EventArgs e)
         {
-            if (treeListView.SelectedNodes.Count > 0 && treeListView.SelectedNodes[0].Text == _addNewSelfRelation)
+            if (treeListViewSelfRelation.SelectedNodes.Count > 0 && treeListViewSelfRelation.SelectedNodes[0].Text == _addNewSelfRelation)
             {
                 using (Transaction txAdd = ((SelfRelation)modelElement).Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
                 {
@@ -283,9 +319,13 @@ namespace Worm.Designer
 
          void treeListView_EntityClick(object sender, System.EventArgs e)
         {
-            if (treeListView.SelectedNodes.Count > 0 && treeListView.SelectedNodes[0].Text == _addNewTableMapping)
+            if (treeListViewTable.SelectedNodes.Count > 0 && treeListViewTable.SelectedNodes[0].Text == _addNewTableMapping)
             {
                 Entity entity = null;
+                if (modelElement is WormModel)
+                {
+                    entity = ((Entity)modelElement);
+                }
                 if (modelElement is Entity)
                 {
                     entity = ((Entity)modelElement);
@@ -334,7 +374,7 @@ namespace Worm.Designer
         {
             label.Visible = false;
             this.BackColor = Color.White;
-            treeListView.Nodes.Clear();
+            treeListViewTable.Nodes.Clear();
 
             if (modelElement == null)
             {
@@ -345,7 +385,7 @@ namespace Worm.Designer
                 TreeListNode tablesNode = new TreeListNode();
                 tablesNode.Text = "Tables";
                 tablesNode.ImageIndex = 0;
-                treeListView.Nodes.Add(tablesNode);
+                treeListViewTable.Nodes.Add(tablesNode);
 
                 foreach (Table table in entity.Tables)
                 {
@@ -372,9 +412,9 @@ namespace Worm.Designer
                 newTablesNode.ForeColor = Color.Gray;
                 tablesNode.Nodes.Add(newTablesNode);
             }
-            treeListView.Click += new System.EventHandler(treeListView_EntityClick);
-            treeListView.ExpandAll();
-            treeListView.Visible = true;
+            treeListViewTable.Click += new System.EventHandler(treeListView_EntityClick);
+            treeListViewTable.ExpandAll();
+            treeListViewTable.Visible = true;
         }
 
         private void AddField(string value, string name, TreeListNode node, bool readOnly)
@@ -434,7 +474,7 @@ namespace Worm.Designer
 
         private void SetProperty(TextBox textBox)
         {
-            foreach(TreeListNode mappingNode in treeListView.Nodes[0].Nodes)
+            foreach(TreeListNode mappingNode in treeListViewTable.Nodes[0].Nodes)
             {
                 foreach (TreeListNode node in mappingNode.Nodes[0].Nodes)
                 {
@@ -462,7 +502,7 @@ namespace Worm.Designer
         private void SetSelfRelation(TextBox textBox)
         {
             SelfRelation relation = modelElement as SelfRelation;
-            foreach (TreeListNode mappingNode in treeListView.Nodes[0].Nodes)
+            foreach (TreeListNode mappingNode in treeListViewSelfRelation.Nodes[0].Nodes)
             {
                 for (int i = 0; i < mappingNode.Nodes.Count; i++)
                 {
@@ -525,7 +565,7 @@ namespace Worm.Designer
         private void SetRelation(TextBox textBox)
         {
             EntityReferencesTargetEntities relation = modelElement as EntityReferencesTargetEntities;
-            foreach (TreeListNode mappingNode in treeListView.Nodes[0].Nodes)
+            foreach (TreeListNode mappingNode in treeListViewRelation.Nodes[0].Nodes)
             {
                 for (int i = 0; i < mappingNode.Nodes.Count; i++)
                 {
@@ -589,64 +629,111 @@ namespace Worm.Designer
         
         private void SetupControls()
         {
-            this.treeListView = new TreeListView();
-            this.containerListViewColumnHeader1 = new ToggleColumnHeader();
-            this.containerListViewColumnHeader2 = new ToggleColumnHeader();
-            this.containerListViewColumnHeader3 = new ToggleColumnHeader();
+            this.tabControl = new System.Windows.Forms.TabControl();
+            this.tabPageDiagram = new System.Windows.Forms.TabPage();
+            this.tabPageRelation = new System.Windows.Forms.TabPage();
+            this.tabPageSelfRelation = new System.Windows.Forms.TabPage();
+            this.tabPageTable = new System.Windows.Forms.TabPage();
+            this.tabControl.SuspendLayout();
+            this.SuspendLayout();
+            // 
+            // tabControl1
+            // 
+            this.tabControl.Controls.Add(this.tabPageDiagram);
+            this.tabControl.Controls.Add(this.tabPageTable);
+            this.tabControl.Controls.Add(this.tabPageSelfRelation);
+            this.tabControl.Controls.Add(this.tabPageRelation);
+            this.tabControl.Location = new System.Drawing.Point(0, 0);
+            this.tabControl.Name = "Mapping details";
+            this.tabControl.SelectedIndex = 0;
+            this.tabControl.Size = new System.Drawing.Size(493, 100);
+            this.tabControl.TabIndex = 0;
+            this.tabControl.Dock = DockStyle.Fill;
+            // 
+            // tabPage1
+            // 
+            this.tabPageDiagram.Location = new System.Drawing.Point(4, 22);
+            this.tabPageDiagram.Name = "tabPageDiagram";
+            this.tabPageDiagram.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageDiagram.Size = new System.Drawing.Size(485, 74);
+            this.tabPageDiagram.TabIndex = 0;
+            this.tabPageDiagram.Text = "Worm Model";
+            this.tabPageDiagram.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            this.tabPageTable.Location = new System.Drawing.Point(4, 22);
+            this.tabPageTable.Name = "tabPageTable";
+            this.tabPageTable.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageTable.Size = new System.Drawing.Size(485, 74);
+            this.tabPageTable.TabIndex = 1;
+            this.tabPageTable.Text = "Table mappings";
+            this.tabPageTable.UseVisualStyleBackColor = true;
+
+            this.tabPageRelation.Location = new System.Drawing.Point(4, 22);
+            this.tabPageRelation.Name = "tabPageRelation";
+            this.tabPageRelation.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageRelation.Size = new System.Drawing.Size(485, 74);
+            this.tabPageRelation.TabIndex = 1;
+            this.tabPageRelation.Text = "Relation mappings";
+            this.tabPageRelation.UseVisualStyleBackColor = true;
+
+
+            this.tabPageSelfRelation.Location = new System.Drawing.Point(4, 22);
+            this.tabPageSelfRelation.Name = "tabPageTable";
+            this.tabPageSelfRelation.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPageSelfRelation.Size = new System.Drawing.Size(485, 74);
+            this.tabPageSelfRelation.TabIndex = 1;
+            this.tabPageSelfRelation.Text = "Self relation mappings";
+            this.tabPageSelfRelation.UseVisualStyleBackColor = true;
+            // 
+            // ClassDetailsControl
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoSize = true;
+            this.BackColor = System.Drawing.SystemColors.ControlLightLight;
+            this.Controls.Add(this.tabControl);
+            this.Name = "ClassDetailsControl";
+            this.Size = new System.Drawing.Size(754, 153);
+            this.tabControl.ResumeLayout(false);
+            this.ResumeLayout(false);
+
+
+            this.treeListViewDiagram = new TreeListView();
+            this.containerListViewColumnHeader1Diagram = new ToggleColumnHeader();
+            this.containerListViewColumnHeader2Diagram = new ToggleColumnHeader();
+            this.containerListViewColumnHeader3Diagram = new ToggleColumnHeader();
+            this.treeListViewTable= new TreeListView();
+            this.containerListViewColumnHeader1Table = new ToggleColumnHeader();
+            this.containerListViewColumnHeader2Table = new ToggleColumnHeader();
+            this.containerListViewColumnHeader3Table = new ToggleColumnHeader();
+            this.treeListViewRelation = new TreeListView();
+            this.containerListViewColumnHeader1Relation = new ToggleColumnHeader();
+            this.containerListViewColumnHeader2Relation = new ToggleColumnHeader();
+            this.containerListViewColumnHeader3Relation = new ToggleColumnHeader();
+            this.treeListViewSelfRelation = new TreeListView();
+            this.containerListViewColumnHeader1SelfRelation = new ToggleColumnHeader();
+            this.containerListViewColumnHeader2SelfRelation = new ToggleColumnHeader();
+            this.containerListViewColumnHeader3SelfRelation = new ToggleColumnHeader();
 
             SuspendLayout();
             // 
             // containerListView1
             // 
-            this.treeListView.AllowColumnReorder = false;            
-            this.treeListView.Columns.AddRange(new ToggleColumnHeader[] {
-            this.containerListViewColumnHeader1,
-            this.containerListViewColumnHeader2,
-            this.containerListViewColumnHeader3});
-            //this.containerListView.ItemContextMenu = this.contextMenuStrip1;
-            this.treeListView.Location = new System.Drawing.Point(0, 0);
-            this.treeListView.Name = "containerListView1";
-            this.treeListView.Dock = DockStyle.Fill;            
-            this.treeListView.TabIndex = 0;
-            this.treeListView.BorderStyle = BorderStyle.FixedSingle;
-            treeListView.ShowLines = true;
-            treeListView.ShowRootLines = true;
-            treeListView.ShowPlusMinus = true;
-            treeListView.GridLines = true;
-            treeListView.GridLineColor = Color.FromArgb(212, 208, 200);
-            treeListView.LabelEdit = true;
-            treeListView.RowSelectColor = Color.FromArgb(212, 208, 200); ;
-            this.Controls.Add(this.treeListView);
-            
-           
-            this.containerListViewColumnHeader1.Text = "Column";
-            containerListViewColumnHeader1.Width = (int)(this.DisplayRectangle.Width *0.4);
-            
-            // 
-            // containerListViewColumnHeader2
-            // 
-            
-            this.containerListViewColumnHeader2.Text = "Operator";
-            containerListViewColumnHeader2.Width = (int)(this.DisplayRectangle.Width * 0.2);
-            
-            // 
-            // containerListViewColumnHeader3
-            // 
-            
-            this.containerListViewColumnHeader3.Text = "Value/Property";
-            containerListViewColumnHeader3.Width = (int)(this.DisplayRectangle.Width * 0.4);
-            
-            treeListView.Items.Clear();
-            treeListView.SmallImageList = new ImageList();
-            
-                
-           
-            treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("2601"), size));
-            treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("2621"), size));
-            treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("2022"), size));
-            treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("2651"), size));
-            treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("2671"), size));
+            CreateTree("treeListViewDiagram", treeListViewDiagram, containerListViewColumnHeader1Diagram, containerListViewColumnHeader2Diagram, containerListViewColumnHeader3Diagram);
+            CreateTree("treeListViewTable", treeListViewTable, containerListViewColumnHeader1Table, containerListViewColumnHeader2Table, containerListViewColumnHeader3Table);
+            CreateTree("treeListViewSelfRelation", treeListViewSelfRelation, containerListViewColumnHeader1SelfRelation, containerListViewColumnHeader2SelfRelation, containerListViewColumnHeader3SelfRelation);
+            CreateTree("treeListViewRelation", treeListViewRelation, containerListViewColumnHeader1Relation, containerListViewColumnHeader2Relation, containerListViewColumnHeader3Relation);
 
+            
+            
+           
+            //this.Controls.Add(this.treeListView);
+            tabPageDiagram.Controls.Add(this.treeListViewDiagram);
+            tabPageTable.Controls.Add(this.treeListViewTable);
+            tabPageRelation.Controls.Add(this.treeListViewRelation);
+            tabPageSelfRelation.Controls.Add(this.treeListViewSelfRelation);
 
             label = new Label();
             label.Text = "Select Entity or Relation on the Entity Designer to edit its mappings";
@@ -657,6 +744,58 @@ namespace Worm.Designer
             label.Location = new Point(label.Parent.Width / 2 - label.Width / 2, label.Parent.Height / 2 - label.Height / 2);
             
             ResumeLayout(false);
+        }
+
+        private void CreateTree(string name, TreeListView treeListView, ToggleColumnHeader col1, ToggleColumnHeader col2, ToggleColumnHeader col3)
+        {
+          treeListView.AllowColumnReorder = false;
+          treeListView.Columns.AddRange(new ToggleColumnHeader[] {
+          col1,
+          col2,
+          col3});
+          
+          treeListView.Location = new System.Drawing.Point(0, 0);
+          treeListView.Name = name;
+          treeListView.Dock = DockStyle.Fill;
+          treeListView.TabIndex = 0;
+            treeListView.BorderStyle = BorderStyle.FixedSingle;
+            treeListView.ShowLines = true;
+            treeListView.ShowRootLines = true;
+            treeListView.ShowPlusMinus = true;
+            treeListView.GridLines = true;
+            treeListView.GridLineColor = Color.FromArgb(212, 208, 200);
+            treeListView.LabelEdit = true;
+            treeListView.RowSelectColor = Color.FromArgb(212, 208, 200); ;
+
+
+            col1.Text = "Column";
+            col1.Width = (int)(this.DisplayRectangle.Width * 0.4);
+
+            // 
+            // containerListViewColumnHeader2
+            // 
+
+            col2.Text = "Operator";
+            col2.Width = (int)(this.DisplayRectangle.Width * 0.2);
+
+            // 
+            // containerListViewColumnHeader3
+            // 
+
+            col3.Text = "Value/Property";
+            col3.Width = (int)(this.DisplayRectangle.Width * 0.4);
+
+            treeListView.Items.Clear();
+
+            treeListView.SmallImageList = new ImageList();
+
+
+
+            treeListViewDiagram.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("2601"), size));
+            treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("2621"), size));
+            treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("2022"), size));
+            treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("2651"), size));
+            treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("2671"), size));
         }
 
         #region DataGridView Virtual Mode Events

@@ -141,6 +141,10 @@
     <value>Default Namespace</value>
     <comment>DisplayName for DomainProperty &apos;DefaultNamespace&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
+  <data name="Worm.Designer.WormModel/DefaultNamespace.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;DefaultNamespace&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
   <data name="Worm.Designer.WormModel/SchemaVersion.Description" xml:space="preserve">
     <value>Schema Version</value>
     <comment>Description for DomainProperty &apos;SchemaVersion&apos; on DomainClass &apos;WormModel&apos;</comment>
@@ -148,6 +152,10 @@
   <data name="Worm.Designer.WormModel/SchemaVersion.DisplayName" xml:space="preserve">
     <value>Schema Version</value>
     <comment>DisplayName for DomainProperty &apos;SchemaVersion&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/SchemaVersion.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;SchemaVersion&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModel/ClassNamePrefix.Description" xml:space="preserve">
     <value>Class name prefix</value>
@@ -157,6 +165,10 @@
     <value>Class Name Prefix</value>
     <comment>DisplayName for DomainProperty &apos;ClassNamePrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
+  <data name="Worm.Designer.WormModel/ClassNamePrefix.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;ClassNamePrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
   <data name="Worm.Designer.WormModel/ClassNameSuffix.Description" xml:space="preserve">
     <value>Class Name Suffix</value>
     <comment>Description for DomainProperty &apos;ClassNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
@@ -164,6 +176,10 @@
   <data name="Worm.Designer.WormModel/ClassNameSuffix.DisplayName" xml:space="preserve">
     <value>Class Name Suffix</value>
     <comment>DisplayName for DomainProperty &apos;ClassNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/ClassNameSuffix.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;ClassNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModel/FileNameSuffix.Description" xml:space="preserve">
     <value>File Name Suffix</value>
@@ -173,6 +189,10 @@
     <value>File Name Suffix</value>
     <comment>DisplayName for DomainProperty &apos;FileNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
+  <data name="Worm.Designer.WormModel/FileNameSuffix.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;FileNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
   <data name="Worm.Designer.WormModel/Split.Description" xml:space="preserve">
     <value>Split</value>
     <comment>Description for DomainProperty &apos;Split&apos; on DomainClass &apos;WormModel&apos;</comment>
@@ -180,6 +200,10 @@
   <data name="Worm.Designer.WormModel/Split.DisplayName" xml:space="preserve">
     <value>Split</value>
     <comment>DisplayName for DomainProperty &apos;Split&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/Split.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Split&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModel/EntitySchemaDefClassNameSuffix.Description" xml:space="preserve">
     <value>Entity Schema Def Class Name Suffix</value>
@@ -189,13 +213,9 @@
     <value>Entity Schema Def Class Name Suffix</value>
     <comment>DisplayName for DomainProperty &apos;EntitySchemaDefClassNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
-  <data name="Worm.Designer.WormModel/LanguageSpecificHacks.Description" xml:space="preserve">
-    <value>Language Specific Hacks</value>
-    <comment>Description for DomainProperty &apos;LanguageSpecificHacks&apos; on DomainClass &apos;WormModel&apos;</comment>
-  </data>
-  <data name="Worm.Designer.WormModel/LanguageSpecificHacks.DisplayName" xml:space="preserve">
-    <value>Language Specific Hacks</value>
-    <comment>DisplayName for DomainProperty &apos;LanguageSpecificHacks&apos; on DomainClass &apos;WormModel&apos;</comment>
+  <data name="Worm.Designer.WormModel/EntitySchemaDefClassNameSuffix.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;EntitySchemaDefClassNameSuffix&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModel/PrivateMembersPrefix.Description" xml:space="preserve">
     <value>Private Members Prefix</value>
@@ -204,6 +224,202 @@
   <data name="Worm.Designer.WormModel/PrivateMembersPrefix.DisplayName" xml:space="preserve">
     <value>Private Members Prefix</value>
     <comment>DisplayName for DomainProperty &apos;PrivateMembersPrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/PrivateMembersPrefix.Category" xml:space="preserve">
+    <value>Generator Settings</value>
+    <comment>Category for DomainProperty &apos;PrivateMembersPrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/FileNamePrefix.Description" xml:space="preserve">
+    <value>File Name Prefix</value>
+    <comment>Description for DomainProperty &apos;FileNamePrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/FileNamePrefix.DisplayName" xml:space="preserve">
+    <value>File Name Prefix</value>
+    <comment>DisplayName for DomainProperty &apos;FileNamePrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/FileNamePrefix.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;FileNamePrefix&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/DerivedGenericMembersRequireConstraits.Description" xml:space="preserve">
+    <value>Generic члены производных классов требует наличия констрейтов</value>
+    <comment>Description for DomainProperty &apos;DerivedGenericMembersRequireConstraits&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/DerivedGenericMembersRequireConstraits.DisplayName" xml:space="preserve">
+    <value>Derived Generic Members Require Constraits</value>
+    <comment>DisplayName for DomainProperty &apos;DerivedGenericMembersRequireConstraits&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/DerivedGenericMembersRequireConstraits.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;DerivedGenericMembersRequireConstraits&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/MethodsInsteadParametrizedProperties.Description" xml:space="preserve">
+    <value>Генерировать методы вместо параметризованых пропертей</value>
+    <comment>Description for DomainProperty &apos;MethodsInsteadParametrizedProperties&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/MethodsInsteadParametrizedProperties.DisplayName" xml:space="preserve">
+    <value>Methods Instead Parametrized Properties</value>
+    <comment>DisplayName for DomainProperty &apos;MethodsInsteadParametrizedProperties&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/MethodsInsteadParametrizedProperties.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;MethodsInsteadParametrizedProperties&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/AddOptionsStrict.Description" xml:space="preserve">
+    <value>Add Options Strict</value>
+    <comment>Description for DomainProperty &apos;AddOptionsStrict&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/AddOptionsStrict.DisplayName" xml:space="preserve">
+    <value>Add Options Strict</value>
+    <comment>DisplayName for DomainProperty &apos;AddOptionsStrict&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/AddOptionsStrict.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;AddOptionsStrict&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/OptionsStrictOn.Description" xml:space="preserve">
+    <value>Options Strict On</value>
+    <comment>Description for DomainProperty &apos;OptionsStrictOn&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/OptionsStrictOn.DisplayName" xml:space="preserve">
+    <value>Options Strict On</value>
+    <comment>DisplayName for DomainProperty &apos;OptionsStrictOn&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/OptionsStrictOn.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;OptionsStrictOn&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/AddOptionsExplicit.Description" xml:space="preserve">
+    <value>Add Options Explicit</value>
+    <comment>Description for DomainProperty &apos;AddOptionsExplicit&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/AddOptionsExplicit.DisplayName" xml:space="preserve">
+    <value>Add Options Explicit</value>
+    <comment>DisplayName for DomainProperty &apos;AddOptionsExplicit&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/AddOptionsExplicit.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;AddOptionsExplicit&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/OptionsExplicitOn.Description" xml:space="preserve">
+    <value>Options Explicit On</value>
+    <comment>Description for DomainProperty &apos;OptionsExplicitOn&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/OptionsExplicitOn.DisplayName" xml:space="preserve">
+    <value>Options Explicit On</value>
+    <comment>DisplayName for DomainProperty &apos;OptionsExplicitOn&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/OptionsExplicitOn.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;OptionsExplicitOn&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCSUsingStatement.Description" xml:space="preserve">
+    <value>Generate CSUsing Statement</value>
+    <comment>Description for DomainProperty &apos;GenerateCSUsingStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCSUsingStatement.DisplayName" xml:space="preserve">
+    <value>Generate CSUsing Statement</value>
+    <comment>DisplayName for DomainProperty &apos;GenerateCSUsingStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCSUsingStatement.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;GenerateCSUsingStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVBUsingStatement.Description" xml:space="preserve">
+    <value>Generate VBUsing Statement</value>
+    <comment>Description for DomainProperty &apos;GenerateVBUsingStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVBUsingStatement.DisplayName" xml:space="preserve">
+    <value>Generate VBUsing Statement</value>
+    <comment>DisplayName for DomainProperty &apos;GenerateVBUsingStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVBUsingStatement.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;GenerateVBUsingStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/SafeUnboxToEnum.Description" xml:space="preserve">
+    <value>Безопасная распаковка переменных с кастом в энам</value>
+    <comment>Description for DomainProperty &apos;SafeUnboxToEnum&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/SafeUnboxToEnum.DisplayName" xml:space="preserve">
+    <value>Safe Unbox To Enum</value>
+    <comment>DisplayName for DomainProperty &apos;SafeUnboxToEnum&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/SafeUnboxToEnum.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;SafeUnboxToEnum&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCsIsStatement.Description" xml:space="preserve">
+    <value>Generate Cs Is Statement</value>
+    <comment>Description for DomainProperty &apos;GenerateCsIsStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCsIsStatement.DisplayName" xml:space="preserve">
+    <value>Generate Cs Is Statement</value>
+    <comment>DisplayName for DomainProperty &apos;GenerateCsIsStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCsIsStatement.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;GenerateCsIsStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVbTypeOfIsStatement.Description" xml:space="preserve">
+    <value>Generate Vb Type Of Is Statement</value>
+    <comment>Description for DomainProperty &apos;GenerateVbTypeOfIsStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVbTypeOfIsStatement.DisplayName" xml:space="preserve">
+    <value>Generate Vb Type Of Is Statement</value>
+    <comment>DisplayName for DomainProperty &apos;GenerateVbTypeOfIsStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVbTypeOfIsStatement.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;GenerateVbTypeOfIsStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCsAsStatement.Description" xml:space="preserve">
+    <value>Generate Cs As Statement</value>
+    <comment>Description for DomainProperty &apos;GenerateCsAsStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCsAsStatement.DisplayName" xml:space="preserve">
+    <value>Generate Cs As Statement</value>
+    <comment>DisplayName for DomainProperty &apos;GenerateCsAsStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCsAsStatement.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;GenerateCsAsStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVbTryCastStatement.Description" xml:space="preserve">
+    <value>Generate Vb Try Cast Statement</value>
+    <comment>Description for DomainProperty &apos;GenerateVbTryCastStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVbTryCastStatement.DisplayName" xml:space="preserve">
+    <value>Generate Vb Try Cast Statement</value>
+    <comment>DisplayName for DomainProperty &apos;GenerateVbTryCastStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVbTryCastStatement.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;GenerateVbTryCastStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCsLockStatement.Description" xml:space="preserve">
+    <value>Generate Cs Lock Statement</value>
+    <comment>Description for DomainProperty &apos;GenerateCsLockStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCsLockStatement.DisplayName" xml:space="preserve">
+    <value>Generate Cs Lock Statement</value>
+    <comment>DisplayName for DomainProperty &apos;GenerateCsLockStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateCsLockStatement.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;GenerateCsLockStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVbSyncLockStatement.Description" xml:space="preserve">
+    <value>Generate Vb Sync Lock Statement</value>
+    <comment>Description for DomainProperty &apos;GenerateVbSyncLockStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVbSyncLockStatement.DisplayName" xml:space="preserve">
+    <value>Generate Vb Sync Lock Statement</value>
+    <comment>DisplayName for DomainProperty &apos;GenerateVbSyncLockStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormModel/GenerateVbSyncLockStatement.Category" xml:space="preserve">
+    <value>Language Specific Hacks</value>
+    <comment>Category for DomainProperty &apos;GenerateVbSyncLockStatement&apos; on DomainClass &apos;WormModel&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity.Description" xml:space="preserve">
     <value>Сущность</value>
@@ -221,6 +437,10 @@
     <value>Id</value>
     <comment>DisplayName for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
+  <data name="Worm.Designer.Entity/IdProperty.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
   <data name="Worm.Designer.Entity/Name.Description" xml:space="preserve">
     <value>Наименование сущности</value>
     <comment>Description for DomainProperty &apos;Name&apos; on DomainClass &apos;Entity&apos;</comment>
@@ -228,6 +448,10 @@
   <data name="Worm.Designer.Entity/Name.DisplayName" xml:space="preserve">
     <value>Name</value>
     <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/Name.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Name&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/Namespace.Description" xml:space="preserve">
     <value>Пространство имен для сущности</value>
@@ -237,6 +461,10 @@
     <value>Namespace</value>
     <comment>DisplayName for DomainProperty &apos;Namespace&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
+  <data name="Worm.Designer.Entity/Namespace.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Namespace&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
   <data name="Worm.Designer.Entity/Behaviour.Description" xml:space="preserve">
     <value>Entity generator behaviour</value>
     <comment>Description for DomainProperty &apos;Behaviour&apos; on DomainClass &apos;Entity&apos;</comment>
@@ -244,6 +472,10 @@
   <data name="Worm.Designer.Entity/Behaviour.DisplayName" xml:space="preserve">
     <value>Behaviour</value>
     <comment>DisplayName for DomainProperty &apos;Behaviour&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/Behaviour.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Behaviour&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/Description.Description" xml:space="preserve">
     <value>Описание сущности</value>
@@ -253,6 +485,10 @@
     <value>Description</value>
     <comment>DisplayName for DomainProperty &apos;Description&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
+  <data name="Worm.Designer.Entity/Description.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Description&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
   <data name="Worm.Designer.Entity/UseGenerics.Description" xml:space="preserve">
     <value>Определяет генерировать generic или строго типизированные методы</value>
     <comment>Description for DomainProperty &apos;UseGenerics&apos; on DomainClass &apos;Entity&apos;</comment>
@@ -260,6 +496,10 @@
   <data name="Worm.Designer.Entity/UseGenerics.DisplayName" xml:space="preserve">
     <value>Use Generics</value>
     <comment>DisplayName for DomainProperty &apos;UseGenerics&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/UseGenerics.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;UseGenerics&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Entity/MakeInterface.Description" xml:space="preserve">
     <value>Определяет генерировать интерфейс для сущности</value>
@@ -269,6 +509,10 @@
     <value>Make Interface</value>
     <comment>DisplayName for DomainProperty &apos;MakeInterface&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
+  <data name="Worm.Designer.Entity/MakeInterface.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;MakeInterface&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
   <data name="Worm.Designer.Entity/BaseEntity.Description" xml:space="preserve">
     <value>ИД базовой сущности</value>
     <comment>Description for DomainProperty &apos;BaseEntity&apos; on DomainClass &apos;Entity&apos;</comment>
@@ -276,6 +520,10 @@
   <data name="Worm.Designer.Entity/BaseEntity.DisplayName" xml:space="preserve">
     <value>Base Entity</value>
     <comment>DisplayName for DomainProperty &apos;BaseEntity&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/BaseEntity.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;BaseEntity&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
   <data name="Worm.Designer.Table.Description" xml:space="preserve">
     <value>Tаблицa БД</value>
@@ -293,13 +541,21 @@
     <value>Name</value>
     <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;Table&apos;</comment>
   </data>
+  <data name="Worm.Designer.Table/Name.Category" xml:space="preserve">
+    <value>Database property</value>
+    <comment>Category for DomainProperty &apos;Name&apos; on DomainClass &apos;Table&apos;</comment>
+  </data>
   <data name="Worm.Designer.Table/IdProperty.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.Table.Id</value>
+    <value>Table Id</value>
     <comment>Description for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Table&apos;</comment>
   </data>
   <data name="Worm.Designer.Table/IdProperty.DisplayName" xml:space="preserve">
     <value>Id</value>
     <comment>DisplayName for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Table&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Table/IdProperty.Category" xml:space="preserve">
+    <value>Database property</value>
+    <comment>Category for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;Table&apos;</comment>
   </data>
   <data name="Worm.Designer.Table/Schema.Description" xml:space="preserve">
     <value>Schema name for table</value>
@@ -308,6 +564,10 @@
   <data name="Worm.Designer.Table/Schema.DisplayName" xml:space="preserve">
     <value>Schema</value>
     <comment>DisplayName for DomainProperty &apos;Schema&apos; on DomainClass &apos;Table&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Table/Schema.Category" xml:space="preserve">
+    <value>Database property</value>
+    <comment>Category for DomainProperty &apos;Schema&apos; on DomainClass &apos;Table&apos;</comment>
   </data>
   <data name="Worm.Designer.Property.Description" xml:space="preserve">
     <value>Свойство сущности</value>
@@ -325,6 +585,10 @@
     <value>Name</value>
     <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
+  <data name="Worm.Designer.Property/Name.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Name&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
   <data name="Worm.Designer.Property/Type.Description" xml:space="preserve">
     <value>Тип свойства (возможна ссылка на сущность)</value>
     <comment>Description for DomainProperty &apos;Type&apos; on DomainClass &apos;Property&apos;</comment>
@@ -332,6 +596,10 @@
   <data name="Worm.Designer.Property/Type.DisplayName" xml:space="preserve">
     <value>Type</value>
     <comment>DisplayName for DomainProperty &apos;Type&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Type.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Type&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
   <data name="Worm.Designer.Property/Description.Description" xml:space="preserve">
     <value>Описание свойства</value>
@@ -341,6 +609,10 @@
     <value>Description</value>
     <comment>DisplayName for DomainProperty &apos;Description&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
+  <data name="Worm.Designer.Property/Description.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Description&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
   <data name="Worm.Designer.Property/FieldName.Description" xml:space="preserve">
     <value>Наименование колонки из БД</value>
     <comment>Description for DomainProperty &apos;FieldName&apos; on DomainClass &apos;Property&apos;</comment>
@@ -348,6 +620,10 @@
   <data name="Worm.Designer.Property/FieldName.DisplayName" xml:space="preserve">
     <value>Field Name</value>
     <comment>DisplayName for DomainProperty &apos;FieldName&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/FieldName.Category" xml:space="preserve">
+    <value>Mapping properties</value>
+    <comment>Category for DomainProperty &apos;FieldName&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
   <data name="Worm.Designer.Property/Table.Description" xml:space="preserve">
     <value>Ссылка на таблицу БД</value>
@@ -357,6 +633,10 @@
     <value>Table</value>
     <comment>DisplayName for DomainProperty &apos;Table&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
+  <data name="Worm.Designer.Property/Table.Category" xml:space="preserve">
+    <value>Mapping properties</value>
+    <comment>Category for DomainProperty &apos;Table&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
   <data name="Worm.Designer.Property/FieldAccessLevel.Description" xml:space="preserve">
     <value>Уровень доступа к полю класса</value>
     <comment>Description for DomainProperty &apos;FieldAccessLevel&apos; on DomainClass &apos;Property&apos;</comment>
@@ -364,6 +644,10 @@
   <data name="Worm.Designer.Property/FieldAccessLevel.DisplayName" xml:space="preserve">
     <value>Field Access Level</value>
     <comment>DisplayName for DomainProperty &apos;FieldAccessLevel&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/FieldAccessLevel.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;FieldAccessLevel&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
   <data name="Worm.Designer.Property/Alias.Description" xml:space="preserve">
     <value>Property alias</value>
@@ -373,6 +657,10 @@
     <value>Alias</value>
     <comment>DisplayName for DomainProperty &apos;Alias&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
+  <data name="Worm.Designer.Property/Alias.Category" xml:space="preserve">
+    <value>Other</value>
+    <comment>Category for DomainProperty &apos;Alias&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
   <data name="Worm.Designer.Property/AccessLevel.Description" xml:space="preserve">
     <value>Уровень доступа к полю класса</value>
     <comment>Description for DomainProperty &apos;AccessLevel&apos; on DomainClass &apos;Property&apos;</comment>
@@ -380,6 +668,10 @@
   <data name="Worm.Designer.Property/AccessLevel.DisplayName" xml:space="preserve">
     <value>Access Level</value>
     <comment>DisplayName for DomainProperty &apos;AccessLevel&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/AccessLevel.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;AccessLevel&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
   <data name="Worm.Designer.Property/Nullable.Description" xml:space="preserve">
     <value>Nullable</value>
@@ -389,13 +681,9 @@
     <value>Nullable</value>
     <comment>DisplayName for DomainProperty &apos;Nullable&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
-  <data name="Worm.Designer.Property/Attributes.Description" xml:space="preserve">
-    <value>Атрибуты свойства</value>
-    <comment>Description for DomainProperty &apos;Attributes&apos; on DomainClass &apos;Property&apos;</comment>
-  </data>
-  <data name="Worm.Designer.Property/Attributes.DisplayName" xml:space="preserve">
-    <value>Attributes</value>
-    <comment>DisplayName for DomainProperty &apos;Attributes&apos; on DomainClass &apos;Property&apos;</comment>
+  <data name="Worm.Designer.Property/Nullable.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Nullable&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
   <data name="Worm.Designer.Property/Disabled.Description" xml:space="preserve">
     <value>Признак отключения проперти</value>
@@ -405,6 +693,10 @@
     <value>Disabled</value>
     <comment>DisplayName for DomainProperty &apos;Disabled&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
+  <data name="Worm.Designer.Property/Disabled.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Disabled&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
   <data name="Worm.Designer.Property/Obsolete.Description" xml:space="preserve">
     <value>Make property obsolete</value>
     <comment>Description for DomainProperty &apos;Obsolete&apos; on DomainClass &apos;Property&apos;</comment>
@@ -412,6 +704,10 @@
   <data name="Worm.Designer.Property/Obsolete.DisplayName" xml:space="preserve">
     <value>Obsolete</value>
     <comment>DisplayName for DomainProperty &apos;Obsolete&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Obsolete.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Obsolete&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
   <data name="Worm.Designer.Property/ObsoleteDescription.Description" xml:space="preserve">
     <value>Description for obsolete property</value>
@@ -421,6 +717,10 @@
     <value>Obsolete Description</value>
     <comment>DisplayName for DomainProperty &apos;ObsoleteDescription&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
+  <data name="Worm.Designer.Property/ObsoleteDescription.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;ObsoleteDescription&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
   <data name="Worm.Designer.Property/EnablePropertyChanged.Description" xml:space="preserve">
     <value>Включает для свойства поднятие события PropertyChanged, при этом реализация идет на уровне конкретной сущности. При этом в целом для сущности отключается общий механизм этого события.</value>
     <comment>Description for DomainProperty &apos;EnablePropertyChanged&apos; on DomainClass &apos;Property&apos;</comment>
@@ -428,6 +728,130 @@
   <data name="Worm.Designer.Property/EnablePropertyChanged.DisplayName" xml:space="preserve">
     <value>Enable Property Changed</value>
     <comment>DisplayName for DomainProperty &apos;EnablePropertyChanged&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/EnablePropertyChanged.Category" xml:space="preserve">
+    <value>Other</value>
+    <comment>Category for DomainProperty &apos;EnablePropertyChanged&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/PK.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.Property.PK</value>
+    <comment>Description for DomainProperty &apos;PK&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/PK.DisplayName" xml:space="preserve">
+    <value>PK</value>
+    <comment>DisplayName for DomainProperty &apos;PK&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/PK.Category" xml:space="preserve">
+    <value>Mapping attributes</value>
+    <comment>Category for DomainProperty &apos;PK&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Factory.Description" xml:space="preserve">
+    <value>Factory</value>
+    <comment>Description for DomainProperty &apos;Factory&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Factory.DisplayName" xml:space="preserve">
+    <value>Factory</value>
+    <comment>DisplayName for DomainProperty &apos;Factory&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Factory.Category" xml:space="preserve">
+    <value>Mapping attributes</value>
+    <comment>Category for DomainProperty &apos;Factory&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/InsertDefault.Description" xml:space="preserve">
+    <value>InsertDefault</value>
+    <comment>Description for DomainProperty &apos;InsertDefault&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/InsertDefault.DisplayName" xml:space="preserve">
+    <value>Insert Default</value>
+    <comment>DisplayName for DomainProperty &apos;InsertDefault&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/InsertDefault.Category" xml:space="preserve">
+    <value>Mapping attributes</value>
+    <comment>Category for DomainProperty &apos;InsertDefault&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/PrimaryKey.Description" xml:space="preserve">
+    <value>Primary Key</value>
+    <comment>Description for DomainProperty &apos;PrimaryKey&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/PrimaryKey.DisplayName" xml:space="preserve">
+    <value>Primary Key</value>
+    <comment>DisplayName for DomainProperty &apos;PrimaryKey&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/PrimaryKey.Category" xml:space="preserve">
+    <value>Mapping attributes</value>
+    <comment>Category for DomainProperty &apos;PrimaryKey&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Private.Description" xml:space="preserve">
+    <value>Private</value>
+    <comment>Description for DomainProperty &apos;Private&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Private.DisplayName" xml:space="preserve">
+    <value>Private</value>
+    <comment>DisplayName for DomainProperty &apos;Private&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Private.Category" xml:space="preserve">
+    <value>Mapping attributes</value>
+    <comment>Category for DomainProperty &apos;Private&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/ReadOnly.Description" xml:space="preserve">
+    <value>Read Only</value>
+    <comment>Description for DomainProperty &apos;ReadOnly&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/ReadOnly.DisplayName" xml:space="preserve">
+    <value>Read Only</value>
+    <comment>DisplayName for DomainProperty &apos;ReadOnly&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/ReadOnly.Category" xml:space="preserve">
+    <value>Mapping attributes</value>
+    <comment>Category for DomainProperty &apos;ReadOnly&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/RowVersion.Description" xml:space="preserve">
+    <value>Row Version</value>
+    <comment>Description for DomainProperty &apos;RowVersion&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/RowVersion.DisplayName" xml:space="preserve">
+    <value>Row Version</value>
+    <comment>DisplayName for DomainProperty &apos;RowVersion&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/RowVersion.Category" xml:space="preserve">
+    <value>Mapping attributes</value>
+    <comment>Category for DomainProperty &apos;RowVersion&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/RV.Description" xml:space="preserve">
+    <value>RV</value>
+    <comment>Description for DomainProperty &apos;RV&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/RV.DisplayName" xml:space="preserve">
+    <value>RV</value>
+    <comment>DisplayName for DomainProperty &apos;RV&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/RV.Category" xml:space="preserve">
+    <value>Mapping attributes</value>
+    <comment>Category for DomainProperty &apos;RV&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/SyncInsert.Description" xml:space="preserve">
+    <value>Sync Insert</value>
+    <comment>Description for DomainProperty &apos;SyncInsert&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/SyncInsert.DisplayName" xml:space="preserve">
+    <value>Sync Insert</value>
+    <comment>DisplayName for DomainProperty &apos;SyncInsert&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/SyncInsert.Category" xml:space="preserve">
+    <value>Mapping attributes</value>
+    <comment>Category for DomainProperty &apos;SyncInsert&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/SyncUpdate.Description" xml:space="preserve">
+    <value>Sync Update</value>
+    <comment>Description for DomainProperty &apos;SyncUpdate&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/SyncUpdate.DisplayName" xml:space="preserve">
+    <value>Sync Update</value>
+    <comment>DisplayName for DomainProperty &apos;SyncUpdate&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/SyncUpdate.Category" xml:space="preserve">
+    <value>Mapping attributes</value>
+    <comment>Category for DomainProperty &apos;SyncUpdate&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
   <data name="Worm.Designer.SupressedProperty.Description" xml:space="preserve">
     <value>Supressed Property</value>
@@ -1069,20 +1493,8 @@
     <value>Entity</value>
     <comment>DisplayName for DomainClass &apos;EntityShape&apos;</comment>
   </data>
-  <data name="EntityShapeTablesTitle" xml:space="preserve">
-    <value>Tables</value>
-    <comment>Compartment title</comment>
-  </data>
   <data name="EntityShapePropertiesTitle" xml:space="preserve">
     <value>Properties</value>
-    <comment>Compartment title</comment>
-  </data>
-  <data name="EntityShapeSupressedPropertiesTitle" xml:space="preserve">
-    <value>SupressedProperties</value>
-    <comment>Compartment title</comment>
-  </data>
-  <data name="EntityShapeSelfRelationTitle" xml:space="preserve">
-    <value>Self Relation</value>
     <comment>Compartment title</comment>
   </data>
   <data name="EntityShapeNameDefaultText" xml:space="preserve">

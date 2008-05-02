@@ -738,7 +738,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for LeftCascadeDelete
 		/// </summary>
-		private global::System.Boolean leftCascadeDeletePropertyStorage = true;
+		private global::System.String leftCascadeDeletePropertyStorage = "true";
 		
 		/// <summary>
 		/// Gets or sets the value of LeftCascadeDelete domain property.
@@ -747,9 +747,9 @@ namespace Worm.Designer
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue(true)]
+		[global::System.ComponentModel.DefaultValue("true")]
 		[DslModeling::DomainObjectId("ecd23e88-6e56-438b-9f10-c56c1aba7cbf")]
-		public global::System.Boolean LeftCascadeDelete
+		public global::System.String LeftCascadeDelete
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -765,7 +765,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the EntityReferencesTargetEntities.LeftCascadeDelete domain property.
 		/// </summary>
-		internal sealed partial class LeftCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesTargetEntities, global::System.Boolean>
+		internal sealed partial class LeftCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesTargetEntities, global::System.String>
 		{
 			private LeftCascadeDeletePropertyHandler() { }
 		
@@ -791,7 +791,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(EntityReferencesTargetEntities element)
+			public override sealed global::System.String GetValue(EntityReferencesTargetEntities element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.leftCascadeDeletePropertyStorage;
@@ -802,11 +802,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesTargetEntities element, global::System.Boolean newValue)
+			public override sealed void SetValue(EntityReferencesTargetEntities element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1002,7 +1002,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Disabled
 		/// </summary>
-		private global::System.Boolean disabledPropertyStorage;
+		private global::System.String disabledPropertyStorage = "false";
 		
 		/// <summary>
 		/// Gets or sets the value of Disabled domain property.
@@ -1011,8 +1011,9 @@ namespace Worm.Designer
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/Disabled.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/Disabled.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("false")]
 		[DslModeling::DomainObjectId("8c000c96-92a2-4eeb-871b-a09fd6a2e10d")]
-		public global::System.Boolean Disabled
+		public global::System.String Disabled
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1028,7 +1029,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the EntityReferencesTargetEntities.Disabled domain property.
 		/// </summary>
-		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesTargetEntities, global::System.Boolean>
+		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesTargetEntities, global::System.String>
 		{
 			private DisabledPropertyHandler() { }
 		
@@ -1054,7 +1055,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(EntityReferencesTargetEntities element)
+			public override sealed global::System.String GetValue(EntityReferencesTargetEntities element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.disabledPropertyStorage;
@@ -1065,11 +1066,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesTargetEntities element, global::System.Boolean newValue)
+			public override sealed void SetValue(EntityReferencesTargetEntities element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1096,6 +1097,7 @@ namespace Worm.Designer
 		/// Gets or sets the value of Table domain property.
 		/// Description for Worm.Designer.EntityReferencesTargetEntities.Table
 		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.TableUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/Table.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/Table.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("202b0d26-d30c-4a1f-96f1-0b6bdbce7db3")]
@@ -1526,7 +1528,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for RightCascadeDelete
 		/// </summary>
-		private global::System.Boolean rightCascadeDeletePropertyStorage = true;
+		private global::System.String rightCascadeDeletePropertyStorage = "true";
 		
 		/// <summary>
 		/// Gets or sets the value of RightCascadeDelete domain property.
@@ -1535,9 +1537,9 @@ namespace Worm.Designer
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/RightCascadeDelete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/RightCascadeDelete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue(true)]
+		[global::System.ComponentModel.DefaultValue("true")]
 		[DslModeling::DomainObjectId("7c7b3972-2e7d-4b2c-bee9-49cb3c2d8742")]
-		public global::System.Boolean RightCascadeDelete
+		public global::System.String RightCascadeDelete
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1553,7 +1555,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the EntityReferencesTargetEntities.RightCascadeDelete domain property.
 		/// </summary>
-		internal sealed partial class RightCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesTargetEntities, global::System.Boolean>
+		internal sealed partial class RightCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<EntityReferencesTargetEntities, global::System.String>
 		{
 			private RightCascadeDeletePropertyHandler() { }
 		
@@ -1579,7 +1581,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(EntityReferencesTargetEntities element)
+			public override sealed global::System.String GetValue(EntityReferencesTargetEntities element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.rightCascadeDeletePropertyStorage;
@@ -1590,11 +1592,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(EntityReferencesTargetEntities element, global::System.Boolean newValue)
+			public override sealed void SetValue(EntityReferencesTargetEntities element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -2643,6 +2645,7 @@ namespace Worm.Designer
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.TableReferencesEntity/Table.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.TableReferencesEntity/Table.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.Browsable(false)]
 		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Source, PropertyName = "Entity", PropertyDisplayNameKey="Worm.Designer.TableReferencesEntity/Table.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.One)]
 		[DslModeling::DomainObjectId("fed3349d-8eb3-4b10-b341-b618f1e9f1c6")]
 		public virtual Table Table

@@ -3,32 +3,32 @@
   <Classes>
     <DomainClass Id="2d55930a-31b5-4bd4-9a68-1bdec0d265fe" Description="The root in which all other elements are embedded. Appears as a diagram." Name="WormModel" DisplayName="Worm Model" Namespace="Worm.Designer">
       <Properties>
-        <DomainProperty Id="ef57328f-fa14-4ae6-b1b5-66eefd00ff48" Description="Default namespace used in case entity has no any namespace specified" Name="DefaultNamespace" DisplayName="Default Namespace">
+        <DomainProperty Id="ef57328f-fa14-4ae6-b1b5-66eefd00ff48" Description="Default namespace used in case entity has no any namespace specified" Name="DefaultNamespace" DisplayName="Default Namespace" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="bd1e5b90-b0b3-4647-a044-f4f459241872" Description="Schema Version" Name="SchemaVersion" DisplayName="Schema Version" DefaultValue="1">
+        <DomainProperty Id="bd1e5b90-b0b3-4647-a044-f4f459241872" Description="Schema Version" Name="SchemaVersion" DisplayName="Schema Version" DefaultValue="1" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="5eb9368f-2c70-452b-b572-7a5ed9640999" Description="Class name prefix" Name="ClassNamePrefix" DisplayName="Class Name Prefix">
+        <DomainProperty Id="5eb9368f-2c70-452b-b572-7a5ed9640999" Description="Class name prefix" Name="ClassNamePrefix" DisplayName="Class Name Prefix" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="7c38f9f4-5d8a-4bfd-9112-fd7c9f96522c" Description="Class Name Suffix" Name="ClassNameSuffix" DisplayName="Class Name Suffix">
+        <DomainProperty Id="7c38f9f4-5d8a-4bfd-9112-fd7c9f96522c" Description="Class Name Suffix" Name="ClassNameSuffix" DisplayName="Class Name Suffix" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="42926c46-a937-4b2c-acd1-76859bca5084" Description="File Name Suffix" Name="FileNameSuffix" DisplayName="File Name Suffix">
+        <DomainProperty Id="42926c46-a937-4b2c-acd1-76859bca5084" Description="File Name Suffix" Name="FileNameSuffix" DisplayName="File Name Suffix" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="56a2b134-f643-45c6-9d9e-feb681a11e8c" Description="Split" Name="Split" DisplayName="Split" DefaultValue="False">
+        <DomainProperty Id="56a2b134-f643-45c6-9d9e-feb681a11e8c" Description="Split" Name="Split" DisplayName="Split" DefaultValue="False" Category="Code generation">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -37,20 +37,200 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="e3e5953c-14f7-4661-9915-4d4bba04a001" Description="Entity Schema Def Class Name Suffix" Name="EntitySchemaDefClassNameSuffix" DisplayName="Entity Schema Def Class Name Suffix" DefaultValue="SchemaDef">
+        <DomainProperty Id="e3e5953c-14f7-4661-9915-4d4bba04a001" Description="Entity Schema Def Class Name Suffix" Name="EntitySchemaDefClassNameSuffix" DisplayName="Entity Schema Def Class Name Suffix" DefaultValue="SchemaDef" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="7fa8a791-39c7-4fd2-b179-4634c72159f1" Description="Language Specific Hacks" Name="LanguageSpecificHacks" DisplayName="Language Specific Hacks">
+        <DomainProperty Id="a8bceba5-c8e5-4a7e-8f2b-0c4e32afde31" Description="Private Members Prefix" Name="PrivateMembersPrefix" DisplayName="Private Members Prefix" DefaultValue="m_" Category="Generator Settings">
           <Type>
-            <ExternalTypeMoniker Name="/Worm.CodeGen.Core/LanguageSpecificHacks" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="a8bceba5-c8e5-4a7e-8f2b-0c4e32afde31" Description="Private Members Prefix" Name="PrivateMembersPrefix" DisplayName="Private Members Prefix" DefaultValue="m_">
+        <DomainProperty Id="b07f1210-d276-4596-840a-df7742b9150f" Description="File Name Prefix" Name="FileNamePrefix" DisplayName="File Name Prefix" Category="Code generation">
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="095cfba4-b4bd-43ff-969f-1fa0f989111a" Description="Generic члены производных классов требует наличия констрейтов" Name="DerivedGenericMembersRequireConstraits" DisplayName="Derived Generic Members Require Constraits" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="0252ee35-0a4d-4470-ae55-b58aacb2f05b" Description="Генерировать методы вместо параметризованых пропертей" Name="MethodsInsteadParametrizedProperties" DisplayName="Methods Instead Parametrized Properties" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="76b4b7cc-b1a7-4614-8f27-7f046c6bb846" Description="Add Options Strict" Name="AddOptionsStrict" DisplayName="Add Options Strict" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="567d6f8d-615a-4661-9903-e5fa83a7f6e4" Description="Options Strict On" Name="OptionsStrictOn" DisplayName="Options Strict On" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="769200c0-4be7-4e6a-bce9-f2ee0c9c1fce" Description="Add Options Explicit" Name="AddOptionsExplicit" DisplayName="Add Options Explicit" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="3add2ebb-e424-4dbd-9b82-a6c6ead25420" Description="Options Explicit On" Name="OptionsExplicitOn" DisplayName="Options Explicit On" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="50e58d80-288a-4a19-b8b5-108b2f5da6bc" Description="Generate CSUsing Statement" Name="GenerateCSUsingStatement" DisplayName="Generate CSUsing Statement" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="d8135d5c-383c-474f-bf05-55fba1c44b03" Description="Generate VBUsing Statement" Name="GenerateVBUsingStatement" DisplayName="Generate VBUsing Statement" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="29d1b322-32a0-4f9a-a06e-42f4bf0a22eb" Description="Безопасная распаковка переменных с кастом в энам" Name="SafeUnboxToEnum" DisplayName="Safe Unbox To Enum" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="eea1df37-9263-4dd7-97f7-b33214b2bf19" Description="Generate Cs Is Statement" Name="GenerateCsIsStatement" DisplayName="Generate Cs Is Statement" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="a1b94ed9-f47d-4dff-9279-b371fff48570" Description="Generate Vb Type Of Is Statement" Name="GenerateVbTypeOfIsStatement" DisplayName="Generate Vb Type Of Is Statement" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="dc11051e-0396-4dbc-8458-32ffe8ab5512" Description="Generate Cs As Statement" Name="GenerateCsAsStatement" DisplayName="Generate Cs As Statement" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="393a72ca-30af-4715-a4ee-1ea38e9c8514" Description="Generate Vb Try Cast Statement" Name="GenerateVbTryCastStatement" DisplayName="Generate Vb Try Cast Statement" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="8df88772-b5fe-45b5-b39e-58ef6ed32293" Description="Generate Cs Lock Statement" Name="GenerateCsLockStatement" DisplayName="Generate Cs Lock Statement" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="746cf092-46e5-4a4d-997e-84011c756c26" Description="Generate Vb Sync Lock Statement" Name="GenerateVbSyncLockStatement" DisplayName="Generate Vb Sync Lock Statement" DefaultValue="False" Category="Language Specific Hacks">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
@@ -85,42 +265,56 @@
     </DomainClass>
     <DomainClass Id="4fd18942-120e-481b-9834-7c4d652242e1" Description="Сущность" Name="Entity" DisplayName="Entity" Namespace="Worm.Designer">
       <Properties>
-        <DomainProperty Id="44616f38-82f8-43e3-bde6-d55d7e11e189" Description="Идентификатор сущности" Name="IdProperty" DisplayName="Id" DefaultValue="entity id" Kind="Calculated">
+        <DomainProperty Id="44616f38-82f8-43e3-bde6-d55d7e11e189" Description="Идентификатор сущности" Name="IdProperty" DisplayName="Id" DefaultValue="entity id" Kind="Calculated" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="a07738d3-b31e-4ae8-bddd-0de25ae5a420" Description="Наименование сущности" Name="Name" DisplayName="Name" DefaultValue="Entity" IsElementName="true">
+        <DomainProperty Id="a07738d3-b31e-4ae8-bddd-0de25ae5a420" Description="Наименование сущности" Name="Name" DisplayName="Name" DefaultValue="Entity" Category="Code generation" IsElementName="true">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="c0abea7d-0b57-4ddb-806f-1e0fdf96bb39" Description="Пространство имен для сущности" Name="Namespace" DisplayName="Namespace">
+        <DomainProperty Id="c0abea7d-0b57-4ddb-806f-1e0fdf96bb39" Description="Пространство имен для сущности" Name="Namespace" DisplayName="Namespace" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="41ea2ab0-0bd7-4116-82a4-63a0a386ace4" Description="Entity generator behaviour" Name="Behaviour" DisplayName="Behaviour" DefaultValue="Default">
+        <DomainProperty Id="41ea2ab0-0bd7-4116-82a4-63a0a386ace4" Description="Entity generator behaviour" Name="Behaviour" DisplayName="Behaviour" DefaultValue="Default" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/Worm.CodeGen.Core/EntityBehaviuor" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="b7e0a887-5470-48c5-8638-554df5318014" Description="Описание сущности" Name="Description" DisplayName="Description">
+        <DomainProperty Id="b7e0a887-5470-48c5-8638-554df5318014" Description="Описание сущности" Name="Description" DisplayName="Description" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="fee6dfaf-50e0-4a7a-864d-90e3497b5246" Description="Определяет генерировать generic или строго типизированные методы" Name="UseGenerics" DisplayName="Use Generics" DefaultValue="false">
+        <DomainProperty Id="fee6dfaf-50e0-4a7a-864d-90e3497b5246" Description="Определяет генерировать generic или строго типизированные методы" Name="UseGenerics" DisplayName="Use Generics" DefaultValue="False" Category="Code generation">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="e3b3d3c8-0ff2-48d5-9460-c087e81f051a" Description="Определяет генерировать интерфейс для сущности" Name="MakeInterface" DisplayName="Make Interface">
+        <DomainProperty Id="e3b3d3c8-0ff2-48d5-9460-c087e81f051a" Description="Определяет генерировать интерфейс для сущности" Name="MakeInterface" DisplayName="Make Interface" DefaultValue="False" Category="Code generation">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="24a9a6f7-5964-44fd-9547-5b9ec4e25da9" Description="ИД базовой сущности" Name="BaseEntity" DisplayName="Base Entity">
+        <DomainProperty Id="24a9a6f7-5964-44fd-9547-5b9ec4e25da9" Description="ИД базовой сущности" Name="BaseEntity" DisplayName="Base Entity" Category="Code generation">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -171,17 +365,17 @@
     </DomainClass>
     <DomainClass Id="d8167da3-fa3f-4ed4-8a42-1e613b5f9902" Description="Tаблицa БД" Name="Table" DisplayName="Table" Namespace="Worm.Designer">
       <Properties>
-        <DomainProperty Id="a17a80a3-b19c-4719-81d0-6015be74217d" Description="Имя таблицы" Name="Name" DisplayName="Name" IsElementName="true">
+        <DomainProperty Id="a17a80a3-b19c-4719-81d0-6015be74217d" Description="Имя таблицы" Name="Name" DisplayName="Name" Category="Database property" IsElementName="true">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="1be4d74c-edb8-4f30-a29a-fcd3e0f8baf7" Description="Description for Worm.Designer.Table.Id" Name="IdProperty" DisplayName="Id" Kind="Calculated">
+        <DomainProperty Id="1be4d74c-edb8-4f30-a29a-fcd3e0f8baf7" Description="Table Id" Name="IdProperty" DisplayName="Id" Kind="Calculated" Category="Database property">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="cca3b40b-cd96-4448-a20c-30c6e8592209" Description="Schema name for table" Name="Schema" DisplayName="Schema" DefaultValue="dbo">
+        <DomainProperty Id="cca3b40b-cd96-4448-a20c-30c6e8592209" Description="Schema name for table" Name="Schema" DisplayName="Schema" DefaultValue="dbo" Category="Database property">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
@@ -189,13 +383,16 @@
       </Properties>
     </DomainClass>
     <DomainClass Id="a3ab88fb-d6b4-420b-8325-029f77e93036" Description="Свойство сущности" Name="Property" DisplayName="Property" Namespace="Worm.Designer">
+      <CustomTypeDescriptor>
+        <DomainTypeDescriptor />
+      </CustomTypeDescriptor>
       <Properties>
-        <DomainProperty Id="8b3c0c4e-2990-403c-9528-4acabe75ecdd" Description="Имя свойства" Name="Name" DisplayName="Name" IsElementName="true">
+        <DomainProperty Id="8b3c0c4e-2990-403c-9528-4acabe75ecdd" Description="Имя свойства" Name="Name" DisplayName="Name" Category="Code generation" IsElementName="true">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="72a756c7-b007-4ade-ac88-696b306a4153" Description="Тип свойства (возможна ссылка на сущность)" Name="Type" DisplayName="Type" DefaultValue="System.String">
+        <DomainProperty Id="72a756c7-b007-4ade-ac88-696b306a4153" Description="Тип свойства (возможна ссылка на сущность)" Name="Type" DisplayName="Type" DefaultValue="System.String" Category="Code generation">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -207,17 +404,17 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="3f78744d-0bae-4bc7-8f97-8bd98bba72e3" Description="Описание свойства" Name="Description" DisplayName="Description">
+        <DomainProperty Id="3f78744d-0bae-4bc7-8f97-8bd98bba72e3" Description="Описание свойства" Name="Description" DisplayName="Description" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="4c13ac94-3d96-4ae5-ada6-c63cb97fc2c2" Description="Наименование колонки из БД" Name="FieldName" DisplayName="Field Name">
+        <DomainProperty Id="4c13ac94-3d96-4ae5-ada6-c63cb97fc2c2" Description="Наименование колонки из БД" Name="FieldName" DisplayName="Field Name" Category="Mapping properties">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="8980f42e-ee24-4198-8a4e-b6965e0c0f0a" Description="Ссылка на таблицу БД" Name="Table" DisplayName="Table">
+        <DomainProperty Id="8980f42e-ee24-4198-8a4e-b6965e0c0f0a" Description="Ссылка на таблицу БД" Name="Table" DisplayName="Table" Category="Mapping properties">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -229,22 +426,22 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="ff8c776c-7228-4b15-8903-e744348ea9f9" Description="Уровень доступа к полю класса" Name="FieldAccessLevel" DisplayName="Field Access Level" DefaultValue="Private">
+        <DomainProperty Id="ff8c776c-7228-4b15-8903-e744348ea9f9" Description="Уровень доступа к полю класса" Name="FieldAccessLevel" DisplayName="Field Access Level" DefaultValue="Private" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/Worm.CodeGen.Core/AccessLevel" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="0e08e4e5-983f-434a-b23d-c230096ed20a" Description="Property alias" Name="Alias" DisplayName="Alias">
+        <DomainProperty Id="0e08e4e5-983f-434a-b23d-c230096ed20a" Description="Property alias" Name="Alias" DisplayName="Alias" Category="Other">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="67ec9948-c2e5-406c-a7ec-21932a4f97f5" Description="Уровень доступа к полю класса" Name="AccessLevel" DisplayName="Access Level" DefaultValue="Public">
+        <DomainProperty Id="67ec9948-c2e5-406c-a7ec-21932a4f97f5" Description="Уровень доступа к полю класса" Name="AccessLevel" DisplayName="Access Level" DefaultValue="Public" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/Worm.CodeGen.Core/AccessLevel" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="32ebc3a6-9aa6-4fec-bcfa-b84adf684a9a" Description="Nullable" Name="Nullable" DisplayName="Nullable" DefaultValue="true">
+        <DomainProperty Id="32ebc3a6-9aa6-4fec-bcfa-b84adf684a9a" Description="Nullable" Name="Nullable" DisplayName="Nullable" DefaultValue="True" Category="Code generation">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -253,22 +450,10 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
-          </Type>
-        </DomainProperty>
-        <DomainProperty Id="2a909caa-923a-4796-bb3c-c16f23664b16" Description="Атрибуты свойства" Name="Attributes" DisplayName="Attributes">
-          <Attributes>
-            <ClrAttribute Name="System.ComponentModel.Editor">
-              <Parameters>
-                <AttributeParameter Value="typeof(Worm.Designer.FlagEnumUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
-              </Parameters>
-            </ClrAttribute>
-          </Attributes>
-          <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="55b97295-ab7f-4ae8-b6a3-5cfee02b9be9" Description="Признак отключения проперти" Name="Disabled" DisplayName="Disabled" DefaultValue="false">
+        <DomainProperty Id="55b97295-ab7f-4ae8-b6a3-5cfee02b9be9" Description="Признак отключения проперти" Name="Disabled" DisplayName="Disabled" DefaultValue="False" Category="Code generation">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -277,20 +462,20 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="53125034-447a-4175-b30d-a6ea4885f846" Description="Make property obsolete" Name="Obsolete" DisplayName="Obsolete" DefaultValue="None">
+        <DomainProperty Id="53125034-447a-4175-b30d-a6ea4885f846" Description="Make property obsolete" Name="Obsolete" DisplayName="Obsolete" DefaultValue="None" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/Worm.CodeGen.Core.Descriptors/ObsoleteType" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="c71cec64-dbd4-4be1-9e67-c9416fbd8978" Description="Description for obsolete property" Name="ObsoleteDescription" DisplayName="Obsolete Description">
+        <DomainProperty Id="c71cec64-dbd4-4be1-9e67-c9416fbd8978" Description="Description for obsolete property" Name="ObsoleteDescription" DisplayName="Obsolete Description" Category="Code generation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="27b55a46-03a8-4f6d-96c8-df53b4fd52ab" Description="Включает для свойства поднятие события PropertyChanged, при этом реализация идет на уровне конкретной сущности. При этом в целом для сущности отключается общий механизм этого события." Name="EnablePropertyChanged" DisplayName="Enable Property Changed" DefaultValue="False">
+        <DomainProperty Id="27b55a46-03a8-4f6d-96c8-df53b4fd52ab" Description="Включает для свойства поднятие события PropertyChanged, при этом реализация идет на уровне конкретной сущности. При этом в целом для сущности отключается общий механизм этого события." Name="EnablePropertyChanged" DisplayName="Enable Property Changed" DefaultValue="False" Category="Other">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -299,7 +484,127 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="343f5f78-64cb-4219-bcd0-cfaf0bde39fb" Description="Description for Worm.Designer.Property.PK" Name="PK" DisplayName="PK" DefaultValue="false" Category="Mapping attributes">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="d9353848-d1ec-4b07-9f57-d62f33cbc23c" Description="Factory" Name="Factory" DisplayName="Factory" DefaultValue="False" Category="Mapping attributes">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="b07345b1-8507-4e4f-bcde-e9ea2bfb97da" Description="InsertDefault" Name="InsertDefault" DisplayName="Insert Default" DefaultValue="False" Category="Mapping attributes">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="b73e60df-a00d-4fd7-a1ee-6c00670294a7" Description="Primary Key" Name="PrimaryKey" DisplayName="Primary Key" DefaultValue="False" Category="Mapping attributes">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="14b6d58c-4c31-4dc9-a08a-5e2cef3166a3" Description="Private" Name="Private" DisplayName="Private" DefaultValue="False" Category="Mapping attributes">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="283e4887-f046-4928-81c4-49acbff2bb72" Description="Read Only" Name="ReadOnly" DisplayName="Read Only" DefaultValue="False" Category="Mapping attributes">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="09b6faf5-7ee9-4af7-9b05-1b30ba7e9b4d" Description="Row Version" Name="RowVersion" DisplayName="Row Version" DefaultValue="False" Category="Mapping attributes">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="e1f9c393-dbbb-4479-a9f5-980deb4ab858" Description="RV" Name="RV" DisplayName="RV" DefaultValue="False" Category="Mapping attributes">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="7ef75517-7a6d-4435-ba28-12fbc277296d" Description="Sync Insert" Name="SyncInsert" DisplayName="Sync Insert" DefaultValue="False" Category="Mapping attributes">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="535c031e-5176-46ea-be1c-5138c176e820" Description="Sync Update" Name="SyncUpdate" DisplayName="Sync Update" DefaultValue="False" Category="Mapping attributes">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
       </Properties>
@@ -348,7 +653,7 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
         <DomainProperty Id="18d076fb-382a-4f46-ae6d-5cf468778ff1" Description="Имя поля таблицы связи" Name="DirectFieldName" DisplayName="Direct Field Name">
@@ -365,7 +670,7 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
         <DomainProperty Id="763e2750-9675-41b9-8cce-3250b1032a5a" Description="Имя связанной сущности для генерации методов" Name="ReverseAccessor" DisplayName="Reverse Accessor">
@@ -382,7 +687,7 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
         <DomainProperty Id="d4f2dffb-91fb-419b-b5ca-aca2fa83ef3b" Description="Имя поля таблицы связи" Name="ReverseFieldName" DisplayName="Reverse Field Name">
@@ -502,7 +807,7 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
         <DomainProperty Id="ec48a8e3-f1b3-4c88-bbd4-644451ce13b0" Description="Имя поля таблицы связи" Name="LeftFieldName" DisplayName="Left Field Name">
@@ -531,10 +836,17 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
         <DomainProperty Id="202b0d26-d30c-4a1f-96f1-0b6bdbce7db3" Description="Description for Worm.Designer.EntityReferencesTargetEntities.Table" Name="Table" DisplayName="Table">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.TableUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
@@ -575,7 +887,7 @@
             </ClrAttribute>
           </Attributes>
           <Type>
-            <ExternalTypeMoniker Name="/System/Boolean" />
+            <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
         <DomainProperty Id="ef1396f8-92b2-4af5-bf2f-7df39cc03e01" Description="Имя связанной сущности для генерации методов" Name="RightAccessorName" DisplayName="Right Accessor Name">
@@ -654,7 +966,7 @@
     </DomainRelationship>
     <DomainRelationship Id="02763e91-46a7-468a-9cb0-6d88cdede236" Description="Список используемых таблиц" Name="TableReferencesEntity" DisplayName="Table References Entity" Namespace="Worm.Designer">
       <Source>
-        <DomainRole Id="fed3349d-8eb3-4b10-b341-b618f1e9f1c6" Description="Description for Worm.Designer.TableReferencesEntity.Table" Name="Table" DisplayName="Table" PropertyName="Entity" Multiplicity="One" PropertyDisplayName="Entity">
+        <DomainRole Id="fed3349d-8eb3-4b10-b341-b618f1e9f1c6" Description="Description for Worm.Designer.TableReferencesEntity.Table" Name="Table" DisplayName="Table" PropertyName="Entity" Multiplicity="One" IsPropertyBrowsable="false" PropertyDisplayName="Entity">
           <RolePlayer>
             <DomainClassMoniker Name="Table" />
           </RolePlayer>
@@ -745,14 +1057,9 @@
       <ShapeHasDecorators Position="InnerTopRight" HorizontalOffset="0" VerticalOffset="0">
         <ExpandCollapseDecorator Name="ExpandCollapseDecorator1" DisplayName="Expand Collapse Decorator1" />
       </ShapeHasDecorators>
-      <Compartment TitleFillColor="Honeydew" Name="Tables" Title="Tables">
-        <Notes>Список используемых таблиц</Notes>
-      </Compartment>
       <Compartment TitleFillColor="Honeydew" Name="Properties" Title="Properties">
         <Notes>Свойства сущности</Notes>
       </Compartment>
-      <Compartment TitleFillColor="Honeydew" Name="SupressedProperties" Title="SupressedProperties" />
-      <Compartment FillColor="Window" TitleFillColor="Honeydew" Name="SelfRelation" Title="Self Relation" />
     </CompartmentShape>
   </Shapes>
   <Connectors>
@@ -793,11 +1100,56 @@
           <XmlPropertyData XmlName="entitySchemaDefClassNameSuffix">
             <DomainPropertyMoniker Name="WormModel/EntitySchemaDefClassNameSuffix" />
           </XmlPropertyData>
-          <XmlPropertyData XmlName="languageSpecificHacks">
-            <DomainPropertyMoniker Name="WormModel/LanguageSpecificHacks" />
-          </XmlPropertyData>
           <XmlPropertyData XmlName="privateMembersPrefix">
             <DomainPropertyMoniker Name="WormModel/PrivateMembersPrefix" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="fileNamePrefix">
+            <DomainPropertyMoniker Name="WormModel/FileNamePrefix" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="derivedGenericMembersRequireConstraits">
+            <DomainPropertyMoniker Name="WormModel/DerivedGenericMembersRequireConstraits" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="methodsInsteadParametrizedProperties">
+            <DomainPropertyMoniker Name="WormModel/MethodsInsteadParametrizedProperties" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="addOptionsStrict">
+            <DomainPropertyMoniker Name="WormModel/AddOptionsStrict" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="optionsStrictOn">
+            <DomainPropertyMoniker Name="WormModel/OptionsStrictOn" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="addOptionsExplicit">
+            <DomainPropertyMoniker Name="WormModel/AddOptionsExplicit" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="optionsExplicitOn">
+            <DomainPropertyMoniker Name="WormModel/OptionsExplicitOn" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="generateCSUsingStatement">
+            <DomainPropertyMoniker Name="WormModel/GenerateCSUsingStatement" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="generateVBUsingStatement">
+            <DomainPropertyMoniker Name="WormModel/GenerateVBUsingStatement" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="safeUnboxToEnum">
+            <DomainPropertyMoniker Name="WormModel/SafeUnboxToEnum" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="generateCsIsStatement">
+            <DomainPropertyMoniker Name="WormModel/GenerateCsIsStatement" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="generateVbTypeOfIsStatement">
+            <DomainPropertyMoniker Name="WormModel/GenerateVbTypeOfIsStatement" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="generateCsAsStatement">
+            <DomainPropertyMoniker Name="WormModel/GenerateCsAsStatement" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="generateVbTryCastStatement">
+            <DomainPropertyMoniker Name="WormModel/GenerateVbTryCastStatement" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="generateCsLockStatement">
+            <DomainPropertyMoniker Name="WormModel/GenerateCsLockStatement" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="generateVbSyncLockStatement">
+            <DomainPropertyMoniker Name="WormModel/GenerateVbSyncLockStatement" />
           </XmlPropertyData>
         </ElementData>
       </XmlClassData>
@@ -901,9 +1253,6 @@
           <XmlPropertyData XmlName="nullable">
             <DomainPropertyMoniker Name="Property/Nullable" />
           </XmlPropertyData>
-          <XmlPropertyData XmlName="attributes">
-            <DomainPropertyMoniker Name="Property/Attributes" />
-          </XmlPropertyData>
           <XmlPropertyData XmlName="disabled">
             <DomainPropertyMoniker Name="Property/Disabled" />
           </XmlPropertyData>
@@ -915,6 +1264,36 @@
           </XmlPropertyData>
           <XmlPropertyData XmlName="enablePropertyChanged">
             <DomainPropertyMoniker Name="Property/EnablePropertyChanged" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="pK">
+            <DomainPropertyMoniker Name="Property/PK" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="factory">
+            <DomainPropertyMoniker Name="Property/Factory" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="insertDefault">
+            <DomainPropertyMoniker Name="Property/InsertDefault" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="primaryKey">
+            <DomainPropertyMoniker Name="Property/PrimaryKey" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="private">
+            <DomainPropertyMoniker Name="Property/Private" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="readOnly">
+            <DomainPropertyMoniker Name="Property/ReadOnly" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="rowVersion">
+            <DomainPropertyMoniker Name="Property/RowVersion" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="rV">
+            <DomainPropertyMoniker Name="Property/RV" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="syncInsert">
+            <DomainPropertyMoniker Name="Property/SyncInsert" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="syncUpdate">
+            <DomainPropertyMoniker Name="Property/SyncUpdate" />
           </XmlPropertyData>
         </ElementData>
       </XmlClassData>
@@ -1149,17 +1528,6 @@
         </DecoratorMap>
         <CompartmentShapeMoniker Name="EntityShape" />
         <CompartmentMap>
-          <CompartmentMoniker Name="EntityShape/Tables" />
-          <ElementsDisplayed>
-            <DomainPath>TableReferencesEntity.Tables/!Table</DomainPath>
-          </ElementsDisplayed>
-          <PropertyDisplayed>
-            <PropertyPath>
-              <DomainPropertyMoniker Name="Table/Name" />
-            </PropertyPath>
-          </PropertyDisplayed>
-        </CompartmentMap>
-        <CompartmentMap>
           <CompartmentMoniker Name="EntityShape/Properties" />
           <ElementsDisplayed>
             <DomainPath>EntityHasProperties.Properties/!Property</DomainPath>
@@ -1167,28 +1535,6 @@
           <PropertyDisplayed>
             <PropertyPath>
               <DomainPropertyMoniker Name="Property/Name" />
-            </PropertyPath>
-          </PropertyDisplayed>
-        </CompartmentMap>
-        <CompartmentMap>
-          <CompartmentMoniker Name="EntityShape/SupressedProperties" />
-          <ElementsDisplayed>
-            <DomainPath>EntityHasSupressedProperties.SupressedProperties/!SupressedProperty</DomainPath>
-          </ElementsDisplayed>
-          <PropertyDisplayed>
-            <PropertyPath>
-              <DomainPropertyMoniker Name="SupressedProperty/Name" />
-            </PropertyPath>
-          </PropertyDisplayed>
-        </CompartmentMap>
-        <CompartmentMap>
-          <CompartmentMoniker Name="EntityShape/SelfRelation" />
-          <ElementsDisplayed>
-            <DomainPath>EntityHasSelfRelations.SelfRelations/!SelfRelation</DomainPath>
-          </ElementsDisplayed>
-          <PropertyDisplayed>
-            <PropertyPath>
-              <DomainPropertyMoniker Name="SelfRelation/Name" />
             </PropertyPath>
           </PropertyDisplayed>
         </CompartmentMap>

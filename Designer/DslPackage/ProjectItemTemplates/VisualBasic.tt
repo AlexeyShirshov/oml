@@ -14,17 +14,12 @@
 		<DefaultName><#=  this.Dsl.Name #>.<#=this.Dsl.Editor.FileExtension#></DefaultName>
 	</TemplateData>
 	<TemplateContent>
-	
-
-
 		<ProjectItem ReplaceParameters="true" TargetFileName="$fileinputname$.<#=this.Dsl.Editor.FileExtension#>"><#=this.Dsl.Editor.FileExtension#>.<#=this.Dsl.Editor.FileExtension#></ProjectItem>
+		<ProjectItem ReplaceParameters="false"  TargetFileName="$fileinputname$.<#=this.Dsl.Editor.FileExtension#>.diagram"><#=this.Dsl.Editor.FileExtension#>.diagram</ProjectItem>
 		<CustomParameters>
 	        <CustomParameter Name="$itemproperties$" Value="CustomTool" />
 	        <CustomParameter Name="$CustomTool$" Value="WormCodeGenerator" />
 		</CustomParameters>
-		<ProjectItem ReplaceParameters="false"  TargetFileName="$fileinputname$.<#=this.Dsl.Editor.FileExtension#>.diagram"><#=this.Dsl.Editor.FileExtension#>.diagram</ProjectItem>
-		
-		
 	</TemplateContent>
 	<WizardExtension>
 		<Assembly>Microsoft.VSDesigner, Version=9.0.0.0, Culture=Neutral, PublicKeyToken=b03f5f7f11d50a3a</Assembly>

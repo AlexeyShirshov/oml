@@ -1564,7 +1564,7 @@ namespace SynapticEffect.Forms
 					TreeListNodeCollection list2 = GetSelectedNodes(node.Nodes[i]);
 					for (int j=0; j<list2.Count; j++)
 					{
-						list.Add(list2[i]);
+						list.Add(list2[j]);
 					}
 				}
 			}

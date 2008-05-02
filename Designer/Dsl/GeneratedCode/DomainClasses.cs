@@ -64,6 +64,7 @@ namespace Worm.Designer
 		/// Default namespace used in case entity has no any namespace specified
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/DefaultNamespace.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/DefaultNamespace.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/DefaultNamespace.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("ef57328f-fa14-4ae6-b1b5-66eefd00ff48")]
 		public global::System.String DefaultNamespace
@@ -151,6 +152,7 @@ namespace Worm.Designer
 		/// Schema Version
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/SchemaVersion.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/SchemaVersion.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/SchemaVersion.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue("1")]
 		[DslModeling::DomainObjectId("bd1e5b90-b0b3-4647-a044-f4f459241872")]
@@ -239,6 +241,7 @@ namespace Worm.Designer
 		/// Class name prefix
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/ClassNamePrefix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/ClassNamePrefix.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/ClassNamePrefix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("5eb9368f-2c70-452b-b572-7a5ed9640999")]
 		public global::System.String ClassNamePrefix
@@ -326,6 +329,7 @@ namespace Worm.Designer
 		/// Class Name Suffix
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/ClassNameSuffix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/ClassNameSuffix.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/ClassNameSuffix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("7c38f9f4-5d8a-4bfd-9112-fd7c9f96522c")]
 		public global::System.String ClassNameSuffix
@@ -413,6 +417,7 @@ namespace Worm.Designer
 		/// File Name Suffix
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/FileNameSuffix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/FileNameSuffix.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/FileNameSuffix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("42926c46-a937-4b2c-acd1-76859bca5084")]
 		public global::System.String FileNameSuffix
@@ -493,7 +498,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Split
 		/// </summary>
-		private global::System.Boolean splitPropertyStorage;
+		private global::System.String splitPropertyStorage = "False";
 		
 		/// <summary>
 		/// Gets or sets the value of Split domain property.
@@ -501,9 +506,11 @@ namespace Worm.Designer
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/Split.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/Split.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/Split.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
 		[DslModeling::DomainObjectId("56a2b134-f643-45c6-9d9e-feb681a11e8c")]
-		public global::System.Boolean Split
+		public global::System.String Split
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -519,7 +526,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.Split domain property.
 		/// </summary>
-		internal sealed partial class SplitPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.Boolean>
+		internal sealed partial class SplitPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
 		{
 			private SplitPropertyHandler() { }
 		
@@ -545,7 +552,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(WormModel element)
+			public override sealed global::System.String GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.splitPropertyStorage;
@@ -556,11 +563,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.Boolean newValue)
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -588,6 +595,7 @@ namespace Worm.Designer
 		/// Entity Schema Def Class Name Suffix
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/EntitySchemaDefClassNameSuffix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/EntitySchemaDefClassNameSuffix.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/EntitySchemaDefClassNameSuffix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue("SchemaDef")]
 		[DslModeling::DomainObjectId("e3e5953c-14f7-4661-9915-4d4bba04a001")]
@@ -659,93 +667,6 @@ namespace Worm.Designer
 		}
 		
 		#endregion
-		#region LanguageSpecificHacks domain property code
-		
-		/// <summary>
-		/// LanguageSpecificHacks domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid LanguageSpecificHacksDomainPropertyId = new global::System.Guid(0x7fa8a791, 0x39c7, 0x4fd2, 0xb1, 0x79, 0x46, 0x34, 0xc7, 0x21, 0x59, 0xf1);
-		
-		/// <summary>
-		/// Storage for LanguageSpecificHacks
-		/// </summary>
-		private global::Worm.CodeGen.Core.LanguageSpecificHacks languageSpecificHacksPropertyStorage;
-		
-		/// <summary>
-		/// Gets or sets the value of LanguageSpecificHacks domain property.
-		/// Language Specific Hacks
-		/// </summary>
-		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/LanguageSpecificHacks.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.WormModel/LanguageSpecificHacks.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("7fa8a791-39c7-4fd2-b179-4634c72159f1")]
-		public global::Worm.CodeGen.Core.LanguageSpecificHacks LanguageSpecificHacks
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return languageSpecificHacksPropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				LanguageSpecificHacksPropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the WormModel.LanguageSpecificHacks domain property.
-		/// </summary>
-		internal sealed partial class LanguageSpecificHacksPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::Worm.CodeGen.Core.LanguageSpecificHacks>
-		{
-			private LanguageSpecificHacksPropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the WormModel.LanguageSpecificHacks domain property value handler.
-			/// </summary>
-			public static readonly LanguageSpecificHacksPropertyHandler Instance = new LanguageSpecificHacksPropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the WormModel.LanguageSpecificHacks domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return LanguageSpecificHacksDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
-			public override sealed global::Worm.CodeGen.Core.LanguageSpecificHacks GetValue(WormModel element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.languageSpecificHacksPropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::Worm.CodeGen.Core.LanguageSpecificHacks newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::Worm.CodeGen.Core.LanguageSpecificHacks oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.languageSpecificHacksPropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
 		#region PrivateMembersPrefix domain property code
 		
 		/// <summary>
@@ -763,6 +684,7 @@ namespace Worm.Designer
 		/// Private Members Prefix
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/PrivateMembersPrefix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/PrivateMembersPrefix.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/PrivateMembersPrefix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue("m_")]
 		[DslModeling::DomainObjectId("a8bceba5-c8e5-4a7e-8f2b-0c4e32afde31")]
@@ -828,6 +750,1444 @@ namespace Worm.Designer
 				{
 					ValueChanging(element, oldValue, newValue);
 					element.privateMembersPrefixPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region FileNamePrefix domain property code
+		
+		/// <summary>
+		/// FileNamePrefix domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid FileNamePrefixDomainPropertyId = new global::System.Guid(0xb07f1210, 0xd276, 0x4596, 0x84, 0x0a, 0xdf, 0x77, 0x42, 0xb9, 0x15, 0x0f);
+		
+		/// <summary>
+		/// Storage for FileNamePrefix
+		/// </summary>
+		private global::System.String fileNamePrefixPropertyStorage = string.Empty;
+		
+		/// <summary>
+		/// Gets or sets the value of FileNamePrefix domain property.
+		/// File Name Prefix
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/FileNamePrefix.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/FileNamePrefix.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/FileNamePrefix.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainObjectId("b07f1210-d276-4596-840a-df7742b9150f")]
+		public global::System.String FileNamePrefix
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return fileNamePrefixPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				FileNamePrefixPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.FileNamePrefix domain property.
+		/// </summary>
+		internal sealed partial class FileNamePrefixPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private FileNamePrefixPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.FileNamePrefix domain property value handler.
+			/// </summary>
+			public static readonly FileNamePrefixPropertyHandler Instance = new FileNamePrefixPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.FileNamePrefix domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return FileNamePrefixDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.fileNamePrefixPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.fileNamePrefixPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region DerivedGenericMembersRequireConstraits domain property code
+		
+		/// <summary>
+		/// DerivedGenericMembersRequireConstraits domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid DerivedGenericMembersRequireConstraitsDomainPropertyId = new global::System.Guid(0x095cfba4, 0xb4bd, 0x43ff, 0x96, 0x9f, 0x1f, 0xa0, 0xf9, 0x89, 0x11, 0x1a);
+		
+		/// <summary>
+		/// Storage for DerivedGenericMembersRequireConstraits
+		/// </summary>
+		private global::System.String derivedGenericMembersRequireConstraitsPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of DerivedGenericMembersRequireConstraits domain property.
+		/// Generic члены производных классов требует наличия констрейтов
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/DerivedGenericMembersRequireConstraits.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/DerivedGenericMembersRequireConstraits.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/DerivedGenericMembersRequireConstraits.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("095cfba4-b4bd-43ff-969f-1fa0f989111a")]
+		public global::System.String DerivedGenericMembersRequireConstraits
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return derivedGenericMembersRequireConstraitsPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				DerivedGenericMembersRequireConstraitsPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.DerivedGenericMembersRequireConstraits domain property.
+		/// </summary>
+		internal sealed partial class DerivedGenericMembersRequireConstraitsPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private DerivedGenericMembersRequireConstraitsPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.DerivedGenericMembersRequireConstraits domain property value handler.
+			/// </summary>
+			public static readonly DerivedGenericMembersRequireConstraitsPropertyHandler Instance = new DerivedGenericMembersRequireConstraitsPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.DerivedGenericMembersRequireConstraits domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return DerivedGenericMembersRequireConstraitsDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.derivedGenericMembersRequireConstraitsPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.derivedGenericMembersRequireConstraitsPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region MethodsInsteadParametrizedProperties domain property code
+		
+		/// <summary>
+		/// MethodsInsteadParametrizedProperties domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid MethodsInsteadParametrizedPropertiesDomainPropertyId = new global::System.Guid(0x0252ee35, 0x0a4d, 0x4470, 0xae, 0x55, 0xb5, 0x8a, 0xac, 0xb2, 0xf0, 0x5b);
+		
+		/// <summary>
+		/// Storage for MethodsInsteadParametrizedProperties
+		/// </summary>
+		private global::System.String methodsInsteadParametrizedPropertiesPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of MethodsInsteadParametrizedProperties domain property.
+		/// Генерировать методы вместо параметризованых пропертей
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/MethodsInsteadParametrizedProperties.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/MethodsInsteadParametrizedProperties.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/MethodsInsteadParametrizedProperties.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("0252ee35-0a4d-4470-ae55-b58aacb2f05b")]
+		public global::System.String MethodsInsteadParametrizedProperties
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return methodsInsteadParametrizedPropertiesPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				MethodsInsteadParametrizedPropertiesPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.MethodsInsteadParametrizedProperties domain property.
+		/// </summary>
+		internal sealed partial class MethodsInsteadParametrizedPropertiesPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private MethodsInsteadParametrizedPropertiesPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.MethodsInsteadParametrizedProperties domain property value handler.
+			/// </summary>
+			public static readonly MethodsInsteadParametrizedPropertiesPropertyHandler Instance = new MethodsInsteadParametrizedPropertiesPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.MethodsInsteadParametrizedProperties domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return MethodsInsteadParametrizedPropertiesDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.methodsInsteadParametrizedPropertiesPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.methodsInsteadParametrizedPropertiesPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region AddOptionsStrict domain property code
+		
+		/// <summary>
+		/// AddOptionsStrict domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid AddOptionsStrictDomainPropertyId = new global::System.Guid(0x76b4b7cc, 0xb1a7, 0x4614, 0x8f, 0x27, 0x7f, 0x04, 0x6c, 0x6b, 0xb8, 0x46);
+		
+		/// <summary>
+		/// Storage for AddOptionsStrict
+		/// </summary>
+		private global::System.String addOptionsStrictPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of AddOptionsStrict domain property.
+		/// Add Options Strict
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/AddOptionsStrict.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/AddOptionsStrict.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/AddOptionsStrict.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("76b4b7cc-b1a7-4614-8f27-7f046c6bb846")]
+		public global::System.String AddOptionsStrict
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return addOptionsStrictPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				AddOptionsStrictPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.AddOptionsStrict domain property.
+		/// </summary>
+		internal sealed partial class AddOptionsStrictPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private AddOptionsStrictPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.AddOptionsStrict domain property value handler.
+			/// </summary>
+			public static readonly AddOptionsStrictPropertyHandler Instance = new AddOptionsStrictPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.AddOptionsStrict domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return AddOptionsStrictDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.addOptionsStrictPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.addOptionsStrictPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region OptionsStrictOn domain property code
+		
+		/// <summary>
+		/// OptionsStrictOn domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid OptionsStrictOnDomainPropertyId = new global::System.Guid(0x567d6f8d, 0x615a, 0x4661, 0x99, 0x03, 0xe5, 0xfa, 0x83, 0xa7, 0xf6, 0xe4);
+		
+		/// <summary>
+		/// Storage for OptionsStrictOn
+		/// </summary>
+		private global::System.String optionsStrictOnPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of OptionsStrictOn domain property.
+		/// Options Strict On
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/OptionsStrictOn.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/OptionsStrictOn.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/OptionsStrictOn.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("567d6f8d-615a-4661-9903-e5fa83a7f6e4")]
+		public global::System.String OptionsStrictOn
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return optionsStrictOnPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				OptionsStrictOnPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.OptionsStrictOn domain property.
+		/// </summary>
+		internal sealed partial class OptionsStrictOnPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private OptionsStrictOnPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.OptionsStrictOn domain property value handler.
+			/// </summary>
+			public static readonly OptionsStrictOnPropertyHandler Instance = new OptionsStrictOnPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.OptionsStrictOn domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return OptionsStrictOnDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.optionsStrictOnPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.optionsStrictOnPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region AddOptionsExplicit domain property code
+		
+		/// <summary>
+		/// AddOptionsExplicit domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid AddOptionsExplicitDomainPropertyId = new global::System.Guid(0x769200c0, 0x4be7, 0x4e6a, 0xbc, 0xe9, 0xf2, 0xee, 0x0c, 0x9c, 0x1f, 0xce);
+		
+		/// <summary>
+		/// Storage for AddOptionsExplicit
+		/// </summary>
+		private global::System.String addOptionsExplicitPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of AddOptionsExplicit domain property.
+		/// Add Options Explicit
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/AddOptionsExplicit.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/AddOptionsExplicit.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/AddOptionsExplicit.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("769200c0-4be7-4e6a-bce9-f2ee0c9c1fce")]
+		public global::System.String AddOptionsExplicit
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return addOptionsExplicitPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				AddOptionsExplicitPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.AddOptionsExplicit domain property.
+		/// </summary>
+		internal sealed partial class AddOptionsExplicitPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private AddOptionsExplicitPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.AddOptionsExplicit domain property value handler.
+			/// </summary>
+			public static readonly AddOptionsExplicitPropertyHandler Instance = new AddOptionsExplicitPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.AddOptionsExplicit domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return AddOptionsExplicitDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.addOptionsExplicitPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.addOptionsExplicitPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region OptionsExplicitOn domain property code
+		
+		/// <summary>
+		/// OptionsExplicitOn domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid OptionsExplicitOnDomainPropertyId = new global::System.Guid(0x3add2ebb, 0xe424, 0x4dbd, 0x9b, 0x82, 0xa6, 0xc6, 0xea, 0xd2, 0x54, 0x20);
+		
+		/// <summary>
+		/// Storage for OptionsExplicitOn
+		/// </summary>
+		private global::System.String optionsExplicitOnPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of OptionsExplicitOn domain property.
+		/// Options Explicit On
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/OptionsExplicitOn.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/OptionsExplicitOn.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/OptionsExplicitOn.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("3add2ebb-e424-4dbd-9b82-a6c6ead25420")]
+		public global::System.String OptionsExplicitOn
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return optionsExplicitOnPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				OptionsExplicitOnPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.OptionsExplicitOn domain property.
+		/// </summary>
+		internal sealed partial class OptionsExplicitOnPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private OptionsExplicitOnPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.OptionsExplicitOn domain property value handler.
+			/// </summary>
+			public static readonly OptionsExplicitOnPropertyHandler Instance = new OptionsExplicitOnPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.OptionsExplicitOn domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return OptionsExplicitOnDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.optionsExplicitOnPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.optionsExplicitOnPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region GenerateCSUsingStatement domain property code
+		
+		/// <summary>
+		/// GenerateCSUsingStatement domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid GenerateCSUsingStatementDomainPropertyId = new global::System.Guid(0x50e58d80, 0x288a, 0x4a19, 0xb8, 0xb5, 0x10, 0x8b, 0x2f, 0x5d, 0xa6, 0xbc);
+		
+		/// <summary>
+		/// Storage for GenerateCSUsingStatement
+		/// </summary>
+		private global::System.String generateCSUsingStatementPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of GenerateCSUsingStatement domain property.
+		/// Generate CSUsing Statement
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateCSUsingStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateCSUsingStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateCSUsingStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("50e58d80-288a-4a19-b8b5-108b2f5da6bc")]
+		public global::System.String GenerateCSUsingStatement
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return generateCSUsingStatementPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				GenerateCSUsingStatementPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.GenerateCSUsingStatement domain property.
+		/// </summary>
+		internal sealed partial class GenerateCSUsingStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private GenerateCSUsingStatementPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.GenerateCSUsingStatement domain property value handler.
+			/// </summary>
+			public static readonly GenerateCSUsingStatementPropertyHandler Instance = new GenerateCSUsingStatementPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.GenerateCSUsingStatement domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return GenerateCSUsingStatementDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.generateCSUsingStatementPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.generateCSUsingStatementPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region GenerateVBUsingStatement domain property code
+		
+		/// <summary>
+		/// GenerateVBUsingStatement domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid GenerateVBUsingStatementDomainPropertyId = new global::System.Guid(0xd8135d5c, 0x383c, 0x474f, 0xbf, 0x05, 0x55, 0xfb, 0xa1, 0xc4, 0x4b, 0x03);
+		
+		/// <summary>
+		/// Storage for GenerateVBUsingStatement
+		/// </summary>
+		private global::System.String generateVBUsingStatementPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of GenerateVBUsingStatement domain property.
+		/// Generate VBUsing Statement
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateVBUsingStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateVBUsingStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateVBUsingStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("d8135d5c-383c-474f-bf05-55fba1c44b03")]
+		public global::System.String GenerateVBUsingStatement
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return generateVBUsingStatementPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				GenerateVBUsingStatementPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.GenerateVBUsingStatement domain property.
+		/// </summary>
+		internal sealed partial class GenerateVBUsingStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private GenerateVBUsingStatementPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.GenerateVBUsingStatement domain property value handler.
+			/// </summary>
+			public static readonly GenerateVBUsingStatementPropertyHandler Instance = new GenerateVBUsingStatementPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.GenerateVBUsingStatement domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return GenerateVBUsingStatementDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.generateVBUsingStatementPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.generateVBUsingStatementPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region SafeUnboxToEnum domain property code
+		
+		/// <summary>
+		/// SafeUnboxToEnum domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid SafeUnboxToEnumDomainPropertyId = new global::System.Guid(0x29d1b322, 0x32a0, 0x4f9a, 0xa0, 0x6e, 0x42, 0xf4, 0xbf, 0x0a, 0x22, 0xeb);
+		
+		/// <summary>
+		/// Storage for SafeUnboxToEnum
+		/// </summary>
+		private global::System.String safeUnboxToEnumPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of SafeUnboxToEnum domain property.
+		/// Безопасная распаковка переменных с кастом в энам
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/SafeUnboxToEnum.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/SafeUnboxToEnum.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/SafeUnboxToEnum.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("29d1b322-32a0-4f9a-a06e-42f4bf0a22eb")]
+		public global::System.String SafeUnboxToEnum
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return safeUnboxToEnumPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				SafeUnboxToEnumPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.SafeUnboxToEnum domain property.
+		/// </summary>
+		internal sealed partial class SafeUnboxToEnumPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private SafeUnboxToEnumPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.SafeUnboxToEnum domain property value handler.
+			/// </summary>
+			public static readonly SafeUnboxToEnumPropertyHandler Instance = new SafeUnboxToEnumPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.SafeUnboxToEnum domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return SafeUnboxToEnumDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.safeUnboxToEnumPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.safeUnboxToEnumPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region GenerateCsIsStatement domain property code
+		
+		/// <summary>
+		/// GenerateCsIsStatement domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid GenerateCsIsStatementDomainPropertyId = new global::System.Guid(0xeea1df37, 0x9263, 0x4dd7, 0x97, 0xf7, 0xb3, 0x32, 0x14, 0xb2, 0xbf, 0x19);
+		
+		/// <summary>
+		/// Storage for GenerateCsIsStatement
+		/// </summary>
+		private global::System.String generateCsIsStatementPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of GenerateCsIsStatement domain property.
+		/// Generate Cs Is Statement
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateCsIsStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateCsIsStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateCsIsStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("eea1df37-9263-4dd7-97f7-b33214b2bf19")]
+		public global::System.String GenerateCsIsStatement
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return generateCsIsStatementPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				GenerateCsIsStatementPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.GenerateCsIsStatement domain property.
+		/// </summary>
+		internal sealed partial class GenerateCsIsStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private GenerateCsIsStatementPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.GenerateCsIsStatement domain property value handler.
+			/// </summary>
+			public static readonly GenerateCsIsStatementPropertyHandler Instance = new GenerateCsIsStatementPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.GenerateCsIsStatement domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return GenerateCsIsStatementDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.generateCsIsStatementPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.generateCsIsStatementPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region GenerateVbTypeOfIsStatement domain property code
+		
+		/// <summary>
+		/// GenerateVbTypeOfIsStatement domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid GenerateVbTypeOfIsStatementDomainPropertyId = new global::System.Guid(0xa1b94ed9, 0xf47d, 0x4dff, 0x92, 0x79, 0xb3, 0x71, 0xff, 0xf4, 0x85, 0x70);
+		
+		/// <summary>
+		/// Storage for GenerateVbTypeOfIsStatement
+		/// </summary>
+		private global::System.String generateVbTypeOfIsStatementPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of GenerateVbTypeOfIsStatement domain property.
+		/// Generate Vb Type Of Is Statement
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateVbTypeOfIsStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateVbTypeOfIsStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateVbTypeOfIsStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("a1b94ed9-f47d-4dff-9279-b371fff48570")]
+		public global::System.String GenerateVbTypeOfIsStatement
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return generateVbTypeOfIsStatementPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				GenerateVbTypeOfIsStatementPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.GenerateVbTypeOfIsStatement domain property.
+		/// </summary>
+		internal sealed partial class GenerateVbTypeOfIsStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private GenerateVbTypeOfIsStatementPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.GenerateVbTypeOfIsStatement domain property value handler.
+			/// </summary>
+			public static readonly GenerateVbTypeOfIsStatementPropertyHandler Instance = new GenerateVbTypeOfIsStatementPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.GenerateVbTypeOfIsStatement domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return GenerateVbTypeOfIsStatementDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.generateVbTypeOfIsStatementPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.generateVbTypeOfIsStatementPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region GenerateCsAsStatement domain property code
+		
+		/// <summary>
+		/// GenerateCsAsStatement domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid GenerateCsAsStatementDomainPropertyId = new global::System.Guid(0xdc11051e, 0x0396, 0x4dbc, 0x84, 0x58, 0x32, 0xff, 0xe8, 0xab, 0x55, 0x12);
+		
+		/// <summary>
+		/// Storage for GenerateCsAsStatement
+		/// </summary>
+		private global::System.String generateCsAsStatementPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of GenerateCsAsStatement domain property.
+		/// Generate Cs As Statement
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateCsAsStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateCsAsStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateCsAsStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("dc11051e-0396-4dbc-8458-32ffe8ab5512")]
+		public global::System.String GenerateCsAsStatement
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return generateCsAsStatementPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				GenerateCsAsStatementPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.GenerateCsAsStatement domain property.
+		/// </summary>
+		internal sealed partial class GenerateCsAsStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private GenerateCsAsStatementPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.GenerateCsAsStatement domain property value handler.
+			/// </summary>
+			public static readonly GenerateCsAsStatementPropertyHandler Instance = new GenerateCsAsStatementPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.GenerateCsAsStatement domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return GenerateCsAsStatementDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.generateCsAsStatementPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.generateCsAsStatementPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region GenerateVbTryCastStatement domain property code
+		
+		/// <summary>
+		/// GenerateVbTryCastStatement domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid GenerateVbTryCastStatementDomainPropertyId = new global::System.Guid(0x393a72ca, 0x30af, 0x4715, 0xa4, 0xee, 0x1e, 0xa3, 0x8e, 0x9c, 0x85, 0x14);
+		
+		/// <summary>
+		/// Storage for GenerateVbTryCastStatement
+		/// </summary>
+		private global::System.String generateVbTryCastStatementPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of GenerateVbTryCastStatement domain property.
+		/// Generate Vb Try Cast Statement
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateVbTryCastStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateVbTryCastStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateVbTryCastStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("393a72ca-30af-4715-a4ee-1ea38e9c8514")]
+		public global::System.String GenerateVbTryCastStatement
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return generateVbTryCastStatementPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				GenerateVbTryCastStatementPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.GenerateVbTryCastStatement domain property.
+		/// </summary>
+		internal sealed partial class GenerateVbTryCastStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private GenerateVbTryCastStatementPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.GenerateVbTryCastStatement domain property value handler.
+			/// </summary>
+			public static readonly GenerateVbTryCastStatementPropertyHandler Instance = new GenerateVbTryCastStatementPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.GenerateVbTryCastStatement domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return GenerateVbTryCastStatementDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.generateVbTryCastStatementPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.generateVbTryCastStatementPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region GenerateCsLockStatement domain property code
+		
+		/// <summary>
+		/// GenerateCsLockStatement domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid GenerateCsLockStatementDomainPropertyId = new global::System.Guid(0x8df88772, 0xb5fe, 0x45b5, 0xb3, 0x9e, 0x58, 0xef, 0x6e, 0xd3, 0x22, 0x93);
+		
+		/// <summary>
+		/// Storage for GenerateCsLockStatement
+		/// </summary>
+		private global::System.String generateCsLockStatementPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of GenerateCsLockStatement domain property.
+		/// Generate Cs Lock Statement
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateCsLockStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateCsLockStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateCsLockStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("8df88772-b5fe-45b5-b39e-58ef6ed32293")]
+		public global::System.String GenerateCsLockStatement
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return generateCsLockStatementPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				GenerateCsLockStatementPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.GenerateCsLockStatement domain property.
+		/// </summary>
+		internal sealed partial class GenerateCsLockStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private GenerateCsLockStatementPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.GenerateCsLockStatement domain property value handler.
+			/// </summary>
+			public static readonly GenerateCsLockStatementPropertyHandler Instance = new GenerateCsLockStatementPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.GenerateCsLockStatement domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return GenerateCsLockStatementDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.generateCsLockStatementPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.generateCsLockStatementPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region GenerateVbSyncLockStatement domain property code
+		
+		/// <summary>
+		/// GenerateVbSyncLockStatement domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid GenerateVbSyncLockStatementDomainPropertyId = new global::System.Guid(0x746cf092, 0x46e5, 0x4a4d, 0x99, 0x7e, 0x84, 0x01, 0x1c, 0x75, 0x6c, 0x26);
+		
+		/// <summary>
+		/// Storage for GenerateVbSyncLockStatement
+		/// </summary>
+		private global::System.String generateVbSyncLockStatementPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of GenerateVbSyncLockStatement domain property.
+		/// Generate Vb Sync Lock Statement
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateVbSyncLockStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateVbSyncLockStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateVbSyncLockStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("746cf092-46e5-4a4d-997e-84011c756c26")]
+		public global::System.String GenerateVbSyncLockStatement
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return generateVbSyncLockStatementPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				GenerateVbSyncLockStatementPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormModel.GenerateVbSyncLockStatement domain property.
+		/// </summary>
+		internal sealed partial class GenerateVbSyncLockStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		{
+			private GenerateVbSyncLockStatementPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormModel.GenerateVbSyncLockStatement domain property value handler.
+			/// </summary>
+			public static readonly GenerateVbSyncLockStatementPropertyHandler Instance = new GenerateVbSyncLockStatementPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormModel.GenerateVbSyncLockStatement domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return GenerateVbSyncLockStatementDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(WormModel element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.generateVbSyncLockStatementPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.generateVbSyncLockStatementPropertyStorage = newValue;
 					ValueChanged(element, oldValue, newValue);
 				}
 			}
@@ -1073,6 +2433,7 @@ namespace Worm.Designer
 		/// Идентификатор сущности
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/IdProperty.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Entity/IdProperty.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/IdProperty.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue("entity id")]
 		[global::System.ComponentModel.ReadOnly(true)]
@@ -1144,6 +2505,7 @@ namespace Worm.Designer
 		/// Наименование сущности
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/Name.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Entity/Name.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/Name.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue("Entity")]
 		[DslModeling::ElementName]
@@ -1233,6 +2595,7 @@ namespace Worm.Designer
 		/// Пространство имен для сущности
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/Namespace.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Entity/Namespace.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/Namespace.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("c0abea7d-0b57-4ddb-806f-1e0fdf96bb39")]
 		public global::System.String Namespace
@@ -1320,6 +2683,7 @@ namespace Worm.Designer
 		/// Entity generator behaviour
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/Behaviour.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Entity/Behaviour.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/Behaviour.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue(typeof(global::Worm.CodeGen.Core.EntityBehaviuor), "Default")]
 		[DslModeling::DomainObjectId("41ea2ab0-0bd7-4116-82a4-63a0a386ace4")]
@@ -1408,6 +2772,7 @@ namespace Worm.Designer
 		/// Описание сущности
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/Description.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Entity/Description.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/Description.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("b7e0a887-5470-48c5-8638-554df5318014")]
 		public global::System.String Description
@@ -1488,16 +2853,19 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for UseGenerics
 		/// </summary>
-		private global::System.Boolean useGenericsPropertyStorage;
+		private global::System.String useGenericsPropertyStorage = "False";
 		
 		/// <summary>
 		/// Gets or sets the value of UseGenerics domain property.
 		/// Определяет генерировать generic или строго типизированные методы
 		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/UseGenerics.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Entity/UseGenerics.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/UseGenerics.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
 		[DslModeling::DomainObjectId("fee6dfaf-50e0-4a7a-864d-90e3497b5246")]
-		public global::System.Boolean UseGenerics
+		public global::System.String UseGenerics
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1513,7 +2881,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Entity.UseGenerics domain property.
 		/// </summary>
-		internal sealed partial class UseGenericsPropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, global::System.Boolean>
+		internal sealed partial class UseGenericsPropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, global::System.String>
 		{
 			private UseGenericsPropertyHandler() { }
 		
@@ -1539,7 +2907,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(Entity element)
+			public override sealed global::System.String GetValue(Entity element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.useGenericsPropertyStorage;
@@ -1550,11 +2918,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Entity element, global::System.Boolean newValue)
+			public override sealed void SetValue(Entity element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1575,16 +2943,19 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for MakeInterface
 		/// </summary>
-		private global::System.Boolean makeInterfacePropertyStorage;
+		private global::System.String makeInterfacePropertyStorage = "False";
 		
 		/// <summary>
 		/// Gets or sets the value of MakeInterface domain property.
 		/// Определяет генерировать интерфейс для сущности
 		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/MakeInterface.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Entity/MakeInterface.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/MakeInterface.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
 		[DslModeling::DomainObjectId("e3b3d3c8-0ff2-48d5-9460-c087e81f051a")]
-		public global::System.Boolean MakeInterface
+		public global::System.String MakeInterface
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1600,7 +2971,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Entity.MakeInterface domain property.
 		/// </summary>
-		internal sealed partial class MakeInterfacePropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, global::System.Boolean>
+		internal sealed partial class MakeInterfacePropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, global::System.String>
 		{
 			private MakeInterfacePropertyHandler() { }
 		
@@ -1626,7 +2997,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(Entity element)
+			public override sealed global::System.String GetValue(Entity element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.makeInterfacePropertyStorage;
@@ -1637,11 +3008,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Entity element, global::System.Boolean newValue)
+			public override sealed void SetValue(Entity element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1670,6 +3041,7 @@ namespace Worm.Designer
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BaseEntityUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/BaseEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Entity/BaseEntity.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/BaseEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("24a9a6f7-5964-44fd-9547-5b9ec4e25da9")]
 		public global::System.String BaseEntity
@@ -2104,6 +3476,7 @@ namespace Worm.Designer
 		/// Имя таблицы
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Table/Name.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Table/Name.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Table/Name.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::ElementName]
 		[DslModeling::DomainObjectId("a17a80a3-b19c-4719-81d0-6015be74217d")]
@@ -2184,9 +3557,10 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of IdProperty domain property.
-		/// Description for Worm.Designer.Table.Id
+		/// Table Id
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Table/IdProperty.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Table/IdProperty.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Table/IdProperty.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.ReadOnly(true)]
 		[DslModeling::DomainProperty(Kind = DslModeling::DomainPropertyKind.Calculated)]
@@ -2257,6 +3631,7 @@ namespace Worm.Designer
 		/// Schema name for table
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Table/Schema.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Table/Schema.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Table/Schema.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue("dbo")]
 		[DslModeling::DomainObjectId("cca3b40b-cd96-4448-a20c-30c6e8592209")]
@@ -2424,6 +3799,7 @@ namespace Worm.Designer
 		/// Имя свойства
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Name.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Name.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Name.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::ElementName]
 		[DslModeling::DomainObjectId("8b3c0c4e-2990-403c-9528-4acabe75ecdd")]
@@ -2513,6 +3889,7 @@ namespace Worm.Designer
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.TypeUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Type.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Type.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Type.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue("System.String")]
 		[DslModeling::DomainObjectId("72a756c7-b007-4ade-ac88-696b306a4153")]
@@ -2601,6 +3978,7 @@ namespace Worm.Designer
 		/// Описание свойства
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Description.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Description.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Description.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("3f78744d-0bae-4bc7-8f97-8bd98bba72e3")]
 		public global::System.String Description
@@ -2688,6 +4066,7 @@ namespace Worm.Designer
 		/// Наименование колонки из БД
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/FieldName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/FieldName.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/FieldName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("4c13ac94-3d96-4ae5-ada6-c63cb97fc2c2")]
 		public global::System.String FieldName
@@ -2776,6 +4155,7 @@ namespace Worm.Designer
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.TableUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Table.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Table.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Table.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("8980f42e-ee24-4198-8a4e-b6965e0c0f0a")]
 		public global::System.String Table
@@ -2863,6 +4243,7 @@ namespace Worm.Designer
 		/// Уровень доступа к полю класса
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/FieldAccessLevel.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/FieldAccessLevel.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/FieldAccessLevel.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue(typeof(global::Worm.CodeGen.Core.AccessLevel), "Private")]
 		[DslModeling::DomainObjectId("ff8c776c-7228-4b15-8903-e744348ea9f9")]
@@ -2951,6 +4332,7 @@ namespace Worm.Designer
 		/// Property alias
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Alias.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Alias.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Alias.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("0e08e4e5-983f-434a-b23d-c230096ed20a")]
 		public global::System.String Alias
@@ -3038,6 +4420,7 @@ namespace Worm.Designer
 		/// Уровень доступа к полю класса
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/AccessLevel.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/AccessLevel.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/AccessLevel.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue(typeof(global::Worm.CodeGen.Core.AccessLevel), "Public")]
 		[DslModeling::DomainObjectId("67ec9948-c2e5-406c-a7ec-21932a4f97f5")]
@@ -3119,7 +4502,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Nullable
 		/// </summary>
-		private global::System.Boolean nullablePropertyStorage = true;
+		private global::System.String nullablePropertyStorage = "True";
 		
 		/// <summary>
 		/// Gets or sets the value of Nullable domain property.
@@ -3127,10 +4510,11 @@ namespace Worm.Designer
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Nullable.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Nullable.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Nullable.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue(true)]
+		[global::System.ComponentModel.DefaultValue("True")]
 		[DslModeling::DomainObjectId("32ebc3a6-9aa6-4fec-bcfa-b84adf684a9a")]
-		public global::System.Boolean Nullable
+		public global::System.String Nullable
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -3146,7 +4530,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.Nullable domain property.
 		/// </summary>
-		internal sealed partial class NullablePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.Boolean>
+		internal sealed partial class NullablePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
 		{
 			private NullablePropertyHandler() { }
 		
@@ -3172,98 +4556,10 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(Property element)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.nullablePropertyStorage;
-			}
-		
-			/// <summary>
-			/// Sets property value on an element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.Boolean newValue)
-			{
-				if (element == null) throw new global::System.ArgumentNullException("element");
-		
-				global::System.Boolean oldValue = GetValue(element);
-				if (newValue != oldValue)
-				{
-					ValueChanging(element, oldValue, newValue);
-					element.nullablePropertyStorage = newValue;
-					ValueChanged(element, oldValue, newValue);
-				}
-			}
-		}
-		
-		#endregion
-		#region Attributes domain property code
-		
-		/// <summary>
-		/// Attributes domain property Id.
-		/// </summary>
-		public static readonly global::System.Guid AttributesDomainPropertyId = new global::System.Guid(0x2a909caa, 0x923a, 0x4796, 0xbb, 0x3c, 0xc1, 0x6f, 0x23, 0x66, 0x4b, 0x16);
-		
-		/// <summary>
-		/// Storage for Attributes
-		/// </summary>
-		private global::System.String attributesPropertyStorage = string.Empty;
-		
-		/// <summary>
-		/// Gets or sets the value of Attributes domain property.
-		/// Атрибуты свойства
-		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.FlagEnumUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
-		[DslDesign::DisplayNameResource("Worm.Designer.Property/Attributes.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslDesign::DescriptionResource("Worm.Designer.Property/Attributes.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[DslModeling::DomainObjectId("2a909caa-923a-4796-bb3c-c16f23664b16")]
-		public global::System.String Attributes
-		{
-			[global::System.Diagnostics.DebuggerStepThrough]
-			get
-			{
-				return attributesPropertyStorage;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				AttributesPropertyHandler.Instance.SetValue(this, value);
-			}
-		}
-		/// <summary>
-		/// Value handler for the Property.Attributes domain property.
-		/// </summary>
-		internal sealed partial class AttributesPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
-		{
-			private AttributesPropertyHandler() { }
-		
-			/// <summary>
-			/// Gets the singleton instance of the Property.Attributes domain property value handler.
-			/// </summary>
-			public static readonly AttributesPropertyHandler Instance = new AttributesPropertyHandler();
-		
-			/// <summary>
-			/// Gets the Id of the Property.Attributes domain property.
-			/// </summary>
-			public sealed override global::System.Guid DomainPropertyId
-			{
-				[global::System.Diagnostics.DebuggerStepThrough]
-				get
-				{
-					return AttributesDomainPropertyId;
-				}
-			}
-			
-			/// <summary>
-			/// Gets a strongly-typed value of the property on specified element.
-			/// </summary>
-			/// <param name="element">Element which owns the property.</param>
-			/// <returns>Property value.</returns>
 			public override sealed global::System.String GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
-				return element.attributesPropertyStorage;
+				return element.nullablePropertyStorage;
 			}
 		
 			/// <summary>
@@ -3279,7 +4575,7 @@ namespace Worm.Designer
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
-					element.attributesPropertyStorage = newValue;
+					element.nullablePropertyStorage = newValue;
 					ValueChanged(element, oldValue, newValue);
 				}
 			}
@@ -3296,7 +4592,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Disabled
 		/// </summary>
-		private global::System.Boolean disabledPropertyStorage;
+		private global::System.String disabledPropertyStorage = "False";
 		
 		/// <summary>
 		/// Gets or sets the value of Disabled domain property.
@@ -3304,9 +4600,11 @@ namespace Worm.Designer
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Disabled.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Disabled.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Disabled.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
 		[DslModeling::DomainObjectId("55b97295-ab7f-4ae8-b6a3-5cfee02b9be9")]
-		public global::System.Boolean Disabled
+		public global::System.String Disabled
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -3322,7 +4620,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.Disabled domain property.
 		/// </summary>
-		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.Boolean>
+		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
 		{
 			private DisabledPropertyHandler() { }
 		
@@ -3348,7 +4646,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(Property element)
+			public override sealed global::System.String GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.disabledPropertyStorage;
@@ -3359,11 +4657,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.Boolean newValue)
+			public override sealed void SetValue(Property element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -3391,6 +4689,7 @@ namespace Worm.Designer
 		/// Make property obsolete
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Obsolete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Obsolete.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Obsolete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.DefaultValue(typeof(global::Worm.CodeGen.Core.Descriptors.ObsoleteType), "None")]
 		[DslModeling::DomainObjectId("53125034-447a-4175-b30d-a6ea4885f846")]
@@ -3479,6 +4778,7 @@ namespace Worm.Designer
 		/// Description for obsolete property
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/ObsoleteDescription.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/ObsoleteDescription.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/ObsoleteDescription.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("c71cec64-dbd4-4be1-9e67-c9416fbd8978")]
 		public global::System.String ObsoleteDescription
@@ -3559,7 +4859,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for EnablePropertyChanged
 		/// </summary>
-		private global::System.Boolean enablePropertyChangedPropertyStorage;
+		private global::System.String enablePropertyChangedPropertyStorage = "False";
 		
 		/// <summary>
 		/// Gets or sets the value of EnablePropertyChanged domain property.
@@ -3569,9 +4869,11 @@ namespace Worm.Designer
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/EnablePropertyChanged.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/EnablePropertyChanged.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/EnablePropertyChanged.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
 		[DslModeling::DomainObjectId("27b55a46-03a8-4f6d-96c8-df53b4fd52ab")]
-		public global::System.Boolean EnablePropertyChanged
+		public global::System.String EnablePropertyChanged
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -3587,7 +4889,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.EnablePropertyChanged domain property.
 		/// </summary>
-		internal sealed partial class EnablePropertyChangedPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.Boolean>
+		internal sealed partial class EnablePropertyChangedPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
 		{
 			private EnablePropertyChangedPropertyHandler() { }
 		
@@ -3613,7 +4915,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(Property element)
+			public override sealed global::System.String GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.enablePropertyChangedPropertyStorage;
@@ -3624,15 +4926,915 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.Boolean newValue)
+			public override sealed void SetValue(Property element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
 					element.enablePropertyChangedPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region PK domain property code
+		
+		/// <summary>
+		/// PK domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid PKDomainPropertyId = new global::System.Guid(0x343f5f78, 0x64cb, 0x4219, 0xbc, 0xd0, 0xcf, 0xaf, 0x0b, 0xde, 0x39, 0xfb);
+		
+		/// <summary>
+		/// Storage for PK
+		/// </summary>
+		private global::System.String pKPropertyStorage = "false";
+		
+		/// <summary>
+		/// Gets or sets the value of PK domain property.
+		/// Description for Worm.Designer.Property.PK
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/PK.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/PK.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/PK.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("false")]
+		[DslModeling::DomainObjectId("343f5f78-64cb-4219-bcd0-cfaf0bde39fb")]
+		public global::System.String PK
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return pKPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				PKPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.PK domain property.
+		/// </summary>
+		internal sealed partial class PKPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private PKPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.PK domain property value handler.
+			/// </summary>
+			public static readonly PKPropertyHandler Instance = new PKPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.PK domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return PKDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.pKPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.pKPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region Factory domain property code
+		
+		/// <summary>
+		/// Factory domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid FactoryDomainPropertyId = new global::System.Guid(0xd9353848, 0xd1ec, 0x4b07, 0x9f, 0x57, 0xd6, 0x2f, 0x33, 0xcb, 0xc2, 0x3c);
+		
+		/// <summary>
+		/// Storage for Factory
+		/// </summary>
+		private global::System.String factoryPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of Factory domain property.
+		/// Factory
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/Factory.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Factory.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/Factory.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("d9353848-d1ec-4b07-9f57-d62f33cbc23c")]
+		public global::System.String Factory
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return factoryPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				FactoryPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.Factory domain property.
+		/// </summary>
+		internal sealed partial class FactoryPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private FactoryPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.Factory domain property value handler.
+			/// </summary>
+			public static readonly FactoryPropertyHandler Instance = new FactoryPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.Factory domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return FactoryDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.factoryPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.factoryPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region InsertDefault domain property code
+		
+		/// <summary>
+		/// InsertDefault domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid InsertDefaultDomainPropertyId = new global::System.Guid(0xb07345b1, 0x8507, 0x4e4f, 0xbc, 0xde, 0xe9, 0xea, 0x2b, 0xfb, 0x97, 0xda);
+		
+		/// <summary>
+		/// Storage for InsertDefault
+		/// </summary>
+		private global::System.String insertDefaultPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of InsertDefault domain property.
+		/// InsertDefault
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/InsertDefault.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/InsertDefault.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/InsertDefault.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("b07345b1-8507-4e4f-bcde-e9ea2bfb97da")]
+		public global::System.String InsertDefault
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return insertDefaultPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				InsertDefaultPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.InsertDefault domain property.
+		/// </summary>
+		internal sealed partial class InsertDefaultPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private InsertDefaultPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.InsertDefault domain property value handler.
+			/// </summary>
+			public static readonly InsertDefaultPropertyHandler Instance = new InsertDefaultPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.InsertDefault domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return InsertDefaultDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.insertDefaultPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.insertDefaultPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region PrimaryKey domain property code
+		
+		/// <summary>
+		/// PrimaryKey domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid PrimaryKeyDomainPropertyId = new global::System.Guid(0xb73e60df, 0xa00d, 0x4fd7, 0xa1, 0xee, 0x6c, 0x00, 0x67, 0x02, 0x94, 0xa7);
+		
+		/// <summary>
+		/// Storage for PrimaryKey
+		/// </summary>
+		private global::System.String primaryKeyPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of PrimaryKey domain property.
+		/// Primary Key
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/PrimaryKey.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/PrimaryKey.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/PrimaryKey.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("b73e60df-a00d-4fd7-a1ee-6c00670294a7")]
+		public global::System.String PrimaryKey
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return primaryKeyPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				PrimaryKeyPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.PrimaryKey domain property.
+		/// </summary>
+		internal sealed partial class PrimaryKeyPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private PrimaryKeyPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.PrimaryKey domain property value handler.
+			/// </summary>
+			public static readonly PrimaryKeyPropertyHandler Instance = new PrimaryKeyPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.PrimaryKey domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return PrimaryKeyDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.primaryKeyPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.primaryKeyPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region Private domain property code
+		
+		/// <summary>
+		/// Private domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid PrivateDomainPropertyId = new global::System.Guid(0x14b6d58c, 0x4c31, 0x4dc9, 0xa0, 0x8a, 0x5e, 0x2c, 0xef, 0x31, 0x66, 0xa3);
+		
+		/// <summary>
+		/// Storage for Private
+		/// </summary>
+		private global::System.String privatePropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of Private domain property.
+		/// Private
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/Private.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Private.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/Private.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("14b6d58c-4c31-4dc9-a08a-5e2cef3166a3")]
+		public global::System.String Private
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return privatePropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				PrivatePropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.Private domain property.
+		/// </summary>
+		internal sealed partial class PrivatePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private PrivatePropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.Private domain property value handler.
+			/// </summary>
+			public static readonly PrivatePropertyHandler Instance = new PrivatePropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.Private domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return PrivateDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.privatePropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.privatePropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region ReadOnly domain property code
+		
+		/// <summary>
+		/// ReadOnly domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid ReadOnlyDomainPropertyId = new global::System.Guid(0x283e4887, 0xf046, 0x4928, 0x81, 0xc4, 0x49, 0xac, 0xbf, 0xf2, 0xbb, 0x72);
+		
+		/// <summary>
+		/// Storage for ReadOnly
+		/// </summary>
+		private global::System.String readOnlyPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of ReadOnly domain property.
+		/// Read Only
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/ReadOnly.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/ReadOnly.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/ReadOnly.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("283e4887-f046-4928-81c4-49acbff2bb72")]
+		public global::System.String ReadOnly
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return readOnlyPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				ReadOnlyPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.ReadOnly domain property.
+		/// </summary>
+		internal sealed partial class ReadOnlyPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private ReadOnlyPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.ReadOnly domain property value handler.
+			/// </summary>
+			public static readonly ReadOnlyPropertyHandler Instance = new ReadOnlyPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.ReadOnly domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return ReadOnlyDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.readOnlyPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.readOnlyPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region RowVersion domain property code
+		
+		/// <summary>
+		/// RowVersion domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid RowVersionDomainPropertyId = new global::System.Guid(0x09b6faf5, 0x7ee9, 0x4af7, 0x9b, 0x05, 0x1b, 0x30, 0xba, 0x7e, 0x9b, 0x4d);
+		
+		/// <summary>
+		/// Storage for RowVersion
+		/// </summary>
+		private global::System.String rowVersionPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of RowVersion domain property.
+		/// Row Version
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/RowVersion.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/RowVersion.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/RowVersion.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("09b6faf5-7ee9-4af7-9b05-1b30ba7e9b4d")]
+		public global::System.String RowVersion
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return rowVersionPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				RowVersionPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.RowVersion domain property.
+		/// </summary>
+		internal sealed partial class RowVersionPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private RowVersionPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.RowVersion domain property value handler.
+			/// </summary>
+			public static readonly RowVersionPropertyHandler Instance = new RowVersionPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.RowVersion domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return RowVersionDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.rowVersionPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.rowVersionPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region RV domain property code
+		
+		/// <summary>
+		/// RV domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid RVDomainPropertyId = new global::System.Guid(0xe1f9c393, 0xdbbb, 0x4479, 0xa9, 0xf5, 0x98, 0x0d, 0xeb, 0x4a, 0xb8, 0x58);
+		
+		/// <summary>
+		/// Storage for RV
+		/// </summary>
+		private global::System.String rVPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of RV domain property.
+		/// RV
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/RV.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/RV.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/RV.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("e1f9c393-dbbb-4479-a9f5-980deb4ab858")]
+		public global::System.String RV
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return rVPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				RVPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.RV domain property.
+		/// </summary>
+		internal sealed partial class RVPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private RVPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.RV domain property value handler.
+			/// </summary>
+			public static readonly RVPropertyHandler Instance = new RVPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.RV domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return RVDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.rVPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.rVPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region SyncInsert domain property code
+		
+		/// <summary>
+		/// SyncInsert domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid SyncInsertDomainPropertyId = new global::System.Guid(0x7ef75517, 0x7a6d, 0x4435, 0xba, 0x28, 0x12, 0xfb, 0xc2, 0x77, 0x29, 0x6d);
+		
+		/// <summary>
+		/// Storage for SyncInsert
+		/// </summary>
+		private global::System.String syncInsertPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of SyncInsert domain property.
+		/// Sync Insert
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/SyncInsert.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/SyncInsert.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/SyncInsert.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("7ef75517-7a6d-4435-ba28-12fbc277296d")]
+		public global::System.String SyncInsert
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return syncInsertPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				SyncInsertPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.SyncInsert domain property.
+		/// </summary>
+		internal sealed partial class SyncInsertPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private SyncInsertPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.SyncInsert domain property value handler.
+			/// </summary>
+			public static readonly SyncInsertPropertyHandler Instance = new SyncInsertPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.SyncInsert domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return SyncInsertDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.syncInsertPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.syncInsertPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region SyncUpdate domain property code
+		
+		/// <summary>
+		/// SyncUpdate domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid SyncUpdateDomainPropertyId = new global::System.Guid(0x535c031e, 0x5176, 0x46ea, 0xbe, 0x1c, 0x51, 0x38, 0xc1, 0x76, 0xe8, 0x20);
+		
+		/// <summary>
+		/// Storage for SyncUpdate
+		/// </summary>
+		private global::System.String syncUpdatePropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of SyncUpdate domain property.
+		/// Sync Update
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/SyncUpdate.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/SyncUpdate.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/SyncUpdate.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("535c031e-5176-46ea-be1c-5138c176e820")]
+		public global::System.String SyncUpdate
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return syncUpdatePropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				SyncUpdatePropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.SyncUpdate domain property.
+		/// </summary>
+		internal sealed partial class SyncUpdatePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private SyncUpdatePropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.SyncUpdate domain property value handler.
+			/// </summary>
+			public static readonly SyncUpdatePropertyHandler Instance = new SyncUpdatePropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.SyncUpdate domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return SyncUpdateDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.syncUpdatePropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.syncUpdatePropertyStorage = newValue;
 					ValueChanged(element, oldValue, newValue);
 				}
 			}
@@ -4034,7 +6236,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for DirectCascadeDelete
 		/// </summary>
-		private global::System.Boolean directCascadeDeletePropertyStorage = true;
+		private global::System.String directCascadeDeletePropertyStorage = "true";
 		
 		/// <summary>
 		/// Gets or sets the value of DirectCascadeDelete domain property.
@@ -4043,9 +6245,9 @@ namespace Worm.Designer
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/DirectCascadeDelete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/DirectCascadeDelete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue(true)]
+		[global::System.ComponentModel.DefaultValue("true")]
 		[DslModeling::DomainObjectId("45766242-ccce-4e5a-8ed7-14fff5253190")]
-		public global::System.Boolean DirectCascadeDelete
+		public global::System.String DirectCascadeDelete
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -4061,7 +6263,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the SelfRelation.DirectCascadeDelete domain property.
 		/// </summary>
-		internal sealed partial class DirectCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, global::System.Boolean>
+		internal sealed partial class DirectCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, global::System.String>
 		{
 			private DirectCascadeDeletePropertyHandler() { }
 		
@@ -4087,7 +6289,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(SelfRelation element)
+			public override sealed global::System.String GetValue(SelfRelation element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.directCascadeDeletePropertyStorage;
@@ -4098,11 +6300,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(SelfRelation element, global::System.Boolean newValue)
+			public override sealed void SetValue(SelfRelation element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -4210,7 +6412,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Disabled
 		/// </summary>
-		private global::System.Boolean disabledPropertyStorage;
+		private global::System.String disabledPropertyStorage = "false";
 		
 		/// <summary>
 		/// Gets or sets the value of Disabled domain property.
@@ -4219,8 +6421,9 @@ namespace Worm.Designer
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/Disabled.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/Disabled.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("false")]
 		[DslModeling::DomainObjectId("00f08749-66ca-48dd-93d9-5952d87203fb")]
-		public global::System.Boolean Disabled
+		public global::System.String Disabled
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -4236,7 +6439,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the SelfRelation.Disabled domain property.
 		/// </summary>
-		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, global::System.Boolean>
+		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, global::System.String>
 		{
 			private DisabledPropertyHandler() { }
 		
@@ -4262,7 +6465,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(SelfRelation element)
+			public override sealed global::System.String GetValue(SelfRelation element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.disabledPropertyStorage;
@@ -4273,11 +6476,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(SelfRelation element, global::System.Boolean newValue)
+			public override sealed void SetValue(SelfRelation element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -4385,7 +6588,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for ReverseCascadeDelete
 		/// </summary>
-		private global::System.Boolean reverseCascadeDeletePropertyStorage = true;
+		private global::System.String reverseCascadeDeletePropertyStorage = "true";
 		
 		/// <summary>
 		/// Gets or sets the value of ReverseCascadeDelete domain property.
@@ -4394,9 +6597,9 @@ namespace Worm.Designer
 		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/ReverseCascadeDelete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/ReverseCascadeDelete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue(true)]
+		[global::System.ComponentModel.DefaultValue("true")]
 		[DslModeling::DomainObjectId("ba170593-27b7-4523-9d3a-a6551c492c26")]
-		public global::System.Boolean ReverseCascadeDelete
+		public global::System.String ReverseCascadeDelete
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -4412,7 +6615,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the SelfRelation.ReverseCascadeDelete domain property.
 		/// </summary>
-		internal sealed partial class ReverseCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, global::System.Boolean>
+		internal sealed partial class ReverseCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, global::System.String>
 		{
 			private ReverseCascadeDeletePropertyHandler() { }
 		
@@ -4438,7 +6641,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.Boolean GetValue(SelfRelation element)
+			public override sealed global::System.String GetValue(SelfRelation element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.reverseCascadeDeletePropertyStorage;
@@ -4449,11 +6652,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(SelfRelation element, global::System.Boolean newValue)
+			public override sealed void SetValue(SelfRelation element, global::System.String newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.Boolean oldValue = GetValue(element);
+				global::System.String oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);

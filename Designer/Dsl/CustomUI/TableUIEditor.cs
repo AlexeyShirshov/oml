@@ -72,6 +72,7 @@ namespace Worm.Designer
             {
                 entity = (context.Instance as SelfRelation).Entity;
             }
+           
 
             if (entity != null)
             {
@@ -79,6 +80,10 @@ namespace Worm.Designer
                 string entityName = entity.Name;
                 // Current graph 
                 IList<Table> tables = entity.Tables;
+                if (tables == null)
+                {
+                    tables = entity.WormModel.Tables;
+                }
                 if (tables != null)
                 {
                     // Build list box 
@@ -103,7 +108,47 @@ namespace Worm.Designer
                     // Result 
                     return listBox.SelectedItem;
                 }
+                
 
+
+            }
+             if (context.Instance is EntityConnector)
+            {
+                EntityConnector relation = (EntityConnector)context.Instance;
+                ListBox listBox = new ListBox();
+                listBox.Sorted = true;
+                listBox.Click += new EventHandler(listBox_Click);
+                listBox.BorderStyle = BorderStyle.None;
+     
+                // Current graph 
+                IList<Table> tables = ((Entity)relation.FromShape.ModelElement).Tables;
+                if (tables != null)
+                {
+       
+                    foreach (Table childTable in tables)
+                    {
+                        listBox.Items.Add(childTable.Name);
+                    }
+               }
+                tables = ((Entity)relation.ToShape.ModelElement).Tables;
+                if (tables != null)
+                {
+
+                    foreach (Table childTable in tables)
+                    {
+                        listBox.Items.Add(childTable.Name);
+                    }
+                }
+                listBox.SelectedItem = value;
+
+                // Handle the service 
+                this.formsEditorService =
+                    (IWindowsFormsEditorService)provider.
+                    GetService(typeof(IWindowsFormsEditorService));
+                this.formsEditorService.DropDownControl(listBox);
+
+                // Result 
+                return listBox.SelectedItem;
             }
 
             // Default behavior 

@@ -117,7 +117,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Split -->
-    <xsd:attribute name="split" type="xsd:boolean" >
+    <xsd:attribute name="split" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Split</xsd:documentation>
       </xsd:annotation>
@@ -128,16 +128,106 @@
         <xsd:documentation>Entity Schema Def Class Name Suffix</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <!-- Property: LanguageSpecificHacks -->
-    <xsd:attribute name="languageSpecificHacks" type="xsd:string" >
-      <xsd:annotation>
-        <xsd:documentation>Language Specific Hacks</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
     <!-- Property: PrivateMembersPrefix -->
     <xsd:attribute name="privateMembersPrefix" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Private Members Prefix</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: FileNamePrefix -->
+    <xsd:attribute name="fileNamePrefix" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>File Name Prefix</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: DerivedGenericMembersRequireConstraits -->
+    <xsd:attribute name="derivedGenericMembersRequireConstraits" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Generic члены производных классов требует наличия констрейтов</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: MethodsInsteadParametrizedProperties -->
+    <xsd:attribute name="methodsInsteadParametrizedProperties" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Генерировать методы вместо параметризованых пропертей</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: AddOptionsStrict -->
+    <xsd:attribute name="addOptionsStrict" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Add Options Strict</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: OptionsStrictOn -->
+    <xsd:attribute name="optionsStrictOn" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Options Strict On</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: AddOptionsExplicit -->
+    <xsd:attribute name="addOptionsExplicit" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Add Options Explicit</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: OptionsExplicitOn -->
+    <xsd:attribute name="optionsExplicitOn" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Options Explicit On</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: GenerateCSUsingStatement -->
+    <xsd:attribute name="generateCSUsingStatement" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Generate CSUsing Statement</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: GenerateVBUsingStatement -->
+    <xsd:attribute name="generateVBUsingStatement" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Generate VBUsing Statement</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: SafeUnboxToEnum -->
+    <xsd:attribute name="safeUnboxToEnum" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Безопасная распаковка переменных с кастом в энам</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: GenerateCsIsStatement -->
+    <xsd:attribute name="generateCsIsStatement" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Generate Cs Is Statement</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: GenerateVbTypeOfIsStatement -->
+    <xsd:attribute name="generateVbTypeOfIsStatement" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Generate Vb Type Of Is Statement</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: GenerateCsAsStatement -->
+    <xsd:attribute name="generateCsAsStatement" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Generate Cs As Statement</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: GenerateVbTryCastStatement -->
+    <xsd:attribute name="generateVbTryCastStatement" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Generate Vb Try Cast Statement</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: GenerateCsLockStatement -->
+    <xsd:attribute name="generateCsLockStatement" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Generate Cs Lock Statement</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: GenerateVbSyncLockStatement -->
+    <xsd:attribute name="generateVbSyncLockStatement" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Generate Vb Sync Lock Statement</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -275,13 +365,13 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: UseGenerics -->
-    <xsd:attribute name="useGenerics" type="xsd:boolean" >
+    <xsd:attribute name="useGenerics" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Определяет генерировать generic или строго типизированные методы</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: MakeInterface -->
-    <xsd:attribute name="makeInterface" type="xsd:boolean" >
+    <xsd:attribute name="makeInterface" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Определяет генерировать интерфейс для сущности</xsd:documentation>
       </xsd:annotation>
@@ -414,19 +504,13 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Nullable -->
-    <xsd:attribute name="nullable" type="xsd:boolean" >
+    <xsd:attribute name="nullable" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Nullable</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <!-- Property: Attributes -->
-    <xsd:attribute name="attributes" type="xsd:string" >
-      <xsd:annotation>
-        <xsd:documentation>Атрибуты свойства</xsd:documentation>
-      </xsd:annotation>
-    </xsd:attribute>
     <!-- Property: Disabled -->
-    <xsd:attribute name="disabled" type="xsd:boolean" >
+    <xsd:attribute name="disabled" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Признак отключения проперти</xsd:documentation>
       </xsd:annotation>
@@ -444,9 +528,65 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: EnablePropertyChanged -->
-    <xsd:attribute name="enablePropertyChanged" type="xsd:boolean" >
+    <xsd:attribute name="enablePropertyChanged" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Включает для свойства поднятие события PropertyChanged, при этом реализация идет на уровне конкретной сущности. При этом в целом для сущности отключается общий механизм этого события.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: PK -->
+    <xsd:attribute name="pK" type="xsd:string" />
+    <!-- Property: Factory -->
+    <xsd:attribute name="factory" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Factory</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: InsertDefault -->
+    <xsd:attribute name="insertDefault" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>InsertDefault</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: PrimaryKey -->
+    <xsd:attribute name="primaryKey" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Primary Key</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Private -->
+    <xsd:attribute name="private" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Private</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: ReadOnly -->
+    <xsd:attribute name="readOnly" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Read Only</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: RowVersion -->
+    <xsd:attribute name="rowVersion" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Row Version</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: RV -->
+    <xsd:attribute name="rV" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>RV</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: SyncInsert -->
+    <xsd:attribute name="syncInsert" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Sync Insert</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: SyncUpdate -->
+    <xsd:attribute name="syncUpdate" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Sync Update</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
   </xsd:complexType>
@@ -500,7 +640,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: DirectCascadeDelete -->
-    <xsd:attribute name="directCascadeDelete" type="xsd:boolean" >
+    <xsd:attribute name="directCascadeDelete" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Kаскадное удаление</xsd:documentation>
       </xsd:annotation>
@@ -512,7 +652,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Disabled -->
-    <xsd:attribute name="disabled" type="xsd:boolean" >
+    <xsd:attribute name="disabled" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Disable relation</xsd:documentation>
       </xsd:annotation>
@@ -524,7 +664,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: ReverseCascadeDelete -->
-    <xsd:attribute name="reverseCascadeDelete" type="xsd:boolean" >
+    <xsd:attribute name="reverseCascadeDelete" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Каскадное удаление</xsd:documentation>
       </xsd:annotation>
@@ -676,7 +816,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: LeftCascadeDelete -->
-    <xsd:attribute name="leftCascadeDelete" type="xsd:boolean" >
+    <xsd:attribute name="leftCascadeDelete" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Каскадное удаление</xsd:documentation>
       </xsd:annotation>
@@ -694,7 +834,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Disabled -->
-    <xsd:attribute name="disabled" type="xsd:boolean" />
+    <xsd:attribute name="disabled" type="xsd:string" />
     <!-- Property: Table -->
     <xsd:attribute name="table" type="xsd:string" />
     <!-- Property: LeftEntity -->
@@ -722,7 +862,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: RightCascadeDelete -->
-    <xsd:attribute name="rightCascadeDelete" type="xsd:boolean" >
+    <xsd:attribute name="rightCascadeDelete" type="xsd:string" >
       <xsd:annotation>
         <xsd:documentation>Каскадное удаление</xsd:documentation>
       </xsd:annotation>

@@ -15,6 +15,7 @@ using Microsoft.VisualStudio.TextTemplating.VSHost;
 using Microsoft.VisualStudio.Designer.Interfaces;
 using Microsoft.VisualStudio.Shell.Interop;
 using EnvDTE;
+using EnvDTE80;
 
 namespace Worm.Designer
 {
@@ -43,7 +44,13 @@ namespace Worm.Designer
                         "Unsupported project type. ActiveWriter currently supports C# and Visual Basic.NET projects.");
             }
 
-            
+            if (!inputFileName.EndsWith(".wxml"))
+            {
+                projectItem.Properties.Item("CustomTool").Value = string.Empty;
+                return null;
+            }
+          
+
             ResourceManager manager =
                 new ResourceManager("Worm.Designer.VSPackage",
                                     typeof(WormCodeGenerator).Assembly);
@@ -54,11 +61,36 @@ namespace Worm.Designer
                     .Replace("%MODELFILEFULLNAME%", fi.FullName)
                     .Replace("%NAMESPACE%", FileNamespace)
                     .Replace("%EXT%", fileExtension)
+                    .Replace("%ISCODE%", "False")
                     .Replace("%PID%", currentProcess.Id.ToString());
 
-                      
             byte[] data = base.GenerateCode(inputFileName, inputFileContent);
-            data = GenerateCode(data, ext);
+
+            string localFile = Path.Combine(Path.GetDirectoryName(projectItem.ContainingProject.FullName),
+            fi.Name + ".xml");
+
+            using (FileStream fs = File.Create(localFile))
+            {
+                // Add some information to the file.
+                fs.Write(data, 0, data.Length);
+            }
+
+            projectItem.ProjectItems.AddFromFile(localFile);
+            EnvDTE.ProjectItem xmlProjectItem = projectItem.ProjectItems.Item(fi.Name + ".xml");
+
+           
+
+            inputFileContent =
+               manager.GetObject("XmlGeneratorTemplate").ToString()
+                   .Replace("%MODELFILE%", fi.Name)
+                   .Replace("%MODELFILEFULLNAME%", fi.FullName)
+                   .Replace("%NAMESPACE%", FileNamespace)
+                   .Replace("%EXT%", fileExtension)
+                   .Replace("%ISCODE%", "True")
+                   .Replace("%PID%", currentProcess.Id.ToString());
+
+
+            data = base.GenerateCode(inputFileName, inputFileContent);
             return data;
         }
 
@@ -124,8 +156,6 @@ namespace Worm.Designer
                 }
                 settings.PrivateMembersPrefix = "m_";
                 settings.Split = false;
-
-               
 
                 CodeCompileUnit compileUnit = generator.GetFullSingleUnit(settings);
 
