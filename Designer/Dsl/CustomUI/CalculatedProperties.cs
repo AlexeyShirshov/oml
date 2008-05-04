@@ -101,25 +101,47 @@ namespace Worm.Designer
             Property property = e.ModelElement as Property;
             if (property != null)
             {
-                if (property.Entity.WormModel.Types.FindAll(t => t.Name == property.Type).Count == 0)
+
+                using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
                 {
-                    using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    if (property.Entity.WormModel.Types.FindAll(t => t.Name == property.Type).Count == 0)
                     {
                         WormType type = new WormType(property.Entity.WormModel.Store);
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
-                        string idProperty =  Utils.GetIdProperty(property.Type);
+                        string idProperty = Utils.GetIdProperty(property.Type);
                         if (idProperty != null && bool.Parse(property.Nullable))
                         {
                             idProperty += "nullable";
                         }
                         type.IdProperty = idProperty ?? "t" + property.Type;
-
-
-                        txAdd.Commit();
                     }
+
+                  
+                    if (e.OldValue != e.NewValue && e.DomainProperty.Name == "Supressed")
+                    {
+                        if ((string)(e.NewValue) == "True")
+                        {
+                            SupressedProperty sp = new SupressedProperty(property.Entity.WormModel.Store);
+                            sp.Entity = property.Entity;
+                            sp.Name = property.Name;
+                        }
+
+                        if ((string)(e.NewValue) == "False")
+                        {
+                            List<SupressedProperty> list = property.Entity.SupressedProperties.FindAll
+                                (p => p.Name == property.Name);
+                            foreach (SupressedProperty p in list)
+                            {
+                                p.Delete();
+                            }
+                        }
+                    }
+
+                    txAdd.Commit();
                 }
             }
+
             base.ElementPropertyChanged(e);
         }
    
@@ -154,6 +176,16 @@ namespace Worm.Designer
                         {
                             property.Entity.WormModel.Types.Find(t => t.Name == property.Type).Delete();
                         }
+
+                        if (bool.Parse(property.Supressed))
+                        {
+                            List<SupressedProperty> list = property.Entity.SupressedProperties.FindAll(p => p.Name == property.Name);
+                            foreach (SupressedProperty sp in list)
+                            {
+                                sp.Delete();
+                            }
+                        }
+
                       txAdd.Commit();
                     }
             }
@@ -179,21 +211,28 @@ namespace Worm.Designer
             if (property != null)
             {
 
-                if (property.Entity.WormModel.Types.FindAll(t => t.Name == property.Type).Count == 0)
+                using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
                 {
-                    using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    if (property.Entity.WormModel.Types.FindAll(t => t.Name == property.Type).Count == 0)
                     {
                         WormType type = new WormType(property.Entity.WormModel.Store);
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
                         string idProperty = Utils.GetIdProperty(property.Type);
-                      
+
                         type.IdProperty = idProperty ?? "t" + property.Type;
 
-
-                        txAdd.Commit();
                     }
+
+                    List<Property> list = property.Entity.Properties.FindAll(p => p.Name == property.Name);
+                    foreach (Property p in list)
+                    {
+                        p.Supressed = "True";
+                    }
+
+                    txAdd.Commit();
                 }
+
             }
         }
        
@@ -211,9 +250,10 @@ namespace Worm.Designer
             SupressedProperty property = e.ModelElement as SupressedProperty;
             if (property != null)
             {
-                if (property.Entity.WormModel.Types.FindAll(t => t.Name == property.Type).Count == 0)
+
+                using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
                 {
-                    using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    if (property.Entity.WormModel.Types.FindAll(t => t.Name == property.Type).Count == 0)
                     {
                         WormType type = new WormType(property.Entity.WormModel.Store);
                         type.WormModel = property.Entity.WormModel;
@@ -221,11 +261,32 @@ namespace Worm.Designer
                         string idProperty = Utils.GetIdProperty(property.Type);
 
                         type.IdProperty = idProperty ?? "t" + property.Type;
-
-
-                        txAdd.Commit();
                     }
+
+                   
+                    if (e.OldValue != e.NewValue && e.DomainProperty.Name == "Name")
+                    {
+                        if (e.OldValue != null)
+                        {
+                            List<Property> list = property.Entity.Properties.FindAll(p => p.Name == (string)(e.OldValue));
+                            foreach (Property p in list)
+                            {
+                                p.Supressed = "False";
+                            }
+                        }
+
+                        if (e.NewValue != null)
+                        {
+                            List<Property> list = property.Entity.Properties.FindAll(p => p.Name == (string)(e.NewValue));
+                            foreach (Property p in list)
+                            {
+                                p.Supressed = "True";
+                            }
+                        }
+                    }
+                    txAdd.Commit();
                 }
+
             }
             base.ElementPropertyChanged(e);
         }
@@ -261,6 +322,12 @@ namespace Worm.Designer
                  {
                      property.Entity.WormModel.Types.Find(t => t.Name == property.Type).Delete();
                  }
+                 List<Property> list = property.Entity.Properties.FindAll(p => p.Name == property.Name);
+                 foreach (Property p in list)
+                 {
+                     p.Supressed = "False";
+                 }
+
                  txAdd.Commit();
              }
          }

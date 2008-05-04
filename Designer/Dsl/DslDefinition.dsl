@@ -607,6 +607,18 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
+        <DomainProperty Id="ba8acd0d-b334-4d0b-b706-9975b8121e26" Description="Supressed" Name="Supressed" DisplayName="Supressed" DefaultValue="False" Category="Code generation">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
       </Properties>
     </DomainClass>
     <DomainClass Id="bc04f16d-d6ae-4ae2-b470-b81094434fb9" Description="Supressed Property" Name="SupressedProperty" DisplayName="Supressed Property" Namespace="Worm.Designer">
@@ -1048,6 +1060,7 @@
     </DomainEnumeration>
     <ExternalType Name="ObsoleteType" Namespace="Worm.CodeGen.Core.Descriptors" />
     <ExternalType Name="LanguageSpecificHacks" Namespace="Worm.CodeGen.Core" />
+    <ExternalType Name="ExternalType1" Namespace="" />
   </Types>
   <Shapes>
     <CompartmentShape Id="1ac7c68e-23be-47ec-a6fe-2ece8f63e49c" Description="Entity" Name="EntityShape" DisplayName="Entity" Namespace="Worm.Designer" FixedTooltipText="Entity Shape" FillColor="PaleGreen" InitialHeight="0.5" OutlineThickness="0.01125" HasDefaultConnectionPoints="true" Geometry="RoundedRectangle">
@@ -1294,6 +1307,9 @@
           </XmlPropertyData>
           <XmlPropertyData XmlName="syncUpdate">
             <DomainPropertyMoniker Name="Property/SyncUpdate" />
+          </XmlPropertyData>
+          <XmlPropertyData XmlName="supressed">
+            <DomainPropertyMoniker Name="Property/Supressed" />
           </XmlPropertyData>
         </ElementData>
       </XmlClassData>

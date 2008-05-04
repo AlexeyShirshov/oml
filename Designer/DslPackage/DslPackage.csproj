@@ -110,6 +110,9 @@
     <Compile Include="CommandSet.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="DesignerExplorer.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="ToolWindow\DesignerEditorFactory.cs" />
     <Compile Include="ToolWindow\WormToolWindow.cs" />
     <Compile Include="ToolWindow\ClassDetailsControl.cs">

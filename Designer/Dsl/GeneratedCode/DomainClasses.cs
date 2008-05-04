@@ -5841,6 +5841,96 @@ namespace Worm.Designer
 		}
 		
 		#endregion
+		#region Supressed domain property code
+		
+		/// <summary>
+		/// Supressed domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid SupressedDomainPropertyId = new global::System.Guid(0xba8acd0d, 0xb334, 0x4d0b, 0xb7, 0x06, 0x99, 0x75, 0xb8, 0x12, 0x1e, 0x26);
+		
+		/// <summary>
+		/// Storage for Supressed
+		/// </summary>
+		private global::System.String supressedPropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of Supressed domain property.
+		/// Supressed
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Property/Supressed.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Property/Supressed.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Property/Supressed.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("ba8acd0d-b334-4d0b-b706-9975b8121e26")]
+		public global::System.String Supressed
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return supressedPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				SupressedPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Property.Supressed domain property.
+		/// </summary>
+		internal sealed partial class SupressedPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		{
+			private SupressedPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Property.Supressed domain property value handler.
+			/// </summary>
+			public static readonly SupressedPropertyHandler Instance = new SupressedPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Property.Supressed domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return SupressedDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Property element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.supressedPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Property element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.supressedPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
 		#region Entity opposite domain role accessor
 		/// <summary>
 		/// Gets or sets Entity.

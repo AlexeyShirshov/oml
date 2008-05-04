@@ -853,6 +853,18 @@
     <value>Mapping attributes</value>
     <comment>Category for DomainProperty &apos;SyncUpdate&apos; on DomainClass &apos;Property&apos;</comment>
   </data>
+  <data name="Worm.Designer.Property/Supressed.Description" xml:space="preserve">
+    <value>Supressed</value>
+    <comment>Description for DomainProperty &apos;Supressed&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Supressed.DisplayName" xml:space="preserve">
+    <value>Supressed</value>
+    <comment>DisplayName for DomainProperty &apos;Supressed&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Property/Supressed.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;Supressed&apos; on DomainClass &apos;Property&apos;</comment>
+  </data>
   <data name="Worm.Designer.SupressedProperty.Description" xml:space="preserve">
     <value>Supressed Property</value>
     <comment>Description for DomainClass &apos;SupressedProperty&apos;</comment>

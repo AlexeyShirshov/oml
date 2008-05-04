@@ -21,10 +21,12 @@ namespace Worm.Designer
     using Microsoft.VisualStudio.Modeling.Shell;
     using Microsoft.VisualStudio.Modeling.Diagrams;
     using System.Runtime.InteropServices;
+    using EnvDTE;
 
     [Guid(Constants.WormToolWindowId)]
     internal partial class WormToolWindow : ToolWindow
     {
+        private static WormToolWindow window;
         private ClassDetailsControl control;
 
         public WormToolWindow(global::System.IServiceProvider serviceProvider)
@@ -36,6 +38,12 @@ namespace Worm.Designer
         {
             get { return (IWin32Window)control; }
         }
+
+        public static WormToolWindow ActiveWindow
+        {
+            get { return window; }
+        }
+
 
         public override string WindowTitle
         {
@@ -62,9 +70,11 @@ namespace Worm.Designer
         {
             control = new ClassDetailsControl();
             control.Clear();
+            window = this;
+        //    DesignerExplorerToolWindow.OnSelect += new DesignerExplorerToolWindow.DesignerExplorerToolWindowSelect(DesignerExplorerToolWindow_OnSelect);
         }
 
-
+      
         protected override void OnDocumentWindowChanged(ModelingDocView oldView, ModelingDocView newView)
         {
 
@@ -175,12 +185,12 @@ namespace Worm.Designer
                 ModelingDocView view = sender as ModelingDocView;
                 if (view != null)
                 {
-                   
+
                     ICollection selection = view.GetSelectedComponents();
                     if (selection.Count == 1)
                     {
                         IEnumerator enumerator = selection.GetEnumerator();
-                        
+
                         enumerator.MoveNext();
 
                         DesignerDiagram diagram = enumerator.Current as DesignerDiagram;
@@ -194,8 +204,8 @@ namespace Worm.Designer
                         if (shape != null)
                         {
                             control.Display((Entity)shape.ModelElement);
-                                return;
-                            
+                            return;
+
                         }
 
                         EntityConnector connector = enumerator.Current as EntityConnector;
@@ -207,19 +217,19 @@ namespace Worm.Designer
                         }
 
                         ElementListCompartment comp = enumerator.Current as ElementListCompartment;
-                         if (comp != null)
+                        if (comp != null)
                         {
                             control.Display((Entity)comp.ParentShape.ModelElement);
-                                return;
-                            
+                            return;
+
                         }
 
                         Entity entity = enumerator.Current as Entity;
                         if (entity != null)
                         {
                             control.Display(entity);
-                                return;
-                            
+                            return;
+
                         }
 
                         Property property = enumerator.Current as Property;
@@ -254,6 +264,84 @@ namespace Worm.Designer
                             return;
                         }
                     }
+                }
+                else
+                {
+
+
+
+                    DesignerDiagram diagram = sender as DesignerDiagram;
+                    if (diagram != null)
+                    {
+                        control.Display((WormModel)diagram.ModelElement);
+                        return;
+                    }
+
+                    EntityShape shape = sender as EntityShape;
+                    if (shape != null)
+                    {
+                        control.Display((Entity)shape.ModelElement);
+                        return;
+
+                    }
+
+                    EntityConnector connector = sender as EntityConnector;
+                    if (connector != null)
+                    {
+                        control.Display((EntityReferencesTargetEntities)connector.ModelElement);
+                        return;
+
+                    }
+
+                    ElementListCompartment comp = sender as ElementListCompartment;
+                    if (comp != null)
+                    {
+                        control.Display((Entity)comp.ParentShape.ModelElement);
+                        return;
+
+                    }
+
+                    Entity entity = sender as Entity;
+                    if (entity != null)
+                    {
+                        control.Display(entity);
+                        return;
+
+                    }
+
+                    Property property = sender as Property;
+                    if (property != null)
+                    {
+                        control.Display(property);
+
+                        return;
+                    }
+
+                    SupressedProperty supressedProperty = sender as SupressedProperty;
+                    if (supressedProperty != null)
+                    {
+                        control.Display(supressedProperty);
+
+                        return;
+                    }
+
+                    Table table = sender as Table;
+                    if (table != null)
+                    {
+                        control.Display(table);
+
+                        return;
+                    }
+
+                    SelfRelation selfRelation = sender as SelfRelation;
+                    if (selfRelation != null)
+                    {
+                        control.Display(selfRelation);
+
+                        return;
+                    }
+
+
                 }
 
                 control.Clear();

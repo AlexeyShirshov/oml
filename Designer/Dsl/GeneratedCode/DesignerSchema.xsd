@@ -589,6 +589,12 @@
         <xsd:documentation>Sync Update</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <!-- Property: Supressed -->
+    <xsd:attribute name="supressed" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Supressed</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
   
   <!-- Property Moniker -->

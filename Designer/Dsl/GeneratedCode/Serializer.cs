@@ -4033,6 +4033,23 @@ namespace Worm.Designer
 					}
 				}
 			}
+			// Supressed
+			if (!serializationContext.Result.Failed)
+			{
+				string attribSupressed = reader.GetAttribute("supressed");
+				if (attribSupressed != null)
+				{
+					global::System.String valueOfSupressed;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSupressed), out valueOfSupressed))
+					{
+						instanceOfProperty.Supressed = valueOfSupressed;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "supressed", typeof(global::System.String), attribSupressed);
+					}
+				}
+			}
 		}
 	
 		/// <summary>
@@ -4624,6 +4641,18 @@ namespace Worm.Designer
 					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
 					{	// No need to write the value out if it's the same as default value.
 						writer.WriteAttributeString("syncUpdate", propValue);
+					}
+				}
+			}
+			// Supressed
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfProperty.Supressed;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("supressed", propValue);
 					}
 				}
 			}

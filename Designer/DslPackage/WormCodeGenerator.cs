@@ -49,7 +49,7 @@ namespace Worm.Designer
                 projectItem.Properties.Item("CustomTool").Value = string.Empty;
                 return null;
             }
-          
+            RegisterExtension();
 
             ResourceManager manager =
                 new ResourceManager("Worm.Designer.VSPackage",
@@ -92,6 +92,28 @@ namespace Worm.Designer
 
             data = base.GenerateCode(inputFileName, inputFileContent);
             return data;
+        }
+
+        private void RegisterExtension()
+        {
+            string keyName;
+            string keyValue;
+           
+            keyName = "WormDesigner";
+            keyValue = "WormDesigner";
+
+            RegistryKey key;
+            key = Registry.ClassesRoot.CreateSubKey(keyName);
+            key.SetValue("", keyValue);
+            key = key.CreateSubKey("shell");
+            key = key.CreateSubKey("open");
+            key = key.CreateSubKey("command");
+            key.SetValue("", "VisualStudio.ORDesigner.9.0");
+
+            keyName = ".wxml";
+            keyValue = "WormDesigner";
+            key = Registry.ClassesRoot.CreateSubKey(keyName);
+            key.SetValue("", keyValue);
         }
 
         /// <summary>

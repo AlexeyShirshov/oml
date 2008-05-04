@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,9 @@ using global::Microsoft.VisualStudio.Shell;
 using global::Microsoft.VisualStudio.Modeling;
 using global::Microsoft.VisualStudio.Modeling.Diagrams;
 using global::Microsoft.VisualStudio.Modeling.Validation;
+using DslModeling = global::Microsoft.VisualStudio.Modeling;
+using EnvDTE;
+using EnvDTE80;
 
 namespace Worm.Designer
 {
@@ -24,6 +28,9 @@ namespace Worm.Designer
                 base.ProcessOnMenuDeleteCommand();
             }
         }
+
+     
+       
     }
  /// <summary>
 	/// Double-derived class to allow easier code customization.
@@ -135,5 +142,20 @@ namespace Worm.Designer
             }
         }
 
+    }
+
+    internal partial class DesignerExplorerToolWindow
+    {
+    
+
+           protected override void OnSelectionChanged(EventArgs e)
+           {
+               base.OnSelectionChanged(e);
+               DslModeling::ModelElement selectedElement = this.PrimarySelection as DslModeling::ModelElement;
+               if (WormToolWindow.ActiveWindow != null)
+               {
+                   WormToolWindow.ActiveWindow.OnDocumentSelectionChanged(selectedElement, e);
+               }
+           }
     }
 }

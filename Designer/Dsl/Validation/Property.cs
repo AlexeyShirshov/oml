@@ -23,7 +23,7 @@ namespace Worm.Designer
         {
             if (string.IsNullOrEmpty(this.Table))
             {
-                context.LogError( "Property " + this.Name + " doesn't containt Table value", "WR04",  this);
+                context.LogError( "Property " + this.Name + " doesn't contain Table value", "WR04",  this);
                                 
             }
 

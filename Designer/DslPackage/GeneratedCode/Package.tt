@@ -10,6 +10,10 @@ namespace <#= CodeGenerationUtilities.GetPackageNamespace(this.Dsl) #>
 {
 	using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.TextTemplating.VSHost;
+    using Microsoft.Win32;
+	using System.Runtime.InteropServices;
+	using System.Text;
+	using EnvDTE;
 
 	/// <summary>
 	/// Double-derived class to allow easier code customization.
@@ -30,7 +34,49 @@ namespace <#= CodeGenerationUtilities.GetPackageNamespace(this.Dsl) #>
 			base.Initialize();
 			
 			this.AddToolWindow(typeof(Worm.Designer.WormToolWindow));
+			
+			 if (!IsAssociated(".wxml"))
+			 {
+			 System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+			 DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
+            
+                Associate(".wxml", "ClassID.ProgID", "Worm Designer", @"D:\depot_tfs\Designer\DslPackage\bin\Debug\Worm.Designer.DslPackage.dll, 0", dte.FileName);
+             }
 		}
+		
+		// Associate file extension with progID, description, icon and application
+		 public static void Associate(string extension, string progID, string description, string icon, string application)
+        {
+            Registry.ClassesRoot.CreateSubKey(extension).SetValue("", progID);
+            if (progID != null && progID.Length > 0)
+                using (RegistryKey key = Registry.ClassesRoot.CreateSubKey(progID))
+                {
+                    if (description != null)
+                        key.SetValue("", description);
+                    if (icon != null)
+                        key.CreateSubKey("DefaultIcon").SetValue("", ToShortPathName(icon));
+                    if (application != null)
+                        key.CreateSubKey(@"Shell\Open\Command").SetValue("", ToShortPathName(application) + " \"%1\"");
+                }
+        }
+
+        // Return true if extension already associated in registry
+        public static bool IsAssociated(string extension)
+        {
+            return (Registry.ClassesRoot.OpenSubKey(extension, false) != null);
+        }
+
+        [DllImport("Kernel32.dll")]
+        private static extern uint GetShortPathName(string lpszLongPath, [Out] StringBuilder lpszShortPath, uint cchBuffer);
+
+        // Return short path format of a file name
+        private static string ToShortPathName(string longName)
+        {
+            StringBuilder s = new StringBuilder(1000);
+            uint iSize = (uint)s.Capacity;
+            uint iRet = GetShortPathName(longName, s, iSize);
+            return s.ToString();
+        }
 	}
 }
 

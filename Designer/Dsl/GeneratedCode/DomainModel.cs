@@ -148,6 +148,7 @@ namespace Worm.Designer
 				new DomainMemberInfo(typeof(Property), "RV", Property.RVDomainPropertyId, typeof(Property.RVPropertyHandler)),
 				new DomainMemberInfo(typeof(Property), "SyncInsert", Property.SyncInsertDomainPropertyId, typeof(Property.SyncInsertPropertyHandler)),
 				new DomainMemberInfo(typeof(Property), "SyncUpdate", Property.SyncUpdateDomainPropertyId, typeof(Property.SyncUpdatePropertyHandler)),
+				new DomainMemberInfo(typeof(Property), "Supressed", Property.SupressedDomainPropertyId, typeof(Property.SupressedPropertyHandler)),
 				new DomainMemberInfo(typeof(SupressedProperty), "Name", SupressedProperty.NameDomainPropertyId, typeof(SupressedProperty.NamePropertyHandler)),
 				new DomainMemberInfo(typeof(SupressedProperty), "Type", SupressedProperty.TypeDomainPropertyId, typeof(SupressedProperty.TypePropertyHandler)),
 				new DomainMemberInfo(typeof(SelfRelation), "DirectAccessor", SelfRelation.DirectAccessorDomainPropertyId, typeof(SelfRelation.DirectAccessorPropertyHandler)),
