@@ -148,7 +148,7 @@ Module Module2
     Private _gdeleted As ArrayList = ArrayList.Synchronized(New ArrayList)
 
     Private Const iterCount As Integer = 1000
-    Private Const threadCount As Integer = 20
+    Private Const threadCount As Integer = 40
 
     <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
     Function GetIdentity() As Integer
@@ -289,15 +289,16 @@ Module Module2
                                 Try
                                     Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                                         Using t.BeginAlter
-                                            If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
-                                                done = t.Delete()
-                                                Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
-                                                If Not done Then
-                                                    Debug.Assert(st.Saver.AffectedObjects.Count = 0)
-                                                    Dim oc As ModifiedObject = mgr.Cache.Modified(t)
-                                                    Debug.Assert(oc Is Nothing)
-                                                End If
+                                            'If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
+                                            done = t.Delete()
+                                            Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
+                                            If Not done Then
+                                                Debug.Assert(st.Saver.AffectedObjects.Count = 0)
+                                                Dim oc As ModifiedObject = mgr.Cache.Modified(t)
+                                                Debug.Assert(oc IsNot Nothing OrElse t.InternalProperties.ObjectState = Orm.ObjectState.NotFoundInSource)
+                                                Debug.Assert(oc Is Nothing OrElse oc.Reason = ModifiedObject.ReasonEnum.Delete)
                                             End If
+                                            'End If
                                         End Using
                                         If done Then
                                             Debug.Assert(st.Saver.AffectedObjects.Count > 0)
