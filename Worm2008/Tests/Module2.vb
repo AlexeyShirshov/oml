@@ -148,7 +148,7 @@ Module Module2
     Private _gdeleted As ArrayList = ArrayList.Synchronized(New ArrayList)
 
     Private Const iterCount As Integer = 1000
-    Private Const threadCount As Integer = 40
+    Private Const threadCount As Integer = 10
 
     <Runtime.CompilerServices.MethodImpl(Runtime.CompilerServices.MethodImplOptions.Synchronized)> _
     Function GetIdentity() As Integer

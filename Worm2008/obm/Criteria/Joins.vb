@@ -192,7 +192,7 @@ Namespace Criteria.Joins
                 Case Worm.Criteria.Joins.JoinType.CrossJoin
                     Return " cross join "
                 Case Else
-                    Throw New OrmSchemaException("invalid join type " & _joinType.ToString)
+                    Throw New QueryGeneratorException("invalid join type " & _joinType.ToString)
             End Select
         End Function
 
@@ -311,12 +311,22 @@ Namespace Database
                 Dim [alias] As String = String.Empty
 
                 If tableAliases IsNot Nothing Then
-                    [alias] = tableAliases(map._tableName) & "."
+                    Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+                    Try
+                        [alias] = tableAliases(map._tableName) & "."
+                    Catch ex As KeyNotFoundException
+                        Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+                    End Try
                 End If
 
                 Dim alias2 As String = String.Empty
                 If map2._tableName IsNot Nothing AndAlso tableAliases IsNot Nothing AndAlso tableAliases.ContainsKey(map2._tableName) Then
-                    alias2 = tableAliases(map2._tableName) & "."
+                    Debug.Assert(tableAliases.ContainsKey(map2._tableName), "There is not alias for table " & map2._tableName.RawName)
+                    Try
+                        alias2 = tableAliases(map2._tableName) & "."
+                    Catch ex As KeyNotFoundException
+                        Throw New QueryGeneratorException("There is not alias for table " & map2._tableName.RawName, ex)
+                    End Try
                 End If
 
                 Return [alias] & map._columnName & Criteria.Core.TemplateBase.Oper2String(_oper) & alias2 & map2._columnName

@@ -3123,10 +3123,10 @@ l1:
             Dim ns As Sort = s
             Do
                 If ns.IsExternal Then
-                    Throw New OrmSchemaException("External sort must be alone")
+                    Throw New QueryGeneratorException("External sort must be alone")
                 End If
                 If ns.IsCustom Then
-                    Throw New OrmSchemaException("Custom sort is not supported")
+                    Throw New QueryGeneratorException("Custom sort is not supported")
                 End If
                 q.Push(ns)
                 ns = ns.Previous
@@ -3149,10 +3149,10 @@ l1:
             Dim ns As Sort = s
             Do
                 If ns.IsExternal Then
-                    Throw New OrmSchemaException("External sort must be alone")
+                    Throw New QueryGeneratorException("External sort must be alone")
                 End If
                 If ns.IsCustom Then
-                    Throw New OrmSchemaException("Custom sort is not supported")
+                    Throw New QueryGeneratorException("Custom sort is not supported")
                 End If
                 q.Push(ns)
                 ns = ns.Previous

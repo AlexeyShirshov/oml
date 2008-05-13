@@ -280,7 +280,7 @@ Namespace Orm.Meta
 
         Friend Sub New(ByVal t As Type, ByVal table As String, ByVal cols As ICollection(Of ColumnAttribute), ByVal pk As String)
             If String.IsNullOrEmpty(pk) Then
-                Throw New OrmSchemaException(String.Format("Primary key required for {0}", t))
+                Throw New QueryGeneratorException(String.Format("Primary key required for {0}", t))
             End If
 
             'If tables IsNot Nothing Then
@@ -298,14 +298,14 @@ Namespace Orm.Meta
 
             For Each c As ColumnAttribute In cols
                 If String.IsNullOrEmpty(c.FieldName) Then
-                    Throw New OrmSchemaException(String.Format("Cann't create schema for entity {0}", t))
+                    Throw New QueryGeneratorException(String.Format("Cann't create schema for entity {0}", t))
                 End If
 
                 If String.IsNullOrEmpty(c.Column) Then
                     If c.FieldName = "ID" Then
                         c.Column = pk
                     Else
-                        Throw New OrmSchemaException(String.Format("Column for property {0} entity {1} is undefined", c.FieldName, t))
+                        Throw New QueryGeneratorException(String.Format("Column for property {0} entity {1} is undefined", c.FieldName, t))
                     End If
                 End If
 

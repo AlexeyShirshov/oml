@@ -37,7 +37,7 @@ Namespace Database
                 Dim cmdtext As String = Nothing
                 Try
                     cmdtext = DbSchema.Update(obj, GetFilterInfo, params, cols, upd)
-                Catch ex As OrmSchemaException When ex.Message.Contains("Cannot save object while it has reference to new object")
+                Catch ex As QueryGeneratorException When ex.Message.Contains("Cannot save object while it has reference to new object")
                     Return False
                 End Try
                 If cmdtext.Length > 0 Then
@@ -151,7 +151,7 @@ Namespace Database
                     Dim cmdtext As String = Nothing
                     Try
                         cmdtext = DbSchema.Insert(obj, GetFilterInfo, params, cols)
-                    Catch ex As OrmSchemaException When ex.Message.Contains("Cannot save object while it has reference to new object")
+                    Catch ex As QueryGeneratorException When ex.Message.Contains("Cannot save object while it has reference to new object")
                         Return False
                     End Try
                     If cmdtext.Length > 0 Then

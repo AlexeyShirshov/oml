@@ -63,7 +63,7 @@ Namespace Database
                     Case Worm.Criteria.FilterOperation.Between
                         Return " between "
                     Case Else
-                        Throw New OrmSchemaException("invalid opration " & oper.ToString)
+                        Throw New QueryGeneratorException("invalid opration " & oper.ToString)
                 End Select
             End Function
 
@@ -224,7 +224,12 @@ Namespace Database
                     Dim [alias] As String = String.Empty
 
                     If tableAliases IsNot Nothing Then
-                        [alias] = tableAliases(map._tableName) & "."
+                        Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+                        Try
+                            [alias] = tableAliases(map._tableName) & "."
+                        Catch ex As KeyNotFoundException
+                            Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+                        End Try
                     End If
 
                     Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
@@ -352,7 +357,12 @@ Namespace Database
                     Dim [alias] As String = String.Empty
 
                     If tableAliases IsNot Nothing Then
-                        [alias] = tableAliases(map._tableName) & "."
+                        Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+                        Try
+                            [alias] = tableAliases(map._tableName) & "."
+                        Catch ex As KeyNotFoundException
+                            Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+                        End Try
                     End If
 
                     If _dbFilter Then

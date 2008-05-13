@@ -35,7 +35,7 @@ Namespace Xml
                     Case Worm.Criteria.FilterOperation.LessThan
                         Return " < "
                     Case Else
-                        Throw New OrmSchemaException("invalid opration " & oper.ToString)
+                        Throw New QueryGeneratorException("invalid opration " & oper.ToString)
                 End Select
             End Function
         End Class
