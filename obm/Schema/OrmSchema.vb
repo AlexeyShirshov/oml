@@ -12,7 +12,7 @@ Imports Worm.Sorting
 ''' </summary>
 ''' <remarks></remarks>
 <Serializable()> _
-Public NotInheritable Class OrmSchemaException
+Public NotInheritable Class QueryGeneratorException
     Inherits Exception
 
     ''' <summary>
@@ -143,8 +143,8 @@ Public MustInherit Class QueryGenerator
     '    Return GetProperties(t, schema)
     'End Function
 
-	Public Shared Function GetColumnProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase) As IDictionary
-		Dim h As New Hashtable
+    Public Shared Function GetColumnProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase) As IDictionary
+        Dim h As New Hashtable
 
         Dim sup As Array = Nothing
         If schema IsNot Nothing Then
@@ -182,28 +182,28 @@ Public MustInherit Class QueryGenerator
         Return h
     End Function
 
-	Public Function GetProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase) As IDictionary
-		If t Is Nothing Then Throw New ArgumentNullException("original_type")
-		Dim s As String = Nothing
-		If schema Is Nothing Then
-			s = t.ToString
-		Else
-			s = schema.GetType().ToString
-		End If
-		Dim key As String = "properties" & s
-		Dim h As IDictionary = CType(map(key), IDictionary)
-		If h Is Nothing Then
-			SyncLock String.Intern(key)
-				h = CType(map(key), IDictionary)
-				If h Is Nothing Then
-					h = GetColumnProperties(t, schema)
+    Public Function GetProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase) As IDictionary
+        If t Is Nothing Then Throw New ArgumentNullException("original_type")
+        Dim s As String = Nothing
+        If schema Is Nothing Then
+            s = t.ToString
+        Else
+            s = schema.GetType().ToString
+        End If
+        Dim key As String = "properties" & s
+        Dim h As IDictionary = CType(map(key), IDictionary)
+        If h Is Nothing Then
+            SyncLock String.Intern(key)
+                h = CType(map(key), IDictionary)
+                If h Is Nothing Then
+                    h = GetColumnProperties(t, schema)
 
-					map(key) = h
-				End If
-			End SyncLock
-		End If
-		Return h
-	End Function
+                    map(key) = h
+                End If
+            End SyncLock
+        End If
+        Return h
+    End Function
 
 #End Region
 
@@ -261,7 +261,7 @@ Public MustInherit Class QueryGenerator
             End If
         Next
 
-        Throw New OrmSchemaException("Cannot find column: " & columnName)
+        Throw New QueryGeneratorException("Cannot find column: " & columnName)
     End Function
 
     Private Function GetColumnNameByFieldNameInternal(ByVal schema As IObjectSchemaBase, ByVal field As String, Optional ByVal add_alias As Boolean = True) As String
@@ -278,7 +278,7 @@ Public MustInherit Class QueryGenerator
             End If
         End If
 
-        Throw New OrmSchemaException("Cannot find property: " & field)
+        Throw New QueryGeneratorException("Cannot find property: " & field)
     End Function
 
     Protected Friend Function GetColumnNameByFieldNameInternal(ByVal type As Type, ByVal field As String, Optional ByVal add_alias As Boolean = True) As String
@@ -512,7 +512,7 @@ Public MustInherit Class QueryGenerator
         Try
             Return coll(field)._tableName
         Catch ex As Exception
-            Throw New OrmSchemaException("Unknown field name: " & field, ex)
+            Throw New QueryGeneratorException("Unknown field name: " & field, ex)
         End Try
     End Function
     'Public ReadOnly Property IsExternalSort(ByVal sort As String, ByVal type As Type) As Boolean
@@ -541,7 +541,7 @@ Public MustInherit Class QueryGenerator
         Dim r As M2MRelation = GetM2MRelation(t, subType, True)
 
         If r Is Nothing Then
-            Throw New OrmSchemaException(String.Format("Type {0} has no relation to {1}", t.Name, subType.Name))
+            Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", t.Name, subType.Name))
         End If
 
         Return r.Mapping
@@ -883,7 +883,7 @@ Public MustInherit Class QueryGenerator
                 Return CType(de.Value, Reflection.PropertyInfo).PropertyType
             End If
         Next
-        Throw New OrmSchemaException("Type " & type.Name & " doesnot contain property " & field)
+        Throw New QueryGeneratorException("Type " & type.Name & " doesnot contain property " & field)
     End Function
 
     Public Function GetFieldNameByType(ByVal type As Type, ByVal fieldType As Type) As ICollection(Of String)
@@ -1061,13 +1061,13 @@ Public MustInherit Class QueryGenerator
                                     schema = New SimpleObjectSchema(tp, ea.TableName, l, ea.PrimaryKey)
 
                                     If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
-                                        Throw New OrmSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                        Throw New QueryGeneratorException(String.Format("Type {0} has neither table name nor schema", tp))
                                     End If
                                 Else
                                     Try
                                         schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
                                     Catch ex As Exception
-                                        Throw New OrmSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                        Throw New QueryGeneratorException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
                                     End Try
                                 End If
 
@@ -1090,7 +1090,7 @@ Public MustInherit Class QueryGenerator
                                 Try
                                     idic.Add(tp, schema)
                                 Catch ex As ArgumentException
-                                    Throw New OrmSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
+                                    Throw New QueryGeneratorException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
                                 End Try
                             End If
                         Next
@@ -1110,13 +1110,13 @@ Public MustInherit Class QueryGenerator
                                         schema = New SimpleObjectSchema(tp, ea.TableName, l, ea.PrimaryKey)
 
                                         If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
-                                            Throw New OrmSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                            Throw New QueryGeneratorException(String.Format("Type {0} has neither table name nor schema", tp))
                                         End If
                                     Else
                                         Try
                                             schema = CType(ea.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
                                         Catch ex As Exception
-                                            Throw New OrmSchemaException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
+                                            Throw New QueryGeneratorException(String.Format("Cannot create type [{0}]", ea.Type.ToString), ex)
                                         End Try
                                     End If
 
@@ -1140,7 +1140,7 @@ Public MustInherit Class QueryGenerator
                                         idic.Add(tp, schema)
                                         Exit For
                                     Catch ex As ArgumentException
-                                        Throw New OrmSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
+                                        Throw New QueryGeneratorException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea.Type), ex)
                                     End Try
                                 End If
                             Next
@@ -1166,13 +1166,13 @@ Public MustInherit Class QueryGenerator
                                         schema = New SimpleObjectSchema(tp, ea1.TableName, l, ea1.PrimaryKey)
 
                                         If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
-                                            Throw New OrmSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                            Throw New QueryGeneratorException(String.Format("Type {0} has neither table name nor schema", tp))
                                         End If
                                     Else
                                         Try
                                             schema = CType(ea1.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
                                         Catch ex As Exception
-                                            Throw New OrmSchemaException(String.Format("Cannot create type [{0}]", ea1.Type.ToString), ex)
+                                            Throw New QueryGeneratorException(String.Format("Cannot create type [{0}]", ea1.Type.ToString), ex)
                                         End Try
                                     End If
 
@@ -1201,7 +1201,7 @@ Public MustInherit Class QueryGenerator
                                     Try
                                         idic.Add(tp, schema)
                                     Catch ex As ArgumentException
-                                        Throw New OrmSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea1.Type), ex)
+                                        Throw New QueryGeneratorException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea1.Type), ex)
                                     End Try
                                 End If
                                 'Next
@@ -1227,13 +1227,13 @@ Public MustInherit Class QueryGenerator
                                             schema = New SimpleObjectSchema(tp, ea2.TableName, l, ea2.PrimaryKey)
 
                                             If CType(schema, IOrmObjectSchema).GetTables.Length = 0 Then
-                                                Throw New OrmSchemaException(String.Format("Type {0} has neither table name nor schema", tp))
+                                                Throw New QueryGeneratorException(String.Format("Type {0} has neither table name nor schema", tp))
                                             End If
                                         Else
                                             Try
                                                 schema = CType(ea2.Type.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IOrmObjectSchemaBase)
                                             Catch ex As Exception
-                                                Throw New OrmSchemaException(String.Format("Cannot create type [{0}]", ea2.Type.ToString), ex)
+                                                Throw New QueryGeneratorException(String.Format("Cannot create type [{0}]", ea2.Type.ToString), ex)
                                             End Try
                                         End If
 
@@ -1263,7 +1263,7 @@ Public MustInherit Class QueryGenerator
                                             idic.Add(tp, schema)
                                             'Exit For
                                         Catch ex As ArgumentException
-                                            Throw New OrmSchemaException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea2.Type), ex)
+                                            Throw New QueryGeneratorException(String.Format("Invalid Entity attribute({0}). Multiple Entity attributes must have different versions.", ea2.Type), ex)
                                         End Try
                                     End If
                                     'Next
@@ -1443,7 +1443,12 @@ Public MustInherit Class QueryGenerator
                 End If
 
                 If tableAliases IsNot Nothing Then
-                    [alias] = tableAliases(tbl)
+                    Debug.Assert(tableAliases.ContainsKey(tbl), "There is not alias for table " & tbl.RawName)
+                    Try
+                        [alias] = tableAliases(tbl)
+                    Catch ex As KeyNotFoundException
+                        Throw New QueryGeneratorException("There is not alias for table " & tbl.RawName, ex)
+                    End Try
                 End If
                 If Not String.IsNullOrEmpty([alias]) Then
                     values.Add([alias] & "." & fld)
@@ -1453,7 +1458,12 @@ Public MustInherit Class QueryGenerator
             ElseIf TypeOf o Is OrmTable Then
                 Dim tbl As OrmTable = CType(o, OrmTable)
                 If tableAliases IsNot Nothing Then
-                    [alias] = tableAliases(tbl)
+                    Debug.Assert(tableAliases.ContainsKey(tbl), "There is not alias for table " & tbl.RawName)
+                    Try
+                        [alias] = tableAliases(tbl)
+                    Catch ex As KeyNotFoundException
+                        Throw New QueryGeneratorException("There is not alias for table " & tbl.RawName, ex)
+                    End Try
                 End If
                 If Not String.IsNullOrEmpty([alias]) Then
                     values.Add([alias] & "." & p.Second)

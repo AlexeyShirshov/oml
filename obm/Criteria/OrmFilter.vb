@@ -396,7 +396,7 @@ Namespace Criteria.Core
                 Case FilterOperation.Between
                     Return "Between"
                 Case Else
-                    Throw New OrmSchemaException("Operation " & oper & " not supported")
+                    Throw New QueryGeneratorException("Operation " & oper & " not supported")
             End Select
         End Function
 

@@ -1564,8 +1564,10 @@ Public Module helper
                     rest.Add(ids(start))
                 End If
                 start = i
-            Else
-                Throw New ArgumentException("Collection of integer is invalid. Not sorted or countans duplicates")
+            ElseIf d = 0 Then
+                Throw New ArgumentException(String.Format("Collection of integer countans duplicates of {0} at {1}", ids(i), i))
+            ElseIf d < 0 Then
+                Throw New ArgumentException(String.Format("Collection of integer is not sorted at {0} and {1}", ids(i - 1), ids(i)))
             End If
         Next
 

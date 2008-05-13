@@ -368,41 +368,41 @@ Namespace Database
 									If Not String.IsNullOrEmpty(DefaultValue) Then
 										f = New dc.EntityFilter(real_t, c.FieldName, New LiteralValue(DefaultValue), FilterOperation.Equal)
 									Else
-										Throw New OrmSchemaException("DefaultValue required for operation")
-									End If
-								ElseIf v Is DBNull.Value AndAlso pkt IsNot tb AndAlso js IsNot Nothing Then
-									Dim j As OrmJoin = CType(GetJoins(js, pkt, tb, filterInfo), OrmJoin)
-									If j.JoinType = Joins.JoinType.Join Then
-										GoTo l1
-									End If
-								Else
+                                        Throw New QueryGeneratorException("DefaultValue required for operation")
+                                    End If
+                                ElseIf v Is DBNull.Value AndAlso pkt IsNot tb AndAlso js IsNot Nothing Then
+                                    Dim j As OrmJoin = CType(GetJoins(js, pkt, tb, filterInfo), OrmJoin)
+                                    If j.JoinType = Joins.JoinType.Join Then
+                                        GoTo l1
+                                    End If
+                                Else
 l1:
-									If GetType(OrmBase).IsAssignableFrom(v.GetType) Then
-										If CType(v, OrmBase).ObjectState = ObjectState.Created Then
-											Throw New OrmSchemaException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(v, OrmBase).ObjName)
-										End If
-									End If
-									f = New dc.EntityFilter(real_t, c.FieldName, New ScalarValue(v), FilterOperation.Equal)
-								End If
+                                    If GetType(OrmBase).IsAssignableFrom(v.GetType) Then
+                                        If CType(v, OrmBase).ObjectState = ObjectState.Created Then
+                                            Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(v, OrmBase).ObjName)
+                                        End If
+                                    End If
+                                    f = New dc.EntityFilter(real_t, c.FieldName, New ScalarValue(v), FilterOperation.Equal)
+                                End If
 
-								If f IsNot Nothing Then
-									If Not inserted_tables.ContainsKey(tb) Then
-										inserted_tables.Add(tb, New List(Of ITemplateFilter))
-									End If
-									inserted_tables(tb).Add(f)
-								End If
-							End If
+                                If f IsNot Nothing Then
+                                    If Not inserted_tables.ContainsKey(tb) Then
+                                        inserted_tables.Add(tb, New List(Of ITemplateFilter))
+                                    End If
+                                    inserted_tables(tb).Add(f)
+                                End If
+                            End If
 
-							If (att And Field2DbRelations.SyncInsert) = Field2DbRelations.SyncInsert Then
-								sel_columns.Add(c)
-							End If
+                            If (att And Field2DbRelations.SyncInsert) = Field2DbRelations.SyncInsert Then
+                                sel_columns.Add(c)
+                            End If
 
-							If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-								prim_key = c
-								'prim_key_value = current
-							End If
-						End If
-					Next
+                            If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                prim_key = c
+                                'prim_key_value = current
+                            End If
+                        End If
+                    Next
 
                     If Not inserted_tables.ContainsKey(pkt) Then
                         inserted_tables.Add(pkt, Nothing)
@@ -420,7 +420,7 @@ l1:
                             Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(jn.Condition, real_t, prim_key.FieldName, "@id")
 
                             If f Is Nothing Then
-                                Throw New OrmSchemaException("Cannot change join")
+                                Throw New QueryGeneratorException("Cannot change join")
                             End If
 
                             'For Each fl As OrmFilter In f.GetAllFilters
@@ -560,7 +560,7 @@ l1:
                             Throw New NotImplementedException
                             'ins_cmd.Append(GetColumnNameByFieldName(type, "ID", pk_table)).Append(" = @id")
                         Else
-							ins_cmd.Append(GetColumnNameByFieldName(os, "ID")).Append(" = @id")
+                            ins_cmd.Append(GetColumnNameByFieldName(os, "ID")).Append(" = @id")
                         End If
                     End If
                 End If
@@ -588,161 +588,161 @@ l1:
             Dim rt As Type = obj.GetType
             Dim col As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
-			For Each de As DictionaryEntry In GetProperties(rt, TryCast(oschema, IObjectSchemaBase))
-				'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
-				Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-				Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-				If c IsNot Nothing Then
-					Dim original As Object = pi.GetValue(obj.OriginalCopy, Nothing)
+            For Each de As DictionaryEntry In GetProperties(rt, TryCast(oschema, IObjectSchemaBase))
+                'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
+                Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                If c IsNot Nothing Then
+                    Dim original As Object = pi.GetValue(obj.OriginalCopy, Nothing)
 
-					'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) <> Field2DbRelations.PrimaryKey AndAlso _
-					'    (c.SyncBehavior And Field2DbRelations.RowVersion) <> Field2DbRelations.RowVersion Then
-					Dim map As MapField2Column = Nothing
-					If col.TryGetValue(c.FieldName, map) Then
-						Dim att As Field2DbRelations = map.GetAttributes(c)
-						If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
+                    'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) <> Field2DbRelations.PrimaryKey AndAlso _
+                    '    (c.SyncBehavior And Field2DbRelations.RowVersion) <> Field2DbRelations.RowVersion Then
+                    Dim map As MapField2Column = Nothing
+                    If col.TryGetValue(c.FieldName, map) Then
+                        Dim att As Field2DbRelations = map.GetAttributes(c)
+                        If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
 
-							Dim current As Object = pi.GetValue(obj, Nothing)
-							If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
-								(current IsNot Nothing AndAlso Not current.Equals(original)) OrElse obj.ForseUpdate(c) Then
+                            Dim current As Object = pi.GetValue(obj, Nothing)
+                            If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
+                             (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse obj.ForseUpdate(c) Then
 
-								If current IsNot Nothing AndAlso GetType(OrmBase).IsAssignableFrom(current.GetType) Then
-									If CType(current, OrmBase).ObjectState = ObjectState.Created Then
-										Throw New OrmSchemaException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, OrmBase).ObjName)
-									End If
-								End If
+                                If current IsNot Nothing AndAlso GetType(OrmBase).IsAssignableFrom(current.GetType) Then
+                                    If CType(current, OrmBase).ObjectState = ObjectState.Created Then
+                                        Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, OrmBase).ObjName)
+                                    End If
+                                End If
 
-								Dim fieldTable As OrmTable = GetFieldTable(oschema, c.FieldName)
+                                Dim fieldTable As OrmTable = GetFieldTable(oschema, c.FieldName)
 
-								If unions IsNot Nothing Then
-									Throw New NotImplementedException
-									'fieldTable = MapUnionType2Table(rt, uniontype)
-								End If
+                                If unions IsNot Nothing Then
+                                    Throw New NotImplementedException
+                                    'fieldTable = MapUnionType2Table(rt, uniontype)
+                                End If
 
-								If Not tables.ContainsKey(fieldTable) Then
-									tables.Add(fieldTable, New TableUpdate(fieldTable))
-									'param_vals.Add(fieldTable, New ArrayList)
-								End If
+                                If Not tables.ContainsKey(fieldTable) Then
+                                    tables.Add(fieldTable, New TableUpdate(fieldTable))
+                                    'param_vals.Add(fieldTable, New ArrayList)
+                                End If
 
-								Dim updates As IList(Of EntityFilterBase) = tables(fieldTable)._updates
+                                Dim updates As IList(Of EntityFilterBase) = tables(fieldTable)._updates
 
-								updates.Add(New dc.EntityFilter(rt, c.FieldName, New ScalarValue(current), FilterOperation.Equal))
+                                updates.Add(New dc.EntityFilter(rt, c.FieldName, New ScalarValue(current), FilterOperation.Equal))
 
-								'Dim tb_sb As StringBuilder = CType(tables(fieldTable), StringBuilder)
-								'Dim _params As ArrayList = CType(param_vals(fieldTable), ArrayList)
-								'If tb_sb.Length <> 0 Then
-								'    tb_sb.Append(", ")
-								'End If
-								'If unions IsNot Nothing Then
-								'    Throw New NotSupportedException
-								'    'tb_sb.Append(GetColumnNameByFieldName(type, c.FieldName, tb))
-								'Else
-								'    tb_sb.Append(GetColumnNameByFieldNameInternal(type, c.FieldName, False))
-								'End If
-								'tb_sb.Append(" = ").Append(ParamName("p", i))
-								'_params.Add(CreateDBParameter(ParamName("p", i), ChangeValueType(type, c, current)))
-								'i += 1
-							End If
-							'Else
-							'    If sbwhere.Length > 0 Then sbwhere.Append(" and ")
-							'    sbwhere.Append(GetColumnNameByFieldName(type, c.FieldName))
-							'    Dim pname As String = "pk"
-							'    If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
-							'        pname = "rv"
-							'    Else
-							'        If sbsel_where.Length = 0 Then
-							'            'sbsel_where.Append(" from ").Append(GetTables(type)(0))
-							'            sbsel_where.Append(" where ")
-							'        Else
-							'            sbsel_where.Append(" and ")
-							'        End If
+                                'Dim tb_sb As StringBuilder = CType(tables(fieldTable), StringBuilder)
+                                'Dim _params As ArrayList = CType(param_vals(fieldTable), ArrayList)
+                                'If tb_sb.Length <> 0 Then
+                                '    tb_sb.Append(", ")
+                                'End If
+                                'If unions IsNot Nothing Then
+                                '    Throw New NotSupportedException
+                                '    'tb_sb.Append(GetColumnNameByFieldName(type, c.FieldName, tb))
+                                'Else
+                                '    tb_sb.Append(GetColumnNameByFieldNameInternal(type, c.FieldName, False))
+                                'End If
+                                'tb_sb.Append(" = ").Append(ParamName("p", i))
+                                '_params.Add(CreateDBParameter(ParamName("p", i), ChangeValueType(type, c, current)))
+                                'i += 1
+                            End If
+                            'Else
+                            '    If sbwhere.Length > 0 Then sbwhere.Append(" and ")
+                            '    sbwhere.Append(GetColumnNameByFieldName(type, c.FieldName))
+                            '    Dim pname As String = "pk"
+                            '    If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
+                            '        pname = "rv"
+                            '    Else
+                            '        If sbsel_where.Length = 0 Then
+                            '            'sbsel_where.Append(" from ").Append(GetTables(type)(0))
+                            '            sbsel_where.Append(" where ")
+                            '        Else
+                            '            sbsel_where.Append(" and ")
+                            '        End If
 
-							'        sbsel_where.Append(GetColumnNameByFieldName(type, c.FieldName))
-							'        sbsel_where.Append(" = ").Append(ParamName(pname, i))
-							'    End If
-							'    sbwhere.Append(" = ").Append(ParamName(pname, i))
-							'    _params.Add(CreateDBParameter(ParamName(pname, i), original))
-							'    i += 1
-						End If
+                            '        sbsel_where.Append(GetColumnNameByFieldName(type, c.FieldName))
+                            '        sbsel_where.Append(" = ").Append(ParamName(pname, i))
+                            '    End If
+                            '    sbwhere.Append(" = ").Append(ParamName(pname, i))
+                            '    _params.Add(CreateDBParameter(ParamName(pname, i), original))
+                            '    i += 1
+                        End If
 
-						If (att And Field2DbRelations.SyncUpdate) = Field2DbRelations.SyncUpdate Then
-							'If sbselect.Length = 0 Then
-							'    sbselect.Append("if @@rowcount > 0 select ")
-							'Else
-							'    sbselect.Append(", ")
-							'End If
+                        If (att And Field2DbRelations.SyncUpdate) = Field2DbRelations.SyncUpdate Then
+                            'If sbselect.Length = 0 Then
+                            '    sbselect.Append("if @@rowcount > 0 select ")
+                            'Else
+                            '    sbselect.Append(", ")
+                            'End If
 
-							'sbselect.Append(GetColumnNameByFieldName(type, c.FieldName))
-							sel_columns.Add(c)
-						End If
-					End If
-				End If
-			Next
+                            'sbselect.Append(GetColumnNameByFieldName(type, c.FieldName))
+                            sel_columns.Add(c)
+                        End If
+                    End If
+                End If
+            Next
         End Sub
 
-		Protected Sub GetUpdateConditions(ByVal obj As OrmBase, ByVal oschema As IObjectSchemaBase, _
-			ByVal updated_tables As IDictionary(Of OrmTable, TableUpdate), ByVal unions() As String, ByVal filterInfo As Object)
+        Protected Sub GetUpdateConditions(ByVal obj As OrmBase, ByVal oschema As IObjectSchemaBase, _
+         ByVal updated_tables As IDictionary(Of OrmTable, TableUpdate), ByVal unions() As String, ByVal filterInfo As Object)
 
-			Dim rt As Type = obj.GetType
+            Dim rt As Type = obj.GetType
 
-			For Each de As DictionaryEntry In GetProperties(rt, oschema)
-				'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
-				Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-				Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-				If c IsNot Nothing Then
-					Dim att As Field2DbRelations = GetAttributes(rt, c)
-					If (att And Field2DbRelations.PK) = Field2DbRelations.PK OrElse _
-						(att And Field2DbRelations.RV) = Field2DbRelations.RV Then
+            For Each de As DictionaryEntry In GetProperties(rt, oschema)
+                'Dim c As ColumnAttribute = CType(Attribute.GetCustomAttribute(pi, GetType(ColumnAttribute), True), ColumnAttribute)
+                Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                If c IsNot Nothing Then
+                    Dim att As Field2DbRelations = GetAttributes(rt, c)
+                    If (att And Field2DbRelations.PK) = Field2DbRelations.PK OrElse _
+                     (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
 
-						Dim original As Object = pi.GetValue(obj, Nothing)
-						'Dim original As Object = pi.GetValue(obj.ModifiedObject, Nothing)
-						'If obj.ModifiedObject.old_state = ObjectState.Created Then
-						'original = pi.GetValue(obj, Nothing)
-						'End If
+                        Dim original As Object = pi.GetValue(obj, Nothing)
+                        'Dim original As Object = pi.GetValue(obj.ModifiedObject, Nothing)
+                        'If obj.ModifiedObject.old_state = ObjectState.Created Then
+                        'original = pi.GetValue(obj, Nothing)
+                        'End If
 
-						Dim tb As OrmTable = GetFieldTable(oschema, c.FieldName)
-						If unions IsNot Nothing Then
-							Throw New NotImplementedException
-							'tb = MapUnionType2Table(rt, uniontype)
-						End If
-						'If pk_table Is Nothing Then pk_table = tb
-						'If Not tables_filter.Contains(tb) Then
-						'    tables_filter.Add(tb, New StringBuilder)
-						'End If
-						'Dim tb_sb As StringBuilder = CType(tables_filter(tb), StringBuilder)
-						'Dim pname As String = "pk"
-						'If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
-						'    pname = "rv"
-						'End If
-						'Dim add_param As Boolean = False
+                        Dim tb As OrmTable = GetFieldTable(oschema, c.FieldName)
+                        If unions IsNot Nothing Then
+                            Throw New NotImplementedException
+                            'tb = MapUnionType2Table(rt, uniontype)
+                        End If
+                        'If pk_table Is Nothing Then pk_table = tb
+                        'If Not tables_filter.Contains(tb) Then
+                        '    tables_filter.Add(tb, New StringBuilder)
+                        'End If
+                        'Dim tb_sb As StringBuilder = CType(tables_filter(tb), StringBuilder)
+                        'Dim pname As String = "pk"
+                        'If (c.SyncBehavior And Field2DbRelations.RowVersion) = Field2DbRelations.RowVersion Then
+                        '    pname = "rv"
+                        'End If
+                        'Dim add_param As Boolean = False
 
 
-						For Each de_table As Generic.KeyValuePair(Of OrmTable, TableUpdate) In updated_tables 'In New Generic.List(Of Generic.KeyValuePair(Of String, TableUpdate))(CType(updated_tables, Generic.ICollection(Of Generic.KeyValuePair(Of String, TableUpdate))))
-							'Dim de_table As TableUpdate = updated_tables(tb)
-							If de_table.Key.Equals(tb) Then
-								'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
-								de_table.Value._where4update.AddFilter(New dc.EntityFilter(rt, c.FieldName, New ScalarValue(original), FilterOperation.Equal))
-							Else
-								Dim joinableSchema As IOrmObjectSchema = TryCast(oschema, IOrmObjectSchema)
-								If joinableSchema IsNot Nothing Then
-									Dim join As OrmJoin = CType(GetJoins(joinableSchema, tb, de_table.Key, filterInfo), OrmJoin)
-									If Not OrmJoin.IsEmpty(join) Then
-										Dim f As IFilter = JoinFilter.ChangeEntityJoinToParam(join.Condition, rt, c.FieldName, New TypeWrap(Of Object)(original))
+                        For Each de_table As Generic.KeyValuePair(Of OrmTable, TableUpdate) In updated_tables 'In New Generic.List(Of Generic.KeyValuePair(Of String, TableUpdate))(CType(updated_tables, Generic.ICollection(Of Generic.KeyValuePair(Of String, TableUpdate))))
+                            'Dim de_table As TableUpdate = updated_tables(tb)
+                            If de_table.Key.Equals(tb) Then
+                                'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
+                                de_table.Value._where4update.AddFilter(New dc.EntityFilter(rt, c.FieldName, New ScalarValue(original), FilterOperation.Equal))
+                            Else
+                                Dim joinableSchema As IOrmObjectSchema = TryCast(oschema, IOrmObjectSchema)
+                                If joinableSchema IsNot Nothing Then
+                                    Dim join As OrmJoin = CType(GetJoins(joinableSchema, tb, de_table.Key, filterInfo), OrmJoin)
+                                    If Not OrmJoin.IsEmpty(join) Then
+                                        Dim f As IFilter = JoinFilter.ChangeEntityJoinToParam(join.Condition, rt, c.FieldName, New TypeWrap(Of Object)(original))
 
-										If f Is Nothing Then
-											Throw New OrmSchemaException("Cannot replace join")
-										End If
+                                        If f Is Nothing Then
+                                            Throw New QueryGeneratorException("Cannot replace join")
+                                        End If
 
-										'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(f))
-										de_table.Value._where4update.AddFilter(f)
-									End If
-								End If
-							End If
-						Next
-					End If
-				End If
-			Next
-		End Sub
+                                        'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(f))
+                                        de_table.Value._where4update.AddFilter(f)
+                                    End If
+                                End If
+                            End If
+                        Next
+                    End If
+                End If
+            Next
+        End Sub
 
         Public Overridable Function Update(ByVal obj As OrmBase, ByVal filterInfo As Object, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
             ByRef select_columns As Generic.IList(Of ColumnAttribute), ByRef updated_fields As IList(Of EntityFilterBase)) As String
@@ -789,7 +789,7 @@ l1:
                     Next
                     updated_fields = l
 
-					GetUpdateConditions(obj, esch, updated_tables, unions, filterInfo)
+                    GetUpdateConditions(obj, esch, updated_tables, unions, filterInfo)
 
                     select_columns = sel_columns
 
@@ -816,20 +816,20 @@ l1:
                             Next
                             upd_cmd.Length -= 1
                             upd_cmd.Append(" from ").Append(GetTableName(tbl)).Append(" ").Append([alias])
-							upd_cmd.Append(" where ")
-							Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
-							Dim ef As EntityFilterBase = TryCast(fl, EntityFilterBase)
-							If ef IsNot Nothing Then
-								upd_cmd.Append(ef.MakeQueryStmt(esch, Me, amgr, params))
-							Else
-								upd_cmd.Append(fl.MakeQueryStmt(Me, amgr, params))
-							End If
-							If Not item.Key.Equals(pk_table) Then
-								'Dim pcnt As Integer = 0
-								'If Not named_params Then pcnt = XMedia.Framework.Data.DBA.ExtractParamsCount(upd_cmd.ToString)
-								CorrectUpdateWithInsert(oschema, tbl, item.Value, upd_cmd, obj, params)
-								'FormInsert(,upd_cmd,
-							End If
+                            upd_cmd.Append(" where ")
+                            Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
+                            Dim ef As EntityFilterBase = TryCast(fl, EntityFilterBase)
+                            If ef IsNot Nothing Then
+                                upd_cmd.Append(ef.MakeQueryStmt(esch, Me, amgr, params))
+                            Else
+                                upd_cmd.Append(fl.MakeQueryStmt(Me, amgr, params))
+                            End If
+                            If Not item.Key.Equals(pk_table) Then
+                                'Dim pcnt As Integer = 0
+                                'If Not named_params Then pcnt = XMedia.Framework.Data.DBA.ExtractParamsCount(upd_cmd.ToString)
+                                CorrectUpdateWithInsert(oschema, tbl, item.Value, upd_cmd, obj, params)
+                                'FormInsert(,upd_cmd,
+                            End If
                         Next
 
                         If sel_columns.Count > 0 Then
@@ -875,7 +875,7 @@ l1:
                                 amgr.Replace(Me, pk_table, sel_sb)
                                 sel_sb.Append(" from ").Append(GetTableName(pk_table)).Append(" ").Append([alias]).Append(" where ")
                                 'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
-								sel_sb.Append(New dc.EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeQueryStmt(esch, Me, amgr, params))
+                                sel_sb.Append(New dc.EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeQueryStmt(esch, Me, amgr, params))
 
                                 upd_cmd.Append(sel_sb)
                             End If
@@ -937,7 +937,7 @@ l1:
                         Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(join.Condition, type, "ID", "@id")
 
                         If f Is Nothing Then
-                            Throw New OrmSchemaException("Cannot replace join")
+                            Throw New QueryGeneratorException("Cannot replace join")
                         End If
 
                         o.AddFilter(f)
@@ -1518,7 +1518,7 @@ l1:
                 Dim pos As Integer = sb.Length
                 Do
                     If ns.IsExternal Then
-                        Throw New OrmSchemaException("External sort must be alone")
+                        Throw New QueryGeneratorException("External sort must be alone")
                     End If
 
                     'If ns.IsAny Then
@@ -1608,11 +1608,11 @@ l1:
             selected_r = GetRevM2MRelation(selectedType, filteredType, direct)
 
             If selected_r Is Nothing Then
-                Throw New OrmSchemaException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
+                Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
             End If
 
             If filtered_r Is Nothing Then
-                Throw New OrmSchemaException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
+                Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
             End If
 
             Dim table As OrmTable = selected_r.Table
@@ -1707,11 +1707,11 @@ l1:
             selected_r = GetRevM2MRelation(type, t, direct)
 
             If selected_r Is Nothing Then
-                Throw New OrmSchemaException(String.Format("Type {0} has no relation to {1}", t.Name, type.Name))
+                Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", t.Name, type.Name))
             End If
 
             If filtered_r Is Nothing Then
-                Throw New OrmSchemaException(String.Format("Type {0} has no relation to {1}", type.Name, t.Name))
+                Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", type.Name, t.Name))
             End If
 
             Dim id_clm As String = filtered_r.Column
@@ -2210,6 +2210,25 @@ l1:
                 Return t.Table
             End If
         End Function
+    End Class
+
+    <Serializable()> _
+    Public Class SQLGeneratorException
+        Inherits System.Exception
+
+        Public Sub New(ByVal message As String)
+            MyBase.New(message)
+        End Sub
+
+        Public Sub New(ByVal message As String, ByVal inner As Exception)
+            MyBase.New(message, inner)
+        End Sub
+
+        Protected Sub New( _
+            ByVal info As System.Runtime.Serialization.SerializationInfo, _
+            ByVal context As System.Runtime.Serialization.StreamingContext)
+            MyBase.New(info, context)
+        End Sub
     End Class
 
 End Namespace
