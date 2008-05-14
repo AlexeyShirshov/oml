@@ -559,7 +559,7 @@ Public MustInherit Class QueryGenerator
 #End Region
 
 #Region " Helpers "
-    Protected Sub GetPKList(ByVal schema As IOrmObjectSchemaBase, ByVal ids As StringBuilder)
+    Protected Friend Sub GetPKList(ByVal schema As IOrmObjectSchemaBase, ByVal ids As StringBuilder)
         'If ids Is Nothing Then
         '    Throw New ArgumentNullException("ids")
         'End If
@@ -1343,7 +1343,7 @@ Public MustInherit Class QueryGenerator
         Return GetJoins(schema, left, right, filterInfo)
     End Function
 
-    Protected Function GetJoins(ByVal schema As IOrmRelationalSchema, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin
+    Protected Friend Function GetJoins(ByVal schema As IOrmRelationalSchema, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin
         If schema Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -1486,7 +1486,7 @@ Public MustInherit Class QueryGenerator
     Public MustOverride Function CreateTopAspect(ByVal top As Integer) As Worm.Orm.Query.TopAspect
     Public MustOverride Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sorting.Sort) As Worm.Orm.Query.TopAspect
     Public MustOverride Function GetTableName(ByVal t As OrmTable) As String
-
+    Public MustOverride Function CreateExecutor() As Worm.Query.IExecutor
 End Class
 
 'End Namespace

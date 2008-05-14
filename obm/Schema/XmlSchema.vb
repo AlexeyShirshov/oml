@@ -85,5 +85,9 @@ Namespace Xml
                 Return t.Schema & ":" & t.Table
             End If
         End Function
+
+        Public Overrides Function CreateExecutor() As Query.IExecutor
+            Throw New NotImplementedException
+        End Function
     End Class
 End Namespace

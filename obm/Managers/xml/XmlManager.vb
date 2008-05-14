@@ -129,7 +129,7 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, Orm.OrmBase})( _
             ByVal obj As Orm.OrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal queryAspect() As Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
+            ByVal queryAspect() As Orm.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
 
             Throw New NotImplementedException
         End Function

@@ -154,6 +154,9 @@
     <Compile Include="Managers\OrmManagerBase.vb">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="QueryCmd\Aggregates.vb" />
+    <Compile Include="QueryCmd\db\DbQueryExecutor.vb" />
+    <Compile Include="QueryCmd\QueryCmd.vb" />
     <Compile Include="Relation.vb" />
     <Compile Include="Schema\DbSchema.vb" />
     <Compile Include="Schema\InterfacesAndClasses.vb" />

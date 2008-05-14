@@ -418,6 +418,12 @@ Namespace Cache
             End Using
         End Sub
 
+        Public ReadOnly Property IsReadonly() As Boolean
+            Get
+                Return False
+            End Get
+        End Property
+
         Public ReadOnly Property IsModified() As Boolean
             Get
                 Using SyncRoot
