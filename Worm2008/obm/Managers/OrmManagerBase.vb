@@ -1596,7 +1596,7 @@ _callstack = environment.StackTrace
         Return id & GetType(T).ToString
     End Function
 
-    Protected Sub RaiseOnDataAvailable()
+    Protected Friend Sub RaiseOnDataAvailable()
         RaiseEvent DataAvailable(Me, _er)
     End Sub
 
@@ -1984,7 +1984,7 @@ l1:
 
 #Region " Cache "
 
-    Protected Function GetFromCache(Of T As {OrmBase, New})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+    Protected Friend Function GetFromCache(Of T As {OrmBase, New})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICustDelegate(Of T)) As CachedItem
 
         Invariant()
@@ -4125,12 +4125,12 @@ l1:
         Return l.Length + 1
     End Function
 
-    Protected Function HasJoins(ByVal selectType As Type, ByRef filter As IFilter, ByVal s As Sort, ByRef joins() As OrmJoin) As Boolean
+    Protected Friend Function HasJoins(ByVal selectType As Type, ByRef filter As IFilter, ByVal s As Sort, ByRef joins() As OrmJoin) As Boolean
         Dim l As New List(Of OrmJoin)
         Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(selectType)
         Dim types As New List(Of Type)
         If filter IsNot Nothing Then
-            For Each fl As IFilter In filter.GetAllFilters
+            For Each fl As IFilter In filter.Filter.GetAllFilters
                 Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                 If f IsNot Nothing Then
                     Dim type2join As System.Type = CType(f.Template, OrmFilterTemplateBase).Type
@@ -4155,19 +4155,19 @@ l1:
 
                         Dim ts As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2join), IOrmObjectSchema)
                         Dim pk_table As OrmTable = ts.GetTables(0)
-						For i As Integer = 1 To ts.GetTables.Length - 1
-							Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
-							Dim join As OrmJoin = Nothing
-							If joinableTs IsNot Nothing Then
-								join = joinableTs.GetJoins(pk_table, ts.GetTables(i), GetFilterInfo)
-							Else
-								join = ts.GetJoins(pk_table, ts.GetTables(i))
-							End If
+                        For i As Integer = 1 To ts.GetTables.Length - 1
+                            Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
+                            Dim join As OrmJoin = Nothing
+                            If joinableTs IsNot Nothing Then
+                                join = joinableTs.GetJoins(pk_table, ts.GetTables(i), GetFilterInfo)
+                            Else
+                                join = ts.GetJoins(pk_table, ts.GetTables(i))
+                            End If
 
-							If Not OrmJoin.IsEmpty(join) Then
-								l.Add(join)
-							End If
-						Next
+                            If Not OrmJoin.IsEmpty(join) Then
+                                l.Add(join)
+                            End If
+                        Next
 
                         Dim newfl As IFilter = ts.GetFilter(GetFilterInfo)
                         If newfl IsNot Nothing Then
@@ -4205,9 +4205,9 @@ l1:
                         End If
                     End If
 
-                        'types.Add(sortType)
-                        'l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
-                    End If
+                    'types.Add(sortType)
+                    'l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                End If
                 ns = ns.Previous
             Loop While ns IsNot Nothing
         End If

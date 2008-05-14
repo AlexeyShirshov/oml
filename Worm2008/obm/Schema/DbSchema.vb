@@ -339,7 +339,7 @@ Namespace Database
                     End If
 
                     Dim rs As IReadonlyObjectSchema = TryCast(oschema, IReadonlyObjectSchema)
-					Dim es As IObjectSchemaBase = oschema
+                    Dim es As IObjectSchemaBase = oschema
                     If rs IsNot Nothing Then
                         es = rs.GetEditableSchema
                     End If
@@ -348,26 +348,26 @@ Namespace Database
 
                     Dim pkt As OrmTable = tbls(0)
 
-					For Each de As DictionaryEntry In GetProperties(real_t, es)
-						Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-						Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-						If c IsNot Nothing Then
-							Dim current As Object = pi.GetValue(obj, Nothing)
-							Dim att As Field2DbRelations = GetAttributes(real_t, c)
-							If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse _
-								(att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
-								Dim tb As OrmTable = GetFieldTable(es, c.FieldName)
-								If unions IsNot Nothing Then
-									Throw New NotImplementedException
-									'tb = MapUnionType2Table(real_t, uniontype)
-								End If
+                    For Each de As DictionaryEntry In GetProperties(real_t, es)
+                        Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                        Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                        If c IsNot Nothing Then
+                            Dim current As Object = pi.GetValue(obj, Nothing)
+                            Dim att As Field2DbRelations = GetAttributes(real_t, c)
+                            If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse _
+                             (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
+                                Dim tb As OrmTable = GetFieldTable(es, c.FieldName)
+                                If unions IsNot Nothing Then
+                                    Throw New NotImplementedException
+                                    'tb = MapUnionType2Table(real_t, uniontype)
+                                End If
 
-								Dim f As EntityFilterBase = Nothing
-								Dim v As Object = ChangeValueType(real_t, c, current)
-								If (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault AndAlso v Is DBNull.Value Then
-									If Not String.IsNullOrEmpty(DefaultValue) Then
-										f = New dc.EntityFilter(real_t, c.FieldName, New LiteralValue(DefaultValue), FilterOperation.Equal)
-									Else
+                                Dim f As EntityFilterBase = Nothing
+                                Dim v As Object = ChangeValueType(real_t, c, current)
+                                If (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault AndAlso v Is DBNull.Value Then
+                                    If Not String.IsNullOrEmpty(DefaultValue) Then
+                                        f = New dc.EntityFilter(real_t, c.FieldName, New LiteralValue(DefaultValue), FilterOperation.Equal)
+                                    Else
                                         Throw New QueryGeneratorException("DefaultValue required for operation")
                                     End If
                                 ElseIf v Is DBNull.Value AndAlso pkt IsNot tb AndAlso js IsNot Nothing Then
@@ -1440,7 +1440,7 @@ l1:
         ''' <param name="sch"></param>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Protected Function AppendFrom(ByVal almgr As AliasMgr, ByVal filterInfo As Object, _
+        Protected Friend Function AppendFrom(ByVal almgr As AliasMgr, ByVal filterInfo As Object, _
             ByVal tables As OrmTable(), ByVal selectcmd As StringBuilder, ByVal pname As ICreateParam, _
             ByVal sch As IOrmObjectSchema) As StringBuilder
             'Dim sch As IOrmObjectSchema = GetObjectSchema(original_type)
@@ -1559,7 +1559,7 @@ l1:
                                 sb2.Append(" desc")
                             End If
                         Else
-                            Throw New ArgumentException(String.Format("Field {0} of type {1} is not defuned", ns.FieldName, st))
+                            Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", ns.FieldName, st))
                         End If
                     End If
                     sb2.Append(",")
@@ -2209,6 +2209,14 @@ l1:
             Else
                 Return t.Table
             End If
+        End Function
+
+        'Public Overloads Overrides Function CreateCriteriaLink(ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase) As Criteria.CriteriaLink
+
+        'End Function
+
+        Public Overrides Function CreateExecutor() As Worm.Query.IExecutor
+            Return New Worm.Query.Database.DbQueryExecutor
         End Function
     End Class
 

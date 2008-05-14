@@ -59,6 +59,28 @@ Namespace Orm
         'End Function
     End Class
 
+    Public Class OrmProperty
+
+        Private _field As String
+        Private _type As Type
+
+        Public Sub New(ByVal t As Type, ByVal field As String)
+            _field = field
+            _type = t
+        End Sub
+
+        Public ReadOnly Property Field() As String
+            Get
+                Return _field
+            End Get
+        End Property
+
+        Public ReadOnly Property Type() As Type
+            Get
+                Return _type
+            End Get
+        End Property
+    End Class
 End Namespace
 
 Namespace Sorting
@@ -67,6 +89,7 @@ Namespace Sorting
 
     Public Class SortOrder
         Private _f As String
+        'Private _prop As OrmProperty
         Private _ext As Boolean
         Private _prev As SortOrder
         Private _order As SortType
