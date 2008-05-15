@@ -265,6 +265,18 @@ Namespace Database
             Return "top " & top & " "
         End Function
 
+        Protected Friend Overridable Function TopStatement(ByVal top As Integer, ByVal percent As Boolean, ByVal ties As Boolean) As String
+            Dim sb As New StringBuilder
+            sb.Append("top ").Append(top).Append(" ")
+            If percent Then
+                sb.Append("percent ")
+            End If
+            If ties Then
+                sb.Append(" with ties ")
+            End If
+            Return sb.ToString
+        End Function
+
         Protected Overridable Function DefaultValues() As String
             Return "default values"
         End Function
