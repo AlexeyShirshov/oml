@@ -52,8 +52,8 @@ Namespace Query.Database
                 If Query.Sort IsNot Nothing AndAlso Query.Sort.IsExternal Then
                     r = dbm.DbSchema.ExternalSort(Of ReturnType)(dbm, Query.Sort, r)
                 End If
-                Return r
 
+                Return r
             End Function
 
             Protected Sub MakeStatement(ByVal cmd As System.Data.Common.DbCommand, _
@@ -92,10 +92,14 @@ Namespace Query.Database
         Public Function Exec(Of ReturnType As {New, Orm.OrmBase})(ByVal mgr As OrmManagerBase, _
             ByVal query As QueryCmdBase) As ReadOnlyList(Of ReturnType) Implements IExecutor.Exec
 
-            Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)(query.Joins)
+            Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
+            If query.Joins IsNot Nothing Then
+                j.AddRange(query.Joins)
+            End If
+
             Dim f As IFilter = Nothing
             If query.Filter IsNot Nothing Then
-                f = query.Filter.Filter
+                f = query.Filter.Filter(GetType(ReturnType))
             End If
 
             If query.AutoJoins Then
@@ -113,7 +117,7 @@ Namespace Query.Database
             Dim sync As String = Nothing
 
             If Not dontcache Then
-                key = query.GetStaticKey(j, f)
+                key = query.GetStaticKey(mgr, j, f)
                 dic = mgr.GetDic(mgr.Cache, key)
                 id = query.GetDynamicKey(j, f)
                 sync = id & mgr.GetStaticKey()
@@ -156,23 +160,17 @@ Namespace Query.Database
         Private Shared Sub FormSelectList(ByVal query As QueryCmdBase, ByVal t As Type, _
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema)
             If query.WithLoad Then
-                Dim b As Boolean
                 If query.SelectList IsNot Nothing Then
-                    b = True
                     Dim columns As String = s.GetSelectColumnList(t, GetFields(s, t, query.SelectList))
                     sb.Append(columns)
                 End If
-                If query.Aggregates IsNot Nothing Then
-                    For Each a As AggregateBase In query.Aggregates
-                        If b Then
-                            sb.Append(",")
-                        End If
-                        b = True
-                        sb.Append(a.MakeStmt)
-                    Next
-                End If
             Else
                 s.GetPKList(os, sb)
+            End If
+            If query.Aggregates IsNot Nothing Then
+                For Each a As AggregateBase In query.Aggregates
+                    sb.Append(",").Append(a.MakeStmt)
+                Next
             End If
         End Sub
 
@@ -257,7 +255,7 @@ Namespace Query.Database
             End If
 
             If query.Top IsNot Nothing Then
-                sb.Append(query.Top.MakeStmt(s)).Append(" ")
+                sb.Append(s.TopStatement(query.Top.Count, query.Top.Percent, query.Top.Ties)).Append(" ")
             End If
 
             FormSelectList(query, t, sb, s, os)

@@ -11,12 +11,50 @@ Namespace Query
         Function Exec(Of ReturnType As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyList(Of ReturnType)
     End Interface
 
-    Public MustInherit Class Top
+    Public Class Top
         Private _perc As Boolean
         Private _ties As Boolean
         Private _n As Integer
 
-        Public MustOverride Function MakeStmt(ByVal s As QueryGenerator) As String
+        Public Sub New(ByVal n As Integer)
+            _n = n
+        End Sub
+
+        Public Sub New(ByVal n As Integer, ByVal percent As Boolean)
+            MyClass.New(n)
+            _perc = percent
+        End Sub
+
+        Public Sub New(ByVal n As Integer, ByVal percent As Boolean, ByVal ties As Boolean)
+            MyClass.New(n, percent)
+            _ties = ties
+        End Sub
+
+        Public ReadOnly Property Percent() As Boolean
+            Get
+                Return _perc
+            End Get
+        End Property
+
+        Public ReadOnly Property Ties() As Boolean
+            Get
+                Return _ties
+            End Get
+        End Property
+
+        Public ReadOnly Property Count() As Integer
+            Get
+                Return _n
+            End Get
+        End Property
+
+        Public Function GetDynamicKey() As String
+            Return "-top-" & _n.ToString & "-"
+        End Function
+
+        Public Function GetStaticKey() As String
+            Return "-top-"
+        End Function
     End Class
 
     Public Class QueryCmdBase
@@ -34,12 +72,50 @@ Namespace Query
         Protected _joins() As OrmJoin
         Protected _autoJoins As Boolean
 
-        Public Function GetStaticKey(ByVal j As List(Of OrmJoin), ByVal f As IFilter) As String
+        Public Function GetStaticKey(ByVal mgr As OrmManagerBase, ByVal j As List(Of OrmJoin), ByVal f As IFilter) As String
+            Dim key As String = String.Empty
 
+            If f IsNot Nothing Then
+                key &= f.ToStaticString
+            End If
+
+            If j IsNot Nothing Then
+                For Each join As OrmJoin In j
+                    If Not OrmJoin.IsEmpty(join) Then
+                        key &= join.ToString
+                    End If
+                Next
+            End If
+
+            If _top IsNot Nothing Then
+                key &= _top.GetStaticKey
+            End If
+
+            'key &= mgr.ObjectSchema.GetEntityKey(mgr.GetFilterInfo, GetType(T))
+
+            Return key & mgr.GetStaticKey()
         End Function
 
         Public Function GetDynamicKey(ByVal j As List(Of OrmJoin), ByVal f As IFilter) As String
+            Dim id As String = String.Empty
 
+            If f IsNot Nothing Then
+                id &= f.ToString
+            End If
+
+            If j IsNot Nothing Then
+                For Each join As OrmJoin In j
+                    If Not OrmJoin.IsEmpty(join) Then
+                        id &= join.ToString
+                    End If
+                Next
+            End If
+
+            If _top IsNot Nothing Then
+                id &= _top.GetDynamicKey
+            End If
+
+            Return id '& GetType(T).ToString
         End Function
 
 #Region " Properties "
@@ -165,6 +241,21 @@ Namespace Query
             End With
             Return q
         End Function
+
+#Region " Extensions "
+        Public Function [Single](ByVal mgr As OrmManagerBase) As ReturnType
+            Dim r As ReadOnlyList(Of ReturnType) = Exec(mgr)
+            If r.Count <> 1 Then
+                Throw New InvalidOperationException
+            Else
+                Return r(0)
+            End If
+        End Function
+
+        Public Function ToList(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
+            Return Exec(mgr)
+        End Function
+#End Region
     End Class
 
 End Namespace
