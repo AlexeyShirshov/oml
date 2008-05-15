@@ -110,7 +110,9 @@
   </TestList>
   <TestList name="Query" id="31b9e877-139f-4906-8b58-9421d559f45c" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6">
     <TestLinks>
-      <TestLink id="f7818bd7-02ca-2fef-3490-174989118311" name="TestMethod1" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+      <TestLink id="06758209-bf5d-d257-2c2f-8c6e649de530" name="TestFilter" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+      <TestLink id="b340f570-2578-d20d-6bea-e64262975fae" name="TestFilterFromRawTable" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
+      <TestLink id="f62cd61d-ff91-2795-de98-e36201b0ed10" name="TestFilterFromRawTableWrong" storage="testproject1\bin\testproject1.dll" type="Microsoft.VisualStudio.TestTools.TestTypes.Unit.UnitTestElement, Microsoft.VisualStudio.QualityTools.Tips.UnitTest.ObjectModel,   PublicKeyToken=b03f5f7f11d50a3a" />
     </TestLinks>
   </TestList>
   <TestList name="Search" id="5632cd0e-86e7-4585-85f6-6e5ba0ba8716" parentListId="8c43106b-9dc1-4907-a29f-aa66a61bf5b6">

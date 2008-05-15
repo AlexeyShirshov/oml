@@ -1495,12 +1495,26 @@ l1:
 
         Public Overridable Function AppendWhere(ByVal t As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
+            Dim schema As IOrmObjectSchema = Nothing
+            If t IsNot Nothing Then
+                schema = GetObjectSchema(t)
+            End If
+
+            Return AppendWhere(schema, filter, almgr, sb, filter_info, pmgr)
+        End Function
+
+        Public Overridable Function AppendWhere(ByVal schema As IOrmObjectSchema, ByVal filter As Worm.Criteria.Core.IFilter, _
+            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
 
             Dim con As New Condition.ConditionConstructor
             con.AddFilter(filter)
 
-            If t IsNot Nothing Then
-                Dim schema As IOrmObjectSchema = GetObjectSchema(t)
+            'If t IsNot Nothing Then
+            '    Dim schema As IOrmObjectSchema = GetObjectSchema(t)
+            '    con.AddFilter(schema.GetFilter(filter_info))
+            'End If
+
+            If schema IsNot Nothing Then
                 con.AddFilter(schema.GetFilter(filter_info))
             End If
 
@@ -1537,12 +1551,6 @@ l1:
                     '    Throw New DBSchemaException("Any sort must be alone")
                     'End If
 
-                    Dim st As Type = ns.Type
-                    If st Is Nothing Then
-                        st = defaultType
-                    End If
-
-                    Dim schema As IOrmObjectSchema = GetObjectSchema(st)
                     'Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
                     'If s Is Nothing Then
 
@@ -1552,9 +1560,7 @@ l1:
                     '    Throw New ArgumentException("Sort " & sort & " is not supported", "sort")
                     'End If
 
-                    Dim map As MapField2Column = Nothing
                     Dim sb2 As New StringBuilder
-                    Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
                     If ns.IsCustom Then
                         'Dim s As String = ns.CustomSortExpression
                         'For Each map In cm
@@ -1565,14 +1571,32 @@ l1:
                         'Next
                         sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(Me, almgr.Aliases)))
                     Else
-                        If cm.TryGetValue(ns.FieldName, map) Then
-                            sb2.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
+                        Dim st As Type = ns.Type
+                        If st Is Nothing Then
+                            st = defaultType
+                        End If
+
+                        If st IsNot Nothing Then
+                            Dim schema As IOrmObjectSchema = GetObjectSchema(st)
+
+                            Dim map As MapField2Column = Nothing
+                            Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
+
+                            If cm.TryGetValue(ns.FieldName, map) Then
+                                sb2.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
+                                If ns.Order = Orm.SortType.Desc Then
+                                    sb2.Append(" desc")
+                                End If
+                            Else
+                                Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", ns.FieldName, st))
+                            End If
+                        Else
+                            sb2.Append(almgr.Aliases(ns.Table)).Append(".").Append(ns.FieldName)
                             If ns.Order = Orm.SortType.Desc Then
                                 sb2.Append(" desc")
                             End If
-                        Else
-                            Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", ns.FieldName, st))
                         End If
+
                     End If
                     sb2.Append(",")
                     sb.Insert(pos, sb2.ToString)

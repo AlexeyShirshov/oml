@@ -6,6 +6,9 @@ Imports Worm.Query
 Imports Worm.Database.Criteria
 Imports Worm.Database
 Imports Worm
+Imports Worm.Orm.Meta
+Imports Worm.Database.Criteria.Core
+Imports Worm.Criteria.Values
 
 <TestClass()> Public Class QueryTest
 
@@ -46,10 +49,47 @@ Imports Worm
     '
 #End Region
 
-    <TestMethod()> Public Sub TestMethod1()
+    <TestMethod()> Public Sub TestFilter()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim q As QueryCmd(Of Entity) = QueryCmd(Of Entity).Create(Ctor.AutoTypeField("ID").Eq(1))
             Assert.IsNotNull(q)
+
+            Dim e As Entity = q.Single(mgr)
+            Assert.IsNotNull(e)
+            Assert.AreEqual(1, e.Identifier)
+
+            Dim r As ReadOnlyList(Of Entity) = q.ToList(mgr)
+
+            Assert.AreEqual(1, r.Count)
+            Assert.AreEqual(e, r(0))
+        End Using
+    End Sub
+
+    <TestMethod(), ExpectedException(GetType(Worm.QueryGeneratorException))> Public Sub TestFilterFromRawTableWrong()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+
+            Dim t As OrmTable = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
+            Dim q As QueryCmd(Of Entity) = QueryCmd(Of Entity).Create(t, "ID")
+            Assert.IsNotNull(q)
+
+            q.Filter = Ctor.AutoTypeField("ID").Eq(1)
+
+            Dim e As Entity = q.Single(mgr)
+
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestFilterFromRawTable()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+
+            Dim t As OrmTable = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
+            Dim q As QueryCmd(Of Entity) = QueryCmd(Of Entity).Create(t, "ID")
+            Assert.IsNotNull(q)
+
+            Dim c As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
+            c.AddFilter(New TableFilter(t, "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
+
+            q.Filter = c.Condition
 
             Dim e As Entity = q.Single(mgr)
             Assert.IsNotNull(e)

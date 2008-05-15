@@ -71,12 +71,13 @@ Namespace Query
         Protected _clientPage As Pair(Of Integer)
         Protected _joins() As OrmJoin
         Protected _autoJoins As Boolean
+        Protected _table As OrmTable
 
         Public Function GetStaticKey(ByVal mgr As OrmManagerBase, ByVal j As List(Of OrmJoin), ByVal f As IFilter) As String
             Dim key As String = String.Empty
 
             If f IsNot Nothing Then
-                key &= f.ToStaticString
+                key &= f.ToStaticString & "$"
             End If
 
             If j IsNot Nothing Then
@@ -88,19 +89,19 @@ Namespace Query
             End If
 
             If _top IsNot Nothing Then
-                key &= _top.GetStaticKey
+                key &= _top.GetStaticKey & "$"
             End If
 
             'key &= mgr.ObjectSchema.GetEntityKey(mgr.GetFilterInfo, GetType(T))
 
-            Return key & mgr.GetStaticKey()
+            Return key & "$" & mgr.GetStaticKey()
         End Function
 
         Public Function GetDynamicKey(ByVal j As List(Of OrmJoin), ByVal f As IFilter) As String
             Dim id As String = String.Empty
 
             If f IsNot Nothing Then
-                id &= f.ToString
+                id &= f.ToString & "$"
             End If
 
             If j IsNot Nothing Then
@@ -112,13 +113,28 @@ Namespace Query
             End If
 
             If _top IsNot Nothing Then
-                id &= _top.GetDynamicKey
+                id &= _top.GetDynamicKey & "$"
             End If
 
             Return id '& GetType(T).ToString
         End Function
 
 #Region " Properties "
+
+        Public ReadOnly Property Table() As OrmTable
+            Get
+                Return _table
+            End Get
+        End Property
+
+        Public Property ClientPaging() As Pair(Of Integer)
+            Get
+                Return _clientPage
+            End Get
+            Set(ByVal value As Pair(Of Integer))
+                _clientPage = value
+            End Set
+        End Property
 
         Public Property DontCache() As Boolean
             Get
@@ -186,10 +202,13 @@ Namespace Query
             End Set
         End Property
 
-        Public ReadOnly Property Filter() As IGetFilter
+        Public Property Filter() As IGetFilter
             Get
                 Return _filter
             End Get
+            Set(ByVal value As IGetFilter)
+                _filter = value
+            End Set
         End Property
 
         Public Property WithLoad() As Boolean
@@ -210,14 +229,14 @@ Namespace Query
         Private _exec As IExecutor
 
         Protected Function GetExecutor(ByVal mgr As OrmManagerBase) As IExecutor
-            If _dontcache Then
-                If _exec Is Nothing Then
-                    _exec = mgr.ObjectSchema.CreateExecutor()
-                End If
-                Return _exec
-            Else
-                Return mgr.ObjectSchema.CreateExecutor()
+            'If _dontcache Then
+            If _exec Is Nothing Then
+                _exec = mgr.ObjectSchema.CreateExecutor()
             End If
+            Return _exec
+            'Else
+            'Return mgr.ObjectSchema.CreateExecutor()
+            'End If
         End Function
 
         Public Function Exec(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
@@ -228,8 +247,35 @@ Namespace Query
             Return Create(filter, Nothing, False)
         End Function
 
+        Public Shared Function Create(ByVal table As OrmTable, ByVal field As String) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
+            q._fields = New List(Of OrmProperty)
+            q._fields.Add(New OrmProperty(table, field))
+            Return q
+        End Function
+
+        Public Shared Function Create(ByVal table As OrmTable, ByVal fields() As String) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
+            q._fields = New List(Of OrmProperty)
+            For Each f As String In fields
+                q._fields.Add(New OrmProperty(table, f))
+            Next
+            Return q
+        End Function
+
+        Public Shared Function Create(ByVal table As OrmTable, ByVal fields() As OrmProperty) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
+            q._fields = New List(Of OrmProperty)
+            q._fields.AddRange(fields)
+            Return q
+        End Function
+
         Public Shared Function Create(ByVal filter As IGetFilter, ByVal sort As Sort) As QueryCmd(Of ReturnType)
             Return Create(filter, sort, False)
+        End Function
+
+        Public Shared Function Create(ByVal table As OrmTable, ByVal filter As IGetFilter, ByVal sort As Sort) As QueryCmd(Of ReturnType)
+            Return Create(table, filter, sort, False)
         End Function
 
         Public Shared Function Create(ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
@@ -242,6 +288,11 @@ Namespace Query
             Return q
         End Function
 
+        Public Shared Function Create(ByVal table As OrmTable, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(filter, sort, withLoad)
+            q._table = table
+            Return q
+        End Function
 #Region " Extensions "
         Public Function [Single](ByVal mgr As OrmManagerBase) As ReturnType
             Dim r As ReadOnlyList(Of ReturnType) = Exec(mgr)

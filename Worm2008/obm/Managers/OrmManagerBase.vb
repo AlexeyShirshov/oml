@@ -631,7 +631,7 @@ Public MustInherit Class OrmManagerBase
     End Structure
 
     Public Interface ICustDelegate(Of T As {OrmBase, New})
-        Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+        'Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
         Property Created() As Boolean
         Property Renew() As Boolean
         ReadOnly Property SmartSort() As Boolean
@@ -800,7 +800,7 @@ Public MustInherit Class OrmManagerBase
             End Get
         End Property
 
-        Public MustOverride Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T) Implements ICustDelegate(Of T).GetValues
+        Public MustOverride Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T) 'Implements ICustDelegate(Of T).GetValues
         Public MustOverride Sub CreateDepends() Implements ICustDelegate(Of T).CreateDepends
         Public MustOverride ReadOnly Property Filter() As IFilter Implements ICustDelegate(Of T).Filter
         Public MustOverride ReadOnly Property Sort() As Sort Implements ICustDelegate(Of T).Sort
@@ -865,8 +865,8 @@ Public MustInherit Class OrmManagerBase
     Protected Friend _dont_cache_lists As Boolean
     Private _newMgr As INewObjects
     Private _expiresPattern As Date
-    Protected _start As Integer
-    Protected _length As Integer = Integer.MaxValue
+    Protected Friend _start As Integer
+    Protected Friend _length As Integer = Integer.MaxValue
     Protected _er As ExecutionResult
     Friend _externalFilter As IFilter
     Protected Friend _loadedInLastFetch As Integer
