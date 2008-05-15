@@ -357,7 +357,7 @@ Namespace Database
                     Dim [alias] As String = String.Empty
 
                     If tableAliases IsNot Nothing Then
-                        Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+                        'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
                         Try
                             [alias] = tableAliases(map._tableName) & "."
                         Catch ex As KeyNotFoundException

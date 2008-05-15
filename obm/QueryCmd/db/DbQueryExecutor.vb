@@ -20,6 +20,23 @@ Namespace Query.Database
             Private _j As List(Of Worm.Criteria.Joins.OrmJoin)
             Private _f As IFilter
             Private _q As QueryCmdBase
+            Private _key As String
+            Private _id As String
+            Private _sync As String
+            Private _dic As IDictionary
+
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
+                ByVal f As IFilter, ByVal q As QueryCmdBase)
+                _mgr = mgr
+                _j = j
+                _f = f
+                _q = q
+
+                _key = Query.GetStaticKey(mgr, j, f)
+                _dic = mgr.GetDic(mgr.Cache, _key)
+                _id = Query.GetDynamicKey(j, f)
+                _sync = _id & mgr.GetStaticKey()
+            End Sub
 
             Public Overrides Sub CreateDepends()
 
@@ -27,16 +44,24 @@ Namespace Query.Database
 
             Public Overrides ReadOnly Property Filter() As Criteria.Core.IFilter
                 Get
-                    Throw New NotImplementedException
+                    Return _f
                 End Get
             End Property
 
             Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
-
+                Return GetCacheItem(GetValues(withLoad))
             End Function
 
             Public Overloads Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of ReturnType)) As OrmManagerBase.CachedItem
-
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(ReturnType)), IOrmSorting2)
+                Dim s As Date = Nothing
+                If sortex IsNot Nothing Then
+                    Dim ts As TimeSpan = sortex.SortExpiration(_q.Sort)
+                    If ts <> TimeSpan.MaxValue AndAlso ts <> TimeSpan.MinValue Then
+                        s = Now.Add(ts)
+                    End If
+                End If
+                Return New OrmManagerBase.CachedItem(_q.Sort, s, _f, col, _mgr)
             End Function
 
             Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of ReturnType)
@@ -74,7 +99,7 @@ Namespace Query.Database
 
             Public Overrides ReadOnly Property Sort() As Sorting.Sort
                 Get
-                    Throw New NotImplementedException
+                    Return _q.Sort
                 End Get
             End Property
 
@@ -83,31 +108,62 @@ Namespace Query.Database
                     Return _q
                 End Get
             End Property
+
+            Public ReadOnly Property Key() As String
+                Get
+                    Return _key
+                End Get
+            End Property
+
+            Public ReadOnly Property Id() As String
+                Get
+                    Return _id
+                End Get
+            End Property
+
+            Public ReadOnly Property Sync() As String
+                Get
+                    Return _sync
+                End Get
+            End Property
+
+            Public ReadOnly Property Dic() As IDictionary
+                Get
+                    Return _dic
+                End Get
+            End Property
         End Class
 
         Private _proc As Object
 
-        ', ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter
+        Protected Function GetProcessor(Of ReturnType As {New, Orm.OrmBase})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As Processor(Of ReturnType)
+            If _proc Is Nothing Then
+                Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
+                If query.Joins IsNot Nothing Then
+                    j.AddRange(query.Joins)
+                End If
+
+                Dim f As IFilter = Nothing
+                If query.Filter IsNot Nothing Then
+                    f = query.Filter.Filter(GetType(ReturnType))
+                End If
+
+                If query.AutoJoins Then
+                    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+                    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
+                        j.AddRange(joins)
+                    End If
+                End If
+
+                _proc = New Processor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+
+            End If
+
+            Return CType(_proc, Processor(Of ReturnType))
+        End Function
 
         Public Function Exec(Of ReturnType As {New, Orm.OrmBase})(ByVal mgr As OrmManagerBase, _
             ByVal query As QueryCmdBase) As ReadOnlyList(Of ReturnType) Implements IExecutor.Exec
-
-            Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
-            If query.Joins IsNot Nothing Then
-                j.AddRange(query.Joins)
-            End If
-
-            Dim f As IFilter = Nothing
-            If query.Filter IsNot Nothing Then
-                f = query.Filter.Filter(GetType(ReturnType))
-            End If
-
-            If query.AutoJoins Then
-                Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
-                    j.AddRange(joins)
-                End If
-            End If
 
             Dim dontcache As Boolean = query.DontCache
 
@@ -116,23 +172,30 @@ Namespace Query.Database
             Dim id As String = Nothing
             Dim sync As String = Nothing
 
+            Dim p As Processor(Of ReturnType) = GetProcessor(Of ReturnType)(mgr, query)
+
             If Not dontcache Then
-                key = query.GetStaticKey(mgr, j, f)
-                dic = mgr.GetDic(mgr.Cache, key)
-                id = query.GetDynamicKey(j, f)
-                sync = id & mgr.GetStaticKey()
+                key = p.Key
+                id = p.Id
+                dic = p.dic
+                sync = p.sync
             End If
-
-            If _proc Is Nothing Then
-                _proc = New Processor(Of ReturnType)
-            End If
-
-            Dim p As OrmManagerBase.ICustDelegate(Of ReturnType) = CType(_proc, Global.Worm.OrmManagerBase.ICustDelegate(Of ReturnType))
 
             Dim oldCache As Boolean = mgr._dont_cache_lists
+            Dim oldStart As Integer = mgr._start
+            Dim oldLength As Integer = mgr._length
+
             mgr._dont_cache_lists = dontcache
+            If query.ClientPaging IsNot Nothing Then
+                mgr._start = query.ClientPaging.First
+                mgr._length = query.ClientPaging.Second
+            End If
+
             Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.WithLoad, p)
+
             mgr._dont_cache_lists = oldCache
+            mgr._start = oldStart
+            mgr._length = oldLength
 
             mgr.RaiseOnDataAvailable()
 
@@ -145,12 +208,18 @@ Namespace Query.Database
             If c IsNot Nothing Then
                 Dim l As New List(Of ColumnAttribute)
                 For Each p As OrmProperty In c
-                    If Not type.Equals(p.Type) Then
-                        Throw New NotImplementedException
+                    'If Not type.Equals(p.Type) Then
+                    '    Throw New NotImplementedException
+                    'End If
+                    If p.Type Is Nothing Then
+                        Dim cl As New ColumnAttribute(p.Field)
+                        cl.Column = p.Column
+                        l.Add(cl)
+                    Else
+                        l.Add(New ColumnAttribute(p.Field))
                     End If
-                    l.Add(New ColumnAttribute(p.Field))
                 Next
-                l.Sort()
+                'l.Sort()
                 Return l
             Else
                 Return gen.GetSortedFieldList(type)
@@ -159,14 +228,23 @@ Namespace Query.Database
 
         Private Shared Sub FormSelectList(ByVal query As QueryCmdBase, ByVal t As Type, _
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema)
-            If query.WithLoad Then
-                If query.SelectList IsNot Nothing Then
-                    Dim columns As String = s.GetSelectColumnList(t, GetFields(s, t, query.SelectList))
-                    sb.Append(columns)
-                End If
+            
+            If os Is Nothing Then
+                For Each p As OrmProperty In query.SelectList
+                    sb.Append(s.GetTableName(p.Table)).Append(".").Append(p.Column).Append(", ")
+                Next
+                sb.Length -= 2
             Else
-                s.GetPKList(os, sb)
+                If query.WithLoad Then
+                    If query.SelectList IsNot Nothing Then
+                        Dim columns As String = s.GetSelectColumnList(t, GetFields(s, t, query.SelectList))
+                        sb.Append(columns)
+                    End If
+                Else
+                    s.GetPKList(os, sb)
+                End If
             End If
+
             If query.Aggregates IsNot Nothing Then
                 For Each a As AggregateBase In query.Aggregates
                     sb.Append(",").Append(a.MakeStmt)
@@ -174,8 +252,7 @@ Namespace Query.Database
             End If
         End Sub
 
-        Private Shared Sub FormTypeTables(ByVal mgr As OrmReadOnlyDBManager, ByVal params As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema)
-            Dim tables() As OrmTable = os.GetTables()
+        Private Shared Sub FormTypeTables(ByVal mgr As OrmReadOnlyDBManager, ByVal params As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema, ByVal tables() As OrmTable)
             Dim tbl As OrmTable = tables(0)
             Dim tbl_real As OrmTable = tbl
             Dim [alias] As String = Nothing
@@ -246,7 +323,11 @@ Namespace Query.Database
             Dim almgr As AliasMgr = AliasMgr.Create
             Dim sb As New StringBuilder
             Dim s As SQLGenerator = mgr.DbSchema
-            Dim os As IOrmObjectSchema = s.GetObjectSchema(t)
+            Dim os As IOrmObjectSchema = Nothing
+
+            If query.Table Is Nothing Then
+                os = s.GetObjectSchema(t)
+            End If
 
             sb.Append("select ")
 
@@ -262,11 +343,18 @@ Namespace Query.Database
 
             sb.Append(" from ")
 
-            FormTypeTables(mgr, params, almgr, sb, s, os)
+            Dim tables() As OrmTable = Nothing
+            If os IsNot Nothing Then
+                tables = os.GetTables()
+            Else
+                tables = New OrmTable() {query.Table}
+            End If
+
+            FormTypeTables(mgr, params, almgr, sb, s, os, tables)
 
             FormJoins(mgr, query, params, joins, almgr, sb, s)
 
-            s.AppendWhere(t, f, almgr, sb, mgr.GetFilterInfo, params)
+            s.AppendWhere(os, f, almgr, sb, mgr.GetFilterInfo, params)
 
             FormGroupBy(query, almgr, sb, s)
 

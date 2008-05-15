@@ -51,7 +51,7 @@ Imports Worm.Criteria.Core
         j.MakeSQLStmt(schema, almgr, Nothing)
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(System.Collections.Generic.KeyNotFoundException))> _
+    <TestMethod(), ExpectedException(GetType(Worm.QueryGeneratorException))> _
     Public Sub TestMakeSQLStmt4()
         Dim t As New OrmTable("table1")
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
