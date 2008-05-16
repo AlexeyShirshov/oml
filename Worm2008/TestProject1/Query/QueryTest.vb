@@ -102,4 +102,54 @@ Imports Worm.Criteria.Values
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestSort()
+
+    End Sub
+
+    <TestMethod()> Public Sub TestJoin()
+
+    End Sub
+
+    <TestMethod()> Public Sub TestAutoJoin()
+
+    End Sub
+
+    <TestMethod()> Public Sub TestDistinct()
+
+    End Sub
+
+    <TestMethod()> Public Sub TestTop()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+
+            Dim q As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create(Ctor.AutoTypeField("Title").Like("b%"))
+            Assert.IsNotNull(q)
+
+            Dim r As ReadOnlyList(Of Entity4) = q.ToList(mgr)
+
+            Assert.AreEqual(3, r.Count)
+            Dim m As Integer = q.Mark
+
+            q.Top = New Top(2)
+            Assert.AreNotEqual(m, q.Mark)
+
+            r = q.ToList(mgr)
+
+            Assert.AreEqual(2, r.Count)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestHint()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+
+            Dim q As QueryCmd(Of Entity) = QueryCmd(Of Entity).Create(Ctor.AutoTypeField("ID").Eq(1))
+            Assert.IsNotNull(q)
+
+            Dim s As String = "<ShowPlanXML xmlns='http://schemas.microsoft.com/sqlserver/2004/07/showplan' Version='1.0' Build='9.00.3042.00'><BatchSequence><Batch><Statements><StmtSimple StatementText='declare @p1 Int;set @p1 = 1&#xd;' StatementId='1' StatementCompId='1' StatementType='ASSIGN'/><StmtSimple StatementText='&#xa;select t1.id from dbo.ent1 t1 where t1.id = @p1&#xd;&#xa;' StatementId='2' StatementCompId='2' StatementType='SELECT' StatementSubTreeCost='0.0032831' StatementEstRows='1' StatementOptmLevel='TRIVIAL'><StatementSetOptions QUOTED_IDENTIFIER='false' ARITHABORT='true' CONCAT_NULL_YIELDS_NULL='false' ANSI_NULLS='false' ANSI_PADDING='false' ANSI_WARNINGS='false' NUMERIC_ROUNDABORT='false'/><QueryPlan CachedPlanSize='8' CompileTime='0' CompileCPU='0' CompileMemory='72'><RelOp NodeId='0' PhysicalOp='Clustered Index Seek' LogicalOp='Clustered Index Seek' EstimateRows='1' EstimateIO='0.003125' EstimateCPU='0.0001581' AvgRowSize='11' EstimatedTotalSubtreeCost='0.0032831' Parallel='0' EstimateRebinds='0' EstimateRewinds='0'><OutputList><ColumnReference Schema='[dbo]' Table='[ent1]' Alias='[t1]' Column='id'/></OutputList><IndexScan Ordered='1' ScanDirection='FORWARD' ForcedIndex='0' NoExpandHint='0'><DefinedValues><DefinedValue><ColumnReference Schema='[dbo]' Table='[ent1]' Alias='[t1]' Column='id'/></DefinedValue></DefinedValues><Object Schema='[dbo]' Table='[ent1]' Index='[PK_ent1]' Alias='[t1]'/><SeekPredicates><SeekPredicate><Prefix ScanType='EQ'><RangeColumns><ColumnReference Schema='[dbo]' Table='[ent1]' Alias='[t1]' Column='id'/></RangeColumns><RangeExpressions><ScalarOperator ScalarString='[@p1]'><Identifier><ColumnReference Column='@p1'/></Identifier></ScalarOperator></RangeExpressions></Prefix></SeekPredicate></SeekPredicates></IndexScan></RelOp></QueryPlan></StmtSimple></Statements></Batch></BatchSequence></ShowPlanXML>"
+            q.Hint = "option(use plan N'" & s.Replace("'", """") & "')"
+            Dim e As Entity = q.Single(mgr)
+
+            Assert.IsNotNull(e)
+            Assert.AreEqual(1, e.Identifier)
+        End Using
+    End Sub
 End Class

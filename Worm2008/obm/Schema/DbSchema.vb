@@ -2254,6 +2254,28 @@ l1:
         Public Overrides Function CreateExecutor() As Worm.Query.IExecutor
             Return New Worm.Query.Database.DbQueryExecutor
         End Function
+
+        Protected Friend Overrides Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
+           ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType, Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.OrmJoin
+
+            Dim tbl As OrmTable = GetTables(type2join)(0)
+            If switchTable Then
+                tbl = GetTables(selectType)(0)
+            End If
+
+            Dim jf As New Database.Criteria.Joins.JoinFilter(type2join, "ID", selectType, field, oper)
+
+            Return New Database.Criteria.Joins.OrmJoin(tbl, joinType, jf)
+        End Function
+
+        Protected Friend Overrides Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As Worm.Criteria.Joins.OrmJoin()
+            Dim jf As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, m2m.Type, "ID", Worm.Criteria.FilterOperation.Equal)
+            Dim mj As New Database.Criteria.Joins.OrmJoin(m2m.Table, Joins.JoinType.Join, jf)
+            m2m = GetM2MRelation(m2m.Type, type2join, True)
+            Dim jt As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, type2join, "ID", Worm.Criteria.FilterOperation.Equal)
+            Dim tj As New Database.Criteria.Joins.OrmJoin(GetTables(type2join)(0), Joins.JoinType.Join, jt)
+            Return New Database.Criteria.Joins.OrmJoin() {mj, tj}
+        End Function
     End Class
 
     <Serializable()> _

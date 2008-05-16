@@ -1487,6 +1487,10 @@ Public MustInherit Class QueryGenerator
     Public MustOverride Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sorting.Sort) As Worm.Orm.Query.TopAspect
     Public MustOverride Function GetTableName(ByVal t As OrmTable) As String
     Public MustOverride Function CreateExecutor() As Worm.Query.IExecutor
+
+    Protected Friend MustOverride Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
+        ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
+    Protected Friend MustOverride Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As OrmJoin()
 End Class
 
 'End Namespace
