@@ -1936,6 +1936,9 @@ l1:
                                 val = "'" & val & "'"
                             End If
                             tp = DbTypeConvertor.ToSqlDbType(p.DbType).ToString
+                            If p.DbType = Data.DbType.String Then
+                                tp &= "(" & p.Size.ToString & ")"
+                            End If
                         End If
                         sb.Append(DbSchema.DeclareVariable(p.ParameterName, tp))
                         sb.AppendLine(";set " & p.ParameterName & " = " & val)
@@ -2785,28 +2788,6 @@ l2:
 
         Protected Overrides Function GetSearchSection() As String
             Return String.Empty
-        End Function
-
-        Protected Overrides Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
-            ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
-
-            Dim tbl As OrmTable = DbSchema.GetTables(type2join)(0)
-            If switchTable Then
-                tbl = DbSchema.GetTables(selectType)(0)
-            End If
-
-            Dim jf As New Database.Criteria.Joins.JoinFilter(type2join, "ID", selectType, field, oper)
-
-            Return New Database.Criteria.Joins.OrmJoin(tbl, joinType, jf)
-        End Function
-
-        Protected Overrides Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As Worm.Criteria.Joins.OrmJoin()
-            Dim jf As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, m2m.Type, "ID", Worm.Criteria.FilterOperation.Equal)
-            Dim mj As New Database.Criteria.Joins.OrmJoin(m2m.Table, JoinType.Join, jf)
-            m2m = _schema.GetM2MRelation(m2m.Type, type2join, True)
-            Dim jt As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, type2join, "ID", Worm.Criteria.FilterOperation.Equal)
-            Dim tj As New Database.Criteria.Joins.OrmJoin(_schema.GetTables(type2join)(0), JoinType.Join, jt)
-            Return New Database.Criteria.Joins.OrmJoin() {mj, tj}
         End Function
 
         Protected Overrides ReadOnly Property Exec() As System.TimeSpan

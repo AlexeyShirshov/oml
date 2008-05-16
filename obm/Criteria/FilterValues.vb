@@ -564,6 +564,7 @@ Namespace Database
             Private _tbl As OrmTable
             Private _f As IFilter
             Private _field As String
+            Private _joins() As Worm.Criteria.Joins.OrmJoin
 
             Public Sub New(ByVal t As Type, ByVal f As IFilter)
                 _t = t
@@ -582,12 +583,51 @@ Namespace Database
                 _field = field
             End Sub
 
-            Public Function _ToString() As String Implements IDatabaseFilterValue._ToString
+#Region " Properties "
+
+            Public Property Joins() As Worm.Criteria.Joins.OrmJoin()
+                Get
+                    Return _joins
+                End Get
+                Set(ByVal value As Worm.Criteria.Joins.OrmJoin())
+                    _joins = value
+                End Set
+            End Property
+
+            Public ReadOnly Property Filter() As IFilter
+                Get
+                    Return _f
+                End Get
+            End Property
+
+            Public ReadOnly Property Table() As OrmTable
+                Get
+                    Return _tbl
+                End Get
+            End Property
+
+            Public ReadOnly Property Type() As Type
+                Get
+                    Return _t
+                End Get
+            End Property
+
+#End Region
+
+            Public Overridable Function _ToString() As String Implements IDatabaseFilterValue._ToString
                 Dim r As String = Nothing
                 If _t IsNot Nothing Then
                     r = _t.ToString()
                 Else
                     r = _tbl.RawName
+                End If
+                If _joins IsNot Nothing Then
+                    r &= "$"
+                    For Each join As Worm.Criteria.Joins.OrmJoin In _joins
+                        If Not Worm.Criteria.Joins.OrmJoin.IsEmpty(join) Then
+                            r &= join.ToString
+                        End If
+                    Next
                 End If
                 If _f IsNot Nothing Then
                     r &= "$" & _f.ToString
@@ -598,12 +638,10 @@ Namespace Database
                 Return r
             End Function
 
-            Public Function GetParam(ByVal dbschema As SQLGenerator, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
-                Dim sb As New StringBuilder
-                'Dim dbschema As DbSchema = CType(schema, DbSchema)
-                sb.Append("(")
+            Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
                 If _t Is Nothing Then
-                    sb.Append(dbschema.SelectWithJoin(Nothing, New OrmTable() {_tbl}, almgr, paramMgr, Nothing, False, Nothing, Nothing, Nothing, Nothing, Nothing))
+                    sb.Append(dbschema.SelectWithJoin(Nothing, New OrmTable() {_tbl}, almgr, paramMgr, _joins, _
+                        False, Nothing, Nothing, Nothing, Nothing, Nothing))
                 Else
                     Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
                     If Not String.IsNullOrEmpty(_field) Then
@@ -614,18 +652,34 @@ Namespace Database
                 End If
 
                 dbschema.AppendWhere(_t, _f, almgr, sb, Nothing, paramMgr)
+            End Sub
+
+            Public Function GetParam(ByVal dbschema As SQLGenerator, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
+                Dim sb As New StringBuilder
+                'Dim dbschema As DbSchema = CType(schema, DbSchema)
+                sb.Append("(")
+
+                FormStmt(dbschema, paramMgr, almgr, sb)
 
                 sb.Append(")")
 
                 Return sb.ToString
             End Function
 
-            Public Function GetStaticString() As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+            Public Overridable Function GetStaticString() As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
                 Dim r As String = Nothing
                 If _t IsNot Nothing Then
                     r = _t.ToString()
                 Else
                     r = _tbl.RawName
+                End If
+                If _joins IsNot Nothing Then
+                    r &= "$"
+                    For Each join As Worm.Criteria.Joins.OrmJoin In _joins
+                        If Not Worm.Criteria.Joins.OrmJoin.IsEmpty(join) Then
+                            r &= join.ToString
+                        End If
+                    Next
                 End If
                 If _f IsNot Nothing Then
                     r &= "$" & _f.ToStaticString

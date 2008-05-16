@@ -2544,6 +2544,15 @@ l1:
 #End Region
 
 #Region " helpers "
+    Protected Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
+        ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
+        Return _schema.MakeJoin(type2join, selectType, field, oper, joinType, switchTable)
+    End Function
+
+    Protected Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As OrmJoin()
+        Return _schema.MakeM2MJoin(m2m, type2join)
+    End Function
+
     Friend Shared Function GetSync(ByVal key As String, ByVal id As String) As String
         Return id & Const_KeyStaticString & key
     End Function
@@ -3908,10 +3917,6 @@ l1:
 
     'Protected MustOverride Sub Obj2ObjRelationSave2(ByVal obj As OrmBase, ByVal dt As System.Data.DataTable, ByVal sync As String, ByVal t As System.Type)
 
-    Protected MustOverride Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
-        ByVal oper As FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
-    Protected MustOverride Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As OrmJoin()
-
     Protected MustOverride ReadOnly Property Exec() As TimeSpan
     Protected MustOverride ReadOnly Property Fecth() As TimeSpan
 
@@ -4125,7 +4130,7 @@ l1:
         Return l.Length + 1
     End Function
 
-    Protected Friend Function HasJoins(ByVal selectType As Type, ByRef filter As IFilter, ByVal s As Sort, ByRef joins() As OrmJoin) As Boolean
+    Protected Friend Shared Function HasJoins(ByVal _schema As QueryGenerator, ByVal selectType As Type, ByRef filter As IFilter, ByVal s As Sort, ByVal filterInfo As Object, ByRef joins() As OrmJoin) As Boolean
         Dim l As New List(Of OrmJoin)
         Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(selectType)
         Dim types As New List(Of Type)
@@ -4143,12 +4148,12 @@ l1:
                         If String.IsNullOrEmpty(field) Then
                             Dim m2m As M2MRelation = _schema.GetM2MRelation(type2join, selectType, True)
                             If m2m IsNot Nothing Then
-                                l.AddRange(MakeM2MJoin(m2m, type2join))
+                                l.AddRange(_schema.MakeM2MJoin(m2m, type2join))
                             Else
                                 Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
                             End If
                         Else
-                            l.Add(MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
+                            l.Add(_schema.MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
                         End If
 
                         types.Add(type2join)
@@ -4159,7 +4164,7 @@ l1:
                             Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
                             Dim join As OrmJoin = Nothing
                             If joinableTs IsNot Nothing Then
-                                join = joinableTs.GetJoins(pk_table, ts.GetTables(i), GetFilterInfo)
+                                join = joinableTs.GetJoins(pk_table, ts.GetTables(i), filterInfo)
                             Else
                                 join = ts.GetJoins(pk_table, ts.GetTables(i))
                             End If
@@ -4169,9 +4174,9 @@ l1:
                             End If
                         Next
 
-                        Dim newfl As IFilter = ts.GetFilter(GetFilterInfo)
+                        Dim newfl As IFilter = ts.GetFilter(filterInfo)
                         If newfl IsNot Nothing Then
-                            Dim con As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
+                            Dim con As Conditions.Condition.ConditionConstructorBase = _schema.CreateConditionCtor
                             con.AddFilter(filter)
                             con.AddFilter(newfl)
                             filter = con.Condition
@@ -4190,7 +4195,7 @@ l1:
 
                     If Not String.IsNullOrEmpty(field) Then
                         types.Add(sortType)
-                        l.Add(MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
+                        l.Add(_schema.MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
                         Continue Do
                     End If
 
@@ -4199,7 +4204,7 @@ l1:
                     If String.IsNullOrEmpty(field) Then
                         Dim m2m As M2MRelation = _schema.GetM2MRelation(sortType, selectType, True)
                         If m2m IsNot Nothing Then
-                            l.AddRange(MakeM2MJoin(m2m, sortType))
+                            l.AddRange(_schema.MakeM2MJoin(m2m, sortType))
                         Else
                             Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, sortType))
                         End If

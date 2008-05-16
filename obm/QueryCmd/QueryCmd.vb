@@ -72,8 +72,32 @@ Namespace Query
         Protected _joins() As OrmJoin
         Protected _autoJoins As Boolean
         Protected _table As OrmTable
+        Protected _hint As String
+        Protected _mark As Integer = Environment.TickCount
+        Protected _smark As Integer = Environment.TickCount
+        Protected _t As Type
 
-        Public Function GetStaticKey(ByVal mgr As OrmManagerBase, ByVal j As List(Of OrmJoin), ByVal f As IFilter) As String
+        Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal mgr As OrmManagerBase, ByVal t As Type) As IFilter
+
+            If Joins IsNot Nothing Then
+                j.AddRange(Joins)
+            End If
+
+            Dim f As IFilter = Nothing
+            If Filter IsNot Nothing Then
+                f = Filter.Filter(t)
+            End If
+
+            If AutoJoins Then
+                Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+                If mgr.HasJoins(t, f, Sort, joins) Then
+                    j.AddRange(joins)
+                End If
+            End If
+            Return f
+        End Function
+
+        Public Function GetStaticKey(ByVal mgrKey As String, ByVal j As List(Of OrmJoin), ByVal f As IFilter) As String
             Dim key As String = String.Empty
 
             If f IsNot Nothing Then
@@ -94,7 +118,7 @@ Namespace Query
 
             'key &= mgr.ObjectSchema.GetEntityKey(mgr.GetFilterInfo, GetType(T))
 
-            Return key & "$" & mgr.GetStaticKey()
+            Return key & "$" & mgrKey
         End Function
 
         Public Function GetDynamicKey(ByVal j As List(Of OrmJoin), ByVal f As IFilter) As String
@@ -120,6 +144,37 @@ Namespace Query
         End Function
 
 #Region " Properties "
+
+        Public Overridable Property SelectedType() As Type
+            Get
+                Return _t
+            End Get
+            Set(ByVal value As Type)
+                _t = value
+            End Set
+        End Property
+
+        Public ReadOnly Property Mark() As Integer
+            Get
+                Return _mark
+            End Get
+        End Property
+
+        Public ReadOnly Property SMark() As Integer
+            Get
+                Return _smark
+            End Get
+        End Property
+
+        Public Property Hint() As String
+            Get
+                Return _hint
+            End Get
+            Set(ByVal value As String)
+                _hint = value
+                _smark = Environment.TickCount
+            End Set
+        End Property
 
         Public ReadOnly Property Table() As OrmTable
             Get
@@ -151,6 +206,7 @@ Namespace Query
             End Get
             Set(ByVal value As Boolean)
                 _autoJoins = value
+                _mark = Environment.TickCount
             End Set
         End Property
 
@@ -190,6 +246,7 @@ Namespace Query
             End Get
             Set(ByVal value As Top)
                 _top = value
+                _mark = Environment.TickCount
             End Set
         End Property
 
@@ -199,6 +256,7 @@ Namespace Query
             End Get
             Set(ByVal value As Boolean)
                 _distinct = value
+                _mark = Environment.TickCount
             End Set
         End Property
 
@@ -208,6 +266,7 @@ Namespace Query
             End Get
             Set(ByVal value As IGetFilter)
                 _filter = value
+                _mark = Environment.TickCount
             End Set
         End Property
 
@@ -217,6 +276,7 @@ Namespace Query
             End Get
             Set(ByVal value As Boolean)
                 _load = value
+                _smark = Environment.TickCount
             End Set
         End Property
 #End Region
@@ -242,6 +302,15 @@ Namespace Query
         Public Function Exec(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
             Return GetExecutor(mgr).Exec(Of ReturnType)(mgr, Me)
         End Function
+
+        Public Overrides Property SelectedType() As System.Type
+            Get
+                Return GetType(ReturnType)
+            End Get
+            Set(ByVal value As System.Type)
+                Throw New NotSupportedException
+            End Set
+        End Property
 
         Public Shared Function Create(ByVal filter As IGetFilter) As QueryCmd(Of ReturnType)
             Return Create(filter, Nothing, False)
@@ -293,7 +362,9 @@ Namespace Query
             q._table = table
             Return q
         End Function
+
 #Region " Extensions "
+
         Public Function [Single](ByVal mgr As OrmManagerBase) As ReturnType
             Dim r As ReadOnlyList(Of ReturnType) = Exec(mgr)
             If r.Count <> 1 Then
@@ -306,7 +377,9 @@ Namespace Query
         Public Function ToList(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
             Return Exec(mgr)
         End Function
+
 #End Region
+
     End Class
 
 End Namespace

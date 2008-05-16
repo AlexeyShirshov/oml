@@ -16,6 +16,7 @@ Namespace Query.Database
             Private _stmt As String
             Private _params As ParamMgr
             Private _cmdType As System.Data.CommandType
+
             Private _mgr As OrmReadOnlyDBManager
             Private _j As List(Of Worm.Criteria.Joins.OrmJoin)
             Private _f As IFilter
@@ -32,10 +33,7 @@ Namespace Query.Database
                 _f = f
                 _q = q
 
-                _key = Query.GetStaticKey(mgr, j, f)
-                _dic = mgr.GetDic(mgr.Cache, _key)
-                _id = Query.GetDynamicKey(j, f)
-                _sync = _id & mgr.GetStaticKey()
+                Reset()
             End Sub
 
             Public Overrides Sub CreateDepends()
@@ -89,7 +87,7 @@ Namespace Query.Database
                     _cmdType = Data.CommandType.Text
 
                     _params = New ParamMgr(mgr.DbSchema, "p")
-                    _stmt = _MakeStatement(mgr, query, _params, t, joins, f)
+                    _stmt = MakeQueryStatement(mgr, query, _params, t, joins, f)
                 End If
 
                 cmd.CommandText = _stmt
@@ -132,31 +130,55 @@ Namespace Query.Database
                     Return _dic
                 End Get
             End Property
+
+            Public Sub ResetStmt()
+                _stmt = Nothing
+            End Sub
+
+            Public Sub Reset()
+                _key = Query.GetStaticKey(_mgr.GetStaticKey(), _j, _f)
+                _dic = _mgr.GetDic(_mgr.Cache, _key)
+                _id = Query.GetDynamicKey(_j, _f)
+                _sync = _id & _mgr.GetStaticKey()
+
+                ResetStmt()
+            End Sub
+
         End Class
 
         Private _proc As Object
+        Private _m As Integer
+        Private _sm As Integer
 
         Protected Function GetProcessor(Of ReturnType As {New, Orm.OrmBase})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As Processor(Of ReturnType)
             If _proc Is Nothing Then
                 Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
-                If query.Joins IsNot Nothing Then
-                    j.AddRange(query.Joins)
-                End If
+                'If query.Joins IsNot Nothing Then
+                '    j.AddRange(query.Joins)
+                'End If
 
-                Dim f As IFilter = Nothing
-                If query.Filter IsNot Nothing Then
-                    f = query.Filter.Filter(GetType(ReturnType))
-                End If
+                Dim f As IFilter = query.Prepare(j, mgr, GetType(ReturnType))
+                'If query.Filter IsNot Nothing Then
+                '    f = query.Filter.Filter(GetType(ReturnType))
+                'End If
 
-                If query.AutoJoins Then
-                    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
-                        j.AddRange(joins)
-                    End If
-                End If
+                'If query.AutoJoins Then
+                '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+                '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
+                '        j.AddRange(joins)
+                '    End If
+                'End If
 
                 _proc = New Processor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
 
+                _m = query.Mark
+                _sm = query.SMark
+            Else
+                If _m <> query.Mark Then
+                    CType(_proc, Processor(Of ReturnType)).Reset()
+                ElseIf _sm <> query.SMark Then
+                    CType(_proc, Processor(Of ReturnType)).ResetStmt()
+                End If
             End If
 
             Return CType(_proc, Processor(Of ReturnType))
@@ -316,7 +338,7 @@ Namespace Query.Database
             End If
         End Sub
 
-        Protected Shared Function _MakeStatement(ByVal mgr As OrmReadOnlyDBManager, _
+        Public Shared Function MakeQueryStatement(ByVal mgr As OrmReadOnlyDBManager, _
             ByVal query As QueryCmdBase, ByVal params As ICreateParam, ByVal t As Type, _
             ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter) As String
 
@@ -359,6 +381,10 @@ Namespace Query.Database
             FormGroupBy(query, almgr, sb, s)
 
             FormOrderBy(query, t, almgr, sb, s)
+
+            If Not String.IsNullOrEmpty(query.Hint) Then
+                sb.Append(" ").Append(query.Hint)
+            End If
 
             Return sb.ToString
         End Function
