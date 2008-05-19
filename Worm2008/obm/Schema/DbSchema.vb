@@ -824,7 +824,7 @@ l1:
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
                             For Each f As EntityFilterBase In item.Value._updates
-                                upd_cmd.Append(f.MakeQueryStmt(esch, Me, amgr, params)).Append(",")
+                                upd_cmd.Append(f.MakeQueryStmt(esch, filterInfo, Me, amgr, params)).Append(",")
                             Next
                             upd_cmd.Length -= 1
                             upd_cmd.Append(" from ").Append(GetTableName(tbl)).Append(" ").Append([alias])
@@ -832,9 +832,9 @@ l1:
                             Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
                             Dim ef As EntityFilterBase = TryCast(fl, EntityFilterBase)
                             If ef IsNot Nothing Then
-                                upd_cmd.Append(ef.MakeQueryStmt(esch, Me, amgr, params))
+                                upd_cmd.Append(ef.MakeQueryStmt(esch, filterInfo, Me, amgr, params))
                             Else
-                                upd_cmd.Append(fl.MakeQueryStmt(Me, amgr, params))
+                                upd_cmd.Append(fl.MakeQueryStmt(Me, filterInfo, amgr, params))
                             End If
                             If Not item.Key.Equals(pk_table) Then
                                 'Dim pcnt As Integer = 0
@@ -887,7 +887,7 @@ l1:
                                 amgr.Replace(Me, pk_table, sel_sb)
                                 sel_sb.Append(" from ").Append(GetTableName(pk_table)).Append(" ").Append([alias]).Append(" where ")
                                 'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
-                                sel_sb.Append(New dc.EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeQueryStmt(esch, Me, amgr, params))
+                                sel_sb.Append(New dc.EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeQueryStmt(esch, filterInfo, Me, amgr, params))
 
                                 upd_cmd.Append(sel_sb)
                             End If
@@ -988,7 +988,7 @@ l1:
 
                     For Each de As KeyValuePair(Of OrmTable, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(GetTableName(de.Key))
-                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(Me, Nothing, params))
+                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(Me, filterInfo, Nothing, params))
                         del_cmd.Append(EndLine)
                     Next
                     del_cmd.Length -= EndLine.Length
@@ -1010,7 +1010,7 @@ l1:
 
             Dim del_cmd As New StringBuilder
             del_cmd.Append("delete from ").Append(GetTableName(GetTables(t)(0)))
-            del_cmd.Append(" where ").Append(filter.MakeQueryStmt(Me, Nothing, params))
+            del_cmd.Append(" where ").Append(filter.MakeQueryStmt(Me, Nothing, Nothing, params))
 
             Return del_cmd.ToString
         End Function
@@ -1060,7 +1060,7 @@ l1:
 
                         If Not OrmJoin.IsEmpty(join) Then
                             almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
-                            selectcmd.Append(join.MakeSQLStmt(Me, almgr, params))
+                            selectcmd.Append(join.MakeSQLStmt(Me, filterInfo, almgr, params))
                         End If
                     Next
                 End If
@@ -1135,7 +1135,7 @@ l1:
                 Dim join As New OrmJoin(tbl, Joins.JoinType.Join, f)
 
                 almgr.AddTable(tbl)
-                selectcmd.Append(join.MakeSQLStmt(Me, almgr, params))
+                selectcmd.Append(join.MakeSQLStmt(Me, filterInfo, almgr, params))
 
                 If appendSecondTable Then
                     AppendNativeTypeJoins(relation.Type, almgr, GetTables(relation.Type), selectcmd, params, tbl, relation.Column, True, filterInfo)
@@ -1367,7 +1367,7 @@ l1:
                         '    End If
                         'Next
 
-                        selectcmd.Append(join.MakeSQLStmt(Me, almgr, pname))
+                        selectcmd.Append(join.MakeSQLStmt(Me, filterInfo, almgr, pname))
                     End If
                 Next
             Else
@@ -1385,13 +1385,13 @@ l1:
                 If adal Then
                     almgr.AddTable(pk_table, al)
                 End If
-                selectcmd.Append(j.MakeSQLStmt(Me, almgr, pname))
+                selectcmd.Append(j.MakeSQLStmt(Me, filterInfo, almgr, pname))
                 For i As Integer = 1 To tables.Length - 1
                     Dim join As OrmJoin = CType(GetJoins(sch, pk_table, tables(i), filterInfo), OrmJoin)
 
                     If Not OrmJoin.IsEmpty(join) Then
                         almgr.AddTable(tables(i), CType(Nothing, ParamMgr))
-                        selectcmd.Append(join.MakeSQLStmt(Me, almgr, pname))
+                        selectcmd.Append(join.MakeSQLStmt(Me, filterInfo, almgr, pname))
                     End If
                 Next
             End If
@@ -1484,7 +1484,7 @@ l1:
                             If Not almgr.Aliases.ContainsKey(tables(j)) Then
                                 almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
                             End If
-                            selectcmd.Append(join.MakeSQLStmt(Me, almgr, pname))
+                            selectcmd.Append(join.MakeSQLStmt(Me, filterInfo, almgr, pname))
                         End If
                     Next
                 End If
@@ -1522,7 +1522,7 @@ l1:
                 'Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = TryCast(con.Condition, IFilter)
                 'If f IsNot Nothing Then
-                Dim s As String = f.MakeQueryStmt(Me, almgr, pmgr)
+                Dim s As String = f.MakeQueryStmt(Me, filter_info, almgr, pmgr)
                 If Not String.IsNullOrEmpty(s) Then
                     sb.Append(" where ").Append(s)
                 End If
@@ -1917,7 +1917,7 @@ l1:
                     'columns = columns.Replace(join.Table.TableName & ".", al & ".")
                     almgr.AddTable(join.Table)
                     almgr.Replace(Me, join.Table, columns)
-                    sb.Append(join.MakeSQLStmt(Me, almgr, params))
+                    sb.Append(join.MakeSQLStmt(Me, filter_info, almgr, params))
                     'Else
                     '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
                 End If
@@ -2083,7 +2083,7 @@ l1:
 
                     If Not OrmJoin.IsEmpty(join) Then
                         almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
-                        sb.Append(join.MakeSQLStmt(Me, almgr, params))
+                        sb.Append(join.MakeSQLStmt(Me, filter_info, almgr, params))
                     End If
                 Next
             End If

@@ -351,6 +351,16 @@ Public MustInherit Class QueryGenerator
         End If
     End Function
 
+    Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelation
+        For Each r As M2MRelation In GetM2MRelations(maintype)
+            If r.Type Is subtype AndAlso r.Key.Equals(key) Then
+                Return r
+            End If
+        Next
+
+        Return Nothing
+    End Function
+
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As Boolean) As M2MRelation
         For Each r As M2MRelation In GetM2MRelations(maintype)
             If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
@@ -1356,6 +1366,7 @@ Public MustInherit Class QueryGenerator
         End If
     End Function
 
+    <Obsolete()> _
     Public Function GetSharedTable(ByVal tableName As String) As OrmTable 'Implements IDbSchema.GetSharedTable
         Dim t As OrmTable = CType(_sharedTables(tableName), OrmTable)
         If t Is Nothing Then
@@ -1364,6 +1375,27 @@ Public MustInherit Class QueryGenerator
                 If t Is Nothing Then
                     t = New OrmTable(tableName)
                     _sharedTables.Add(tableName, t)
+                End If
+            End SyncLock
+        End If
+        Return t
+    End Function
+
+    Public Function GetSharedTable(ByVal schema As String, ByVal tableName As String) As OrmTable
+        Return GetSharedTable(schema, tableName, Nothing)
+    End Function
+
+    Public Function GetSharedTable(ByVal schema As String, ByVal tableName As String, ByVal key As String) As OrmTable 'Implements IDbSchema.GetSharedTable
+        If String.IsNullOrEmpty(key) Then
+            key = schema & "^" & tableName
+        End If
+        Dim t As OrmTable = CType(_sharedTables(key), OrmTable)
+        If t Is Nothing Then
+            SyncLock Me
+                t = CType(_sharedTables(key), OrmTable)
+                If t Is Nothing Then
+                    t = New OrmTable(schema, tableName)
+                    _sharedTables.Add(key, t)
                 End If
             End SyncLock
         End If

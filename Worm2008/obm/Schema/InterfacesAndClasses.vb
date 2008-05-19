@@ -239,8 +239,12 @@ Namespace Orm.Meta
         Public ReadOnly Column As String
         Public ReadOnly DeleteCascade As Boolean
         Public ReadOnly Mapping As System.Data.Common.DataTableMapping
-        Public ReadOnly non_direct As Boolean
+        <Obsolete()> _
         Public ReadOnly ConnectedType As Type
+        Public ReadOnly Key As String
+
+        Public Const RevKey As String = "xxx%rev$"
+        Public Const DirKey As String = "xxx%direct$"
 
         Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
@@ -254,21 +258,34 @@ Namespace Orm.Meta
         Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
             MyClass.New(type, table, column, delete, mapping)
-            non_direct = Not direct
+            If direct Then
+                Key = DirKey
+            Else
+                Key = RevKey
+            End If
         End Sub
 
+        <Obsolete()> _
         Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
             MyClass.New(type, table, column, delete, mapping)
             Me.ConnectedType = connectedType
         End Sub
 
+        <Obsolete()> _
         Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
             ByVal connectedType As Type, ByVal direct As Boolean)
             MyClass.New(type, table, column, delete, mapping, direct)
             Me.ConnectedType = connectedType
         End Sub
+
+        Public ReadOnly Property non_direct() As Boolean
+            Get
+                Return Key = RevKey
+            End Get
+        End Property
+
     End Class
 
     Public NotInheritable Class SimpleObjectSchema

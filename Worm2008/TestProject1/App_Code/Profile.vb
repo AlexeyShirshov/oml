@@ -7,6 +7,8 @@ Imports Worm.Orm.Meta
 Imports Worm.Cache
 Imports Worm.Database
 
+#Const UseUserInstance = True
+
 Public Class GetMgr
     Implements IGetDBMgr
 

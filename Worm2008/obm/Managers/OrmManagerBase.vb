@@ -284,7 +284,9 @@ Public MustInherit Class OrmManagerBase
 
         Public Sub New(ByVal sort As Sort, ByVal sortExpire As Date, ByVal filter As IFilter, _
             ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
-            _sort = sort
+            If sort IsNot Nothing Then
+                _sort = CType(sort.Clone, Sorting.Sort)
+            End If
             '_st = sortType
             'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
             _obj = mgr.ListConverter.ToWeakList(obj)
@@ -470,7 +472,10 @@ Public MustInherit Class OrmManagerBase
         Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
             ByVal mainId As Integer, ByVal obj As IList(Of Integer), ByVal mgr As OrmManagerBase, _
             ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean)
-            _sort = sort
+            If sort IsNot Nothing Then
+                _sort = CType(sort.Clone, Sorting.Sort)
+            End If
+
             '_st = sortType
             _cache = mgr.Cache
             If obj IsNot Nothing Then
@@ -485,7 +490,10 @@ Public MustInherit Class OrmManagerBase
 
         Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
             ByVal el As EditableList, ByVal mgr As OrmManagerBase)
-            _sort = sort
+            If sort IsNot Nothing Then
+                _sort = CType(sort.Clone, Sorting.Sort)
+            End If
+
             '_st = SortType
             _cache = mgr.Cache
             If el IsNot Nothing Then
@@ -1825,7 +1833,8 @@ l1:
             filter = criteria.Filter(GetType(T))
         End If
         Dim joins() As OrmJoin = Nothing
-        HasJoins(GetType(T), filter, sort, joins)
+        Dim appendMain As Boolean
+        HasJoins(_schema, GetType(T), filter, sort, GetFilterInfo, joins, appendMain)
         Return FindWithJoins(Of T)(New DistinctAspect(), joins, filter, sort, withLoad)
     End Function
 
@@ -1839,7 +1848,8 @@ l1:
         Dim filter As IFilter = criteria.Filter(GetType(T))
 
         Dim joins() As OrmJoin = Nothing
-        If HasJoins(GetType(T), filter, sort, joins) Then
+        Dim appendMain As Boolean
+        If HasJoins(_schema, GetType(T), filter, sort, GetFilterInfo, joins, appendMain) Then
             Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
             c.AddFilter(filter)
             Return FindWithJoins(Of T)(Nothing, joins, ObjectSchema.CreateCriteriaLink(c), sort, withLoad)
@@ -1919,7 +1929,8 @@ l1:
             filter = criteria.Filter(GetType(T))
         End If
         Dim joins() As OrmJoin = Nothing
-        HasJoins(GetType(T), filter, sort, joins)
+        Dim appendMain As Boolean
+        HasJoins(_schema, GetType(T), filter, sort, GetFilterInfo, joins, appendMain)
         Return FindWithJoins(Of T)(ObjectSchema.CreateTopAspect(top, sort), joins, filter, sort, withLoad, cols)
     End Function
 
@@ -4130,9 +4141,11 @@ l1:
         Return l.Length + 1
     End Function
 
-    Protected Friend Shared Function HasJoins(ByVal _schema As QueryGenerator, ByVal selectType As Type, ByRef filter As IFilter, ByVal s As Sort, ByVal filterInfo As Object, ByRef joins() As OrmJoin) As Boolean
+    Protected Friend Shared Function HasJoins(ByVal schema As QueryGenerator, ByVal selectType As Type, _
+        ByRef filter As IFilter, ByVal s As Sort, ByVal filterInfo As Object, ByRef joins() As OrmJoin, _
+        ByRef appendMain As Boolean) As Boolean
         Dim l As New List(Of OrmJoin)
-        Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(selectType)
+        Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(selectType)
         Dim types As New List(Of Type)
         If filter IsNot Nothing Then
             For Each fl As IFilter In filter.Filter.GetAllFilters
@@ -4143,22 +4156,22 @@ l1:
                         Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                     End If
                     If type2join IsNot selectType AndAlso Not types.Contains(type2join) Then
-                        Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2join, oschema)
+                        Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, oschema)
 
                         If String.IsNullOrEmpty(field) Then
-                            Dim m2m As M2MRelation = _schema.GetM2MRelation(type2join, selectType, True)
+                            Dim m2m As M2MRelation = schema.GetM2MRelation(type2join, selectType, True)
                             If m2m IsNot Nothing Then
-                                l.AddRange(_schema.MakeM2MJoin(m2m, type2join))
+                                l.AddRange(schema.MakeM2MJoin(m2m, type2join))
                             Else
                                 Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
                             End If
                         Else
-                            l.Add(_schema.MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
+                            l.Add(schema.MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))
                         End If
 
                         types.Add(type2join)
 
-                        Dim ts As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2join), IOrmObjectSchema)
+                        Dim ts As IOrmObjectSchema = CType(schema.GetObjectSchema(type2join), IOrmObjectSchema)
                         Dim pk_table As OrmTable = ts.GetTables(0)
                         For i As Integer = 1 To ts.GetTables.Length - 1
                             Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
@@ -4176,11 +4189,13 @@ l1:
 
                         Dim newfl As IFilter = ts.GetFilter(filterInfo)
                         If newfl IsNot Nothing Then
-                            Dim con As Conditions.Condition.ConditionConstructorBase = _schema.CreateConditionCtor
+                            Dim con As Conditions.Condition.ConditionConstructorBase = schema.CreateConditionCtor
                             con.AddFilter(filter)
                             con.AddFilter(newfl)
                             filter = con.Condition
                         End If
+                    ElseIf type2join Is selectType Then
+                        appendMain = True
                     End If
                 End If
             Next
@@ -4191,20 +4206,20 @@ l1:
             Do
                 Dim sortType As System.Type = ns.Type
                 If sortType IsNot selectType AndAlso sortType IsNot Nothing AndAlso Not types.Contains(sortType) Then
-                    Dim field As String = _schema.GetJoinFieldNameByType(selectType, sortType, oschema)
+                    Dim field As String = schema.GetJoinFieldNameByType(selectType, sortType, oschema)
 
                     If Not String.IsNullOrEmpty(field) Then
                         types.Add(sortType)
-                        l.Add(_schema.MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
+                        l.Add(schema.MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
                         Continue Do
                     End If
 
                     'Dim sschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
                     'field = _schema.GetJoinFieldNameByType(sortType, selectType, sschema)
                     If String.IsNullOrEmpty(field) Then
-                        Dim m2m As M2MRelation = _schema.GetM2MRelation(sortType, selectType, True)
+                        Dim m2m As M2MRelation = schema.GetM2MRelation(sortType, selectType, True)
                         If m2m IsNot Nothing Then
-                            l.AddRange(_schema.MakeM2MJoin(m2m, sortType))
+                            l.AddRange(schema.MakeM2MJoin(m2m, sortType))
                         Else
                             Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, sortType))
                         End If
@@ -4212,6 +4227,8 @@ l1:
 
                     'types.Add(sortType)
                     'l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                ElseIf sortType Is selectType Then
+                    appendMain = True
                 End If
                 ns = ns.Previous
             Loop While ns IsNot Nothing

@@ -151,13 +151,13 @@ Namespace Database
                 Return New NonTemplateFilter() {Me}
             End Function
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
                 'Return TemplateBase.Oper2String(_oper) & GetParam(schema, pname)
                 Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
                 If id IsNot Nothing Then
-                    Return TemplateBase.Oper2String(_oper) & id.GetParam(CType(schema, SQLGenerator), pname, CType(almgr, AliasMgr))
+                    Return TemplateBase.Oper2String(_oper) & id.GetParam(CType(schema, SQLGenerator), filterInfo, pname, CType(almgr, AliasMgr))
                 Else
-                    Return MakeQueryStmt(schema, almgr, pname)
+                    Return MakeQueryStmt(schema, filterInfo, almgr, pname)
                 End If
             End Function
 
@@ -212,7 +212,7 @@ Namespace Database
                 End Get
             End Property
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
                 If ParamValue.ShouldUse Then
                     Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = Nothing
 
@@ -335,7 +335,7 @@ Namespace Database
             '    End If
             'End Function
 
-            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 If _oschema Is Nothing Then
                     _oschema = oschema
                 End If
@@ -366,7 +366,7 @@ Namespace Database
                     End If
 
                     If _dbFilter Then
-                        Return [alias] & map._columnName & Template.OperToStmt & GetParam(CType(schema, SQLGenerator), pname, CType(almgr, AliasMgr))
+                        Return [alias] & map._columnName & Template.OperToStmt & GetParam(CType(schema, SQLGenerator), filterInfo, pname, CType(almgr, AliasMgr))
                     Else
                         Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
                     End If
@@ -375,7 +375,7 @@ Namespace Database
                 End If
             End Function
 
-            Public Overloads Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overloads Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 If schema Is Nothing Then
                     Throw New ArgumentNullException("schema")
                 End If
@@ -384,7 +384,7 @@ Namespace Database
                     _oschema = schema.GetObjectSchema(Template.Type)
                 End If
 
-                Return MakeQueryStmt(_oschema, schema, almgr, pname)
+                Return MakeQueryStmt(_oschema, filterInfo, schema, almgr, pname)
             End Function
 
             Protected Overrides Function GetParam(ByVal schema As QueryGenerator, ByVal pmgr As ICreateParam) As String
@@ -395,9 +395,9 @@ Namespace Database
                 End If
             End Function
 
-            Protected Overloads Function GetParam(ByVal schema As SQLGenerator, ByVal pmgr As ICreateParam, ByVal almgr As AliasMgr) As String
+            Protected Overloads Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal pmgr As ICreateParam, ByVal almgr As AliasMgr) As String
                 If _dbFilter Then
-                    Return CType(val, Values.IDatabaseFilterValue).GetParam(schema, pmgr, almgr)
+                    Return CType(val, Values.IDatabaseFilterValue).GetParam(schema, filterInfo, pmgr, almgr)
                 Else
                     Throw New InvalidOperationException
                 End If

@@ -127,7 +127,7 @@ Namespace Criteria.Joins
             Return _ToString()
         End Function
 
-        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
 
         Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
             Get
@@ -291,7 +291,7 @@ Namespace Database
                 MyBase.New(table, column, table2, column2, operation)
             End Sub
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases
 
                 Dim map As MapField2Column = Nothing
@@ -412,7 +412,7 @@ Namespace Database
                 MyBase.New(table, joinType, condition)
             End Sub
 
-            Public Function MakeSQLStmt(ByVal schema As SQLGenerator, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String
+            Public Function MakeSQLStmt(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String
                 'If IsEmpty Then
                 '    Throw New InvalidOperationException("Object must be created")
                 'End If
@@ -428,7 +428,7 @@ Namespace Database
                 Dim tableAliases As IDictionary(Of OrmTable, String) = almgr.Aliases
                 'Dim table As String = _table
                 'Dim sch as IOrmObjectSchema = schema.GetObjectSchema(
-                Return JoinTypeString() & schema.GetTableName(_table) & " " & tableAliases(_table) & " on " & Condition.MakeQueryStmt(schema, almgr, pname)
+                Return JoinTypeString() & schema.GetTableName(_table) & " " & tableAliases(_table) & " on " & Condition.MakeQueryStmt(schema, filterInfo, almgr, pname)
             End Function
 
             Protected Overrides Function CreateOrmFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase

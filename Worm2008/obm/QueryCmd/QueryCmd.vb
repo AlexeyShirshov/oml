@@ -58,11 +58,11 @@ Namespace Query
     End Class
 
     Public Class QueryCmdBase
-        Protected _fields As List(Of OrmProperty)
+        Protected _fields As ObjectModel.ReadOnlyCollection(Of OrmProperty)
         Protected _filter As IGetFilter
-        Protected _group As List(Of OrmProperty)
+        Protected _group As ObjectModel.ReadOnlyCollection(Of OrmProperty)
         Protected _order As Sort
-        Protected _aggregates As List(Of AggregateBase)
+        Protected _aggregates As ObjectModel.ReadOnlyCollection(Of AggregateBase)
         Protected _load As Boolean
         Protected _top As Top
         Protected _page As Nullable(Of Integer)
@@ -76,8 +76,34 @@ Namespace Query
         Protected _mark As Integer = Environment.TickCount
         Protected _smark As Integer = Environment.TickCount
         Protected _t As Type
+        Protected _o As OrmBase
+        Protected _key As String
 
-        Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal mgr As OrmManagerBase, ByVal t As Type) As IFilter
+        Private _appendMain As Boolean
+
+        Protected Friend ReadOnly Property Obj() As OrmBase
+            Get
+                Return _o
+            End Get
+        End Property
+
+        Protected Friend ReadOnly Property Key() As String
+            Get
+                Return _key
+            End Get
+        End Property
+
+        Protected ReadOnly Property AppendMain() As Boolean
+            Get
+                Return _appendMain
+            End Get
+        End Property
+
+        Protected Sub OnSortChanged()
+            _smark = Environment.TickCount
+        End Sub
+
+        Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal t As Type) As IFilter
 
             If Joins IsNot Nothing Then
                 j.AddRange(Joins)
@@ -90,7 +116,7 @@ Namespace Query
 
             If AutoJoins Then
                 Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                If mgr.HasJoins(t, f, Sort, joins) Then
+                If OrmManagerBase.HasJoins(schema, t, f, Sort, filterInfo, joins, _appendMain) Then
                     j.AddRange(joins)
                 End If
             End If
@@ -210,34 +236,55 @@ Namespace Query
             End Set
         End Property
 
-        Public ReadOnly Property Group() As List(Of OrmProperty)
+        Public Property Group() As ObjectModel.ReadOnlyCollection(Of OrmProperty)
             Get
                 Return _group
             End Get
+            Set(ByVal value As ObjectModel.ReadOnlyCollection(Of OrmProperty))
+                _group = value
+                _mark = Environment.TickCount
+            End Set
         End Property
 
-        Public ReadOnly Property Joins() As OrmJoin()
+        Public Property Joins() As OrmJoin()
             Get
                 Return _joins
             End Get
+            Set(ByVal value As OrmJoin())
+                _joins = value
+                _mark = Environment.TickCount
+            End Set
         End Property
 
-        Public ReadOnly Property Aggregates() As List(Of AggregateBase)
+        Public Property Aggregates() As ObjectModel.ReadOnlyCollection(Of AggregateBase)
             Get
                 Return _aggregates
             End Get
+            Set(ByVal value As ObjectModel.ReadOnlyCollection(Of AggregateBase))
+                _aggregates = value
+                _mark = Environment.TickCount
+            End Set
         End Property
 
-        Public ReadOnly Property SelectList() As List(Of OrmProperty)
+        Public Property SelectList() As ObjectModel.ReadOnlyCollection(Of OrmProperty)
             Get
                 Return _fields
             End Get
+            Set(ByVal value As ObjectModel.ReadOnlyCollection(Of OrmProperty))
+                _fields = value
+                _mark = Environment.TickCount
+            End Set
         End Property
 
-        Public ReadOnly Property Sort() As Sort
+        Public Property Sort() As Sort
             Get
                 Return _order
             End Get
+            Set(ByVal value As Sort)
+                _order = value
+                _mark = Environment.TickCount
+                AddHandler value.OnChange, AddressOf OnSortChanged
+            End Set
         End Property
 
         Public Property Top() As Top
@@ -318,24 +365,27 @@ Namespace Query
 
         Public Shared Function Create(ByVal table As OrmTable, ByVal field As String) As QueryCmd(Of ReturnType)
             Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
-            q._fields = New List(Of OrmProperty)
-            q._fields.Add(New OrmProperty(table, field))
+            Dim l As New List(Of OrmProperty)
+            l.Add(New OrmProperty(table, field))
+            q._fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(l)
             Return q
         End Function
 
         Public Shared Function Create(ByVal table As OrmTable, ByVal fields() As String) As QueryCmd(Of ReturnType)
             Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
-            q._fields = New List(Of OrmProperty)
+            Dim l As New List(Of OrmProperty)
             For Each f As String In fields
-                q._fields.Add(New OrmProperty(table, f))
+                l.Add(New OrmProperty(table, f))
             Next
+            q._fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(l)
             Return q
         End Function
 
         Public Shared Function Create(ByVal table As OrmTable, ByVal fields() As OrmProperty) As QueryCmd(Of ReturnType)
             Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
-            q._fields = New List(Of OrmProperty)
-            q._fields.AddRange(fields)
+            Dim l As New List(Of OrmProperty)
+            l.AddRange(fields)
+            q._fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(l)
             Return q
         End Function
 
@@ -354,12 +404,42 @@ Namespace Query
                 ._order = sort
                 ._load = withLoad
             End With
+            If sort IsNot Nothing Then
+                AddHandler sort.OnChange, AddressOf q.OnSortChanged
+            End If
             Return q
         End Function
 
         Public Shared Function Create(ByVal table As OrmTable, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
             Dim q As QueryCmd(Of ReturnType) = Create(filter, sort, withLoad)
             q._table = table
+            Return q
+        End Function
+
+        Public Shared Function Create(ByVal o As OrmBase) As QueryCmd(Of ReturnType)
+            Return Create(o, Nothing, Nothing, False, Nothing)
+        End Function
+
+        Public Shared Function Create(ByVal o As OrmBase, ByVal key As String) As QueryCmd(Of ReturnType)
+            Return Create(o, Nothing, Nothing, False, key)
+        End Function
+
+        Public Shared Function Create(ByVal o As OrmBase, ByVal direct As Boolean) As QueryCmd(Of ReturnType)
+            Dim key As String
+            If direct Then
+                key = M2MRelation.DirKey
+            Else
+                key = M2MRelation.RevKey
+            End If
+            Return Create(o, Nothing, Nothing, False, key)
+        End Function
+
+        Public Shared Function Create(ByVal o As OrmBase, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean, ByVal key As String) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(filter, sort, withLoad)
+            With q
+                ._o = o
+                ._key = key
+            End With
             Return q
         End Function
 
