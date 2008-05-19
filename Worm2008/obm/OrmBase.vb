@@ -2148,6 +2148,18 @@ l1:
         'Protected MustOverride Function CloneMe() As OrmBase
         Protected MustOverride Sub RevertToOriginalVersion()
         Protected Friend MustOverride Function CreateOriginalVersion() As OrmBase
+
+        Protected Friend Overridable Function ValidateNewObject(ByVal mgr As OrmManagerBase) As Boolean
+            Return True
+        End Function
+
+        Protected Friend Overridable Function ValidateUpdate(ByVal mgr As OrmManagerBase) As Boolean
+            Return True
+        End Function
+
+        Protected Friend Overridable Function ValidateDelete(ByVal mgr As OrmManagerBase) As Boolean
+            Return True
+        End Function
     End Class
 
     Public Enum ObjectState
