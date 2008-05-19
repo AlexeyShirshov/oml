@@ -554,7 +554,7 @@ Namespace Database
     Namespace Criteria.Values
         Public Interface IDatabaseFilterValue
             Inherits Worm.Criteria.Values.IFilterValue
-            Function GetParam(ByVal schema As SQLGenerator, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String
+            Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String
         End Interface
 
         Public Class SubQuery
@@ -638,7 +638,7 @@ Namespace Database
                 Return r
             End Function
 
-            Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
+            Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
                 If _t Is Nothing Then
                     sb.Append(dbschema.SelectWithJoin(Nothing, New OrmTable() {_tbl}, almgr, paramMgr, _joins, _
                         False, Nothing, Nothing, Nothing, Nothing, Nothing))
@@ -654,12 +654,12 @@ Namespace Database
                 dbschema.AppendWhere(_t, _f, almgr, sb, Nothing, paramMgr)
             End Sub
 
-            Public Function GetParam(ByVal dbschema As SQLGenerator, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
+            Public Function GetParam(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
                 Dim sb As New StringBuilder
                 'Dim dbschema As DbSchema = CType(schema, DbSchema)
                 sb.Append("(")
 
-                FormStmt(dbschema, paramMgr, almgr, sb)
+                FormStmt(dbschema, filterInfo, paramMgr, almgr, sb)
 
                 sb.Append(")")
 

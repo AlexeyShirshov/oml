@@ -342,6 +342,20 @@ Namespace Orm
             Public Function Search(Of T As {OrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
                 Throw New NotImplementedException
             End Function
+
+            Public Function GetTable(ByVal t As Type, ByVal key As String) As OrmTable
+                Dim s As QueryGenerator = _o.GetMgr.ObjectSchema
+                Dim m2m As M2MRelation = s.GetM2MRelation(_o.GetType, t, key)
+                If m2m Is Nothing Then
+                    Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
+                Else
+                    Return m2m.Table
+                End If
+            End Function
+
+            Public Function GetTable(ByVal t As Type) As OrmTable
+                Return GetTable(t, Nothing)
+            End Function
         End Class
 
         <EditorBrowsable(EditorBrowsableState.Never)> _

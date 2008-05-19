@@ -7,6 +7,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" >
 <head runat="server">
     <script runat="server" language="VB">
+#Const UseUserInstance = True
         
         Public Function GetTime() As Date
             Using mgr As OrmReadOnlyDBManager = CreateDBManager()

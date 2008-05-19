@@ -10,7 +10,7 @@ Imports Worm.Orm.Meta
 Imports Worm.Database.Criteria.Core
 Imports Worm.Criteria.Values
 
-<TestClass()> Public Class QueryTest
+<TestClass()> Public Class BasicQueryTest
 
     Private testContextInstance As TestContext
 
@@ -103,7 +103,33 @@ Imports Worm.Criteria.Values
     End Sub
 
     <TestMethod()> Public Sub TestSort()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim q As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create(Ctor.AutoTypeField("Title").Like("b%"), Worm.Orm.Sorting.Field("ID"))
+            Assert.IsNotNull(q)
 
+            Dim r As ReadOnlyList(Of Entity4) = q.ToList(mgr)
+            Assert.AreEqual(3, r(0).ID)
+
+            q.Sort = Orm.Sorting.Field("ID").Desc
+            r = q.ToList(mgr)
+
+            Assert.AreEqual(12, r(0).ID)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestSort2()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim q As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create(Ctor.AutoTypeField("Title").Like("b%"), Worm.Orm.Sorting.Field("ID"))
+            Assert.IsNotNull(q)
+
+            Dim r As ReadOnlyList(Of Entity4) = q.ToList(mgr)
+            Assert.AreEqual(3, r(0).ID)
+
+            q.Sort.Order = Orm.SortType.Desc
+            r = q.ToList(mgr)
+
+            Assert.AreEqual(12, r(0).ID)
+        End Using
     End Sub
 
     <TestMethod()> Public Sub TestJoin()
@@ -150,6 +176,80 @@ Imports Worm.Criteria.Values
 
             Assert.IsNotNull(e)
             Assert.AreEqual(1, e.Identifier)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestM2M()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+
+            Dim q As QueryCmd(Of Entity) = QueryCmd(Of Entity).Create(Ctor.AutoTypeField("ID").Eq(1))
+            Assert.IsNotNull(q)
+
+            Dim e As Entity = q.Single(mgr)
+
+            Assert.IsNotNull(e)
+
+            Dim q2 As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create(e)
+
+            Dim r As ReadOnlyList(Of Entity4) = q2.ToList(mgr)
+
+            Assert.AreEqual(4, r.Count)
+            For Each o As Entity4 In r
+                Assert.IsFalse(o.InternalProperties.IsLoaded)
+            Next
+
+            q2.WithLoad = True
+            r = q2.ToList(mgr)
+
+            Assert.AreEqual(4, r.Count)
+            For Each o As Entity4 In r
+                Assert.IsTrue(o.InternalProperties.IsLoaded)
+            Next
+
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestM2MFilter()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+
+            Dim q As QueryCmd(Of Entity) = QueryCmd(Of Entity).Create(Ctor.AutoTypeField("ID").Eq(1))
+            Assert.IsNotNull(q)
+
+            Dim e As Entity = q.Single(mgr)
+
+            Assert.IsNotNull(e)
+
+            Dim q2 As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create(e)
+            q2.Filter = Ctor.AutoTypeField("Title").Like("b%")
+
+            Dim r As ReadOnlyList(Of Entity4) = q2.ToList(mgr)
+
+            Assert.AreEqual(1, r.Count)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestM2MSort()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+
+            Dim q As QueryCmd(Of Entity) = QueryCmd(Of Entity).Create(Ctor.AutoTypeField("ID").Eq(1))
+            Assert.IsNotNull(q)
+
+            Dim e As Entity = q.Single(mgr)
+
+            Assert.IsNotNull(e)
+
+            Dim q2 As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create(e)
+            q2.Sort = Orm.Sorting.Field("Title")
+
+            Dim r As ReadOnlyList(Of Entity4) = q2.ToList(mgr)
+
+            Assert.AreEqual(4, r.Count)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestTypeless()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+
         End Using
     End Sub
 End Class

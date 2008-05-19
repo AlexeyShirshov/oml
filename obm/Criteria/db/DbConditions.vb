@@ -60,11 +60,11 @@ Namespace Database
                 End Get
             End Property
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
                 If _right Is Nothing Then
-                    Return _left.MakeQueryStmt(schema, almgr, pname)
+                    Return _left.MakeQueryStmt(schema, filterInfo, almgr, pname)
                 End If
-                Return "(" & _left.MakeQueryStmt(schema, almgr, pname) & Condition2String() & _right.MakeQueryStmt(schema, almgr, pname) & ")"
+                Return "(" & _left.MakeQueryStmt(schema, filterInfo, almgr, pname) & Condition2String() & _right.MakeQueryStmt(schema, filterInfo, almgr, pname) & ")"
             End Function
 
             'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeSQLStmt
@@ -138,12 +138,12 @@ Namespace Database
                 End Get
             End Property
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
                 If _right Is Nothing Then
-                    Return CType(_left, IEntityFilter).MakeQueryStmt(schema, almgr, pname)
+                    Return CType(_left, IEntityFilter).MakeQueryStmt(schema, filterInfo, almgr, pname)
                 End If
 
-                Return "(" & CType(_left, IEntityFilter).MakeQueryStmt(schema, almgr, pname) & Condition2String() & CType(_right, IEntityFilter).MakeQueryStmt(schema, almgr, pname) & ")"
+                Return "(" & CType(_left, IEntityFilter).MakeQueryStmt(schema, filterInfo, almgr, pname) & Condition2String() & CType(_right, IEntityFilter).MakeQueryStmt(schema, filterInfo, almgr, pname) & ")"
             End Function
 
             'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements Worm.Database.Criteria.Core.ITemplateFilter.MakeSQLStmt

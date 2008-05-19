@@ -8,6 +8,7 @@
 <head>
     <title>Test simple page</title>
     <script runat="server" language="VB">
+#Const UseUserInstance = True
         
         Public Function GetTime() As Date
             Using mgr As OrmReadOnlyDBManager = CreateDBManager()

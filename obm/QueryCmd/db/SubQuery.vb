@@ -10,40 +10,49 @@ Namespace Query.Database.Filters
         Implements IDatabaseFilterValue, Worm.Criteria.Values.INonTemplateValue
 
         Private _q As QueryCmdBase
+        Private _j As List(Of Worm.Criteria.Joins.OrmJoin)
+        Private _f As IFilter
 
         Public Sub New(ByVal query As QueryCmdBase)
             _q = query
         End Sub
 
         Public Function _ToString() As String Implements Criteria.Values.IFilterValue._ToString
-            Return _q.GetDynamicKey(
+            Prepare(Nothing, Nothing)
+            Return _q.GetDynamicKey(_j, _f)
         End Function
 
         Public Function GetStaticString() As String Implements Criteria.Values.INonTemplateValue.GetStaticString
-            Return _q.GetStaticKey(
+            Prepare(Nothing, Nothing)
+            Return _q.GetStaticKey(String.Empty, _j, _f)
         End Function
 
-        Public Function GetParam(ByVal schema As SQLGenerator, ByVal paramMgr As Orm.Meta.ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
+        Public Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As Orm.Meta.ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
             Dim sb As New StringBuilder
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
 
-            FormStmt(schema, paramMgr, almgr, sb)
+            FormStmt(schema, filterInfo, paramMgr, almgr, sb)
 
             sb.Append(")")
 
             Return sb.ToString
         End Function
 
-        Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
-            Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
-            'If query.Joins IsNot Nothing Then
-            '    j.AddRange(query.Joins)
-            'End If
+        Private Sub Prepare(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object)
+            If _j Is Nothing Then
+                Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
 
-            Dim f As IFilter = _q.Prepare(j, mgr, _q.SelectedType)
+                _f = _q.Prepare(j, dbschema, filterInfo, _q.SelectedType)
 
-            sb.Append(DbQueryExecutor.MakeQueryStatement(mgr, _q, paramMgr, _q.SelectedType, j, f))
+                _j = j
+            End If
+        End Sub
+
+        Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
+            Prepare(dbschema, filterInfo)
+
+            sb.Append(DbQueryExecutor.MakeQueryStatement(filterInfo, dbschema, _q, paramMgr, _q.SelectedType, _j, _f))
         End Sub
     End Class
 End Namespace

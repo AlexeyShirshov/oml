@@ -247,7 +247,17 @@ Public Class ReadOnlyList(Of T As {Orm.OrmBase, New})
 		Else
 			Return Me
 		End If
-	End Function
+    End Function
+
+    Public Function Distinct() As ReadOnlyList(Of T)
+        Dim l As New Dictionary(Of T, T)
+        For Each o As T In Me
+            If Not l.ContainsKey(o) Then
+                l.Add(o, o)
+            End If
+        Next
+        Return New ReadOnlyList(Of T)(l.Keys)
+    End Function
 End Class
 
 Namespace Collections

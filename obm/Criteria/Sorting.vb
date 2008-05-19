@@ -315,6 +315,8 @@ Namespace Sorting
     End Class
 
     Public Class Sort
+        Implements ICloneable
+
         Private _f As String
         Private _order As SortType
         'Private _any As Boolean
@@ -326,6 +328,8 @@ Namespace Sorting
         Private _prev As Sort
         Private _t As Type
         Private _table As OrmTable
+
+        Public Event OnChange()
 
 #Region " Table ctors "
 
@@ -417,12 +421,17 @@ Namespace Sorting
         '    _any = True
         'End Sub
 
+        Protected Sub RaiseOnChange()
+            RaiseEvent OnChange()
+        End Sub
+
         Public Property CustomSortExpression() As String
             Get
                 Return _custom
             End Get
             Set(ByVal value As String)
                 _custom = value
+                RaiseOnChange()
             End Set
         End Property
 
@@ -442,6 +451,7 @@ Namespace Sorting
             End Get
             Set(ByVal value As Type)
                 _t = value
+                RaiseOnChange()
             End Set
         End Property
 
@@ -451,6 +461,7 @@ Namespace Sorting
             End Get
             Set(ByVal value As String)
                 _f = value
+                RaiseOnChange()
             End Set
         End Property
 
@@ -460,6 +471,7 @@ Namespace Sorting
             End Get
             Set(ByVal value As SortType)
                 _order = value
+                RaiseOnChange()
             End Set
         End Property
 
@@ -552,6 +564,14 @@ Namespace Sorting
                 Throw New InvalidOperationException("Delegate is not set")
             End If
 
+        End Function
+
+        Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
+            Dim s As New Sort(_prev, _t, _f, _order, _ext, _del)
+            s._custom = _custom
+            s._table = _table
+            s._values = _values
+            Return s
         End Function
     End Class
 

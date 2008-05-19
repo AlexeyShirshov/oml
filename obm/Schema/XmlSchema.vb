@@ -66,7 +66,7 @@ Namespace Xml
             If Not con.IsEmpty Then
                 Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = con.Condition
-                sb.Append("[").Append(bf.MakeQueryStmt(Me, Nothing, Nothing)).Append("]")
+                sb.Append("[").Append(bf.MakeQueryStmt(Me, filter_info, Nothing, Nothing)).Append("]")
                 Return True
             End If
             Return False
@@ -92,11 +92,11 @@ Namespace Xml
         End Function
 
         Protected Friend Overrides Function MakeJoin(ByVal type2join As System.Type, ByVal selectType As System.Type, ByVal field As String, ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Worm.Criteria.Joins.JoinType, Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.OrmJoin
-
+            Throw New NotImplementedException
         End Function
 
         Protected Friend Overrides Function MakeM2MJoin(ByVal m2m As Orm.Meta.M2MRelation, ByVal type2join As System.Type) As Worm.Criteria.Joins.OrmJoin()
-
+            Throw New NotImplementedException
         End Function
     End Class
 End Namespace

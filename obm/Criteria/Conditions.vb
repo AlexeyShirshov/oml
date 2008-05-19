@@ -144,7 +144,7 @@ Namespace Criteria.Conditions
         '    Return lt.GetStaticString & Condition2String() & r
         'End Function
 
-        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
         Protected MustOverride Function CreateMe(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
         Public MustOverride ReadOnly Property Template() As Core.ITemplate Implements Core.ITemplateFilterBase.Template
 
