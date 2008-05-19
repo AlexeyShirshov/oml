@@ -3710,6 +3710,20 @@ l1:
 
     Public Function SaveChanges(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
         Try
+            Dim b As Boolean = True
+            Select Case obj.ObjectState
+                Case ObjectState.Created, ObjectState.NotFoundInSource
+                    b = obj.ValidateNewObject(Me)
+                Case ObjectState.Modified
+                    b = obj.ValidateUpdate(Me)
+                Case ObjectState.Deleted
+                    b = obj.ValidateDelete(Me)
+            End Select
+
+            If Not b Then
+                Return True
+            End If
+
             Dim t As Type = obj.GetType
             'Using obj.GetSyncRoot
             Using GetSyncForSave(t, obj)

@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Database Name="WormTest" Class="WormTestDataContext" xmlns="http://schemas.microsoft.com/linqtosql/dbml/2007">
+  <Connection Mode="AppSettings" ConnectionString="Data Source=.\SQLEXPRESS;AttachDbFilename=D:\Work\Worm2008\TestProject1\Databases\WormTest.mdf;Integrated Security=True;Connect Timeout=30;User Instance=True" SettingsObjectName="linq.My.MySettings" SettingsPropertyName="WormTestConnectionString" Provider="System.Data.SqlClient" />
+  <Table Name="dbo.[Table]" Member="Tables">
+    <Type Name="Table">
+      <Column Name="id" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="col" Type="System.Boolean" DbType="Bit" CanBeNull="true" />
+      <Column Name="uq" Type="System.Guid" DbType="UniqueIdentifier NOT NULL" CanBeNull="false" />
+      <Association Name="Table2_Table" Member="Table2" ThisKey="id" Type="Table2" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Tables1to3Relation" Member="Tables1to3Relations">
+    <Type Name="Tables1to3Relation">
+      <Column Name="id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="name" Type="System.String" DbType="VarChar(50)" CanBeNull="true" />
+      <Column Name="table1" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="table3" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Association Name="Table1_Tables1to3Relation" Member="Table11" ThisKey="table1" Type="Table1" IsForeignKey="true" />
+      <Association Name="Table3_Tables1to3Relation" Member="Table31" ThisKey="table3" Type="Table3" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Table1" Member="Table1s">
+    <Type Name="Table1">
+      <Column Name="id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="name" Type="System.String" DbType="VarChar(50)" CanBeNull="true" />
+      <Column Name="code" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="enum" Type="System.Byte" DbType="TinyInt" CanBeNull="true" />
+      <Column Name="enum_str" Type="System.String" DbType="VarChar(50)" CanBeNull="true" />
+      <Column Name="dt" Type="System.DateTime" DbType="DateTime NOT NULL" CanBeNull="false" />
+      <Association Name="Table1_Tables1to3Relation" Member="Tables1to3Relations" OtherKey="table1" Type="Tables1to3Relation" />
+      <Association Name="Table1_Table10" Member="Table10s" OtherKey="table1_id" Type="Table10" />
+      <Association Name="Table1_Table2" Member="Table2s" OtherKey="table1_id" Type="Table2" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Table10" Member="Table10s">
+    <Type Name="Table10">
+      <Column Name="id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="table1_id" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Association Name="Table1_Table10" Member="Table1" ThisKey="table1_id" Type="Table1" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Table1to1" Member="Table1to1s">
+    <Type Name="Table1to1">
+      <Column Name="id" Type="System.Int32" DbType="Int NOT NULL" IsPrimaryKey="true" CanBeNull="false" />
+      <Column Name="table1" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="table1_back" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="k" Type="System.String" DbType="VarChar(50)" CanBeNull="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Table2" Member="Table2s">
+    <Type Name="Table2">
+      <Column Name="id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="table1_id" Type="System.Int32" DbType="Int" CanBeNull="true" />
+      <Column Name="blob" Type="System.Data.Linq.Binary" DbType="VarBinary(MAX)" CanBeNull="true" UpdateCheck="Never" />
+      <Column Name="m" Type="System.Decimal" DbType="Money" CanBeNull="true" />
+      <Column Name="dt2" Type="System.DateTime" DbType="DateTime" CanBeNull="true" />
+      <Association Name="Table2_Table" Member="Table" OtherKey="id" Type="Table" Cardinality="One" />
+      <Association Name="Table1_Table2" Member="Table1" ThisKey="table1_id" Type="Table1" IsForeignKey="true" />
+    </Type>
+  </Table>
+  <Table Name="dbo.Table3" Member="Table3s">
+    <Type Name="Table3">
+      <Column Name="id" Type="System.Int32" DbType="Int NOT NULL IDENTITY" IsPrimaryKey="true" IsDbGenerated="true" CanBeNull="false" />
+      <Column Name="ref_id" Type="System.Int32" DbType="Int NOT NULL" CanBeNull="false" />
+      <Column Name="code" Type="System.Byte" DbType="TinyInt NOT NULL" CanBeNull="false" />
+      <Column Name="v" Type="System.Data.Linq.Binary" DbType="rowversion NOT NULL" CanBeNull="false" IsVersion="true" />
+      <Column Name="x" Type="System.Xml.Linq.XElement" DbType="Xml" CanBeNull="true" />
+      <Association Name="Table3_Tables1to3Relation" Member="Tables1to3Relations" OtherKey="table3" Type="Tables1to3Relation" />
+    </Type>
+  </Table>
+</Database>

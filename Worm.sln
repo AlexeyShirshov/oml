@@ -28,9 +28,13 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Worm.CodeGen.VSTool", "OrmC
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test projects", "Test projects", "{8C1323A6-F732-41FE-ABFB-E484363505C7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "net3.5", "net3.5", "{1284C3C7-8A34-4C94-9A82-7DA6B87DC070}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "linq", "net3.5\linq\linq.vbproj", "{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}"
+EndProject
 Global
 	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 10
+		SccNumberOfProjects = 11
 		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
 		SccTeamFoundationServer = https://tfs03.codeplex.com/
 		SccLocalPath0 = .
@@ -65,6 +69,10 @@ Global
 		SccProjectTopLevelParentUniqueName9 = Worm.sln
 		SccProjectName9 = Tests
 		SccLocalPath9 = Tests
+		SccProjectUniqueName10 = net3.5\\linq\\linq.vbproj
+		SccProjectTopLevelParentUniqueName10 = Worm.sln
+		SccProjectName10 = net3.5/linq
+		SccLocalPath10 = net3.5\\linq
 	EndGlobalSection
 	GlobalSection(TestCaseManagementSettings) = postSolution
 		CategoryFile = Worm1.vsmdi
@@ -205,6 +213,20 @@ Global
 		{0B3CE332-EE5D-4F0A-9DEB-8B2C0D8F6EC0}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0B3CE332-EE5D-4F0A-9DEB-8B2C0D8F6EC0}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0B3CE332-EE5D-4F0A-9DEB-8B2C0D8F6EC0}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug AddIn|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug AddIn|Any CPU.Build.0 = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug_Trace|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug_Trace|Any CPU.Build.0 = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.DebugNonUserInstance|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.DebugNonUserInstance|Any CPU.Build.0 = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Signed Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Signed Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Unsigned Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}.Unsigned Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -214,6 +236,7 @@ Global
 		{7D8F3864-281D-495E-B0E4-5731FC31D007} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
 		{FD0ADB48-33C6-4399-9943-6ACAB857CF53} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
 		{9D39DD33-0A52-460D-A5E2-8576E46B334F} = {8C1323A6-F732-41FE-ABFB-E484363505C7}
+		{7A3C88E6-950E-4D7B-B0C9-1573328F44D0} = {1284C3C7-8A34-4C94-9A82-7DA6B87DC070}
 	EndGlobalSection
 	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
 		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
