@@ -258,11 +258,7 @@ Namespace Orm.Meta
         Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
             MyClass.New(type, table, column, delete, mapping)
-            If direct Then
-                Key = DirKey
-            Else
-                Key = RevKey
-            End If
+            Key = GetKey(direct)
         End Sub
 
         <Obsolete()> _
@@ -286,6 +282,13 @@ Namespace Orm.Meta
             End Get
         End Property
 
+        Public Shared Function GetKey(ByVal direct As Boolean) As String
+            If direct Then
+                Return DirKey
+            Else
+                Return RevKey
+            End If
+        End Function
     End Class
 
     Public NotInheritable Class SimpleObjectSchema

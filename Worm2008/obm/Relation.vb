@@ -9,7 +9,7 @@ Namespace Cache
         Private _mainList As IList(Of Integer)
         Private _addedList As New List(Of Integer)
         Private _deletedList As New List(Of Integer)
-        Private _non_direct As Boolean
+        Private _key As String
         Private _saved As Boolean
         Private _mainType As Type
         Private _subType As Type
@@ -17,6 +17,12 @@ Namespace Cache
         Private _sort As Sort
         Private _cantgetCurrent As Boolean
         Private _syncRoot As New Object
+
+        Private ReadOnly Property _non_direct() As Boolean
+            Get
+                Return _key = M2MRelation.RevKey
+            End Get
+        End Property
 
         Sub New(ByVal mainId As Integer, ByVal mainList As IList(Of Integer), ByVal mainType As Type, ByVal subType As Type, ByVal sort As Sort)
             _mainList = mainList
@@ -27,8 +33,12 @@ Namespace Cache
         End Sub
 
         Sub New(ByVal mainId As Integer, ByVal mainList As IList(Of Integer), ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean, ByVal sort As Sort)
+            MyClass.New(mainId, mainList, mainType, subType, M2MRelation.GetKey(direct), sort)
+        End Sub
+
+        Sub New(ByVal mainId As Integer, ByVal mainList As IList(Of Integer), ByVal mainType As Type, ByVal subType As Type, ByVal key As String, ByVal sort As Sort)
             MyClass.New(mainId, mainList, mainType, subType, sort)
-            _non_direct = Not direct
+            _key = key
         End Sub
 
 #Region " Public properties "

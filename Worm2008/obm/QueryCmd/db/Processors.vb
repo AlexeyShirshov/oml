@@ -85,16 +85,16 @@ Namespace Query.Database
             '    ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter
 
             Protected Overridable Sub MakeStatement(ByVal cmd As System.Data.Common.DbCommand)
-                Dim mgr As OrmReadOnlyDBManager = _mgr
-                Dim t As Type = GetType(ReturnType)
-                Dim joins As List(Of Worm.Criteria.Joins.OrmJoin) = _j
-                Dim f As IFilter = _f
+                'Dim mgr As OrmReadOnlyDBManager = _mgr
+                'Dim t As Type = GetType(ReturnType)
+                'Dim joins As List(Of Worm.Criteria.Joins.OrmJoin) = _j
+                'Dim f As IFilter = _f
 
                 If String.IsNullOrEmpty(_stmt) Then
                     _cmdType = Data.CommandType.Text
 
-                    _params = New ParamMgr(mgr.DbSchema, "p")
-                    _stmt = MakeQueryStatement(mgr.GetFilterInfo, mgr.DbSchema, Query, _params, t, joins, f)
+                    _params = New ParamMgr(Mgr.DbSchema, "p")
+                    _stmt = _MakeStatement
                 End If
 
                 cmd.CommandText = _stmt
@@ -102,11 +102,21 @@ Namespace Query.Database
                 _params.AppendParams(cmd.Parameters)
             End Sub
 
+            Protected Overridable Function _MakeStatement() As String
+                Return MakeQueryStatement(Mgr.GetFilterInfo, Mgr.DbSchema, Query, _params, GetType(ReturnType), _j, _f)
+            End Function
+
             Protected Overridable Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Return New ReadOnlyList(Of ReturnType)(dbm.LoadMultipleObjects(Of ReturnType)( _
                         cmd, Query.WithLoad, Nothing, GetFields(dbm.DbSchema, GetType(ReturnType), Query.SelectList)))
             End Function
+
+            Protected ReadOnly Property Mgr() As OrmReadOnlyDBManager
+                Get
+                    Return _mgr
+                End Get
+            End Property
 
             Public Overrides ReadOnly Property Sort() As Sorting.Sort
                 Get
@@ -166,6 +176,18 @@ Namespace Query.Database
             End Function
         End Class
 
+        Class M2MPublicProcessor(Of ReturnType As {New, Orm.OrmBase})
+            Inherits Processor(Of ReturnType)
+
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
+                ByVal f As IFilter, ByVal q As QueryCmdBase)
+                MyBase.New(mgr, j, f, q)
+            End Sub
+
+
+        End Class
+
+
         Class M2MProcessor(Of ReturnType As {New, Orm.OrmBase})
             Inherits Processor(Of ReturnType)
 
@@ -175,12 +197,45 @@ Namespace Query.Database
             End Sub
 
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyList(Of ReturnType)
+                Throw New NotSupportedException
+            End Function
+
+            Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of ReturnType)
+                Throw New NotSupportedException
+            End Function
+
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of ReturnType)) As OrmManagerBase.CachedItem
+                Dim ids As New List(Of Integer)
+                For Each o As ReturnType In col
+                    ids.Add(o.Identifier)
+                Next
+                Return GetCacheItem(ids)
+            End Function
+
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
+                Return GetCacheItem(GetValuesInternal(withLoad))
+            End Function
+
+            Protected Overloads Function GetCacheItem(ByVal ids As List(Of Integer)) As OrmManagerBase.CachedItem
+                Return New OrmManagerBase.M2MCache(Query.Sort, Filter, Query.Obj.Identifier, ids, Mgr, Query.Obj.GetType, GetType(ReturnType), Query.Key)
+            End Function
+
+            Protected Function GetValuesInternal(ByVal withLoad As Boolean) As List(Of Integer)
+                Using cmd As System.Data.Common.DbCommand = Mgr.DbSchema.CreateDBCommand
+                    ', dbm, Query, GetType(ReturnType), _j, _f
+                    MakeStatement(cmd)
+
+                    Return ExecStmtInternal(cmd)
+                End Using
+            End Function
+
+            Protected Function ExecStmtInternal(ByVal cmd As System.Data.Common.DbCommand) As List(Of Integer)
                 Throw New NotImplementedException
             End Function
 
-            Protected Overrides Sub MakeStatement(ByVal cmd As System.Data.Common.DbCommand)
-                Throw New NotImplementedException
-            End Sub
+            Protected Overrides Function _MakeStatement() As String
+
+            End Function
         End Class
     End Class
 

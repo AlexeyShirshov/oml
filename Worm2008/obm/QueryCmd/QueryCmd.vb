@@ -104,7 +104,6 @@ Namespace Query
         End Sub
 
         Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal t As Type) As IFilter
-
             If Joins IsNot Nothing Then
                 j.AddRange(Joins)
             End If
@@ -114,12 +113,51 @@ Namespace Query
                 f = Filter.Filter(t)
             End If
 
-            If AutoJoins Then
+            If AutoJoins OrElse _o IsNot Nothing Then
                 Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
                 If OrmManagerBase.HasJoins(schema, t, f, Sort, filterInfo, joins, _appendMain) Then
                     j.AddRange(joins)
                 End If
             End If
+
+            If _o IsNot Nothing Then
+                Dim selectedType As Type = t
+                Dim filteredType As Type = _o.GetType
+
+                Dim os As IOrmObjectSchemaBase = schema.GetObjectSchema(selectedType)
+                'Dim schema2 As IOrmObjectSchema = GetObjectSchema(filteredType)
+
+                'column - select
+                Dim selected_r As M2MRelation = Nothing
+                'column - filter
+                Dim filtered_r As M2MRelation = Nothing
+
+                filtered_r = schema.GetM2MRelation(selectedType, filteredType, _key)
+                selected_r = schema.GetRevM2MRelation(selectedType, filteredType, _key)
+
+                If selected_r Is Nothing Then
+                    Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
+                End If
+
+                If filtered_r Is Nothing Then
+                    Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
+                End If
+
+                Dim table As OrmTable = selected_r.Table
+
+                If table Is Nothing Then
+                    Throw New ArgumentException("Invalid relation", filteredType.ToString)
+                End If
+
+                If _appendMain OrElse WithLoad Then
+                    Dim jf As New Worm.Database.Criteria.Joins.JoinFilter()
+                    Dim jn As New Worm.Database.Criteria.Joins.OrmJoin(table, JoinType.Join, jf)
+                    j.Add(jn)
+                Else
+                    _table = table
+                End If
+            End If
+
             Return f
         End Function
 
@@ -431,6 +469,7 @@ Namespace Query
             Else
                 key = M2MRelation.RevKey
             End If
+
             Return Create(o, Nothing, Nothing, False, key)
         End Function
 
@@ -440,6 +479,7 @@ Namespace Query
                 ._o = o
                 ._key = key
             End With
+
             Return q
         End Function
 

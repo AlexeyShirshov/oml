@@ -472,6 +472,12 @@ Public MustInherit Class OrmManagerBase
         Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
             ByVal mainId As Integer, ByVal obj As IList(Of Integer), ByVal mgr As OrmManagerBase, _
             ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean)
+            MyClass.new(sort, filter, mainId, obj, mgr, mainType, subType, M2MRelation.GetKey(direct))
+        End Sub
+
+        Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
+            ByVal mainId As Integer, ByVal obj As IList(Of Integer), ByVal mgr As OrmManagerBase, _
+            ByVal mainType As Type, ByVal subType As Type, ByVal key As String)
             If sort IsNot Nothing Then
                 _sort = CType(sort.Clone, Sorting.Sort)
             End If
@@ -480,7 +486,7 @@ Public MustInherit Class OrmManagerBase
             _cache = mgr.Cache
             If obj IsNot Nothing Then
                 _cache.RegisterCreationCacheItem(Me.GetType)
-                _obj = New EditableList(mainId, obj, mainType, subType, direct, sort)
+                _obj = New EditableList(mainId, obj, mainType, subType, key, sort)
             End If
             _f = filter
             _expires = mgr._expiresPattern

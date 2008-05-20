@@ -2801,5 +2801,57 @@ l2:
                 Return _fetch
             End Get
         End Property
+
+        Protected Friend Function LoadM2M(Of T As {OrmBase, New})(ByVal cmd As System.Data.Common.DbCommand, ByVal withLoad As Boolean, _
+            ByVal obj As OrmBase, ByVal sort As Sort, ByVal columns As IList(Of ColumnAttribute)) As List(Of Integer)
+            Dim b As ConnAction = TestConn(cmd)
+            Dim tt As Type = GetType(T)
+            Try
+                If withLoad Then
+                    _cache.BeginTrackDelete(tt)
+                End If
+                _loadedInLastFetch = 0
+                Dim et As New PerfCounter
+                Dim l As New List(Of Integer)
+                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                    _exec = et.GetTime
+                    Dim ft As New PerfCounter
+                    Do While dr.Read
+                        Dim id1 As Integer = CInt(dr.GetValue(0))
+                        If id1 <> obj.Identifier Then
+                            Throw New OrmManagerException("Wrong relation statement")
+                        End If
+                        Dim id2 As Integer = CInt(dr.GetValue(1))
+                        l.Add(id2)
+                        If withLoad AndAlso Not _cache.IsDeleted(tt, id2) Then
+                            Dim o As T = CreateDBObject(Of T)(id2)
+                            If o.ObjectState <> ObjectState.Modified Then
+                                Using o.GetSyncRoot()
+                                    'If obj.IsLoaded Then obj.IsLoaded = False
+                                    LoadFromDataReader(o, dr, columns, False, 2)
+                                    If o.ObjectState = ObjectState.NotLoaded AndAlso o.IsLoaded Then o.ObjectState = ObjectState.None
+                                    _loadedInLastFetch += 1
+                                End Using
+                            End If
+                        End If
+                    Loop
+                    _fetch = ft.GetTime
+                End Using
+
+                If sort IsNot Nothing AndAlso sort.IsExternal Then
+                    Dim l2 As New List(Of Integer)
+                    For Each o As T In DbSchema.ExternalSort(Of T)(Me, sort, ConvertIds2Objects(Of T)(l, False))
+                        l2.Add(o.Identifier)
+                    Next
+                    l = l2
+                End If
+                Return l
+            Finally
+                If withLoad Then
+                    _cache.EndTrackDelete(tt)
+                End If
+                CloseConn(b)
+            End Try
+        End Function
     End Class
 End Namespace

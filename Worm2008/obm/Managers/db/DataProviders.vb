@@ -398,53 +398,54 @@ Namespace Database
                     If withLoad Then
                         arr = _mgr.DbSchema.GetSortedFieldList(t)
                     End If
-                    Dim b As ConnAction = _mgr.TestConn(cmd)
-                    Try
-                        If withLoad Then
-                            _mgr._cache.BeginTrackDelete(t)
-                        End If
-                        _mgr._loadedInLastFetch = 0
-						Dim et As New PerfCounter
-						Dim l As New List(Of Integer)
-                        Using dr As System.Data.IDataReader = cmd.ExecuteReader
-                            _mgr._exec = et.GetTime                            
-                            Dim ft As New PerfCounter
-                            Do While dr.Read
-                                Dim id1 As Integer = CInt(dr.GetValue(0))
-                                If id1 <> _obj.Identifier Then
-                                    Throw New OrmManagerException("Wrong relation statement")
-                                End If
-                                Dim id2 As Integer = CInt(dr.GetValue(1))
-                                l.Add(id2)
-                                If withLoad AndAlso Not _mgr._cache.IsDeleted(t, id2) Then
-                                    Dim obj As T = _mgr.CreateDBObject(Of T)(id2)
-                                    If obj.ObjectState <> ObjectState.Modified Then
-                                        Using obj.GetSyncRoot()
-                                            'If obj.IsLoaded Then obj.IsLoaded = False
-                                            _mgr.LoadFromDataReader(obj, dr, arr, False, 2)
-                                            If obj.ObjectState = ObjectState.NotLoaded AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
-                                            _mgr._loadedInLastFetch += 1
-                                        End Using
-                                    End If
-                                End If
-                            Loop
-                            _mgr._fetch = ft.GetTime
-                        End Using
+                    Return _mgr.LoadM2M(Of T)(cmd, withLoad, _obj, _sort, arr)
+                    '              Dim b As ConnAction = _mgr.TestConn(cmd)
+                    '              Try
+                    '                  If withLoad Then
+                    '                      _mgr._cache.BeginTrackDelete(t)
+                    '                  End If
+                    '                  _mgr._loadedInLastFetch = 0
+                    'Dim et As New PerfCounter
+                    'Dim l As New List(Of Integer)
+                    '                  Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                    '                      _mgr._exec = et.GetTime                            
+                    '                      Dim ft As New PerfCounter
+                    '                      Do While dr.Read
+                    '                          Dim id1 As Integer = CInt(dr.GetValue(0))
+                    '                          If id1 <> _obj.Identifier Then
+                    '                              Throw New OrmManagerException("Wrong relation statement")
+                    '                          End If
+                    '                          Dim id2 As Integer = CInt(dr.GetValue(1))
+                    '                          l.Add(id2)
+                    '                          If withLoad AndAlso Not _mgr._cache.IsDeleted(t, id2) Then
+                    '                              Dim obj As T = _mgr.CreateDBObject(Of T)(id2)
+                    '                              If obj.ObjectState <> ObjectState.Modified Then
+                    '                                  Using obj.GetSyncRoot()
+                    '                                      'If obj.IsLoaded Then obj.IsLoaded = False
+                    '                                      _mgr.LoadFromDataReader(obj, dr, arr, False, 2)
+                    '                                      If obj.ObjectState = ObjectState.NotLoaded AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
+                    '                                      _mgr._loadedInLastFetch += 1
+                    '                                  End Using
+                    '                              End If
+                    '                          End If
+                    '                      Loop
+                    '                      _mgr._fetch = ft.GetTime
+                    '                  End Using
 
-						If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-							Dim l2 As New List(Of Integer)
-							For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False))
-								l2.Add(o.Identifier)
-							Next
-							l = l2
-						End If
-						Return l
-                    Finally
-                        If withLoad Then
-                            _mgr._cache.EndTrackDelete(t)
-                        End If
-                        _mgr.CloseConn(b)
-                    End Try
+                    'If _sort IsNot Nothing AndAlso _sort.IsExternal Then
+                    '	Dim l2 As New List(Of Integer)
+                    '	For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False))
+                    '		l2.Add(o.Identifier)
+                    '	Next
+                    '	l = l2
+                    'End If
+                    'Return l
+                    '              Finally
+                    '                  If withLoad Then
+                    '                      _mgr._cache.EndTrackDelete(t)
+                    '                  End If
+                    '                  _mgr.CloseConn(b)
+                    '              End Try
                 End Using
             End Function
 
