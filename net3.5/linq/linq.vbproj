@@ -53,6 +53,10 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Deployment" />
+    <Reference Include="System.Runtime.Serialization">
+      <RequiredTargetFramework>3.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="System.Security" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -91,9 +95,17 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="WormADO.Designer.vb">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>WormADO.edmx</DependentUpon>
+    </Compile>
     <Compile Include="WormTest.designer.vb">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
+      <DependentUpon>WormTest.dbml</DependentUpon>
+    </Compile>
+    <Compile Include="WormTest.vb">
       <DependentUpon>WormTest.dbml</DependentUpon>
     </Compile>
   </ItemGroup>
@@ -119,6 +131,10 @@
       <CustomToolNamespace>My</CustomToolNamespace>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
+    <EntityDeploy Include="WormADO.edmx">
+      <Generator>EntityModelCodeGenerator</Generator>
+      <LastGenOutput>WormADO.Designer.vb</LastGenOutput>
+    </EntityDeploy>
     <None Include="WormTest.dbml">
       <Generator>MSLinqToSQLGenerator</Generator>
       <LastGenOutput>WormTest.designer.vb</LastGenOutput>
