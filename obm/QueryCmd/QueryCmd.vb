@@ -9,6 +9,7 @@ Namespace Query
 
     Public Interface IExecutor
         Function Exec(Of ReturnType As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyList(Of ReturnType)
+        Function Exec(Of SelectType As {OrmBase, New}, ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As IList(Of ReturnType)
     End Interface
 
     Public Class Top
@@ -71,7 +72,7 @@ Namespace Query
         Protected _clientPage As Pair(Of Integer)
         Protected _joins() As OrmJoin
         Protected _autoJoins As Boolean
-        Protected _table As OrmTable
+        Protected _table As SourceFragment
         Protected _hint As String
         Protected _mark As Integer = Environment.TickCount
         Protected _smark As Integer = Environment.TickCount
@@ -93,6 +94,23 @@ Namespace Query
             End Get
         End Property
 
+        'Protected Friend Sub SetSelectList(ByVal l As ObjectModel.ReadOnlyCollection(Of OrmProperty))
+        '    _fields = l
+        'End Sub
+
+        Private _exec As IExecutor
+
+        Protected Function GetExecutor(ByVal mgr As OrmManagerBase) As IExecutor
+            'If _dontcache Then
+            If _exec Is Nothing Then
+                _exec = mgr.ObjectSchema.CreateExecutor()
+            End If
+            Return _exec
+            'Else
+            'Return mgr.ObjectSchema.CreateExecutor()
+            'End If
+        End Function
+
         Protected ReadOnly Property AppendMain() As Boolean
             Get
                 Return _appendMain
@@ -101,6 +119,13 @@ Namespace Query
 
         Protected Sub OnSortChanged()
             _smark = Environment.TickCount
+        End Sub
+
+        Protected Sub New()
+        End Sub
+
+        Public Sub New(ByVal table As SourceFragment)
+            _table = table
         End Sub
 
         Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal t As Type) As IFilter
@@ -124,7 +149,6 @@ Namespace Query
                 Dim selectedType As Type = t
                 Dim filteredType As Type = _o.GetType
 
-                Dim os As IOrmObjectSchemaBase = schema.GetObjectSchema(selectedType)
                 'Dim schema2 As IOrmObjectSchema = GetObjectSchema(filteredType)
 
                 'column - select
@@ -133,7 +157,7 @@ Namespace Query
                 Dim filtered_r As M2MRelation = Nothing
 
                 filtered_r = schema.GetM2MRelation(selectedType, filteredType, _key)
-                selected_r = schema.GetRevM2MRelation(selectedType, filteredType, _key)
+                selected_r = schema.GetM2MRelation(filteredType, selectedType, M2MRelation.GetRevKey(_key))
 
                 If selected_r Is Nothing Then
                     Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
@@ -143,19 +167,39 @@ Namespace Query
                     Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
                 End If
 
-                Dim table As OrmTable = selected_r.Table
+                'Dim table As OrmTable = selected_r.Table
+                Dim table As SourceFragment = filtered_r.Table
 
                 If table Is Nothing Then
                     Throw New ArgumentException("Invalid relation", filteredType.ToString)
                 End If
 
+                'Dim table As OrmTable = _o.M2M.GetTable(t, _key)
+
                 If _appendMain OrElse WithLoad Then
-                    Dim jf As New Worm.Database.Criteria.Joins.JoinFilter()
+                    Dim jf As New Worm.Database.Criteria.Joins.JoinFilter(table, selected_r.Column, t, "ID", Criteria.FilterOperation.Equal)
                     Dim jn As New Worm.Database.Criteria.Joins.OrmJoin(table, JoinType.Join, jf)
                     j.Add(jn)
+                    If table.Equals(_table) Then
+                        _table = Nothing
+                    End If
+                    If WithLoad AndAlso _fields.Count = 1 Then
+                        _fields = Nothing
+                    End If
                 Else
                     _table = table
+                    Dim r As New List(Of OrmProperty)
+                    'Dim os As IOrmObjectSchemaBase = schema.GetObjectSchema(selectedType)
+                    'os.GetFieldColumnMap()("ID")._columnName
+                    r.Add(New OrmProperty(table, selected_r.Column & " " & schema.GetColumnNameByFieldNameInternal(t, "ID", False), "ID"))
+                    _fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(r)
                 End If
+
+                Dim tf As New Worm.Database.Criteria.Core.TableFilter(table, filtered_r.Column, New Worm.Criteria.Values.ScalarValue(_o.Identifier), Criteria.FilterOperation.Equal)
+                Dim con As Criteria.Conditions.Condition.ConditionConstructorBase = schema.CreateConditionCtor
+                con.AddFilter(f)
+                con.AddFilter(tf)
+                f = con.Condition
             End If
 
             Return f
@@ -240,7 +284,7 @@ Namespace Query
             End Set
         End Property
 
-        Public ReadOnly Property Table() As OrmTable
+        Public ReadOnly Property Table() As SourceFragment
             Get
                 Return _table
             End Get
@@ -361,7 +405,11 @@ Namespace Query
             End Get
             Set(ByVal value As Boolean)
                 _load = value
-                _smark = Environment.TickCount
+                If _o Is Nothing Then
+                    _smark = Environment.TickCount
+                Else
+                    _mark = Environment.TickCount
+                End If
             End Set
         End Property
 #End Region
@@ -371,21 +419,12 @@ Namespace Query
     Public Class QueryCmd(Of ReturnType As {OrmBase, New})
         Inherits QueryCmdBase
 
-        Private _exec As IExecutor
-
-        Protected Function GetExecutor(ByVal mgr As OrmManagerBase) As IExecutor
-            'If _dontcache Then
-            If _exec Is Nothing Then
-                _exec = mgr.ObjectSchema.CreateExecutor()
-            End If
-            Return _exec
-            'Else
-            'Return mgr.ObjectSchema.CreateExecutor()
-            'End If
-        End Function
-
         Public Function Exec(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
             Return GetExecutor(mgr).Exec(Of ReturnType)(mgr, Me)
+        End Function
+
+        Public Function Exec(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
+            Return GetExecutor(mgr).Exec(Of ReturnType, T)(mgr, Me)
         End Function
 
         Public Overrides Property SelectedType() As System.Type
@@ -397,11 +436,15 @@ Namespace Query
             End Set
         End Property
 
+        Public Shared Function Create() As QueryCmd(Of ReturnType)
+            Return Create(Nothing, Nothing, False)
+        End Function
+
         Public Shared Function Create(ByVal filter As IGetFilter) As QueryCmd(Of ReturnType)
             Return Create(filter, Nothing, False)
         End Function
 
-        Public Shared Function Create(ByVal table As OrmTable, ByVal field As String) As QueryCmd(Of ReturnType)
+        Public Shared Function Create(ByVal table As SourceFragment, ByVal field As String) As QueryCmd(Of ReturnType)
             Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
             Dim l As New List(Of OrmProperty)
             l.Add(New OrmProperty(table, field))
@@ -409,7 +452,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal table As OrmTable, ByVal fields() As String) As QueryCmd(Of ReturnType)
+        Public Shared Function Create(ByVal table As SourceFragment, ByVal fields() As String) As QueryCmd(Of ReturnType)
             Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
             Dim l As New List(Of OrmProperty)
             For Each f As String In fields
@@ -419,7 +462,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal table As OrmTable, ByVal fields() As OrmProperty) As QueryCmd(Of ReturnType)
+        Public Shared Function Create(ByVal table As SourceFragment, ByVal fields() As OrmProperty) As QueryCmd(Of ReturnType)
             Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
             Dim l As New List(Of OrmProperty)
             l.AddRange(fields)
@@ -431,7 +474,7 @@ Namespace Query
             Return Create(filter, sort, False)
         End Function
 
-        Public Shared Function Create(ByVal table As OrmTable, ByVal filter As IGetFilter, ByVal sort As Sort) As QueryCmd(Of ReturnType)
+        Public Shared Function Create(ByVal table As SourceFragment, ByVal filter As IGetFilter, ByVal sort As Sort) As QueryCmd(Of ReturnType)
             Return Create(table, filter, sort, False)
         End Function
 
@@ -448,7 +491,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal table As OrmTable, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
+        Public Shared Function Create(ByVal table As SourceFragment, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
             Dim q As QueryCmd(Of ReturnType) = Create(filter, sort, withLoad)
             q._table = table
             Return q
@@ -483,6 +526,12 @@ Namespace Query
             Return q
         End Function
 
+        Public Shared Function Create(ByVal aggregates() As AggregateBase) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(CType(Nothing, IFilter))
+            q._aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(aggregates)
+            Return q
+        End Function
+
 #Region " Extensions "
 
         Public Function [Single](ByVal mgr As OrmManagerBase) As ReturnType
@@ -498,6 +547,9 @@ Namespace Query
             Return Exec(mgr)
         End Function
 
+        Public Function ToSimpleList(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
+            Return Exec(Of T)(mgr)
+        End Function
 #End Region
 
     End Class

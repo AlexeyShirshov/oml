@@ -68,7 +68,7 @@ Imports Worm.Criteria.Values
     <TestMethod(), ExpectedException(GetType(Worm.QueryGeneratorException))> Public Sub TestFilterFromRawTableWrong()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
-            Dim t As OrmTable = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
+            Dim t As SourceFragment = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
             Dim q As QueryCmd(Of Entity) = QueryCmd(Of Entity).Create(t, "ID")
             Assert.IsNotNull(q)
 
@@ -82,7 +82,7 @@ Imports Worm.Criteria.Values
     <TestMethod()> Public Sub TestFilterFromRawTable()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
-            Dim t As OrmTable = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
+            Dim t As SourceFragment = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
             Dim q As QueryCmd(Of Entity) = QueryCmd(Of Entity).Create(t, "ID")
             Assert.IsNotNull(q)
 

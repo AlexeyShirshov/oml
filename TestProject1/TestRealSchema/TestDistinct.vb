@@ -15,7 +15,7 @@ Public Class TestDistinct
     Public Sub TestSelect()
         Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
-            Dim tbl As OrmTable = s.GetTables(GetType(Tables1to3))(0)
+            Dim tbl As SourceFragment = s.GetTables(GetType(Tables1to3))(0)
             Dim f As New JoinFilter(tbl, "table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal)
             Dim join As New OrmJoin(tbl, Worm.Criteria.Joins.JoinType.Join, f)
 
@@ -34,7 +34,7 @@ Public Class TestDistinct
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
             Dim tt As Type = GetType(Table1)
             Dim t As Type = GetType(Table2)
-            Dim tbl As OrmTable = s.GetTables(tt)(0)
+            Dim tbl As SourceFragment = s.GetTables(tt)(0)
             Dim col As ICollection(Of String) = s.GetFieldNameByType(t, tt)
             Assert.AreEqual(1, col.Count)
             Dim field As String = String.Empty
@@ -130,7 +130,7 @@ Public Class TestDistinct
     Public Sub TestSelect5()
         Dim s As New SQLGenerator("1")
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(s)
-            Dim tbl As OrmTable = s.GetTables(GetType(Tables1to3))(0)
+            Dim tbl As SourceFragment = s.GetTables(GetType(Tables1to3))(0)
             Dim f As New JoinFilter(tbl, "table1", GetType(Table1), "ID", Worm.Criteria.FilterOperation.Equal)
             Dim join As New OrmJoin(tbl, Worm.Criteria.Joins.JoinType.Join, f)
 

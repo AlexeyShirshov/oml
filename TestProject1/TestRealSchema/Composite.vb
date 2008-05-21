@@ -60,7 +60,7 @@ Public Class CompositeSchema
     Implements IReadonlyObjectSchema
 
     Private _idx As OrmObjectIndex
-    Private _tables() As OrmTable = {New OrmTable("dbo.m1"), New OrmTable("dbo.m2")}
+    Private _tables() As SourceFragment = {New SourceFragment("dbo.m1"), New SourceFragment("dbo.m2")}
 
     Public Enum Tables
         First
@@ -78,11 +78,11 @@ Public Class CompositeSchema
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tables
     End Function
 
-    Public Overrides Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As Worm.Criteria.Joins.OrmJoin
+    Public Overrides Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.OrmJoin
         If left.Equals(GetTables()(Tables.First)) AndAlso right.Equals(GetTables()(Tables.Second)) Then
             Return New Worm.Database.Criteria.Joins.OrmJoin(right, Worm.Criteria.Joins.JoinType.Join, New Worm.Database.Criteria.Joins.JoinFilter(right, "id", _objectType, "ID", Worm.Criteria.FilterOperation.Equal))
         End If
@@ -98,7 +98,7 @@ Public Class CompositeEditableSchema
     Implements IRelMapObjectSchema
 
     Private _idx As OrmObjectIndex
-    Private _tables() As OrmTable = {New OrmTable("dbo.m1")}
+    Private _tables() As SourceFragment = {New SourceFragment("dbo.m1")}
 
     Public Enum Tables
         First
@@ -114,11 +114,11 @@ Public Class CompositeEditableSchema
         Return _idx
     End Function
 
-    Public Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As Worm.Criteria.Joins.OrmJoin Implements IRelMapObjectSchema.GetJoins
+    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.OrmJoin Implements IRelMapObjectSchema.GetJoins
         Return Nothing
     End Function
 
-    Public Function GetTables() As OrmTable() Implements IRelMapObjectSchema.GetTables
+    Public Function GetTables() As SourceFragment() Implements IRelMapObjectSchema.GetTables
         Return _tables
     End Function
 

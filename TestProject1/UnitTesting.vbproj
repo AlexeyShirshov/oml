@@ -98,6 +98,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="Query\Agreegates.vb" />
     <Compile Include="Query\QueryTest.vb" />
     <Compile Include="TestCriteria.vb" />
     <Compile Include="TestRealSchema\Composite.vb" />

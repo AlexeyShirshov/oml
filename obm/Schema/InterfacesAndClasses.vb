@@ -39,8 +39,8 @@ Namespace Orm.Meta
 
     Public Interface IObjectSchemaBase
         Inherits IOrmPropertyMap
-        Function GetTables() As OrmTable()
-		Function GetSuppressedColumns() As ColumnAttribute()
+        Function GetTables() As SourceFragment()
+        Function GetSuppressedColumns() As ColumnAttribute()
         Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
     End Interface
 
@@ -61,7 +61,7 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface IOrmRelationalSchema
-        Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin
+        Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As OrmJoin
     End Interface
 
     Public Interface IOrmRelationalSchemaWithM2M
@@ -70,7 +70,7 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface IRelMapObjectSchema
-		Inherits IOrmRelationalSchemaWithM2M, IObjectSchemaBase
+        Inherits IOrmRelationalSchemaWithM2M, IObjectSchemaBase
     End Interface
 
     Public Interface IOrmObjectSchema
@@ -139,7 +139,7 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface IGetJoinsWithContext
-        Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin
+        Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As OrmJoin
     End Interface
 
     Public Interface IConnectedFilter
@@ -149,7 +149,7 @@ Namespace Orm.Meta
 
 #Region " Classes "
 
-    Public Class OrmTable
+    Public Class SourceFragment
 
         Private _table As String
         Private _schema As String
@@ -180,7 +180,7 @@ Namespace Orm.Meta
             Throw New NotSupportedException
         End Function
 
-        Public Overridable Function OnTableAdd(ByVal pmgr As ICreateParam) As OrmTable
+        Public Overridable Function OnTableAdd(ByVal pmgr As ICreateParam) As SourceFragment
             Return Nothing
         End Function
 
@@ -196,7 +196,7 @@ Namespace Orm.Meta
             End Get
         End Property
 
-        Public ReadOnly Property Table() As String
+        Public ReadOnly Property Name() As String
             Get
                 Return _table
             End Get
@@ -206,17 +206,17 @@ Namespace Orm.Meta
     Public Class MapField2Column
         Public ReadOnly _fieldName As String
         Public ReadOnly _columnName As String
-        Public ReadOnly _tableName As OrmTable
+        Public ReadOnly _tableName As SourceFragment
         Private ReadOnly _newattributes As Field2DbRelations
 
-        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As OrmTable)
+        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment)
             _fieldName = fieldName
             _columnName = columnName
             _tableName = tableName
             _newattributes = Field2DbRelations.None
         End Sub
 
-        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As OrmTable, _
+        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations)
             _fieldName = fieldName
             _columnName = columnName
@@ -235,7 +235,7 @@ Namespace Orm.Meta
 
     Public Class M2MRelation
         Public ReadOnly Type As Type
-        Public ReadOnly Table As OrmTable
+        Public ReadOnly Table As SourceFragment
         Public ReadOnly Column As String
         Public ReadOnly DeleteCascade As Boolean
         Public ReadOnly Mapping As System.Data.Common.DataTableMapping
@@ -246,7 +246,7 @@ Namespace Orm.Meta
         Public Const RevKey As String = "xxx%rev$"
         Public Const DirKey As String = "xxx%direct$"
 
-        Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
             Me.Type = type
             Me.Table = table
@@ -255,21 +255,21 @@ Namespace Orm.Meta
             Me.Mapping = mapping
         End Sub
 
-        Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
             MyClass.New(type, table, column, delete, mapping)
             Key = GetKey(direct)
         End Sub
 
         <Obsolete()> _
-        Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
             MyClass.New(type, table, column, delete, mapping)
             Me.ConnectedType = connectedType
         End Sub
 
         <Obsolete()> _
-        Public Sub New(ByVal type As Type, ByVal table As OrmTable, ByVal column As String, _
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
             ByVal connectedType As Type, ByVal direct As Boolean)
             MyClass.New(type, table, column, delete, mapping, direct)
@@ -289,13 +289,23 @@ Namespace Orm.Meta
                 Return RevKey
             End If
         End Function
+
+        Public Shared Function GetRevKey(ByVal key As String) As String
+            If key = DirKey Then
+                Return RevKey
+            ElseIf key = RevKey Then
+                Return DirKey
+            Else
+                Return key
+            End If
+        End Function
     End Class
 
     Public NotInheritable Class SimpleObjectSchema
         Implements IOrmObjectSchema
 
         'Private _tables(-1) As OrmTable
-        Private _table As OrmTable
+        Private _table As SourceFragment
         Private _cols As New OrmObjectIndex
 
         Friend Sub New(ByVal t As Type, ByVal table As String, ByVal cols As ICollection(Of ColumnAttribute), ByVal pk As String)
@@ -313,7 +323,7 @@ Namespace Orm.Meta
             If String.IsNullOrEmpty(table) Then
                 Throw New ArgumentNullException("table")
             Else
-                _table = New OrmTable(table)
+                _table = New SourceFragment(table)
             End If
 
             For Each c As ColumnAttribute In cols
@@ -358,12 +368,12 @@ Namespace Orm.Meta
         '    Return _tables(l)
         'End Function
 
-        Public Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As OrmJoin Implements IOrmObjectSchema.GetJoins
+        Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As OrmJoin Implements IOrmObjectSchema.GetJoins
             Throw New NotSupportedException("Joins is not supported in simple mode")
         End Function
 
-        Public Function GetTables() As OrmTable() Implements IOrmObjectSchema.GetTables
-            Return New OrmTable() {_table}
+        Public Function GetTables() As SourceFragment() Implements IOrmObjectSchema.GetTables
+            Return New SourceFragment() {_table}
         End Function
 
         Public Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchemaBase.ChangeValueType

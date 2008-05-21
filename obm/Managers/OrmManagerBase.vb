@@ -4192,7 +4192,7 @@ l1:
                         types.Add(type2join)
 
                         Dim ts As IOrmObjectSchema = CType(schema.GetObjectSchema(type2join), IOrmObjectSchema)
-                        Dim pk_table As OrmTable = ts.GetTables(0)
+                        Dim pk_table As SourceFragment = ts.GetTables(0)
                         For i As Integer = 1 To ts.GetTables.Length - 1
                             Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
                             Dim join As OrmJoin = Nothing
@@ -4247,7 +4247,7 @@ l1:
 
                     'types.Add(sortType)
                     'l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
-                ElseIf sortType Is selectType Then
+                ElseIf sortType Is selectType OrElse sortType Is Nothing Then
                     appendMain = True
                 End If
                 ns = ns.Previous

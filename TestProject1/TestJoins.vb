@@ -21,7 +21,7 @@ Imports Worm.Criteria.Core
 
     <TestMethod(), ExpectedException(GetType(InvalidOperationException))> _
     Public Sub TestMakeSQLStmt()
-        Dim j As New OrmJoin(New OrmTable("table1"), Worm.Criteria.Joins.JoinType.Join, Nothing)
+        Dim j As New OrmJoin(New SourceFragment("table1"), Worm.Criteria.Joins.JoinType.Join, Nothing)
 
         Assert.IsNull(j.Condition)
 
@@ -32,7 +32,7 @@ Imports Worm.Criteria.Core
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt2()
-        Dim j As New OrmJoin(New OrmTable("table1"), Worm.Criteria.Joins.JoinType.Join, _
+        Dim j As New OrmJoin(New SourceFragment("table1"), Worm.Criteria.Joins.JoinType.Join, _
             New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
         Dim schema As New SQLGenerator("1")
@@ -43,7 +43,7 @@ Imports Worm.Criteria.Core
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestMakeSQLStmt3()
         Dim schema As New SQLGenerator("1")
-        Dim t As OrmTable = schema.GetTables(GetType(Entity))(0)
+        Dim t As SourceFragment = schema.GetTables(GetType(Entity))(0)
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, _
             New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
         Dim almgr As AliasMgr = AliasMgr.Create
@@ -53,7 +53,7 @@ Imports Worm.Criteria.Core
 
     <TestMethod(), ExpectedException(GetType(Worm.QueryGeneratorException))> _
     Public Sub TestMakeSQLStmt4()
-        Dim t As New OrmTable("table1")
+        Dim t As New SourceFragment("table1")
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
         Dim schema As New SQLGenerator("1")
@@ -65,7 +65,7 @@ Imports Worm.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestMakeSQLStmt5()
-        Dim t As New OrmTable("table1")
+        Dim t As New SourceFragment("table1")
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
         Dim schema As New SQLGenerator("1")
@@ -83,7 +83,7 @@ Imports Worm.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestMakeSQLStmt6()
-        Dim t As New OrmTable("table1")
+        Dim t As New SourceFragment("table1")
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, _
             New EntityFilter(GetType(Entity), "ID", New LiteralValue("1"), Worm.Criteria.FilterOperation.Equal))
 
@@ -102,8 +102,8 @@ Imports Worm.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestMakeSQLStmt7()
-        Dim t As New OrmTable("table1")
-        Dim t2 As New OrmTable("table2")
+        Dim t As New SourceFragment("table1")
+        Dim t2 As New SourceFragment("table2")
 
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, _
             New TableFilter(t2, "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
@@ -128,7 +128,7 @@ Imports Worm.Criteria.Core
         Assert.IsNull(cc.Condition)
 
         Dim t As Type = GetType(Entity)
-        Dim tbl As New OrmTable("table1")
+        Dim tbl As New SourceFragment("table1")
         Dim f As New JoinFilter(tbl, "id", t, "ID", Worm.Criteria.FilterOperation.Equal)
         cc.AddFilter(f)
 
@@ -163,7 +163,7 @@ Imports Worm.Criteria.Core
 
     <TestMethod()> _
     Public Sub TestMakeSQLStmt8()
-        Dim tbl As New OrmTable("table1")
+        Dim tbl As New SourceFragment("table1")
         Dim j As New OrmJoin(tbl, Worm.Criteria.Joins.JoinType.FullJoin, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
         Dim schema As New SQLGenerator("1")
@@ -265,7 +265,7 @@ End Class
     <TestMethod()> _
     Public Sub TestMakeSQLStmt5()
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
-        Dim tbl As New OrmTable("table1")
+        Dim tbl As New SourceFragment("table1")
         Dim f2 As New TableFilter(tbl, "id", New ScalarValue(1), Worm.Criteria.FilterOperation.GreaterThan)
         Dim c As New Criteria.Conditions.Condition(f, f2, ConditionOperator.Or)
 
@@ -287,7 +287,7 @@ End Class
     Public Sub TestReplace()
 
         Dim f As New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal)
-        Dim tbl As New OrmTable("table1")
+        Dim tbl As New SourceFragment("table1")
         Dim f2 As New TableFilter(tbl, "id", New ScalarValue(1), Worm.Criteria.FilterOperation.GreaterThan)
         Dim c As New Criteria.Conditions.Condition(f, f2, ConditionOperator.Or)
 
@@ -328,7 +328,7 @@ End Class
     Public Sub TestReplace2()
         Dim schema As New SQLGenerator("1")
         Dim f As New JoinFilter(GetType(Entity), "ID", GetType(Entity2), "oqwef", Worm.Criteria.FilterOperation.Equal)
-        Dim tbl As New OrmTable("table1")
+        Dim tbl As New SourceFragment("table1")
         Dim ct As New Criteria.Conditions.Condition.ConditionConstructor
         ct.AddFilter(f, ConditionOperator.Or)
         Dim j As New OrmJoin(schema.GetTables(GetType(Entity))(0), Worm.Criteria.Joins.JoinType.Join, f)

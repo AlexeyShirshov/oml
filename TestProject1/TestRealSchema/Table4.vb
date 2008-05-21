@@ -85,7 +85,7 @@ Public Class Table4Implementation
     Inherits ObjectSchemaBaseImplementation
     Implements ICacheBehavior
 
-    Private _tables() As OrmTable = {New OrmTable("dbo.[Table]")}
+    Private _tables() As SourceFragment = {New SourceFragment("dbo.[Table]")}
 
     Public Enum Tables
         Main
@@ -99,7 +99,7 @@ Public Class Table4Implementation
         Return idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tables
     End Function
 
@@ -116,7 +116,7 @@ Public Class Table4Implementation2
     Inherits ObjectSchemaBaseImplementation
 
     Private _idx As OrmObjectIndex
-    Private _tables() As OrmTable = {New OrmTable("dbo.[Table]")}
+    Private _tables() As SourceFragment = {New SourceFragment("dbo.[Table]")}
 
     Public Enum Tables
         Main
@@ -133,7 +133,7 @@ Public Class Table4Implementation2
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tables
     End Function
 End Class

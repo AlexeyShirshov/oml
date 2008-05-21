@@ -82,7 +82,7 @@ Imports Worm.Orm.Meta
         Inherits ObjectSchemaBaseImplementation
 
         Private _idx As OrmObjectIndex
-        Protected _tables() As OrmTable = {New OrmTable("/root/objects/object")}
+        Protected _tables() As SourceFragment = {New SourceFragment("/root/objects/object")}
 
         Public Enum Tables
             Main
@@ -98,7 +98,7 @@ Imports Worm.Orm.Meta
             Return _idx
         End Function
 
-        Public Overrides Function GetTables() As Worm.Orm.Meta.OrmTable()
+        Public Overrides Function GetTables() As Worm.Orm.Meta.SourceFragment()
             Return _tables
         End Function
     End Class

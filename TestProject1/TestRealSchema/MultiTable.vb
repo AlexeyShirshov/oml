@@ -63,9 +63,9 @@ End Class
 Public Class MultiTableEn
     Inherits MultiTableSchemaBase
 
-    Private _tables() As OrmTable = {New OrmTable("dbo.m2")}
+    Private _tables() As SourceFragment = {New SourceFragment("dbo.m2")}
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tables
     End Function
 End Class
@@ -73,9 +73,9 @@ End Class
 Public Class MultiTableRu
     Inherits MultiTableSchemaBase
 
-    Private _tables() As OrmTable = {New OrmTable("dbo.m1")}
+    Private _tables() As SourceFragment = {New SourceFragment("dbo.m1")}
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tables
     End Function
 End Class

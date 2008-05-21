@@ -106,7 +106,7 @@ Public Class TablesImplementation
     Implements IRelation
 
     Private _idx As OrmObjectIndex
-    Public Shared _tables() As OrmTable = {New OrmTable("dbo.Tables1to3Relation")}
+    Public Shared _tables() As SourceFragment = {New SourceFragment("dbo.Tables1to3Relation")}
 
     Public Enum Tables
         Main
@@ -124,7 +124,7 @@ Public Class TablesImplementation
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tables
     End Function
 

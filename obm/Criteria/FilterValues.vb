@@ -561,7 +561,7 @@ Namespace Database
             Implements IDatabaseFilterValue, Worm.Criteria.Values.INonTemplateValue
 
             Private _t As Type
-            Private _tbl As OrmTable
+            Private _tbl As SourceFragment
             Private _f As IFilter
             Private _field As String
             Private _joins() As Worm.Criteria.Joins.OrmJoin
@@ -571,7 +571,7 @@ Namespace Database
                 _f = f
             End Sub
 
-            Public Sub New(ByVal table As OrmTable, ByVal f As IFilter)
+            Public Sub New(ByVal table As SourceFragment, ByVal f As IFilter)
                 _tbl = table
                 _f = f
             End Sub
@@ -600,7 +600,7 @@ Namespace Database
                 End Get
             End Property
 
-            Public ReadOnly Property Table() As OrmTable
+            Public ReadOnly Property Table() As SourceFragment
                 Get
                     Return _tbl
                 End Get
@@ -640,7 +640,7 @@ Namespace Database
 
             Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
                 If _t Is Nothing Then
-                    sb.Append(dbschema.SelectWithJoin(Nothing, New OrmTable() {_tbl}, almgr, paramMgr, _joins, _
+                    sb.Append(dbschema.SelectWithJoin(Nothing, New SourceFragment() {_tbl}, almgr, paramMgr, _joins, _
                         False, Nothing, Nothing, Nothing, Nothing, Nothing))
                 Else
                     Dim arr As Generic.IList(Of ColumnAttribute) = Nothing

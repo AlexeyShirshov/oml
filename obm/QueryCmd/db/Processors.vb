@@ -29,11 +29,9 @@ Namespace Query.Database
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
                 ByVal f As IFilter, ByVal q As QueryCmdBase)
                 _mgr = mgr
-                _j = j
-                _f = f
                 _q = q
 
-                Reset()
+                Reset(j, f)
             End Sub
 
             Public Overrides Sub CreateDepends()
@@ -80,6 +78,17 @@ Namespace Query.Database
                 Return r
             End Function
 
+            Public Function GetSimpleValues(Of T)() As IList(Of T)
+                Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
+
+                Using cmd As System.Data.Common.DbCommand = dbm.DbSchema.CreateDBCommand
+                    ', dbm, Query, GetType(ReturnType), _j, _f
+                    MakeStatement(cmd)
+
+                    Return ExecStmt(Of T)(cmd)
+                End Using
+            End Function
+
             'ByVal cmd As System.Data.Common.DbCommand, _
             '   ByVal mgr As OrmReadOnlyDBManager, ByVal query As QueryCmdBase, ByVal t As Type, _
             '    ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter
@@ -104,6 +113,10 @@ Namespace Query.Database
 
             Protected Overridable Function _MakeStatement() As String
                 Return MakeQueryStatement(Mgr.GetFilterInfo, Mgr.DbSchema, Query, _params, GetType(ReturnType), _j, _f)
+            End Function
+
+            Protected Overridable Function ExecStmt(Of T)(ByVal cmd As System.Data.Common.DbCommand) As IList(Of T)
+                Return _mgr.GetSimpleValues(Of T)(cmd)
             End Function
 
             Protected Overridable Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyList(Of ReturnType)
@@ -158,7 +171,9 @@ Namespace Query.Database
                 _stmt = Nothing
             End Sub
 
-            Public Sub Reset()
+            Public Sub Reset(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter)
+                _j = j
+                _f = f
                 _key = Query.GetStaticKey(_mgr.GetStaticKey(), _j, _f)
                 _dic = _mgr.GetDic(_mgr.Cache, _key)
                 _id = Query.GetDynamicKey(_j, _f)
@@ -176,16 +191,16 @@ Namespace Query.Database
             End Function
         End Class
 
-        Class M2MPublicProcessor(Of ReturnType As {New, Orm.OrmBase})
-            Inherits Processor(Of ReturnType)
+        'Class M2MPublicProcessor(Of ReturnType As {New, Orm.OrmBase})
+        '    Inherits Processor(Of ReturnType)
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
-                ByVal f As IFilter, ByVal q As QueryCmdBase)
-                MyBase.New(mgr, j, f, q)
-            End Sub
+        '    Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
+        '        ByVal f As IFilter, ByVal q As QueryCmdBase)
+        '        MyBase.New(mgr, j, f, q)
+        '    End Sub
 
 
-        End Class
+        'End Class
 
 
         Class M2MProcessor(Of ReturnType As {New, Orm.OrmBase})
