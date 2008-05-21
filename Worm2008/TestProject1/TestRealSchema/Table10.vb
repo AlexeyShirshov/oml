@@ -72,7 +72,7 @@ Public Class Table10Implementation
     Inherits ObjectSchemaBaseImplementation
 
     Private _idx As OrmObjectIndex
-    Private _tables() As OrmTable = {New OrmTable("dbo.Table10")}
+    Private _tables() As SourceFragment = {New SourceFragment("dbo.Table10")}
 
     Public Enum Tables
         Main
@@ -88,7 +88,7 @@ Public Class Table10Implementation
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tables
     End Function
 End Class

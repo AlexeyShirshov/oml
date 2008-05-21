@@ -81,22 +81,22 @@ Namespace Database
         Public Class TableFilterTemplate
             Inherits TemplateBase
 
-            Private _tbl As OrmTable
+            Private _tbl As SourceFragment
             Private _col As String
 
-            Public Sub New(ByVal table As OrmTable, ByVal column As String, ByVal operation As Worm.Criteria.FilterOperation)
+            Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal operation As Worm.Criteria.FilterOperation)
                 MyBase.New(operation)
                 _tbl = table
                 _col = column
             End Sub
 
-            Public Sub New(ByVal table As OrmTable, ByVal column As String)
+            Public Sub New(ByVal table As SourceFragment, ByVal column As String)
                 MyBase.New()
                 _tbl = table
                 _col = column
             End Sub
 
-            Public ReadOnly Property Table() As OrmTable
+            Public ReadOnly Property Table() As SourceFragment
                 Get
                     Return _tbl
                 End Get
@@ -188,7 +188,7 @@ Namespace Database
 
             'Private _templ As TableFilterTemplate
 
-            Public Sub New(ByVal table As OrmTable, ByVal column As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+            Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
                 MyBase.New(value, New TableFilterTemplate(table, column, operation))
                 '_templ = New TableFilterTemplate(table, column, operation)
             End Sub
@@ -214,7 +214,7 @@ Namespace Database
 
             Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
                 If ParamValue.ShouldUse Then
-                    Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = Nothing
+                    Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
                     If almgr IsNot Nothing Then
                         tableAliases = almgr.Aliases
@@ -343,7 +343,7 @@ Namespace Database
                 Dim pv As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
                 If pv Is Nothing OrElse ParamValue.ShouldUse Then
-                    Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = Nothing
+                    Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
                     If almgr IsNot Nothing Then
                         tableAliases = almgr.Aliases

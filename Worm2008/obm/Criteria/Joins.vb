@@ -20,10 +20,10 @@ Namespace Criteria.Joins
         Implements Core.IFilter
 
         Friend _e1 As Pair(Of Type, String)
-        Friend _t1 As Pair(Of OrmTable, String)
+        Friend _t1 As Pair(Of SourceFragment, String)
 
         Friend _e2 As Pair(Of Type, String)
-        Friend _t2 As Pair(Of OrmTable, String)
+        Friend _t2 As Pair(Of SourceFragment, String)
 
         Friend _oper As FilterOperation
 
@@ -33,15 +33,15 @@ Namespace Criteria.Joins
             _oper = operation
         End Sub
 
-        Public Sub New(ByVal table As OrmTable, ByVal column As String, ByVal t2 As Type, ByVal FieldName2 As String, ByVal operation As FilterOperation)
-            _t1 = New Pair(Of OrmTable, String)(table, column)
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal t2 As Type, ByVal FieldName2 As String, ByVal operation As FilterOperation)
+            _t1 = New Pair(Of SourceFragment, String)(table, column)
             _e2 = New Pair(Of Type, String)(t2, FieldName2)
             _oper = operation
         End Sub
 
-        Public Sub New(ByVal table As OrmTable, ByVal column As String, ByVal table2 As OrmTable, ByVal column2 As String, ByVal operation As FilterOperation)
-            _t1 = New Pair(Of OrmTable, String)(table, column)
-            _t2 = New Pair(Of OrmTable, String)(table2, column2)
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal table2 As SourceFragment, ByVal column2 As String, ByVal operation As FilterOperation)
+            _t1 = New Pair(Of SourceFragment, String)(table, column)
+            _t2 = New Pair(Of SourceFragment, String)(table2, column2)
             _oper = operation
         End Sub
 
@@ -159,11 +159,11 @@ Namespace Criteria.Joins
     End Class
 
     Public MustInherit Class OrmJoin
-        Protected _table As OrmTable
+        Protected _table As SourceFragment
         Protected _joinType As Worm.Criteria.Joins.JoinType
         Protected _condition As Core.IFilter
 
-        Public Sub New(ByVal Table As OrmTable, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
+        Public Sub New(ByVal Table As SourceFragment, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
             _table = Table
             _joinType = joinType
             _condition = condition
@@ -214,11 +214,11 @@ Namespace Criteria.Joins
             Return _table.RawName & JoinTypeString() & _condition.ToString
         End Function
 
-        Public Property Table() As OrmTable
+        Public Property Table() As SourceFragment
             Get
                 Return _table
             End Get
-            Friend Set(ByVal value As OrmTable)
+            Friend Set(ByVal value As SourceFragment)
                 _table = value
             End Set
         End Property
@@ -229,7 +229,7 @@ Namespace Criteria.Joins
             End Get
         End Property
 
-        Public Function InjectJoinFilter(ByVal t As Type, ByVal field As String, ByVal table As OrmTable, ByVal column As String) As Core.TemplateBase
+        Public Function InjectJoinFilter(ByVal t As Type, ByVal field As String, ByVal table As SourceFragment, ByVal column As String) As Core.TemplateBase
             For Each _fl As Core.IFilter In _condition.GetAllFilters()
                 Dim f As JoinFilter = Nothing
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
@@ -263,10 +263,10 @@ Namespace Criteria.Joins
             Return Nothing
         End Function
 
-        Protected MustOverride Function CreateTableFilter(ByVal table As OrmTable, ByVal fieldName As String, ByVal oper As FilterOperation) As Core.TemplateBase
+        Protected MustOverride Function CreateTableFilter(ByVal table As SourceFragment, ByVal fieldName As String, ByVal oper As FilterOperation) As Core.TemplateBase
         Protected MustOverride Function CreateOrmFilter(ByVal t As Type, ByVal fieldName As String, ByVal oper As FilterOperation) As Core.TemplateBase
-        Protected MustOverride Function CreateJoin(ByVal table As OrmTable, ByVal column As String, ByVal t As Type, ByVal fieldName As String, ByVal oper As FilterOperation) As JoinFilter
-        Protected MustOverride Function CreateJoin(ByVal table As OrmTable, ByVal column As String, ByVal table2 As OrmTable, ByVal column2 As String, ByVal oper As FilterOperation) As JoinFilter
+        Protected MustOverride Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, ByVal t As Type, ByVal fieldName As String, ByVal oper As FilterOperation) As JoinFilter
+        Protected MustOverride Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, ByVal table2 As SourceFragment, ByVal column2 As String, ByVal oper As FilterOperation) As JoinFilter
     End Class
 End Namespace
 
@@ -283,16 +283,16 @@ Namespace Database
                 MyBase.New(t, fieldName, t2, fieldName2, operation)
             End Sub
 
-            Public Sub New(ByVal table As OrmTable, ByVal column As String, ByVal t As Type, ByVal fieldName As String, ByVal operation As FilterOperation)
+            Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal t As Type, ByVal fieldName As String, ByVal operation As FilterOperation)
                 MyBase.New(table, column, t, fieldName, operation)
             End Sub
 
-            Public Sub New(ByVal table As OrmTable, ByVal column As String, ByVal table2 As OrmTable, ByVal column2 As String, ByVal operation As FilterOperation)
+            Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal table2 As SourceFragment, ByVal column2 As String, ByVal operation As FilterOperation)
                 MyBase.New(table, column, table2, column2, operation)
             End Sub
 
             Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
-                Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases
+                Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
                 Dim map As MapField2Column = Nothing
                 If _e1 IsNot Nothing Then
@@ -408,7 +408,7 @@ Namespace Database
         Public Class OrmJoin
             Inherits Worm.Criteria.Joins.OrmJoin
 
-            Public Sub New(ByVal table As OrmTable, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As IFilter)
+            Public Sub New(ByVal table As SourceFragment, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As IFilter)
                 MyBase.New(table, joinType, condition)
             End Sub
 
@@ -425,7 +425,7 @@ Namespace Database
                     Throw New ArgumentNullException("almgr")
                 End If
 
-                Dim tableAliases As IDictionary(Of OrmTable, String) = almgr.Aliases
+                Dim tableAliases As IDictionary(Of SourceFragment, String) = almgr.Aliases
                 'Dim table As String = _table
                 'Dim sch as IOrmObjectSchema = schema.GetObjectSchema(
                 Return JoinTypeString() & schema.GetTableName(_table) & " " & tableAliases(_table) & " on " & Condition.MakeQueryStmt(schema, filterInfo, almgr, pname)
@@ -435,7 +435,7 @@ Namespace Database
                 Return New Core.OrmFilterTemplate(t, fieldName, oper)
             End Function
 
-            Protected Overrides Function CreateTableFilter(ByVal table As Orm.Meta.OrmTable, ByVal fieldName As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase
+            Protected Overrides Function CreateTableFilter(ByVal table As Orm.Meta.SourceFragment, ByVal fieldName As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase
                 Return New Core.TableFilterTemplate(table, fieldName, oper)
             End Function
 
@@ -445,11 +445,11 @@ Namespace Database
                 End Get
             End Property
 
-            Protected Overloads Overrides Function CreateJoin(ByVal table As Orm.Meta.OrmTable, ByVal column As String, ByVal t As System.Type, ByVal fieldName As String, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Joins.JoinFilter
+            Protected Overloads Overrides Function CreateJoin(ByVal table As Orm.Meta.SourceFragment, ByVal column As String, ByVal t As System.Type, ByVal fieldName As String, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Joins.JoinFilter
                 Return New JoinFilter(table, column, t, fieldName, oper)
             End Function
 
-            Protected Overloads Overrides Function CreateJoin(ByVal table As Orm.Meta.OrmTable, ByVal column As String, ByVal table2 As Orm.Meta.OrmTable, ByVal column2 As String, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Joins.JoinFilter
+            Protected Overloads Overrides Function CreateJoin(ByVal table As Orm.Meta.SourceFragment, ByVal column As String, ByVal table2 As Orm.Meta.SourceFragment, ByVal column2 As String, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Joins.JoinFilter
                 Return New JoinFilter(table, column, table2, column2, oper)
             End Function
         End Class

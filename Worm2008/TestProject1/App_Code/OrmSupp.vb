@@ -14,7 +14,7 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
         Return Nothing
     End Function
 
-    Public Overridable Function GetJoins(ByVal left As OrmTable, ByVal right As OrmTable) As Worm.Criteria.Joins.OrmJoin Implements IOrmObjectSchema.GetJoins
+    Public Overridable Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.OrmJoin Implements IOrmObjectSchema.GetJoins
         Return Nothing
     End Function
 
@@ -26,7 +26,7 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
     '    Return Nothing
     'End Function
 
-    Public MustOverride Function GetTables() As OrmTable() Implements IOrmObjectSchema.GetTables
+    Public MustOverride Function GetTables() As SourceFragment() Implements IOrmObjectSchema.GetTables
 
     Public MustOverride Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IOrmObjectSchema.GetFieldColumnMap
 

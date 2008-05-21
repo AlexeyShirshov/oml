@@ -62,7 +62,7 @@ Public Interface ISchemaWithJoins
     ''' <param name="filterInfo">Произвольный объект, используемый реализацией. Передается из <see cref="OrmManagerBase.GetFilterInfo" /></param>
     ''' <returns>Объекта типа <see cref="OrmJoin" /></returns>
     ''' <remarks>Используется для генерации запросов</remarks>
-    Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin
+    Function GetJoins(ByVal type As Type, ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As OrmJoin
 End Interface
 
 ''' <summary>
@@ -76,14 +76,14 @@ Public Interface IPrepareTable
     ''' <value></value>
     ''' <returns>Словарь где каждой таблице соответствует псевдоним</returns>
     ''' <remarks></remarks>
-    ReadOnly Property Aliases() As IDictionary(Of OrmTable, String)
+    ReadOnly Property Aliases() As IDictionary(Of SourceFragment, String)
     ''' <summary>
     ''' Добавляет таблицу в словарь и создает текстовое представление таблицы (псевдоним)
     ''' </summary>
     ''' <param name="table">Таблица</param>
     ''' <returns>Возвращает псевдоним таблицы</returns>
     ''' <remarks>Если таблица уже добавлена реализация может кинуть исключение</remarks>
-    Function AddTable(ByRef table As OrmTable) As String
+    Function AddTable(ByRef table As SourceFragment) As String
     ''' <summary>
     ''' Заменяет в <see cref="StringBuilder"/> названия таблиц на псевдонимы
     ''' </summary>
@@ -91,7 +91,7 @@ Public Interface IPrepareTable
     ''' <param name="table">Таблица</param>
     ''' <param name="sb">StringBuilder</param>
     ''' <remarks></remarks>
-    Sub Replace(ByVal schema As QueryGenerator, ByVal table As OrmTable, ByVal sb As StringBuilder)
+    Sub Replace(ByVal schema As QueryGenerator, ByVal table As SourceFragment, ByVal sb As StringBuilder)
 End Interface
 
 ''' <summary>
@@ -353,7 +353,7 @@ Public MustInherit Class QueryGenerator
 
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelation
         For Each r As M2MRelation In GetM2MRelations(maintype)
-            If r.Type Is subtype AndAlso r.Key.Equals(key) Then
+            If r.Type Is subtype AndAlso String.Equals(r.Key, key) Then
                 Return r
             End If
         Next
@@ -513,7 +513,7 @@ Public MustInherit Class QueryGenerator
     'End Function
 
     <CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
-    Protected Function GetFieldTable(ByVal schema As IOrmPropertyMap, ByVal field As String) As OrmTable
+    Protected Function GetFieldTable(ByVal schema As IOrmPropertyMap, ByVal field As String) As SourceFragment
         If schema Is Nothing Then
             Throw New ArgumentNullException("schema")
         End If
@@ -1343,7 +1343,7 @@ Public MustInherit Class QueryGenerator
     End Property
 #End Region
 
-    Protected Function GetJoins(ByVal type As Type, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin Implements ISchemaWithJoins.GetJoins
+    Protected Function GetJoins(ByVal type As Type, ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As OrmJoin Implements ISchemaWithJoins.GetJoins
         If type Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -1353,7 +1353,7 @@ Public MustInherit Class QueryGenerator
         Return GetJoins(schema, left, right, filterInfo)
     End Function
 
-    Protected Friend Function GetJoins(ByVal schema As IOrmRelationalSchema, ByVal left As OrmTable, ByVal right As OrmTable, ByVal filterInfo As Object) As OrmJoin
+    Protected Friend Function GetJoins(ByVal schema As IOrmRelationalSchema, ByVal left As SourceFragment, ByVal right As SourceFragment, ByVal filterInfo As Object) As OrmJoin
         If schema Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -1367,13 +1367,13 @@ Public MustInherit Class QueryGenerator
     End Function
 
     <Obsolete()> _
-    Public Function GetSharedTable(ByVal tableName As String) As OrmTable 'Implements IDbSchema.GetSharedTable
-        Dim t As OrmTable = CType(_sharedTables(tableName), OrmTable)
+    Public Function GetSharedTable(ByVal tableName As String) As SourceFragment 'Implements IDbSchema.GetSharedTable
+        Dim t As SourceFragment = CType(_sharedTables(tableName), SourceFragment)
         If t Is Nothing Then
             SyncLock Me
-                t = CType(_sharedTables(tableName), OrmTable)
+                t = CType(_sharedTables(tableName), SourceFragment)
                 If t Is Nothing Then
-                    t = New OrmTable(tableName)
+                    t = New SourceFragment(tableName)
                     _sharedTables.Add(tableName, t)
                 End If
             End SyncLock
@@ -1381,20 +1381,20 @@ Public MustInherit Class QueryGenerator
         Return t
     End Function
 
-    Public Function GetSharedTable(ByVal schema As String, ByVal tableName As String) As OrmTable
-        Return GetSharedTable(schema, tableName, Nothing)
+    Public Function GetSharedSourceFragment(ByVal schema As String, ByVal tableName As String) As SourceFragment
+        Return GetSharedSourceFragment(schema, tableName, Nothing)
     End Function
 
-    Public Function GetSharedTable(ByVal schema As String, ByVal tableName As String, ByVal key As String) As OrmTable 'Implements IDbSchema.GetSharedTable
+    Public Function GetSharedSourceFragment(ByVal schema As String, ByVal tableName As String, ByVal key As String) As SourceFragment 'Implements IDbSchema.GetSharedTable
         If String.IsNullOrEmpty(key) Then
-            key = schema & "^" & tableName
+            key = schema & "." & tableName
         End If
-        Dim t As OrmTable = CType(_sharedTables(key), OrmTable)
+        Dim t As SourceFragment = CType(_sharedTables(key), SourceFragment)
         If t Is Nothing Then
             SyncLock Me
-                t = CType(_sharedTables(key), OrmTable)
+                t = CType(_sharedTables(key), SourceFragment)
                 If t Is Nothing Then
-                    t = New OrmTable(schema, tableName)
+                    t = New SourceFragment(schema, tableName)
                     _sharedTables.Add(key, t)
                 End If
             End SyncLock
@@ -1402,7 +1402,7 @@ Public MustInherit Class QueryGenerator
         Return t
     End Function
 
-    Public Function GetTables(ByVal type As Type) As OrmTable() 'Implements IDbSchema.GetTables
+    Public Function GetTables(ByVal type As Type) As SourceFragment() 'Implements IDbSchema.GetTables
         If type Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -1412,7 +1412,7 @@ Public MustInherit Class QueryGenerator
         Return schema.GetTables
     End Function
 
-    Public Function GetTables(ByVal schema As IObjectSchemaBase) As OrmTable()
+    Public Function GetTables(ByVal schema As IObjectSchemaBase) As SourceFragment()
         If schema Is Nothing Then
             Throw New ArgumentNullException("type")
         End If
@@ -1445,7 +1445,7 @@ Public MustInherit Class QueryGenerator
         End If
     End Function
 
-    Public Function ExtractValues(ByVal schema As QueryGenerator, ByVal tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String), _
+    Public Function ExtractValues(ByVal schema As QueryGenerator, ByVal tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String), _
         ByVal _values() As Pair(Of Object, String)) As List(Of String)
         Dim [alias] As String = String.Empty
         Dim values As New List(Of String)
@@ -1464,7 +1464,7 @@ Public MustInherit Class QueryGenerator
                 lastt = t
 
                 Dim oschema As IOrmObjectSchema = CType(schema.GetObjectSchema(t), IOrmObjectSchema)
-                Dim tbl As OrmTable = Nothing
+                Dim tbl As SourceFragment = Nothing
                 Dim map As MapField2Column = Nothing
                 Dim fld As String = p.Second
                 If oschema.GetFieldColumnMap.TryGetValue(fld, map) Then
@@ -1487,8 +1487,8 @@ Public MustInherit Class QueryGenerator
                 Else
                     values.Add(fld)
                 End If
-            ElseIf TypeOf o Is OrmTable Then
-                Dim tbl As OrmTable = CType(o, OrmTable)
+            ElseIf TypeOf o Is SourceFragment Then
+                Dim tbl As SourceFragment = CType(o, SourceFragment)
                 If tableAliases IsNot Nothing Then
                     Debug.Assert(tableAliases.ContainsKey(tbl), "There is not alias for table " & tbl.RawName)
                     Try
@@ -1517,7 +1517,7 @@ Public MustInherit Class QueryGenerator
     Public MustOverride Function CreateCriteriaLink(ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase) As Criteria.CriteriaLink
     Public MustOverride Function CreateTopAspect(ByVal top As Integer) As Worm.Orm.Query.TopAspect
     Public MustOverride Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sorting.Sort) As Worm.Orm.Query.TopAspect
-    Public MustOverride Function GetTableName(ByVal t As OrmTable) As String
+    Public MustOverride Function GetTableName(ByVal t As SourceFragment) As String
     Public MustOverride Function CreateExecutor() As Worm.Query.IExecutor
 
     Protected Friend MustOverride Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _

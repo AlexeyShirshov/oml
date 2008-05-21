@@ -118,24 +118,24 @@ Namespace Database
     Public Structure AliasMgr
         Implements IPrepareTable
 
-        Private _aliases As IDictionary(Of OrmTable, String)
+        Private _aliases As IDictionary(Of SourceFragment, String)
 
-        Private Sub New(ByVal aliases As IDictionary(Of OrmTable, String))
+        Private Sub New(ByVal aliases As IDictionary(Of SourceFragment, String))
             _aliases = aliases
         End Sub
 
         Public Shared Function Create() As AliasMgr
-            Return New AliasMgr(New Generic.Dictionary(Of OrmTable, String))
+            Return New AliasMgr(New Generic.Dictionary(Of SourceFragment, String))
         End Function
 
-        Public Function AddTable(ByRef table As OrmTable) As String Implements IPrepareTable.AddTable
+        Public Function AddTable(ByRef table As SourceFragment) As String Implements IPrepareTable.AddTable
             Return AddTable(table, CType(Nothing, ParamMgr))
         End Function
 
-        Public Function AddTable(ByRef table As OrmTable, ByVal pmgr As ICreateParam) As String
+        Public Function AddTable(ByRef table As SourceFragment, ByVal pmgr As ICreateParam) As String
             'Dim tf As IOrmTableFunction = TryCast(schema, IOrmTableFunction)
-            Dim t As OrmTable = table
-            Dim tt As OrmTable = table.OnTableAdd(pmgr)
+            Dim t As SourceFragment = table
+            Dim tt As SourceFragment = table.OnTableAdd(pmgr)
             If tt IsNot Nothing Then
                 '    Dim f As OrmTable = tf.GetFunction(table, pmgr)
                 '    If f IsNot Nothing Then
@@ -148,7 +148,7 @@ Namespace Database
             Return [alias]
         End Function
 
-        Friend Sub AddTable(ByVal tbl As OrmTable, ByVal [alias] As String)
+        Friend Sub AddTable(ByVal tbl As SourceFragment, ByVal [alias] As String)
             _aliases.Add(tbl, [alias])
         End Sub
 
@@ -156,7 +156,7 @@ Namespace Database
         '    Return _aliases(table)
         'End Function
 
-        Public ReadOnly Property Aliases() As IDictionary(Of OrmTable, String) Implements IPrepareTable.Aliases
+        Public ReadOnly Property Aliases() As IDictionary(Of SourceFragment, String) Implements IPrepareTable.Aliases
             Get
                 Return _aliases
             End Get
@@ -168,7 +168,7 @@ Namespace Database
             End Get
         End Property
 
-        Public Sub Replace(ByVal schema As QueryGenerator, ByVal table As Orm.Meta.OrmTable, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
+        Public Sub Replace(ByVal schema As QueryGenerator, ByVal table As Orm.Meta.SourceFragment, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
             sb.Replace(schema.GetTableName(table) & ".", _aliases(table) & ".")
         End Sub
     End Structure
@@ -334,7 +334,7 @@ Namespace Database
                 If obj.ObjectState = ObjectState.Created Then
                     'Dim named_params As Boolean = ParamName("p", 1) <> ParamName("p", 2)
                     'Dim type As Type = obj.GetType
-                    Dim inserted_tables As New Generic.Dictionary(Of OrmTable, List(Of ITemplateFilter))
+                    Dim inserted_tables As New Generic.Dictionary(Of SourceFragment, List(Of ITemplateFilter))
                     'Dim tables_val As New System.Collections.Specialized.ListDictionary
                     'Dim params_val As New System.Collections.Specialized.ListDictionary
                     'Dim _params As New ArrayList
@@ -356,9 +356,9 @@ Namespace Database
                         es = rs.GetEditableSchema
                     End If
                     Dim js As IOrmObjectSchema = TryCast(es, IOrmObjectSchema)
-                    Dim tbls() As OrmTable = GetTables(es)
+                    Dim tbls() As SourceFragment = GetTables(es)
 
-                    Dim pkt As OrmTable = tbls(0)
+                    Dim pkt As SourceFragment = tbls(0)
 
                     For Each de As DictionaryEntry In GetProperties(real_t, es)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
@@ -368,7 +368,7 @@ Namespace Database
                             Dim att As Field2DbRelations = GetAttributes(real_t, c)
                             If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse _
                              (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
-                                Dim tb As OrmTable = GetFieldTable(es, c.FieldName)
+                                Dim tb As SourceFragment = GetFieldTable(es, c.FieldName)
                                 If unions IsNot Nothing Then
                                     Throw New NotImplementedException
                                     'tb = MapUnionType2Table(real_t, uniontype)
@@ -420,10 +420,10 @@ l1:
                         inserted_tables.Add(pkt, Nothing)
                     End If
 
-                    Dim ins_tables As List(Of Pair(Of OrmTable, List(Of ITemplateFilter))) = Sort(Of OrmTable, List(Of ITemplateFilter))(inserted_tables, tbls)
+                    Dim ins_tables As List(Of Pair(Of SourceFragment, List(Of ITemplateFilter))) = Sort(Of SourceFragment, List(Of ITemplateFilter))(inserted_tables, tbls)
 
                     For j As Integer = 1 To ins_tables.Count - 1
-                        Dim join_table As OrmTable = ins_tables(j).First
+                        Dim join_table As SourceFragment = ins_tables(j).First
                         Dim jn As OrmJoin = Nothing
                         If js IsNot Nothing Then
                             jn = CType(GetJoins(js, pkt, join_table, filterInfo), OrmJoin)
@@ -451,7 +451,7 @@ l1:
             End Using
         End Function
 
-        Protected Overridable Function FormInsert(ByVal inserted_tables As List(Of Pair(Of OrmTable, List(Of ITemplateFilter))), _
+        Protected Overridable Function FormInsert(ByVal inserted_tables As List(Of Pair(Of SourceFragment, List(Of ITemplateFilter))), _
             ByVal ins_cmd As StringBuilder, ByVal type As Type, ByVal os As IObjectSchemaBase, _
             ByVal sel_columns As Generic.List(Of ColumnAttribute), _
             ByVal unions() As String, ByVal params As ICreateParam) As ICollection(Of System.Data.Common.DbParameter)
@@ -473,8 +473,8 @@ l1:
                 End If
                 Dim b As Boolean = False
                 'Dim os As IOrmObjectSchema = GetObjectSchema(type)
-                Dim pk_table As OrmTable = os.GetTables(0)
-                For Each item As Pair(Of OrmTable, List(Of ITemplateFilter)) In inserted_tables
+                Dim pk_table As SourceFragment = os.GetTables(0)
+                For Each item As Pair(Of SourceFragment, List(Of ITemplateFilter)) In inserted_tables
                     If b Then
                         ins_cmd.Append(EndLine)
                         If SupportIf() Then
@@ -582,11 +582,11 @@ l1:
         End Function
 
         Protected Structure TableUpdate
-            Public _table As OrmTable
+            Public _table As SourceFragment
             Public _updates As IList(Of EntityFilterBase)
             Public _where4update As Condition.ConditionConstructor
 
-            Public Sub New(ByVal table As OrmTable)
+            Public Sub New(ByVal table As SourceFragment)
                 _table = table
                 _updates = New List(Of EntityFilterBase)
                 _where4update = New Condition.ConditionConstructor
@@ -594,7 +594,7 @@ l1:
 
         End Structure
 
-        Protected Sub GetChangedFields(ByVal obj As OrmBase, ByVal oschema As IOrmPropertyMap, ByVal tables As IDictionary(Of OrmTable, TableUpdate), _
+        Protected Sub GetChangedFields(ByVal obj As OrmBase, ByVal oschema As IOrmPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate), _
             ByVal sel_columns As Generic.List(Of ColumnAttribute), ByVal unions As String())
 
             Dim rt As Type = obj.GetType
@@ -624,7 +624,7 @@ l1:
                                     End If
                                 End If
 
-                                Dim fieldTable As OrmTable = GetFieldTable(oschema, c.FieldName)
+                                Dim fieldTable As SourceFragment = GetFieldTable(oschema, c.FieldName)
 
                                 If unions IsNot Nothing Then
                                     Throw New NotImplementedException
@@ -693,7 +693,7 @@ l1:
         End Sub
 
         Protected Sub GetUpdateConditions(ByVal obj As OrmBase, ByVal oschema As IObjectSchemaBase, _
-         ByVal updated_tables As IDictionary(Of OrmTable, TableUpdate), ByVal unions() As String, ByVal filterInfo As Object)
+         ByVal updated_tables As IDictionary(Of SourceFragment, TableUpdate), ByVal unions() As String, ByVal filterInfo As Object)
 
             Dim rt As Type = obj.GetType
 
@@ -712,7 +712,7 @@ l1:
                         'original = pi.GetValue(obj, Nothing)
                         'End If
 
-                        Dim tb As OrmTable = GetFieldTable(oschema, c.FieldName)
+                        Dim tb As SourceFragment = GetFieldTable(oschema, c.FieldName)
                         If unions IsNot Nothing Then
                             Throw New NotImplementedException
                             'tb = MapUnionType2Table(rt, uniontype)
@@ -729,7 +729,7 @@ l1:
                         'Dim add_param As Boolean = False
 
 
-                        For Each de_table As Generic.KeyValuePair(Of OrmTable, TableUpdate) In updated_tables 'In New Generic.List(Of Generic.KeyValuePair(Of String, TableUpdate))(CType(updated_tables, Generic.ICollection(Of Generic.KeyValuePair(Of String, TableUpdate))))
+                        For Each de_table As Generic.KeyValuePair(Of SourceFragment, TableUpdate) In updated_tables 'In New Generic.List(Of Generic.KeyValuePair(Of String, TableUpdate))(CType(updated_tables, Generic.ICollection(Of Generic.KeyValuePair(Of String, TableUpdate))))
                             'Dim de_table As TableUpdate = updated_tables(tb)
                             If de_table.Key.Equals(tb) Then
                                 'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
@@ -775,7 +775,7 @@ l1:
                     End If
 
                     Dim sel_columns As New Generic.List(Of ColumnAttribute)
-                    Dim updated_tables As New Dictionary(Of OrmTable, TableUpdate)
+                    Dim updated_tables As New Dictionary(Of SourceFragment, TableUpdate)
                     Dim rt As Type = obj.GetType
 
                     Dim unions() As String = GetUnions(rt)
@@ -807,11 +807,11 @@ l1:
 
                     If updated_tables.Count > 0 Then
                         'Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
-                        Dim pk_table As OrmTable = esch.GetTables()(0)
+                        Dim pk_table As SourceFragment = esch.GetTables()(0)
                         Dim amgr As AliasMgr = AliasMgr.Create
                         Dim params As New ParamMgr(Me, "p")
 
-                        For Each item As Generic.KeyValuePair(Of OrmTable, TableUpdate) In updated_tables
+                        For Each item As Generic.KeyValuePair(Of SourceFragment, TableUpdate) In updated_tables
                             If upd_cmd.Length > 0 Then
                                 upd_cmd.Append(EndLine)
                                 If SupportIf() Then
@@ -819,7 +819,7 @@ l1:
                                 End If
                             End If
 
-                            Dim tbl As OrmTable = item.Key
+                            Dim tbl As SourceFragment = item.Key
                             Dim [alias] As String = amgr.AddTable(tbl, params)
 
                             upd_cmd.Append("update ").Append([alias]).Append(" set ")
@@ -902,10 +902,10 @@ l1:
             End Using
         End Function
 
-        Protected Overridable Sub CorrectUpdateWithInsert(ByVal oschema As IOrmObjectSchema, ByVal table As OrmTable, ByVal tableinfo As TableUpdate, _
+        Protected Overridable Sub CorrectUpdateWithInsert(ByVal oschema As IOrmObjectSchema, ByVal table As SourceFragment, ByVal tableinfo As TableUpdate, _
             ByVal upd_cmd As StringBuilder, ByVal obj As OrmBase, ByVal params As ICreateParam)
 
-            Dim dic As New List(Of Pair(Of OrmTable, List(Of ITemplateFilter)))
+            Dim dic As New List(Of Pair(Of SourceFragment, List(Of ITemplateFilter)))
             Dim l As New List(Of ITemplateFilter)
             For Each f As EntityFilterBase In tableinfo._updates
                 l.Add(f)
@@ -915,18 +915,18 @@ l1:
                 l.Add(f)
             Next
 
-            dic.Add(New Pair(Of OrmTable, List(Of ITemplateFilter))(table, l))
+            dic.Add(New Pair(Of SourceFragment, List(Of ITemplateFilter))(table, l))
             upd_cmd.Append(EndLine).Append("if ").Append(RowCount).Append(" = 0 ")
             FormInsert(dic, upd_cmd, obj.GetType, oschema, Nothing, Nothing, params)
         End Sub
 
-        Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of OrmTable, IFilter), ByVal filterInfo As Object, _
+        Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of SourceFragment, IFilter), ByVal filterInfo As Object, _
             ByVal type As Type, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchema, ByVal relSchema As IOrmRelationalSchema)
             'Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
-            Dim tables() As OrmTable = GetTables(oschema)
-            Dim pk_table As OrmTable = tables(0)
+            Dim tables() As SourceFragment = GetTables(oschema)
+            Dim pk_table As SourceFragment = tables(0)
             For j As Integer = 0 To tables.Length - 1
-                Dim table As OrmTable = tables(j)
+                Dim table As SourceFragment = tables(j)
                 Dim o As New Condition.ConditionConstructor
                 If table.Equals(pk_table) Then
                     For Each de As DictionaryEntry In GetProperties(type, oschema)
@@ -979,14 +979,14 @@ l1:
                     End If
 
                     Dim params As New ParamMgr(Me, "p")
-                    Dim deleted_tables As New Generic.Dictionary(Of OrmTable, IFilter)
+                    Dim deleted_tables As New Generic.Dictionary(Of SourceFragment, IFilter)
 
                     del_cmd.Append(DeclareVariable("@id", "int")).Append(EndLine)
                     del_cmd.Append("set @id = ").Append(params.CreateParam(obj.Identifier)).Append(EndLine)
 
                     GetDeletedConditions(deleted_tables, filterInfo, type, obj, oschema, TryCast(relSchema, IOrmRelationalSchema))
 
-                    For Each de As KeyValuePair(Of OrmTable, IFilter) In deleted_tables
+                    For Each de As KeyValuePair(Of SourceFragment, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(GetTableName(de.Key))
                         del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(Me, filterInfo, Nothing, params))
                         del_cmd.Append(EndLine)
@@ -1015,7 +1015,7 @@ l1:
             Return del_cmd.ToString
         End Function
 
-        Public Overridable Function SelectWithJoin(ByVal original_type As Type, ByVal tables() As OrmTable, _
+        Public Overridable Function SelectWithJoin(ByVal original_type As Type, ByVal tables() As SourceFragment, _
             ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.OrmJoin, _
             ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
             ByVal arr As Generic.IList(Of ColumnAttribute), ByVal schema As IOrmObjectSchema, ByVal filterInfo As Object) As String
@@ -1105,7 +1105,7 @@ l1:
 
             Dim schema As IOrmObjectSchema = GetObjectSchema(original_type)
             Dim selectcmd As New StringBuilder
-            Dim tables() As OrmTable = GetTables(schema)
+            Dim tables() As SourceFragment = GetTables(schema)
             'Dim maintable As String = tables(0)
             selectcmd.Append("select distinct ")
             If wideLoad Then
@@ -1122,7 +1122,7 @@ l1:
                 AppendFrom(almgr, filterInfo, tables, selectcmd, pmgr, schema)
 
                 Dim r2 As M2MRelation = GetM2MRelation(relation.Type, original_type, True)
-                Dim tbl As OrmTable = relation.Table
+                Dim tbl As SourceFragment = relation.Table
                 If tbl Is Nothing Then
                     If relation.ConnectedType IsNot Nothing Then
                         tbl = GetTables(relation.ConnectedType)(0)
@@ -1334,10 +1334,10 @@ l1:
         ''' <param name="appendMainTable"></param>
         ''' <remarks></remarks>
         Protected Friend Sub AppendNativeTypeJoins(ByVal selectedType As Type, ByVal almgr As AliasMgr, _
-            ByVal tables As OrmTable(), ByVal selectcmd As StringBuilder, ByVal pname As ParamMgr, _
-            ByVal table As OrmTable, ByVal id As String, ByVal appendMainTable As Boolean, ByVal filterInfo As Object) ', Optional ByVal dic As IDictionary(Of OrmTable, OrmTable) = Nothing)
+            ByVal tables As SourceFragment(), ByVal selectcmd As StringBuilder, ByVal pname As ParamMgr, _
+            ByVal table As SourceFragment, ByVal id As String, ByVal appendMainTable As Boolean, ByVal filterInfo As Object) ', Optional ByVal dic As IDictionary(Of OrmTable, OrmTable) = Nothing)
 
-            Dim pk_table As OrmTable = tables(0)
+            Dim pk_table As SourceFragment = tables(0)
             Dim sch As IOrmObjectSchema = GetObjectSchema(selectedType)
             If Not appendMainTable Then
 
@@ -1371,7 +1371,7 @@ l1:
                     End If
                 Next
             Else
-                Dim tbl As OrmTable = pk_table
+                Dim tbl As SourceFragment = pk_table
                 tbl = tbl.OnTableAdd(pname)
                 Dim adal As Boolean
                 If tbl Is Nothing Then
@@ -1409,8 +1409,8 @@ l1:
         ''' <param name="id"></param>
         ''' <param name="appendMainTable"></param>
         ''' <remarks></remarks>
-        Protected Sub AppendFromM2M(ByVal selectedType As Type, ByVal almgr As AliasMgr, ByVal tables As OrmTable(), _
-            ByVal selectcmd As StringBuilder, ByVal pname As ParamMgr, ByVal table As OrmTable, ByVal id As String, _
+        Protected Sub AppendFromM2M(ByVal selectedType As Type, ByVal almgr As AliasMgr, ByVal tables As SourceFragment(), _
+            ByVal selectcmd As StringBuilder, ByVal pname As ParamMgr, ByVal table As SourceFragment, ByVal id As String, _
             ByVal appendMainTable As Boolean, ByVal filterInfo As Object)
 
             If table Is Nothing Then
@@ -1425,7 +1425,7 @@ l1:
             'Dim dic As New Generic.Dictionary(Of OrmTable, OrmTable)
             AppendNativeTypeJoins(selectedType, almgr, tables, selectcmd, pname, table, id, appendMainTable, filterInfo)
 
-            For Each tbl As OrmTable In tables
+            For Each tbl As SourceFragment In tables
                 'Dim newt As OrmTable = Nothing
                 'If dic.TryGetValue(tbl, newt) Then
                 '    If almgr.Aliases.ContainsKey(newt) Then
@@ -1453,12 +1453,12 @@ l1:
         ''' <returns></returns>
         ''' <remarks></remarks>
         Protected Friend Function AppendFrom(ByVal almgr As AliasMgr, ByVal filterInfo As Object, _
-            ByVal tables As OrmTable(), ByVal selectcmd As StringBuilder, ByVal pname As ICreateParam, _
+            ByVal tables As SourceFragment(), ByVal selectcmd As StringBuilder, ByVal pname As ICreateParam, _
             ByVal sch As IOrmObjectSchema) As StringBuilder
             'Dim sch As IOrmObjectSchema = GetObjectSchema(original_type)
             For i As Integer = 0 To tables.Length - 1
-                Dim tbl As OrmTable = tables(i)
-                Dim tbl_real As OrmTable = tbl
+                Dim tbl As SourceFragment = tables(i)
+                Dim tbl_real As SourceFragment = tbl
                 Dim [alias] As String = Nothing
                 If Not almgr.Aliases.TryGetValue(tbl, [alias]) Then
                     [alias] = almgr.AddTable(tbl_real, pname)
@@ -1569,7 +1569,11 @@ l1:
                         '        s = s.Replace("{" & map._fieldName & "}", almgr.Aliases(map._tableName) & "." & map._columnName)
                         '    End If
                         'Next
-                        sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(Me, almgr.Aliases)))
+                        If ns.Values IsNot Nothing Then
+                            sb2.Append(String.Format(ns.CustomSortExpression, ns.GetCustomExpressionValues(Me, almgr.Aliases)))
+                        Else
+                            sb2.Append(ns.CustomSortExpression)
+                        End If
                     Else
                         Dim st As Type = ns.Type
                         If st Is Nothing Then
@@ -1651,7 +1655,7 @@ l1:
                 Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
             End If
 
-            Dim table As OrmTable = selected_r.Table
+            Dim table As SourceFragment = selected_r.Table
 
             If table Is Nothing Then
                 Throw New ArgumentException("Invalid relation", filteredType.ToString)
@@ -1691,8 +1695,8 @@ l1:
                 '    End If
                 'Next
             Else
-                Dim tbl As OrmTable = schema.GetTables(0)
-                AppendFromM2M(selectedType, almgr, New OrmTable() {tbl}, sb, pmgr, table, id_clm, appendMainTable, filterInfo)
+                Dim tbl As SourceFragment = schema.GetTables(0)
+                AppendFromM2M(selectedType, almgr, New SourceFragment() {tbl}, sb, pmgr, table, id_clm, appendMainTable, filterInfo)
                 'If almgr.Aliases.ContainsKey(tbl) Then
                 '    sb = sb.Replace(tbl.TableName & ".", almgr.Aliases(tbl) & ".")
                 'End If
@@ -1752,7 +1756,7 @@ l1:
 
             Dim id_clm As String = filtered_r.Column
 
-            Dim table As OrmTable = selected_r.Table
+            Dim table As SourceFragment = selected_r.Table
 
             Dim f As New dc.TableFilter(table, id_clm, New EntityValue(obj), FilterOperation.Equal)
             Dim con As New Condition.ConditionConstructor
@@ -1792,7 +1796,7 @@ l1:
             End If
 
             Dim almgr As AliasMgr = AliasMgr.Create
-            Dim ct As New OrmTable(table)
+            Dim ct As New SourceFragment(table)
             Dim [alias] As String = almgr.AddTable(ct)
             Dim pname As String = params.CreateParam(value)
             'cols = New Generic.List(Of ColumnAttribute)
@@ -1800,8 +1804,8 @@ l1:
             'Dim tbl As OrmTable = GetTables(t)(0)
             sb.Append("select ")
             Dim appendMain As Boolean = appendBySort
-            Dim selTable As OrmTable = GetTables(selectType)(0)
-            Dim searchTable As OrmTable = GetTables(searchType)(0)
+            Dim selTable As SourceFragment = GetTables(selectType)(0)
+            Dim searchTable As SourceFragment = GetTables(searchType)(0)
             Dim ins_idx As Integer = sb.Length
             If fields IsNot Nothing AndAlso fields.Count > 0 Then
                 'If searchType IsNot selectType Then
@@ -2064,7 +2068,7 @@ l1:
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal filter As IFilter, ByVal joins() As Worm.Criteria.Joins.OrmJoin, _
             ByVal filter_info As Object, ByVal appendOrder As Boolean) As String
             Dim sb As New StringBuilder
-            Dim tbl As OrmTable = GetTables(schema)(0)
+            Dim tbl As SourceFragment = GetTables(schema)(0)
             Dim al As String = "ZZZZZXXXXXXXX"
             'If Not almgr.Aliases.ContainsKey(tbl) Then
             '    al = almgr.AddTable(tbl)
@@ -2121,7 +2125,7 @@ l1:
             End If
 
             Dim sb As New StringBuilder
-            Dim tbl As OrmTable = relation.Table
+            Dim tbl As SourceFragment = relation.Table
             Dim param_relation As M2MRelation = GetRevM2MRelation(obj.GetType, relation.Type, Not relation.non_direct)
 
             If param_relation Is Nothing Then
@@ -2239,11 +2243,11 @@ l1:
             Return New TopAspect(top, sort)
         End Function
 
-        Public Overrides Function GetTableName(ByVal t As Orm.Meta.OrmTable) As String
+        Public Overrides Function GetTableName(ByVal t As Orm.Meta.SourceFragment) As String
             If Not String.IsNullOrEmpty(t.Schema) Then
-                Return t.Schema & "." & t.Table
+                Return t.Schema & "." & t.Name
             Else
-                Return t.Table
+                Return t.Name
             End If
         End Function
 
@@ -2258,7 +2262,7 @@ l1:
         Protected Friend Overrides Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
            ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType, Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.OrmJoin
 
-            Dim tbl As OrmTable = GetTables(type2join)(0)
+            Dim tbl As SourceFragment = GetTables(type2join)(0)
             If switchTable Then
                 tbl = GetTables(selectType)(0)
             End If

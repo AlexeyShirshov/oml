@@ -172,7 +172,7 @@ Public Class Table1Implementation
 
     Private _idx As OrmObjectIndex
     'Private _schema As OrmSchemaBase
-    Private _tables() As OrmTable = {New OrmTable("dbo.Table1")}
+    Private _tables() As SourceFragment = {New SourceFragment("dbo.Table1")}
     Private _rels() As M2MRelation
 
     Public Enum Tables
@@ -204,7 +204,7 @@ Public Class Table1Implementation
         Return _idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tables
     End Function
 
@@ -227,7 +227,7 @@ Public Class Table1Implementation
         End If
 
         If _rels Is Nothing Then
-            Dim t1to3 As OrmTable = Nothing 'TablesImplementation._tables(0)
+            Dim t1to3 As SourceFragment = Nothing 'TablesImplementation._tables(0)
             _rels = New M2MRelation() { _
                 New M2MRelation(t, t1to3, "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
                 New M2MRelation(_objectType, Tables1to1.TablesImplementation._tables(0), "table1", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), False), _
@@ -371,7 +371,7 @@ End Class
 Public Class Table12Implementation
     Inherits Table1Implementation
 
-    Private _tables() As OrmTable = {New table1func("table1func")}
+    Private _tables() As SourceFragment = {New table1func("table1func")}
 
     'Implements IOrmTableFunction
 
@@ -382,7 +382,7 @@ Public Class Table12Implementation
     '    Return Nothing
     'End Function
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tables
     End Function
 
@@ -394,9 +394,9 @@ End Class
 Public Class Table13Implementation
     Inherits Table1Implementation
 
-    Private _tables() As OrmTable = {New table2func("table2func")}
+    Private _tables() As SourceFragment = {New table2func("table2func")}
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tables
     End Function
 
@@ -411,26 +411,26 @@ Public Class Table13Implementation
 End Class
 
 Public Class table1func
-    Inherits OrmTable
+    Inherits SourceFragment
 
     Public Sub New(ByVal tableName As String)
         MyBase.New(tableName)
     End Sub
 
-    Public Overrides Function OnTableAdd(ByVal pmgr As ICreateParam) As OrmTable
-        Return New OrmTable("dbo.table1func()")
+    Public Overrides Function OnTableAdd(ByVal pmgr As ICreateParam) As SourceFragment
+        Return New SourceFragment("dbo.table1func()")
     End Function
 
 End Class
 
 Public Class table2func
-    Inherits OrmTable
+    Inherits SourceFragment
 
     Public Sub New(ByVal tableName As String)
         MyBase.New(tableName)
     End Sub
 
-    Public Overrides Function OnTableAdd(ByVal pmgr As ICreateParam) As OrmTable
-        Return New OrmTable("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
+    Public Overrides Function OnTableAdd(ByVal pmgr As ICreateParam) As SourceFragment
+        Return New SourceFragment("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
     End Function
 End Class

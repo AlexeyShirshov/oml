@@ -316,7 +316,7 @@ Public Class MyUserDef
         Main
     End Enum
 
-    Private _tbls() As OrmTable = {New OrmTable("dbo.users")}
+    Private _tbls() As SourceFragment = {New SourceFragment("dbo.users")}
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Dim idx As New OrmObjectIndex
@@ -334,7 +334,7 @@ Public Class MyUserDef
         Return idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tbls
     End Function
 
@@ -406,7 +406,7 @@ Public Class MyRoleDef
         Main
     End Enum
 
-    Private _tbls() As OrmTable = {New OrmTable("dbo.roles")}
+    Private _tbls() As SourceFragment = {New SourceFragment("dbo.roles")}
 
     Public Overrides Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column)
         Dim idx As New OrmObjectIndex
@@ -415,7 +415,7 @@ Public Class MyRoleDef
         Return idx
     End Function
 
-    Public Overrides Function GetTables() As OrmTable()
+    Public Overrides Function GetTables() As SourceFragment()
         Return _tbls
     End Function
 

@@ -33,24 +33,33 @@ Namespace Query.Database
                 '    End If
                 'End If
 
-                If query.Obj IsNot Nothing Then
-                    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
-                Else
-                    _proc = New Processor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
-                End If
+                'If query.Obj IsNot Nothing Then
+                '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                'Else
+                _proc = New Processor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                'End If
 
                 _m = query.Mark
                 _sm = query.SMark
             Else
+                Dim p As Processor(Of ReturnType) = CType(_proc, Processor(Of ReturnType))
                 If _m <> query.Mark Then
-                    CType(_proc, Processor(Of ReturnType)).Reset()
+                    Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
+                    Dim f As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, GetType(ReturnType))
+                    p.Reset(j, f)
                 ElseIf _sm <> query.SMark Then
-                    CType(_proc, Processor(Of ReturnType)).ResetStmt()
+                    p.ResetStmt()
                 End If
-                CType(_proc, Processor(Of ReturnType)).Created = False
+                p.Created = False
             End If
 
             Return CType(_proc, Processor(Of ReturnType))
+        End Function
+
+        Public Function Exec(Of SelectType As {New, Orm.OrmBase}, ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.Exec
+            Dim p As Processor(Of SelectType) = GetProcessor(Of SelectType)(mgr, query)
+
+            Return p.GetSimpleValues(Of ReturnType)()
         End Function
 
         Public Function Exec(Of ReturnType As {New, Orm.OrmBase})(ByVal mgr As OrmManagerBase, _
@@ -122,32 +131,46 @@ Namespace Query.Database
         Protected Shared Sub FormSelectList(ByVal query As QueryCmdBase, ByVal t As Type, _
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema)
 
+            Dim b As Boolean
             If os Is Nothing Then
-                For Each p As OrmProperty In query.SelectList
-                    sb.Append(s.GetTableName(p.Table)).Append(".").Append(p.Column).Append(", ")
-                Next
-                sb.Length -= 2
+                If query.SelectList IsNot Nothing Then
+                    For Each p As OrmProperty In query.SelectList
+                        sb.Append(s.GetTableName(p.Table)).Append(".").Append(p.Column).Append(", ")
+                    Next
+                    sb.Length -= 2
+                    b = True
+                End If
             Else
                 If query.WithLoad Then
-                    If query.SelectList IsNot Nothing Then
+                    If query.SelectList Is Nothing AndAlso query.Aggregates Is Nothing Then
+                        sb.Append(s.GetSelectColumnList(t))
+                        b = True
+                    ElseIf query.SelectList IsNot Nothing Then
                         Dim columns As String = s.GetSelectColumnList(t, GetFields(s, t, query.SelectList))
                         sb.Append(columns)
+                        b = True
                     End If
-                Else
+                ElseIf query.Aggregates Is Nothing Then
                     s.GetPKList(os, sb)
+                    b = True
                 End If
             End If
 
             If query.Aggregates IsNot Nothing Then
                 For Each a As AggregateBase In query.Aggregates
-                    sb.Append(",").Append(a.MakeStmt)
+                    If b Then
+                        sb.Append(",")
+                    Else
+                        b = True
+                    End If
+                    sb.Append(a.MakeStmt(t, s))
                 Next
             End If
         End Sub
 
-        Protected Shared Sub FormTypeTables(ByVal filterInfo As Object, ByVal params As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema, ByVal tables() As OrmTable)
-            Dim tbl As OrmTable = tables(0)
-            Dim tbl_real As OrmTable = tbl
+        Protected Shared Sub FormTypeTables(ByVal filterInfo As Object, ByVal params As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema, ByVal tables() As SourceFragment)
+            Dim tbl As SourceFragment = tables(0)
+            Dim tbl_real As SourceFragment = tbl
             Dim [alias] As String = Nothing
             If Not almgr.Aliases.TryGetValue(tbl, [alias]) Then
                 [alias] = almgr.AddTable(tbl_real, params)
@@ -187,25 +210,40 @@ Namespace Query.Database
             Next
         End Sub
 
-        Protected Shared Sub FormGroupBy(ByVal query As QueryCmdBase, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator)
+        Protected Shared Sub FormGroupBy(ByVal query As QueryCmdBase, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal selectType As Type)
             If query.Group IsNot Nothing Then
                 sb.Append(" group by ")
                 For Each g As OrmProperty In query.Group
-                    Dim schema As IOrmObjectSchema = s.GetObjectSchema(g.Type)
-                    Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
-                    Dim map As MapField2Column = Nothing
-                    If cm.TryGetValue(g.Field, map) Then
-                        sb.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
+                    If g.Table IsNot Nothing Then
+                        sb.Append(almgr.Aliases(g.Table)).Append(".").Append(g.Column)
                     Else
-                        Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", g.Field, g.Type))
+                        Dim t As Type = g.Type
+                        If t Is Nothing Then
+                            t = selectType
+                        End If
+                        Dim schema As IOrmObjectSchema = s.GetObjectSchema(t)
+                        Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
+                        Dim map As MapField2Column = Nothing
+                        If cm.TryGetValue(g.Field, map) Then
+                            sb.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
+                        Else
+                            Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", g.Field, g.Type))
+                        End If
                     End If
+                    sb.Append(",")
                 Next
+                sb.Length -= 1
             End If
         End Sub
 
-        Protected Shared Sub FormOrderBy(ByVal query As QueryCmdBase, ByVal t As Type, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator)
+        Protected Shared Sub FormOrderBy(ByVal query As QueryCmdBase, ByVal t As Type, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, ByVal params As ICreateParam)
             If query.Sort IsNot Nothing AndAlso Not query.Sort.IsExternal Then
-                s.AppendOrder(t, query.Sort, almgr, sb)
+                Dim adv As Sorting.SortAdv = TryCast(query.Sort, Sorting.SortAdv)
+                If adv IsNot Nothing Then
+                    adv.MakeStmt(s, almgr, sb, t, filterInfo, params)
+                Else
+                    s.AppendOrder(t, query.Sort, almgr, sb)
+                End If
             End If
         End Sub
 
@@ -236,11 +274,11 @@ Namespace Query.Database
 
             sb.Append(" from ")
 
-            Dim tables() As OrmTable = Nothing
+            Dim tables() As SourceFragment = Nothing
             If os IsNot Nothing Then
                 tables = os.GetTables()
             Else
-                tables = New OrmTable() {query.Table}
+                tables = New SourceFragment() {query.Table}
             End If
 
             FormTypeTables(filterInfo, params, almgr, sb, s, os, tables)
@@ -249,9 +287,9 @@ Namespace Query.Database
 
             s.AppendWhere(os, f, almgr, sb, filterInfo, params)
 
-            FormGroupBy(query, almgr, sb, s)
+            FormGroupBy(query, almgr, sb, s, t)
 
-            FormOrderBy(query, t, almgr, sb, s)
+            FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
 
             If Not String.IsNullOrEmpty(query.Hint) Then
                 sb.Append(" ").Append(query.Hint)
@@ -261,7 +299,6 @@ Namespace Query.Database
         End Function
 
 #End Region
-
     End Class
 
 End Namespace

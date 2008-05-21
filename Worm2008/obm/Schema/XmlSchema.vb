@@ -79,11 +79,11 @@ Namespace Xml
             Return selectcmd.ToString
         End Function
 
-        Public Overrides Function GetTableName(ByVal t As Orm.Meta.OrmTable) As String
+        Public Overrides Function GetTableName(ByVal t As Orm.Meta.SourceFragment) As String
             If String.IsNullOrEmpty(t.Schema) Then
-                Return t.Table
+                Return t.Name
             Else
-                Return t.Schema & ":" & t.Table
+                Return t.Schema & ":" & t.Name
             End If
         End Function
 

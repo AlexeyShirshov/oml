@@ -343,7 +343,7 @@ Namespace Orm
                 Throw New NotImplementedException
             End Function
 
-            Public Function GetTable(ByVal t As Type, ByVal key As String) As OrmTable
+            Public Function GetTable(ByVal t As Type, ByVal key As String) As SourceFragment
                 Dim s As QueryGenerator = _o.GetMgr.ObjectSchema
                 Dim m2m As M2MRelation = s.GetM2MRelation(_o.GetType, t, key)
                 If m2m Is Nothing Then
@@ -353,7 +353,7 @@ Namespace Orm
                 End If
             End Function
 
-            Public Function GetTable(ByVal t As Type) As OrmTable
+            Public Function GetTable(ByVal t As Type) As SourceFragment
                 Return GetTable(t, Nothing)
             End Function
         End Class

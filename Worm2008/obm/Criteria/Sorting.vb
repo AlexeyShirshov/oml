@@ -34,6 +34,10 @@ Namespace Orm
         '    Return SortOrder.CreateCustom(sortExpression, Nothing, values)
         'End Function
 
+        Public Shared Function Custom(ByVal sortExpression As String) As SortOrder
+            Return SortOrder.CreateCustom(sortExpression, Nothing, Nothing)
+        End Function
+
         Public Shared Function Custom(ByVal sortExpression As String, ByVal values() As Pair(Of Object, String)) As SortOrder
             Return SortOrder.CreateCustom(sortExpression, Nothing, values)
         End Function
@@ -63,7 +67,7 @@ Namespace Orm
 
         Private _field As String
         Private _type As Type
-        Private _table As OrmTable
+        Private _table As SourceFragment
         Private _column As String
 
         Public Sub New(ByVal t As Type, ByVal field As String)
@@ -71,12 +75,12 @@ Namespace Orm
             _type = t
         End Sub
 
-        Public Sub New(ByVal t As OrmTable, ByVal column As String)
+        Public Sub New(ByVal t As SourceFragment, ByVal column As String)
             _column = column
             _table = t
         End Sub
 
-        Public Sub New(ByVal t As OrmTable, ByVal column As String, ByVal field As String)
+        Public Sub New(ByVal t As SourceFragment, ByVal column As String, ByVal field As String)
             _column = column
             _table = t
             _field = field
@@ -88,10 +92,13 @@ Namespace Orm
             End Get
         End Property
 
-        Public ReadOnly Property Field() As String
+        Public Property Field() As String
             Get
                 Return _field
             End Get
+            Protected Friend Set(ByVal value As String)
+                _field = value
+            End Set
         End Property
 
         Public ReadOnly Property Type() As Type
@@ -100,7 +107,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public ReadOnly Property Table() As OrmTable
+        Public ReadOnly Property Table() As SourceFragment
             Get
                 Return _table
             End Get
@@ -122,7 +129,11 @@ Namespace Sorting
         Private _custom As String
         Private _values() As Pair(Of Object, String)
         Private _del As ExternalSortDelegate
-        Private _table As OrmTable
+        Private _table As SourceFragment
+
+        Protected Sub New()
+
+        End Sub
 
         Protected Friend Shared Function CreateCustom(ByVal sortExpression As String, _
            ByVal prev As SortOrder, ByVal values() As Pair(Of Object, String)) As SortOrder
@@ -163,25 +174,25 @@ Namespace Sorting
 
 #Region " Table ctor "
 
-        Protected Friend Sub New(ByVal t As OrmTable, ByVal prev As SortOrder)
+        Protected Friend Sub New(ByVal t As SourceFragment, ByVal prev As SortOrder)
             _prev = prev
             _table = t
         End Sub
 
-        Protected Friend Sub New(ByVal t As OrmTable, ByVal f As String, Optional ByVal prev As SortOrder = Nothing)
+        Protected Friend Sub New(ByVal t As SourceFragment, ByVal f As String, Optional ByVal prev As SortOrder = Nothing)
             _f = f
             _prev = prev
             _table = t
         End Sub
 
-        Protected Friend Sub New(ByVal t As OrmTable, ByVal f As String, ByVal ext As Boolean, Optional ByVal prev As SortOrder = Nothing)
+        Protected Friend Sub New(ByVal t As SourceFragment, ByVal f As String, ByVal ext As Boolean, Optional ByVal prev As SortOrder = Nothing)
             _f = f
             _ext = ext
             _prev = prev
             _table = t
         End Sub
 
-        Protected Friend Sub New(ByVal t As OrmTable, ByVal f As String, ByVal ext As Boolean, ByVal del As ExternalSortDelegate)
+        Protected Friend Sub New(ByVal t As SourceFragment, ByVal f As String, ByVal ext As Boolean, ByVal del As ExternalSortDelegate)
             _f = f
             _ext = ext
             _table = t
@@ -227,7 +238,7 @@ Namespace Sorting
             End If
         End Function
 
-        Public Function NextField(ByVal t As OrmTable, ByVal fieldName As String) As SortOrder
+        Public Function NextField(ByVal t As SourceFragment, ByVal fieldName As String) As SortOrder
             Return New SortOrder(t, fieldName, Me)
         End Function
 
@@ -327,13 +338,13 @@ Namespace Sorting
 
         Private _prev As Sort
         Private _t As Type
-        Private _table As OrmTable
+        Private _table As SourceFragment
 
         Public Event OnChange()
 
 #Region " Table ctors "
 
-        Protected Friend Sub New(ByVal prev As Sort, ByVal t As OrmTable, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
+        Protected Friend Sub New(ByVal prev As Sort, ByVal t As SourceFragment, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
             _f = fieldName
             _order = order
             _ext = external
@@ -342,14 +353,14 @@ Namespace Sorting
             _del = del
         End Sub
 
-        Public Sub New(ByVal t As OrmTable, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
+        Public Sub New(ByVal t As SourceFragment, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean)
             _f = fieldName
             _order = order
             _ext = external
             _table = t
         End Sub
 
-        Public Sub New(ByVal t As OrmTable, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
+        Public Sub New(ByVal t As SourceFragment, ByVal fieldName As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
             _f = fieldName
             _order = order
             _ext = external
@@ -417,13 +428,18 @@ Namespace Sorting
 
 #End Region
 
-        'Protected Friend Sub New()
-        '    _any = True
-        'End Sub
+        Protected Sub New()
+        End Sub
 
         Protected Sub RaiseOnChange()
             RaiseEvent OnChange()
         End Sub
+
+        Public ReadOnly Property Values() As Pair(Of Object, String)()
+            Get
+                Return _values
+            End Get
+        End Property
 
         Public Property CustomSortExpression() As String
             Get
@@ -435,11 +451,11 @@ Namespace Sorting
             End Set
         End Property
 
-        Public Function GetCustomExpressionValues(ByVal schema As QueryGenerator, ByVal aliases As IDictionary(Of OrmTable, String)) As String()
+        Public Function GetCustomExpressionValues(ByVal schema As QueryGenerator, ByVal aliases As IDictionary(Of SourceFragment, String)) As String()
             Return schema.ExtractValues(schema, aliases, _values).ToArray
         End Function
 
-        Public ReadOnly Property Table() As OrmTable
+        Public ReadOnly Property Table() As SourceFragment
             Get
                 Return _table
             End Get

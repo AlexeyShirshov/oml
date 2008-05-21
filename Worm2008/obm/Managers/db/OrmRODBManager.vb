@@ -921,7 +921,7 @@ Namespace Database
                     'Dim table As String = schema2.GetTables(0)
                     DbSchema.AppendNativeTypeJoins(selectedType, almgr, schema2.GetTables, sb, params, DbSchema.GetObjectSchema(ct).GetTables(0), id_clm, appendMainTable, GetFilterInfo)
                     If withLoad Then
-                        For Each tbl As OrmTable In schema2.GetTables
+                        For Each tbl As SourceFragment In schema2.GetTables
                             If almgr.Aliases.ContainsKey(tbl) Then
                                 'Dim [alias] As String = almgr.Aliases(tbl)
                                 'sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
@@ -1541,6 +1541,21 @@ Namespace Database
             End Try
 
         End Sub
+
+        Public Function GetSimpleValues(Of T)(ByVal cmd As System.Data.Common.DbCommand) As IList(Of T)
+            Dim l As New List(Of T)
+            Dim b As ConnAction = TestConn(cmd)
+            Try
+                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                    Do While dr.Read
+                        l.Add(CType(Convert.ChangeType(dr.GetValue(0), GetType(T)), T))
+                    Loop
+                    Return l
+                End Using
+            Finally
+                CloseConn(b)
+            End Try
+        End Function
 
         Protected Friend Function LoadMultipleObjects(Of T As {OrmBase, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
@@ -2186,7 +2201,7 @@ l1:
             Return l
         End Function
 
-        Protected Function GetFilters(ByVal ids As Generic.List(Of Integer), ByVal table As OrmTable, ByVal column As String, _
+        Protected Function GetFilters(ByVal ids As Generic.List(Of Integer), ByVal table As SourceFragment, ByVal column As String, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
 
             Dim mr As MergeResult = MergeIds(ids, Not idsSorted)
