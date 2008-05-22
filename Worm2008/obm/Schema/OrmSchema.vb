@@ -51,8 +51,8 @@ End Class
 ''' </summary>
 ''' <remarks></remarks>
 Public Interface ISchemaWithJoins
-    'Function GetSharedTable(ByVal tableName As String) As OrmTable
-    'Function GetTables(ByVal type As Type) As OrmTable()
+    'Function GetSharedTable(ByVal tableName As String) As SourceFragment
+    'Function GetTables(ByVal type As Type) As SourceFragment()
     ''' <summary>
     ''' Метод используется для получения объекта типа <see cref="OrmJoin" /> для определеной таблицы определеного типа
     ''' </summary>
@@ -212,8 +212,8 @@ Public MustInherit Class QueryGenerator
     'Public Function GetAllJoins(ByVal t As Type) As ICollection(Of OrmJoin)
     '    Dim schema As IOrmObjectSchemaBase = GetObjectSchema(t)
 
-    '    Dim tbls() As OrmTable = schema.GetTables
-    '    Dim tbl As OrmTable = tbls(0)
+    '    Dim tbls() As SourceFragment = schema.GetTables
+    '    Dim tbl As SourceFragment = tbls(0)
     '    Dim js As New List(Of OrmJoin)
     '    For i As Integer = 1 To tbls.Length - 1
     '        Dim j As OrmJoin = schema.GetJoins(tbl, tbls(i))
@@ -496,7 +496,7 @@ Public MustInherit Class QueryGenerator
     End Function
 
     '<CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1062")> _
-    'Protected Function GetFieldTable(ByVal type As Type, ByVal field As String) As OrmTable
+    'Protected Function GetFieldTable(ByVal type As Type, ByVal field As String) As SourceFragment
     '    If type Is Nothing Then
     '        Throw New ArgumentNullException("type")
     '    End If

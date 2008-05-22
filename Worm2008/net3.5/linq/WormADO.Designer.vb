@@ -11,7 +11,7 @@
 Option Strict Off
 Option Explicit On
 
-<Assembly: Global.System.Data.Objects.DataClasses.EdmSchemaAttribute("6bc31906-304e-41cd-8f22-1aa6f206e629"),  _
+<Assembly: Global.System.Data.Objects.DataClasses.EdmSchemaAttribute("4d905eb3-1b3e-45a0-b984-27c179d66e0b"),  _
  Assembly: Global.System.Data.Objects.DataClasses.EdmRelationshipAttribute("Model", "FK_Table_Table2", "Table2", Global.System.Data.Metadata.Edm.RelationshipMultiplicity.One, GetType(Model.Table2), "Table", Global.System.Data.Metadata.Edm.RelationshipMultiplicity.ZeroOrOne, GetType(Model.Table)),  _
  Assembly: Global.System.Data.Objects.DataClasses.EdmRelationshipAttribute("Model", "FK_Table10_Table1", "Table1", Global.System.Data.Metadata.Edm.RelationshipMultiplicity.ZeroOrOne, GetType(Model.Table1), "Table10", Global.System.Data.Metadata.Edm.RelationshipMultiplicity.Many, GetType(Model.Table10)),  _
  Assembly: Global.System.Data.Objects.DataClasses.EdmRelationshipAttribute("Model", "FK_Table2_Table2", "Table1", Global.System.Data.Metadata.Edm.RelationshipMultiplicity.ZeroOrOne, GetType(Model.Table1), "Table2", Global.System.Data.Metadata.Edm.RelationshipMultiplicity.Many, GetType(Model.Table2)),  _
@@ -19,7 +19,7 @@ Option Explicit On
  Assembly: Global.System.Data.Objects.DataClasses.EdmRelationshipAttribute("Model", "FK_Tables1to3Relation_Table3", "Table3", Global.System.Data.Metadata.Edm.RelationshipMultiplicity.One, GetType(Model.Table3), "Tables1to3Relation", Global.System.Data.Metadata.Edm.RelationshipMultiplicity.Many, GetType(Model.Tables1to3Relation))> 
 
 'Original file name:
-'Generation date: 20.05.2008 23:05:58
+'Generation date: 22.05.2008 14:32:42
 Namespace Model
     '''<summary>
     '''There are no comments for Entities in the schema.

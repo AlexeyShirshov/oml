@@ -375,9 +375,9 @@ Public Class Table12Implementation
 
     'Implements IOrmTableFunction
 
-    'Public Function GetFunction(ByVal table As OrmTable, ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable Implements Worm.Orm.IOrmTableFunction.GetFunction
+    'Public Function GetFunction(ByVal table As SourceFragment, ByVal pmgr As Worm.Orm.ParamMgr) As SourceFragment Implements Worm.Orm.IOrmTableFunction.GetFunction
     '    If table.Equals(GetTables()(Tables.Main)) Then
-    '        Return New OrmTable("dbo.table1func()")
+    '        Return New SourceFragment("dbo.table1func()")
     '    End If
     '    Return Nothing
     'End Function
@@ -402,9 +402,9 @@ Public Class Table13Implementation
 
     'Implements IOrmTableFunction
 
-    'Public Function GetFunction(ByVal table As OrmTable, ByVal pmgr As Worm.Orm.ParamMgr) As OrmTable Implements Worm.Orm.IOrmTableFunction.GetFunction
+    'Public Function GetFunction(ByVal table As SourceFragment, ByVal pmgr As Worm.Orm.ParamMgr) As SourceFragment Implements Worm.Orm.IOrmTableFunction.GetFunction
     '    If table.Equals(GetTables()(Tables.Main)) Then
-    '        Return New OrmTable("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
+    '        Return New SourceFragment("dbo.table2func(" & pmgr.CreateParam("sec") & ")")
     '    End If
     '    Return Nothing
     'End Function

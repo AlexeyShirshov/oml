@@ -501,7 +501,7 @@ Namespace Criteria.Core
         'Implements IFilter
 
         'Private _t As Type
-        'Private _tbl As OrmTable
+        'Private _tbl As SourceFragment
         'Private _field As String
         Private _format As String
         Private _oper As Worm.Criteria.FilterOperation
@@ -532,7 +532,7 @@ Namespace Criteria.Core
         '    MyClass.New("{0}.{1}", value, oper, values)
         'End Sub
 
-        'Public Sub New(ByVal table As OrmTable, ByVal field As String, ByVal format As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
+        'Public Sub New(ByVal table As SourceFragment, ByVal field As String, ByVal format As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
         '    MyBase.New(value)
         '    _tbl = table
         '    _field = field
@@ -540,7 +540,7 @@ Namespace Criteria.Core
         '    _oper = oper
         'End Sub
 
-        'Public Sub New(ByVal table As OrmTable, ByVal field As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
+        'Public Sub New(ByVal table As SourceFragment, ByVal field As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
         '    MyClass.New(table, field, "{0}.{1}", value, oper)
         'End Sub
 
@@ -604,7 +604,7 @@ Namespace Criteria.Core
         End Sub
 
         'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeSQLStmt
-        '    Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases
+        '    Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
         '    If schema Is Nothing Then
         '        Throw New ArgumentNullException("schema")
