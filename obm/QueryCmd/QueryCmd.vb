@@ -167,7 +167,7 @@ Namespace Query
                     Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
                 End If
 
-                'Dim table As OrmTable = selected_r.Table
+                'Dim table As SourceFragment = selected_r.Table
                 Dim table As SourceFragment = filtered_r.Table
 
                 If table Is Nothing Then

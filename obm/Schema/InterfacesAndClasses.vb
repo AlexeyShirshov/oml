@@ -82,7 +82,7 @@ Namespace Orm.Meta
     End Interface
 
     'Public Interface IOrmTableFunction
-    '    Function GetFunction(ByVal table As OrmTable, ByVal pmgr As ParamMgr) As OrmTable
+    '    Function GetFunction(ByVal table As SourceFragment, ByVal pmgr As ParamMgr) As SourceFragment
     'End Interface
 
     Public Interface IOrmFullTextSupport
@@ -304,7 +304,7 @@ Namespace Orm.Meta
     Public NotInheritable Class SimpleObjectSchema
         Implements IOrmObjectSchema
 
-        'Private _tables(-1) As OrmTable
+        'Private _tables(-1) As SourceFragment
         Private _table As SourceFragment
         Private _cols As New OrmObjectIndex
 
@@ -314,9 +314,9 @@ Namespace Orm.Meta
             End If
 
             'If tables IsNot Nothing Then
-            '    _tables = New OrmTable(tables.Length - 1) {}
+            '    _tables = New SourceFragment(tables.Length - 1) {}
             '    For i As Integer = 0 To tables.Length - 1
-            '        _tables(i) = New OrmTable(tables(i))
+            '        _tables(i) = New SourceFragment(tables(i))
             '    Next
             'End If
 
@@ -339,7 +339,7 @@ Namespace Orm.Meta
                     End If
                 End If
 
-                'Dim tbl As OrmTable = Nothing
+                'Dim tbl As SourceFragment = Nothing
                 'If Not String.IsNullOrEmpty(c.TableName) Then
                 '    tbl = FindTbl(c.TableName)
                 'Else
@@ -356,15 +356,15 @@ Namespace Orm.Meta
             '_cols.Add(New MapField2Column("ID", pk, _tables(0)))
         End Sub
 
-        'Private Function FindTbl(ByVal table As String) As OrmTable
-        '    For Each t As OrmTable In _tables
+        'Private Function FindTbl(ByVal table As String) As SourceFragment
+        '    For Each t As SourceFragment In _tables
         '        If t.TableName = table Then
         '            Return t
         '        End If
         '    Next
         '    Dim l As Integer = _tables.Length
         '    ReDim Preserve _tables(l)
-        '    _tables(l) = New OrmTable(table)
+        '    _tables(l) = New SourceFragment(table)
         '    Return _tables(l)
         'End Function
 

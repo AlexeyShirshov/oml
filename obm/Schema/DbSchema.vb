@@ -137,7 +137,7 @@ Namespace Database
             Dim t As SourceFragment = table
             Dim tt As SourceFragment = table.OnTableAdd(pmgr)
             If tt IsNot Nothing Then
-                '    Dim f As OrmTable = tf.GetFunction(table, pmgr)
+                '    Dim f As SourceFragment = tf.GetFunction(table, pmgr)
                 '    If f IsNot Nothing Then
                 table = tt
                 '    End If
@@ -1187,7 +1187,7 @@ l1:
         '    'cmd = CStr(map(select_artist))
         '    'If cmd Is Nothing Then
         '    Dim selectcmd As New StringBuilder
-        '    Dim tables() As OrmTable = GetTables(original_type)
+        '    Dim tables() As SourceFragment = GetTables(original_type)
         '    'Dim maintable As String = tables(0)
         '    selectcmd.Append("select ").Append(columns)
         '    If Not String.IsNullOrEmpty(additionalColumns) Then
@@ -1237,8 +1237,8 @@ l1:
         '    'If cmd Is Nothing Then
         '    Dim schema As IOrmObjectSchema = GetObjectSchema(original_type)
         '    Dim selectcmd As New StringBuilder
-        '    Dim tables() As OrmTable = GetTables(schema)
-        '    'Dim maintable As OrmTable = tables(0)
+        '    Dim tables() As SourceFragment = GetTables(schema)
+        '    'Dim maintable As SourceFragment = tables(0)
         '    selectcmd.Append("select ")
         '    GetPKList(schema, selectcmd)
 
@@ -1293,7 +1293,7 @@ l1:
 
         '    Dim columns As String = GetSelectColumnList(original_type, arr)
         '    Dim selectcmd As New StringBuilder
-        '    Dim tables() As OrmTable = GetTables(original_type)
+        '    Dim tables() As SourceFragment = GetTables(original_type)
         '    selectcmd.Append("select ").Append(TopStatement(top)).Append(columns)
         '    selectcmd.Append(" from ")
         '    Dim pmgr As ParamMgr = params 'New ParamMgr()
@@ -1311,8 +1311,8 @@ l1:
         '    End If
 
         '    Dim selectcmd As New StringBuilder
-        '    Dim tables() As OrmTable = GetTables(original_type)
-        '    'Dim maintable As OrmTable = tables(0)
+        '    Dim tables() As SourceFragment = GetTables(original_type)
+        '    'Dim maintable As SourceFragment = tables(0)
         '    selectcmd.Append("select ").Append(TopStatement(top))
         '    GetPKList(original_type, selectcmd)
 
@@ -1335,7 +1335,7 @@ l1:
         ''' <remarks></remarks>
         Protected Friend Sub AppendNativeTypeJoins(ByVal selectedType As Type, ByVal almgr As AliasMgr, _
             ByVal tables As SourceFragment(), ByVal selectcmd As StringBuilder, ByVal pname As ParamMgr, _
-            ByVal table As SourceFragment, ByVal id As String, ByVal appendMainTable As Boolean, ByVal filterInfo As Object) ', Optional ByVal dic As IDictionary(Of OrmTable, OrmTable) = Nothing)
+            ByVal table As SourceFragment, ByVal id As String, ByVal appendMainTable As Boolean, ByVal filterInfo As Object) ', Optional ByVal dic As IDictionary(Of SourceFragment, SourceFragment) = Nothing)
 
             Dim pk_table As SourceFragment = tables(0)
             Dim sch As IOrmObjectSchema = GetObjectSchema(selectedType)
@@ -1422,11 +1422,11 @@ l1:
             selectcmd.Append(GetTableName(table)).Append(" ").Append(almgr.Aliases(table))
 
             'Dim f As IOrmFilter = schema.GetFilter(filter_info)
-            'Dim dic As New Generic.Dictionary(Of OrmTable, OrmTable)
+            'Dim dic As New Generic.Dictionary(Of SourceFragment, SourceFragment)
             AppendNativeTypeJoins(selectedType, almgr, tables, selectcmd, pname, table, id, appendMainTable, filterInfo)
 
             For Each tbl As SourceFragment In tables
-                'Dim newt As OrmTable = Nothing
+                'Dim newt As SourceFragment = Nothing
                 'If dic.TryGetValue(tbl, newt) Then
                 '    If almgr.Aliases.ContainsKey(newt) Then
                 '        Dim [alias] As String = almgr.Aliases(newt)
@@ -1688,7 +1688,7 @@ l1:
 
             If appJoins Then
                 AppendFromM2M(selectedType, almgr, schema.GetTables, sb, pmgr, table, id_clm, appendMainTable, filterInfo)
-                'For Each tbl As OrmTable In schema.GetTables
+                'For Each tbl As SourceFragment In schema.GetTables
                 '    If almgr.Aliases.ContainsKey(tbl) Then
                 '        [alias] = almgr.Aliases(tbl)
                 '        sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
@@ -1801,7 +1801,7 @@ l1:
             Dim pname As String = params.CreateParam(value)
             'cols = New Generic.List(Of ColumnAttribute)
             Dim sb As New StringBuilder, columns As New StringBuilder
-            'Dim tbl As OrmTable = GetTables(t)(0)
+            'Dim tbl As SourceFragment = GetTables(t)(0)
             sb.Append("select ")
             Dim appendMain As Boolean = appendBySort
             Dim selTable As SourceFragment = GetTables(selectType)(0)
@@ -1951,16 +1951,16 @@ l1:
         '    End If
 
         '    Dim almgr As AliasMgr = AliasMgr.Create
-        '    Dim ft As New OrmTable("freetexttable")
+        '    Dim ft As New SourceFragment("freetexttable")
         '    Dim [alias] As String = almgr.AddTable(ft)
         '    Dim pname As String = params.CreateParam(value)
         '    'cols = New Generic.List(Of ColumnAttribute)
         '    Dim sb As New StringBuilder, columns As New StringBuilder
-        '    Dim tbl As OrmTable = GetTables(t)(0)
+        '    Dim tbl As SourceFragment = GetTables(t)(0)
         '    Dim obj_schema As IOrmObjectSchema = GetObjectSchema(t)
         '    sb.Append("select [key] ").Append(obj_schema.GetFieldColumnMap("ID")._columnName)
         '    Dim appendMain As Boolean = False
-        '    Dim main_table As OrmTable = GetTables(t)(0)
+        '    Dim main_table As SourceFragment = GetTables(t)(0)
         '    Dim ins_idx As Integer = sb.Length
         '    If fields IsNot Nothing AndAlso fields.Length > 0 Then
         '        appendMain = True

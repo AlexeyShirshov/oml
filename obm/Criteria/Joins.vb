@@ -333,7 +333,7 @@ Namespace Database
             End Function
 
             'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements Core.IFilter.MakeSQLStmt
-            '    Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases
+            '    Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
             '    Dim map As MapField2Column = Nothing
             '    If _e1 IsNot Nothing Then

@@ -257,7 +257,7 @@ Namespace Database
             End Function
 
             'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt
-            '    Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases
+            '    Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
             '    Dim map As New MapField2Column(String.Empty, Template.Column, Template.Table)
             '    Dim [alias] As String = String.Empty
 
@@ -311,7 +311,7 @@ Namespace Database
             End Sub
 
             'Public Overloads Function MakeSQLStmt(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String Implements IFilter.MakeSQLStmt
-            '    Dim tableAliases As System.Collections.Generic.IDictionary(Of OrmTable, String) = almgr.Aliases
+            '    Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
             '    If schema Is Nothing Then
             '        Throw New ArgumentNullException("schema")
