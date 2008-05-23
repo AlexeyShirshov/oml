@@ -55,13 +55,14 @@ Imports Worm.Linq
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
-        Dim q = From k In e Where k.Code = 2
+        Dim d As Integer = 10
+        Dim q = From k In e Where k.Code = 2 AndAlso k.ID <> d And k.Name > "df"
         Dim l As IList(Of TestProject1.Table1) = q.ToList
         Assert.AreEqual(1, l.Count)
         Assert.AreEqual(1, l(0).ID)
 
         Dim p As New WormLinqProvider(ctx)
-        Dim exp As Expressions.Expression = Nothing
+        Dim exp As Expressions.Expression(Of Func(Of Integer, Boolean)) = Function(num) num = 2
         q = p.CreateQuery(Of TestProject1.Table1)(exp)
         l = q.ToList
 
