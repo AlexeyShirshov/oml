@@ -177,13 +177,13 @@ namespace Worm.Designer
             dialog.Title = "Load worm file";
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                //try
+                try
                 {
-                    using (FileStream stream = new FileStream(dialog.FileName, FileMode.Open))
+                    using (FileStream stream = new FileStream(dialog.FileName, FileMode.Open, FileAccess.Read))
                     {
                         using (XmlReader rdr = XmlReader.Create(stream))
                         {
-                            OrmObjectsDef ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new XmlUrlResolver());
+                            OrmObjectsDef ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new SXmlUrlResolver(System.IO.Path.GetDirectoryName(dialog.FileName)));
                             if(DesignerDocView.ActiveWindow != null)
                             {
 								ModelingDocData data = DesignerDocView.ActiveWindow.DocData;
@@ -196,14 +196,28 @@ namespace Worm.Designer
                         }
                     }
                 }
-                //catch (Exception ex)
-                //{
-                //    MessageBox.Show("Cannot read file", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-               // }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Cannot read file: " + ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-		
+
+        class SXmlUrlResolver : XmlUrlResolver
+        {
+            private string _dir;
+
+            public SXmlUrlResolver(string dir)
+            {
+                _dir = dir;
+            }
+
+            public override Uri ResolveUri(Uri baseUri, string relativeUri)
+            {
+                return new Uri(System.IO.Path.Combine(_dir, relativeUri));
+            }
+        }
 		// Associate file extension with progID, description, icon and application
 		 public static void Associate(string extension, string progID, string description, string icon, string application)
         {
