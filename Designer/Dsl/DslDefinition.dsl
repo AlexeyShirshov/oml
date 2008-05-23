@@ -1082,7 +1082,7 @@
     <ExternalType Name="ExternalType1" Namespace="" />
   </Types>
   <Shapes>
-    <CompartmentShape Id="1ac7c68e-23be-47ec-a6fe-2ece8f63e49c" Description="Entity" Name="EntityShape" DisplayName="Entity" Namespace="Worm.Designer" GeneratesDoubleDerived="true" FixedTooltipText="Entity Shape" FillColor="PaleGreen" InitialHeight="0.5" OutlineThickness="0.01125" HasDefaultConnectionPoints="true" Geometry="RoundedRectangle">
+    <CompartmentShape Id="1ac7c68e-23be-47ec-a6fe-2ece8f63e49c" Description="Entity" Name="EntityShape" DisplayName="Entity" Namespace="Worm.Designer" GeneratesDoubleDerived="true" FixedTooltipText="Entity Shape" FillColor="PaleGreen" InitialHeight="0.5" OutlineThickness="0.01125" FillGradientMode="Vertical" HasDefaultConnectionPoints="true" Geometry="RoundedRectangle">
       <ShapeHasDecorators Position="InnerTopCenter" HorizontalOffset="0" VerticalOffset="0">
         <TextDecorator Name="Name" DisplayName="Name" DefaultText="Name" />
       </ShapeHasDecorators>
