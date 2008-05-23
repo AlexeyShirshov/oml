@@ -906,7 +906,7 @@
     <comment>Description for DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation.DisplayName" xml:space="preserve">
-    <value>Self Relation</value>
+    <value>Many to many</value>
     <comment>DisplayName for DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/DirectAccessor.Description" xml:space="preserve">
@@ -914,24 +914,36 @@
     <comment>Description for DomainProperty &apos;DirectAccessor&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/DirectAccessor.DisplayName" xml:space="preserve">
-    <value>Direct Accessor</value>
+    <value>Accessor</value>
     <comment>DisplayName for DomainProperty &apos;DirectAccessor&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectAccessor.Category" xml:space="preserve">
+    <value>Direct</value>
+    <comment>Category for DomainProperty &apos;DirectAccessor&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/DirectCascadeDelete.Description" xml:space="preserve">
     <value>Kаскадное удаление</value>
     <comment>Description for DomainProperty &apos;DirectCascadeDelete&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/DirectCascadeDelete.DisplayName" xml:space="preserve">
-    <value>Direct Cascade Delete</value>
+    <value>Cascade Delete</value>
     <comment>DisplayName for DomainProperty &apos;DirectCascadeDelete&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectCascadeDelete.Category" xml:space="preserve">
+    <value>Direct</value>
+    <comment>Category for DomainProperty &apos;DirectCascadeDelete&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/DirectFieldName.Description" xml:space="preserve">
     <value>Имя поля таблицы связи</value>
     <comment>Description for DomainProperty &apos;DirectFieldName&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/DirectFieldName.DisplayName" xml:space="preserve">
-    <value>Direct Field Name</value>
+    <value>Field Name</value>
     <comment>DisplayName for DomainProperty &apos;DirectFieldName&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectFieldName.Category" xml:space="preserve">
+    <value>Direct</value>
+    <comment>Category for DomainProperty &apos;DirectFieldName&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/Disabled.Description" xml:space="preserve">
     <value>Disable relation</value>
@@ -941,29 +953,45 @@
     <value>Disabled</value>
     <comment>DisplayName for DomainProperty &apos;Disabled&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
+  <data name="Worm.Designer.SelfRelation/Disabled.Category" xml:space="preserve">
+    <value>Relation</value>
+    <comment>Category for DomainProperty &apos;Disabled&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
   <data name="Worm.Designer.SelfRelation/ReverseAccessor.Description" xml:space="preserve">
     <value>Имя связанной сущности для генерации методов</value>
     <comment>Description for DomainProperty &apos;ReverseAccessor&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/ReverseAccessor.DisplayName" xml:space="preserve">
-    <value>Reverse Accessor</value>
+    <value>Accessor</value>
     <comment>DisplayName for DomainProperty &apos;ReverseAccessor&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseAccessor.Category" xml:space="preserve">
+    <value>Reverse</value>
+    <comment>Category for DomainProperty &apos;ReverseAccessor&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/ReverseCascadeDelete.Description" xml:space="preserve">
     <value>Каскадное удаление</value>
     <comment>Description for DomainProperty &apos;ReverseCascadeDelete&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/ReverseCascadeDelete.DisplayName" xml:space="preserve">
-    <value>Reverse Cascade Delete</value>
+    <value>Cascade Delete</value>
     <comment>DisplayName for DomainProperty &apos;ReverseCascadeDelete&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseCascadeDelete.Category" xml:space="preserve">
+    <value>Reverse</value>
+    <comment>Category for DomainProperty &apos;ReverseCascadeDelete&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/ReverseFieldName.Description" xml:space="preserve">
     <value>Имя поля таблицы связи</value>
     <comment>Description for DomainProperty &apos;ReverseFieldName&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/ReverseFieldName.DisplayName" xml:space="preserve">
-    <value>Reverse Field Name</value>
+    <value>Field Name</value>
     <comment>DisplayName for DomainProperty &apos;ReverseFieldName&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseFieldName.Category" xml:space="preserve">
+    <value>Reverse</value>
+    <comment>Category for DomainProperty &apos;ReverseFieldName&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/Table.Description" xml:space="preserve">
     <value>Имя таблицы связи</value>
@@ -973,6 +1001,10 @@
     <value>Table</value>
     <comment>DisplayName for DomainProperty &apos;Table&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
+  <data name="Worm.Designer.SelfRelation/Table.Category" xml:space="preserve">
+    <value>Relation</value>
+    <comment>Category for DomainProperty &apos;Table&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
   <data name="Worm.Designer.SelfRelation/UnderlyingEntity.Description" xml:space="preserve">
     <value>Сущность реализующая связь</value>
     <comment>Description for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;SelfRelation&apos;</comment>
@@ -981,21 +1013,33 @@
     <value>Underlying Entity</value>
     <comment>DisplayName for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
+  <data name="Worm.Designer.SelfRelation/UnderlyingEntity.Category" xml:space="preserve">
+    <value>Relation</value>
+    <comment>Category for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
   <data name="Worm.Designer.SelfRelation/DirectAccessedEntityType.Description" xml:space="preserve">
     <value>Тип связанной сущности для генерации методов</value>
     <comment>Description for DomainProperty &apos;DirectAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/DirectAccessedEntityType.DisplayName" xml:space="preserve">
-    <value>Direct Accessed Entity Type</value>
+    <value>Accessed Entity Type</value>
     <comment>DisplayName for DomainProperty &apos;DirectAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/DirectAccessedEntityType.Category" xml:space="preserve">
+    <value>Direct</value>
+    <comment>Category for DomainProperty &apos;DirectAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/ReverseAccessedEntityType.Description" xml:space="preserve">
     <value>Тип связанной сущности для генерации методов</value>
     <comment>Description for DomainProperty &apos;ReverseAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/ReverseAccessedEntityType.DisplayName" xml:space="preserve">
-    <value>Reverse Accessed Entity Type</value>
+    <value>Accessed Entity Type</value>
     <comment>DisplayName for DomainProperty &apos;ReverseAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
+  <data name="Worm.Designer.SelfRelation/ReverseAccessedEntityType.Category" xml:space="preserve">
+    <value>Reverse</value>
+    <comment>Category for DomainProperty &apos;ReverseAccessedEntityType&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
   <data name="Worm.Designer.SelfRelation/Name.Description" xml:space="preserve">
     <value>Name</value>
@@ -1005,8 +1049,12 @@
     <value>Name</value>
     <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;SelfRelation&apos;</comment>
   </data>
+  <data name="Worm.Designer.SelfRelation/Name.Category" xml:space="preserve">
+    <value>Relation</value>
+    <comment>Category for DomainProperty &apos;Name&apos; on DomainClass &apos;SelfRelation&apos;</comment>
+  </data>
   <data name="Worm.Designer.WormType.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.WormType</value>
+    <value>Worm type</value>
     <comment>Description for DomainClass &apos;WormType&apos;</comment>
   </data>
   <data name="Worm.Designer.WormType.DisplayName" xml:space="preserve">
@@ -1014,7 +1062,7 @@
     <comment>DisplayName for DomainClass &apos;WormType&apos;</comment>
   </data>
   <data name="Worm.Designer.WormType/Name.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.WormType.Name</value>
+    <value>Name</value>
     <comment>Description for DomainProperty &apos;Name&apos; on DomainClass &apos;WormType&apos;</comment>
   </data>
   <data name="Worm.Designer.WormType/Name.DisplayName" xml:space="preserve">
@@ -1022,12 +1070,28 @@
     <comment>DisplayName for DomainProperty &apos;Name&apos; on DomainClass &apos;WormType&apos;</comment>
   </data>
   <data name="Worm.Designer.WormType/IdProperty.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.WormType.Id Property</value>
+    <value>Id Property</value>
     <comment>Description for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;WormType&apos;</comment>
   </data>
   <data name="Worm.Designer.WormType/IdProperty.DisplayName" xml:space="preserve">
     <value>Id Property</value>
     <comment>DisplayName for DomainProperty &apos;IdProperty&apos; on DomainClass &apos;WormType&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormType/Type.Description" xml:space="preserve">
+    <value>Type</value>
+    <comment>Description for DomainProperty &apos;Type&apos; on DomainClass &apos;WormType&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormType/Type.DisplayName" xml:space="preserve">
+    <value>Type</value>
+    <comment>DisplayName for DomainProperty &apos;Type&apos; on DomainClass &apos;WormType&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormType/Hint.Description" xml:space="preserve">
+    <value>Hint</value>
+    <comment>Description for DomainProperty &apos;Hint&apos; on DomainClass &apos;WormType&apos;</comment>
+  </data>
+  <data name="Worm.Designer.WormType/Hint.DisplayName" xml:space="preserve">
+    <value>Hint</value>
+    <comment>DisplayName for DomainProperty &apos;Hint&apos; on DomainClass &apos;WormType&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModelHasEntities.Description" xml:space="preserve">
     <value>Description for Worm.Designer.WormModelHasEntities</value>
@@ -1330,7 +1394,7 @@
     <comment>DisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasSelfRelations&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityHasSelfRelations/Entity.PropertyDisplayName" xml:space="preserve">
-    <value>Self Relations</value>
+    <value>Many to many</value>
     <comment>PropertyDisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;EntityHasSelfRelations&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityHasSelfRelations/SelfRelation.Description" xml:space="preserve">
@@ -1338,7 +1402,7 @@
     <comment>Description for DomainRole &apos;SelfRelation&apos; on DomainRelationship &apos;EntityHasSelfRelations&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityHasSelfRelations/SelfRelation.DisplayName" xml:space="preserve">
-    <value>Self Relation</value>
+    <value>Many to many</value>
     <comment>DisplayName for DomainRole &apos;SelfRelation&apos; on DomainRelationship &apos;EntityHasSelfRelations&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityHasSelfRelations/SelfRelation.PropertyDisplayName" xml:space="preserve">
@@ -1560,6 +1624,46 @@
   <data name="Worm.Designer.PropertyAttribute/Factory.Description" xml:space="preserve">
     <value>Factory</value>
     <comment>Description for EnumerationLiteral &apos;Factory&apos; on DomainEnumeration &apos;PropertyAttribute&apos;</comment>
+  </data>
+  <data name="Worm.Designer.TypeEnum/UserType.DisplayName" xml:space="preserve">
+    <value>UserType</value>
+    <comment>Display name for EnumerationLiteral &apos;UserType&apos; on DomainEnumeration &apos;TypeEnum&apos;</comment>
+  </data>
+  <data name="Worm.Designer.TypeEnum/UserType.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.TypeEnum.UserType</value>
+    <comment>Description for EnumerationLiteral &apos;UserType&apos; on DomainEnumeration &apos;TypeEnum&apos;</comment>
+  </data>
+  <data name="Worm.Designer.TypeEnum/EntityType.DisplayName" xml:space="preserve">
+    <value>EntityType</value>
+    <comment>Display name for EnumerationLiteral &apos;EntityType&apos; on DomainEnumeration &apos;TypeEnum&apos;</comment>
+  </data>
+  <data name="Worm.Designer.TypeEnum/EntityType.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.TypeEnum.EntityType</value>
+    <comment>Description for EnumerationLiteral &apos;EntityType&apos; on DomainEnumeration &apos;TypeEnum&apos;</comment>
+  </data>
+  <data name="Worm.Designer.TypeEnum/ClrType.DisplayName" xml:space="preserve">
+    <value>ClrType</value>
+    <comment>Display name for EnumerationLiteral &apos;ClrType&apos; on DomainEnumeration &apos;TypeEnum&apos;</comment>
+  </data>
+  <data name="Worm.Designer.TypeEnum/ClrType.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.TypeEnum.ClrType</value>
+    <comment>Description for EnumerationLiteral &apos;ClrType&apos; on DomainEnumeration &apos;TypeEnum&apos;</comment>
+  </data>
+  <data name="Worm.Designer.BooleanEnum/False.DisplayName" xml:space="preserve">
+    <value>False</value>
+    <comment>Display name for EnumerationLiteral &apos;False&apos; on DomainEnumeration &apos;BooleanEnum&apos;</comment>
+  </data>
+  <data name="Worm.Designer.BooleanEnum/False.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.BooleanEnum.False</value>
+    <comment>Description for EnumerationLiteral &apos;False&apos; on DomainEnumeration &apos;BooleanEnum&apos;</comment>
+  </data>
+  <data name="Worm.Designer.BooleanEnum/True.DisplayName" xml:space="preserve">
+    <value>True</value>
+    <comment>Display name for EnumerationLiteral &apos;True&apos; on DomainEnumeration &apos;BooleanEnum&apos;</comment>
+  </data>
+  <data name="Worm.Designer.BooleanEnum/True.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.BooleanEnum.True</value>
+    <comment>Description for EnumerationLiteral &apos;True&apos; on DomainEnumeration &apos;BooleanEnum&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityShape.Description" xml:space="preserve">
     <value>Entity</value>

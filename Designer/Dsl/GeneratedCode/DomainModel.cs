@@ -166,6 +166,8 @@ namespace Worm.Designer
 				new DomainMemberInfo(typeof(SelfRelation), "Name", SelfRelation.NameDomainPropertyId, typeof(SelfRelation.NamePropertyHandler)),
 				new DomainMemberInfo(typeof(WormType), "Name", WormType.NameDomainPropertyId, typeof(WormType.NamePropertyHandler)),
 				new DomainMemberInfo(typeof(WormType), "IdProperty", WormType.IdPropertyDomainPropertyId, typeof(WormType.IdPropertyPropertyHandler)),
+				new DomainMemberInfo(typeof(WormType), "Type", WormType.TypeDomainPropertyId, typeof(WormType.TypePropertyHandler)),
+				new DomainMemberInfo(typeof(WormType), "Hint", WormType.HintDomainPropertyId, typeof(WormType.HintPropertyHandler)),
 				new DomainMemberInfo(typeof(EntityReferencesTargetEntities), "UnderlyingEntity", EntityReferencesTargetEntities.UnderlyingEntityDomainPropertyId, typeof(EntityReferencesTargetEntities.UnderlyingEntityPropertyHandler)),
 				new DomainMemberInfo(typeof(EntityReferencesTargetEntities), "LeftCascadeDelete", EntityReferencesTargetEntities.LeftCascadeDeleteDomainPropertyId, typeof(EntityReferencesTargetEntities.LeftCascadeDeletePropertyHandler)),
 				new DomainMemberInfo(typeof(EntityReferencesTargetEntities), "LeftFieldName", EntityReferencesTargetEntities.LeftFieldNameDomainPropertyId, typeof(EntityReferencesTargetEntities.LeftFieldNamePropertyHandler)),
@@ -701,6 +703,58 @@ namespace Worm.Designer
 		/// </summary>
 		[DslDesign::DescriptionResource("Worm.Designer.PropertyAttribute/Factory.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		Factory,
+	}
+}
+namespace Worm.Designer
+{
+	/// <summary>
+	/// DomainEnumeration: TypeEnum
+	/// Description for Worm.Designer.TypeEnum
+	/// </summary>
+	[global::System.CLSCompliant(true)]
+	public enum TypeEnum
+	{
+		/// <summary>
+		/// UserType
+		/// Description for Worm.Designer.TypeEnum.UserType
+		/// </summary>
+		[DslDesign::DescriptionResource("Worm.Designer.TypeEnum/UserType.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		UserType,
+		/// <summary>
+		/// EntityType
+		/// Description for Worm.Designer.TypeEnum.EntityType
+		/// </summary>
+		[DslDesign::DescriptionResource("Worm.Designer.TypeEnum/EntityType.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		EntityType,
+		/// <summary>
+		/// ClrType
+		/// Description for Worm.Designer.TypeEnum.ClrType
+		/// </summary>
+		[DslDesign::DescriptionResource("Worm.Designer.TypeEnum/ClrType.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		ClrType,
+	}
+}
+namespace Worm.Designer
+{
+	/// <summary>
+	/// DomainEnumeration: BooleanEnum
+	/// Description for Worm.Designer.BooleanEnum
+	/// </summary>
+	[global::System.CLSCompliant(true)]
+	public enum BooleanEnum
+	{
+		/// <summary>
+		/// False
+		/// Description for Worm.Designer.BooleanEnum.False
+		/// </summary>
+		[DslDesign::DescriptionResource("Worm.Designer.BooleanEnum/False.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		False,
+		/// <summary>
+		/// True
+		/// Description for Worm.Designer.BooleanEnum.True
+		/// </summary>
+		[DslDesign::DescriptionResource("Worm.Designer.BooleanEnum/True.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		True,
 	}
 }
 

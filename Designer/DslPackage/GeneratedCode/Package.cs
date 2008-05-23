@@ -94,8 +94,10 @@ namespace Worm.Designer
 	using System.Drawing; 
 	using System.Windows.Forms; 
 	using System.IO;
+	using System.Collections;
 	using System.Xml;
 	using EnvDTE;
+	using EnvDTE80;
 	using Worm.CodeGen.Core;
 	using Microsoft.VisualStudio.CommandBars;
 	using Microsoft.VisualStudio.Modeling;
@@ -117,6 +119,7 @@ namespace Worm.Designer
 	{
 		CommandBarEvents menuItemHandler;
         CommandBarControl menuItem;
+        static OrmObjectsDef importData;
         
 		protected override void Initialize()
 		{
@@ -151,25 +154,17 @@ namespace Worm.Designer
             menuItemHandler.Click += new _dispCommandBarControlEvents_ClickEventHandler(menuItemHandler_Click);
         }
         
+        public static OrmObjectsDef ImportData
+        {
+			get {return importData;}
+			set {importData = value;}
+        }
+        
         private void menuItemHandler_Click(object CommandBarControl, ref bool handled, ref bool CancelDefault)
         {
             System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
             DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
-            if (dte.ActiveDocument != null && Path.GetExtension(dte.ActiveDocument.Name) == ".wxml")
-            {
-                if (MessageBox.Show("Do you want to import data from worm file? Current model will be replaced by imported.", "Confirmation", MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question) != DialogResult.Yes)
-                {
-                    return;
-                }
-            }
-            else
-            {
-                 MessageBox.Show("Worm designer file should be opened to import data.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                 return;
-            }
 
-           
             OpenFileDialog dialog = new OpenFileDialog();
             dialog.DefaultExt = "xml";
             dialog.Filter = "Xml files|*.xml|All files|*.*";
@@ -184,15 +179,7 @@ namespace Worm.Designer
 						using (XmlReader rdr = XmlReader.Create(stream))
 						{
 							OrmObjectsDef ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new SXmlUrlResolver(System.IO.Path.GetDirectoryName(dialog.FileName)));
-							if(DesignerDocView.ActiveWindow != null)
-							{
-								ModelingDocData data = DesignerDocView.ActiveWindow.DocData;
-								if ((data != null) && data is DesignerDocData)
-								{
-									WormModel model = (WormModel)data.RootElement;
-									XmlHelper.Import(model, ormObjectsDef);
-								}
-							}
+							ImportData = ormObjectsDef;
 						}
 					}
 				}
@@ -200,6 +187,30 @@ namespace Worm.Designer
 				{
 					MessageBox.Show("Cannot read file: " + ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				}
+
+                try
+                { Solution2 sln = (Solution2)dte.Solution;
+                    string templateFolderPath = sln.GetProjectItemTemplate("Designer", "CSharp");
+                    ArrayList list = new ArrayList();
+                    foreach (ProjectItem item in dte.ActiveDocument.ProjectItem.ContainingProject.ProjectItems)
+                    {
+                        list.Add(item.Name);                        
+                    }
+                    string name = "Designer1.wxml";
+                    int i = 1;
+                    while (list.Contains(name) || File.Exists(Path.Combine(
+                        Path.GetDirectoryName(dte.ActiveDocument.ProjectItem.ContainingProject.FullName), name)))
+                    {
+                        name = "Designer"  + i + ".wxml";
+                        i++;
+                    }
+
+                    dte.ActiveDocument.ProjectItem.ContainingProject.ProjectItems.AddFromTemplate(templateFolderPath, name);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Cannot create new file: " + ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
 			}
         }
     

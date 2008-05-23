@@ -157,16 +157,6 @@ namespace Worm.Designer
 		}
 		
 		/// <summary>
-		/// Indicates the direction of the gradient.
-		/// </summary>
-		public override global::System.Drawing.Drawing2D.LinearGradientMode BackgroundGradientMode
-		{
-			get
-			{
-				return global::System.Drawing.Drawing2D.LinearGradientMode.Horizontal;
-			}
-		}
-		/// <summary>
 		/// Indicates whether the shape requires connection points.
 		/// </summary>
 		public override bool HasConnectionPoints

@@ -117,7 +117,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Split -->
-    <xsd:attribute name="split" type="xsd:string" >
+    <xsd:attribute name="split" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Split</xsd:documentation>
       </xsd:annotation>
@@ -141,91 +141,91 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: DerivedGenericMembersRequireConstraits -->
-    <xsd:attribute name="derivedGenericMembersRequireConstraits" type="xsd:string" >
+    <xsd:attribute name="derivedGenericMembersRequireConstraits" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Generic члены производных классов требует наличия констрейтов</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: MethodsInsteadParametrizedProperties -->
-    <xsd:attribute name="methodsInsteadParametrizedProperties" type="xsd:string" >
+    <xsd:attribute name="methodsInsteadParametrizedProperties" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Генерировать методы вместо параметризованых пропертей</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: AddOptionsStrict -->
-    <xsd:attribute name="addOptionsStrict" type="xsd:string" >
+    <xsd:attribute name="addOptionsStrict" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Add Options Strict</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: OptionsStrictOn -->
-    <xsd:attribute name="optionsStrictOn" type="xsd:string" >
+    <xsd:attribute name="optionsStrictOn" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Options Strict On</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: AddOptionsExplicit -->
-    <xsd:attribute name="addOptionsExplicit" type="xsd:string" >
+    <xsd:attribute name="addOptionsExplicit" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Add Options Explicit</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: OptionsExplicitOn -->
-    <xsd:attribute name="optionsExplicitOn" type="xsd:string" >
+    <xsd:attribute name="optionsExplicitOn" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Options Explicit On</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: GenerateCSUsingStatement -->
-    <xsd:attribute name="generateCSUsingStatement" type="xsd:string" >
+    <xsd:attribute name="generateCSUsingStatement" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Generate CSUsing Statement</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: GenerateVBUsingStatement -->
-    <xsd:attribute name="generateVBUsingStatement" type="xsd:string" >
+    <xsd:attribute name="generateVBUsingStatement" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Generate VBUsing Statement</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: SafeUnboxToEnum -->
-    <xsd:attribute name="safeUnboxToEnum" type="xsd:string" >
+    <xsd:attribute name="safeUnboxToEnum" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Безопасная распаковка переменных с кастом в энам</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: GenerateCsIsStatement -->
-    <xsd:attribute name="generateCsIsStatement" type="xsd:string" >
+    <xsd:attribute name="generateCsIsStatement" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Generate Cs Is Statement</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: GenerateVbTypeOfIsStatement -->
-    <xsd:attribute name="generateVbTypeOfIsStatement" type="xsd:string" >
+    <xsd:attribute name="generateVbTypeOfIsStatement" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Generate Vb Type Of Is Statement</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: GenerateCsAsStatement -->
-    <xsd:attribute name="generateCsAsStatement" type="xsd:string" >
+    <xsd:attribute name="generateCsAsStatement" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Generate Cs As Statement</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: GenerateVbTryCastStatement -->
-    <xsd:attribute name="generateVbTryCastStatement" type="xsd:string" >
+    <xsd:attribute name="generateVbTryCastStatement" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Generate Vb Try Cast Statement</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: GenerateCsLockStatement -->
-    <xsd:attribute name="generateCsLockStatement" type="xsd:string" >
+    <xsd:attribute name="generateCsLockStatement" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Generate Cs Lock Statement</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: GenerateVbSyncLockStatement -->
-    <xsd:attribute name="generateVbSyncLockStatement" type="xsd:string" >
+    <xsd:attribute name="generateVbSyncLockStatement" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Generate Vb Sync Lock Statement</xsd:documentation>
       </xsd:annotation>
@@ -365,13 +365,13 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: UseGenerics -->
-    <xsd:attribute name="useGenerics" type="xsd:string" >
+    <xsd:attribute name="useGenerics" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Определяет генерировать generic или строго типизированные методы</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: MakeInterface -->
-    <xsd:attribute name="makeInterface" type="xsd:string" >
+    <xsd:attribute name="makeInterface" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Определяет генерировать интерфейс для сущности</xsd:documentation>
       </xsd:annotation>
@@ -383,7 +383,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: InheritsBase -->
-    <xsd:attribute name="inheritsBase" type="xsd:string" >
+    <xsd:attribute name="inheritsBase" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Inherits table list from base entity.</xsd:documentation>
       </xsd:annotation>
@@ -510,13 +510,13 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Nullable -->
-    <xsd:attribute name="nullable" type="xsd:string" >
+    <xsd:attribute name="nullable" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Nullable</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Disabled -->
-    <xsd:attribute name="disabled" type="xsd:string" >
+    <xsd:attribute name="disabled" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Признак отключения проперти</xsd:documentation>
       </xsd:annotation>
@@ -534,69 +534,69 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: EnablePropertyChanged -->
-    <xsd:attribute name="enablePropertyChanged" type="xsd:string" >
+    <xsd:attribute name="enablePropertyChanged" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Включает для свойства поднятие события PropertyChanged, при этом реализация идет на уровне конкретной сущности. При этом в целом для сущности отключается общий механизм этого события.</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: PK -->
-    <xsd:attribute name="pK" type="xsd:string" />
+    <xsd:attribute name="pK" type="BooleanEnum" />
     <!-- Property: Factory -->
-    <xsd:attribute name="factory" type="xsd:string" >
+    <xsd:attribute name="factory" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Factory</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: InsertDefault -->
-    <xsd:attribute name="insertDefault" type="xsd:string" >
+    <xsd:attribute name="insertDefault" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>InsertDefault</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: PrimaryKey -->
-    <xsd:attribute name="primaryKey" type="xsd:string" >
+    <xsd:attribute name="primaryKey" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Primary Key</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Private -->
-    <xsd:attribute name="private" type="xsd:string" >
+    <xsd:attribute name="private" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Private</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: ReadOnly -->
-    <xsd:attribute name="readOnly" type="xsd:string" >
+    <xsd:attribute name="readOnly" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Read Only</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: RowVersion -->
-    <xsd:attribute name="rowVersion" type="xsd:string" >
+    <xsd:attribute name="rowVersion" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Row Version</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: RV -->
-    <xsd:attribute name="rV" type="xsd:string" >
+    <xsd:attribute name="rV" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>RV</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: SyncInsert -->
-    <xsd:attribute name="syncInsert" type="xsd:string" >
+    <xsd:attribute name="syncInsert" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Sync Insert</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: SyncUpdate -->
-    <xsd:attribute name="syncUpdate" type="xsd:string" >
+    <xsd:attribute name="syncUpdate" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Sync Update</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Supressed -->
-    <xsd:attribute name="supressed" type="xsd:string" >
+    <xsd:attribute name="supressed" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Supressed</xsd:documentation>
       </xsd:annotation>
@@ -652,7 +652,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: DirectCascadeDelete -->
-    <xsd:attribute name="directCascadeDelete" type="xsd:string" >
+    <xsd:attribute name="directCascadeDelete" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Kаскадное удаление</xsd:documentation>
       </xsd:annotation>
@@ -664,7 +664,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Disabled -->
-    <xsd:attribute name="disabled" type="xsd:string" >
+    <xsd:attribute name="disabled" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Disable relation</xsd:documentation>
       </xsd:annotation>
@@ -676,7 +676,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: ReverseCascadeDelete -->
-    <xsd:attribute name="reverseCascadeDelete" type="xsd:string" >
+    <xsd:attribute name="reverseCascadeDelete" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Каскадное удаление</xsd:documentation>
       </xsd:annotation>
@@ -730,6 +730,9 @@
   <!-- WormType -->
   <xsd:element name="wormType" type="WormType" />
   <xsd:complexType name="WormType">
+    <xsd:annotation>
+      <xsd:documentation>Worm type</xsd:documentation>
+    </xsd:annotation>
     <xsd:sequence minOccurs="0" maxOccurs="1">
       <!-- Relationship: WormTypeReferencesEntities -->
       <xsd:element name="entities" minOccurs="0" maxOccurs="1">
@@ -755,9 +758,29 @@
       </xsd:element>
     </xsd:sequence>
     <!-- Property: Name -->
-    <xsd:attribute name="name" type="xsd:string" />
+    <xsd:attribute name="name" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Name</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <!-- Property: IdProperty -->
-    <xsd:attribute name="idProperty" type="xsd:string" />
+    <xsd:attribute name="idProperty" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Id Property</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Type -->
+    <xsd:attribute name="type" type="TypeEnum" >
+      <xsd:annotation>
+        <xsd:documentation>Type</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <!-- Property: Hint -->
+    <xsd:attribute name="hint" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Hint</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
   
   <!-- WormType Moniker -->
@@ -828,7 +851,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: LeftCascadeDelete -->
-    <xsd:attribute name="leftCascadeDelete" type="xsd:string" >
+    <xsd:attribute name="leftCascadeDelete" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Каскадное удаление</xsd:documentation>
       </xsd:annotation>
@@ -846,7 +869,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: Disabled -->
-    <xsd:attribute name="disabled" type="xsd:string" />
+    <xsd:attribute name="disabled" type="BooleanEnum" />
     <!-- Property: Table -->
     <xsd:attribute name="table" type="xsd:string" />
     <!-- Property: LeftEntity -->
@@ -874,7 +897,7 @@
       </xsd:annotation>
     </xsd:attribute>
     <!-- Property: RightCascadeDelete -->
-    <xsd:attribute name="rightCascadeDelete" type="xsd:string" >
+    <xsd:attribute name="rightCascadeDelete" type="BooleanEnum" >
       <xsd:annotation>
         <xsd:documentation>Каскадное удаление</xsd:documentation>
       </xsd:annotation>
@@ -1080,6 +1103,23 @@
           <xsd:documentation>Factory</xsd:documentation>
         </xsd:annotation>
       </xsd:enumeration>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!-- Enum TypeEnum -->
+  <xsd:simpleType name="TypeEnum">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="UserType"/>
+      <xsd:enumeration value="EntityType"/>
+      <xsd:enumeration value="ClrType"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+  
+  <!-- Enum BooleanEnum -->
+  <xsd:simpleType name="BooleanEnum">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="False"/>
+      <xsd:enumeration value="True"/>
     </xsd:restriction>
   </xsd:simpleType>
   

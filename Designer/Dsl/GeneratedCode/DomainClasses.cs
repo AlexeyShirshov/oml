@@ -498,19 +498,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Split
 		/// </summary>
-		private global::System.String splitPropertyStorage = "False";
+		private BooleanEnum splitPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of Split domain property.
 		/// Split
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/Split.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/Split.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/Split.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("56a2b134-f643-45c6-9d9e-feb681a11e8c")]
-		public global::System.String Split
+		public BooleanEnum Split
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -526,7 +525,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.Split domain property.
 		/// </summary>
-		internal sealed partial class SplitPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class SplitPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private SplitPropertyHandler() { }
 		
@@ -552,7 +551,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.splitPropertyStorage;
@@ -563,11 +562,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -854,19 +853,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for DerivedGenericMembersRequireConstraits
 		/// </summary>
-		private global::System.String derivedGenericMembersRequireConstraitsPropertyStorage = "False";
+		private BooleanEnum derivedGenericMembersRequireConstraitsPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of DerivedGenericMembersRequireConstraits domain property.
 		/// Generic члены производных классов требует наличия констрейтов
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/DerivedGenericMembersRequireConstraits.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/DerivedGenericMembersRequireConstraits.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/DerivedGenericMembersRequireConstraits.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("095cfba4-b4bd-43ff-969f-1fa0f989111a")]
-		public global::System.String DerivedGenericMembersRequireConstraits
+		public BooleanEnum DerivedGenericMembersRequireConstraits
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -882,7 +880,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.DerivedGenericMembersRequireConstraits domain property.
 		/// </summary>
-		internal sealed partial class DerivedGenericMembersRequireConstraitsPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class DerivedGenericMembersRequireConstraitsPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private DerivedGenericMembersRequireConstraitsPropertyHandler() { }
 		
@@ -908,7 +906,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.derivedGenericMembersRequireConstraitsPropertyStorage;
@@ -919,11 +917,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -944,19 +942,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for MethodsInsteadParametrizedProperties
 		/// </summary>
-		private global::System.String methodsInsteadParametrizedPropertiesPropertyStorage = "False";
+		private BooleanEnum methodsInsteadParametrizedPropertiesPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of MethodsInsteadParametrizedProperties domain property.
 		/// Генерировать методы вместо параметризованых пропертей
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/MethodsInsteadParametrizedProperties.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/MethodsInsteadParametrizedProperties.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/MethodsInsteadParametrizedProperties.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("0252ee35-0a4d-4470-ae55-b58aacb2f05b")]
-		public global::System.String MethodsInsteadParametrizedProperties
+		public BooleanEnum MethodsInsteadParametrizedProperties
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -972,7 +969,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.MethodsInsteadParametrizedProperties domain property.
 		/// </summary>
-		internal sealed partial class MethodsInsteadParametrizedPropertiesPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class MethodsInsteadParametrizedPropertiesPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private MethodsInsteadParametrizedPropertiesPropertyHandler() { }
 		
@@ -998,7 +995,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.methodsInsteadParametrizedPropertiesPropertyStorage;
@@ -1009,11 +1006,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1034,19 +1031,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for AddOptionsStrict
 		/// </summary>
-		private global::System.String addOptionsStrictPropertyStorage = "False";
+		private BooleanEnum addOptionsStrictPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of AddOptionsStrict domain property.
 		/// Add Options Strict
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/AddOptionsStrict.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/AddOptionsStrict.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/AddOptionsStrict.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("76b4b7cc-b1a7-4614-8f27-7f046c6bb846")]
-		public global::System.String AddOptionsStrict
+		public BooleanEnum AddOptionsStrict
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1062,7 +1058,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.AddOptionsStrict domain property.
 		/// </summary>
-		internal sealed partial class AddOptionsStrictPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class AddOptionsStrictPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private AddOptionsStrictPropertyHandler() { }
 		
@@ -1088,7 +1084,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.addOptionsStrictPropertyStorage;
@@ -1099,11 +1095,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1124,19 +1120,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for OptionsStrictOn
 		/// </summary>
-		private global::System.String optionsStrictOnPropertyStorage = "False";
+		private BooleanEnum optionsStrictOnPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of OptionsStrictOn domain property.
 		/// Options Strict On
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/OptionsStrictOn.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/OptionsStrictOn.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/OptionsStrictOn.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("567d6f8d-615a-4661-9903-e5fa83a7f6e4")]
-		public global::System.String OptionsStrictOn
+		public BooleanEnum OptionsStrictOn
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1152,7 +1147,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.OptionsStrictOn domain property.
 		/// </summary>
-		internal sealed partial class OptionsStrictOnPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class OptionsStrictOnPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private OptionsStrictOnPropertyHandler() { }
 		
@@ -1178,7 +1173,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.optionsStrictOnPropertyStorage;
@@ -1189,11 +1184,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1214,19 +1209,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for AddOptionsExplicit
 		/// </summary>
-		private global::System.String addOptionsExplicitPropertyStorage = "False";
+		private BooleanEnum addOptionsExplicitPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of AddOptionsExplicit domain property.
 		/// Add Options Explicit
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/AddOptionsExplicit.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/AddOptionsExplicit.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/AddOptionsExplicit.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("769200c0-4be7-4e6a-bce9-f2ee0c9c1fce")]
-		public global::System.String AddOptionsExplicit
+		public BooleanEnum AddOptionsExplicit
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1242,7 +1236,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.AddOptionsExplicit domain property.
 		/// </summary>
-		internal sealed partial class AddOptionsExplicitPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class AddOptionsExplicitPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private AddOptionsExplicitPropertyHandler() { }
 		
@@ -1268,7 +1262,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.addOptionsExplicitPropertyStorage;
@@ -1279,11 +1273,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1304,19 +1298,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for OptionsExplicitOn
 		/// </summary>
-		private global::System.String optionsExplicitOnPropertyStorage = "False";
+		private BooleanEnum optionsExplicitOnPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of OptionsExplicitOn domain property.
 		/// Options Explicit On
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/OptionsExplicitOn.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/OptionsExplicitOn.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/OptionsExplicitOn.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("3add2ebb-e424-4dbd-9b82-a6c6ead25420")]
-		public global::System.String OptionsExplicitOn
+		public BooleanEnum OptionsExplicitOn
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1332,7 +1325,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.OptionsExplicitOn domain property.
 		/// </summary>
-		internal sealed partial class OptionsExplicitOnPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class OptionsExplicitOnPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private OptionsExplicitOnPropertyHandler() { }
 		
@@ -1358,7 +1351,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.optionsExplicitOnPropertyStorage;
@@ -1369,11 +1362,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1394,19 +1387,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for GenerateCSUsingStatement
 		/// </summary>
-		private global::System.String generateCSUsingStatementPropertyStorage = "False";
+		private BooleanEnum generateCSUsingStatementPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of GenerateCSUsingStatement domain property.
 		/// Generate CSUsing Statement
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateCSUsingStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateCSUsingStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateCSUsingStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("50e58d80-288a-4a19-b8b5-108b2f5da6bc")]
-		public global::System.String GenerateCSUsingStatement
+		public BooleanEnum GenerateCSUsingStatement
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1422,7 +1414,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.GenerateCSUsingStatement domain property.
 		/// </summary>
-		internal sealed partial class GenerateCSUsingStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class GenerateCSUsingStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private GenerateCSUsingStatementPropertyHandler() { }
 		
@@ -1448,7 +1440,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.generateCSUsingStatementPropertyStorage;
@@ -1459,11 +1451,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1484,19 +1476,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for GenerateVBUsingStatement
 		/// </summary>
-		private global::System.String generateVBUsingStatementPropertyStorage = "False";
+		private BooleanEnum generateVBUsingStatementPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of GenerateVBUsingStatement domain property.
 		/// Generate VBUsing Statement
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateVBUsingStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateVBUsingStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateVBUsingStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("d8135d5c-383c-474f-bf05-55fba1c44b03")]
-		public global::System.String GenerateVBUsingStatement
+		public BooleanEnum GenerateVBUsingStatement
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1512,7 +1503,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.GenerateVBUsingStatement domain property.
 		/// </summary>
-		internal sealed partial class GenerateVBUsingStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class GenerateVBUsingStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private GenerateVBUsingStatementPropertyHandler() { }
 		
@@ -1538,7 +1529,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.generateVBUsingStatementPropertyStorage;
@@ -1549,11 +1540,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1574,19 +1565,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for SafeUnboxToEnum
 		/// </summary>
-		private global::System.String safeUnboxToEnumPropertyStorage = "False";
+		private BooleanEnum safeUnboxToEnumPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of SafeUnboxToEnum domain property.
 		/// Безопасная распаковка переменных с кастом в энам
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/SafeUnboxToEnum.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/SafeUnboxToEnum.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/SafeUnboxToEnum.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("29d1b322-32a0-4f9a-a06e-42f4bf0a22eb")]
-		public global::System.String SafeUnboxToEnum
+		public BooleanEnum SafeUnboxToEnum
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1602,7 +1592,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.SafeUnboxToEnum domain property.
 		/// </summary>
-		internal sealed partial class SafeUnboxToEnumPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class SafeUnboxToEnumPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private SafeUnboxToEnumPropertyHandler() { }
 		
@@ -1628,7 +1618,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.safeUnboxToEnumPropertyStorage;
@@ -1639,11 +1629,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1664,19 +1654,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for GenerateCsIsStatement
 		/// </summary>
-		private global::System.String generateCsIsStatementPropertyStorage = "False";
+		private BooleanEnum generateCsIsStatementPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of GenerateCsIsStatement domain property.
 		/// Generate Cs Is Statement
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateCsIsStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateCsIsStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateCsIsStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("eea1df37-9263-4dd7-97f7-b33214b2bf19")]
-		public global::System.String GenerateCsIsStatement
+		public BooleanEnum GenerateCsIsStatement
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1692,7 +1681,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.GenerateCsIsStatement domain property.
 		/// </summary>
-		internal sealed partial class GenerateCsIsStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class GenerateCsIsStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private GenerateCsIsStatementPropertyHandler() { }
 		
@@ -1718,7 +1707,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.generateCsIsStatementPropertyStorage;
@@ -1729,11 +1718,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1754,19 +1743,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for GenerateVbTypeOfIsStatement
 		/// </summary>
-		private global::System.String generateVbTypeOfIsStatementPropertyStorage = "False";
+		private BooleanEnum generateVbTypeOfIsStatementPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of GenerateVbTypeOfIsStatement domain property.
 		/// Generate Vb Type Of Is Statement
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateVbTypeOfIsStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateVbTypeOfIsStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateVbTypeOfIsStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("a1b94ed9-f47d-4dff-9279-b371fff48570")]
-		public global::System.String GenerateVbTypeOfIsStatement
+		public BooleanEnum GenerateVbTypeOfIsStatement
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1782,7 +1770,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.GenerateVbTypeOfIsStatement domain property.
 		/// </summary>
-		internal sealed partial class GenerateVbTypeOfIsStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class GenerateVbTypeOfIsStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private GenerateVbTypeOfIsStatementPropertyHandler() { }
 		
@@ -1808,7 +1796,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.generateVbTypeOfIsStatementPropertyStorage;
@@ -1819,11 +1807,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1844,19 +1832,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for GenerateCsAsStatement
 		/// </summary>
-		private global::System.String generateCsAsStatementPropertyStorage = "False";
+		private BooleanEnum generateCsAsStatementPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of GenerateCsAsStatement domain property.
 		/// Generate Cs As Statement
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateCsAsStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateCsAsStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateCsAsStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("dc11051e-0396-4dbc-8458-32ffe8ab5512")]
-		public global::System.String GenerateCsAsStatement
+		public BooleanEnum GenerateCsAsStatement
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1872,7 +1859,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.GenerateCsAsStatement domain property.
 		/// </summary>
-		internal sealed partial class GenerateCsAsStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class GenerateCsAsStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private GenerateCsAsStatementPropertyHandler() { }
 		
@@ -1898,7 +1885,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.generateCsAsStatementPropertyStorage;
@@ -1909,11 +1896,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -1934,19 +1921,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for GenerateVbTryCastStatement
 		/// </summary>
-		private global::System.String generateVbTryCastStatementPropertyStorage = "False";
+		private BooleanEnum generateVbTryCastStatementPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of GenerateVbTryCastStatement domain property.
 		/// Generate Vb Try Cast Statement
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateVbTryCastStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateVbTryCastStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateVbTryCastStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("393a72ca-30af-4715-a4ee-1ea38e9c8514")]
-		public global::System.String GenerateVbTryCastStatement
+		public BooleanEnum GenerateVbTryCastStatement
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -1962,7 +1948,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.GenerateVbTryCastStatement domain property.
 		/// </summary>
-		internal sealed partial class GenerateVbTryCastStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class GenerateVbTryCastStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private GenerateVbTryCastStatementPropertyHandler() { }
 		
@@ -1988,7 +1974,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.generateVbTryCastStatementPropertyStorage;
@@ -1999,11 +1985,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -2024,19 +2010,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for GenerateCsLockStatement
 		/// </summary>
-		private global::System.String generateCsLockStatementPropertyStorage = "False";
+		private BooleanEnum generateCsLockStatementPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of GenerateCsLockStatement domain property.
 		/// Generate Cs Lock Statement
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateCsLockStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateCsLockStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateCsLockStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("8df88772-b5fe-45b5-b39e-58ef6ed32293")]
-		public global::System.String GenerateCsLockStatement
+		public BooleanEnum GenerateCsLockStatement
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -2052,7 +2037,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.GenerateCsLockStatement domain property.
 		/// </summary>
-		internal sealed partial class GenerateCsLockStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class GenerateCsLockStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private GenerateCsLockStatementPropertyHandler() { }
 		
@@ -2078,7 +2063,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.generateCsLockStatementPropertyStorage;
@@ -2089,11 +2074,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -2114,19 +2099,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for GenerateVbSyncLockStatement
 		/// </summary>
-		private global::System.String generateVbSyncLockStatementPropertyStorage = "False";
+		private BooleanEnum generateVbSyncLockStatementPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of GenerateVbSyncLockStatement domain property.
 		/// Generate Vb Sync Lock Statement
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.WormModel/GenerateVbSyncLockStatement.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.WormModel/GenerateVbSyncLockStatement.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormModel/GenerateVbSyncLockStatement.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("746cf092-46e5-4a4d-997e-84011c756c26")]
-		public global::System.String GenerateVbSyncLockStatement
+		public BooleanEnum GenerateVbSyncLockStatement
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -2142,7 +2126,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the WormModel.GenerateVbSyncLockStatement domain property.
 		/// </summary>
-		internal sealed partial class GenerateVbSyncLockStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, global::System.String>
+		internal sealed partial class GenerateVbSyncLockStatementPropertyHandler : DslModeling::DomainPropertyValueHandler<WormModel, BooleanEnum>
 		{
 			private GenerateVbSyncLockStatementPropertyHandler() { }
 		
@@ -2168,7 +2152,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(WormModel element)
+			public override sealed BooleanEnum GetValue(WormModel element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.generateVbSyncLockStatementPropertyStorage;
@@ -2179,11 +2163,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(WormModel element, global::System.String newValue)
+			public override sealed void SetValue(WormModel element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -2853,19 +2837,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for UseGenerics
 		/// </summary>
-		private global::System.String useGenericsPropertyStorage = "False";
+		private BooleanEnum useGenericsPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of UseGenerics domain property.
 		/// Определяет генерировать generic или строго типизированные методы
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/UseGenerics.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Entity/UseGenerics.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/UseGenerics.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("fee6dfaf-50e0-4a7a-864d-90e3497b5246")]
-		public global::System.String UseGenerics
+		public BooleanEnum UseGenerics
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -2881,7 +2864,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Entity.UseGenerics domain property.
 		/// </summary>
-		internal sealed partial class UseGenericsPropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, global::System.String>
+		internal sealed partial class UseGenericsPropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, BooleanEnum>
 		{
 			private UseGenericsPropertyHandler() { }
 		
@@ -2907,7 +2890,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Entity element)
+			public override sealed BooleanEnum GetValue(Entity element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.useGenericsPropertyStorage;
@@ -2918,11 +2901,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Entity element, global::System.String newValue)
+			public override sealed void SetValue(Entity element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -2943,19 +2926,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for MakeInterface
 		/// </summary>
-		private global::System.String makeInterfacePropertyStorage = "False";
+		private BooleanEnum makeInterfacePropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of MakeInterface domain property.
 		/// Определяет генерировать интерфейс для сущности
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/MakeInterface.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Entity/MakeInterface.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/MakeInterface.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("e3b3d3c8-0ff2-48d5-9460-c087e81f051a")]
-		public global::System.String MakeInterface
+		public BooleanEnum MakeInterface
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -2971,7 +2953,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Entity.MakeInterface domain property.
 		/// </summary>
-		internal sealed partial class MakeInterfacePropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, global::System.String>
+		internal sealed partial class MakeInterfacePropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, BooleanEnum>
 		{
 			private MakeInterfacePropertyHandler() { }
 		
@@ -2997,7 +2979,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Entity element)
+			public override sealed BooleanEnum GetValue(Entity element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.makeInterfacePropertyStorage;
@@ -3008,11 +2990,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Entity element, global::System.String newValue)
+			public override sealed void SetValue(Entity element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -3122,19 +3104,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for InheritsBase
 		/// </summary>
-		private global::System.String inheritsBasePropertyStorage = "False";
+		private BooleanEnum inheritsBasePropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of InheritsBase domain property.
 		/// Inherits table list from base entity.
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Entity/InheritsBase.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Entity/InheritsBase.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Entity/InheritsBase.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("fccc40b6-91d8-4905-b4a3-7a408835c758")]
-		public global::System.String InheritsBase
+		public BooleanEnum InheritsBase
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -3150,7 +3131,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Entity.InheritsBase domain property.
 		/// </summary>
-		internal sealed partial class InheritsBasePropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, global::System.String>
+		internal sealed partial class InheritsBasePropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, BooleanEnum>
 		{
 			private InheritsBasePropertyHandler() { }
 		
@@ -3176,7 +3157,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Entity element)
+			public override sealed BooleanEnum GetValue(Entity element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.inheritsBasePropertyStorage;
@@ -3187,11 +3168,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Entity element, global::System.String newValue)
+			public override sealed void SetValue(Entity element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -4587,19 +4568,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Nullable
 		/// </summary>
-		private global::System.String nullablePropertyStorage = "True";
+		private BooleanEnum nullablePropertyStorage = BooleanEnum.True;
 		
 		/// <summary>
 		/// Gets or sets the value of Nullable domain property.
 		/// Nullable
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Nullable.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/Nullable.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Nullable.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("True")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.True)]
 		[DslModeling::DomainObjectId("32ebc3a6-9aa6-4fec-bcfa-b84adf684a9a")]
-		public global::System.String Nullable
+		public BooleanEnum Nullable
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -4615,7 +4595,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.Nullable domain property.
 		/// </summary>
-		internal sealed partial class NullablePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class NullablePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private NullablePropertyHandler() { }
 		
@@ -4641,7 +4621,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.nullablePropertyStorage;
@@ -4652,11 +4632,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -4677,19 +4657,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Disabled
 		/// </summary>
-		private global::System.String disabledPropertyStorage = "False";
+		private BooleanEnum disabledPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of Disabled domain property.
 		/// Признак отключения проперти
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Disabled.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/Disabled.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Disabled.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("55b97295-ab7f-4ae8-b6a3-5cfee02b9be9")]
-		public global::System.String Disabled
+		public BooleanEnum Disabled
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -4705,7 +4684,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.Disabled domain property.
 		/// </summary>
-		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private DisabledPropertyHandler() { }
 		
@@ -4731,7 +4710,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.disabledPropertyStorage;
@@ -4742,11 +4721,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -4944,7 +4923,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for EnablePropertyChanged
 		/// </summary>
-		private global::System.String enablePropertyChangedPropertyStorage = "False";
+		private BooleanEnum enablePropertyChangedPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of EnablePropertyChanged domain property.
@@ -4952,13 +4931,12 @@ namespace Worm.Designer
 		/// на уровне конкретной сущности. При этом в целом для сущности отключается общий
 		/// механизм этого события.
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/EnablePropertyChanged.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/EnablePropertyChanged.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/EnablePropertyChanged.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("27b55a46-03a8-4f6d-96c8-df53b4fd52ab")]
-		public global::System.String EnablePropertyChanged
+		public BooleanEnum EnablePropertyChanged
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -4974,7 +4952,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.EnablePropertyChanged domain property.
 		/// </summary>
-		internal sealed partial class EnablePropertyChangedPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class EnablePropertyChangedPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private EnablePropertyChangedPropertyHandler() { }
 		
@@ -5000,7 +4978,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.enablePropertyChangedPropertyStorage;
@@ -5011,11 +4989,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5036,19 +5014,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for PK
 		/// </summary>
-		private global::System.String pKPropertyStorage = "false";
+		private BooleanEnum pKPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of PK domain property.
 		/// Description for Worm.Designer.Property.PK
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/PK.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/PK.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/PK.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("false")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("343f5f78-64cb-4219-bcd0-cfaf0bde39fb")]
-		public global::System.String PK
+		public BooleanEnum PK
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5064,7 +5041,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.PK domain property.
 		/// </summary>
-		internal sealed partial class PKPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class PKPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private PKPropertyHandler() { }
 		
@@ -5090,7 +5067,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.pKPropertyStorage;
@@ -5101,11 +5078,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5126,19 +5103,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Factory
 		/// </summary>
-		private global::System.String factoryPropertyStorage = "False";
+		private BooleanEnum factoryPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of Factory domain property.
 		/// Factory
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Factory.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/Factory.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Factory.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("d9353848-d1ec-4b07-9f57-d62f33cbc23c")]
-		public global::System.String Factory
+		public BooleanEnum Factory
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5154,7 +5130,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.Factory domain property.
 		/// </summary>
-		internal sealed partial class FactoryPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class FactoryPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private FactoryPropertyHandler() { }
 		
@@ -5180,7 +5156,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.factoryPropertyStorage;
@@ -5191,11 +5167,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5216,19 +5192,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for InsertDefault
 		/// </summary>
-		private global::System.String insertDefaultPropertyStorage = "False";
+		private BooleanEnum insertDefaultPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of InsertDefault domain property.
 		/// InsertDefault
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/InsertDefault.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/InsertDefault.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/InsertDefault.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("b07345b1-8507-4e4f-bcde-e9ea2bfb97da")]
-		public global::System.String InsertDefault
+		public BooleanEnum InsertDefault
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5244,7 +5219,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.InsertDefault domain property.
 		/// </summary>
-		internal sealed partial class InsertDefaultPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class InsertDefaultPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private InsertDefaultPropertyHandler() { }
 		
@@ -5270,7 +5245,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.insertDefaultPropertyStorage;
@@ -5281,11 +5256,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5306,19 +5281,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for PrimaryKey
 		/// </summary>
-		private global::System.String primaryKeyPropertyStorage = "False";
+		private BooleanEnum primaryKeyPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of PrimaryKey domain property.
 		/// Primary Key
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/PrimaryKey.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/PrimaryKey.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/PrimaryKey.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("b73e60df-a00d-4fd7-a1ee-6c00670294a7")]
-		public global::System.String PrimaryKey
+		public BooleanEnum PrimaryKey
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5334,7 +5308,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.PrimaryKey domain property.
 		/// </summary>
-		internal sealed partial class PrimaryKeyPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class PrimaryKeyPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private PrimaryKeyPropertyHandler() { }
 		
@@ -5360,7 +5334,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.primaryKeyPropertyStorage;
@@ -5371,11 +5345,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5396,19 +5370,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Private
 		/// </summary>
-		private global::System.String privatePropertyStorage = "False";
+		private BooleanEnum privatePropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of Private domain property.
 		/// Private
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Private.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/Private.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Private.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("14b6d58c-4c31-4dc9-a08a-5e2cef3166a3")]
-		public global::System.String Private
+		public BooleanEnum Private
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5424,7 +5397,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.Private domain property.
 		/// </summary>
-		internal sealed partial class PrivatePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class PrivatePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private PrivatePropertyHandler() { }
 		
@@ -5450,7 +5423,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.privatePropertyStorage;
@@ -5461,11 +5434,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5486,19 +5459,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for ReadOnly
 		/// </summary>
-		private global::System.String readOnlyPropertyStorage = "False";
+		private BooleanEnum readOnlyPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of ReadOnly domain property.
 		/// Read Only
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/ReadOnly.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/ReadOnly.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/ReadOnly.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("283e4887-f046-4928-81c4-49acbff2bb72")]
-		public global::System.String ReadOnly
+		public BooleanEnum ReadOnly
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5514,7 +5486,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.ReadOnly domain property.
 		/// </summary>
-		internal sealed partial class ReadOnlyPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class ReadOnlyPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private ReadOnlyPropertyHandler() { }
 		
@@ -5540,7 +5512,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.readOnlyPropertyStorage;
@@ -5551,11 +5523,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5576,19 +5548,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for RowVersion
 		/// </summary>
-		private global::System.String rowVersionPropertyStorage = "False";
+		private BooleanEnum rowVersionPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of RowVersion domain property.
 		/// Row Version
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/RowVersion.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/RowVersion.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/RowVersion.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("09b6faf5-7ee9-4af7-9b05-1b30ba7e9b4d")]
-		public global::System.String RowVersion
+		public BooleanEnum RowVersion
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5604,7 +5575,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.RowVersion domain property.
 		/// </summary>
-		internal sealed partial class RowVersionPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class RowVersionPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private RowVersionPropertyHandler() { }
 		
@@ -5630,7 +5601,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.rowVersionPropertyStorage;
@@ -5641,11 +5612,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5666,19 +5637,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for RV
 		/// </summary>
-		private global::System.String rVPropertyStorage = "False";
+		private BooleanEnum rVPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of RV domain property.
 		/// RV
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/RV.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/RV.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/RV.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("e1f9c393-dbbb-4479-a9f5-980deb4ab858")]
-		public global::System.String RV
+		public BooleanEnum RV
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5694,7 +5664,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.RV domain property.
 		/// </summary>
-		internal sealed partial class RVPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class RVPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private RVPropertyHandler() { }
 		
@@ -5720,7 +5690,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.rVPropertyStorage;
@@ -5731,11 +5701,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5756,19 +5726,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for SyncInsert
 		/// </summary>
-		private global::System.String syncInsertPropertyStorage = "False";
+		private BooleanEnum syncInsertPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of SyncInsert domain property.
 		/// Sync Insert
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/SyncInsert.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/SyncInsert.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/SyncInsert.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("7ef75517-7a6d-4435-ba28-12fbc277296d")]
-		public global::System.String SyncInsert
+		public BooleanEnum SyncInsert
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5784,7 +5753,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.SyncInsert domain property.
 		/// </summary>
-		internal sealed partial class SyncInsertPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class SyncInsertPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private SyncInsertPropertyHandler() { }
 		
@@ -5810,7 +5779,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.syncInsertPropertyStorage;
@@ -5821,11 +5790,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5846,19 +5815,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for SyncUpdate
 		/// </summary>
-		private global::System.String syncUpdatePropertyStorage = "False";
+		private BooleanEnum syncUpdatePropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of SyncUpdate domain property.
 		/// Sync Update
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/SyncUpdate.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/SyncUpdate.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/SyncUpdate.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("535c031e-5176-46ea-be1c-5138c176e820")]
-		public global::System.String SyncUpdate
+		public BooleanEnum SyncUpdate
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5874,7 +5842,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.SyncUpdate domain property.
 		/// </summary>
-		internal sealed partial class SyncUpdatePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class SyncUpdatePropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private SyncUpdatePropertyHandler() { }
 		
@@ -5900,7 +5868,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.syncUpdatePropertyStorage;
@@ -5911,11 +5879,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -5936,19 +5904,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Supressed
 		/// </summary>
-		private global::System.String supressedPropertyStorage = "False";
+		private BooleanEnum supressedPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of Supressed domain property.
 		/// Supressed
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.Property/Supressed.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.Property/Supressed.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.Property/Supressed.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("False")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("ba8acd0d-b334-4d0b-b706-9975b8121e26")]
-		public global::System.String Supressed
+		public BooleanEnum Supressed
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -5964,7 +5931,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the Property.Supressed domain property.
 		/// </summary>
-		internal sealed partial class SupressedPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, global::System.String>
+		internal sealed partial class SupressedPropertyHandler : DslModeling::DomainPropertyValueHandler<Property, BooleanEnum>
 		{
 			private SupressedPropertyHandler() { }
 		
@@ -5990,7 +5957,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(Property element)
+			public override sealed BooleanEnum GetValue(Property element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.supressedPropertyStorage;
@@ -6001,11 +5968,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(Property element, global::System.String newValue)
+			public override sealed void SetValue(Property element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -6331,6 +6298,7 @@ namespace Worm.Designer
 		/// Имя связанной сущности для генерации методов
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/DirectAccessor.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/DirectAccessor.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/DirectAccessor.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("4cc7eb74-c9f9-4cfd-9cf7-8f27608c036b")]
 		public global::System.String DirectAccessor
@@ -6411,18 +6379,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for DirectCascadeDelete
 		/// </summary>
-		private global::System.String directCascadeDeletePropertyStorage = "true";
+		private BooleanEnum directCascadeDeletePropertyStorage = BooleanEnum.True;
 		
 		/// <summary>
 		/// Gets or sets the value of DirectCascadeDelete domain property.
 		/// Kаскадное удаление
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/DirectCascadeDelete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/DirectCascadeDelete.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/DirectCascadeDelete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("true")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.True)]
 		[DslModeling::DomainObjectId("45766242-ccce-4e5a-8ed7-14fff5253190")]
-		public global::System.String DirectCascadeDelete
+		public BooleanEnum DirectCascadeDelete
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -6438,7 +6406,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the SelfRelation.DirectCascadeDelete domain property.
 		/// </summary>
-		internal sealed partial class DirectCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, global::System.String>
+		internal sealed partial class DirectCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, BooleanEnum>
 		{
 			private DirectCascadeDeletePropertyHandler() { }
 		
@@ -6464,7 +6432,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(SelfRelation element)
+			public override sealed BooleanEnum GetValue(SelfRelation element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.directCascadeDeletePropertyStorage;
@@ -6475,11 +6443,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(SelfRelation element, global::System.String newValue)
+			public override sealed void SetValue(SelfRelation element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -6507,6 +6475,7 @@ namespace Worm.Designer
 		/// Имя поля таблицы связи
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/DirectFieldName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/DirectFieldName.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/DirectFieldName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("18d076fb-382a-4f46-ae6d-5cf468778ff1")]
 		public global::System.String DirectFieldName
@@ -6587,18 +6556,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for Disabled
 		/// </summary>
-		private global::System.String disabledPropertyStorage = "false";
+		private BooleanEnum disabledPropertyStorage = BooleanEnum.False;
 		
 		/// <summary>
 		/// Gets or sets the value of Disabled domain property.
 		/// Disable relation
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/Disabled.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/Disabled.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/Disabled.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("false")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.False)]
 		[DslModeling::DomainObjectId("00f08749-66ca-48dd-93d9-5952d87203fb")]
-		public global::System.String Disabled
+		public BooleanEnum Disabled
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -6614,7 +6583,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the SelfRelation.Disabled domain property.
 		/// </summary>
-		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, global::System.String>
+		internal sealed partial class DisabledPropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, BooleanEnum>
 		{
 			private DisabledPropertyHandler() { }
 		
@@ -6640,7 +6609,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(SelfRelation element)
+			public override sealed BooleanEnum GetValue(SelfRelation element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.disabledPropertyStorage;
@@ -6651,11 +6620,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(SelfRelation element, global::System.String newValue)
+			public override sealed void SetValue(SelfRelation element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -6683,6 +6652,7 @@ namespace Worm.Designer
 		/// Имя связанной сущности для генерации методов
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/ReverseAccessor.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/ReverseAccessor.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/ReverseAccessor.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("763e2750-9675-41b9-8cce-3250b1032a5a")]
 		public global::System.String ReverseAccessor
@@ -6763,18 +6733,18 @@ namespace Worm.Designer
 		/// <summary>
 		/// Storage for ReverseCascadeDelete
 		/// </summary>
-		private global::System.String reverseCascadeDeletePropertyStorage = "true";
+		private BooleanEnum reverseCascadeDeletePropertyStorage = BooleanEnum.True;
 		
 		/// <summary>
 		/// Gets or sets the value of ReverseCascadeDelete domain property.
 		/// Каскадное удаление
 		/// </summary>
-		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/ReverseCascadeDelete.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/ReverseCascadeDelete.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/ReverseCascadeDelete.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
-		[global::System.ComponentModel.DefaultValue("true")]
+		[global::System.ComponentModel.DefaultValue(BooleanEnum.True)]
 		[DslModeling::DomainObjectId("ba170593-27b7-4523-9d3a-a6551c492c26")]
-		public global::System.String ReverseCascadeDelete
+		public BooleanEnum ReverseCascadeDelete
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
@@ -6790,7 +6760,7 @@ namespace Worm.Designer
 		/// <summary>
 		/// Value handler for the SelfRelation.ReverseCascadeDelete domain property.
 		/// </summary>
-		internal sealed partial class ReverseCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, global::System.String>
+		internal sealed partial class ReverseCascadeDeletePropertyHandler : DslModeling::DomainPropertyValueHandler<SelfRelation, BooleanEnum>
 		{
 			private ReverseCascadeDeletePropertyHandler() { }
 		
@@ -6816,7 +6786,7 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <returns>Property value.</returns>
-			public override sealed global::System.String GetValue(SelfRelation element)
+			public override sealed BooleanEnum GetValue(SelfRelation element)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 				return element.reverseCascadeDeletePropertyStorage;
@@ -6827,11 +6797,11 @@ namespace Worm.Designer
 			/// </summary>
 			/// <param name="element">Element which owns the property.</param>
 			/// <param name="newValue">New property value.</param>
-			public override sealed void SetValue(SelfRelation element, global::System.String newValue)
+			public override sealed void SetValue(SelfRelation element, BooleanEnum newValue)
 			{
 				if (element == null) throw new global::System.ArgumentNullException("element");
 		
-				global::System.String oldValue = GetValue(element);
+				BooleanEnum oldValue = GetValue(element);
 				if (newValue != oldValue)
 				{
 					ValueChanging(element, oldValue, newValue);
@@ -6859,6 +6829,7 @@ namespace Worm.Designer
 		/// Имя поля таблицы связи
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/ReverseFieldName.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/ReverseFieldName.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/ReverseFieldName.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("d4f2dffb-91fb-419b-b5ca-aca2fa83ef3b")]
 		public global::System.String ReverseFieldName
@@ -6947,6 +6918,7 @@ namespace Worm.Designer
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.TableUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/Table.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/Table.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/Table.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("e0558ce9-8a97-43a2-b33c-ab6c6e1bcde8")]
 		public global::System.String Table
@@ -7034,6 +7006,7 @@ namespace Worm.Designer
 		/// Сущность реализующая связь
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/UnderlyingEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/UnderlyingEntity.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/UnderlyingEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("e4d62605-d81b-46e7-a5d6-6266e1ae9a1d")]
 		public global::System.String UnderlyingEntity
@@ -7122,6 +7095,7 @@ namespace Worm.Designer
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.TypeUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/DirectAccessedEntityType.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/DirectAccessedEntityType.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/DirectAccessedEntityType.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("9c577e94-1d95-40ab-af19-34949cd8de47")]
 		public global::System.String DirectAccessedEntityType
@@ -7210,6 +7184,7 @@ namespace Worm.Designer
 		/// </summary>
 		[System.ComponentModel.Editor(typeof(Worm.Designer.TypeUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/ReverseAccessedEntityType.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/ReverseAccessedEntityType.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/ReverseAccessedEntityType.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::DomainObjectId("03fe3ca8-b3f8-4ac6-bd2c-10c8247cf2fc")]
 		public global::System.String ReverseAccessedEntityType
@@ -7297,6 +7272,7 @@ namespace Worm.Designer
 		/// Name
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.SelfRelation/Name.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.SelfRelation/Name.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.SelfRelation/Name.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslModeling::ElementName]
 		[DslModeling::DomainObjectId("f26ad602-9dad-479d-80f7-fb49403bd323")]
@@ -7393,7 +7369,7 @@ namespace Worm.Designer
 {
 	/// <summary>
 	/// DomainClass WormType
-	/// Description for Worm.Designer.WormType
+	/// Worm type
 	/// </summary>
 	[DslDesign::DisplayNameResource("Worm.Designer.WormType.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 	[DslDesign::DescriptionResource("Worm.Designer.WormType.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -7442,7 +7418,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of Name domain property.
-		/// Description for Worm.Designer.WormType.Name
+		/// Name
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormType/Name.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormType/Name.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -7530,7 +7506,7 @@ namespace Worm.Designer
 		
 		/// <summary>
 		/// Gets or sets the value of IdProperty domain property.
-		/// Description for Worm.Designer.WormType.Id Property
+		/// Id Property
 		/// </summary>
 		[DslDesign::DisplayNameResource("Worm.Designer.WormType/IdProperty.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.WormType/IdProperty.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
@@ -7597,6 +7573,181 @@ namespace Worm.Designer
 				{
 					ValueChanging(element, oldValue, newValue);
 					element.idPropertyPropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region Type domain property code
+		
+		/// <summary>
+		/// Type domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid TypeDomainPropertyId = new global::System.Guid(0x7b0b5500, 0x9e84, 0x483f, 0x88, 0x6a, 0xc5, 0x77, 0x18, 0xe6, 0x47, 0x29);
+		
+		/// <summary>
+		/// Storage for Type
+		/// </summary>
+		private TypeEnum typePropertyStorage;
+		
+		/// <summary>
+		/// Gets or sets the value of Type domain property.
+		/// Type
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormType/Type.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormType/Type.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslModeling::DomainObjectId("7b0b5500-9e84-483f-886a-c57718e64729")]
+		public TypeEnum Type
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return typePropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				TypePropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormType.Type domain property.
+		/// </summary>
+		internal sealed partial class TypePropertyHandler : DslModeling::DomainPropertyValueHandler<WormType, TypeEnum>
+		{
+			private TypePropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormType.Type domain property value handler.
+			/// </summary>
+			public static readonly TypePropertyHandler Instance = new TypePropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormType.Type domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return TypeDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed TypeEnum GetValue(WormType element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.typePropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormType element, TypeEnum newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				TypeEnum oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.typePropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
+		#region Hint domain property code
+		
+		/// <summary>
+		/// Hint domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid HintDomainPropertyId = new global::System.Guid(0xb0d82e91, 0xdc64, 0x4540, 0x88, 0x1f, 0xcb, 0x84, 0xd4, 0xc6, 0x54, 0x91);
+		
+		/// <summary>
+		/// Storage for Hint
+		/// </summary>
+		private global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags hintPropertyStorage;
+		
+		/// <summary>
+		/// Gets or sets the value of Hint domain property.
+		/// Hint
+		/// </summary>
+		[DslDesign::DisplayNameResource("Worm.Designer.WormType/Hint.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.WormType/Hint.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.ReadOnly(true)]
+		[DslModeling::DomainObjectId("b0d82e91-dc64-4540-881f-cb84d4c65491")]
+		public global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags Hint
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return hintPropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				HintPropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the WormType.Hint domain property.
+		/// </summary>
+		internal sealed partial class HintPropertyHandler : DslModeling::DomainPropertyValueHandler<WormType, global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags>
+		{
+			private HintPropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the WormType.Hint domain property value handler.
+			/// </summary>
+			public static readonly HintPropertyHandler Instance = new HintPropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the WormType.Hint domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return HintDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags GetValue(WormType element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.hintPropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(WormType element, global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.hintPropertyStorage = newValue;
 					ValueChanged(element, oldValue, newValue);
 				}
 			}

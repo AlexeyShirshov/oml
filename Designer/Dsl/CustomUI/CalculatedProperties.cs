@@ -73,10 +73,11 @@ namespace Worm.Designer
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
                         string idProperty = Utils.GetIdProperty(property.Type);
-                        if (idProperty != null && bool.Parse(property.Nullable))
+                        if (idProperty != null && property.Nullable == BooleanEnum.True)
                         {
                             idProperty += "nullable";
                         }
+                        type.Type = idProperty == null ? TypeEnum.UserType : TypeEnum.ClrType;
                         type.IdProperty = idProperty ?? "t" + property.Type;
                        
                        
@@ -114,10 +115,11 @@ namespace Worm.Designer
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
                         string idProperty = Utils.GetIdProperty(property.Type);
-                        if (idProperty != null && bool.Parse(property.Nullable))
+                        if (idProperty != null && property.Nullable == BooleanEnum.True)
                         {
                             idProperty += "nullable";
                         }
+                        type.Type = idProperty == null ? TypeEnum.UserType : TypeEnum.ClrType;
                         type.IdProperty = idProperty ?? "t" + property.Type;
                     }
 
@@ -184,7 +186,7 @@ namespace Worm.Designer
                             property.Entity.WormModel.Types.Find(t => t.Name == property.Type).Delete();
                         }
 
-                        if (bool.Parse(property.Supressed))
+                        if (property.Supressed == BooleanEnum.True)
                         {
                             List<SupressedProperty> list = property.Entity.SupressedProperties.FindAll(p => p.Name == property.Name);
                             foreach (SupressedProperty sp in list)
@@ -226,7 +228,7 @@ namespace Worm.Designer
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
                         string idProperty = Utils.GetIdProperty(property.Type);
-
+                        type.Type = idProperty == null ? TypeEnum.UserType : TypeEnum.ClrType;
                         type.IdProperty = idProperty ?? "t" + property.Type;
 
                     }
@@ -234,7 +236,7 @@ namespace Worm.Designer
                     List<Property> list = property.Entity.Properties.FindAll(p => p.Name == property.Name);
                     foreach (Property p in list)
                     {
-                        p.Supressed = "True";
+                        p.Supressed = BooleanEnum.True;
                     }
 
                     txAdd.Commit();
@@ -266,7 +268,7 @@ namespace Worm.Designer
                         type.WormModel = property.Entity.WormModel;
                         type.Name = property.Type;
                         string idProperty = Utils.GetIdProperty(property.Type);
-
+                        type.Type = idProperty == null ? TypeEnum.UserType : TypeEnum.ClrType;
                         type.IdProperty = idProperty ?? "t" + property.Type;
                     }
 
@@ -278,7 +280,7 @@ namespace Worm.Designer
                             List<Property> list = property.Entity.Properties.FindAll(p => p.Name == (string)(e.OldValue));
                             foreach (Property p in list)
                             {
-                                p.Supressed = "False";
+                                p.Supressed =  BooleanEnum.False;
                             }
                         }
 
@@ -287,7 +289,7 @@ namespace Worm.Designer
                             List<Property> list = property.Entity.Properties.FindAll(p => p.Name == (string)(e.NewValue));
                             foreach (Property p in list)
                             {
-                                p.Supressed = "True";
+                                p.Supressed =  BooleanEnum.True;
                             }
                         }
                     }
@@ -332,7 +334,7 @@ namespace Worm.Designer
                  List<Property> list = property.Entity.Properties.FindAll(p => p.Name == property.Name);
                  foreach (Property p in list)
                  {
-                     p.Supressed = "False";
+                     p.Supressed = BooleanEnum.False;
                  }
 
                  txAdd.Commit();
@@ -430,6 +432,7 @@ namespace Worm.Designer
                         WormType type = new WormType(entity.WormModel.Store);
                         type.WormModel = entity.WormModel;
                         type.Name = entity.Name;
+                        type.Type = TypeEnum.EntityType;
                         type.IdProperty = "t" + entity.Name;
                         txAdd.Commit();
 
@@ -464,6 +467,7 @@ namespace Worm.Designer
                         type.WormModel = entity.WormModel;
                         type.Name = entity.Name;
                         type.IdProperty = "t" + entity.Name;
+                        type.Type = TypeEnum.EntityType;
                         txAdd.Commit();
 
                     }
@@ -634,6 +638,7 @@ namespace Worm.Designer
                         type.WormModel = relation.Entity.WormModel;
                         type.Name = relation.DirectAccessedEntityType;
                         type.IdProperty = "t" + type.Name;
+                        type.Type = TypeEnum.EntityType;
                         txAdd.Commit();
 
                     }
@@ -646,6 +651,7 @@ namespace Worm.Designer
                         WormType type = new WormType(relation.Entity.WormModel.Store);
                         type.WormModel = relation.Entity.WormModel;
                         type.Name = relation.ReverseAccessedEntityType;
+                        type.Type = TypeEnum.EntityType;
                         type.IdProperty = "t" + type.Name;
                         txAdd.Commit();
 
@@ -706,6 +712,30 @@ namespace Worm.Designer
     }
 
 
+    [RuleOn(typeof(WormType), FireTime = TimeToFire.TopLevelCommit)]
+    public class WormTypeChangeRule : ChangeRule
+    {
+        public override void ElementPropertyChanged(ElementPropertyChangedEventArgs e)
+        {
+            if (e == null)
+            {
+                throw new ArgumentNullException("e");
+            }
+
+            WormType wormType = e.ModelElement as WormType;
+            if (wormType != null)
+            {
+                System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+                DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
+                
+                if (wormType.Type == TypeEnum.UserType)
+                {
+                    //
+                }
+            }
+            base.ElementPropertyChanged(e);
+        }
+    }
 
 
     [RuleOn(typeof(EntityReferencesTargetEntities), FireTime = TimeToFire.TopLevelCommit)]
@@ -750,6 +780,7 @@ namespace Worm.Designer
                             WormType type = new WormType(relation.TargetEntity.WormModel.Store);
                             type.WormModel = relation.TargetEntity.WormModel;
                             type.Name = relation.LeftAccessedEntityType;
+                            type.Type = TypeEnum.EntityType;
                             type.IdProperty = "t" + relation.SourceEntity.Name;
                             txAdd.Commit();
 
@@ -763,6 +794,7 @@ namespace Worm.Designer
                             WormType type = new WormType(relation.TargetEntity.WormModel.Store);
                             type.WormModel = relation.TargetEntity.WormModel;
                             type.Name = relation.RightAccessedEntityType;
+                            type.Type = TypeEnum.EntityType;
                             type.IdProperty = "t" + relation.TargetEntity.Name;
                             txAdd.Commit();
 
@@ -775,17 +807,22 @@ namespace Worm.Designer
                     using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
                     {
                         SelfRelation selfRelation = new SelfRelation(relation.TargetEntity.WormModel.Store);
-                        if (string.IsNullOrEmpty(relation.LeftEntity))
-                        {
-                            selfRelation.Entity = relation.TargetEntity;
-                        }                       
+                        selfRelation.Entity = relation.TargetEntity;
                         if (string.IsNullOrEmpty(relation.LeftAccessedEntityType))
                         {
                             selfRelation.DirectAccessedEntityType = relation.SourceEntity.Name;
                         }
+                        else
+                        {
+                            selfRelation.DirectAccessedEntityType = relation.LeftAccessedEntityType;
+                        }
                         if (string.IsNullOrEmpty(relation.RightAccessedEntityType))
                         {
                             selfRelation.ReverseAccessedEntityType = relation.TargetEntity.Name;
+                        }
+                        else
+                        {
+                            selfRelation.ReverseAccessedEntityType = relation.RightAccessedEntityType;
                         }
 
                         selfRelation.Disabled = relation.Disabled;
@@ -810,6 +847,7 @@ namespace Worm.Designer
                         {
                             WormType type = new WormType(relation.TargetEntity.WormModel.Store);
                             type.WormModel = relation.TargetEntity.WormModel;
+                            type.Type = TypeEnum.EntityType;
                             type.Name = relation.LeftAccessedEntityType;
                             type.IdProperty = "t" + relation.SourceEntity.Name;                            
                         }
@@ -845,6 +883,7 @@ namespace Worm.Designer
                             WormType type = new WormType(relation.TargetEntity.WormModel.Store);
                             type.WormModel = relation.TargetEntity.WormModel;
                             type.Name = relation.LeftAccessedEntityType;
+                            type.Type = TypeEnum.EntityType;
                             type.IdProperty = "t" + relation.SourceEntity.Name;
                             txAdd.Commit();
 
@@ -857,6 +896,7 @@ namespace Worm.Designer
 
                             WormType type = new WormType(relation.TargetEntity.WormModel.Store);
                             type.WormModel = relation.TargetEntity.WormModel;
+                            type.Type = TypeEnum.EntityType;
                             type.Name = relation.RightAccessedEntityType;
                             type.IdProperty = "t" + relation.TargetEntity.Name;
                             txAdd.Commit();
@@ -899,6 +939,7 @@ namespace Worm.Designer
                             WormType type = new WormType(relation.TargetEntity.WormModel.Store);
                             type.WormModel = relation.TargetEntity.WormModel;
                             type.Name = relation.LeftAccessedEntityType;
+                            type.Type = TypeEnum.EntityType;
                             type.IdProperty = "t" + selfRelation.Entity.Name;
                             
                         }
@@ -932,7 +973,7 @@ namespace Worm.Designer
             , typeof(EntityChangeRule), typeof(SupressedPropertyChangeRule),  
             typeof( EntityReferencesTargetEntitiesChangeRule),
             typeof(EntityDeleteRule), typeof(PropertyDeleteRule), typeof(SupressedPropertyDeleteRule),
-            typeof(TableDeleteRule), typeof(DesignerDiagramAddRule)};
+            typeof(TableDeleteRule), typeof(DesignerDiagramAddRule), typeof(WormTypeChangeRule)};
         }
 
        
@@ -1041,7 +1082,7 @@ namespace Worm.Designer
         public static string GetIconIndex(Property property)
         {
             string key = "";
-            if (bool.Parse(property.PrimaryKey))
+            if (property.PrimaryKey == BooleanEnum.True)
             {
                 switch (property.AccessLevel)
                 {

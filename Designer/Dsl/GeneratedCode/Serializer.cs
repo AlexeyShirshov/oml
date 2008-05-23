@@ -220,14 +220,14 @@ namespace Worm.Designer
 				string attribSplit = reader.GetAttribute("split");
 				if (attribSplit != null)
 				{
-					global::System.String valueOfSplit;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSplit), out valueOfSplit))
+					BooleanEnum valueOfSplit;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSplit), out valueOfSplit))
 					{
 						instanceOfWormModel.Split = valueOfSplit;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "split", typeof(global::System.String), attribSplit);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "split", typeof(BooleanEnum), attribSplit);
 					}
 				}
 			}
@@ -288,14 +288,14 @@ namespace Worm.Designer
 				string attribDerivedGenericMembersRequireConstraits = reader.GetAttribute("derivedGenericMembersRequireConstraits");
 				if (attribDerivedGenericMembersRequireConstraits != null)
 				{
-					global::System.String valueOfDerivedGenericMembersRequireConstraits;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDerivedGenericMembersRequireConstraits), out valueOfDerivedGenericMembersRequireConstraits))
+					BooleanEnum valueOfDerivedGenericMembersRequireConstraits;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDerivedGenericMembersRequireConstraits), out valueOfDerivedGenericMembersRequireConstraits))
 					{
 						instanceOfWormModel.DerivedGenericMembersRequireConstraits = valueOfDerivedGenericMembersRequireConstraits;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "derivedGenericMembersRequireConstraits", typeof(global::System.String), attribDerivedGenericMembersRequireConstraits);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "derivedGenericMembersRequireConstraits", typeof(BooleanEnum), attribDerivedGenericMembersRequireConstraits);
 					}
 				}
 			}
@@ -305,14 +305,14 @@ namespace Worm.Designer
 				string attribMethodsInsteadParametrizedProperties = reader.GetAttribute("methodsInsteadParametrizedProperties");
 				if (attribMethodsInsteadParametrizedProperties != null)
 				{
-					global::System.String valueOfMethodsInsteadParametrizedProperties;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribMethodsInsteadParametrizedProperties), out valueOfMethodsInsteadParametrizedProperties))
+					BooleanEnum valueOfMethodsInsteadParametrizedProperties;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribMethodsInsteadParametrizedProperties), out valueOfMethodsInsteadParametrizedProperties))
 					{
 						instanceOfWormModel.MethodsInsteadParametrizedProperties = valueOfMethodsInsteadParametrizedProperties;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "methodsInsteadParametrizedProperties", typeof(global::System.String), attribMethodsInsteadParametrizedProperties);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "methodsInsteadParametrizedProperties", typeof(BooleanEnum), attribMethodsInsteadParametrizedProperties);
 					}
 				}
 			}
@@ -322,14 +322,14 @@ namespace Worm.Designer
 				string attribAddOptionsStrict = reader.GetAttribute("addOptionsStrict");
 				if (attribAddOptionsStrict != null)
 				{
-					global::System.String valueOfAddOptionsStrict;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribAddOptionsStrict), out valueOfAddOptionsStrict))
+					BooleanEnum valueOfAddOptionsStrict;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribAddOptionsStrict), out valueOfAddOptionsStrict))
 					{
 						instanceOfWormModel.AddOptionsStrict = valueOfAddOptionsStrict;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "addOptionsStrict", typeof(global::System.String), attribAddOptionsStrict);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "addOptionsStrict", typeof(BooleanEnum), attribAddOptionsStrict);
 					}
 				}
 			}
@@ -339,14 +339,14 @@ namespace Worm.Designer
 				string attribOptionsStrictOn = reader.GetAttribute("optionsStrictOn");
 				if (attribOptionsStrictOn != null)
 				{
-					global::System.String valueOfOptionsStrictOn;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribOptionsStrictOn), out valueOfOptionsStrictOn))
+					BooleanEnum valueOfOptionsStrictOn;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribOptionsStrictOn), out valueOfOptionsStrictOn))
 					{
 						instanceOfWormModel.OptionsStrictOn = valueOfOptionsStrictOn;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "optionsStrictOn", typeof(global::System.String), attribOptionsStrictOn);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "optionsStrictOn", typeof(BooleanEnum), attribOptionsStrictOn);
 					}
 				}
 			}
@@ -356,14 +356,14 @@ namespace Worm.Designer
 				string attribAddOptionsExplicit = reader.GetAttribute("addOptionsExplicit");
 				if (attribAddOptionsExplicit != null)
 				{
-					global::System.String valueOfAddOptionsExplicit;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribAddOptionsExplicit), out valueOfAddOptionsExplicit))
+					BooleanEnum valueOfAddOptionsExplicit;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribAddOptionsExplicit), out valueOfAddOptionsExplicit))
 					{
 						instanceOfWormModel.AddOptionsExplicit = valueOfAddOptionsExplicit;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "addOptionsExplicit", typeof(global::System.String), attribAddOptionsExplicit);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "addOptionsExplicit", typeof(BooleanEnum), attribAddOptionsExplicit);
 					}
 				}
 			}
@@ -373,14 +373,14 @@ namespace Worm.Designer
 				string attribOptionsExplicitOn = reader.GetAttribute("optionsExplicitOn");
 				if (attribOptionsExplicitOn != null)
 				{
-					global::System.String valueOfOptionsExplicitOn;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribOptionsExplicitOn), out valueOfOptionsExplicitOn))
+					BooleanEnum valueOfOptionsExplicitOn;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribOptionsExplicitOn), out valueOfOptionsExplicitOn))
 					{
 						instanceOfWormModel.OptionsExplicitOn = valueOfOptionsExplicitOn;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "optionsExplicitOn", typeof(global::System.String), attribOptionsExplicitOn);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "optionsExplicitOn", typeof(BooleanEnum), attribOptionsExplicitOn);
 					}
 				}
 			}
@@ -390,14 +390,14 @@ namespace Worm.Designer
 				string attribGenerateCSUsingStatement = reader.GetAttribute("generateCSUsingStatement");
 				if (attribGenerateCSUsingStatement != null)
 				{
-					global::System.String valueOfGenerateCSUsingStatement;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCSUsingStatement), out valueOfGenerateCSUsingStatement))
+					BooleanEnum valueOfGenerateCSUsingStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCSUsingStatement), out valueOfGenerateCSUsingStatement))
 					{
 						instanceOfWormModel.GenerateCSUsingStatement = valueOfGenerateCSUsingStatement;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCSUsingStatement", typeof(global::System.String), attribGenerateCSUsingStatement);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCSUsingStatement", typeof(BooleanEnum), attribGenerateCSUsingStatement);
 					}
 				}
 			}
@@ -407,14 +407,14 @@ namespace Worm.Designer
 				string attribGenerateVBUsingStatement = reader.GetAttribute("generateVBUsingStatement");
 				if (attribGenerateVBUsingStatement != null)
 				{
-					global::System.String valueOfGenerateVBUsingStatement;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVBUsingStatement), out valueOfGenerateVBUsingStatement))
+					BooleanEnum valueOfGenerateVBUsingStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVBUsingStatement), out valueOfGenerateVBUsingStatement))
 					{
 						instanceOfWormModel.GenerateVBUsingStatement = valueOfGenerateVBUsingStatement;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVBUsingStatement", typeof(global::System.String), attribGenerateVBUsingStatement);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVBUsingStatement", typeof(BooleanEnum), attribGenerateVBUsingStatement);
 					}
 				}
 			}
@@ -424,14 +424,14 @@ namespace Worm.Designer
 				string attribSafeUnboxToEnum = reader.GetAttribute("safeUnboxToEnum");
 				if (attribSafeUnboxToEnum != null)
 				{
-					global::System.String valueOfSafeUnboxToEnum;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSafeUnboxToEnum), out valueOfSafeUnboxToEnum))
+					BooleanEnum valueOfSafeUnboxToEnum;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSafeUnboxToEnum), out valueOfSafeUnboxToEnum))
 					{
 						instanceOfWormModel.SafeUnboxToEnum = valueOfSafeUnboxToEnum;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "safeUnboxToEnum", typeof(global::System.String), attribSafeUnboxToEnum);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "safeUnboxToEnum", typeof(BooleanEnum), attribSafeUnboxToEnum);
 					}
 				}
 			}
@@ -441,14 +441,14 @@ namespace Worm.Designer
 				string attribGenerateCsIsStatement = reader.GetAttribute("generateCsIsStatement");
 				if (attribGenerateCsIsStatement != null)
 				{
-					global::System.String valueOfGenerateCsIsStatement;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCsIsStatement), out valueOfGenerateCsIsStatement))
+					BooleanEnum valueOfGenerateCsIsStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCsIsStatement), out valueOfGenerateCsIsStatement))
 					{
 						instanceOfWormModel.GenerateCsIsStatement = valueOfGenerateCsIsStatement;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCsIsStatement", typeof(global::System.String), attribGenerateCsIsStatement);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCsIsStatement", typeof(BooleanEnum), attribGenerateCsIsStatement);
 					}
 				}
 			}
@@ -458,14 +458,14 @@ namespace Worm.Designer
 				string attribGenerateVbTypeOfIsStatement = reader.GetAttribute("generateVbTypeOfIsStatement");
 				if (attribGenerateVbTypeOfIsStatement != null)
 				{
-					global::System.String valueOfGenerateVbTypeOfIsStatement;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVbTypeOfIsStatement), out valueOfGenerateVbTypeOfIsStatement))
+					BooleanEnum valueOfGenerateVbTypeOfIsStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVbTypeOfIsStatement), out valueOfGenerateVbTypeOfIsStatement))
 					{
 						instanceOfWormModel.GenerateVbTypeOfIsStatement = valueOfGenerateVbTypeOfIsStatement;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVbTypeOfIsStatement", typeof(global::System.String), attribGenerateVbTypeOfIsStatement);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVbTypeOfIsStatement", typeof(BooleanEnum), attribGenerateVbTypeOfIsStatement);
 					}
 				}
 			}
@@ -475,14 +475,14 @@ namespace Worm.Designer
 				string attribGenerateCsAsStatement = reader.GetAttribute("generateCsAsStatement");
 				if (attribGenerateCsAsStatement != null)
 				{
-					global::System.String valueOfGenerateCsAsStatement;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCsAsStatement), out valueOfGenerateCsAsStatement))
+					BooleanEnum valueOfGenerateCsAsStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCsAsStatement), out valueOfGenerateCsAsStatement))
 					{
 						instanceOfWormModel.GenerateCsAsStatement = valueOfGenerateCsAsStatement;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCsAsStatement", typeof(global::System.String), attribGenerateCsAsStatement);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCsAsStatement", typeof(BooleanEnum), attribGenerateCsAsStatement);
 					}
 				}
 			}
@@ -492,14 +492,14 @@ namespace Worm.Designer
 				string attribGenerateVbTryCastStatement = reader.GetAttribute("generateVbTryCastStatement");
 				if (attribGenerateVbTryCastStatement != null)
 				{
-					global::System.String valueOfGenerateVbTryCastStatement;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVbTryCastStatement), out valueOfGenerateVbTryCastStatement))
+					BooleanEnum valueOfGenerateVbTryCastStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVbTryCastStatement), out valueOfGenerateVbTryCastStatement))
 					{
 						instanceOfWormModel.GenerateVbTryCastStatement = valueOfGenerateVbTryCastStatement;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVbTryCastStatement", typeof(global::System.String), attribGenerateVbTryCastStatement);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVbTryCastStatement", typeof(BooleanEnum), attribGenerateVbTryCastStatement);
 					}
 				}
 			}
@@ -509,14 +509,14 @@ namespace Worm.Designer
 				string attribGenerateCsLockStatement = reader.GetAttribute("generateCsLockStatement");
 				if (attribGenerateCsLockStatement != null)
 				{
-					global::System.String valueOfGenerateCsLockStatement;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCsLockStatement), out valueOfGenerateCsLockStatement))
+					BooleanEnum valueOfGenerateCsLockStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateCsLockStatement), out valueOfGenerateCsLockStatement))
 					{
 						instanceOfWormModel.GenerateCsLockStatement = valueOfGenerateCsLockStatement;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCsLockStatement", typeof(global::System.String), attribGenerateCsLockStatement);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateCsLockStatement", typeof(BooleanEnum), attribGenerateCsLockStatement);
 					}
 				}
 			}
@@ -526,14 +526,14 @@ namespace Worm.Designer
 				string attribGenerateVbSyncLockStatement = reader.GetAttribute("generateVbSyncLockStatement");
 				if (attribGenerateVbSyncLockStatement != null)
 				{
-					global::System.String valueOfGenerateVbSyncLockStatement;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVbSyncLockStatement), out valueOfGenerateVbSyncLockStatement))
+					BooleanEnum valueOfGenerateVbSyncLockStatement;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribGenerateVbSyncLockStatement), out valueOfGenerateVbSyncLockStatement))
 					{
 						instanceOfWormModel.GenerateVbSyncLockStatement = valueOfGenerateVbSyncLockStatement;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVbSyncLockStatement", typeof(global::System.String), attribGenerateVbSyncLockStatement);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "generateVbSyncLockStatement", typeof(BooleanEnum), attribGenerateVbSyncLockStatement);
 					}
 				}
 			}
@@ -1218,12 +1218,13 @@ namespace Worm.Designer
 			// Split
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.Split;
+				BooleanEnum propValue = instanceOfWormModel.Split;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("split", propValue);
+						writer.WriteAttributeString("split", serializedPropValue);
 					}
 				}
 			}
@@ -1264,180 +1265,195 @@ namespace Worm.Designer
 			// DerivedGenericMembersRequireConstraits
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.DerivedGenericMembersRequireConstraits;
+				BooleanEnum propValue = instanceOfWormModel.DerivedGenericMembersRequireConstraits;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("derivedGenericMembersRequireConstraits", propValue);
+						writer.WriteAttributeString("derivedGenericMembersRequireConstraits", serializedPropValue);
 					}
 				}
 			}
 			// MethodsInsteadParametrizedProperties
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.MethodsInsteadParametrizedProperties;
+				BooleanEnum propValue = instanceOfWormModel.MethodsInsteadParametrizedProperties;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("methodsInsteadParametrizedProperties", propValue);
+						writer.WriteAttributeString("methodsInsteadParametrizedProperties", serializedPropValue);
 					}
 				}
 			}
 			// AddOptionsStrict
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.AddOptionsStrict;
+				BooleanEnum propValue = instanceOfWormModel.AddOptionsStrict;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("addOptionsStrict", propValue);
+						writer.WriteAttributeString("addOptionsStrict", serializedPropValue);
 					}
 				}
 			}
 			// OptionsStrictOn
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.OptionsStrictOn;
+				BooleanEnum propValue = instanceOfWormModel.OptionsStrictOn;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("optionsStrictOn", propValue);
+						writer.WriteAttributeString("optionsStrictOn", serializedPropValue);
 					}
 				}
 			}
 			// AddOptionsExplicit
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.AddOptionsExplicit;
+				BooleanEnum propValue = instanceOfWormModel.AddOptionsExplicit;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("addOptionsExplicit", propValue);
+						writer.WriteAttributeString("addOptionsExplicit", serializedPropValue);
 					}
 				}
 			}
 			// OptionsExplicitOn
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.OptionsExplicitOn;
+				BooleanEnum propValue = instanceOfWormModel.OptionsExplicitOn;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("optionsExplicitOn", propValue);
+						writer.WriteAttributeString("optionsExplicitOn", serializedPropValue);
 					}
 				}
 			}
 			// GenerateCSUsingStatement
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.GenerateCSUsingStatement;
+				BooleanEnum propValue = instanceOfWormModel.GenerateCSUsingStatement;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("generateCSUsingStatement", propValue);
+						writer.WriteAttributeString("generateCSUsingStatement", serializedPropValue);
 					}
 				}
 			}
 			// GenerateVBUsingStatement
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.GenerateVBUsingStatement;
+				BooleanEnum propValue = instanceOfWormModel.GenerateVBUsingStatement;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("generateVBUsingStatement", propValue);
+						writer.WriteAttributeString("generateVBUsingStatement", serializedPropValue);
 					}
 				}
 			}
 			// SafeUnboxToEnum
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.SafeUnboxToEnum;
+				BooleanEnum propValue = instanceOfWormModel.SafeUnboxToEnum;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("safeUnboxToEnum", propValue);
+						writer.WriteAttributeString("safeUnboxToEnum", serializedPropValue);
 					}
 				}
 			}
 			// GenerateCsIsStatement
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.GenerateCsIsStatement;
+				BooleanEnum propValue = instanceOfWormModel.GenerateCsIsStatement;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("generateCsIsStatement", propValue);
+						writer.WriteAttributeString("generateCsIsStatement", serializedPropValue);
 					}
 				}
 			}
 			// GenerateVbTypeOfIsStatement
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.GenerateVbTypeOfIsStatement;
+				BooleanEnum propValue = instanceOfWormModel.GenerateVbTypeOfIsStatement;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("generateVbTypeOfIsStatement", propValue);
+						writer.WriteAttributeString("generateVbTypeOfIsStatement", serializedPropValue);
 					}
 				}
 			}
 			// GenerateCsAsStatement
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.GenerateCsAsStatement;
+				BooleanEnum propValue = instanceOfWormModel.GenerateCsAsStatement;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("generateCsAsStatement", propValue);
+						writer.WriteAttributeString("generateCsAsStatement", serializedPropValue);
 					}
 				}
 			}
 			// GenerateVbTryCastStatement
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.GenerateVbTryCastStatement;
+				BooleanEnum propValue = instanceOfWormModel.GenerateVbTryCastStatement;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("generateVbTryCastStatement", propValue);
+						writer.WriteAttributeString("generateVbTryCastStatement", serializedPropValue);
 					}
 				}
 			}
 			// GenerateCsLockStatement
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.GenerateCsLockStatement;
+				BooleanEnum propValue = instanceOfWormModel.GenerateCsLockStatement;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("generateCsLockStatement", propValue);
+						writer.WriteAttributeString("generateCsLockStatement", serializedPropValue);
 					}
 				}
 			}
 			// GenerateVbSyncLockStatement
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfWormModel.GenerateVbSyncLockStatement;
+				BooleanEnum propValue = instanceOfWormModel.GenerateVbSyncLockStatement;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("generateVbSyncLockStatement", propValue);
+						writer.WriteAttributeString("generateVbSyncLockStatement", serializedPropValue);
 					}
 				}
 			}
@@ -1801,14 +1817,14 @@ namespace Worm.Designer
 				string attribUseGenerics = reader.GetAttribute("useGenerics");
 				if (attribUseGenerics != null)
 				{
-					global::System.String valueOfUseGenerics;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribUseGenerics), out valueOfUseGenerics))
+					BooleanEnum valueOfUseGenerics;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribUseGenerics), out valueOfUseGenerics))
 					{
 						instanceOfEntity.UseGenerics = valueOfUseGenerics;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "useGenerics", typeof(global::System.String), attribUseGenerics);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "useGenerics", typeof(BooleanEnum), attribUseGenerics);
 					}
 				}
 			}
@@ -1818,14 +1834,14 @@ namespace Worm.Designer
 				string attribMakeInterface = reader.GetAttribute("makeInterface");
 				if (attribMakeInterface != null)
 				{
-					global::System.String valueOfMakeInterface;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribMakeInterface), out valueOfMakeInterface))
+					BooleanEnum valueOfMakeInterface;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribMakeInterface), out valueOfMakeInterface))
 					{
 						instanceOfEntity.MakeInterface = valueOfMakeInterface;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "makeInterface", typeof(global::System.String), attribMakeInterface);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "makeInterface", typeof(BooleanEnum), attribMakeInterface);
 					}
 				}
 			}
@@ -1852,14 +1868,14 @@ namespace Worm.Designer
 				string attribInheritsBase = reader.GetAttribute("inheritsBase");
 				if (attribInheritsBase != null)
 				{
-					global::System.String valueOfInheritsBase;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribInheritsBase), out valueOfInheritsBase))
+					BooleanEnum valueOfInheritsBase;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribInheritsBase), out valueOfInheritsBase))
 					{
 						instanceOfEntity.InheritsBase = valueOfInheritsBase;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "inheritsBase", typeof(global::System.String), attribInheritsBase);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "inheritsBase", typeof(BooleanEnum), attribInheritsBase);
 					}
 				}
 			}
@@ -2594,24 +2610,26 @@ namespace Worm.Designer
 			// UseGenerics
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfEntity.UseGenerics;
+				BooleanEnum propValue = instanceOfEntity.UseGenerics;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("useGenerics", propValue);
+						writer.WriteAttributeString("useGenerics", serializedPropValue);
 					}
 				}
 			}
 			// MakeInterface
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfEntity.MakeInterface;
+				BooleanEnum propValue = instanceOfEntity.MakeInterface;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("makeInterface", propValue);
+						writer.WriteAttributeString("makeInterface", serializedPropValue);
 					}
 				}
 			}
@@ -2628,12 +2646,13 @@ namespace Worm.Designer
 			// InheritsBase
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfEntity.InheritsBase;
+				BooleanEnum propValue = instanceOfEntity.InheritsBase;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("inheritsBase", propValue);
+						writer.WriteAttributeString("inheritsBase", serializedPropValue);
 					}
 				}
 			}
@@ -3810,14 +3829,14 @@ namespace Worm.Designer
 				string attribNullable = reader.GetAttribute("nullable");
 				if (attribNullable != null)
 				{
-					global::System.String valueOfNullable;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribNullable), out valueOfNullable))
+					BooleanEnum valueOfNullable;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribNullable), out valueOfNullable))
 					{
 						instanceOfProperty.Nullable = valueOfNullable;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "nullable", typeof(global::System.String), attribNullable);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "nullable", typeof(BooleanEnum), attribNullable);
 					}
 				}
 			}
@@ -3827,14 +3846,14 @@ namespace Worm.Designer
 				string attribDisabled = reader.GetAttribute("disabled");
 				if (attribDisabled != null)
 				{
-					global::System.String valueOfDisabled;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
+					BooleanEnum valueOfDisabled;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
 					{
 						instanceOfProperty.Disabled = valueOfDisabled;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.String), attribDisabled);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(BooleanEnum), attribDisabled);
 					}
 				}
 			}
@@ -3878,14 +3897,14 @@ namespace Worm.Designer
 				string attribEnablePropertyChanged = reader.GetAttribute("enablePropertyChanged");
 				if (attribEnablePropertyChanged != null)
 				{
-					global::System.String valueOfEnablePropertyChanged;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribEnablePropertyChanged), out valueOfEnablePropertyChanged))
+					BooleanEnum valueOfEnablePropertyChanged;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribEnablePropertyChanged), out valueOfEnablePropertyChanged))
 					{
 						instanceOfProperty.EnablePropertyChanged = valueOfEnablePropertyChanged;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "enablePropertyChanged", typeof(global::System.String), attribEnablePropertyChanged);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "enablePropertyChanged", typeof(BooleanEnum), attribEnablePropertyChanged);
 					}
 				}
 			}
@@ -3895,14 +3914,14 @@ namespace Worm.Designer
 				string attribPK = reader.GetAttribute("pK");
 				if (attribPK != null)
 				{
-					global::System.String valueOfPK;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribPK), out valueOfPK))
+					BooleanEnum valueOfPK;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribPK), out valueOfPK))
 					{
 						instanceOfProperty.PK = valueOfPK;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "pK", typeof(global::System.String), attribPK);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "pK", typeof(BooleanEnum), attribPK);
 					}
 				}
 			}
@@ -3912,14 +3931,14 @@ namespace Worm.Designer
 				string attribFactory = reader.GetAttribute("factory");
 				if (attribFactory != null)
 				{
-					global::System.String valueOfFactory;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribFactory), out valueOfFactory))
+					BooleanEnum valueOfFactory;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribFactory), out valueOfFactory))
 					{
 						instanceOfProperty.Factory = valueOfFactory;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "factory", typeof(global::System.String), attribFactory);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "factory", typeof(BooleanEnum), attribFactory);
 					}
 				}
 			}
@@ -3929,14 +3948,14 @@ namespace Worm.Designer
 				string attribInsertDefault = reader.GetAttribute("insertDefault");
 				if (attribInsertDefault != null)
 				{
-					global::System.String valueOfInsertDefault;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribInsertDefault), out valueOfInsertDefault))
+					BooleanEnum valueOfInsertDefault;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribInsertDefault), out valueOfInsertDefault))
 					{
 						instanceOfProperty.InsertDefault = valueOfInsertDefault;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "insertDefault", typeof(global::System.String), attribInsertDefault);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "insertDefault", typeof(BooleanEnum), attribInsertDefault);
 					}
 				}
 			}
@@ -3946,14 +3965,14 @@ namespace Worm.Designer
 				string attribPrimaryKey = reader.GetAttribute("primaryKey");
 				if (attribPrimaryKey != null)
 				{
-					global::System.String valueOfPrimaryKey;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribPrimaryKey), out valueOfPrimaryKey))
+					BooleanEnum valueOfPrimaryKey;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribPrimaryKey), out valueOfPrimaryKey))
 					{
 						instanceOfProperty.PrimaryKey = valueOfPrimaryKey;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "primaryKey", typeof(global::System.String), attribPrimaryKey);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "primaryKey", typeof(BooleanEnum), attribPrimaryKey);
 					}
 				}
 			}
@@ -3963,14 +3982,14 @@ namespace Worm.Designer
 				string attribPrivate = reader.GetAttribute("private");
 				if (attribPrivate != null)
 				{
-					global::System.String valueOfPrivate;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribPrivate), out valueOfPrivate))
+					BooleanEnum valueOfPrivate;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribPrivate), out valueOfPrivate))
 					{
 						instanceOfProperty.Private = valueOfPrivate;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "private", typeof(global::System.String), attribPrivate);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "private", typeof(BooleanEnum), attribPrivate);
 					}
 				}
 			}
@@ -3980,14 +3999,14 @@ namespace Worm.Designer
 				string attribReadOnly = reader.GetAttribute("readOnly");
 				if (attribReadOnly != null)
 				{
-					global::System.String valueOfReadOnly;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReadOnly), out valueOfReadOnly))
+					BooleanEnum valueOfReadOnly;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReadOnly), out valueOfReadOnly))
 					{
 						instanceOfProperty.ReadOnly = valueOfReadOnly;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "readOnly", typeof(global::System.String), attribReadOnly);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "readOnly", typeof(BooleanEnum), attribReadOnly);
 					}
 				}
 			}
@@ -3997,14 +4016,14 @@ namespace Worm.Designer
 				string attribRowVersion = reader.GetAttribute("rowVersion");
 				if (attribRowVersion != null)
 				{
-					global::System.String valueOfRowVersion;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribRowVersion), out valueOfRowVersion))
+					BooleanEnum valueOfRowVersion;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribRowVersion), out valueOfRowVersion))
 					{
 						instanceOfProperty.RowVersion = valueOfRowVersion;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "rowVersion", typeof(global::System.String), attribRowVersion);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "rowVersion", typeof(BooleanEnum), attribRowVersion);
 					}
 				}
 			}
@@ -4014,14 +4033,14 @@ namespace Worm.Designer
 				string attribRV = reader.GetAttribute("rV");
 				if (attribRV != null)
 				{
-					global::System.String valueOfRV;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribRV), out valueOfRV))
+					BooleanEnum valueOfRV;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribRV), out valueOfRV))
 					{
 						instanceOfProperty.RV = valueOfRV;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "rV", typeof(global::System.String), attribRV);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "rV", typeof(BooleanEnum), attribRV);
 					}
 				}
 			}
@@ -4031,14 +4050,14 @@ namespace Worm.Designer
 				string attribSyncInsert = reader.GetAttribute("syncInsert");
 				if (attribSyncInsert != null)
 				{
-					global::System.String valueOfSyncInsert;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSyncInsert), out valueOfSyncInsert))
+					BooleanEnum valueOfSyncInsert;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSyncInsert), out valueOfSyncInsert))
 					{
 						instanceOfProperty.SyncInsert = valueOfSyncInsert;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "syncInsert", typeof(global::System.String), attribSyncInsert);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "syncInsert", typeof(BooleanEnum), attribSyncInsert);
 					}
 				}
 			}
@@ -4048,14 +4067,14 @@ namespace Worm.Designer
 				string attribSyncUpdate = reader.GetAttribute("syncUpdate");
 				if (attribSyncUpdate != null)
 				{
-					global::System.String valueOfSyncUpdate;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSyncUpdate), out valueOfSyncUpdate))
+					BooleanEnum valueOfSyncUpdate;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSyncUpdate), out valueOfSyncUpdate))
 					{
 						instanceOfProperty.SyncUpdate = valueOfSyncUpdate;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "syncUpdate", typeof(global::System.String), attribSyncUpdate);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "syncUpdate", typeof(BooleanEnum), attribSyncUpdate);
 					}
 				}
 			}
@@ -4065,14 +4084,14 @@ namespace Worm.Designer
 				string attribSupressed = reader.GetAttribute("supressed");
 				if (attribSupressed != null)
 				{
-					global::System.String valueOfSupressed;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSupressed), out valueOfSupressed))
+					BooleanEnum valueOfSupressed;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribSupressed), out valueOfSupressed))
 					{
 						instanceOfProperty.Supressed = valueOfSupressed;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "supressed", typeof(global::System.String), attribSupressed);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "supressed", typeof(BooleanEnum), attribSupressed);
 					}
 				}
 			}
@@ -4494,24 +4513,26 @@ namespace Worm.Designer
 			// Nullable
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.Nullable;
+				BooleanEnum propValue = instanceOfProperty.Nullable;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "True") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "True") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("nullable", propValue);
+						writer.WriteAttributeString("nullable", serializedPropValue);
 					}
 				}
 			}
 			// Disabled
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.Disabled;
+				BooleanEnum propValue = instanceOfProperty.Disabled;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("disabled", propValue);
+						writer.WriteAttributeString("disabled", serializedPropValue);
 					}
 				}
 			}
@@ -4541,144 +4562,156 @@ namespace Worm.Designer
 			// EnablePropertyChanged
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.EnablePropertyChanged;
+				BooleanEnum propValue = instanceOfProperty.EnablePropertyChanged;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("enablePropertyChanged", propValue);
+						writer.WriteAttributeString("enablePropertyChanged", serializedPropValue);
 					}
 				}
 			}
 			// PK
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.PK;
+				BooleanEnum propValue = instanceOfProperty.PK;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "false") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("pK", propValue);
+						writer.WriteAttributeString("pK", serializedPropValue);
 					}
 				}
 			}
 			// Factory
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.Factory;
+				BooleanEnum propValue = instanceOfProperty.Factory;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("factory", propValue);
+						writer.WriteAttributeString("factory", serializedPropValue);
 					}
 				}
 			}
 			// InsertDefault
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.InsertDefault;
+				BooleanEnum propValue = instanceOfProperty.InsertDefault;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("insertDefault", propValue);
+						writer.WriteAttributeString("insertDefault", serializedPropValue);
 					}
 				}
 			}
 			// PrimaryKey
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.PrimaryKey;
+				BooleanEnum propValue = instanceOfProperty.PrimaryKey;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("primaryKey", propValue);
+						writer.WriteAttributeString("primaryKey", serializedPropValue);
 					}
 				}
 			}
 			// Private
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.Private;
+				BooleanEnum propValue = instanceOfProperty.Private;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("private", propValue);
+						writer.WriteAttributeString("private", serializedPropValue);
 					}
 				}
 			}
 			// ReadOnly
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.ReadOnly;
+				BooleanEnum propValue = instanceOfProperty.ReadOnly;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("readOnly", propValue);
+						writer.WriteAttributeString("readOnly", serializedPropValue);
 					}
 				}
 			}
 			// RowVersion
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.RowVersion;
+				BooleanEnum propValue = instanceOfProperty.RowVersion;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("rowVersion", propValue);
+						writer.WriteAttributeString("rowVersion", serializedPropValue);
 					}
 				}
 			}
 			// RV
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.RV;
+				BooleanEnum propValue = instanceOfProperty.RV;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("rV", propValue);
+						writer.WriteAttributeString("rV", serializedPropValue);
 					}
 				}
 			}
 			// SyncInsert
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.SyncInsert;
+				BooleanEnum propValue = instanceOfProperty.SyncInsert;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("syncInsert", propValue);
+						writer.WriteAttributeString("syncInsert", serializedPropValue);
 					}
 				}
 			}
 			// SyncUpdate
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.SyncUpdate;
+				BooleanEnum propValue = instanceOfProperty.SyncUpdate;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("syncUpdate", propValue);
+						writer.WriteAttributeString("syncUpdate", serializedPropValue);
 					}
 				}
 			}
 			// Supressed
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfProperty.Supressed;
+				BooleanEnum propValue = instanceOfProperty.Supressed;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("supressed", propValue);
+						writer.WriteAttributeString("supressed", serializedPropValue);
 					}
 				}
 			}
@@ -5500,14 +5533,14 @@ namespace Worm.Designer
 				string attribDirectCascadeDelete = reader.GetAttribute("directCascadeDelete");
 				if (attribDirectCascadeDelete != null)
 				{
-					global::System.String valueOfDirectCascadeDelete;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectCascadeDelete), out valueOfDirectCascadeDelete))
+					BooleanEnum valueOfDirectCascadeDelete;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDirectCascadeDelete), out valueOfDirectCascadeDelete))
 					{
 						instanceOfSelfRelation.DirectCascadeDelete = valueOfDirectCascadeDelete;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directCascadeDelete", typeof(global::System.String), attribDirectCascadeDelete);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "directCascadeDelete", typeof(BooleanEnum), attribDirectCascadeDelete);
 					}
 				}
 			}
@@ -5534,14 +5567,14 @@ namespace Worm.Designer
 				string attribDisabled = reader.GetAttribute("disabled");
 				if (attribDisabled != null)
 				{
-					global::System.String valueOfDisabled;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
+					BooleanEnum valueOfDisabled;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
 					{
 						instanceOfSelfRelation.Disabled = valueOfDisabled;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.String), attribDisabled);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(BooleanEnum), attribDisabled);
 					}
 				}
 			}
@@ -5568,14 +5601,14 @@ namespace Worm.Designer
 				string attribReverseCascadeDelete = reader.GetAttribute("reverseCascadeDelete");
 				if (attribReverseCascadeDelete != null)
 				{
-					global::System.String valueOfReverseCascadeDelete;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseCascadeDelete), out valueOfReverseCascadeDelete))
+					BooleanEnum valueOfReverseCascadeDelete;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribReverseCascadeDelete), out valueOfReverseCascadeDelete))
 					{
 						instanceOfSelfRelation.ReverseCascadeDelete = valueOfReverseCascadeDelete;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseCascadeDelete", typeof(global::System.String), attribReverseCascadeDelete);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "reverseCascadeDelete", typeof(BooleanEnum), attribReverseCascadeDelete);
 					}
 				}
 			}
@@ -6021,12 +6054,13 @@ namespace Worm.Designer
 			// DirectCascadeDelete
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfSelfRelation.DirectCascadeDelete;
+				BooleanEnum propValue = instanceOfSelfRelation.DirectCascadeDelete;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "true") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "True") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("directCascadeDelete", propValue);
+						writer.WriteAttributeString("directCascadeDelete", serializedPropValue);
 					}
 				}
 			}
@@ -6043,12 +6077,13 @@ namespace Worm.Designer
 			// Disabled
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfSelfRelation.Disabled;
+				BooleanEnum propValue = instanceOfSelfRelation.Disabled;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "false") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("disabled", propValue);
+						writer.WriteAttributeString("disabled", serializedPropValue);
 					}
 				}
 			}
@@ -6065,12 +6100,13 @@ namespace Worm.Designer
 			// ReverseCascadeDelete
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfSelfRelation.ReverseCascadeDelete;
+				BooleanEnum propValue = instanceOfSelfRelation.ReverseCascadeDelete;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "true") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "True") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("reverseCascadeDelete", propValue);
+						writer.WriteAttributeString("reverseCascadeDelete", serializedPropValue);
 					}
 				}
 			}
@@ -6371,6 +6407,40 @@ namespace Worm.Designer
 					else
 					{	// Invalid property value, ignored.
 						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "idProperty", typeof(global::System.String), attribIdProperty);
+					}
+				}
+			}
+			// Type
+			if (!serializationContext.Result.Failed)
+			{
+				string attribType = reader.GetAttribute("type");
+				if (attribType != null)
+				{
+					TypeEnum valueOfType;
+					if (DslModeling::SerializationUtilities.TryGetValue<TypeEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribType), out valueOfType))
+					{
+						instanceOfWormType.Type = valueOfType;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "type", typeof(TypeEnum), attribType);
+					}
+				}
+			}
+			// Hint
+			if (!serializationContext.Result.Failed)
+			{
+				string attribHint = reader.GetAttribute("hint");
+				if (attribHint != null)
+				{
+					global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags valueOfHint;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags>(DslModeling::SerializationUtilities.UnescapeXmlString(attribHint), out valueOfHint))
+					{
+						instanceOfWormType.Hint = valueOfHint;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "hint", typeof(global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags), attribHint);
 					}
 				}
 			}
@@ -6809,6 +6879,26 @@ namespace Worm.Designer
 				{
 					if (!string.IsNullOrEmpty(propValue))
 						writer.WriteAttributeString("idProperty", propValue);
+				}
+			}
+			// Type
+			if (!serializationContext.Result.Failed)
+			{
+				TypeEnum propValue = instanceOfWormType.Type;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<TypeEnum>(serializationContext, propValue);
+				if (!serializationContext.Result.Failed)
+				{
+					writer.WriteAttributeString("type", serializedPropValue);
+				}
+			}
+			// Hint
+			if (!serializationContext.Result.Failed)
+			{
+				global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags propValue = instanceOfWormType.Hint;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<global::Worm.CodeGen.Core.Descriptors.UserTypeHintFlags>(serializationContext, propValue);
+				if (!serializationContext.Result.Failed)
+				{
+					writer.WriteAttributeString("hint", serializedPropValue);
 				}
 			}
 		}
@@ -8425,14 +8515,14 @@ namespace Worm.Designer
 				string attribLeftCascadeDelete = reader.GetAttribute("leftCascadeDelete");
 				if (attribLeftCascadeDelete != null)
 				{
-					global::System.String valueOfLeftCascadeDelete;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribLeftCascadeDelete), out valueOfLeftCascadeDelete))
+					BooleanEnum valueOfLeftCascadeDelete;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribLeftCascadeDelete), out valueOfLeftCascadeDelete))
 					{
 						instanceOfEntityReferencesTargetEntities.LeftCascadeDelete = valueOfLeftCascadeDelete;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "leftCascadeDelete", typeof(global::System.String), attribLeftCascadeDelete);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "leftCascadeDelete", typeof(BooleanEnum), attribLeftCascadeDelete);
 					}
 				}
 			}
@@ -8476,14 +8566,14 @@ namespace Worm.Designer
 				string attribDisabled = reader.GetAttribute("disabled");
 				if (attribDisabled != null)
 				{
-					global::System.String valueOfDisabled;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
+					BooleanEnum valueOfDisabled;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribDisabled), out valueOfDisabled))
 					{
 						instanceOfEntityReferencesTargetEntities.Disabled = valueOfDisabled;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(global::System.String), attribDisabled);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "disabled", typeof(BooleanEnum), attribDisabled);
 					}
 				}
 			}
@@ -8578,14 +8668,14 @@ namespace Worm.Designer
 				string attribRightCascadeDelete = reader.GetAttribute("rightCascadeDelete");
 				if (attribRightCascadeDelete != null)
 				{
-					global::System.String valueOfRightCascadeDelete;
-					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribRightCascadeDelete), out valueOfRightCascadeDelete))
+					BooleanEnum valueOfRightCascadeDelete;
+					if (DslModeling::SerializationUtilities.TryGetValue<BooleanEnum>(DslModeling::SerializationUtilities.UnescapeXmlString(attribRightCascadeDelete), out valueOfRightCascadeDelete))
 					{
 						instanceOfEntityReferencesTargetEntities.RightCascadeDelete = valueOfRightCascadeDelete;
 					}
 					else
 					{	// Invalid property value, ignored.
-						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "rightCascadeDelete", typeof(global::System.String), attribRightCascadeDelete);
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "rightCascadeDelete", typeof(BooleanEnum), attribRightCascadeDelete);
 					}
 				}
 			}
@@ -9019,12 +9109,13 @@ namespace Worm.Designer
 			// LeftCascadeDelete
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfEntityReferencesTargetEntities.LeftCascadeDelete;
+				BooleanEnum propValue = instanceOfEntityReferencesTargetEntities.LeftCascadeDelete;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "true") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "True") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("leftCascadeDelete", propValue);
+						writer.WriteAttributeString("leftCascadeDelete", serializedPropValue);
 					}
 				}
 			}
@@ -9051,12 +9142,13 @@ namespace Worm.Designer
 			// Disabled
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfEntityReferencesTargetEntities.Disabled;
+				BooleanEnum propValue = instanceOfEntityReferencesTargetEntities.Disabled;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "false") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "False") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("disabled", propValue);
+						writer.WriteAttributeString("disabled", serializedPropValue);
 					}
 				}
 			}
@@ -9115,12 +9207,13 @@ namespace Worm.Designer
 			// RightCascadeDelete
 			if (!serializationContext.Result.Failed)
 			{
-				global::System.String propValue = instanceOfEntityReferencesTargetEntities.RightCascadeDelete;
+				BooleanEnum propValue = instanceOfEntityReferencesTargetEntities.RightCascadeDelete;
+				string serializedPropValue = DslModeling::SerializationUtilities.GetString<BooleanEnum>(serializationContext, propValue);
 				if (!serializationContext.Result.Failed)
 				{
-					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "true") != 0))
+					if (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(serializedPropValue, "True") != 0)
 					{	// No need to write the value out if it's the same as default value.
-						writer.WriteAttributeString("rightCascadeDelete", propValue);
+						writer.WriteAttributeString("rightCascadeDelete", serializedPropValue);
 					}
 				}
 			}
