@@ -723,47 +723,97 @@ namespace Worm.Designer
             EntityReferencesTargetEntities relation = e.ModelElement as EntityReferencesTargetEntities;
             if (relation != null)
             {
-                if (string.IsNullOrEmpty(relation.LeftEntity))
+                if (relation.TargetEntity != relation.SourceEntity)
                 {
-                    relation.LeftEntity = relation.SourceEntity.Name;
-                }
-                if (string.IsNullOrEmpty(relation.RightEntity))
-                {
-                    relation.RightEntity = relation.TargetEntity.Name;
-                }
-                if (string.IsNullOrEmpty(relation.LeftAccessedEntityType))
-                {
-                    relation.LeftAccessedEntityType = relation.SourceEntity.Name;
-                }
-                if (string.IsNullOrEmpty(relation.RightAccessedEntityType))
-                {
-                    relation.RightAccessedEntityType = relation.TargetEntity.Name;
-                }
-
-                if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.LeftAccessedEntityType).Count == 0)
-                {
-                    using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    if (string.IsNullOrEmpty(relation.LeftEntity))
                     {
+                        relation.LeftEntity = relation.SourceEntity.Name;
+                    }
+                    if (string.IsNullOrEmpty(relation.RightEntity))
+                    {
+                        relation.RightEntity = relation.TargetEntity.Name;
+                    }
+                    if (string.IsNullOrEmpty(relation.LeftAccessedEntityType))
+                    {
+                        relation.LeftAccessedEntityType = relation.SourceEntity.Name;
+                    }
+                    if (string.IsNullOrEmpty(relation.RightAccessedEntityType))
+                    {
+                        relation.RightAccessedEntityType = relation.TargetEntity.Name;
+                    }
 
-                        WormType type = new WormType(relation.TargetEntity.WormModel.Store);
-                        type.WormModel = relation.TargetEntity.WormModel;
-                        type.Name = relation.LeftAccessedEntityType;
-                        type.IdProperty = "t" + relation.SourceEntity.Name;
-                        txAdd.Commit();
+                    if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.LeftAccessedEntityType).Count == 0)
+                    {
+                        using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                        {
 
+                            WormType type = new WormType(relation.TargetEntity.WormModel.Store);
+                            type.WormModel = relation.TargetEntity.WormModel;
+                            type.Name = relation.LeftAccessedEntityType;
+                            type.IdProperty = "t" + relation.SourceEntity.Name;
+                            txAdd.Commit();
+
+                        }
+                    }
+                    if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.RightAccessedEntityType).Count == 0)
+                    {
+                        using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                        {
+
+                            WormType type = new WormType(relation.TargetEntity.WormModel.Store);
+                            type.WormModel = relation.TargetEntity.WormModel;
+                            type.Name = relation.RightAccessedEntityType;
+                            type.IdProperty = "t" + relation.TargetEntity.Name;
+                            txAdd.Commit();
+
+                        }
                     }
                 }
-                if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.RightAccessedEntityType).Count == 0)
+                    // Convert to self relation
+                else
                 {
                     using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
                     {
+                        SelfRelation selfRelation = new SelfRelation(relation.TargetEntity.WormModel.Store);
+                        if (string.IsNullOrEmpty(relation.LeftEntity))
+                        {
+                            selfRelation.Entity = relation.TargetEntity;
+                        }                       
+                        if (string.IsNullOrEmpty(relation.LeftAccessedEntityType))
+                        {
+                            selfRelation.DirectAccessedEntityType = relation.SourceEntity.Name;
+                        }
+                        if (string.IsNullOrEmpty(relation.RightAccessedEntityType))
+                        {
+                            selfRelation.ReverseAccessedEntityType = relation.TargetEntity.Name;
+                        }
 
-                        WormType type = new WormType(relation.TargetEntity.WormModel.Store);
-                        type.WormModel = relation.TargetEntity.WormModel;
-                        type.Name = relation.RightAccessedEntityType;
-                        type.IdProperty = "t" + relation.TargetEntity.Name;
+                        selfRelation.Disabled = relation.Disabled;
+                        selfRelation.Table = relation.Table;
+                        selfRelation.UnderlyingEntity = relation.UnderlyingEntity;
+                        selfRelation.DirectAccessor = relation.LeftAccessorName;
+                        selfRelation.DirectCascadeDelete = relation.LeftCascadeDelete;
+                        selfRelation.DirectFieldName = relation.LeftFieldName;
+                        selfRelation.ReverseAccessor = relation.RightAccessorName;
+                        selfRelation.ReverseCascadeDelete = relation.RightCascadeDelete;
+                        selfRelation.ReverseFieldName = relation.RightFieldName;
+                        relation.Delete();
+                        string name = "SelfRelation1";
+                        int i = 1;
+                        while (relation.TargetEntity.SelfRelations.FindAll(t => t.Name == name).Count > 0)
+                        {
+                            name = "SelfRelation" + (++i);
+                        }
+                        selfRelation.Name = name;
+
+                        if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.LeftAccessedEntityType).Count == 0)
+                        {
+                            WormType type = new WormType(relation.TargetEntity.WormModel.Store);
+                            type.WormModel = relation.TargetEntity.WormModel;
+                            type.Name = relation.LeftAccessedEntityType;
+                            type.IdProperty = "t" + relation.SourceEntity.Name;                            
+                        }
                         txAdd.Commit();
-
                     }
                 }
             }
@@ -785,30 +835,74 @@ namespace Worm.Designer
             EntityReferencesTargetEntities relation = e.ModelElement as EntityReferencesTargetEntities;
             if (relation != null)
             {
-                if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.LeftAccessedEntityType).Count == 0)
+                if (relation.LeftEntity != relation.RightEntity)
                 {
-                    using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                    if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.LeftAccessedEntityType).Count == 0)
                     {
+                        using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                        {
 
-                        WormType type = new WormType(relation.TargetEntity.WormModel.Store);
-                        type.WormModel = relation.TargetEntity.WormModel;
-                        type.Name = relation.LeftAccessedEntityType;
-                        type.IdProperty = "t" + relation.SourceEntity.Name;
-                        txAdd.Commit();
+                            WormType type = new WormType(relation.TargetEntity.WormModel.Store);
+                            type.WormModel = relation.TargetEntity.WormModel;
+                            type.Name = relation.LeftAccessedEntityType;
+                            type.IdProperty = "t" + relation.SourceEntity.Name;
+                            txAdd.Commit();
 
+                        }
+                    }
+                    if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.RightAccessedEntityType).Count == 0)
+                    {
+                        using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
+                        {
+
+                            WormType type = new WormType(relation.TargetEntity.WormModel.Store);
+                            type.WormModel = relation.TargetEntity.WormModel;
+                            type.Name = relation.RightAccessedEntityType;
+                            type.IdProperty = "t" + relation.TargetEntity.Name;
+                            txAdd.Commit();
+
+                        }
                     }
                 }
-                if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.RightAccessedEntityType).Count == 0)
+                // Convert to self relation
+                else
                 {
                     using (Transaction txAdd = relation.TargetEntity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
                     {
+                        SelfRelation selfRelation = new SelfRelation(relation.TargetEntity.WormModel.Store);
+                        
+                        selfRelation.Entity = relation.LeftEntity ==  relation.TargetEntity.Name ?
+                            relation.TargetEntity : relation.SourceEntity;
+                        
+                        selfRelation.DirectAccessedEntityType = relation.LeftAccessedEntityType;
+                        selfRelation.ReverseAccessedEntityType = relation.RightAccessedEntityType;
+                        selfRelation.Disabled = relation.Disabled;
+                        selfRelation.Table = relation.Table;
+                        selfRelation.UnderlyingEntity = relation.UnderlyingEntity;
+                        selfRelation.DirectAccessor = relation.LeftAccessorName;
+                        selfRelation.DirectCascadeDelete = relation.LeftCascadeDelete;
+                        selfRelation.DirectFieldName = relation.LeftFieldName;
+                        selfRelation.ReverseAccessor = relation.RightAccessorName;
+                        selfRelation.ReverseCascadeDelete = relation.RightCascadeDelete;
+                        selfRelation.ReverseFieldName = relation.RightFieldName;
+                        relation.Delete();
+                        string name = "SelfRelation1";
+                        int i = 1;
+                        while (selfRelation.Entity.SelfRelations.FindAll(t => t.Name == name).Count > 0)
+                        {
+                            name = "SelfRelation" + (++i);
+                        }
+                        selfRelation.Name = name;
 
-                        WormType type = new WormType(relation.TargetEntity.WormModel.Store);
-                        type.WormModel = relation.TargetEntity.WormModel;
-                        type.Name = relation.RightAccessedEntityType;
-                        type.IdProperty = "t" + relation.TargetEntity.Name;
+                        if (relation.TargetEntity.WormModel.Types.FindAll(t => t.Name == relation.LeftAccessedEntityType).Count == 0)
+                        {
+                            WormType type = new WormType(relation.TargetEntity.WormModel.Store);
+                            type.WormModel = relation.TargetEntity.WormModel;
+                            type.Name = relation.LeftAccessedEntityType;
+                            type.IdProperty = "t" + selfRelation.Entity.Name;
+                            
+                        }
                         txAdd.Commit();
-
                     }
                 }
             }

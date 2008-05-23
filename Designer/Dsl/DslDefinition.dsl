@@ -841,7 +841,7 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="ec48a8e3-f1b3-4c88-bbd4-644451ce13b0" Description="Имя поля таблицы связи" Name="LeftFieldName" DisplayName="Field Name" Category="Left point">
+        <DomainProperty Id="ec48a8e3-f1b3-4c88-bbd4-644451ce13b0" Description="Имя поля таблицы связи" Name="LeftFieldName" DisplayName="Column" Category="Left point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
@@ -897,7 +897,7 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="2e71233d-d194-4929-bbb4-27cf3ae1d389" Description="Имя поля таблицы связи" Name="RightFieldName" DisplayName="Field Name" Category="Right point">
+        <DomainProperty Id="2e71233d-d194-4929-bbb4-27cf3ae1d389" Description="Имя поля таблицы связи" Name="RightFieldName" DisplayName="Column" Category="Right point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>

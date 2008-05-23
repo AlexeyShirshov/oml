@@ -1130,7 +1130,7 @@
     <comment>Description for DomainProperty &apos;LeftFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.DisplayName" xml:space="preserve">
-    <value>Field Name</value>
+    <value>Column</value>
     <comment>DisplayName for DomainProperty &apos;LeftFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.Category" xml:space="preserve">
@@ -1214,7 +1214,7 @@
     <comment>Description for DomainProperty &apos;RightFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightFieldName.DisplayName" xml:space="preserve">
-    <value>Field Name</value>
+    <value>Column</value>
     <comment>DisplayName for DomainProperty &apos;RightFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightFieldName.Category" xml:space="preserve">
