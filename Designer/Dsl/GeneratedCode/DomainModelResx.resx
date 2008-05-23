@@ -1118,7 +1118,7 @@
     <comment>Description for DomainProperty &apos;LeftCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.DisplayName" xml:space="preserve">
-    <value>Left Cascade Delete</value>
+    <value>Cascade Delete</value>
     <comment>DisplayName for DomainProperty &apos;LeftCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.Category" xml:space="preserve">
@@ -1130,7 +1130,7 @@
     <comment>Description for DomainProperty &apos;LeftFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.DisplayName" xml:space="preserve">
-    <value>Left Field Name</value>
+    <value>Field Name</value>
     <comment>DisplayName for DomainProperty &apos;LeftFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.Category" xml:space="preserve">
@@ -1142,7 +1142,7 @@
     <comment>Description for DomainProperty &apos;LeftAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessorName.DisplayName" xml:space="preserve">
-    <value>Left Accessor Name</value>
+    <value>Accessor Name</value>
     <comment>DisplayName for DomainProperty &apos;LeftAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessorName.Category" xml:space="preserve">
@@ -1178,7 +1178,7 @@
     <comment>Description for DomainProperty &apos;LeftEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftEntity.DisplayName" xml:space="preserve">
-    <value>Left Entity</value>
+    <value>Entity</value>
     <comment>DisplayName for DomainProperty &apos;LeftEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftEntity.Category" xml:space="preserve">
@@ -1190,7 +1190,7 @@
     <comment>Description for DomainProperty &apos;LeftAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessedEntityType.DisplayName" xml:space="preserve">
-    <value>Left Accessed Entity Type</value>
+    <value>Accessed Entity Type</value>
     <comment>DisplayName for DomainProperty &apos;LeftAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessedEntityType.Category" xml:space="preserve">
@@ -1202,7 +1202,7 @@
     <comment>Description for DomainProperty &apos;RightAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessedEntityType.DisplayName" xml:space="preserve">
-    <value>Right Accessed Entity Type</value>
+    <value>Accessed Entity Type</value>
     <comment>DisplayName for DomainProperty &apos;RightAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessedEntityType.Category" xml:space="preserve">
@@ -1214,7 +1214,7 @@
     <comment>Description for DomainProperty &apos;RightFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightFieldName.DisplayName" xml:space="preserve">
-    <value>Right Field Name</value>
+    <value>Field Name</value>
     <comment>DisplayName for DomainProperty &apos;RightFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightFieldName.Category" xml:space="preserve">
@@ -1226,7 +1226,7 @@
     <comment>Description for DomainProperty &apos;RightCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightCascadeDelete.DisplayName" xml:space="preserve">
-    <value>Right Cascade Delete</value>
+    <value>Cascade Delete</value>
     <comment>DisplayName for DomainProperty &apos;RightCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightCascadeDelete.Category" xml:space="preserve">
@@ -1238,7 +1238,7 @@
     <comment>Description for DomainProperty &apos;RightAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessorName.DisplayName" xml:space="preserve">
-    <value>Right Accessor Name</value>
+    <value>Accessor Name</value>
     <comment>DisplayName for DomainProperty &apos;RightAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessorName.Category" xml:space="preserve">
@@ -1250,7 +1250,7 @@
     <comment>Description for DomainProperty &apos;RightEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightEntity.DisplayName" xml:space="preserve">
-    <value>Right Entity</value>
+    <value>Entity</value>
     <comment>DisplayName for DomainProperty &apos;RightEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightEntity.Category" xml:space="preserve">

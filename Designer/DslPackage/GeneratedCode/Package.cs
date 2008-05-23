@@ -179,7 +179,7 @@ namespace Worm.Designer
             {
                 try
                 {
-                    using (FileStream stream = new FileStream(dialog.FileName, FileMode.Open))
+                    using (FileStream stream = new FileStream(dialog.FileName, FileMode.Open, FileAccess.Read))
                     {
                         using (XmlReader rdr = XmlReader.Create(stream))
                         {

@@ -657,6 +657,7 @@ namespace Worm.Designer
 		/// Gets or sets the value of UnderlyingEntity domain property.
 		/// Underlying entity
 		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BaseEntityUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
 		[DslDesign::DisplayNameResource("Worm.Designer.EntityReferencesTargetEntities/UnderlyingEntity.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::CategoryResource("Worm.Designer.EntityReferencesTargetEntities/UnderlyingEntity.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.EntityReferencesTargetEntities/UnderlyingEntity.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]

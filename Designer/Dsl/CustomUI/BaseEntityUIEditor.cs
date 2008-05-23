@@ -69,6 +69,16 @@ namespace Worm.Designer
             ElementPropertyDescriptor descriptor = context.PropertyDescriptor as ElementPropertyDescriptor;
             Entity entity = descriptor.ModelElement as Entity;
 
+            if (descriptor.ModelElement is EntityReferencesTargetEntities)
+            {
+                entity = (descriptor.ModelElement as EntityReferencesTargetEntities).TargetEntity;
+            }
+            if (entity == null)
+            {
+                return value;
+            }
+            
+
             // Current entity name 
             string entityName = entity.Name;
             ICollection<Entity> entities = entity.WormModel.Entities;
@@ -82,7 +92,7 @@ namespace Worm.Designer
 
                 foreach (Entity en in entities)
                 {
-                    if (entityName != en.Name)
+                    if ((string)value != en.Name)
                     {
                         listBox.Items.Add(en.Name);
                     }

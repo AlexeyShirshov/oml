@@ -818,11 +818,18 @@
     <DomainRelationship Id="c0c83bed-1d6c-46fc-97ed-b723d83d36fc" Description="Description for Worm.Designer.EntityReferencesTargetEntities" Name="EntityReferencesTargetEntities" DisplayName="Entity References Target Entities" Namespace="Worm.Designer">
       <Properties>
         <DomainProperty Id="6bd17a24-e3bd-4412-a6c6-2c00b7824678" Description="Underlying entity" Name="UnderlyingEntity" DisplayName="Underlying entity" Category="Relation">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BaseEntityUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="ecd23e88-6e56-438b-9f10-c56c1aba7cbf" Description="Каскадное удаление" Name="LeftCascadeDelete" DisplayName="Left Cascade Delete" DefaultValue="true" Category="Left point">
+        <DomainProperty Id="ecd23e88-6e56-438b-9f10-c56c1aba7cbf" Description="Каскадное удаление" Name="LeftCascadeDelete" DisplayName="Cascade Delete" DefaultValue="true" Category="Left point">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -834,12 +841,12 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="ec48a8e3-f1b3-4c88-bbd4-644451ce13b0" Description="Имя поля таблицы связи" Name="LeftFieldName" DisplayName="Left Field Name" Category="Left point">
+        <DomainProperty Id="ec48a8e3-f1b3-4c88-bbd4-644451ce13b0" Description="Имя поля таблицы связи" Name="LeftFieldName" DisplayName="Field Name" Category="Left point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="3bf5da1c-8e83-42ab-8179-77194758fbaf" Description="Имя связанной сущности для генерации методов" Name="LeftAccessorName" DisplayName="Left Accessor Name" Category="Left point">
+        <DomainProperty Id="3bf5da1c-8e83-42ab-8179-77194758fbaf" Description="Имя связанной сущности для генерации методов" Name="LeftAccessorName" DisplayName="Accessor Name" Category="Left point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
@@ -868,7 +875,7 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="845e0f02-ed94-402a-b087-c9f05a71b9bc" Description="Сущность" Name="LeftEntity" DisplayName="Left Entity" DefaultValue="" Category="Left point">
+        <DomainProperty Id="845e0f02-ed94-402a-b087-c9f05a71b9bc" Description="Сущность" Name="LeftEntity" DisplayName="Entity" DefaultValue="" Category="Left point">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -880,22 +887,22 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="880ca553-e244-4497-b380-e1445219bf73" Description="Тип связанной сущности для генерации методов" Name="LeftAccessedEntityType" DisplayName="Left Accessed Entity Type" Category="Left point">
+        <DomainProperty Id="880ca553-e244-4497-b380-e1445219bf73" Description="Тип связанной сущности для генерации методов" Name="LeftAccessedEntityType" DisplayName="Accessed Entity Type" Category="Left point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="2c3390fd-432a-4268-96f7-4f8859d74b96" Description="Тип связанной сущности для генерации методов" Name="RightAccessedEntityType" DisplayName="Right Accessed Entity Type" Category="Right point">
+        <DomainProperty Id="2c3390fd-432a-4268-96f7-4f8859d74b96" Description="Тип связанной сущности для генерации методов" Name="RightAccessedEntityType" DisplayName="Accessed Entity Type" Category="Right point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="2e71233d-d194-4929-bbb4-27cf3ae1d389" Description="Имя поля таблицы связи" Name="RightFieldName" DisplayName="Right Field Name" Category="Right point">
+        <DomainProperty Id="2e71233d-d194-4929-bbb4-27cf3ae1d389" Description="Имя поля таблицы связи" Name="RightFieldName" DisplayName="Field Name" Category="Right point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="7c7b3972-2e7d-4b2c-bee9-49cb3c2d8742" Description="Каскадное удаление" Name="RightCascadeDelete" DisplayName="Right Cascade Delete" DefaultValue="true" Category="Right point">
+        <DomainProperty Id="7c7b3972-2e7d-4b2c-bee9-49cb3c2d8742" Description="Каскадное удаление" Name="RightCascadeDelete" DisplayName="Cascade Delete" DefaultValue="true" Category="Right point">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -907,12 +914,12 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="ef1396f8-92b2-4af5-bf2f-7df39cc03e01" Description="Имя связанной сущности для генерации методов" Name="RightAccessorName" DisplayName="Right Accessor Name" Category="Right point">
+        <DomainProperty Id="ef1396f8-92b2-4af5-bf2f-7df39cc03e01" Description="Имя связанной сущности для генерации методов" Name="RightAccessorName" DisplayName="Accessor Name" Category="Right point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="25351206-2764-46dc-8cb2-b7932c34da59" Description="Сущность" Name="RightEntity" DisplayName="Right Entity" Category="Right point">
+        <DomainProperty Id="25351206-2764-46dc-8cb2-b7932c34da59" Description="Сущность" Name="RightEntity" DisplayName="Entity" Category="Right point">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
