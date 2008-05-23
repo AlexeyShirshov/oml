@@ -1846,6 +1846,23 @@ namespace Worm.Designer
 					}
 				}
 			}
+			// InheritsBase
+			if (!serializationContext.Result.Failed)
+			{
+				string attribInheritsBase = reader.GetAttribute("inheritsBase");
+				if (attribInheritsBase != null)
+				{
+					global::System.String valueOfInheritsBase;
+					if (DslModeling::SerializationUtilities.TryGetValue<global::System.String>(DslModeling::SerializationUtilities.UnescapeXmlString(attribInheritsBase), out valueOfInheritsBase))
+					{
+						instanceOfEntity.InheritsBase = valueOfInheritsBase;
+					}
+					else
+					{	// Invalid property value, ignored.
+						DesignerSerializationBehaviorSerializationMessages.IgnoredPropertyValue(serializationContext, reader, "inheritsBase", typeof(global::System.String), attribInheritsBase);
+					}
+				}
+			}
 		}
 	
 		/// <summary>
@@ -2608,6 +2625,18 @@ namespace Worm.Designer
 						writer.WriteAttributeString("baseEntity", propValue);
 				}
 			}
+			// InheritsBase
+			if (!serializationContext.Result.Failed)
+			{
+				global::System.String propValue = instanceOfEntity.InheritsBase;
+				if (!serializationContext.Result.Failed)
+				{
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, "False") != 0))
+					{	// No need to write the value out if it's the same as default value.
+						writer.WriteAttributeString("inheritsBase", propValue);
+					}
+				}
+			}
 		}
 	
 		/// <summary>
@@ -2992,7 +3021,7 @@ namespace Worm.Designer
 		{
 			if (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
 			{
-				if (string.Compare(reader.LocalName, "entity", global::System.StringComparison.CurrentCulture) == 0)
+				if (string.Compare(reader.LocalName, "entities", global::System.StringComparison.CurrentCulture) == 0)
 				{
 					if (reader.IsEmptyElement)
 					{	// No instance of this relationship, just skip
@@ -3000,63 +3029,54 @@ namespace Worm.Designer
 					}
 					else
 					{
-						DslModeling::SerializationUtilities.SkipToFirstChild(reader);  // Skip the open tag of <entity>
-						ReadTableReferencesEntityInstance(serializationContext, element, reader);
-						DslModeling::SerializationUtilities.Skip(reader);  // Skip the close tag of </entity>
+						DslModeling::SerializationUtilities.SkipToFirstChild(reader);  // Skip the open tag of <entities>
+						ReadTableReferencesEntitiesInstances(serializationContext, element, reader);
+						DslModeling::SerializationUtilities.Skip(reader);  // Skip the close tag of </entities>
 					}
 				}
 			}
 		}
 	
 		/// <summary>
-		/// Reads instance of relationship TableReferencesEntity.
+		/// Reads all instances of relationship TableReferencesEntities.
 		/// </summary>
 		/// <remarks>
 		/// The caller will position the reader at the open tag of the first XML element inside the relationship tag, so it can be
-		/// either the first instance, or a bogus tag. This method will deserialize only the first valid instance and ignore all the
-		/// rest tags (because the multiplicity allows only one instance). When the method returns, the reader will be positioned at 
-		/// the end tag of the relationship (or EOF if somehow that happens).
+		/// either the first instance, or a bogus tag. This method will deserialize all instances and ignore all bogus tags. When the
+		/// method returns, the reader will be positioned at the end tag of the relationship (or EOF if somehow that happens).
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="element">In-memory Table instance that will get the deserialized data.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA1806")]
-		private static void ReadTableReferencesEntityInstance(DslModeling::SerializationContext serializationContext, Table element, global::System.Xml.XmlReader reader)
+		private static void ReadTableReferencesEntitiesInstances(DslModeling::SerializationContext serializationContext, Table element, global::System.Xml.XmlReader reader)
 		{
-			if (DslModeling::DomainRoleInfo.GetElementLinks<TableReferencesEntity> (element, TableReferencesEntity.TableDomainRoleId).Count > 0)
-			{	// Only allow one instance, which already exists, so skip everything
-				DslModeling::SerializationUtilities.Skip(reader);	// Moniker contains no child XML elements, so just skip.
-				return;
-			}
-	
 			while (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
 			{
-				DslModeling::DomainClassXmlSerializer newEntityMonikerOfTableReferencesEntitySerializer = serializationContext.Directory.GetSerializer(Entity.DomainClassId);
-				global::System.Diagnostics.Debug.Assert(newEntityMonikerOfTableReferencesEntitySerializer != null, "Cannot find serializer for Entity!");
-				DslModeling::Moniker newEntityMonikerOfTableReferencesEntity = newEntityMonikerOfTableReferencesEntitySerializer.TryCreateMonikerInstance(serializationContext, reader, element, TableReferencesEntity.DomainClassId, element.Partition);
-				if (newEntityMonikerOfTableReferencesEntity != null)
+				DslModeling::DomainClassXmlSerializer newEntityMonikerOfTableReferencesEntitiesSerializer = serializationContext.Directory.GetSerializer(Entity.DomainClassId);
+				global::System.Diagnostics.Debug.Assert(newEntityMonikerOfTableReferencesEntitiesSerializer != null, "Cannot find serializer for Entity!");
+				DslModeling::Moniker newEntityMonikerOfTableReferencesEntities = newEntityMonikerOfTableReferencesEntitiesSerializer.TryCreateMonikerInstance(serializationContext, reader, element, TableReferencesEntities.DomainClassId, element.Partition);
+				if (newEntityMonikerOfTableReferencesEntities != null)
 				{
-					new TableReferencesEntity(element.Partition, new DslModeling::RoleAssignment(TableReferencesEntity.TableDomainRoleId, element), new DslModeling::RoleAssignment(TableReferencesEntity.EntityDomainRoleId, newEntityMonikerOfTableReferencesEntity));
+					new TableReferencesEntities(element.Partition, new DslModeling::RoleAssignment(TableReferencesEntities.TableDomainRoleId, element), new DslModeling::RoleAssignment(TableReferencesEntities.EntityDomainRoleId, newEntityMonikerOfTableReferencesEntities));
 					DslModeling::SerializationUtilities.Skip(reader);	// Moniker contains no child XML elements, so just skip.
-					break;	// Only allow one instance.
 				}
 				else
 				{
-					global::System.Type typeofTableReferencesEntity = typeof(TableReferencesEntity);
-					DslModeling::DomainRelationshipXmlSerializer newTableReferencesEntitySerializer = serializationContext.Directory.GetSerializer(TableReferencesEntity.DomainClassId) as DslModeling::DomainRelationshipXmlSerializer;
-					global::System.Diagnostics.Debug.Assert(newTableReferencesEntitySerializer != null, "Cannot find serializer for TableReferencesEntity!");
-					TableReferencesEntity newTableReferencesEntity = newTableReferencesEntitySerializer.TryCreateInstance (serializationContext, reader, element.Partition) as TableReferencesEntity;
-					if (newTableReferencesEntity != null)
+					global::System.Type typeofTableReferencesEntities = typeof(TableReferencesEntities);
+					DslModeling::DomainRelationshipXmlSerializer newTableReferencesEntitiesSerializer = serializationContext.Directory.GetSerializer(TableReferencesEntities.DomainClassId) as DslModeling::DomainRelationshipXmlSerializer;
+					global::System.Diagnostics.Debug.Assert(newTableReferencesEntitiesSerializer != null, "Cannot find serializer for TableReferencesEntities!");
+					TableReferencesEntities newTableReferencesEntities = newTableReferencesEntitiesSerializer.TryCreateInstance (serializationContext, reader, element.Partition) as TableReferencesEntities;
+					if (newTableReferencesEntities != null)
 					{
-						if (newTableReferencesEntity.GetType() == typeofTableReferencesEntity)
+						if (newTableReferencesEntities.GetType() == typeofTableReferencesEntities)
 						{	// The relationship should be serialized in short-form.
-							DesignerSerializationBehaviorSerializationMessages.ExpectingShortFormRelationship(serializationContext, reader, typeof(TableReferencesEntity));
+							DesignerSerializationBehaviorSerializationMessages.ExpectingShortFormRelationship(serializationContext, reader, typeof(TableReferencesEntities));
 						}
-						DslModeling::DomainRoleInfo.SetRolePlayer (newTableReferencesEntity, TableReferencesEntity.TableDomainRoleId, element);
-						DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer (newTableReferencesEntity.GetDomainClass().Id);	
-						global::System.Diagnostics.Debug.Assert (targetSerializer != null, "Cannot find serializer for " + newTableReferencesEntity.GetDomainClass().Name + "!");
-						targetSerializer.Read(serializationContext, newTableReferencesEntity, reader);
-						break;	// Only allow one instance.
+						DslModeling::DomainRoleInfo.SetRolePlayer (newTableReferencesEntities, TableReferencesEntities.TableDomainRoleId, element);
+						DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer (newTableReferencesEntities.GetDomainClass().Id);	
+						global::System.Diagnostics.Debug.Assert (targetSerializer != null, "Cannot find serializer for " + newTableReferencesEntities.GetDomainClass().Name + "!");
+						targetSerializer.Read(serializationContext, newTableReferencesEntities, reader);
 					}
 					else
 					{	// Unknown element, skip
@@ -3421,27 +3441,33 @@ namespace Worm.Designer
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1506:AvoidExcessiveClassCoupling", Justification = "Generated code.")]		
 		private static void WriteChildElements(DslModeling::SerializationContext serializationContext, Table element, global::System.Xml.XmlWriter writer)
 		{
-			// TableReferencesEntity
-			TableReferencesEntity theTableReferencesEntityInstance = TableReferencesEntity.GetLinkToEntity(element);
-			if (!serializationContext.Result.Failed && theTableReferencesEntityInstance != null)
+			// TableReferencesEntities
+			global::System.Collections.ObjectModel.ReadOnlyCollection<TableReferencesEntities> allTableReferencesEntitiesInstances = TableReferencesEntities.GetLinksToEntities(element);
+			if (!serializationContext.Result.Failed && allTableReferencesEntitiesInstances.Count > 0)
 			{
-				DslModeling::DomainRelationshipXmlSerializer relSerializer = serializationContext.Directory.GetSerializer(TableReferencesEntity.DomainClassId) as DslModeling::DomainRelationshipXmlSerializer;
-				global::System.Diagnostics.Debug.Assert(relSerializer != null, "Cannot find serializer for TableReferencesEntity!");
+				DslModeling::DomainRelationshipXmlSerializer relSerializer = serializationContext.Directory.GetSerializer(TableReferencesEntities.DomainClassId) as DslModeling::DomainRelationshipXmlSerializer;
+				global::System.Diagnostics.Debug.Assert(relSerializer != null, "Cannot find serializer for TableReferencesEntities!");
 	
-				writer.WriteStartElement("entity");
-				global::System.Type typeofTableReferencesEntity = typeof(TableReferencesEntity);
-				if (theTableReferencesEntityInstance.GetType() != typeofTableReferencesEntity)
-				{	// Derived relationships will be serialized in full-form.
-					DslModeling::DomainClassXmlSerializer derivedRelSerializer = serializationContext.Directory.GetSerializer(theTableReferencesEntityInstance.GetDomainClass().Id);
-					global::System.Diagnostics.Debug.Assert(derivedRelSerializer != null, "Cannot find serializer for " + theTableReferencesEntityInstance.GetDomainClass().Name + "!");			
-					derivedRelSerializer.Write(serializationContext, theTableReferencesEntityInstance, writer);
-				}
-				else
-				{	// No need to serialize the relationship itself, just serialize the role-player directly.
-					DslModeling::ModelElement targetElement = theTableReferencesEntityInstance.Entity;
-					DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer(targetElement.GetDomainClass().Id);
-					global::System.Diagnostics.Debug.Assert(targetSerializer != null, "Cannot find serializer for " + targetElement.GetDomainClass().Name + "!");			
-					targetSerializer.WriteMoniker(serializationContext, targetElement, writer, element, relSerializer);
+				writer.WriteStartElement("entities");
+				global::System.Type typeofTableReferencesEntities = typeof(TableReferencesEntities);
+				foreach (TableReferencesEntities eachTableReferencesEntitiesInstance in allTableReferencesEntitiesInstances)
+				{
+					if (serializationContext.Result.Failed)
+						break;
+	
+					if (eachTableReferencesEntitiesInstance.GetType() != typeofTableReferencesEntities)
+					{	// Derived relationships will be serialized in full-form.
+						DslModeling::DomainClassXmlSerializer derivedRelSerializer = serializationContext.Directory.GetSerializer(eachTableReferencesEntitiesInstance.GetDomainClass().Id);
+						global::System.Diagnostics.Debug.Assert(derivedRelSerializer != null, "Cannot find serializer for " + eachTableReferencesEntitiesInstance.GetDomainClass().Name + "!");			
+						derivedRelSerializer.Write(serializationContext, eachTableReferencesEntitiesInstance, writer);
+					}
+					else
+					{	// No need to serialize the relationship itself, just serialize the role-player directly.
+						DslModeling::ModelElement targetElement = eachTableReferencesEntitiesInstance.Entity;
+						DslModeling::DomainClassXmlSerializer targetSerializer = serializationContext.Directory.GetSerializer(targetElement.GetDomainClass().Id);
+						global::System.Diagnostics.Debug.Assert(targetSerializer != null, "Cannot find serializer for " + targetElement.GetDomainClass().Name + "!");			
+						targetSerializer.WriteMoniker(serializationContext, targetElement, writer, element, relSerializer);
+					}
 				}
 				writer.WriteEndElement();
 			}
@@ -9050,8 +9076,10 @@ namespace Worm.Designer
 				global::System.String propValue = instanceOfEntityReferencesTargetEntities.LeftEntity;
 				if (!serializationContext.Result.Failed)
 				{
-					if (!string.IsNullOrEmpty(propValue))
+					if (propValue != null && (serializationContext.WriteOptionalPropertiesWithDefaultValue || string.CompareOrdinal(propValue, string.Empty) != 0))
+					{	// No need to write the value out if it's the same as default value.
 						writer.WriteAttributeString("leftEntity", propValue);
+					}
 				}
 			}
 			// LeftAccessedEntityType
@@ -11229,15 +11257,15 @@ namespace Worm.Designer
 namespace Worm.Designer
 {
 	/// <summary>
-	/// Serializer TableReferencesEntitySerializer for DomainClass TableReferencesEntity.
+	/// Serializer TableReferencesEntitiesSerializer for DomainClass TableReferencesEntities.
 	/// </summary>
-	public partial class TableReferencesEntitySerializer : DslModeling::DomainRelationshipXmlSerializer
+	public partial class TableReferencesEntitiesSerializer : DslModeling::DomainRelationshipXmlSerializer
 	{
 		#region Constructor
 		/// <summary>
-		/// TableReferencesEntitySerializer Constructor
+		/// TableReferencesEntitiesSerializer Constructor
 		/// </summary>
-		public TableReferencesEntitySerializer ()
+		public TableReferencesEntitiesSerializer ()
 			: base ()
 		{
 		}
@@ -11245,12 +11273,12 @@ namespace Worm.Designer
 	
 		#region Public Properties
 		/// <summary>
-		/// This is the XML tag name used to serialize an instance of TableReferencesEntity.
+		/// This is the XML tag name used to serialize an instance of TableReferencesEntities.
 		/// </summary>
 		public override string XmlTagName
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
-			get { return @"tableReferencesEntity"; }
+			get { return @"tableReferencesEntities"; }
 		}
 	
 		/// <summary>
@@ -11274,16 +11302,16 @@ namespace Worm.Designer
 	
 		#region Read Methods
 		/// <summary>
-		/// Public Read() method that deserializes one TableReferencesEntity instance from XML.
+		/// Public Read() method that deserializes one TableReferencesEntities instance from XML.
 		/// </summary>
 		/// <remarks>
 		/// When this method is called, caller guarantees that the passed-in XML reader is positioned at the open XML tag
-		/// of the TableReferencesEntity element that is about to be deserialized. 
+		/// of the TableReferencesEntities element that is about to be deserialized. 
 		/// The method needs to ensure that when it returns, the reader is positioned at the open XML tag of the next sibling element,
 		/// or the close tag of the parent element (or EOF).
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">In-memory TableReferencesEntity instance that will get the deserialized data.</param>
+		/// <param name="element">In-memory TableReferencesEntities instance that will get the deserialized data.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		public override void Read(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
 		{
@@ -11328,7 +11356,7 @@ namespace Worm.Designer
 				}
 				else
 				{
-					DesignerSerializationBehaviorSerializationMessages.DanglingRelationship(serializationContext, reader, "TableReferencesEntity");
+					DesignerSerializationBehaviorSerializationMessages.DanglingRelationship(serializationContext, reader, "TableReferencesEntities");
 				}
 			}
 	
@@ -11351,7 +11379,7 @@ namespace Worm.Designer
 		/// 3) EOF.
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">In-memory TableReferencesEntity instance that will link to the target Entity instance.</param>
+		/// <param name="element">In-memory TableReferencesEntities instance that will link to the target Entity instance.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		protected virtual void ReadTargetRolePlayer(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
 		{
@@ -11374,11 +11402,11 @@ namespace Worm.Designer
 	
 			while (!serializationContext.Result.Failed && !reader.EOF && reader.NodeType == global::System.Xml.XmlNodeType.Element)
 			{
-				targetRoleMoniker = targetRoleSerializer.TryCreateMonikerInstance(serializationContext, reader, ((TableReferencesEntity)element).Table, TableReferencesEntity.DomainClassId, element.Partition);
+				targetRoleMoniker = targetRoleSerializer.TryCreateMonikerInstance(serializationContext, reader, ((TableReferencesEntities)element).Table, TableReferencesEntities.DomainClassId, element.Partition);
 				if (targetRoleMoniker != null)
 				{
 					// Attach the target role-player moniker.
-					DslModeling::DomainRoleInfo.SetRolePlayerMoniker (element as DslModeling::ElementLink, TableReferencesEntity.EntityDomainRoleId, targetRoleMoniker);
+					DslModeling::DomainRoleInfo.SetRolePlayerMoniker (element as DslModeling::ElementLink, TableReferencesEntities.EntityDomainRoleId, targetRoleMoniker);
 					// Moniker tag has no child XML elements in it, so just skip to the next element.
 					DslModeling::SerializationUtilities.Skip(reader);
 					break;
@@ -11389,7 +11417,7 @@ namespace Worm.Designer
 			}
 			if (targetRoleMoniker == null)
 			{
-				DesignerSerializationBehaviorSerializationMessages.DanglingRelationship(serializationContext, reader, "TableReferencesEntity");
+				DesignerSerializationBehaviorSerializationMessages.DanglingRelationship(serializationContext, reader, "TableReferencesEntities");
 			}
 		}
 	
@@ -11401,7 +11429,7 @@ namespace Worm.Designer
 		/// The caller will guarantee that the reader is positioned on the open XML tag of the current element being deserialized.
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">In-memory TableReferencesEntity instance that will get the deserialized data.</param>
+		/// <param name="element">In-memory TableReferencesEntities instance that will get the deserialized data.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Generated code.")]
 		protected virtual void ReadPropertiesFromAttributes(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
@@ -11423,7 +11451,7 @@ namespace Worm.Designer
 		/// 3) EOF.
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">In-memory TableReferencesEntity instance that will get the deserialized data.</param>
+		/// <param name="element">In-memory TableReferencesEntities instance that will get the deserialized data.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		protected virtual void ReadElements(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlReader reader)
 		{
@@ -11431,8 +11459,8 @@ namespace Worm.Designer
 	
 		#region TryCreateInstance & TryCreateDerivedInstance
 		/// <summary>
-		/// This method creates a correct instance of TableReferencesEntity based on the tag currently pointed by the reader. If the reader
-		/// is positioned at a serialized TableReferencesEntity, a new TableReferencesEntity instance will be created in the given partition, otherwise 
+		/// This method creates a correct instance of TableReferencesEntities based on the tag currently pointed by the reader. If the reader
+		/// is positioned at a serialized TableReferencesEntities, a new TableReferencesEntities instance will be created in the given partition, otherwise 
 		/// null is returned.
 		/// </summary>
 		/// <remarks>
@@ -11442,7 +11470,7 @@ namespace Worm.Designer
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		/// <param name="partition">Partition in which new elements should be created.</param>	
-		/// <returns>Created TableReferencesEntity instance, or null if the reader is not pointing to a serialized TableReferencesEntity instance.</returns>
+		/// <returns>Created TableReferencesEntities instance, or null if the reader is not pointing to a serialized TableReferencesEntities instance.</returns>
 		public override DslModeling::ModelElement TryCreateInstance(DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::Partition partition)
 		{
 			#region Check Parameters
@@ -11461,9 +11489,9 @@ namespace Worm.Designer
 		}
 	
 		/// <summary>
-		/// This method creates a correct derived instance of TableReferencesEntity based on the tag currently pointed by the reader.
+		/// This method creates a correct derived instance of TableReferencesEntities based on the tag currently pointed by the reader.
 		/// Note that the difference between this method and the above one is that this method will never create an instance of the
-		/// TableReferencesEntity type itself, only derived types are checked.
+		/// TableReferencesEntities type itself, only derived types are checked.
 		/// </summary>
 		/// <remarks>
 		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
@@ -11472,7 +11500,7 @@ namespace Worm.Designer
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
 		/// <param name="partition">Partition in which new elements should be created.</param>
-		/// <returns>Created instance that derives from TableReferencesEntity, or null if the reader is not pointing to such a serialized instance.</returns>
+		/// <returns>Created instance that derives from TableReferencesEntities, or null if the reader is not pointing to such a serialized instance.</returns>
 		public override DslModeling::ElementLink TryCreateDerivedInstance (DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::Partition partition)
 		{
 			#region Check Parameters
@@ -11504,18 +11532,18 @@ namespace Worm.Designer
 			{
 				string localName = reader.LocalName;
 				if (!derivedTypesOnly && string.Compare (localName, this.XmlTagName, global::System.StringComparison.CurrentCulture) == 0)
-				{	// New "TableReferencesEntity" instance.
+				{	// New "TableReferencesEntities" instance.
 					result = this.CreateInstance(serializationContext, reader, partition);
 				}
 				else
-				{	// Check for derived classes of "TableReferencesEntity".
+				{	// Check for derived classes of "TableReferencesEntities".
 					if (this.derivedClasses == null)
 						this.ConstructDerivedClassesLookupTable(serializationContext, partition.DomainDataDirectory);
 					global::System.Diagnostics.Debug.Assert (this.derivedClasses != null);
 					DslModeling::DomainClassInfo derivedClass = null;
 					if (this.derivedClasses.TryGetValue (localName, out derivedClass) && derivedClass != null)
 					{	// New derived relationship instance.
-						TableReferencesEntitySerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as TableReferencesEntitySerializer;
+						TableReferencesEntitiesSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as TableReferencesEntitiesSerializer;
 						global::System.Diagnostics.Debug.Assert(derivedSerializer != null, "Cannot find serializer for " + derivedClass.Name + "!");
 						result = derivedSerializer.CreateInstance(serializationContext, reader, partition);
 					}
@@ -11526,8 +11554,8 @@ namespace Worm.Designer
 		}
 	
 		/// <summary>
-		/// This method creates an instance of TableReferencesEntity based on the tag currently pointed by the reader. The reader is guaranteed (by the caller)
-		/// to be pointed at a serialized instance of TableReferencesEntity.
+		/// This method creates an instance of TableReferencesEntities based on the tag currently pointed by the reader. The reader is guaranteed (by the caller)
+		/// to be pointed at a serialized instance of TableReferencesEntities.
 		/// </summary>
 		/// <remarks>
 		/// The caller will guarantee that the reader is positioned at open XML tag of the ModelRoot instance being read. This method should
@@ -11535,25 +11563,25 @@ namespace Worm.Designer
 		/// </remarks>
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="reader">XmlReader to read serialized data from.</param>
-		/// <param name="partition">Partition in which new TableReferencesEntity instance should be created.</param>	
-		/// <returns>Created TableReferencesEntity instance.</returns>
+		/// <param name="partition">Partition in which new TableReferencesEntities instance should be created.</param>	
+		/// <returns>Created TableReferencesEntities instance.</returns>
 		protected override DslModeling::ModelElement CreateInstance(DslModeling::SerializationContext serializationContext, global::System.Xml.XmlReader reader, DslModeling::Partition partition)
 		{
 			// Create the link with place-holder role-players.
-			return new TableReferencesEntity(
+			return new TableReferencesEntities(
 				partition,
-				DslModeling::RoleAssignment.CreatePlaceholderRoleAssignment (TableReferencesEntity.TableDomainRoleId), 
-				DslModeling::RoleAssignment.CreatePlaceholderRoleAssignment (TableReferencesEntity.EntityDomainRoleId)
+				DslModeling::RoleAssignment.CreatePlaceholderRoleAssignment (TableReferencesEntities.TableDomainRoleId), 
+				DslModeling::RoleAssignment.CreatePlaceholderRoleAssignment (TableReferencesEntities.EntityDomainRoleId)
 			);
 		}
 	
 		/// <summary>
-		/// Stores a mapping from XmlTagName to DomainClassInfo that derives from TableReferencesEntity, created on demand.
+		/// Stores a mapping from XmlTagName to DomainClassInfo that derives from TableReferencesEntities, created on demand.
 		/// </summary>
 		private global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> derivedClasses;
 	
 		/// <summary>
-		/// Construct the apping from XmlTagName to DomainClassInfo that derives from TableReferencesEntity.
+		/// Construct the apping from XmlTagName to DomainClassInfo that derives from TableReferencesEntities.
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="domainDataDirectory">DomainDataDirectory to be used to discover all derived classes.</param>
@@ -11562,7 +11590,7 @@ namespace Worm.Designer
 			global::System.Diagnostics.Debug.Assert(this.derivedClasses == null); // Shouldn't construct the table more than once.
 			this.derivedClasses = new global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> (global::System.StringComparer.CurrentCulture);
 	
-			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(TableReferencesEntity.DomainClassId);
+			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(TableReferencesEntities.DomainClassId);
 			global::System.Diagnostics.Debug.Assert(thisClass != null, "Cannot find DomainClassInfo for ModelRoot!");
 	
 			global::System.Collections.ObjectModel.ReadOnlyCollection<DslModeling::DomainClassInfo> descendents = thisClass.AllDescendants;
@@ -11594,7 +11622,7 @@ namespace Worm.Designer
 	
 		#region TryCreateMonikerInstance
 		/// <summary>
-		/// This method creates a Moniker of the correct derived (including TableReferencesEntity itself) instance of TableReferencesEntity based on the tag currently pointed by the reader.
+		/// This method creates a Moniker of the correct derived (including TableReferencesEntities itself) instance of TableReferencesEntities based on the tag currently pointed by the reader.
 		/// </summary>
 		/// <remarks>
 		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
@@ -11628,18 +11656,18 @@ namespace Worm.Designer
 			{
 				string localName = reader.LocalName;
 				if (string.Compare (localName, this.MonikerTagName, global::System.StringComparison.CurrentCulture) == 0)
-				{	// New "TableReferencesEntity" moniker instance.
+				{	// New "TableReferencesEntities" moniker instance.
 					result = this.CreateMonikerInstance(serializationContext, reader, sourceRolePlayer, relDomainClassId, partition);
 				}
 				else
-				{	// Check for derived classes of "TableReferencesEntity".
+				{	// Check for derived classes of "TableReferencesEntities".
 					if (this.derivedClassMonikers == null)
 						this.ConstructDerivedClassMonikersLookupTable(serializationContext, partition.DomainDataDirectory);
 					global::System.Diagnostics.Debug.Assert(this.derivedClassMonikers != null);
 					DslModeling::DomainClassInfo derivedClass = null;
 					if (this.derivedClassMonikers.TryGetValue (localName, out derivedClass) && derivedClass != null)
 					{	// New derived class moniker instance.
-						TableReferencesEntitySerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as TableReferencesEntitySerializer;
+						TableReferencesEntitiesSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as TableReferencesEntitiesSerializer;
 						global::System.Diagnostics.Debug.Assert(derivedSerializer != null, "Cannot find serializer for " + derivedClass.Name + "!");
 						result = derivedSerializer.CreateMonikerInstance(serializationContext, reader, sourceRolePlayer, relDomainClassId, partition);
 					}
@@ -11650,7 +11678,7 @@ namespace Worm.Designer
 		}
 		
 		/// <summary>
-		/// This method creates a Moniker of TableReferencesEntity based on the tag currently pointed by the reader.
+		/// This method creates a Moniker of TableReferencesEntities based on the tag currently pointed by the reader.
 		/// </summary>
 		/// <remarks>
 		/// The caller will guarantee that the reader is positioned at open XML tag of the next element being read. This method should
@@ -11669,12 +11697,12 @@ namespace Worm.Designer
 		}
 	
 		/// <summary>
-		/// Stores a mapping from Moniker Xml tag name to DomainClassInfo that derives from TableReferencesEntity, created on demand.
+		/// Stores a mapping from Moniker Xml tag name to DomainClassInfo that derives from TableReferencesEntities, created on demand.
 		/// </summary>
 		private global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> derivedClassMonikers;
 	
 		/// <summary>
-		/// Construct the mapping from Moniker Xml tag name to DomainClassInfo that derives from TableReferencesEntity.
+		/// Construct the mapping from Moniker Xml tag name to DomainClassInfo that derives from TableReferencesEntities.
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
 		/// <param name="domainDataDirectory">DomainDataDirectory to be used to discover all derived classes.</param>
@@ -11683,7 +11711,7 @@ namespace Worm.Designer
 			global::System.Diagnostics.Debug.Assert(this.derivedClassMonikers == null); // Shouldn't construct the table more than once.
 			this.derivedClassMonikers = new global::System.Collections.Generic.Dictionary<string, DslModeling::DomainClassInfo> (global::System.StringComparer.CurrentCulture);
 	
-			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(TableReferencesEntity.DomainClassId);
+			DslModeling::DomainClassInfo thisClass = domainDataDirectory.GetDomainClass(TableReferencesEntities.DomainClassId);
 			global::System.Diagnostics.Debug.Assert(thisClass != null, "Cannot find DomainClassInfo for ModelRoot!");
 	
 			global::System.Collections.ObjectModel.ReadOnlyCollection<DslModeling::DomainClassInfo> descendents = thisClass.AllDescendants;
@@ -11709,24 +11737,24 @@ namespace Worm.Designer
 	
 		#region Write Methods
 		/// <summary>
-		/// Public WriteMoniker() method that writes a monikerized TableReferencesEntity instance into XML.
+		/// Public WriteMoniker() method that writes a monikerized TableReferencesEntities instance into XML.
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">TableReferencesEntity instance to be monikerized.</param>
+		/// <param name="element">TableReferencesEntities instance to be monikerized.</param>
 		/// <param name="writer">XmlWriter to write serialized data to.</param>
-		/// <param name="sourceRolePlayer">Source element that references the TableReferencesEntity instance being monikerized.</param>
-		/// <param name="relSerializer">Serializer that handles the relationship connecting the source element to the TableReferencesEntity instance being monikerized.</param>
+		/// <param name="sourceRolePlayer">Source element that references the TableReferencesEntities instance being monikerized.</param>
+		/// <param name="relSerializer">Serializer that handles the relationship connecting the source element to the TableReferencesEntities instance being monikerized.</param>
 		public override void WriteMoniker(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer, DslModeling::ModelElement sourceRolePlayer, DslModeling::DomainRelationshipXmlSerializer relSerializer)
 		{
-			// Instance of TableReferencesEntity cannot be monikerized.
-			DesignerSerializationBehaviorSerializationMessages.CannotMonikerizeElement(serializationContext, "TableReferencesEntity");
+			// Instance of TableReferencesEntities cannot be monikerized.
+			DesignerSerializationBehaviorSerializationMessages.CannotMonikerizeElement(serializationContext, "TableReferencesEntities");
 		}
 		
 		/// <summary>
-		/// Public Write() method that serializes one TableReferencesEntity instance into XML.
+		/// Public Write() method that serializes one TableReferencesEntities instance into XML.
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">TableReferencesEntity instance to be serialized.</param>
+		/// <param name="element">TableReferencesEntities instance to be serialized.</param>
 		/// <param name="writer">XmlWriter to write serialized data to.</param>
 		/// <param name="rootElementSettings">
 		/// The root element settings if the passed in element is serialized as a root element in the XML. The root element contains additional
@@ -11743,7 +11771,7 @@ namespace Worm.Designer
 		/// Write all properties that need to be serialized as XML attributes.
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">TableReferencesEntity instance to be serialized.</param>
+		/// <param name="element">TableReferencesEntities instance to be serialized.</param>
 		/// <param name="writer">XmlWriter to write serialized data to.</param> 
 		[global::System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity", Justification = "Generated code.")]
 		protected virtual void WritePropertiesAsAttributes(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer)
@@ -11755,7 +11783,7 @@ namespace Worm.Designer
 		/// This methods serializes 1) properties serialized as nested XML elements and 2) child model elements into XML. 
 		/// </summary>
 		/// <param name="serializationContext">Serialization context.</param>
-		/// <param name="element">TableReferencesEntity instance to be serialized.</param>
+		/// <param name="element">TableReferencesEntities instance to be serialized.</param>
 		/// <param name="writer">XmlWriter to write serialized data to.</param>        
 		protected virtual void WriteElements(DslModeling::SerializationContext serializationContext, DslModeling::ModelElement element, global::System.Xml.XmlWriter writer)
 		{
@@ -11764,11 +11792,11 @@ namespace Worm.Designer
 	
 		#region Moniker Support
 		/// <summary>
-		/// This method calculates a moniker to a given TableReferencesEntity instance.
+		/// This method calculates a moniker to a given TableReferencesEntities instance.
 		/// </summary>
 		/// <param name="directory">Directory to look up serializer based on model element type.</param>
-		/// <param name="element">TableReferencesEntity instance to calculate qualified name for.</param>
-		/// <returns>A fully qualified string moniker to the TableReferencesEntity instance.</returns>
+		/// <param name="element">TableReferencesEntities instance to calculate qualified name for.</param>
+		/// <returns>A fully qualified string moniker to the TableReferencesEntities instance.</returns>
 		public override string CalculateQualifiedName(DslModeling::DomainXmlSerializerDirectory directory, DslModeling::ModelElement element)
 		{
 			#region Check Parameters
@@ -11780,8 +11808,8 @@ namespace Worm.Designer
 				throw new global::System.ArgumentNullException("element");
 			#endregion	
 			
-			TableReferencesEntity instance = element as TableReferencesEntity;
-			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of TableReferencesEntity!");
+			TableReferencesEntities instance = element as TableReferencesEntities;
+			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of TableReferencesEntities!");
 	
 			DslModeling::ModelElement container = instance.Table;
 			if(container != null)
@@ -11802,7 +11830,7 @@ namespace Worm.Designer
 		/// returns empty string.
 		/// </summary>
 		/// <param name="directory">Directory to look up serializer based on model element type.</param>
-		/// <param name="element">TableReferencesEntity instance to get moniker qualifier from.</param>
+		/// <param name="element">TableReferencesEntities instance to get moniker qualifier from.</param>
 		/// <returns>
 		/// Value of this element's moniker qualifier property, if it has one, or the value of the container's moniker qualifier property. Or empty string if this
 		/// element is not monikerized using standard /qualifier/key mechanism.
@@ -11818,8 +11846,8 @@ namespace Worm.Designer
 				throw new global::System.ArgumentNullException("element");
 			#endregion	
 			
-			TableReferencesEntity instance = element as TableReferencesEntity;
-			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of TableReferencesEntity!");
+			TableReferencesEntities instance = element as TableReferencesEntities;
+			global::System.Diagnostics.Debug.Assert(instance != null, "Expecting an instance of TableReferencesEntities!");
 			DslModeling::ModelElement container = instance.Table;
 			if(container != null)
 			{
@@ -11865,14 +11893,14 @@ namespace Worm.Designer
 			DslModeling::MonikerKey key = null;
 			if (DslModeling::SimpleMonikerResolver.IsFullyQualified(monikerString))
 			{
-				key = new DslModeling::MonikerKey(monikerString, TableReferencesEntity.DomainClassId, domainClassId, store);
+				key = new DslModeling::MonikerKey(monikerString, TableReferencesEntities.DomainClassId, domainClassId, store);
 			}
 			else
 			{
 				DslModeling::DomainClassXmlSerializer sourceSerializer = serializationContext.Directory.GetSerializer(sourceElement.GetDomainClass().Id);
 				global::System.Diagnostics.Debug.Assert(sourceSerializer != null, "Cannot find serializer for " + sourceElement.GetDomainClass().Name + "!");
 				string sourceQualifier = sourceSerializer.GetMonikerQualifier(serializationContext.Directory, sourceElement);
-				key = new DslModeling::MonikerKey(string.Format(global::System.Globalization.CultureInfo.CurrentCulture, "{0}/{1}", sourceQualifier, monikerString), TableReferencesEntity.DomainClassId, domainClassId, store);
+				key = new DslModeling::MonikerKey(string.Format(global::System.Globalization.CultureInfo.CurrentCulture, "{0}/{1}", sourceQualifier, monikerString), TableReferencesEntities.DomainClassId, domainClassId, store);
 			}
 			return new DslModeling::Moniker(key, store);
 		}
@@ -13315,15 +13343,15 @@ namespace Worm.Designer
 namespace Worm.Designer
 {
 	/// <summary>
-	/// Serializer EntityShapeSerializer for DomainClass EntityShape.
+	/// Serializer EntityShapeSerializerBase for DomainClass EntityShape.
 	/// </summary>
-	public partial class EntityShapeSerializer : DslDiagrams::CompartmentShapeSerializer
+	public abstract partial class EntityShapeSerializerBase : DslDiagrams::CompartmentShapeSerializer
 	{
 		#region Constructor
 		/// <summary>
-		/// EntityShapeSerializer Constructor
+		/// EntityShapeSerializerBase Constructor
 		/// </summary>
-		public EntityShapeSerializer ()
+		protected EntityShapeSerializerBase ()
 			: base ()
 		{
 		}
@@ -13459,7 +13487,7 @@ namespace Worm.Designer
 					DslModeling::DomainClassInfo derivedClass = null;
 					if (this.derivedClasses.TryGetValue (localName, out derivedClass) && derivedClass != null)
 					{	// New derived class instance.
-						EntityShapeSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as EntityShapeSerializer;
+						EntityShapeSerializerBase derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as EntityShapeSerializerBase;
 						global::System.Diagnostics.Debug.Assert(derivedSerializer != null, "Cannot find serializer for " + derivedClass.Name + "!");
 						result = derivedSerializer.CreateInstance(serializationContext, reader, partition);
 					}
@@ -13605,7 +13633,7 @@ namespace Worm.Designer
 					DslModeling::DomainClassInfo derivedClass = null;
 					if (this.derivedClassMonikers.TryGetValue (localName, out derivedClass) && derivedClass != null)
 					{	// New derived class moniker instance.
-						EntityShapeSerializer derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as EntityShapeSerializer;
+						EntityShapeSerializerBase derivedSerializer = serializationContext.Directory.GetSerializer(derivedClass.Id) as EntityShapeSerializerBase;
 						global::System.Diagnostics.Debug.Assert(derivedSerializer != null, "Cannot find serializer for " + derivedClass.Name + "!");
 						result = derivedSerializer.CreateMonikerInstance(serializationContext, reader, sourceRolePlayer, relDomainClassId, partition);
 					}
@@ -13836,6 +13864,22 @@ namespace Worm.Designer
 			#endregion	
 			
 			return string.Empty;
+		}
+		#endregion
+	}
+	
+	/// <summary>
+	/// Serializer EntityShapeSerializer for DomainClass EntityShape.
+	/// </summary>
+	public partial class EntityShapeSerializer : EntityShapeSerializerBase
+	{
+		#region Constructor
+		/// <summary>
+		/// EntityShapeSerializer Constructor
+		/// </summary>
+		public EntityShapeSerializer ()
+			: base ()
+		{
 		}
 		#endregion
 	}
@@ -14850,7 +14894,7 @@ namespace Worm.Designer
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityHasSupressedProperties.DomainClassId, typeof(EntityHasSupressedPropertiesSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityHasSelfRelations.DomainClassId, typeof(EntityHasSelfRelationsSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(WormModelHasTables.DomainClassId, typeof(WormModelHasTablesSerializer)));
-					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(TableReferencesEntity.DomainClassId, typeof(TableReferencesEntitySerializer)));
+					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(TableReferencesEntities.DomainClassId, typeof(TableReferencesEntitiesSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(WormModelHasTypes.DomainClassId, typeof(WormModelHasTypesSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(WormTypeReferencesEntities.DomainClassId, typeof(WormTypeReferencesEntitiesSerializer)));
 					DesignerSerializationBehavior.serializerTypes.Add(new DslModeling::DomainXmlSerializerDirectoryEntry(EntityShape.DomainClassId, typeof(EntityShapeSerializer)));

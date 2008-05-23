@@ -94,9 +94,7 @@ namespace Worm.Designer
                 model.ModelSelfRelationDeleted -= new ModelSelfRelationDeletedHandler(this.OnModelSelfRelationDeleted);
                 model.ModelSelfRelationChanged -= new ModelSelfRelationChangedHandler(this.OnModelSelfRelationChanged);
 
-                model.ModelRelationAdded -= new ModelRelationAddedHandler(this.OnModelRelationAdded);
-                model.ModelRelationDeleted -= new ModelRelationDeletedHandler(this.OnModelRelationDeleted);
-                model.ModelRelationChanged -= new ModelRelationChangedHandler(this.OnModelRelationChanged);
+              
             }
 
             ModelingDocData data2 = (newView != null) ? newView.DocData : null;
@@ -113,9 +111,7 @@ namespace Worm.Designer
                 model.ModelSelfRelationDeleted += new ModelSelfRelationDeletedHandler(this.OnModelSelfRelationDeleted);
                 model.ModelSelfRelationChanged += new ModelSelfRelationChangedHandler(this.OnModelSelfRelationChanged);
 
-                model.ModelRelationAdded += new ModelRelationAddedHandler(this.OnModelRelationAdded);
-                model.ModelRelationDeleted += new ModelRelationDeletedHandler(this.OnModelRelationDeleted);
-                model.ModelRelationChanged += new ModelRelationChangedHandler(this.OnModelRelationChanged);
+             
             }
 
             OnDocumentSelectionChanged(data2, EventArgs.Empty);
@@ -159,24 +155,7 @@ namespace Worm.Designer
                 control.Display(relation);
         }
 
-        public void OnModelRelationAdded(ElementAddedEventArgs e)
-        {
-            EntityReferencesTargetEntities relation = e.ModelElement as EntityReferencesTargetEntities;
-            if (relation != null)
-                control.Display(relation);
-        }
-
-        public void OnModelRelationDeleted(ElementDeletedEventArgs e)
-        {
-            control.Clear();
-        }
-
-        public void OnModelRelationChanged(ElementPropertyChangedEventArgs e)
-        {
-            EntityReferencesTargetEntities relation = e.ModelElement as EntityReferencesTargetEntities;
-            if (relation != null)
-                control.Display(relation);
-        }
+      
 
         public void OnDocumentSelectionChanged(object sender, EventArgs e)
         {
@@ -211,7 +190,7 @@ namespace Worm.Designer
                         EntityConnector connector = enumerator.Current as EntityConnector;
                         if (connector != null)
                         {
-                            control.Display((EntityReferencesTargetEntities)connector.ModelElement);
+                            control.Display(((EntityReferencesTargetEntities)connector.ModelElement).TargetEntity);
                             return;
 
                         }
@@ -277,6 +256,13 @@ namespace Worm.Designer
                         return;
                     }
 
+                    WormModel model = sender as WormModel;
+                    if (model != null)
+                    {
+                        control.Display(model);
+                        return;
+                    }
+
                     EntityShape shape = sender as EntityShape;
                     if (shape != null)
                     {
@@ -285,10 +271,11 @@ namespace Worm.Designer
 
                     }
 
+                   
                     EntityConnector connector = sender as EntityConnector;
                     if (connector != null)
                     {
-                        control.Display((EntityReferencesTargetEntities)connector.ModelElement);
+                        control.Display(((EntityReferencesTargetEntities)connector.ModelElement).TargetEntity);
                         return;
 
                     }

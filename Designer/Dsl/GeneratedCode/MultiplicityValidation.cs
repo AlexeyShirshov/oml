@@ -22,12 +22,12 @@ namespace Worm.Designer
 		[DslValidation::ValidationMethod(DslValidation::ValidationCategories.Open | DslValidation::ValidationCategories.Save | DslValidation::ValidationCategories.Menu)]
 		private void ValidateTableMultiplicity (DslValidation::ValidationContext context)
 		{
-			if (this.Entity == null)
+			if (this.Entities.Count == 0)
 			{
 				context.LogViolation(DslValidation::ViolationType.Error,
 					string.Format(global::System.Globalization.CultureInfo.CurrentCulture, 
 						Worm.Designer.DesignerDomainModel.SingletonResourceManager.GetString("MinimumMultiplicityMissingLink"), 
-						"Table", this.Name, "Entity"),
+						"Table", this.Name, "Entities"),
 						"DSL0001", this);
 			}
 		} // ValidateTableMultiplicity

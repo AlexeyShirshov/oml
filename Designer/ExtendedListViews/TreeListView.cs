@@ -933,6 +933,31 @@ namespace SynapticEffect.Forms
 			}
 		}
 
+        public delegate void AfterMouseDownHandler(object sender, MouseEventArgs e);
+        public event AfterMouseDownHandler AfterMouseDown;
+        public delegate void AfterMouseMoveHandler(object sender, MouseEventArgs e);
+        public event AfterMouseMoveHandler AfterMouseMove;
+        public delegate void AfterMouseUpHandler(object sender, MouseEventArgs e);
+        public event AfterMouseUpHandler AfterMouseUp;
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            if (AfterMouseMove != null)
+            {
+                AfterMouseMove(NodeInNodeRow(e), e);
+            }
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            if (AfterMouseUp != null)
+            {
+                AfterMouseUp(NodeInNodeRow(e), e);
+            }
+        }
+
 		protected override void OnMouseDown(MouseEventArgs e)
 		{
 			base.OnMouseDown(e);
@@ -1059,7 +1084,12 @@ namespace SynapticEffect.Forms
 
 					}
 				}
-			}			
+			}
+            TreeListNode node = NodeInNodeRow(e);
+            if (AfterMouseDown != null && node != null)
+            {
+                AfterMouseDown(node, e);
+            }
 		}
 
 
@@ -1231,6 +1261,25 @@ namespace SynapticEffect.Forms
 
 			return null;
 		}
+
+        public TreeListNode NodeInNodeRow(Point point)
+        {
+            IEnumerator ek = nodeRowRects.Keys.GetEnumerator();
+            IEnumerator ev = nodeRowRects.Values.GetEnumerator();
+
+            while (ek.MoveNext() && ev.MoveNext())
+            {
+                Rectangle r = (Rectangle)ek.Current;
+
+                if (r.Left <= point.X && r.Left + r.Width >= point.X
+                    && r.Top <= point.Y && r.Top + r.Height >= point.Y)
+                {
+                    return (TreeListNode)ev.Current;
+                }
+            }
+
+            return null;
+        }
 
 		private TreeListNode NodePlusClicked(MouseEventArgs e)
 		{

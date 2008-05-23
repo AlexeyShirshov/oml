@@ -14,14 +14,13 @@ using DslDiagrams = global::Microsoft.VisualStudio.Modeling.Diagrams;
 namespace Worm.Designer
 {
 	/// <summary>
-	/// DomainClass EntityShape
-	/// Entity
+	/// Double-derived base class for DomainClass EntityShape
 	/// </summary>
 	[DslDesign::DisplayNameResource("Worm.Designer.EntityShape.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 	[DslDesign::DescriptionResource("Worm.Designer.EntityShape.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 	[global::System.CLSCompliant(true)]
 	[DslModeling::DomainObjectId("1ac7c68e-23be-47ec-a6fe-2ece8f63e49c")]
-	public partial class EntityShape : DslDiagrams::CompartmentShape
+	public abstract partial class EntityShapeBase : DslDiagrams::CompartmentShape
 	{
 		#region DiagramElement boilerplate
 		private static DslDiagrams::StyleSet classStyleSet;
@@ -406,6 +405,26 @@ namespace Worm.Designer
 		/// EntityShape domain class Id.
 		/// </summary>
 		public static readonly new global::System.Guid DomainClassId = new global::System.Guid(0x1ac7c68e, 0x23be, 0x47ec, 0xa6, 0xfe, 0x2e, 0xce, 0x8f, 0x63, 0xe4, 0x9c);
+		/// <summary>
+		/// Constructor.
+		/// </summary>
+		/// <param name="partition">Partition where new element is to be created.</param>
+		/// <param name="propertyAssignments">List of domain property id/value pairs to set once the element is created.</param>
+		protected EntityShapeBase(DslModeling::Partition partition, DslModeling::PropertyAssignment[] propertyAssignments)
+			: base(partition, propertyAssignments)
+		{
+		}
+		#endregion
+	}
+	/// <summary>
+	/// DomainClass EntityShape
+	/// Entity
+	/// </summary>
+	[global::System.CLSCompliant(true)]
+			
+	public partial class EntityShape : EntityShapeBase
+	{
+		#region Constructors
 		/// <summary>
 		/// Constructor
 		/// </summary>

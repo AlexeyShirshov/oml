@@ -145,7 +145,7 @@ namespace Worm.Designer
 	/// <summary>
 	/// ConnectionBuilder class to provide logic for constructing connections between elements.
 	/// </summary>
-	public static partial class TableReferencesEntityBuilder
+	public static partial class TableReferencesEntitiesBuilder
 	{
 		#region Accept Connection Methods
 		/// <summary>
@@ -219,8 +219,7 @@ namespace Worm.Designer
 					{
 						global::Worm.Designer.Table sourceTable = (global::Worm.Designer.Table)candidateSource;
 						global::Worm.Designer.Entity targetEntity = (global::Worm.Designer.Entity)candidateTarget;
-						if(sourceTable == null || global::Worm.Designer.TableReferencesEntity.GetLinkToEntity(sourceTable) != null) return false;
-						if(targetEntity == null || sourceTable == null || global::Worm.Designer.TableReferencesEntity.GetLinks(sourceTable, targetEntity).Count > 0) return false;
+						if(targetEntity == null || sourceTable == null || global::Worm.Designer.TableReferencesEntities.GetLinks(sourceTable, targetEntity).Count > 0) return false;
 						return true;
 					}
 				}
@@ -258,7 +257,7 @@ namespace Worm.Designer
 					{
 						global::Worm.Designer.Table sourceAccepted = (global::Worm.Designer.Table)source;
 						global::Worm.Designer.Entity targetAccepted = (global::Worm.Designer.Entity)target;
-						DslModeling::ElementLink result = new global::Worm.Designer.TableReferencesEntity(sourceAccepted, targetAccepted);
+						DslModeling::ElementLink result = new global::Worm.Designer.TableReferencesEntities(sourceAccepted, targetAccepted);
 						if (DslModeling::DomainClassInfo.HasNameProperty(result))
 						{
 							DslModeling::DomainClassInfo.SetUniqueName(result);

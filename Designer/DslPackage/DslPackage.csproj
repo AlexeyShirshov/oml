@@ -59,6 +59,10 @@
       <HintPath>C:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE\PublicAssemblies\EnvDTE.dll</HintPath>
     </Reference>
     <Reference Include="EnvDTE80, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+    <Reference Include="Microsoft.VisualStudio.CommandBars, Version=8.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>D:\Program Files\Microsoft Visual Studio 9.0\Common7\IDE\PublicAssemblies\Microsoft.VisualStudio.CommandBars.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.VisualStudio.Designer.Interfaces, Version=1.0.5000.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
     <Reference Include="Microsoft.VisualStudio.Modeling.Sdk, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="Microsoft.VisualStudio.Modeling.Sdk.Diagrams, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
@@ -277,12 +281,23 @@
     <Content Include="grey.bmp" />
     <Content Include="ProjectItemTemplates\Mvp.Xml.dll" />
     <Content Include="ProjectItemTemplates\Worm.CodeGen.Core.dll" />
+    <Content Include="Resources\123.ico" />
     <Content Include="Resources\2022.ico" />
     <Content Include="Resources\2601.ico" />
     <Content Include="Resources\2621.ico" />
     <Content Include="Resources\2651.ico" />
     <Content Include="Resources\2671.ico" />
     <None Include="Resources\5293.ico" />
+    <Content Include="Resources\assembly.ico" />
+    <Content Include="Resources\family.ico" />
+    <Content Include="Resources\familyassembly.ico" />
+    <Content Include="Resources\kassembly.ico" />
+    <Content Include="Resources\kfamily.ico" />
+    <Content Include="Resources\kfamilyassembly.ico" />
+    <Content Include="Resources\kprivate.ico" />
+    <Content Include="Resources\kpublic.ico" />
     <Content Include="Resources\ModelExplorerToolWindowBitmaps.bmp" />
+    <Content Include="Resources\private.ico" />
+    <Content Include="Resources\public.ico" />
   </ItemGroup>
 </Project>

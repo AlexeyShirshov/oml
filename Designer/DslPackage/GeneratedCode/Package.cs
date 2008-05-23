@@ -84,12 +84,22 @@ namespace Worm.Designer
 //
 namespace Worm.Designer
 {
+	using System;
 	using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.TextTemplating.VSHost;
     using Microsoft.Win32;
 	using System.Runtime.InteropServices;
 	using System.Text;
+	using System.Resources;
+	using System.Drawing; 
+	using System.Windows.Forms; 
+	using System.IO;
+	using System.Xml;
 	using EnvDTE;
+	using Worm.CodeGen.Core;
+	using Microsoft.VisualStudio.CommandBars;
+	using Microsoft.VisualStudio.Modeling;
+	using Microsoft.VisualStudio.Modeling.Shell;
 
 	/// <summary>
 	/// Double-derived class to allow easier code customization.
@@ -105,20 +115,94 @@ namespace Worm.Designer
 	[global::System.Runtime.InteropServices.Guid(Constants.DesignerPackageId)]
 	internal sealed partial class DesignerPackage : DesignerPackageBase
 	{
+		CommandBarEvents menuItemHandler;
+        CommandBarControl menuItem;
+        
 		protected override void Initialize()
 		{
 			base.Initialize();
 			
 			this.AddToolWindow(typeof(Worm.Designer.WormToolWindow));
 			
-			 if (!IsAssociated(".wxml"))
-			 {
-			 System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
-			 DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
-            
-                Associate(".wxml", "WormDesigner", "Worm Designer", @"D:\depot_tfs\Designer\DslPackage\bin\Debug\Worm.Designer.DslPackage.dll, 0", dte.FileName);
-             }
-		}
+			System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+            DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
+            ResourceManager manager = new ResourceManager("Worm.Designer.VSPackage", typeof(DesignerPackage).Assembly);
+            Icon icon = new Icon((Icon)manager.GetObject("2671"), new Size(16, 16));
+            string path = Path.Combine(this.UserLocalDataPath, "worm.ico");
+            using (FileStream fs = new FileStream(path, FileMode.OpenOrCreate))
+            {
+                icon.Save(fs);
+            }
+
+            Associate(".wxml", "ClassID.ProgID", "Worm Designer", path, dte.FileName);           
+                    
+            CommandBar commandBar = ((CommandBars)dte.Application.CommandBars)["Tools"];
+            menuItem = commandBar.FindControl(MsoControlType.msoControlButton, 1, "", null, true);
+            if (menuItem == null)
+            {
+                menuItem = commandBar.Controls.Add(MsoControlType.msoControlButton, System.Reflection.Missing.Value,
+                                             System.Reflection.Missing.Value, 1, true);
+                menuItem.Caption = "Import worm file";
+
+            }
+
+
+            menuItemHandler = (CommandBarEvents)dte.Application.Events.get_CommandBarEvents(menuItem);
+            menuItemHandler.Click += new _dispCommandBarControlEvents_ClickEventHandler(menuItemHandler_Click);
+        }
+        
+        private void menuItemHandler_Click(object CommandBarControl, ref bool handled, ref bool CancelDefault)
+        {
+            System.Diagnostics.Process currentProcess = System.Diagnostics.Process.GetCurrentProcess();
+            DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
+            if (dte.ActiveDocument != null && Path.GetExtension(dte.ActiveDocument.Name) == ".wxml")
+            {
+                if (MessageBox.Show("Do you want to import data from worm file? Current model will be replaced by imported.", "Confirmation", MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question) != DialogResult.Yes)
+                {
+                    return;
+                }
+            }
+            else
+            {
+                 MessageBox.Show("Worm designer file should be opened to import data.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                 return;
+            }
+
+           
+            OpenFileDialog dialog = new OpenFileDialog();
+            dialog.DefaultExt = "xml";
+            dialog.Filter = "Xml files|*.xml|All files|*.*";
+            dialog.RestoreDirectory = true;
+            dialog.Title = "Load worm file";
+            if (dialog.ShowDialog() == DialogResult.OK)
+            {
+                try
+                {
+                    using (FileStream stream = new FileStream(dialog.FileName, FileMode.Open))
+                    {
+                        using (XmlReader rdr = XmlReader.Create(stream))
+                        {
+                            OrmObjectsDef ormObjectsDef = OrmObjectsDef.LoadFromXml(rdr, new XmlUrlResolver());
+                            if(DesignerDocView.ActiveWindow != null)
+                            {
+								ModelingDocData data = DesignerDocView.ActiveWindow.DocData;
+								if ((data != null) && data is DesignerDocData)
+								{
+									WormModel model = (WormModel)data.RootElement;
+									XmlHelper.Import(model, ormObjectsDef);
+								}
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Cannot read file", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
 		
 		// Associate file extension with progID, description, icon and application
 		 public static void Associate(string extension, string progID, string description, string icon, string application)
@@ -130,7 +214,7 @@ namespace Worm.Designer
                     if (description != null)
                         key.SetValue("", description);
                     if (icon != null)
-                        key.CreateSubKey("DefaultIcon").SetValue("", icon);
+                        key.CreateSubKey("DefaultIcon").SetValue("", ToShortPathName(icon));
                     if (application != null)
                         key.CreateSubKey(@"Shell\Open\Command").SetValue("", ToShortPathName(application) + " \"%1\"");
                 }

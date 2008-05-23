@@ -98,7 +98,7 @@
     </Compile>
     <Compile Include="CustomUI\SelfConnector.cs" />
     <Compile Include="CustomUI\SupressedPropertyUIEditor.cs" />
-    <Compile Include="TypeUIEditor.cs" />
+    <Compile Include="CustomUI\TypeUIEditor.cs" />
     <Compile Include="GeneratedCode\ConnectionBuilders.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -178,6 +178,7 @@
     </Compile>
     <Compile Include="CustomUI\TableUIEditor.cs" />
     <Compile Include="Generation\XmlHelper.cs" />
+    <Compile Include="Validation\SelfRelation.cs" />
     <Compile Include="Validation\Property.cs" />
     <Compile Include="Validation\EntityRelation.cs" />
   </ItemGroup>
@@ -278,12 +279,25 @@
     </CodeAnalysisDictionary>
     <Content Include="Resources\2651.bmp" />
     <Content Include="Resources\2671.bmp" />
+    <Content Include="Resources\assembly.bmp" />
     <Content Include="Resources\ClassTool.bmp" />
     <Content Include="Resources\ExampleConnectorToolBitmap.bmp" />
     <Content Include="Resources\ExampleShapeToolBitmap.bmp" />
+    <Content Include="Resources\family.bmp" />
+    <Content Include="Resources\familyassembly.bmp" />
     <Content Include="Resources\GeneralizationTool.bmp" />
     <Content Include="Resources\InterfaceTool.bmp" />
+    <Content Include="Resources\kassembly.bmp" />
+    <Content Include="Resources\kfamily.bmp" />
+    <Content Include="Resources\kfamilyassembly.bmp" />
+    <Content Include="Resources\kprivate.bmp" />
+    <Content Include="Resources\kpublic.bmp" />
+    <Content Include="Resources\private.bmp" />
+    <Content Include="Resources\public.bmp" />
     <Content Include="Resources\tool.bmp" />
+    <EmbeddedResource Include="Resource.resx">
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\ConnectorSourceSearch.cur" />
     <EmbeddedResource Include="Resources\ConnectorTargetSearch.cur" />
   </ItemGroup>

@@ -30,6 +30,8 @@ namespace Worm.Designer
 
             DTE dte = Helper.GetDTE(currentProcess.Id.ToString());
             ProjectItem projectItem = dte.Solution.FindProjectItem(inputFileName);
+                      
+
             string ext = Helper.GetProjectLanguage(projectItem.ContainingProject);
             switch (ext)
             {

@@ -326,6 +326,18 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
+        <DomainProperty Id="fccc40b6-91d8-4905-b4a3-7a408835c758" Description="Inherits table list from base entity." Name="InheritsBase" DisplayName="Inherits Base" DefaultValue="False" Category="Code generation">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
       </Properties>
       <ElementMergeDirectives>
         <ElementMergeDirective>
@@ -357,7 +369,7 @@
             <DomainClassMoniker Name="Table" />
           </Index>
           <LinkCreationPaths>
-            <DomainPath>TableReferencesEntity.Tables</DomainPath>
+            <DomainPath>TableReferencesEntities.Tables</DomainPath>
             <DomainPath>WormModelHasEntities.WormModel/!WormModel/WormModelHasTables.Tables</DomainPath>
           </LinkCreationPaths>
         </ElementMergeDirective>
@@ -805,12 +817,12 @@
     </DomainRelationship>
     <DomainRelationship Id="c0c83bed-1d6c-46fc-97ed-b723d83d36fc" Description="Description for Worm.Designer.EntityReferencesTargetEntities" Name="EntityReferencesTargetEntities" DisplayName="Entity References Target Entities" Namespace="Worm.Designer">
       <Properties>
-        <DomainProperty Id="6bd17a24-e3bd-4412-a6c6-2c00b7824678" Description="Underlying entity" Name="UnderlyingEntity" DisplayName="Underlying entity">
+        <DomainProperty Id="6bd17a24-e3bd-4412-a6c6-2c00b7824678" Description="Underlying entity" Name="UnderlyingEntity" DisplayName="Underlying entity" Category="Relation">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="ecd23e88-6e56-438b-9f10-c56c1aba7cbf" Description="Каскадное удаление" Name="LeftCascadeDelete" DisplayName="Left Cascade Delete" DefaultValue="true">
+        <DomainProperty Id="ecd23e88-6e56-438b-9f10-c56c1aba7cbf" Description="Каскадное удаление" Name="LeftCascadeDelete" DisplayName="Left Cascade Delete" DefaultValue="true" Category="Left point">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -822,24 +834,17 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="ec48a8e3-f1b3-4c88-bbd4-644451ce13b0" Description="Имя поля таблицы связи" Name="LeftFieldName" DisplayName="Left Field Name">
-          <Attributes>
-            <ClrAttribute Name="System.ComponentModel.Editor">
-              <Parameters>
-                <AttributeParameter Value="typeof(Worm.Designer.RelationUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
-              </Parameters>
-            </ClrAttribute>
-          </Attributes>
+        <DomainProperty Id="ec48a8e3-f1b3-4c88-bbd4-644451ce13b0" Description="Имя поля таблицы связи" Name="LeftFieldName" DisplayName="Left Field Name" Category="Left point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="3bf5da1c-8e83-42ab-8179-77194758fbaf" Description="Имя связанной сущности для генерации методов" Name="LeftAccessorName" DisplayName="Left Accessor Name">
+        <DomainProperty Id="3bf5da1c-8e83-42ab-8179-77194758fbaf" Description="Имя связанной сущности для генерации методов" Name="LeftAccessorName" DisplayName="Left Accessor Name" Category="Left point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="8c000c96-92a2-4eeb-871b-a09fd6a2e10d" Description="Description for Worm.Designer.EntityReferencesTargetEntities.Disabled" Name="Disabled" DisplayName="Disabled" DefaultValue="false">
+        <DomainProperty Id="8c000c96-92a2-4eeb-871b-a09fd6a2e10d" Description="Description for Worm.Designer.EntityReferencesTargetEntities.Disabled" Name="Disabled" DisplayName="Disabled" DefaultValue="false" Category="Relation">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -851,7 +856,7 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="202b0d26-d30c-4a1f-96f1-0b6bdbce7db3" Description="Description for Worm.Designer.EntityReferencesTargetEntities.Table" Name="Table" DisplayName="Table">
+        <DomainProperty Id="202b0d26-d30c-4a1f-96f1-0b6bdbce7db3" Description="Description for Worm.Designer.EntityReferencesTargetEntities.Table" Name="Table" DisplayName="Table" Category="Relation">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -863,26 +868,11 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="845e0f02-ed94-402a-b087-c9f05a71b9bc" Description="Сущность" Name="LeftEntity" DisplayName="Left Entity">
-          <Type>
-            <ExternalTypeMoniker Name="/System/String" />
-          </Type>
-        </DomainProperty>
-        <DomainProperty Id="880ca553-e244-4497-b380-e1445219bf73" Description="Тип связанной сущности для генерации методов" Name="LeftAccessedEntityType" DisplayName="Left Accessed Entity Type">
-          <Type>
-            <ExternalTypeMoniker Name="/System/String" />
-          </Type>
-        </DomainProperty>
-        <DomainProperty Id="2c3390fd-432a-4268-96f7-4f8859d74b96" Description="Тип связанной сущности для генерации методов" Name="RightAccessedEntityType" DisplayName="Right Accessed Entity Type">
-          <Type>
-            <ExternalTypeMoniker Name="/System/String" />
-          </Type>
-        </DomainProperty>
-        <DomainProperty Id="2e71233d-d194-4929-bbb4-27cf3ae1d389" Description="Имя поля таблицы связи" Name="RightFieldName" DisplayName="Right Field Name">
+        <DomainProperty Id="845e0f02-ed94-402a-b087-c9f05a71b9bc" Description="Сущность" Name="LeftEntity" DisplayName="Left Entity" DefaultValue="" Category="Left point">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
-                <AttributeParameter Value="typeof(Worm.Designer.RelationUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+                <AttributeParameter Value="typeof(Worm.Designer.BaseEntityUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
               </Parameters>
             </ClrAttribute>
           </Attributes>
@@ -890,7 +880,22 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="7c7b3972-2e7d-4b2c-bee9-49cb3c2d8742" Description="Каскадное удаление" Name="RightCascadeDelete" DisplayName="Right Cascade Delete" DefaultValue="true">
+        <DomainProperty Id="880ca553-e244-4497-b380-e1445219bf73" Description="Тип связанной сущности для генерации методов" Name="LeftAccessedEntityType" DisplayName="Left Accessed Entity Type" Category="Left point">
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="2c3390fd-432a-4268-96f7-4f8859d74b96" Description="Тип связанной сущности для генерации методов" Name="RightAccessedEntityType" DisplayName="Right Accessed Entity Type" Category="Right point">
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="2e71233d-d194-4929-bbb4-27cf3ae1d389" Description="Имя поля таблицы связи" Name="RightFieldName" DisplayName="Right Field Name" Category="Right point">
+          <Type>
+            <ExternalTypeMoniker Name="/System/String" />
+          </Type>
+        </DomainProperty>
+        <DomainProperty Id="7c7b3972-2e7d-4b2c-bee9-49cb3c2d8742" Description="Каскадное удаление" Name="RightCascadeDelete" DisplayName="Right Cascade Delete" DefaultValue="true" Category="Right point">
           <Attributes>
             <ClrAttribute Name="System.ComponentModel.Editor">
               <Parameters>
@@ -902,12 +907,19 @@
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="ef1396f8-92b2-4af5-bf2f-7df39cc03e01" Description="Имя связанной сущности для генерации методов" Name="RightAccessorName" DisplayName="Right Accessor Name">
+        <DomainProperty Id="ef1396f8-92b2-4af5-bf2f-7df39cc03e01" Description="Имя связанной сущности для генерации методов" Name="RightAccessorName" DisplayName="Right Accessor Name" Category="Right point">
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
         </DomainProperty>
-        <DomainProperty Id="25351206-2764-46dc-8cb2-b7932c34da59" Description="Сущность" Name="RightEntity" DisplayName="Right Entity">
+        <DomainProperty Id="25351206-2764-46dc-8cb2-b7932c34da59" Description="Сущность" Name="RightEntity" DisplayName="Right Entity" Category="Right point">
+          <Attributes>
+            <ClrAttribute Name="System.ComponentModel.Editor">
+              <Parameters>
+                <AttributeParameter Value="typeof(Worm.Designer.BaseEntityUIEditor), typeof(System.Drawing.Design.UITypeEditor) " />
+              </Parameters>
+            </ClrAttribute>
+          </Attributes>
           <Type>
             <ExternalTypeMoniker Name="/System/String" />
           </Type>
@@ -976,16 +988,16 @@
         </DomainRole>
       </Target>
     </DomainRelationship>
-    <DomainRelationship Id="02763e91-46a7-468a-9cb0-6d88cdede236" Description="Список используемых таблиц" Name="TableReferencesEntity" DisplayName="Table References Entity" Namespace="Worm.Designer">
+    <DomainRelationship Id="02763e91-46a7-468a-9cb0-6d88cdede236" Description="Список используемых таблиц" Name="TableReferencesEntities" DisplayName="Table References Entities" Namespace="Worm.Designer">
       <Source>
-        <DomainRole Id="fed3349d-8eb3-4b10-b341-b618f1e9f1c6" Description="Description for Worm.Designer.TableReferencesEntity.Table" Name="Table" DisplayName="Table" PropertyName="Entity" Multiplicity="One" IsPropertyBrowsable="false" PropertyDisplayName="Entity">
+        <DomainRole Id="fed3349d-8eb3-4b10-b341-b618f1e9f1c6" Description="Description for Worm.Designer.TableReferencesEntities.Table" Name="Table" DisplayName="Table" PropertyName="Entities" Multiplicity="OneMany" IsPropertyBrowsable="false" PropertyDisplayName="Entities">
           <RolePlayer>
             <DomainClassMoniker Name="Table" />
           </RolePlayer>
         </DomainRole>
       </Source>
       <Target>
-        <DomainRole Id="b738fc99-9cc0-4a55-bde2-535c48a091b8" Description="Description for Worm.Designer.TableReferencesEntity.Entity" Name="Entity" DisplayName="Entity" PropertyName="Tables" PropertyDisplayName="Tables">
+        <DomainRole Id="b738fc99-9cc0-4a55-bde2-535c48a091b8" Description="Description for Worm.Designer.TableReferencesEntities.Entity" Name="Entity" DisplayName="Entity" PropertyName="Tables" PropertyDisplayName="Tables">
           <RolePlayer>
             <DomainClassMoniker Name="Entity" />
           </RolePlayer>
@@ -1063,7 +1075,7 @@
     <ExternalType Name="ExternalType1" Namespace="" />
   </Types>
   <Shapes>
-    <CompartmentShape Id="1ac7c68e-23be-47ec-a6fe-2ece8f63e49c" Description="Entity" Name="EntityShape" DisplayName="Entity" Namespace="Worm.Designer" FixedTooltipText="Entity Shape" FillColor="PaleGreen" InitialHeight="0.5" OutlineThickness="0.01125" HasDefaultConnectionPoints="true" Geometry="RoundedRectangle">
+    <CompartmentShape Id="1ac7c68e-23be-47ec-a6fe-2ece8f63e49c" Description="Entity" Name="EntityShape" DisplayName="Entity" Namespace="Worm.Designer" GeneratesDoubleDerived="true" FixedTooltipText="Entity Shape" FillColor="PaleGreen" InitialHeight="0.5" OutlineThickness="0.01125" HasDefaultConnectionPoints="true" Geometry="RoundedRectangle">
       <ShapeHasDecorators Position="InnerTopCenter" HorizontalOffset="0" VerticalOffset="0">
         <TextDecorator Name="Name" DisplayName="Name" DefaultText="Name" />
       </ShapeHasDecorators>
@@ -1211,6 +1223,9 @@
           <XmlRelationshipData RoleElementName="selfRelations">
             <DomainRelationshipMoniker Name="EntityHasSelfRelations" />
           </XmlRelationshipData>
+          <XmlPropertyData XmlName="inheritsBase">
+            <DomainPropertyMoniker Name="Entity/InheritsBase" />
+          </XmlPropertyData>
         </ElementData>
       </XmlClassData>
       <XmlClassData TypeName="WormModelHasEntities" MonikerAttributeName="" MonikerElementName="wormModelHasEntitiesMoniker" ElementName="wormModelHasEntities" MonikerTypeName="WormModelHasEntitiesMoniker">
@@ -1231,8 +1246,8 @@
           <XmlPropertyData XmlName="schema">
             <DomainPropertyMoniker Name="Table/Schema" />
           </XmlPropertyData>
-          <XmlRelationshipData RoleElementName="entity">
-            <DomainRelationshipMoniker Name="TableReferencesEntity" />
+          <XmlRelationshipData RoleElementName="entities">
+            <DomainRelationshipMoniker Name="TableReferencesEntities" />
           </XmlRelationshipData>
         </ElementData>
       </XmlClassData>
@@ -1421,8 +1436,8 @@
       <XmlClassData TypeName="WormModelHasTables" MonikerAttributeName="" MonikerElementName="wormModelHasTablesMoniker" ElementName="wormModelHasTables" MonikerTypeName="WormModelHasTablesMoniker">
         <DomainRelationshipMoniker Name="WormModelHasTables" />
       </XmlClassData>
-      <XmlClassData TypeName="TableReferencesEntity" MonikerAttributeName="" MonikerElementName="tableReferencesEntityMoniker" ElementName="tableReferencesEntity" MonikerTypeName="TableReferencesEntityMoniker">
-        <DomainRelationshipMoniker Name="TableReferencesEntity" />
+      <XmlClassData TypeName="TableReferencesEntities" MonikerAttributeName="" MonikerElementName="tableReferencesEntitiesMoniker" ElementName="tableReferencesEntities" MonikerTypeName="TableReferencesEntitiesMoniker">
+        <DomainRelationshipMoniker Name="TableReferencesEntities" />
       </XmlClassData>
       <XmlClassData TypeName="WormType" MonikerAttributeName="" MonikerElementName="wormTypeMoniker" ElementName="wormType" MonikerTypeName="WormTypeMoniker">
         <DomainClassMoniker Name="WormType" />
@@ -1463,6 +1478,11 @@
           <DomainClassMoniker Name="WormModel" />
         </Class>
       </ExplorerNodeSettings>
+      <ExplorerNodeSettings ShowsDomainClass="true">
+        <Class>
+          <DomainClassMoniker Name="Property" />
+        </Class>
+      </ExplorerNodeSettings>
     </CustomNodeSettings>
   </ExplorerBehavior>
   <ConnectionBuilders>
@@ -1485,9 +1505,9 @@
         </TargetDirectives>
       </LinkConnectDirective>
     </ConnectionBuilder>
-    <ConnectionBuilder Name="TableReferencesEntityBuilder">
+    <ConnectionBuilder Name="TableReferencesEntitiesBuilder">
       <LinkConnectDirective>
-        <DomainRelationshipMoniker Name="TableReferencesEntity" />
+        <DomainRelationshipMoniker Name="TableReferencesEntities" />
         <SourceDirectives>
           <RolePlayerConnectDirective>
             <AcceptingClass>

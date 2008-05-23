@@ -382,6 +382,12 @@
         <xsd:documentation>ИД базовой сущности</xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <!-- Property: InheritsBase -->
+    <xsd:attribute name="inheritsBase" type="xsd:string" >
+      <xsd:annotation>
+        <xsd:documentation>Inherits table list from base entity.</xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
   
   <!-- Entity Moniker -->
@@ -404,17 +410,17 @@
       <xsd:documentation>Tаблицa БД</xsd:documentation>
     </xsd:annotation>
     <xsd:sequence minOccurs="0" maxOccurs="1">
-      <!-- Relationship: TableReferencesEntity -->
-      <xsd:element name="entity" minOccurs="1" maxOccurs="1">
+      <!-- Relationship: TableReferencesEntities -->
+      <xsd:element name="entities" minOccurs="1" maxOccurs="1">
         <xsd:annotation>
-          <xsd:documentation>Instance of TableReferencesEntity</xsd:documentation>
+          <xsd:documentation>Instances of TableReferencesEntities</xsd:documentation>
         </xsd:annotation>
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:choice minOccurs="1" maxOccurs="1" >
-              <xsd:element ref="tableReferencesEntity">
+            <xsd:choice minOccurs="1" maxOccurs="unbounded" >
+              <xsd:element ref="tableReferencesEntities">
                 <xsd:annotation>
-                  <xsd:documentation>[Relationship deriving from TableReferencesEntity needs to be serialized in full-form]</xsd:documentation>
+                  <xsd:documentation>[Relationship deriving from TableReferencesEntities needs to be serialized in full-form]</xsd:documentation>
                 </xsd:annotation>
               </xsd:element>
               <xsd:element ref="entityMoniker" >
@@ -958,9 +964,9 @@
     </xsd:annotation>
   </xsd:complexType>
   
-  <!-- TableReferencesEntity -->
-  <xsd:element name="tableReferencesEntity" abstract="true" type="TableReferencesEntity" />
-  <xsd:complexType name="TableReferencesEntity" abstract="true" >
+  <!-- TableReferencesEntities -->
+  <xsd:element name="tableReferencesEntities" abstract="true" type="TableReferencesEntities" />
+  <xsd:complexType name="TableReferencesEntities" abstract="true" >
     <xsd:annotation>
       <xsd:documentation>Список используемых таблиц</xsd:documentation>
     </xsd:annotation>
@@ -974,11 +980,11 @@
     </xsd:sequence>
   </xsd:complexType>
   
-  <!-- TableReferencesEntity Moniker -->
-  <xsd:element name="tableReferencesEntityMoniker" abstract="true" type="TableReferencesEntityMoniker" />
-  <xsd:complexType name="TableReferencesEntityMoniker">
+  <!-- TableReferencesEntities Moniker -->
+  <xsd:element name="tableReferencesEntitiesMoniker" abstract="true" type="TableReferencesEntitiesMoniker" />
+  <xsd:complexType name="TableReferencesEntitiesMoniker">
     <xsd:annotation>
-      <xsd:documentation>Moniker for TableReferencesEntity instance.</xsd:documentation>
+      <xsd:documentation>Moniker for TableReferencesEntities instance.</xsd:documentation>
     </xsd:annotation>
   </xsd:complexType>
   

@@ -6,7 +6,10 @@ using EnvDTE;
 using DslModeling = global::Microsoft.VisualStudio.Modeling;
 using Microsoft.VisualStudio.Modeling;
 using Microsoft.VisualStudio.Modeling.Diagrams;
+using DslDesign = global::Microsoft.VisualStudio.Modeling.Design;
+using DslDiagrams = global::Microsoft.VisualStudio.Modeling.Diagrams;
 
+using Worm.CodeGen.Core;
 namespace Worm.Designer
 {
     public partial class Table
@@ -99,6 +102,7 @@ namespace Worm.Designer
                 throw new ArgumentNullException("e");
             }
             Property property = e.ModelElement as Property;
+
             if (property != null)
             {
 
@@ -140,9 +144,12 @@ namespace Worm.Designer
 
                     txAdd.Commit();
                 }
+                property.Entity.WormModel.OnModelPropertyChanged(e);
             }
 
             base.ElementPropertyChanged(e);
+
+            
         }
    
     }
@@ -486,11 +493,11 @@ namespace Worm.Designer
                 using (Transaction txAdd = e.ModelElement.Store.TransactionManager.BeginTransaction("Add property"))
                 {
                     entity.WormModel.Types.Find(t => t.Name ==  entity.Name).Delete();
-                    List<Table> tables = entity.WormModel.Tables.FindAll(t => t.Entity == entity);
-                    foreach (Table table in tables)
-                    {
-                        table.Delete();
-                    }
+                    //List<Table> tables = entity.WormModel.Tables.FindAll(t => t.Entity == entity);
+                    //foreach (Table table in tables)
+                    //{
+                    //    table.Delete();
+                    //}
                     txAdd.Commit();
                 }
             }
@@ -864,6 +871,7 @@ namespace Worm.Designer
         public event ModelRelationDeletedHandler ModelRelationDeleted;
         public event ModelRelationChangedHandler ModelRelationChanged;
     
+
         public void OnModelPropertyAdded(ElementAddedEventArgs e)
         {
             if (ModelPropertyAdded != null)
@@ -935,6 +943,114 @@ namespace Worm.Designer
             }
             return idProperty;
         }
+
+        public static string GetIconIndex(Property property)
+        {
+            string key = "";
+            if (bool.Parse(property.PrimaryKey))
+            {
+                switch (property.AccessLevel)
+                {
+                    case AccessLevel.Public:
+                        key = "kpublic";
+                        break;
+                    case AccessLevel.Private:
+                        key = "kprivate";
+                        break;
+                    case AccessLevel.Assembly:
+                        key = "kassembly";
+                        break;
+                    case AccessLevel.Family:
+                        key = "kfamily";
+                        break;
+                    case AccessLevel.FamilyOrAssembly:
+                        key = "kfamilyassembly";
+                        break;
+                }
+
+
+            }
+            else
+            {
+                switch (property.AccessLevel)
+                {
+                    case AccessLevel.Public:
+                        key = "public";
+                        break;
+                    case AccessLevel.Private:
+                        key = "private";
+                        break;
+                    case AccessLevel.Assembly:
+                        key = "assembly";
+                        break;
+                    case AccessLevel.Family:
+                        key = "family";
+                        break;
+                    case AccessLevel.FamilyOrAssembly:
+                        key = "familyassembly";
+                        break;
+                }
+
+            }
+            return key;
+        }
     }
 
+    public partial class EntityShape : EntityShapeBase
+    {
+        protected override CompartmentMapping[] GetCompartmentMappings(Type melType)
+        {
+            Microsoft.VisualStudio.Modeling.Diagrams.DisplayImageGetter displayImageGetter =
+           new Microsoft.VisualStudio.Modeling.Diagrams.DisplayImageGetter(CompartmentImageProvider);
+
+            CompartmentMapping[] mappings = base.GetCompartmentMappings(melType);
+            mappings[0] = new Microsoft.VisualStudio.Modeling.Diagrams.ElementListCompartmentMapping(
+                        "Properties",
+                        global::Worm.Designer.Property.NameDomainPropertyId,
+                        global::Worm.Designer.Property.DomainClassId,
+                        GetElementsFromEntityForProperties,
+                        null,
+                        null,
+                        displayImageGetter);
+            return mappings;
+        }
+
+
+
+        public System.Drawing.Image CompartmentImageProvider(Microsoft.VisualStudio.Modeling.ModelElement element)
+        { 
+            System.Resources.ResourceManager manager = new System.Resources.ResourceManager("Worm.Designer.Resource", typeof(EntityShape).Assembly);
+
+            string key = string.Empty;
+            if (element is Property)
+                {
+                    key = Utils.GetIconIndex((Property)element);
+                }
+
+            return (System.Drawing.Image)manager.GetObject(key);
+        }
+
+
+    }
+
+    public partial class DesignerToolboxHelper
+    {
+        global::System.Resources.ResourceManager resourceManager = global::Worm.Designer.DesignerDomainModel.SingletonResourceManager;
+        global::System.Globalization.CultureInfo resourceCulture = global::System.Globalization.CultureInfo.CurrentUICulture;
+
+        public override IList<Microsoft.VisualStudio.Modeling.Design.ModelingToolboxItem> CreateToolboxItems()
+        { 
+            IList<Microsoft.VisualStudio.Modeling.Design.ModelingToolboxItem> list = base.CreateToolboxItems();
+
+          
+
+            return list;
+        }
+
+        
+    }
+
+
 }
+
+

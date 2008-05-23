@@ -48,6 +48,9 @@ namespace Worm.Designer
 			this.AddExplorerNodeCustomSetting(global::Worm.Designer.WormModel.DomainClassId, 
 							DslDiagrams::ImageHelper.GetImage(resourceManager.GetObject("WormModelExplorerImage")), 
 							true); 
+			this.AddExplorerNodeCustomSetting(global::Worm.Designer.Property.DomainClassId, 
+							null, 
+							true); 
 			
 			// Add a call back to provide ModelElementTreeNode TreeNode name in the Model Explorer
 			this.GetModelElementDisplayNameEventHandler = new DslShell.GetModelElementDisplayNameEventHandler(GetModelElementDisplayName);

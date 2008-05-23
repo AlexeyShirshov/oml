@@ -3112,6 +3112,96 @@ namespace Worm.Designer
 		}
 		
 		#endregion
+		#region InheritsBase domain property code
+		
+		/// <summary>
+		/// InheritsBase domain property Id.
+		/// </summary>
+		public static readonly global::System.Guid InheritsBaseDomainPropertyId = new global::System.Guid(0xfccc40b6, 0x91d8, 0x4905, 0xb4, 0xa3, 0x7a, 0x40, 0x88, 0x35, 0xc7, 0x58);
+		
+		/// <summary>
+		/// Storage for InheritsBase
+		/// </summary>
+		private global::System.String inheritsBasePropertyStorage = "False";
+		
+		/// <summary>
+		/// Gets or sets the value of InheritsBase domain property.
+		/// Inherits table list from base entity.
+		/// </summary>
+		[System.ComponentModel.Editor(typeof(Worm.Designer.BoolUIEditor), typeof(System.Drawing.Design.UITypeEditor) )]
+		[DslDesign::DisplayNameResource("Worm.Designer.Entity/InheritsBase.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::CategoryResource("Worm.Designer.Entity/InheritsBase.Category", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[DslDesign::DescriptionResource("Worm.Designer.Entity/InheritsBase.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
+		[global::System.ComponentModel.DefaultValue("False")]
+		[DslModeling::DomainObjectId("fccc40b6-91d8-4905-b4a3-7a408835c758")]
+		public global::System.String InheritsBase
+		{
+			[global::System.Diagnostics.DebuggerStepThrough]
+			get
+			{
+				return inheritsBasePropertyStorage;
+			}
+			[global::System.Diagnostics.DebuggerStepThrough]
+			set
+			{
+				InheritsBasePropertyHandler.Instance.SetValue(this, value);
+			}
+		}
+		/// <summary>
+		/// Value handler for the Entity.InheritsBase domain property.
+		/// </summary>
+		internal sealed partial class InheritsBasePropertyHandler : DslModeling::DomainPropertyValueHandler<Entity, global::System.String>
+		{
+			private InheritsBasePropertyHandler() { }
+		
+			/// <summary>
+			/// Gets the singleton instance of the Entity.InheritsBase domain property value handler.
+			/// </summary>
+			public static readonly InheritsBasePropertyHandler Instance = new InheritsBasePropertyHandler();
+		
+			/// <summary>
+			/// Gets the Id of the Entity.InheritsBase domain property.
+			/// </summary>
+			public sealed override global::System.Guid DomainPropertyId
+			{
+				[global::System.Diagnostics.DebuggerStepThrough]
+				get
+				{
+					return InheritsBaseDomainPropertyId;
+				}
+			}
+			
+			/// <summary>
+			/// Gets a strongly-typed value of the property on specified element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <returns>Property value.</returns>
+			public override sealed global::System.String GetValue(Entity element)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+				return element.inheritsBasePropertyStorage;
+			}
+		
+			/// <summary>
+			/// Sets property value on an element.
+			/// </summary>
+			/// <param name="element">Element which owns the property.</param>
+			/// <param name="newValue">New property value.</param>
+			public override sealed void SetValue(Entity element, global::System.String newValue)
+			{
+				if (element == null) throw new global::System.ArgumentNullException("element");
+		
+				global::System.String oldValue = GetValue(element);
+				if (newValue != oldValue)
+				{
+					ValueChanging(element, oldValue, newValue);
+					element.inheritsBasePropertyStorage = newValue;
+					ValueChanged(element, oldValue, newValue);
+				}
+			}
+		}
+		
+		#endregion
 		#region WormModel opposite domain role accessor
 		/// <summary>
 		/// Gets or sets WormModel.
@@ -3204,14 +3294,14 @@ namespace Worm.Designer
 		#region Tables opposite domain role accessor
 		/// <summary>
 		/// Gets a list of Tables.
-		/// Description for Worm.Designer.TableReferencesEntity.Entity
+		/// Description for Worm.Designer.TableReferencesEntities.Entity
 		/// </summary>
 		public virtual DslModeling::LinkedElementCollection<Table> Tables
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
 			{
-				return new DslModeling::LinkedElementCollection<Table>(this, global::Worm.Designer.TableReferencesEntity.EntityDomainRoleId);
+				return new DslModeling::LinkedElementCollection<Table>(this, global::Worm.Designer.TableReferencesEntities.EntityDomainRoleId);
 			}
 		}
 		#endregion
@@ -3305,7 +3395,7 @@ namespace Worm.Designer
 			global::Worm.Designer.Table sourceTable2 = sourceElement as global::Worm.Designer.Table;
 			if (sourceTable2 != null)
 			{
-				// Create link for path TableReferencesEntity.Tables
+				// Create link for path TableReferencesEntities.Tables
 				this.Tables.Add(sourceTable2);
 
 				// Create link for path WormModelHasEntities.WormModel/!WormModel/WormModelHasTables.Tables
@@ -3365,12 +3455,12 @@ namespace Worm.Designer
 			global::Worm.Designer.Table sourceTable2 = sourceElement as global::Worm.Designer.Table;
 			if (sourceTable2 != null)
 			{
-				// Delete link for path TableReferencesEntity.Tables
+				// Delete link for path TableReferencesEntities.Tables
 				
-				foreach (DslModeling::ElementLink link in global::Worm.Designer.TableReferencesEntity.GetLinks(sourceTable2, (global::Worm.Designer.Entity)this))
+				foreach (DslModeling::ElementLink link in global::Worm.Designer.TableReferencesEntities.GetLinks(sourceTable2, (global::Worm.Designer.Entity)this))
 				{
 					// Delete the link, but without possible delete propagation to the element since it's moving to a new location.
-					link.Delete(global::Worm.Designer.TableReferencesEntity.EntityDomainRoleId, global::Worm.Designer.TableReferencesEntity.TableDomainRoleId);
+					link.Delete(global::Worm.Designer.TableReferencesEntities.EntityDomainRoleId, global::Worm.Designer.TableReferencesEntities.TableDomainRoleId);
 				}
 
 				// Delete link for path WormModelHasEntities.WormModel/!WormModel/WormModelHasTables.Tables
@@ -3722,22 +3812,17 @@ namespace Worm.Designer
 			}
 		}
 		#endregion
-		#region Entity opposite domain role accessor
+		#region Entities opposite domain role accessor
 		/// <summary>
-		/// Gets or sets Entity.
-		/// Description for Worm.Designer.TableReferencesEntity.Table
+		/// Gets a list of Entities.
+		/// Description for Worm.Designer.TableReferencesEntities.Table
 		/// </summary>
-		public virtual Entity Entity
+		public virtual DslModeling::LinkedElementCollection<Entity> Entities
 		{
 			[global::System.Diagnostics.DebuggerStepThrough]
 			get
 			{
-				return DslModeling::DomainRoleInfo.GetLinkedElement(this, global::Worm.Designer.TableReferencesEntity.TableDomainRoleId) as Entity;
-			}
-			[global::System.Diagnostics.DebuggerStepThrough]
-			set
-			{
-				DslModeling::DomainRoleInfo.SetLinkedElement(this, global::Worm.Designer.TableReferencesEntity.TableDomainRoleId, value);
+				return new DslModeling::LinkedElementCollection<Entity>(this, global::Worm.Designer.TableReferencesEntities.TableDomainRoleId);
 			}
 		}
 		#endregion

@@ -66,7 +66,7 @@ namespace Worm.Designer
 				typeof(EntityHasSupressedProperties),
 				typeof(EntityHasSelfRelations),
 				typeof(WormModelHasTables),
-				typeof(TableReferencesEntity),
+				typeof(TableReferencesEntities),
 				typeof(WormModelHasTypes),
 				typeof(WormTypeReferencesEntities),
 				typeof(DesignerDiagram),
@@ -122,6 +122,7 @@ namespace Worm.Designer
 				new DomainMemberInfo(typeof(Entity), "UseGenerics", Entity.UseGenericsDomainPropertyId, typeof(Entity.UseGenericsPropertyHandler)),
 				new DomainMemberInfo(typeof(Entity), "MakeInterface", Entity.MakeInterfaceDomainPropertyId, typeof(Entity.MakeInterfacePropertyHandler)),
 				new DomainMemberInfo(typeof(Entity), "BaseEntity", Entity.BaseEntityDomainPropertyId, typeof(Entity.BaseEntityPropertyHandler)),
+				new DomainMemberInfo(typeof(Entity), "InheritsBase", Entity.InheritsBaseDomainPropertyId, typeof(Entity.InheritsBasePropertyHandler)),
 				new DomainMemberInfo(typeof(Table), "Name", Table.NameDomainPropertyId, typeof(Table.NamePropertyHandler)),
 				new DomainMemberInfo(typeof(Table), "IdProperty", Table.IdPropertyDomainPropertyId, typeof(Table.IdPropertyPropertyHandler)),
 				new DomainMemberInfo(typeof(Table), "Schema", Table.SchemaDomainPropertyId, typeof(Table.SchemaPropertyHandler)),
@@ -200,8 +201,8 @@ namespace Worm.Designer
 				new DomainRolePlayerInfo(typeof(EntityHasSelfRelations), "SelfRelation", EntityHasSelfRelations.SelfRelationDomainRoleId),
 				new DomainRolePlayerInfo(typeof(WormModelHasTables), "WormModel", WormModelHasTables.WormModelDomainRoleId),
 				new DomainRolePlayerInfo(typeof(WormModelHasTables), "Table", WormModelHasTables.TableDomainRoleId),
-				new DomainRolePlayerInfo(typeof(TableReferencesEntity), "Table", TableReferencesEntity.TableDomainRoleId),
-				new DomainRolePlayerInfo(typeof(TableReferencesEntity), "Entity", TableReferencesEntity.EntityDomainRoleId),
+				new DomainRolePlayerInfo(typeof(TableReferencesEntities), "Table", TableReferencesEntities.TableDomainRoleId),
+				new DomainRolePlayerInfo(typeof(TableReferencesEntities), "Entity", TableReferencesEntities.EntityDomainRoleId),
 				new DomainRolePlayerInfo(typeof(WormModelHasTypes), "WormModel", WormModelHasTypes.WormModelDomainRoleId),
 				new DomainRolePlayerInfo(typeof(WormModelHasTypes), "WormType", WormModelHasTypes.WormTypeDomainRoleId),
 				new DomainRolePlayerInfo(typeof(WormTypeReferencesEntities), "WormType", WormTypeReferencesEntities.WormTypeDomainRoleId),
@@ -290,7 +291,7 @@ namespace Worm.Designer
 				createElementLinkMap.Add(typeof(EntityHasSupressedProperties), 3);
 				createElementLinkMap.Add(typeof(EntityHasSelfRelations), 4);
 				createElementLinkMap.Add(typeof(WormModelHasTables), 5);
-				createElementLinkMap.Add(typeof(TableReferencesEntity), 6);
+				createElementLinkMap.Add(typeof(TableReferencesEntities), 6);
 				createElementLinkMap.Add(typeof(WormModelHasTypes), 7);
 				createElementLinkMap.Add(typeof(WormTypeReferencesEntities), 8);
 			}
@@ -313,7 +314,7 @@ namespace Worm.Designer
 				case 3: return new EntityHasSupressedProperties(partition, roleAssignments, propertyAssignments);
 				case 4: return new EntityHasSelfRelations(partition, roleAssignments, propertyAssignments);
 				case 5: return new WormModelHasTables(partition, roleAssignments, propertyAssignments);
-				case 6: return new TableReferencesEntity(partition, roleAssignments, propertyAssignments);
+				case 6: return new TableReferencesEntities(partition, roleAssignments, propertyAssignments);
 				case 7: return new WormModelHasTypes(partition, roleAssignments, propertyAssignments);
 				case 8: return new WormTypeReferencesEntities(partition, roleAssignments, propertyAssignments);
 				default: return null;

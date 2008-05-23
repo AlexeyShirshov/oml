@@ -525,6 +525,18 @@
     <value>Code generation</value>
     <comment>Category for DomainProperty &apos;BaseEntity&apos; on DomainClass &apos;Entity&apos;</comment>
   </data>
+  <data name="Worm.Designer.Entity/InheritsBase.Description" xml:space="preserve">
+    <value>Inherits table list from base entity.</value>
+    <comment>Description for DomainProperty &apos;InheritsBase&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/InheritsBase.DisplayName" xml:space="preserve">
+    <value>Inherits Base</value>
+    <comment>DisplayName for DomainProperty &apos;InheritsBase&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
+  <data name="Worm.Designer.Entity/InheritsBase.Category" xml:space="preserve">
+    <value>Code generation</value>
+    <comment>Category for DomainProperty &apos;InheritsBase&apos; on DomainClass &apos;Entity&apos;</comment>
+  </data>
   <data name="Worm.Designer.Table.Description" xml:space="preserve">
     <value>Tаблицa БД</value>
     <comment>Description for DomainClass &apos;Table&apos;</comment>
@@ -1097,6 +1109,10 @@
     <value>Underlying entity</value>
     <comment>DisplayName for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/UnderlyingEntity.Category" xml:space="preserve">
+    <value>Relation</value>
+    <comment>Category for DomainProperty &apos;UnderlyingEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.Description" xml:space="preserve">
     <value>Каскадное удаление</value>
     <comment>Description for DomainProperty &apos;LeftCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
@@ -1104,6 +1120,10 @@
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.DisplayName" xml:space="preserve">
     <value>Left Cascade Delete</value>
     <comment>DisplayName for DomainProperty &apos;LeftCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftCascadeDelete.Category" xml:space="preserve">
+    <value>Left point</value>
+    <comment>Category for DomainProperty &apos;LeftCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.Description" xml:space="preserve">
     <value>Имя поля таблицы связи</value>
@@ -1113,6 +1133,10 @@
     <value>Left Field Name</value>
     <comment>DisplayName for DomainProperty &apos;LeftFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftFieldName.Category" xml:space="preserve">
+    <value>Left point</value>
+    <comment>Category for DomainProperty &apos;LeftFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessorName.Description" xml:space="preserve">
     <value>Имя связанной сущности для генерации методов</value>
     <comment>Description for DomainProperty &apos;LeftAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
@@ -1120,6 +1144,10 @@
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessorName.DisplayName" xml:space="preserve">
     <value>Left Accessor Name</value>
     <comment>DisplayName for DomainProperty &apos;LeftAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessorName.Category" xml:space="preserve">
+    <value>Left point</value>
+    <comment>Category for DomainProperty &apos;LeftAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/Disabled.Description" xml:space="preserve">
     <value>Description for Worm.Designer.EntityReferencesTargetEntities.Disabled</value>
@@ -1129,6 +1157,10 @@
     <value>Disabled</value>
     <comment>DisplayName for DomainProperty &apos;Disabled&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/Disabled.Category" xml:space="preserve">
+    <value>Relation</value>
+    <comment>Category for DomainProperty &apos;Disabled&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/Table.Description" xml:space="preserve">
     <value>Description for Worm.Designer.EntityReferencesTargetEntities.Table</value>
     <comment>Description for DomainProperty &apos;Table&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
@@ -1136,6 +1168,10 @@
   <data name="Worm.Designer.EntityReferencesTargetEntities/Table.DisplayName" xml:space="preserve">
     <value>Table</value>
     <comment>DisplayName for DomainProperty &apos;Table&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/Table.Category" xml:space="preserve">
+    <value>Relation</value>
+    <comment>Category for DomainProperty &apos;Table&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftEntity.Description" xml:space="preserve">
     <value>Сущность</value>
@@ -1145,6 +1181,10 @@
     <value>Left Entity</value>
     <comment>DisplayName for DomainProperty &apos;LeftEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftEntity.Category" xml:space="preserve">
+    <value>Left point</value>
+    <comment>Category for DomainProperty &apos;LeftEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessedEntityType.Description" xml:space="preserve">
     <value>Тип связанной сущности для генерации методов</value>
     <comment>Description for DomainProperty &apos;LeftAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
@@ -1152,6 +1192,10 @@
   <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessedEntityType.DisplayName" xml:space="preserve">
     <value>Left Accessed Entity Type</value>
     <comment>DisplayName for DomainProperty &apos;LeftAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/LeftAccessedEntityType.Category" xml:space="preserve">
+    <value>Left point</value>
+    <comment>Category for DomainProperty &apos;LeftAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessedEntityType.Description" xml:space="preserve">
     <value>Тип связанной сущности для генерации методов</value>
@@ -1161,6 +1205,10 @@
     <value>Right Accessed Entity Type</value>
     <comment>DisplayName for DomainProperty &apos;RightAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessedEntityType.Category" xml:space="preserve">
+    <value>Right point</value>
+    <comment>Category for DomainProperty &apos;RightAccessedEntityType&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightFieldName.Description" xml:space="preserve">
     <value>Имя поля таблицы связи</value>
     <comment>Description for DomainProperty &apos;RightFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
@@ -1168,6 +1216,10 @@
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightFieldName.DisplayName" xml:space="preserve">
     <value>Right Field Name</value>
     <comment>DisplayName for DomainProperty &apos;RightFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightFieldName.Category" xml:space="preserve">
+    <value>Right point</value>
+    <comment>Category for DomainProperty &apos;RightFieldName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightCascadeDelete.Description" xml:space="preserve">
     <value>Каскадное удаление</value>
@@ -1177,6 +1229,10 @@
     <value>Right Cascade Delete</value>
     <comment>DisplayName for DomainProperty &apos;RightCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightCascadeDelete.Category" xml:space="preserve">
+    <value>Right point</value>
+    <comment>Category for DomainProperty &apos;RightCascadeDelete&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessorName.Description" xml:space="preserve">
     <value>Имя связанной сущности для генерации методов</value>
     <comment>Description for DomainProperty &apos;RightAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
@@ -1185,6 +1241,10 @@
     <value>Right Accessor Name</value>
     <comment>DisplayName for DomainProperty &apos;RightAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightAccessorName.Category" xml:space="preserve">
+    <value>Right point</value>
+    <comment>Category for DomainProperty &apos;RightAccessorName&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightEntity.Description" xml:space="preserve">
     <value>Сущность</value>
     <comment>Description for DomainProperty &apos;RightEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
@@ -1192,6 +1252,10 @@
   <data name="Worm.Designer.EntityReferencesTargetEntities/RightEntity.DisplayName" xml:space="preserve">
     <value>Right Entity</value>
     <comment>DisplayName for DomainProperty &apos;RightEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.EntityReferencesTargetEntities/RightEntity.Category" xml:space="preserve">
+    <value>Right point</value>
+    <comment>Category for DomainProperty &apos;RightEntity&apos; on DomainClass &apos;EntityReferencesTargetEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.EntityReferencesTargetEntities/SourceEntity.Description" xml:space="preserve">
     <value>Description for Worm.Designer.EntityReferencesTargetEntities.SourceEntity</value>
@@ -1313,37 +1377,37 @@
     <value>Worm Model</value>
     <comment>PropertyDisplayName for DomainRole &apos;Table&apos; on DomainRelationship &apos;WormModelHasTables&apos;</comment>
   </data>
-  <data name="Worm.Designer.TableReferencesEntity.Description" xml:space="preserve">
+  <data name="Worm.Designer.TableReferencesEntities.Description" xml:space="preserve">
     <value>Список используемых таблиц</value>
-    <comment>Description for DomainClass &apos;TableReferencesEntity&apos;</comment>
+    <comment>Description for DomainClass &apos;TableReferencesEntities&apos;</comment>
   </data>
-  <data name="Worm.Designer.TableReferencesEntity.DisplayName" xml:space="preserve">
-    <value>Table References Entity</value>
-    <comment>DisplayName for DomainClass &apos;TableReferencesEntity&apos;</comment>
+  <data name="Worm.Designer.TableReferencesEntities.DisplayName" xml:space="preserve">
+    <value>Table References Entities</value>
+    <comment>DisplayName for DomainClass &apos;TableReferencesEntities&apos;</comment>
   </data>
-  <data name="Worm.Designer.TableReferencesEntity/Table.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.TableReferencesEntity.Table</value>
-    <comment>Description for DomainRole &apos;Table&apos; on DomainRelationship &apos;TableReferencesEntity&apos;</comment>
+  <data name="Worm.Designer.TableReferencesEntities/Table.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.TableReferencesEntities.Table</value>
+    <comment>Description for DomainRole &apos;Table&apos; on DomainRelationship &apos;TableReferencesEntities&apos;</comment>
   </data>
-  <data name="Worm.Designer.TableReferencesEntity/Table.DisplayName" xml:space="preserve">
+  <data name="Worm.Designer.TableReferencesEntities/Table.DisplayName" xml:space="preserve">
     <value>Table</value>
-    <comment>DisplayName for DomainRole &apos;Table&apos; on DomainRelationship &apos;TableReferencesEntity&apos;</comment>
+    <comment>DisplayName for DomainRole &apos;Table&apos; on DomainRelationship &apos;TableReferencesEntities&apos;</comment>
   </data>
-  <data name="Worm.Designer.TableReferencesEntity/Table.PropertyDisplayName" xml:space="preserve">
+  <data name="Worm.Designer.TableReferencesEntities/Table.PropertyDisplayName" xml:space="preserve">
+    <value>Entities</value>
+    <comment>PropertyDisplayName for DomainRole &apos;Table&apos; on DomainRelationship &apos;TableReferencesEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.TableReferencesEntities/Entity.Description" xml:space="preserve">
+    <value>Description for Worm.Designer.TableReferencesEntities.Entity</value>
+    <comment>Description for DomainRole &apos;Entity&apos; on DomainRelationship &apos;TableReferencesEntities&apos;</comment>
+  </data>
+  <data name="Worm.Designer.TableReferencesEntities/Entity.DisplayName" xml:space="preserve">
     <value>Entity</value>
-    <comment>PropertyDisplayName for DomainRole &apos;Table&apos; on DomainRelationship &apos;TableReferencesEntity&apos;</comment>
+    <comment>DisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;TableReferencesEntities&apos;</comment>
   </data>
-  <data name="Worm.Designer.TableReferencesEntity/Entity.Description" xml:space="preserve">
-    <value>Description for Worm.Designer.TableReferencesEntity.Entity</value>
-    <comment>Description for DomainRole &apos;Entity&apos; on DomainRelationship &apos;TableReferencesEntity&apos;</comment>
-  </data>
-  <data name="Worm.Designer.TableReferencesEntity/Entity.DisplayName" xml:space="preserve">
-    <value>Entity</value>
-    <comment>DisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;TableReferencesEntity&apos;</comment>
-  </data>
-  <data name="Worm.Designer.TableReferencesEntity/Entity.PropertyDisplayName" xml:space="preserve">
+  <data name="Worm.Designer.TableReferencesEntities/Entity.PropertyDisplayName" xml:space="preserve">
     <value>Tables</value>
-    <comment>PropertyDisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;TableReferencesEntity&apos;</comment>
+    <comment>PropertyDisplayName for DomainRole &apos;Entity&apos; on DomainRelationship &apos;TableReferencesEntities&apos;</comment>
   </data>
   <data name="Worm.Designer.WormModelHasTypes.Description" xml:space="preserve">
     <value>Description for Worm.Designer.WormModelHasTypes</value>
