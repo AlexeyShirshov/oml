@@ -177,9 +177,9 @@ namespace Worm.Designer
             dialog.Title = "Load worm file";
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                try
+                //try
                 {
-                    using (FileStream stream = new FileStream(dialog.FileName, FileMode.Open, FileAccess.Read))
+                    using (FileStream stream = new FileStream(dialog.FileName, FileMode.Open))
                     {
                         using (XmlReader rdr = XmlReader.Create(stream))
                         {
@@ -196,10 +196,10 @@ namespace Worm.Designer
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Cannot read file", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                //catch (Exception ex)
+                //{
+                //    MessageBox.Show("Cannot read file", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+               // }
             }
         }
 

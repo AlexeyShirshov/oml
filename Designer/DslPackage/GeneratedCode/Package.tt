@@ -101,7 +101,7 @@ namespace <#= CodeGenerationUtilities.GetPackageNamespace(this.Dsl) #>
             dialog.Title = "Load worm file";
             if (dialog.ShowDialog() == DialogResult.OK)
             {
-                try
+                //try
                 {
                     using (FileStream stream = new FileStream(dialog.FileName, FileMode.Open))
                     {
@@ -120,10 +120,10 @@ namespace <#= CodeGenerationUtilities.GetPackageNamespace(this.Dsl) #>
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Cannot read file", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+                //catch (Exception ex)
+                //{
+                //    MessageBox.Show("Cannot read file", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+               // }
             }
         }
 
