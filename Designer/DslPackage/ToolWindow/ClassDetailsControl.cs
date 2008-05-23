@@ -1069,24 +1069,24 @@ namespace Worm.Designer
 
 
             this.containerListViewColumnHeader1.Text = "Column";
-            containerListViewColumnHeader1.Width = (int)(this.DisplayRectangle.Width * 0.4);
+            containerListViewColumnHeader1.Width = 300;
 
             // 
             // containerListViewColumnHeader2
             // 
 
             this.containerListViewColumnHeader2.Text = "Operator";
-            containerListViewColumnHeader2.Width = (int)(this.DisplayRectangle.Width * 0.2);
+            containerListViewColumnHeader2.Width = 100;
 
             // 
             // containerListViewColumnHeader3
             // 
 
             this.containerListViewColumnHeader3.Text = "Value/Property";
-            containerListViewColumnHeader3.Width = (int)(this.DisplayRectangle.Width * 0.3);
+            containerListViewColumnHeader3.Width = 200;
 
             this.containerListViewColumnHeader4.Text = "Action";
-            containerListViewColumnHeader4.Width = (int)(this.DisplayRectangle.Width * 0.1);
+            containerListViewColumnHeader4.Width = 100;
 
             treeListView.Items.Clear();
             treeListView.SmallImageList = new ImageList();
@@ -1124,7 +1124,9 @@ namespace Worm.Designer
             label.AutoSize = true;
 
             this.Controls.Add(label);
-            label.Location = new Point(label.Parent.Width / 2 - label.Width / 2, label.Parent.Height / 2 - label.Height / 2);
+            int width = label.Parent.Width / 2 - label.Width / 2;
+            label.Location = new Point(width < 0 ? 50 : width
+                , label.Parent.Height / 2 - label.Height / 2);
 
             ResumeLayout(false);
         }
