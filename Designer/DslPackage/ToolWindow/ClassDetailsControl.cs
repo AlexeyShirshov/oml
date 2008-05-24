@@ -80,6 +80,7 @@ namespace Worm.Designer
             treeListView.Nodes.Clear();
 
             this.containerListViewColumnHeader1.Text = "Column";
+            this.containerListViewColumnHeader2.Text = "Operator";
             if (treeListView.Columns.Count == 4)
             {
                 treeListView.Columns.RemoveAt(3);
@@ -128,7 +129,7 @@ namespace Worm.Designer
 
         public void Display(Table table)
         {
-            if (table.Entities.Count >  0)
+            if (table.Entities.Count > 0)
             {
                 Display(table.Entities[0]);
             }
@@ -190,6 +191,7 @@ namespace Worm.Designer
             treeListView.Nodes.Clear();
             // modelClass = modelClassToHandle;
             this.containerListViewColumnHeader1.Text = "Column";
+            this.containerListViewColumnHeader2.Text = "Operator";
             if (treeListView.Columns.Count == 4)
             {
                 treeListView.Columns.RemoveAt(3);
@@ -424,43 +426,7 @@ namespace Worm.Designer
 
         private void EntityClick()
         {
-            if (treeListView.SelectedNodes.Count > 0 && treeListView.SelectedNodes[0].Text == _addNewTableMapping)
-            {
-                Entity entity = modelElement as Entity;
-                if (entity != null)
-                {
-                    using (Transaction txAdd = entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
-                    {
-                        Table table = new Table(entity.WormModel.Store);
-                        // relation. = "RelationNew";
-                        table.Entities.Add( entity);
-                        string name = "Table1";
-                        int i = 1;
-                        while (entity.WormModel.Tables.FindAll(t => t.Name == name).Count > 0)
-                        {
-                            name = "Table" + (++i);
-                        }
-
-                        table.Name = name;
-
-                        entity.WormModel.Tables.Add(table);
-                        txAdd.Commit();
-
-                        if (DesignerExplorerToolWindow.ActiveWindow != null)
-                        {
-                            ExplorerTreeNode node = DesignerExplorerToolWindow.ActiveWindow.TreeContainer.
-                                 FindNodeForElement(table);
-                            if (node != null)
-                            {
-                                node.TreeView.SelectedNode = node;
-                            }
-                        }
-
-                    }
-                    Display(entity);
-                }
-            }
-            else if (treeListView.SelectedNodes.Count > 0 && DesignerExplorerToolWindow.ActiveWindow != null)
+            if (treeListView.SelectedNodes.Count > 0 && DesignerExplorerToolWindow.ActiveWindow != null)
             {
                 SelectInExplorer();
             }
@@ -470,93 +436,48 @@ namespace Worm.Designer
         {
             ExplorerTreeNode node = null;
             TreeListNode selectedNode = null;
-            foreach (TreeListNode mappingNode in treeListView.Nodes[0].Nodes)
+            foreach (TreeListNode propertyNode in treeListView.Nodes[0].Nodes)
             {
-                if (mappingNode.Text == _addNewTableMapping)
+                if (treeListView.SelectedNodes[0].ImageIndex >= 5
+                    && treeListView.SelectedNodes[0].ImageIndex < 15
+                   && treeListView.SelectedNodes[0].Tag == propertyNode.Tag
+                   && treeListView.SelectedNodes[0].Text == propertyNode.Text
+                   )
                 {
-                    continue;
+                    selectedNode = propertyNode;
+                    break;
                 }
-                // Если выбрана ячейка с mapping
-                if (treeListView.SelectedNodes[0].ImageIndex == 1
-                        && treeListView.SelectedNodes[0].Tag == mappingNode.Tag
-                        && !string.IsNullOrEmpty(mappingNode.Tag.ToString()))
-                {
-                    selectedNode = mappingNode;
-                }
-                // Если выбрана ячейка с column
-                if (selectedNode == null)
-                {
-                    TreeListNode columnNode = mappingNode.Nodes[0];
-                    if (treeListView.SelectedNodes[0].ImageIndex == 2
-                    && treeListView.SelectedNodes[0].Tag == columnNode.Tag
-                    && !string.IsNullOrEmpty((string)columnNode.Tag))
-                    {
-                        selectedNode = columnNode;
-                    }
-                    else
-                    {
-                        //Если выбрано property
-                        foreach (TreeListNode propertyNode in columnNode.Nodes)
-                        {
-                            if (treeListView.SelectedNodes[0].ImageIndex >= 5 
-                                && treeListView.SelectedNodes[0].ImageIndex <15
-                               && treeListView.SelectedNodes[0].Tag == propertyNode.Tag
-                               && treeListView.SelectedNodes[0].Text == propertyNode.Text
-                               )
-                            {
-                                selectedNode = propertyNode;
-                            }
-                        }
-                    }
-                }
+            }
 
-                if (selectedNode != null)
+
+            if (selectedNode != null)
+            {
+                WormModel model = GetModel();
+                if (model != null)
                 {
-                    WormModel model = GetModel();
-                    if (model != null)
+
+                    Entity entity = (Entity)modelElement;
+                    if (entity != null)
                     {
-                        // Показываем таблицу
-                        if (selectedNode.ImageIndex == 1 || selectedNode.ImageIndex == 2)
+                        Property property = entity.Properties.Find(p => p.Name == selectedNode.Text);
+                        if (property != null)
                         {
-                            Table table = GetModel().Tables.Find(t => t.Name == selectedNode.Tag.ToString());
-                            if (table != null)
+                            node = DesignerExplorerToolWindow.ActiveWindow.TreeContainer.
+                                FindNodeForElement(property);
+                            if (node != null)
                             {
-                                node = DesignerExplorerToolWindow.ActiveWindow.TreeContainer.
-                                    FindNodeForElement(table);
-                                if (node != null)
-                                {
-                                    node.TreeView.SelectedNode = node;
-                                    DesignerExplorerToolWindow.ActiveWindow.Show();
-                                    break;
-                                }
+                                node.TreeView.SelectedNode = node;
+                                DesignerExplorerToolWindow.ActiveWindow.Show();
                             }
-                        }
-                        //Показываем property
-                        else
-                        {
-                            Entity entity =(Entity)modelElement;
-                            if (entity != null)
-                            {
-                                Property property = entity.Properties.Find(p => p.FieldName == selectedNode.Text);
-                                if (property != null)
-                                {
-                                    node = DesignerExplorerToolWindow.ActiveWindow.TreeContainer.
-                                        FindNodeForElement(property);
-                                    if (node != null)
-                                    {
-                                        node.TreeView.SelectedNode = node;
-                                        DesignerExplorerToolWindow.ActiveWindow.Show();
-                                        break;
-                                    }
-                                }
-                            }
+
                         }
                     }
+
                 }
             }
         }
 
-      
+
 
         private WormModel GetModel()
         {
@@ -587,12 +508,53 @@ namespace Worm.Designer
 
         }
 
+
+
+        private void AddActionField(int iconIndex, string tag, string value, string name, TreeListNode node,
+            string[] values, System.EventHandler handler, System.EventHandler focusHandler)
+        {
+            TreeListNode fieldNode = new TreeListNode();
+            fieldNode.Text = name;
+            fieldNode.Tag = tag;
+            fieldNode.ImageIndex = iconIndex;
+
+            ComboBox combo = new ComboBox();
+            foreach (string t in values)
+            {
+                combo.Items.Add(t);
+            }
+            List<string> list = new List<string>(values);
+
+            fieldNode.SubItems.Add(combo);
+            combo.SelectedIndex = list.FindIndex(l => l == tag);
+            combo.SelectedIndexChanged += handler;
+            combo.GotFocus += focusHandler;
+
+            TextBox text = new TextBox();
+            text.BorderStyle = BorderStyle.None;
+            text.Text = value;
+            text.Leave += new System.EventHandler(text_TextChanged);
+            fieldNode.SubItems.Add(text);
+
+            Label deleteLabel = new Label();
+            deleteLabel.ImageList = new ImageList();
+            deleteLabel.ImageList.Images.Add(new Icon((Icon)manager.GetObject("123"), size));
+            deleteLabel.ImageIndex = 0;
+            deleteLabel.Tag = value;
+            deleteLabel.Click += new System.EventHandler(deleteLabel_Click);
+            fieldNode.SubItems.Add(deleteLabel);
+
+
+            node.Nodes.Add(fieldNode);
+        }
+
         public void Display(Entity entity)
         {
             label.Visible = false;
             this.BackColor = Color.White;
             treeListView.Nodes.Clear();
             this.containerListViewColumnHeader1.Text = "Property";
+            this.containerListViewColumnHeader2.Text = "Table";
 
             if (treeListView.Columns.Count == 3)
             {
@@ -609,67 +571,107 @@ namespace Worm.Designer
                 }
 
                 TreeListNode tablesNode = new TreeListNode();
-                tablesNode.Text = "Tables";
+                tablesNode.Text = entity.Name;
                 tablesNode.ImageIndex = 0;
                 treeListView.Nodes.Add(tablesNode);
-                int i = 0;
-                foreach (Table table in entity.Tables)
+
+                foreach (Property property in entity.Properties)
                 {
-                    AddCombo(table.Name, table.Name, "Maps to " + table.Name, tablesNode, tables.ToArray(),
-                        new System.EventHandler(EntityTable_SelectedIndexChanged),
+                    AddActionField(GetIconIndex(property), property.Table, property.FieldName, property.Name, tablesNode,
+                        tables.ToArray(), new System.EventHandler(EntityTable_SelectedIndexChanged),
                          new System.EventHandler(EntityTable_GotFocus));
-                    TreeListNode node = tablesNode.Nodes[i];
-                    node.ImageIndex = 1;
-
-                    TreeListNode mappingsNode = new TreeListNode();
-                    mappingsNode.Text = "Column Mappings";
-                    mappingsNode.ImageIndex = 2;
-                    mappingsNode.Tag = table.Name;
-                    node.Nodes.Add(mappingsNode);
-
-                    IList<Property> properties = entity.Properties.FindAll(p => p.Table == table.Name);
-                    foreach (Property property in properties)
-                    {
-                        AddActionField(GetIconIndex(property), table.Name, property.Name, property.FieldName, mappingsNode, false);
-                    }
-                    i++;
                 }
-                // Add non mapped properties
-                {
-                    AddCombo("", "", "Unmapped properties", tablesNode, tables.ToArray(),
-                        new System.EventHandler(EntityTable_SelectedIndexChanged),
-                         new System.EventHandler(EntityTable_GotFocus));
-                    TreeListNode node = tablesNode.Nodes[i];
-                    node.ImageIndex = 1;
-
-                    TreeListNode mappingsNode = new TreeListNode();
-                    mappingsNode.Text = "Column Mappings";
-                    mappingsNode.ImageIndex = 2;
-                    mappingsNode.Tag = "";
-                    node.Nodes.Add(mappingsNode);
-
-                    IList<Property> properties = entity.Properties.FindAll(p => p.Table == "");
-                    foreach (Property property in properties)
-                    {
-                        AddActionField(GetIconIndex(property), "", property.Name, property.FieldName, mappingsNode, false);
-                    }
-                    i++;
-                }
-                TreeListNode newTablesNode = new TreeListNode();
-                newTablesNode.Text = _addNewTableMapping;
-                newTablesNode.ImageIndex = 1;
-                newTablesNode.ForeColor = Color.Gray;
-                tablesNode.Nodes.Add(newTablesNode);
             }
             treeListView.Click += new System.EventHandler(treeListView_Click);
             treeListView.ExpandAll();
             treeListView.Visible = true;
         }
 
+
+        /*
+                public void Display(Entity entity)
+                {
+                    label.Visible = false;
+                    this.BackColor = Color.White;
+                    treeListView.Nodes.Clear();
+                    this.containerListViewColumnHeader1.Text = "Property";
+
+                    if (treeListView.Columns.Count == 3)
+                    {
+                        treeListView.Columns.Add(containerListViewColumnHeader4);
+                    }
+                    modelElement = entity;
+
+                    if (modelElement != null)
+                    {
+                        List<string> tables = new List<string>();
+                        foreach (Table t in entity.WormModel.Tables)
+                        {
+                            tables.Add(t.Name);
+                        }
+
+                        TreeListNode tablesNode = new TreeListNode();
+                        tablesNode.Text = "Tables";
+                        tablesNode.ImageIndex = 0;
+                        treeListView.Nodes.Add(tablesNode);
+                        int i = 0;
+                        foreach (Table table in entity.Tables)
+                        {
+                            AddCombo(table.Name, table.Name, "Maps to " + table.Name, tablesNode, tables.ToArray(),
+                                new System.EventHandler(EntityTable_SelectedIndexChanged),
+                                 new System.EventHandler(EntityTable_GotFocus));
+                            TreeListNode node = tablesNode.Nodes[i];
+                            node.ImageIndex = 1;
+
+                            TreeListNode mappingsNode = new TreeListNode();
+                            mappingsNode.Text = "Column Mappings";
+                            mappingsNode.ImageIndex = 2;
+                            mappingsNode.Tag = table.Name;
+                            node.Nodes.Add(mappingsNode);
+
+                            IList<Property> properties = entity.Properties.FindAll(p => p.Table == table.Name);
+                            foreach (Property property in properties)
+                            {
+                                AddActionField(GetIconIndex(property), table.Name, property.Name, property.FieldName, mappingsNode, false);
+                            }
+                            i++;
+                        }
+                        // Add non mapped properties
+                        {
+                            AddCombo("", "", "Unmapped properties", tablesNode, tables.ToArray(),
+                                new System.EventHandler(EntityTable_SelectedIndexChanged),
+                                 new System.EventHandler(EntityTable_GotFocus));
+                            TreeListNode node = tablesNode.Nodes[i];
+                            node.ImageIndex = 1;
+
+                            TreeListNode mappingsNode = new TreeListNode();
+                            mappingsNode.Text = "Column Mappings";
+                            mappingsNode.ImageIndex = 2;
+                            mappingsNode.Tag = "";
+                            node.Nodes.Add(mappingsNode);
+
+                            IList<Property> properties = entity.Properties.FindAll(p => p.Table == "");
+                            foreach (Property property in properties)
+                            {
+                                AddActionField(GetIconIndex(property), "", property.Name, property.FieldName, mappingsNode, false);
+                            }
+                            i++;
+                        }
+                        TreeListNode newTablesNode = new TreeListNode();
+                        newTablesNode.Text = _addNewTableMapping;
+                        newTablesNode.ImageIndex = 1;
+                        newTablesNode.ForeColor = Color.Gray;
+                        tablesNode.Nodes.Add(newTablesNode);
+                    }
+                    treeListView.Click += new System.EventHandler(treeListView_Click);
+                    treeListView.ExpandAll();
+                    treeListView.Visible = true;
+                }*/
+
         private int GetIconIndex(Property property)
         {
             int index = 3;
-            if (bool.Parse(property.PrimaryKey))
+            if (property.PrimaryKey == BooleanEnum.True)
             {
                 switch (property.AccessLevel)
                 {
@@ -689,7 +691,7 @@ namespace Worm.Designer
                         index = 14;
                         break;
                 }
-             
+
 
             }
             else
@@ -729,13 +731,25 @@ namespace Worm.Designer
                 {
                     if (!string.IsNullOrEmpty(focusedTable))
                     {
-                        Table fTable = entity.WormModel.Tables.Find(t => t.Name == focusedTable);
-                        fTable.Entities.Remove(entity);
+                        int count = entity.Properties.FindAll(p => p.Table == focusedTable).Count;
+                        if (count <= 1)
+                        {
+                            Table fTable = entity.WormModel.Tables.Find(t => t.Name == focusedTable);
+                            fTable.Entities.Remove(entity);
+                        }
                     }
                     Table table = entity.WormModel.Tables.Find(t => t.Name == tableName);
-                    if (table != null)
+                    if (table != null && !table.Entities.Contains(entity))
                     {
                         table.Entities.Add(entity);
+                    }
+                    if (treeListView.SelectedNodes.Count > 0)
+                    {
+                        Property property = entity.Properties.Find(p => p.Name == treeListView.SelectedNodes[0].Text);
+                        if (property != null)
+                        {
+                            property.Table = table.Name;
+                        }
                     }
                     txAdd.Commit();
                 }
@@ -780,41 +794,6 @@ namespace Worm.Designer
             node.Nodes.Add(fieldNode);
         }
 
-        private void AddActionField(int iconIndex, string tag, string value, string name, TreeListNode node, bool readOnly)
-        {
-            TreeListNode fieldNode = new TreeListNode();
-            fieldNode.Text = name;
-            fieldNode.Tag = tag;
-            fieldNode.ImageIndex = iconIndex;
-
-            Label label = new Label();
-            label.ImageList = new ImageList();
-            label.ImageList.Images.Add(new Icon((Icon)manager.GetObject("5293"), size));
-            label.ImageIndex = 0;
-            fieldNode.SubItems.Add(label);
-
-            TextBox text = new TextBox();
-            text.BorderStyle = BorderStyle.None;
-            text.Text = value;
-            if (readOnly)
-            {
-                text.ReadOnly = true;
-                text.BackColor = Color.White;
-            }
-            text.Leave += new System.EventHandler(text_TextChanged);
-            fieldNode.SubItems.Add(text);
-
-            Label deleteLabel = new Label();
-            deleteLabel.ImageList = new ImageList();
-            deleteLabel.ImageList.Images.Add(new Icon((Icon)manager.GetObject("123"), size));
-            deleteLabel.ImageIndex = 0;
-            deleteLabel.Tag = value;
-            deleteLabel.Click += new System.EventHandler(deleteLabel_Click);
-            fieldNode.SubItems.Add(deleteLabel);
-
-
-            node.Nodes.Add(fieldNode);
-        }
 
         void deleteLabel_Click(object sender, System.EventArgs e)
         {
@@ -862,34 +841,7 @@ namespace Worm.Designer
             text.SelectedIndexChanged += handler;
         }
 
-        private void AddCombo(string tag, string value, string name, TreeListNode node, string[] values,
-            System.EventHandler handler, System.EventHandler focusHandler)
-        {
-            TreeListNode fieldNode = new TreeListNode();
-            fieldNode.Text = name;
-            fieldNode.Tag = tag;
-            fieldNode.ImageIndex = 3;
 
-            Label label = new Label();
-            label.ImageList = new ImageList();
-            label.ImageList.Images.Add(new Icon((Icon)manager.GetObject("5293"), size));
-            label.ImageIndex = 0;
-            fieldNode.SubItems.Add(label);
-
-            ComboBox text = new ComboBox();
-            foreach (string t in values)
-            {
-                text.Items.Add(t);
-            }
-            List<string> list = new List<string>(values);
-
-            fieldNode.SubItems.Add(text);
-
-            node.Nodes.Add(fieldNode);
-            text.SelectedIndex = list.FindIndex(l => l == value);
-            text.SelectedIndexChanged += handler;
-            text.GotFocus += focusHandler;
-        }
 
 
 
@@ -914,29 +866,22 @@ namespace Worm.Designer
         {
             foreach (TreeListNode mappingNode in treeListView.Nodes[0].Nodes)
             {
-                if (mappingNode.Text == _addNewTableMapping)
+                if (mappingNode.SubItems[1].ItemControl == textBox && modelElement != null)
                 {
-                    continue;
-                }
-                foreach (TreeListNode node in mappingNode.Nodes[0].Nodes)
-                {
-                    if (node.SubItems[1].ItemControl == textBox && modelElement != null)
-                    {
 
-                        foreach (Property property in ((Entity)modelElement).Properties)
+                    foreach (Property property in ((Entity)modelElement).Properties)
+                    {
+                        if (property.Name == mappingNode.Text && property.FieldName != textBox.Text)
                         {
-                            if (property.FieldName == node.Text && property.Name != textBox.Text)
+                            using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
                             {
-                                using (Transaction txAdd = property.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
-                                {
-                                    property.Name = textBox.Text;
-                                    txAdd.Commit();
-                                    return;
-                                }
+                                property.FieldName = textBox.Text;
+                                txAdd.Commit();
+                                return;
                             }
                         }
-
                     }
+
                 }
             }
         }
@@ -1110,12 +1055,7 @@ namespace Worm.Designer
             treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("familyassembly"), size));
             treeListView.SmallImageList.Images.Add(new Icon((Icon)manager.GetObject("kfamilyassembly"), size));
 
-            treeListView.AllowDrop = true;
-            treeListView.AfterMouseUp += new TreeListView.AfterMouseUpHandler(treeListView_AfterMouseUp);
-            treeListView.AfterMouseMove += new TreeListView.AfterMouseMoveHandler(treeListView_AfterMouseMove);
-            treeListView.DragEnter += new DragEventHandler(treeListView_DragEnter);
-            treeListView.DragDrop += new DragEventHandler(treeListView_DragDrop);
-            treeListView.DragOver += new DragEventHandler(treeListView_DragOver);
+
 
 
             label = new Label();
@@ -1129,90 +1069,6 @@ namespace Worm.Designer
                 , label.Parent.Height / 2 - label.Height / 2);
 
             ResumeLayout(false);
-        }
-
-        private bool isDragging = false;
-        void treeListView_AfterMouseUp(object sender, MouseEventArgs e)
-        {
-            isDragging = false;
-        }
-
-        void treeListView_AfterMouseMove(object sender, MouseEventArgs e)
-        {
-            if (!isDragging && modelElement is Entity && treeListView.SelectedNodes.Count > 0
-                && treeListView.SelectedNodes[0].ImageIndex >= 5 && treeListView.SelectedNodes[0].ImageIndex < 15)
-            {
-                isDragging = true;
-                treeListView.DoDragDrop(treeListView.SelectedNodes[0], DragDropEffects.Copy | DragDropEffects.Move);
-            }
-            else
-            {
-                isDragging = false;
-            }
-        }
-
-        void treeListView_DragEnter(object sender, DragEventArgs e)
-        {
-            if (isDragging)
-            {
-                if (e.Data.GetDataPresent(typeof(TreeListNode)))
-                    e.Effect = DragDropEffects.Copy;
-                else
-                    e.Effect = DragDropEffects.None;
-            }
-        }
-
-
-
-        void treeListView_DragOver(object sender, DragEventArgs e)
-        {
-            if (isDragging)
-            {
-                TreeListNode hoveredNode = GetHoveringNode(e.X, e.Y);
-                TreeListNode draggingNode = e.Data.GetData(typeof(TreeListNode)) as TreeListNode;
-                if (hoveredNode != null && hoveredNode != draggingNode && (hoveredNode.ImageIndex >= 1
-                    && hoveredNode.ImageIndex <= 3 || hoveredNode.ImageIndex >= 5 && hoveredNode.ImageIndex < 15)
-                    && hoveredNode.Text != _addNewTableMapping)
-                {
-                    e.Effect = DragDropEffects.Move;
-                }
-                else
-                {
-                    e.Effect = DragDropEffects.None;
-                }
-            }
-        }
-
-        private TreeListNode GetHoveringNode(int screen_x, int screen_y)
-        {
-
-            Point pt = treeListView.PointToClient(new Point(screen_x, screen_y));
-            return treeListView.NodeInNodeRow(pt);
-        }
-
-        void treeListView_DragDrop(object sender, DragEventArgs e)
-        {
-
-            if (e.Effect == DragDropEffects.Move)
-            {
-               TreeListNode hoveredNode = GetHoveringNode(e.X, e.Y);
-               if (hoveredNode != null)
-                {
-                    TreeListNode node = e.Data.GetData(typeof(TreeListNode)) as TreeListNode;
-                    if (node != null && modelElement != null && !string.IsNullOrEmpty((string)hoveredNode.Tag))
-                    {
-                        using (Transaction txAdd = ((Entity)modelElement).WormModel.Store.TransactionManager.BeginTransaction("Add property"))
-                        {
-                            Property property = ((Entity)modelElement).Properties.Find(p => p.FieldName == node.Text);
-                            property.Table = hoveredNode.Tag.ToString();
-                            txAdd.Commit();
-                            Display(((Entity)modelElement));
-                        }
-                    }
-                }
-            }
-           
-            
         }
 
     }
