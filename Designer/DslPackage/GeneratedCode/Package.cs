@@ -189,8 +189,23 @@ namespace Worm.Designer
 				}
 
                 try
-                { Solution2 sln = (Solution2)dte.Solution;
-                    string templateFolderPath = sln.GetProjectItemTemplate("Designer", "CSharp");
+                { 
+					Solution2 sln = (Solution2)dte.Solution;
+					string ext = Helper.GetProjectLanguage(dte.ActiveDocument.ProjectItem.ContainingProject);
+					string fileType = "";
+					switch (ext)
+					{
+						case ".cs":
+							fileType = "CSharp";
+							break;
+						case ".vb":
+							fileType = "VisualBasic";
+							break;
+						default:
+							throw new ArgumentException(
+								"Unsupported project type.");
+					}
+                    string templateFolderPath = sln.GetProjectItemTemplate("Designer", fileType);
                     ArrayList list = new ArrayList();
                     foreach (ProjectItem item in dte.ActiveDocument.ProjectItem.ContainingProject.ProjectItems)
                     {
