@@ -63,82 +63,34 @@ namespace Worm.Designer
                 return base.EditValue(context, provider, value);
             } // Get current entity 
 
-            Entity entity = null;
+            IList<Table> tables = null;
             if (context.Instance is Property)
             {
-                entity = (context.Instance as Property).Entity;
+                tables = (context.Instance as Property).Entity.Tables;
             }
             if (context.Instance is SelfRelation)
             {
-                entity = (context.Instance as SelfRelation).Entity;
+                tables = (context.Instance as SelfRelation).Entity.Tables;
             }
-           
-
-            if (entity != null)
+            if (context.Instance is EntityConnector)
             {
-                // Current entity name 
-                string entityName = entity.Name;
-                // Current graph 
-                IList<Table> tables = entity.Tables;
-                if (tables == null)
-                {
-                    tables = entity.WormModel.Tables;
-                }
-                if (tables != null)
-                {
-                    // Build list box 
-                    ListBox listBox = new ListBox();
-                    listBox.Sorted = true;
-                    listBox.Click += new EventHandler(listBox_Click);
-                    listBox.BorderStyle = BorderStyle.None;
-
-                    foreach (Table childTable in tables)
-                    {
-                        listBox.Items.Add(childTable.Name);
-                    }
-
-                    listBox.SelectedItem = value;
-
-                    // Handle the service 
-                    this.formsEditorService =
-                        (IWindowsFormsEditorService)provider.
-                        GetService(typeof(IWindowsFormsEditorService));
-                    this.formsEditorService.DropDownControl(listBox);
-
-                    // Result 
-                    return listBox.SelectedItem;
-                }
-                
-
-
+                tables = ((Entity)((EntityConnector)(context.Instance)).FromShape.ModelElement).WormModel.Tables;
             }
-             if (context.Instance is EntityConnector)
+
+
+            if (tables != null)
             {
-                EntityConnector relation = (EntityConnector)context.Instance;
+                // Build list box 
                 ListBox listBox = new ListBox();
                 listBox.Sorted = true;
                 listBox.Click += new EventHandler(listBox_Click);
                 listBox.BorderStyle = BorderStyle.None;
-     
-                // Current graph 
-                IList<Table> tables = ((Entity)relation.FromShape.ModelElement).Tables;
-                if (tables != null)
-                {
-       
-                    foreach (Table childTable in tables)
-                    {
-                        listBox.Items.Add(childTable.Name);
-                    }
-               }
-                tables = ((Entity)relation.ToShape.ModelElement).Tables;
-                if (tables != null)
-                {
 
-                    foreach (Table childTable in tables)
-                    {
-                        listBox.Items.Add(childTable.Name);
-                    }
+                foreach (Table childTable in tables)
+                {
+                    listBox.Items.Add(childTable.Name);
                 }
+
                 listBox.SelectedItem = value;
 
                 // Handle the service 
@@ -150,6 +102,7 @@ namespace Worm.Designer
                 // Result 
                 return listBox.SelectedItem;
             }
+            
 
             // Default behavior 
             return base.EditValue(context, provider, value);

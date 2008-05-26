@@ -734,7 +734,7 @@
     </DomainRelationship>
     <DomainRelationship Id="02763e91-46a7-468a-9cb0-6d88cdede236" Description="Список используемых таблиц" Name="TableReferencesEntities" DisplayName="Table References Entities" Namespace="Worm.Designer">
       <Source>
-        <DomainRole Id="fed3349d-8eb3-4b10-b341-b618f1e9f1c6" Description="Description for Worm.Designer.TableReferencesEntities.Table" Name="Table" DisplayName="Table" PropertyName="Entities" Multiplicity="OneMany" IsPropertyBrowsable="false" PropertyDisplayName="Entities">
+        <DomainRole Id="fed3349d-8eb3-4b10-b341-b618f1e9f1c6" Description="Description for Worm.Designer.TableReferencesEntities.Table" Name="Table" DisplayName="Table" PropertyName="Entities" IsPropertyBrowsable="false" PropertyDisplayName="Entities">
           <RolePlayer>
             <DomainClassMoniker Name="Table" />
           </RolePlayer>

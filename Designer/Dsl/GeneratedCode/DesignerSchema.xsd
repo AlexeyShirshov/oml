@@ -411,13 +411,13 @@
     </xsd:annotation>
     <xsd:sequence minOccurs="0" maxOccurs="1">
       <!-- Relationship: TableReferencesEntities -->
-      <xsd:element name="entities" minOccurs="1" maxOccurs="1">
+      <xsd:element name="entities" minOccurs="0" maxOccurs="1">
         <xsd:annotation>
           <xsd:documentation>Instances of TableReferencesEntities</xsd:documentation>
         </xsd:annotation>
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:choice minOccurs="1" maxOccurs="unbounded" >
+            <xsd:choice minOccurs="0" maxOccurs="unbounded" >
               <xsd:element ref="tableReferencesEntities">
                 <xsd:annotation>
                   <xsd:documentation>[Relationship deriving from TableReferencesEntities needs to be serialized in full-form]</xsd:documentation>

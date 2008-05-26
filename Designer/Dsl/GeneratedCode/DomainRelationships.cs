@@ -2658,7 +2658,7 @@ namespace Worm.Designer
 		[DslDesign::DisplayNameResource("Worm.Designer.TableReferencesEntities/Table.DisplayName", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[DslDesign::DescriptionResource("Worm.Designer.TableReferencesEntities/Table.Description", typeof(global::Worm.Designer.DesignerDomainModel), "Worm.Designer.GeneratedCode.DomainModelResx")]
 		[global::System.ComponentModel.Browsable(false)]
-		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Source, PropertyName = "Entities", PropertyDisplayNameKey="Worm.Designer.TableReferencesEntities/Table.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.OneMany)]
+		[DslModeling::DomainRole(DslModeling::DomainRoleOrder.Source, PropertyName = "Entities", PropertyDisplayNameKey="Worm.Designer.TableReferencesEntities/Table.PropertyDisplayName", Multiplicity = DslModeling::Multiplicity.ZeroMany)]
 		[DslModeling::DomainObjectId("fed3349d-8eb3-4b10-b341-b618f1e9f1c6")]
 		public virtual Table Table
 		{
