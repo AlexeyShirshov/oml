@@ -42,8 +42,14 @@ Namespace Linq
     Public Class FilterValueVisitor
         Inherits ExpressionVisitor
 
-        Private _v As IFilterValue
+        Private _v As IParamFilterValue
         Private _p As Orm.OrmProperty
+
+        Public ReadOnly Property Value() As IParamFilterValue
+            Get
+                Return _v
+            End Get
+        End Property
 
         Protected Overrides Function VisitConstant(ByVal c As System.Linq.Expressions.ConstantExpression) As System.Linq.Expressions.Expression
             If c.Type.IsPrimitive Then
@@ -103,9 +109,9 @@ Namespace Linq
         End Sub
 
         Protected Sub ExtractCondition(ByVal b As System.Linq.Expressions.BinaryExpression, ByVal fo As Criteria.FilterOperation)
-            Dim rf As New FilterVisitorBase
+            Dim rf As New FilterValueVisitor
             rf.Visit(b.Right)
-            Filter = rf.Filter
+            Filter = New EntityFilter(b.Type, "", rf.Value, fo)
         End Sub
 
         Protected Overrides Function VisitBinary(ByVal b As System.Linq.Expressions.BinaryExpression) As System.Linq.Expressions.Expression
@@ -116,6 +122,10 @@ Namespace Linq
                     ExtractOrAnd(b, Criteria.Conditions.ConditionOperator.Or)
                 Case ExpressionType.NotEqual
                     ExtractCondition(b, Criteria.FilterOperation.NotEqual)
+                Case ExpressionType.Equal
+                    ExtractCondition(b, Criteria.FilterOperation.Equal)
+                Case Else
+                    Dim r = b.NodeType
             End Select
             Return MyBase.VisitBinary(b)
         End Function
