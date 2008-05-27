@@ -66,6 +66,17 @@ namespace Worm.Designer
                 ormObjectsDef.Namespace = model.DefaultNamespace;
             }
 
+            // Добавляем таблицы в модель
+            foreach (Table table in model.Tables)
+            {
+                TableDescription tableDescription = new TableDescription(table.IdProperty,
+                    GetTableName(table.Schema, table.Name));
+                if (!ormObjectsDef.Tables.Exists(c => c.Identifier == table.IdProperty))
+                {
+                    ormObjectsDef.Tables.Add(tableDescription);
+                }
+            }
+
             // Заполняем сущности
             foreach (Entity entity in model.Entities)
             {
@@ -82,12 +93,7 @@ namespace Worm.Designer
                 // Добавляем таблицы в сущность и в модель
                 foreach (Table table in entity.Tables)
                 {
-                    TableDescription tableDescription = new TableDescription(table.IdProperty,
-                        GetTableName(table.Schema, table.Name));
-                    if (!ormObjectsDef.Tables.Exists(c => c.Identifier == table.IdProperty))
-                    {
-                        ormObjectsDef.Tables.Add(tableDescription);
-                    }
+                    TableDescription tableDescription = ormObjectsDef.Tables.Find(c => c.Identifier == table.IdProperty);
                     if (!entityDescription.Tables.Exists(c => c.Identifier == table.IdProperty))
                     {
                         entityDescription.Tables.Add(tableDescription);
@@ -181,7 +187,7 @@ namespace Worm.Designer
                     SelfRelationDescription self = new SelfRelationDescription(entityDescription,
                          new SelfRelationTarget(selfRelation.DirectFieldName, selfRelation.DirectCascadeDelete == BooleanEnum.True, selfRelation.DirectAccessor),
                          new SelfRelationTarget(selfRelation.ReverseFieldName, selfRelation.ReverseCascadeDelete == BooleanEnum.True, selfRelation.ReverseAccessor),
-                         entityDescription.Tables.Find(t => t.Name == GetTableName(entity.Tables[0].Schema, selfRelation.Table)),
+                         ormObjectsDef.Tables.Find(t => t.Name == GetTableName(entity.Tables[0].Schema, selfRelation.Table)),
                          ormObjectsDef.Entities.Find(e => e.Name == selfRelation.UnderlyingEntity),
                         selfRelation.Disabled == BooleanEnum.True);
                     if (!string.IsNullOrEmpty(selfRelation.ReverseAccessedEntityType))
@@ -369,6 +375,8 @@ namespace Worm.Designer
         //    }
         //    throw new TypeLoadException("Cannot load type " + type);
         //}
+
+
 
         /// <summary>
         /// Function that builds the contents of the generated file based on the contents of the input file
