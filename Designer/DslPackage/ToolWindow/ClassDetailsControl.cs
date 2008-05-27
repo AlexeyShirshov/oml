@@ -185,156 +185,9 @@ namespace Worm.Designer
 
         public void Display(SelfRelation relation)
         {
-            label.Visible = false;
-            this.BackColor = Color.White;
-            modelElement = relation;
-            treeListView.Nodes.Clear();
-            // modelClass = modelClassToHandle;
-            this.containerListViewColumnHeader1.Text = "Column";
-            this.containerListViewColumnHeader2.Text = "Operator";
-            if (treeListView.Columns.Count == 4)
-            {
-                treeListView.Columns.RemoveAt(3);
-            }
-            if (relation != null)
-            {
-
-                TreeListNode tablesNode = new TreeListNode();
-                tablesNode.Text = "Self relation";
-                tablesNode.ImageIndex = 0;
-                treeListView.Nodes.Add(tablesNode);
-                int i = 0;
-                foreach (SelfRelation rel in relation.Entity.SelfRelations)
-                {
-
-                    List<string> tables = new List<string>();
-                    foreach (Table t in relation.Entity.Tables)
-                    {
-                        tables.Add(t.Name);
-                    }
-
-                    AddCombo(rel.Name, rel.Table, "Maps to " + rel.Table, tablesNode, tables.ToArray(),
-                        new System.EventHandler(SelfTable_SelectedIndexChanged));
-                    TreeListNode mappingsNode = tablesNode.Nodes[i];
-                    mappingsNode.ImageIndex = 1;
-
-                    TreeListNode node = new TreeListNode();
-                    node.Text = "Direct";
-                    node.ImageIndex = 2;
-                    mappingsNode.Nodes.Add(node);
-
-                    List<string> properties = new List<string>();
-                    foreach (Property property in relation.Entity.Properties)
-                    {
-                        properties.Add(property.Name);
-                    }
-
-                    AddCombo(rel.Name, rel.DirectFieldName, "Field name", node,
-                        properties.ToArray(), new System.EventHandler(DirectField_SelectedIndexChanged));
-
-
-                    node = new TreeListNode();
-                    node.Text = "Reverse";
-                    node.ImageIndex = 2;
-                    mappingsNode.Nodes.Add(node);
-
-                    AddCombo(rel.Name, rel.ReverseFieldName, "Field name", node,
-                        properties.ToArray(), new System.EventHandler(ReverseField_SelectedIndexChanged));
-                    i++;
-                }
-                TreeListNode newNode = new TreeListNode();
-                newNode.Text = _addNewSelfRelation;
-                newNode.ImageIndex = 1;
-                newNode.ForeColor = Color.Gray;
-                tablesNode.Nodes.Add(newNode);
-            }
-            treeListView.Click += new System.EventHandler(treeListView_Click);
-            treeListView.ExpandAll();
-            treeListView.Visible = true;
+            Display(relation.Entity);
         }
 
-
-        void SelfTable_SelectedIndexChanged(object sender, System.EventArgs e)
-        {
-            SelfRelation relation = modelElement as SelfRelation;
-
-            using (Transaction txAdd = relation.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
-            {
-                relation.Table = ((ComboBox)(sender)).SelectedItem.ToString();
-                txAdd.Commit();
-            }
-
-            Display(relation);
-
-        }
-
-        void DirectField_SelectedIndexChanged(object sender, System.EventArgs e)
-        {
-            SelfRelation relation = modelElement as SelfRelation;
-            using (Transaction txAdd = relation.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
-            {
-                relation.DirectFieldName = ((ComboBox)(sender)).SelectedItem.ToString();
-                txAdd.Commit();
-            }
-        }
-
-        void ReverseField_SelectedIndexChanged(object sender, System.EventArgs e)
-        {
-
-            SelfRelation relation = modelElement as SelfRelation;
-            using (Transaction txAdd = relation.Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
-            {
-                relation.ReverseFieldName = ((ComboBox)(sender)).SelectedItem.ToString();
-                txAdd.Commit();
-            }
-        }
-
-
-        void SelfRelationClick()
-        {
-            if (treeListView.SelectedNodes.Count > 0 && treeListView.SelectedNodes[0].Text == _addNewSelfRelation)
-            {
-                using (Transaction txAdd = ((SelfRelation)modelElement).Entity.WormModel.Store.TransactionManager.BeginTransaction("Add property"))
-                {
-                    SelfRelation relation = new SelfRelation(((SelfRelation)modelElement).Entity.WormModel.Store);
-                    string name = "SelfRelation1";
-                    int i = 1;
-                    while (((SelfRelation)modelElement).Entity.SelfRelations.FindAll(s => s.Name == name).Count > 0)
-                    {
-                        name = "SelfRelation" + (++i);
-                    }
-                    relation.Name = name;
-                    relation.Entity = ((SelfRelation)modelElement).Entity;
-                    txAdd.Commit();
-                }
-                Display((SelfRelation)modelElement);
-            }
-            else if (treeListView.SelectedNodes.Count > 0)
-            {
-                SelectSelfRelationInExplorer();
-            }
-        }
-
-        private void SelectSelfRelationInExplorer()
-        {
-            ExplorerTreeNode node = null;
-            if (treeListView.SelectedNodes.Count > 0 && modelElement is SelfRelation
-                && !string.IsNullOrEmpty((string)treeListView.SelectedNodes[0].Tag))
-            {
-                SelfRelation rel = ((SelfRelation)modelElement).Entity.SelfRelations.Find
-                    (r => r.Name == treeListView.SelectedNodes[0].Tag.ToString());
-                if (rel != null)
-                {
-                    node = DesignerExplorerToolWindow.ActiveWindow.TreeContainer.
-                        FindNodeForElement(rel);
-                    if (node != null)
-                    {
-                        node.TreeView.SelectedNode = node;
-                        DesignerExplorerToolWindow.ActiveWindow.Show();
-                    }
-                }
-            }
-        }
 
 
         // void treeListView_RelationClick(object sender, System.EventArgs e)
@@ -361,10 +214,7 @@ namespace Worm.Designer
             {
                 EntityClick();
             }
-            else if (modelElement is SelfRelation)
-            {
-                SelfRelationClick();
-            }
+           
             else if (modelElement is WormModel)
             {
                 ModelClick();
