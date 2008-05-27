@@ -23,11 +23,11 @@ using Microsoft.VisualStudio.CommandBars;
 namespace Worm.Designer
 {
 
-   
- /// <summary>
-	/// Double-derived class to allow easier code customization.
-	/// </summary>
-	internal partial class DesignerCommandSet 
+
+    /// <summary>
+    /// Double-derived class to allow easier code customization.
+    /// </summary>
+    internal partial class DesignerCommandSet
     {
         private const int cmdAddEntity = 0x801;
         /// <summary>
@@ -39,8 +39,8 @@ namespace Worm.Designer
             IList<MenuCommand> commands = base.GetMenuCommands();
             commands.Add(new DynamicStatusMenuCommand(
             new EventHandler(OnStatusEntity),
-            new EventHandler(OnMenuEntity),    				
-            new CommandID(new Guid(Constants.DesignerCommandSetId),	cmdAddEntity)
+            new EventHandler(OnMenuEntity),
+            new CommandID(new Guid(Constants.DesignerCommandSetId), cmdAddEntity)
             ));
             // AW Class Details ToolWindow
             MenuCommand toolWindowMenuCommand = new CommandContextBoundMenuCommand(this.ServiceProvider,
@@ -121,10 +121,10 @@ namespace Worm.Designer
                         switch (command.CommandID.ID)
                         {
                             case cmdAddEntity:
-                               ((WormModel)( this.CurrentDesignerDocData.RootElement))
-                                    .Entities.Add(new Entity(diagram.Store));
+                                ((WormModel)(this.CurrentDesignerDocData.RootElement))
+                                     .Entities.Add(new Entity(diagram.Store));
                                 break;
-                            
+
                             // … other cases …
                         }
 
@@ -138,48 +138,48 @@ namespace Worm.Designer
 
     internal partial class DesignerExplorerToolWindow
     {
-          protected override void OnSelectionChanged(EventArgs e)
-           {
-               base.OnSelectionChanged(e);
-               DslModeling::ModelElement selectedElement = this.PrimarySelection as DslModeling::ModelElement;
-               if (WormToolWindow.ActiveWindow != null)
-               {
-                   WormToolWindow.ActiveWindow.OnDocumentSelectionChanged(selectedElement, e);
-               }
+        protected override void OnSelectionChanged(EventArgs e)
+        {
+            base.OnSelectionChanged(e);
+            DslModeling::ModelElement selectedElement = this.PrimarySelection as DslModeling::ModelElement;
+            if (WormToolWindow.ActiveWindow != null)
+            {
+                WormToolWindow.ActiveWindow.OnDocumentSelectionChanged(selectedElement, e);
+            }
 
 
-               if (DesignerDocView.ActiveWindow != null)
-               {
-                   ArrayList list = new ArrayList(DesignerDocView.ActiveWindow.GetSelectedComponents());
-                   if(!list.Contains(selectedElement))
-                   {
-                       ArrayList collection = new ArrayList();
-                       collection.Add(selectedElement);
-                       DesignerDocView.ActiveWindow.SetSelectedComponents(collection);
-                   }
-               }     
-          }
-    
+            if (DesignerDocView.ActiveWindow != null)
+            {
+                ArrayList list = new ArrayList(DesignerDocView.ActiveWindow.GetSelectedComponents());
+                if (!list.Contains(selectedElement))
+                {
+                    ArrayList collection = new ArrayList();
+                    collection.Add(selectedElement);
+                    DesignerDocView.ActiveWindow.SetSelectedComponents(collection);
+                }
+            }
+        }
 
-         
-          private static DesignerExplorerToolWindow window;
-          protected override void OnToolWindowCreate()
-          {
-              base.OnToolWindowCreate();
-              window = this;
-          }
 
-          public static DesignerExplorerToolWindow ActiveWindow
-          {
-              get { return window; }
-          }
+
+        private static DesignerExplorerToolWindow window;
+        protected override void OnToolWindowCreate()
+        {
+            base.OnToolWindowCreate();
+            window = this;
+        }
+
+        public static DesignerExplorerToolWindow ActiveWindow
+        {
+            get { return window; }
+        }
 
     }
 
     internal partial class DesignerDocView
     {
         private static DesignerDocView window;
-       
+
 
         protected override void OnCreate()
         {
@@ -187,7 +187,7 @@ namespace Worm.Designer
             base.OnCreate();
         }
 
-        
+
 
         public static DesignerDocView ActiveWindow
         {
@@ -202,10 +202,26 @@ namespace Worm.Designer
             {
                 WormModel model = (WormModel)data.RootElement;
                 model.ModelPropertyChanged += new ModelPropertyChangedHandler(this.OnModelPropertyChanged);
+
+                if (DesignerPackage.ImportData != null)
+                {
+                    try
+                    {
+                        XmlHelper.Import(model, (OrmObjectsDef)DesignerPackage.ImportData);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Cannot import data: " + ex.ToString(), "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                    finally
+                    {
+                        DesignerPackage.ImportData = null;
+                    }
+                }
             }
             return load;
         }
-      
+
 
         public void OnModelPropertyChanged(ElementPropertyChangedEventArgs e)
         {
@@ -214,8 +230,8 @@ namespace Worm.Designer
             {
                 if (DesignerExplorerToolWindow.ActiveWindow != null && this.SelectedElements.Count > 0)
                 {
-                     ExplorerTreeNode node = DesignerExplorerToolWindow.ActiveWindow.TreeContainer.
-                             FindNodeForElement((ModelElement)this.SelectedElements[0]);
+                    ExplorerTreeNode node = DesignerExplorerToolWindow.ActiveWindow.TreeContainer.
+                            FindNodeForElement((ModelElement)this.SelectedElements[0]);
                 }
                 this.CurrentDesigner.Refresh();
             }
@@ -251,7 +267,7 @@ namespace Worm.Designer
             }
         }
 
-       
+
     }
 
     internal partial class DesignerExplorer
@@ -279,8 +295,8 @@ namespace Worm.Designer
             return node;
         }
 
-       
-     
+
+
         public override void InsertTreeNode(TreeNodeCollection siblingNodes, ExplorerTreeNode node)
         {
             base.InsertTreeNode(siblingNodes, node);
@@ -312,5 +328,5 @@ namespace Worm.Designer
         }
     }
 
-    
+
 }
