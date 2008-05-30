@@ -183,11 +183,11 @@ Namespace Query.Database
             End Sub
 
             Public Overridable Function Validate() As Boolean Implements OrmManagerBase.ICacheValidator.Validate
-
+                Return True
             End Function
 
             Public Overridable Function Validate(ByVal ce As OrmManagerBase.CachedItem) As Boolean Implements OrmManagerBase.ICacheValidator.Validate
-
+                Return True
             End Function
         End Class
 

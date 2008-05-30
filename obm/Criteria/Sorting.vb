@@ -212,11 +212,10 @@ Namespace Sorting
         '    Return Me
         'End Function
 
-        'Public Function NextSort(ByVal t As Type, ByVal field As String) As SortOrder
-        '    _f = field
-        '    _t = t
-        '    Return Me
-        'End Function
+        Public Function NextSort(ByVal so As SortOrder) As SortOrder
+            _prev = so
+            Return Me
+        End Function
 
         Public Function NextField(ByVal t As Type, ByVal fieldName As String) As SortOrder
             Return New SortOrder(t, fieldName, Me)

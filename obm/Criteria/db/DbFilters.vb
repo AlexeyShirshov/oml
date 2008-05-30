@@ -353,7 +353,13 @@ Namespace Database
                         Throw New ArgumentNullException("schema")
                     End If
 
-                    Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.FieldName)
+                    Dim map As MapField2Column = Nothing
+                    Try
+                        map = oschema.GetFieldColumnMap()(Template.FieldName)
+                    Catch ex As KeyNotFoundException
+                        Throw New QueryGeneratorException(String.Format("There is not column for property {0} ", Template.Type.ToString & "." & Template.FieldName, ex))
+                    End Try
+
                     Dim [alias] As String = String.Empty
 
                     If tableAliases IsNot Nothing Then
