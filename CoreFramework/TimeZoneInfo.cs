@@ -14,7 +14,7 @@ namespace CoreFramework.Globalization
         private String m_displayName;
         private String m_standardName;
         private String m_daylightName;
-        private Int32 m_index;
+        private String m_index;
         private Boolean m_supportsDst;
         private TimeSpan m_bias;
         private TimeSpan m_daylightBias;
@@ -52,7 +52,7 @@ namespace CoreFramework.Globalization
             }
         }
 
-        public Int32 Index {
+        public String Index {
             get {
                 return m_index;
             }
@@ -131,7 +131,7 @@ namespace CoreFramework.Globalization
         public static TimeZoneInfo[] GetTimeZonesFromRegistry() {
 
             List<TimeZoneInfo> timeZoneList = new List<TimeZoneInfo>();
-
+            List<string> l = new List<string>();
             // Extract the information from the registry into an arraylist.
             String timeZoneKeyPath = "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Time Zones";
             using (RegistryKey timeZonesKey = Registry.LocalMachine.OpenSubKey(timeZoneKeyPath)) {
@@ -148,7 +148,15 @@ namespace CoreFramework.Globalization
                         //Object o = timeZoneKey.GetValue("Index");
                         //if (o == null)
                         //    continue;
-                        newTimeZone.m_index = i;
+                        string n = System.IO.Path.GetFileName(timeZoneKey.Name);
+                        //int p = l.BinarySearch(n);
+                        //if (p < 0)
+                        //{
+                        //    p = ~p;
+                        //    l.Insert(p, n);
+                        //}
+                        //System.Security.Cryptography.MD5.Create().ComputeHash(new System.IO.Str
+                        newTimeZone.m_index = n;
                         Byte[] bytes = (Byte[])timeZoneKey.GetValue("TZI");
                         newTimeZone.m_bias = new TimeSpan(0, BitConverter.ToInt32(bytes, 0), 0);
                         newTimeZone.m_daylightBias = new TimeSpan(0, BitConverter.ToInt32(bytes, 8), 0);
