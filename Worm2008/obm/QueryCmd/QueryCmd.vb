@@ -59,6 +59,8 @@ Namespace Query
     End Class
 
     Public Class QueryCmdBase
+        Implements ICloneable
+
         Protected _fields As ObjectModel.ReadOnlyCollection(Of OrmProperty)
         Protected _filter As IGetFilter
         Protected _group As ObjectModel.ReadOnlyCollection(Of OrmProperty)
@@ -414,10 +416,56 @@ Namespace Query
         End Property
 #End Region
 
+        Public Function ExecTypeless(ByVal mgr As OrmManagerBase) As IEnumerator
+            Dim qgt As Type = GetType(QueryCmd(Of ))
+            Dim qt As Type = qgt.MakeGenericType(New Type() {SelectedType})
+            Dim q As QueryCmdBase = CType(Activator.CreateInstance(qt), QueryCmdBase)
+            CopyTo(q)
+            Dim e As IEnumerable = CType(qt.InvokeMember("_Exec", Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.InvokeMethod, _
+                                   Nothing, q, New Object() {mgr}), System.Collections.IEnumerable)
+            Return e.GetEnumerator
+        End Function
+
+        Public Sub CopyTo(ByVal o As QueryCmdBase)
+            With o
+                ._aggregates = _aggregates
+                ._appendMain = _appendMain
+                ._autoJoins = _autoJoins
+                ._clientPage = _clientPage
+                ._distinct = _distinct
+                ._dontcache = _dontcache
+                ._exec = _exec
+                ._fields = _fields
+                ._filter = _filter
+                ._group = _group
+                ._hint = _hint
+                ._joins = _joins
+                ._key = _key
+                ._load = _load
+                ._mark = ._mark
+                ._o = _o
+                ._order = _order
+                ._page = _page
+                ._smark = _smark
+                ._t = _t
+                ._table = _table
+                ._top = _top
+            End With
+        End Sub
+
+        Public Function Clone() As Object Implements System.ICloneable.Clone
+            Dim q As New QueryCmdBase
+            CopyTo(q)
+            Return q
+        End Function
     End Class
 
     Public Class QueryCmd(Of ReturnType As {OrmBase, New})
         Inherits QueryCmdBase
+
+        Protected Function _Exec(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
+            Return GetExecutor(mgr).Exec(Of ReturnType)(mgr, Me)
+        End Function
 
         Public Function Exec(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
             Return GetExecutor(mgr).Exec(Of ReturnType)(mgr, Me)

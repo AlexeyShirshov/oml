@@ -1,5 +1,8 @@
 ﻿Imports System.Linq.Expressions
 Imports System.Collections.ObjectModel
+Imports System.Reflection
+Imports Worm.Orm.Meta
+Imports Worm.Criteria
 
 Namespace Linq
     Public MustInherit Class ExpressionVisitor
@@ -59,8 +62,7 @@ Namespace Linq
                     Return Me.VisitLambda(CType(exp, LambdaExpression))
                 Case ExpressionType.New
                     Return Me.VisitNew(CType(exp, NewExpression))
-                Case ExpressionType.NewArrayInit, _
-                     ExpressionType.NewArrayBounds
+                Case ExpressionType.NewArrayInit, ExpressionType.NewArrayBounds
                     Return Me.VisitNewArray(CType(exp, NewArrayExpression))
                 Case ExpressionType.Invoke
                     Return Me.VisitInvocation(CType(exp, InvocationExpression))
@@ -68,6 +70,8 @@ Namespace Linq
                     Return Me.VisitMemberInit(CType(exp, MemberInitExpression))
                 Case ExpressionType.ListInit
                     Return Me.VisitListInit(CType(exp, ListInitExpression))
+                Case CType(1000, ExpressionType)
+                    Return Me.VisitWithLoad(CType(exp, WithLoadExpression))
                 Case Else
                     Throw New Exception("Unhandled expression type: '" & exp.NodeType & "'")
             End Select
@@ -86,14 +90,13 @@ Namespace Linq
             End Select
         End Function
 
-        Protected Overridable Function VisitElementInitializer(ByVal initializer As ElementInit) _
-            As ElementInit
+        Protected Overridable Function VisitElementInitializer(ByVal initializer As ElementInit) As ElementInit
 
             Dim arguments = Me.VisitExpressionList(initializer.Arguments)
 
-            If arguments IsNot initializer.Arguments Then
-                Return Expression.ElementInit(initializer.AddMethod, arguments)
-            End If
+            'If arguments IsNot initializer.Arguments Then
+            '    Return Expression.ElementInit(initializer.AddMethod, arguments)
+            'End If
 
             Return initializer
         End Function
@@ -101,9 +104,9 @@ Namespace Linq
         Protected Overridable Function VisitUnary(ByVal u As UnaryExpression) As Expression
             Dim operand = Me.Visit(u.Operand)
 
-            If operand IsNot u.Operand Then
-                Return Expression.MakeUnary(u.NodeType, operand, u.Type, u.Method)
-            End If
+            'If operand IsNot u.Operand Then
+            '    Return Expression.MakeUnary(u.NodeType, operand, u.Type, u.Method)
+            'End If
 
             Return u
         End Function
@@ -111,18 +114,18 @@ Namespace Linq
         Protected Overridable Function VisitBinary(ByVal b As BinaryExpression) As Expression
             Dim left = Me.Visit(b.Left)
             Dim right = Me.Visit(b.Right)
-            Dim conversion = Me.Visit(b.Conversion)
+            'Dim conversion = Me.Visit(b.Conversion)
 
-            If left IsNot b.Left Or right IsNot b.Right Or conversion IsNot b.Conversion Then
+            'If left IsNot b.Left Or right IsNot b.Right Or conversion IsNot b.Conversion Then
 
-                If b.NodeType = ExpressionType.Coalesce And b.Conversion IsNot Nothing Then
-                    Return Expression.Coalesce(left, right, _
-                                               TryCast(conversion, LambdaExpression))
-                Else
-                    Return Expression.MakeBinary(b.NodeType, left, right, _
-                                                 b.IsLiftedToNull, b.Method)
-                End If
-            End If
+            '    If b.NodeType = ExpressionType.Coalesce And b.Conversion IsNot Nothing Then
+            '        Return Expression.Coalesce(left, right, _
+            '                                   TryCast(conversion, LambdaExpression))
+            '    Else
+            '        Return Expression.MakeBinary(b.NodeType, left, right, _
+            '                                     b.IsLiftedToNull, b.Method)
+            '    End If
+            'End If
 
             Return b
         End Function
@@ -130,9 +133,9 @@ Namespace Linq
         Protected Overridable Function VisitTypeIs(ByVal b As TypeBinaryExpression) As Expression
             Dim expr = Me.Visit(b.Expression)
 
-            If expr IsNot b.Expression Then
-                Return Expression.TypeIs(expr, b.TypeOperand)
-            End If
+            'If expr IsNot b.Expression Then
+            '    Return Expression.TypeIs(expr, b.TypeOperand)
+            'End If
 
             Return b
         End Function
@@ -146,9 +149,9 @@ Namespace Linq
             Dim ifTrue = Me.Visit(c.IfTrue)
             Dim ifFalse = Me.Visit(c.IfFalse)
 
-            If test IsNot c.Test Or ifTrue IsNot c.IfTrue Or ifFalse IsNot c.IfFalse Then
-                Return Expression.Condition(test, ifTrue, ifFalse)
-            End If
+            'If test IsNot c.Test Or ifTrue IsNot c.IfTrue Or ifFalse IsNot c.IfFalse Then
+            '    Return Expression.Condition(test, ifTrue, ifFalse)
+            'End If
 
             Return c
         End Function
@@ -160,9 +163,9 @@ Namespace Linq
         Protected Overridable Function VisitMemberAccess(ByVal m As MemberExpression) As Expression
             Dim exp = Me.Visit(m.Expression)
 
-            If exp IsNot m.Expression Then
-                Return Expression.MakeMemberAccess(exp, m.Member)
-            End If
+            'If exp IsNot m.Expression Then
+            '    Return Expression.MakeMemberAccess(exp, m.Member)
+            'End If
 
             Return m
         End Function
@@ -170,8 +173,8 @@ Namespace Linq
         Protected Overridable Function VisitMethodCall(ByVal m As MethodCallExpression) As Expression
             'Dim l As LambdaExpression = CType(CType(m.Arguments(1), UnaryExpression).Operand, LambdaExpression)
 
-            'Dim obj = Me.Visit(m.Object)
-            'Dim args = Me.VisitExpressionList(m.Arguments)
+            Dim obj = Me.Visit(m.Object)
+            Dim args = Me.VisitExpressionList(m.Arguments)
 
             'If obj IsNot m.Object Or args IsNot m.Arguments Then
             '    Return Expression.Call(obj, m.Method, args)
@@ -301,22 +304,26 @@ Namespace Linq
         Protected Overridable Function VisitLambda(ByVal lambda As LambdaExpression) As Expression
             Dim body = Me.Visit(lambda.Body)
 
-            If body IsNot lambda.Body Then
-                Return Expression.Lambda(lambda.Type, body, lambda.Parameters)
-            End If
+            'If body IsNot lambda.Body Then
+            '    Return Expression.Lambda(lambda.Type, body, lambda.Parameters)
+            'End If
             Return lambda
+        End Function
+
+        Protected Overridable Function VisitWithLoad(ByVal w As WithLoadExpression) As Expression
+            Return Visit(w.InnerExpression)
         End Function
 
         Protected Overridable Function VisitNew(ByVal nex As NewExpression) As NewExpression
             Dim args = Me.VisitExpressionList(nex.Arguments)
 
-            If args IsNot nex.Arguments Then
-                If nex.Members IsNot Nothing Then
-                    Return Expression.[New](nex.Constructor, args, nex.Members)
-                Else
-                    Return Expression.[New](nex.Constructor, args)
-                End If
-            End If
+            'If args IsNot nex.Arguments Then
+            '    If nex.Members IsNot Nothing Then
+            '        Return Expression.[New](nex.Constructor, args, nex.Members)
+            '    Else
+            '        Return Expression.[New](nex.Constructor, args)
+            '    End If
+            'End If
 
             Return nex
         End Function
@@ -365,6 +372,49 @@ Namespace Linq
             End If
 
             Return iv
+        End Function
+    End Class
+
+    Public MustInherit Class MyExpressionVisitor
+        Inherits ExpressionVisitor
+
+        Protected _schema As QueryGenerator
+
+        Public Sub New(ByVal schema As QueryGenerator)
+            _schema = schema
+        End Sub
+
+        Protected Function Eval(ByVal exp As Expression) As Object
+            Dim l As LambdaExpression = Expression.Lambda(exp)
+            Dim f = l.Compile()
+            Return f.DynamicInvoke(Nothing)
+        End Function
+
+        Protected Function GetField(ByVal t As Type, ByVal prop As String) As String
+            For Each de As DictionaryEntry In _schema.GetProperties(t, Nothing)
+                Dim pi As PropertyInfo = CType(de.Value, PropertyInfo)
+                If pi.Name = prop Then
+                    'Return _schema.GetColumnNameByFieldNameInternal(t, CType(de.Key, ColumnAttribute).FieldName, False)
+                    Return CType(de.Key, ColumnAttribute).FieldName
+                End If
+            Next
+            If prop.Equals("ID", StringComparison.InvariantCultureIgnoreCase) Then Return "ID"
+            Throw New ArgumentException(String.Format("Property {0} of type {1} is not mapped", prop, t.ToString))
+        End Function
+
+        Protected Function Invert(ByVal fo As FilterOperation) As FilterOperation
+            Select Case fo
+                Case FilterOperation.GreaterEqualThan
+                    Return FilterOperation.LessEqualThan
+                Case FilterOperation.GreaterThan
+                    Return FilterOperation.LessThan
+                Case FilterOperation.LessThan
+                    Return FilterOperation.GreaterThan
+                Case FilterOperation.LessEqualThan
+                    Return FilterOperation.GreaterEqualThan
+                Case Else
+                    Return fo
+            End Select
         End Function
     End Class
 End Namespace

@@ -1,5 +1,6 @@
 ﻿Imports System.Linq.Expressions
 Imports Worm.Database
+Imports System.Runtime.CompilerServices
 
 Namespace Linq
     Public MustInherit Class WormContext
@@ -69,10 +70,10 @@ Namespace Linq
     End Class
 
     Public Class QueryWrapper
-        Implements IQueryable
+        Implements IQueryable, IOrderedQueryable
 
         Private _provider As WormLinqProvider
-        Private _expression As Expression
+        Protected _expression As Expression
         Private _t As Type
 
         Public Sub New(ByVal t As Type, ByVal ctx As WormContext)
@@ -117,11 +118,12 @@ Namespace Linq
                 Return _provider
             End Get
         End Property
+
     End Class
 
     Public Class QueryWrapperT(Of T)
         Inherits QueryWrapper
-        Implements IQueryable(Of T)
+        Implements IQueryable(Of T), IOrderedQueryable(Of T)
 
         Public Sub New(ByVal ctx As WormContext)
             MyBase.new(ctx)
@@ -132,7 +134,7 @@ Namespace Linq
         End Sub
 
         Public Overloads Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of T) Implements System.Collections.Generic.IEnumerable(Of T).GetEnumerator
-            Return CType(Provider.Execute(Of T)(Expression), Global.System.Collections.Generic.IEnumerator(Of T))
+            Return Provider.Execute(Of IEnumerator(Of T))(Expression)
         End Function
 
         Public Overrides ReadOnly Property ElementType() As System.Type
@@ -140,5 +142,38 @@ Namespace Linq
                 Return GetType(T)
             End Get
         End Property
+
+        Public Function WithLoad() As QueryWrapperT(Of T)
+            _expression = New WithLoadExpression(GetType(QueryWrapperT(Of T)), _expression)
+            Return Me
+        End Function
+
     End Class
+
+    Public Class WithLoadExpression
+        Inherits Expression
+
+        Private _exp As Expression
+        Public Property InnerExpression() As Expression
+            Get
+                Return _exp
+            End Get
+            Set(ByVal value As Expression)
+                _exp = value
+            End Set
+        End Property
+
+        Public Sub New(ByVal t As Type, ByVal exp As Expression)
+            MyBase.New(CType(1000, ExpressionType), t)
+            _exp = exp
+            'ExpressionType.m()
+        End Sub
+    End Class
+
+    'Public Module t
+    '    <ExtensionAttribute()> _
+    '    Public Function WithLoad(Of TSource As Orm.OrmBase)(ByVal source As IQueryable(Of TSource)) As IQueryable(Of TSource)
+    '        Return source
+    '    End Function
+    'End Module
 End Namespace
