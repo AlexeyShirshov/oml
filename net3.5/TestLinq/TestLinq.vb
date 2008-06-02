@@ -121,7 +121,67 @@ Imports Worm.Linq
         q = From k In e Where TestProject1.Enum1.first < k.Enum Order By k.ID Descending, k.Enum
         l = q.ToList
         Assert.AreEqual(2, l.Count)
-        Assert.AreEqual(2, l(0).ID)
+        Assert.AreEqual(3, l(0).ID)
 
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestSelect()
+        Dim ctx As New WormDBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = From k In e Where TestProject1.Enum1.first < k.Enum Order By k.ID Select k.Code
+
+        Dim l = q.ToList
+        Dim f = l(0)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSelect2()
+        Dim ctx As New WormDBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = From k In e Where TestProject1.Enum1.first < k.Enum Order By k.ID Select k.Code, k.CreatedAt
+
+        Dim l = q.ToList
+        Dim f = l(0)
+
+        Dim q2 = From k In e Where TestProject1.Enum1.first < k.Enum Order By k.ID Select New With {k.Code, k.CreatedAt, .G = 3}
+
+        Dim l2 = q2.ToList
+        Dim f2 = l(0)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSelect3()
+        Dim ctx As New WormDBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        'Dim q = From k In e Where TestProject1.Enum1.first < k.Enum Order By k.ID Select k.Code, k.CreatedAt()
+
+        Dim q2 = e.Where(Function(l) l.Enum.Value > TestProject1.Enum1.first).Select(Function(k) k).OrderBy(Function(o) o.ID) '.Where(Function(l As TestProject1.Table1) l.ID = 10)
+
+        Dim r = q2.ToList
+
+        Dim q3 = From k In e Select k.Code, k.ID, k.Enum Where [Enum] = TestProject1.Enum1.first
+
+        Dim r2 = q3.ToList
+    End Sub
+
+    'Class cls
+    '    Public Sub New(ByVal i As Integer?)
+
+    '    End Sub
+    'End Class
+
+    '<TestMethod()> _
+    'Public Sub TestSelect3()
+    '    Dim ctor = GetType(cls).GetConstructor(New Type() {GetType(Integer?)})
+    '    Dim args = New Expressions.Expression() {Expressions.Expression.Constant(10)}
+    '    Dim n = Expressions.Expression.[New](ctor, args)
+
+    'End Sub
 End Class

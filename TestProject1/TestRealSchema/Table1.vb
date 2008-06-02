@@ -8,6 +8,19 @@ Public Enum Enum1 As Byte
     sec = 2
 End Enum
 
+Public Class [Table1_x]
+    Inherits Table1
+
+    Public Overrides Property Name() As String
+        Get
+            Return MyBase.Name
+        End Get
+        Set(ByVal value As String)
+            MyBase.Name = value
+        End Set
+    End Property
+End Class
+
 <Entity(GetType(Table1Implementation), "1"), Entity(GetType(Table12Implementation), "2"), Entity(GetType(Table13Implementation), "3"), Entity(GetType(Table1Search), "Search")> _
 Public Class Table1
     Inherits OrmBaseT(Of Table1)
@@ -90,7 +103,7 @@ Public Class Table1
     End Function
 
     <Column("Title")> _
-    Public Property Name() As String
+    Public Overridable Property Name() As String
         Get
             Using SyncHelper(True, "Title")
                 Return _name

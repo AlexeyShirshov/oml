@@ -1166,6 +1166,18 @@ Public Class TestManagerRS
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestInh()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim l As Table1_x = mgr.Find(Of Table1_x)(1)
+            l.Load()
+
+            Dim r As Worm.ReadOnlyList(Of Table1_x) = mgr.FindDistinct(Of Table1_x)(Ctor.AutoTypeField("ID").Eq(1), Sorting.Field("Title"), True)
+            Assert.AreEqual(1, r.Count)
+
+        End Using
+    End Sub
+
     '<TestMethod()> _
     'Public Sub TestSortAny()
     '    Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))

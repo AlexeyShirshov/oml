@@ -38,8 +38,22 @@ Namespace Linq
                 ev.Visit(expression)
                 'Dim q As New Worm.Query.QueryCmd(Of TResult)(ev.Query)
                 Dim q As Worm.Query.QueryCmdBase = ev.Query
-                q.SelectedType = GetType(TResult).GetGenericArguments(0)
-                Return CType(q.ExecTypeless(mgr), TResult)
+                Dim t As Type = GetType(TResult).GetGenericArguments(0)
+                If GetType(OrmBase).IsAssignableFrom(t) Then
+                    q.SelectedType = t
+                    Return CType(q.ExecTypeless(mgr), TResult)
+                Else
+                    Dim lt As Type = GetType(List(Of ))
+                    Dim glt As Type = lt.MakeGenericType(New Type() {t})
+                    Dim l As IList = CType(Activator.CreateInstance(glt), System.Collections.IList)
+                    q.SelectedType = ev.T
+                    Dim e As IEnumerator = q.ExecTypeless(mgr)
+                    Do While e.MoveNext
+                        Dim o As OrmBase = CType(e.Current, OrmBase)
+                        l.Add(ev.GetNew(o))
+                    Loop
+                    Return CType(l.GetEnumerator, TResult)
+                End If
             End Using
         End Function
     End Class
@@ -98,9 +112,11 @@ Namespace Linq
 
         Private _v As IParamFilterValue
         Private _p As Orm.OrmProperty
+        Private _q As QueryVisitor
 
-        Sub New(ByVal schema As QueryGenerator)
+        Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
             MyBase.new(schema)
+            _q = q
         End Sub
 
         Public ReadOnly Property Prop() As Orm.OrmProperty
@@ -130,12 +146,15 @@ Namespace Linq
                 Dim field As String = GetField(p.Type, m.Member.Name)
                 _p = New Orm.OrmProperty(p.Type, field)
                 Return Nothing
-            ElseIf TypeOf m.Expression Is ConstantExpression Then
-                _v = New ScalarValue(Eval(m))
-                Return Nothing
+                '                ElseIf TypeOf m.Expression Is ConstantExpression Then
+                '    _v = New ScalarValue(Eval(m))
+                '    Return Nothing
+            ElseIf TypeOf m.Expression Is ParameterExpression Then
+                _p = _q.GetProperty(m.Member.Name)
             Else
                 Return MyBase.VisitMemberAccess(m)
             End If
+            Return Nothing
         End Function
     End Class
 
@@ -201,9 +220,11 @@ Namespace Linq
         Inherits FilterVisitorBase
 
         Private _c As New Condition.ConditionConstructor
+        Private _q As QueryVisitor
 
-        Sub New(ByVal schema As QueryGenerator)
+        Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
             MyBase.new(schema)
+            _q = q
         End Sub
 
         Public Overrides Property Filter() As Criteria.Core.IFilter
@@ -220,15 +241,15 @@ Namespace Linq
         End Property
 
         Private Sub ExtractOrAnd(ByVal b As System.Linq.Expressions.BinaryExpression, ByVal oper As Criteria.Conditions.ConditionOperator)
-            Dim rf As New FilterVisitor(_schema) : rf.Visit(b.Left)
+            Dim rf As New FilterVisitor(_schema, _q) : rf.Visit(b.Left)
             _c.AddFilter(rf.Filter)
-            Dim lf As New FilterVisitor(_schema) : lf.Visit(b.Right)
+            Dim lf As New FilterVisitor(_schema, _q) : lf.Visit(b.Right)
             _c.AddFilter(lf.Filter, oper)
         End Sub
 
         Protected Sub ExtractCondition(ByVal b As System.Linq.Expressions.BinaryExpression, ByVal fo As Criteria.FilterOperation)
-            Dim lf As New FilterValueVisitor(_schema)
-            Dim rf As New FilterValueVisitor(_schema)
+            Dim lf As New FilterValueVisitor(_schema, _q)
+            Dim rf As New FilterValueVisitor(_schema, _q)
             If TypeOf (b.Left) Is MethodCallExpression Then
                 Dim m As MethodCallExpression = CType(b.Left, MethodCallExpression)
                 If m.Method.Name = "CompareString" Then
@@ -272,13 +293,13 @@ Namespace Linq
             Return Nothing
         End Function
 
-        Protected Overrides Function VisitMemberAccess(ByVal m As System.Linq.Expressions.MemberExpression) As System.Linq.Expressions.Expression
-            Return MyBase.VisitMemberAccess(m)
-        End Function
+        'Protected Overrides Function VisitMemberAccess(ByVal m As System.Linq.Expressions.MemberExpression) As System.Linq.Expressions.Expression
+        '    Return MyBase.VisitMemberAccess(m)
+        'End Function
 
-        Protected Overrides Function VisitUnary(ByVal u As System.Linq.Expressions.UnaryExpression) As System.Linq.Expressions.Expression
-            Return MyBase.VisitUnary(u)
-        End Function
+        'Protected Overrides Function VisitUnary(ByVal u As System.Linq.Expressions.UnaryExpression) As System.Linq.Expressions.Expression
+        '    Return MyBase.VisitUnary(u)
+        'End Function
     End Class
 
     Public Class QueryVisitor
@@ -286,6 +307,9 @@ Namespace Linq
 
         Private _q As Query.QueryCmdBase
         Private _so As SortOrder
+        Private _new As NewExpression
+        Private _mem As MemberExpression
+        Private _t As Type
 
         Sub New(ByVal schema As QueryGenerator)
             MyBase.new(schema)
@@ -295,6 +319,12 @@ Namespace Linq
         'Sub New(ByVal q As Query.QueryCmdBase)
         '    _q = q
         'End Sub
+
+        Public ReadOnly Property T() As Type
+            Get
+                Return _t
+            End Get
+        End Property
 
         Public ReadOnly Property Query() As Query.QueryCmdBase
             Get
@@ -311,11 +341,41 @@ Namespace Linq
             Return MyBase.VisitWithLoad(w)
         End Function
 
+        Protected Friend Function Getproperty(ByVal name As String) As Orm.OrmProperty
+            If _new Is Nothing Then
+                Throw New InvalidOperationException
+            End If
+
+            For i As Integer = 0 To _new.Arguments.Count
+                If _new.Constructor.GetParameters(i).Name = name Then
+                    Dim m As MemberExpression = CType(_new.Arguments(i), MemberExpression)
+                    Return New Orm.OrmProperty(m.Member.DeclaringType, m.Member.Name)
+                End If
+            Next
+
+            Return Nothing
+        End Function
+
+        Protected Overrides Function VisitNew(ByVal nex As System.Linq.Expressions.NewExpression) As System.Linq.Expressions.NewExpression
+            _new = nex
+            Return Nothing
+        End Function
+
+        Protected Overrides Function VisitMemberAccess(ByVal m As System.Linq.Expressions.MemberExpression) As System.Linq.Expressions.Expression
+            _mem = m
+            Return Nothing
+        End Function
+
+        Protected Overrides Function VisitConstant(ByVal c As System.Linq.Expressions.ConstantExpression) As System.Linq.Expressions.Expression
+            _t = c.Type.GetGenericArguments(0)
+            Return Nothing
+        End Function
+
         Protected Overrides Function VisitMethodCall(ByVal m As System.Linq.Expressions.MethodCallExpression) As System.Linq.Expressions.Expression
             Select Case m.Method.Name
                 Case "Where"
                     Me.Visit(m.Arguments(0))
-                    Dim v = New FilterVisitor(_schema)
+                    Dim v = New FilterVisitor(_schema, Me)
                     v.Visit(m.Arguments(1))
                     _q.Filter = v.Filter
                 Case "OrderBy"
@@ -334,10 +394,67 @@ Namespace Linq
                     Dim sv As New SortVisitor(_schema)
                     sv.Visit(m.Arguments(1))
                     _so = sv.Sort.NextSort(_so)
+                Case "Select"
+                    Me.Visit(m.Arguments(0))
+                    Me.Visit(m.Arguments(1))
+                    _q.WithLoad = True
                 Case Else
                     Throw New NotImplementedException
             End Select
             Return Nothing
+        End Function
+
+        Public Function GetNew(ByVal o As OrmBase) As Object
+            If _new Is Nothing Then
+                If _mem IsNot Nothing Then
+                    Return Eval(Expression.MakeMemberAccess(Expression.Constant(o), _mem.Member))
+                Else
+                    Throw New InvalidOperationException
+                End If
+            End If
+
+            'Dim nex = Expression.[New](_new.Constructor, GetArgs(_new.Arguments, o), _new.Members)
+            'Dim l As LambdaExpression = Expression.Lambda(nex.Type, nex, Nothing)
+            'Dim f As [Delegate] = l.Compile()
+            'Return f.DynamicInvoke(Nothing)
+            'Return Eval(nex)
+            Return _new.Constructor.Invoke(GetArgsO(_new.Arguments, o))
+        End Function
+
+        Protected Function GetArgs(ByVal args As ReadOnlyCollection(Of Expression), ByVal o As OrmBase) As Expression()
+            Dim l As New List(Of ConstantExpression)
+            For Each exp In args
+                Dim mem As MemberExpression = TryCast(exp, MemberExpression)
+                Dim e As Expression = Nothing
+                If mem IsNot Nothing Then
+                    e = Expression.MakeMemberAccess(Expression.Constant(o), mem.Member)
+                Else
+                End If
+                'Dim v As Object = exp.Type.InvokeMember(Nothing, BindingFlags.CreateInstance, Nothing, Nothing, New Object() {Eval(e)})
+                'Dim v As Object = Activator.CreateInstance(exp.Type, New Object() {Eval(e)})
+                Dim v As Object = Eval(e)
+                'Dim v As Object = Eval(Expression.[New](exp.Type.GetConstructor(New Type() {}), New Expression() {expression.Constant(Eval(e))}))
+                l.Add(Expression.Constant(v))
+            Next
+            Return l.ToArray
+        End Function
+
+        Protected Function GetArgsO(ByVal args As ReadOnlyCollection(Of Expression), ByVal o As OrmBase) As Object()
+            Dim l As New List(Of Object)
+            For Each exp In args
+                Dim mem As MemberExpression = TryCast(exp, MemberExpression)
+                Dim e As Expression = exp
+                If mem IsNot Nothing Then
+                    e = Expression.MakeMemberAccess(Expression.Constant(o), mem.Member)
+                End If
+                'Dim v As Object = exp.Type.InvokeMember(Nothing, BindingFlags.CreateInstance, Nothing, Nothing, New Object() {Eval(e)})
+                'Dim v As Object = Activator.CreateInstance(exp.Type, New Object() {Eval(e)})
+                Dim v As Object = Eval(e)
+                'Dim v As Object = Eval(Expression.[New](exp.Type.GetConstructor(New Type() {}), New Expression() {expression.Constant(Eval(e))}))
+                'l.Add(Expression.Constant(v))
+                l.Add(v)
+            Next
+            Return l.ToArray
         End Function
     End Class
 End Namespace
