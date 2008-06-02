@@ -250,6 +250,15 @@ Namespace Query
                 id &= _top.GetDynamicKey & "$"
             End If
 
+            Dim cnt As Integer = 0
+            Dim n As Sort = _order
+            Do While n IsNot Nothing
+                cnt += 1
+                n = n.Previous
+            Loop
+            If cnt > 0 Then
+                id &= "sort=" & cnt & "$"
+            End If
             Return id '& GetType(T).ToString
         End Function
 

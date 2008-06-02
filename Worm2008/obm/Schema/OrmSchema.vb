@@ -144,7 +144,7 @@ Public MustInherit Class QueryGenerator
     'End Function
 
     Public Shared Function GetColumnProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase) As IDictionary
-        Dim h As New Hashtable
+        Dim result As New Hashtable
 
         Dim sup As Array = Nothing
         If schema IsNot Nothing Then
@@ -152,34 +152,34 @@ Public MustInherit Class QueryGenerator
         End If
 
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
-            Dim cl As ColumnAttribute = Nothing
-            Dim cls() As Attribute = CType(pi.GetCustomAttributes(GetType(ColumnAttribute), True), Attribute())
-            If cls.Length > 0 Then cl = CType(cls(0), ColumnAttribute)
-            If cl IsNot Nothing Then
-                If String.IsNullOrEmpty(cl.FieldName) Then
-                    cl.FieldName = pi.Name
+            Dim column As ColumnAttribute = Nothing
+            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(ColumnAttribute)), Attribute())
+            If columns.Length > 0 Then column = CType(columns(0), ColumnAttribute)
+            If column IsNot Nothing Then
+                If String.IsNullOrEmpty(column.FieldName) Then
+                    column.FieldName = pi.Name
                 End If
 
-                If sup Is Nothing OrElse Array.IndexOf(sup, cl) < 0 Then
-                    h.Add(cl, pi)
+                If sup Is Nothing OrElse Array.IndexOf(sup, column) < 0 Then
+                    result.Add(column, pi)
                 End If
             End If
         Next
 
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic)
-            Dim cl As ColumnAttribute = Nothing
-            Dim cls() As Attribute = CType(pi.GetCustomAttributes(GetType(ColumnAttribute), True), Attribute())
-            If cls.Length > 0 Then cl = CType(cls(0), ColumnAttribute)
-            If cl IsNot Nothing Then
-                If String.IsNullOrEmpty(cl.FieldName) Then
-                    cl.FieldName = pi.Name
+            Dim column As ColumnAttribute = Nothing
+            Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(ColumnAttribute)), Attribute())
+            If columns.Length > 0 Then column = CType(columns(0), ColumnAttribute)
+            If column IsNot Nothing Then
+                If String.IsNullOrEmpty(column.FieldName) Then
+                    column.FieldName = pi.Name
                 End If
-                If Not h.Contains(cl) AndAlso (sup Is Nothing OrElse Array.IndexOf(sup, cl) < 0) Then
-                    h.Add(cl, pi)
+                If Not result.Contains(column) AndAlso (sup Is Nothing OrElse Array.IndexOf(sup, column) < 0) Then
+                    result.Add(column, pi)
                 End If
             End If
         Next
-        Return h
+        Return result
     End Function
 
     Public Function GetProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase) As IDictionary
