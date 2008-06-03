@@ -112,7 +112,7 @@ Namespace Query.Database
             End Sub
 
             Protected Overridable Function _MakeStatement() As String
-                Return MakeQueryStatement(Mgr.GetFilterInfo, Mgr.DbSchema, Query, _params, GetType(ReturnType), _j, _f)
+                Return MakeQueryStatement(Mgr.GetFilterInfo, Mgr.DbSchema, Query, _params, GetType(ReturnType), _j, _f, AliasMgr.Create)
             End Function
 
             Protected Overridable Function ExecStmt(Of T)(ByVal cmd As System.Data.Common.DbCommand) As IList(Of T)

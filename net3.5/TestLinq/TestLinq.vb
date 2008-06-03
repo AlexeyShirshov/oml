@@ -171,6 +171,52 @@ Imports Worm.Linq
         Dim r2 = q3.ToList
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestDistinct()
+        Dim ctx As New WormDBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = From k In e Distinct Select k.EnumStr
+
+        Dim l = q.ToList
+
+        Assert.AreEqual(2, l.Count)
+        Assert.AreEqual("first", l(0))
+        Assert.AreEqual("sec", l(1))
+
+        Dim q2 = From k In e Select k.EnumStr Distinct
+
+        Dim l2 = q2.ToList
+
+        Assert.AreEqual(2, l2.Count)
+        Assert.AreEqual("first", l2(0))
+        Assert.AreEqual("second", l2(1))
+
+        Dim q3 = From k In e Where k.ID > 0 Distinct Distinct Select k.EnumStr Distinct
+
+        Dim l3 = q3.ToList
+
+        Assert.AreEqual(2, l3.Count)
+        Assert.AreEqual("first", l3(0))
+        Assert.AreEqual("second", l3(1))
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestCount()
+        Dim ctx As New WormDBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = (From k In e).Count
+
+        Assert.AreEqual(3, q)
+
+        Assert.AreEqual(1, (From k In e).Count(Function(d) d.ID = 1))
+
+        Assert.AreEqual(1, (From k In e Where k.ID = 1).Count)
+    End Sub
+
     'Class cls
     '    Public Sub New(ByVal i As Integer?)
 
