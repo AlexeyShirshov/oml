@@ -249,9 +249,8 @@ Namespace Query.Database
 
         Public Shared Function MakeQueryStatement(ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
             ByVal query As QueryCmdBase, ByVal params As ICreateParam, ByVal t As Type, _
-            ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter) As String
+            ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As AliasMgr) As String
 
-            Dim almgr As AliasMgr = AliasMgr.Create
             Dim sb As New StringBuilder
             Dim s As SQLGenerator = schema
             Dim os As IOrmObjectSchema = Nothing

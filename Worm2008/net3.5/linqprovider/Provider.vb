@@ -7,6 +7,7 @@ Imports Worm.Orm
 Imports System.Reflection
 Imports Worm.Orm.Meta
 Imports Worm.Sorting
+Imports Worm.Query
 
 Namespace Linq
     Public Class WormLinqProvider
@@ -38,21 +39,26 @@ Namespace Linq
                 ev.Visit(expression)
                 'Dim q As New Worm.Query.QueryCmd(Of TResult)(ev.Query)
                 Dim q As Worm.Query.QueryCmdBase = ev.Query
-                Dim t As Type = GetType(TResult).GetGenericArguments(0)
-                If GetType(OrmBase).IsAssignableFrom(t) Then
-                    q.SelectedType = t
-                    Return CType(q.ExecTypeless(mgr), TResult)
+                Dim rt As Type = GetType(TResult)
+                If GetType(IEnumerator).IsAssignableFrom(rt) Then
+                    Dim t As Type = rt.GetGenericArguments(0)
+                    If GetType(OrmBase).IsAssignableFrom(t) Then
+                        q.SelectedType = t
+                        Return CType(q.ExecTypeless(mgr), TResult)
+                    Else
+                        Dim lt As Type = GetType(List(Of ))
+                        Dim glt As Type = lt.MakeGenericType(New Type() {t})
+                        Dim l As IList = CType(Activator.CreateInstance(glt), System.Collections.IList)
+                        q.SelectedType = ev.T
+                        Dim e As IEnumerator = q.ExecTypeless(mgr)
+                        Do While e.MoveNext
+                            Dim o As OrmBase = CType(e.Current, OrmBase)
+                            l.Add(ev.GetNew(o))
+                        Loop
+                        Return CType(l.GetEnumerator, TResult)
+                    End If
                 Else
-                    Dim lt As Type = GetType(List(Of ))
-                    Dim glt As Type = lt.MakeGenericType(New Type() {t})
-                    Dim l As IList = CType(Activator.CreateInstance(glt), System.Collections.IList)
-                    q.SelectedType = ev.T
-                    Dim e As IEnumerator = q.ExecTypeless(mgr)
-                    Do While e.MoveNext
-                        Dim o As OrmBase = CType(e.Current, OrmBase)
-                        l.Add(ev.GetNew(o))
-                    Loop
-                    Return CType(l.GetEnumerator, TResult)
+                    Throw New NotImplementedException
                 End If
             End Using
         End Function
@@ -398,6 +404,12 @@ Namespace Linq
                     Me.Visit(m.Arguments(0))
                     Me.Visit(m.Arguments(1))
                     _q.WithLoad = True
+                Case "Distinct"
+                    Me.Visit(m.Arguments(0))
+                    _q.Distinct = True
+                Case "Count"
+                    Me.Visit(m.Arguments(0))
+                    _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(AggregateFunction.Count)})
                 Case Else
                     Throw New NotImplementedException
             End Select

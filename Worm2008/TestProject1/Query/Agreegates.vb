@@ -9,6 +9,8 @@ Imports Worm.Orm.Meta
 Imports System.Collections
 Imports Worm.Orm
 Imports Worm
+Imports Worm.Database.Criteria
+Imports Worm.Database.Criteria.Core
 
 <TestClass()> Public Class TestAgreegates
 
@@ -83,7 +85,7 @@ Imports Worm
             Dim table As SourceFragment = r.Table
 
             Dim inner As QueryCmdBase = New QueryCmdBase(table)
-
+            inner.Filter = New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
             inner.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
             })

@@ -52,7 +52,7 @@ Namespace Query.Database.Filters
         Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
             Prepare(dbschema, filterInfo)
 
-            sb.Append(DbQueryExecutor.MakeQueryStatement(filterInfo, dbschema, _q, paramMgr, _q.SelectedType, _j, _f))
+            sb.Append(DbQueryExecutor.MakeQueryStatement(filterInfo, dbschema, _q, paramMgr, _q.SelectedType, _j, _f, almgr))
         End Sub
     End Class
 End Namespace
