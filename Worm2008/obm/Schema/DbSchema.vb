@@ -213,6 +213,12 @@ Namespace Database
             End Get
         End Property
 
+        Public Overridable ReadOnly Property SupportRowNumber() As Boolean
+            Get
+                Return False
+            End Get
+        End Property
+
         Public Overridable Function ParamName(ByVal name As String, ByVal i As Integer) As String
             Return "@" & name & i
         End Function

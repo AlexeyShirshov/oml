@@ -1548,7 +1548,8 @@ Namespace Database
             Try
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     Do While dr.Read
-                        l.Add(CType(Convert.ChangeType(dr.GetValue(0), GetType(T)), T))
+                        'l.Add(CType(Convert.ChangeType(dr.GetValue(0), GetType(T)), T))
+                        l.Add(CType(dr.GetValue(0), T))
                     Loop
                     Return l
                 End Using

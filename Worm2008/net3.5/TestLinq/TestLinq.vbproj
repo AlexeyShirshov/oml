@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="My Project\AssemblyInfo.vb" />
+    <Compile Include="TestAgg.vb" />
     <Compile Include="TestLinq.vb" />
   </ItemGroup>
   <ItemGroup>

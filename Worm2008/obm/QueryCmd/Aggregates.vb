@@ -11,6 +11,7 @@ Namespace Query
         Average
         Count
         BigCount
+        Sum
         Custom
     End Enum
 
@@ -71,13 +72,13 @@ Namespace Query
 
         Private _prop As OrmProperty
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String, ByVal t As Type, ByVal field As String)
-            MyBase.New(agFunc, [alias])
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnAlias As String, ByVal t As Type, ByVal field As String)
+            MyBase.New(agFunc, columnAlias)
             _prop = New OrmProperty(t, field)
         End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String, ByVal table As SourceFragment, ByVal column As String)
-            MyBase.New(agFunc, [alias])
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnAlias As String, ByVal table As SourceFragment, ByVal column As String)
+            MyBase.New(agFunc, columnAlias)
             _prop = New OrmProperty(table, column)
         End Sub
 
@@ -121,8 +122,10 @@ Namespace Query
                     s = "avg(" & d & "{0})"
                 Case AggregateFunction.Count
                     s = "count(" & d & "{0})"
-                Case AggregateFunction.Average
+                Case AggregateFunction.BigCount
                     s = "count_big(" & d & "{0})"
+                Case AggregateFunction.Sum
+                    s = "sum(" & d & "{0})"
                 Case Else
                     Throw New NotImplementedException(AggFunc.ToString)
             End Select
