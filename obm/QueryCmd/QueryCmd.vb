@@ -4,6 +4,7 @@ Imports Worm.Criteria.Core
 Imports Worm.Sorting
 Imports Worm.Orm
 Imports Worm.Criteria.Joins
+Imports System.Reflection
 
 Namespace Query
 
@@ -81,6 +82,7 @@ Namespace Query
         Protected _t As Type
         Protected _o As OrmBase
         Protected _key As String
+        Protected _rn As Worm.Database.Criteria.Core.TableFilter
 
         Private _appendMain As Boolean
 
@@ -214,6 +216,10 @@ Namespace Query
                 key &= f.ToStaticString & "$"
             End If
 
+            If _rn IsNot Nothing Then
+                key &= _rn.ToStaticString
+            End If
+
             If j IsNot Nothing Then
                 For Each join As OrmJoin In j
                     If Not OrmJoin.IsEmpty(join) Then
@@ -259,10 +265,26 @@ Namespace Query
             If cnt > 0 Then
                 id &= "sort=" & cnt & "$"
             End If
+
+            If _rn IsNot Nothing Then
+                id &= _rn.ToString
+            End If
+
             Return id '& GetType(T).ToString
         End Function
 
 #Region " Properties "
+        Public Const RowNumerColumn As String = "[worm.row_number]"
+
+        Public Property RowNumberFilter() As Worm.Database.Criteria.Core.TableFilter
+            Get
+                Return _rn
+            End Get
+            Set(ByVal value As Worm.Database.Criteria.Core.TableFilter)
+                _rn = value
+                _mark = Environment.TickCount
+            End Set
+        End Property
 
         Public Overridable Property SelectedType() As Type
             Get
@@ -425,14 +447,38 @@ Namespace Query
         End Property
 #End Region
 
-        Public Function ExecTypeless(ByVal mgr As OrmManagerBase) As IEnumerator
+        Protected Function CreateTypedCmd(ByVal qt As Type) As QueryCmdBase
             Dim qgt As Type = GetType(QueryCmd(Of ))
-            Dim qt As Type = qgt.MakeGenericType(New Type() {SelectedType})
-            Dim q As QueryCmdBase = CType(Activator.CreateInstance(qt), QueryCmdBase)
+            Dim t As Type = qgt.MakeGenericType(New Type() {qt})
+            Return CType(Activator.CreateInstance(t), QueryCmdBase)
+        End Function
+
+        Protected Function CreateTypedCopy(ByVal qt As Type) As QueryCmdBase
+            Dim q As QueryCmdBase = CreateTypedCmd(qt)
             CopyTo(q)
-            Dim e As IEnumerable = CType(qt.InvokeMember("_Exec", Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.InvokeMethod, _
-                                   Nothing, q, New Object() {mgr}), System.Collections.IEnumerable)
-            Return e.GetEnumerator
+            Return q
+        End Function
+
+        Public Function ExecTypelessToList(ByVal mgr As OrmManagerBase) As IList
+            Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
+            Dim e As IList = CType(q.GetType.InvokeMember("_Exec", Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.InvokeMethod, _
+                                   Nothing, q, New Object() {mgr}), System.Collections.IList)
+            Return e
+        End Function
+
+        Public Function ExecTypeless(ByVal mgr As OrmManagerBase) As IEnumerator
+            Return ExecTypelessToList(mgr).GetEnumerator
+        End Function
+
+        Public Function ExecSimple(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
+            Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
+            Dim qt As Type = q.GetType
+            Dim mi As MethodInfo = qt.GetMethod("ToSimpleList")
+            If mi Is Nothing Then
+                Throw New InvalidOperationException
+            End If
+            Dim rmi As MethodInfo = mi.MakeGenericMethod(New Type() {GetType(T)})
+            Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
         End Function
 
         Public Sub CopyTo(ByVal o As QueryCmdBase)
@@ -459,6 +505,7 @@ Namespace Query
                 ._t = _t
                 ._table = _table
                 ._top = _top
+                ._rn = _rn
             End With
         End Sub
 

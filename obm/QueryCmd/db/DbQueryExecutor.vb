@@ -10,6 +10,8 @@ Namespace Query.Database
     Partial Public Class DbQueryExecutor
         Implements IExecutor
 
+        Private Const RowNumberOrder As String = "qiervfnkasdjvn"
+
         Private _proc As Object
         Private _m As Integer
         Private _sm As Integer
@@ -129,29 +131,34 @@ Namespace Query.Database
         End Function
 
         Protected Shared Sub FormSelectList(ByVal query As QueryCmdBase, ByVal t As Type, _
-            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema)
+            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema, _
+            ByVal almgr As AliasMgr, ByVal filterInfo As Object, ByVal params As ICreateParam)
 
             Dim b As Boolean
+            Dim cols As New StringBuilder
             If os Is Nothing Then
                 If query.SelectList IsNot Nothing Then
                     For Each p As OrmProperty In query.SelectList
-                        sb.Append(s.GetTableName(p.Table)).Append(".").Append(p.Column).Append(", ")
+                        cols.Append(s.GetTableName(p.Table)).Append(".").Append(p.Column).Append(", ")
                     Next
-                    sb.Length -= 2
+                    cols.Length -= 2
+                    sb.Append(cols.ToString)
                     b = True
                 End If
             Else
                 If query.WithLoad Then
                     If query.SelectList Is Nothing AndAlso query.Aggregates Is Nothing Then
-                        sb.Append(s.GetSelectColumnList(t))
+                        cols.Append(s.GetSelectColumnList(t))
+                        sb.Append(cols.ToString)
                         b = True
                     ElseIf query.SelectList IsNot Nothing Then
-                        Dim columns As String = s.GetSelectColumnList(t, GetFields(s, t, query.SelectList))
-                        sb.Append(columns)
+                        cols.Append(s.GetSelectColumnList(t, GetFields(s, t, query.SelectList)))
+                        sb.Append(cols.ToString)
                         b = True
                     End If
                 ElseIf query.Aggregates Is Nothing Then
-                    s.GetPKList(os, sb)
+                    s.GetPKList(os, cols)
+                    sb.Append(cols.ToString)
                     b = True
                 End If
             End If
@@ -165,6 +172,20 @@ Namespace Query.Database
                     End If
                     sb.Append(a.MakeStmt(t, s))
                 Next
+            End If
+
+            If query.RowNumberFilter IsNot Nothing Then
+                If Not s.SupportRowNumber Then
+                    Throw New NotSupportedException("RowNumber statement is not supported by " & s.Name)
+                End If
+                sb.Append(",row_number() over (")
+                If query.Sort IsNot Nothing AndAlso Not query.Sort.IsExternal Then
+                    sb.Append(RowNumberOrder)
+                    'FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
+                Else
+                    sb.Append("order by ").Append(cols.ToString)
+                End If
+                sb.Append(") as ").Append(QueryCmdBase.RowNumerColumn)
             End If
         End Sub
 
@@ -269,7 +290,7 @@ Namespace Query.Database
                 sb.Append(s.TopStatement(query.Top.Count, query.Top.Percent, query.Top.Ties)).Append(" ")
             End If
 
-            FormSelectList(query, t, sb, s, os)
+            FormSelectList(query, t, sb, s, os, almgr, filterInfo, params)
 
             sb.Append(" from ")
 
@@ -288,10 +309,23 @@ Namespace Query.Database
 
             FormGroupBy(query, almgr, sb, s, t)
 
-            FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
+            If query.RowNumberFilter Is Nothing Then
+                FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
+            Else
+                Dim r As New StringBuilder
+                FormOrderBy(query, t, almgr, r, s, filterInfo, params)
+                sb.Replace(RowNumberOrder, r.ToString)
+            End If
 
             If Not String.IsNullOrEmpty(query.Hint) Then
                 sb.Append(" ").Append(query.Hint)
+            End If
+
+            If query.RowNumberFilter IsNot Nothing Then
+                Dim rs As String = sb.ToString
+                sb.Length = 0
+                sb.Append("select * from (").Append(rs).Append(") as t0t01 where ")
+                sb.Append(query.RowNumberFilter.MakeQueryStmt(s, filterInfo, almgr, params))
             End If
 
             Return sb.ToString

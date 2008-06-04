@@ -252,4 +252,13 @@ Imports Worm.Criteria.Values
 
         End Using
     End Sub
+
+    <TestMethod()> Public Sub TestRowNumber()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New MSSQL2005Generator("1"))
+            Dim q As QueryCmd(Of Entity) = QueryCmd(Of Entity).Create
+            q.RowNumberFilter = New TableFilter(QueryCmdBase.RowNumerColumn, New ScalarValue(2), Worm.Criteria.FilterOperation.LessEqualThan)
+            Dim l As ReadOnlyList(Of Entity) = q.ToList(mgr)
+            Assert.AreEqual(2, l.Count)
+        End Using
+    End Sub
 End Class

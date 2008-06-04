@@ -184,12 +184,18 @@ Namespace Database
 
         Public Class TableFilter
             Inherits Worm.Criteria.Core.TemplatedFilterBase
+            Private Const TempTable As String = "calculated"
             'Implements ITemplateFilter
 
             'Private _templ As TableFilterTemplate
 
             Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
                 MyBase.New(value, New TableFilterTemplate(table, column, operation))
+                '_templ = New TableFilterTemplate(table, column, operation)
+            End Sub
+
+            Public Sub New(ByVal column As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+                MyBase.New(value, New TableFilterTemplate(New SourceFragment(TempTable), column, operation))
                 '_templ = New TableFilterTemplate(table, column, operation)
             End Sub
 
@@ -214,25 +220,29 @@ Namespace Database
 
             Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
                 If ParamValue.ShouldUse Then
-                    Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
+                    If Template.Table.Name = TempTable Then
+                        Return Template.Column & Template.OperToStmt & GetParam(schema, pname)
+                    Else
+                        Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
-                    If almgr IsNot Nothing Then
-                        tableAliases = almgr.Aliases
+                        If almgr IsNot Nothing Then
+                            tableAliases = almgr.Aliases
+                        End If
+
+                        Dim map As New MapField2Column(String.Empty, Template.Column, Template.Table)
+                        Dim [alias] As String = String.Empty
+
+                        If tableAliases IsNot Nothing Then
+                            Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+                            Try
+                                [alias] = tableAliases(map._tableName) & "."
+                            Catch ex As KeyNotFoundException
+                                Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+                            End Try
+                        End If
+
+                        Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
                     End If
-
-                    Dim map As New MapField2Column(String.Empty, Template.Column, Template.Table)
-                    Dim [alias] As String = String.Empty
-
-                    If tableAliases IsNot Nothing Then
-                        Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
-                        Try
-                            [alias] = tableAliases(map._tableName) & "."
-                        Catch ex As KeyNotFoundException
-                            Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
-                        End Try
-                    End If
-
-                    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
                 Else
                     Return String.Empty
                 End If

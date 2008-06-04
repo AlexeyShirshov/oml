@@ -39,6 +39,11 @@ Namespace Database
             Return sb.ToString
         End Function
 
+        Public Overrides ReadOnly Property SupportRowNumber() As Boolean
+            Get
+                Return True
+            End Get
+        End Property
         '    Protected Overrides Function FormInsert(ByVal inserted_tables As System.Collections.Generic.Dictionary(Of String, System.Collections.Generic.IList(Of OrmFilter)), ByVal ins_cmd As System.Text.StringBuilder, ByVal type As System.Type, ByVal sel_columns As System.Collections.Generic.List(Of ColumnAttribute), ByVal unions() As String, ByVal params As ICreateParam) As System.Collections.Generic.ICollection(Of System.Data.Common.DbParameter)
         '        If params Is Nothing Then
         '            params = New ParamMgr(Me, "p")

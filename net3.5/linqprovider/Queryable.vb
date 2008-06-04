@@ -69,6 +69,14 @@ Namespace Linq
         End Function
     End Class
 
+    Public Class WormMSSQL2005DBContext
+        Inherits WormDBContext
+
+        Public Sub New(ByVal conn As String)
+            MyBase.New(New Cache.OrmCache, New MSSQL2005Generator("1"), conn)
+        End Sub
+    End Class
+
     Public Class QueryWrapper
         Implements IQueryable, IOrderedQueryable
 
