@@ -83,6 +83,7 @@ Namespace Query
         Protected _o As OrmBase
         Protected _key As String
         Protected _rn As Worm.Database.Criteria.Core.TableFilter
+        Protected _outer As QueryCmdBase
 
         Private _appendMain As Boolean
 
@@ -131,6 +132,21 @@ Namespace Query
         Public Sub New(ByVal table As SourceFragment)
             _table = table
         End Sub
+
+        Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal t As Type) As IFilter()
+            Dim i As Integer = 0
+            Dim q As QueryCmdBase = Me
+            Dim fs As New List(Of IFilter)
+            Do While q IsNot Nothing
+                Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
+                Dim f As IFilter = q.Prepare(j, schema, filterInfo, t)
+                fs.Add(f)
+                js.Add(j)
+                q = q.OuterQuery
+            Loop
+
+            Return fs.ToArray
+        End Function
 
         Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal t As Type) As IFilter
             If Joins IsNot Nothing Then
@@ -209,51 +225,79 @@ Namespace Query
             Return f
         End Function
 
-        Public Function GetStaticKey(ByVal mgrKey As String, ByVal j As List(Of OrmJoin), ByVal f As IFilter) As String
-            Dim key As String = String.Empty
-
-            If f IsNot Nothing Then
-                key &= f.ToStaticString & "$"
-            End If
-
-            If _rn IsNot Nothing Then
-                key &= _rn.ToStaticString
-            End If
-
-            If j IsNot Nothing Then
-                For Each join As OrmJoin In j
-                    If Not OrmJoin.IsEmpty(join) Then
-                        key &= join.ToString
-                    End If
-                Next
-            End If
-
-            If _top IsNot Nothing Then
-                key &= _top.GetStaticKey & "$"
-            End If
+        Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of OrmJoin)), ByVal fs() As IFilter) As String
+            Dim key As New StringBuilder
+            Dim i As Integer = 0
+            Dim q As QueryCmdBase = Me
+            Do While q IsNot Nothing
+                q.GetStaticKey(key, js(i), fs(i))
+                i += 1
+                q = q._outer
+                If q IsNot Nothing Then
+                    key.Append("$inner:")
+                End If
+            Loop
 
             'key &= mgr.ObjectSchema.GetEntityKey(mgr.GetFilterInfo, GetType(T))
 
-            Return key & "$" & mgrKey
+            key.Append("$").Append(mgrKey)
+            Return key.ToString
         End Function
 
-        Public Function GetDynamicKey(ByVal j As List(Of OrmJoin), ByVal f As IFilter) As String
-            Dim id As String = String.Empty
-
+        Protected Friend Sub GetStaticKey(ByVal sb As StringBuilder, ByVal j As List(Of OrmJoin), ByVal f As IFilter)
             If f IsNot Nothing Then
-                id &= f.ToString & "$"
+                sb.Append(f.ToStaticString).Append("$")
+            End If
+
+            If _rn IsNot Nothing Then
+                sb.Append(_rn.ToStaticString)
             End If
 
             If j IsNot Nothing Then
                 For Each join As OrmJoin In j
                     If Not OrmJoin.IsEmpty(join) Then
-                        id &= join.ToString
+                        sb.Append(join.ToString)
                     End If
                 Next
             End If
 
             If _top IsNot Nothing Then
-                id &= _top.GetDynamicKey & "$"
+                sb.Append(_top.GetStaticKey).Append("$")
+            End If
+        End Sub
+
+        Public Function GetDynamicKey(ByVal js As List(Of List(Of OrmJoin)), ByVal fs() As IFilter) As String
+            Dim id As New StringBuilder
+
+            Dim i As Integer = 0
+            Dim q As QueryCmdBase = Me
+            Do While q IsNot Nothing
+                q.GetDynamicKey(id, js(i), fs(i))
+                i += 1
+                q = q._outer
+                If q IsNot Nothing Then
+                    id.Append("$inner:")
+                End If
+            Loop
+
+            Return id.ToString '& GetType(T).ToString
+        End Function
+
+        Protected Friend Sub GetDynamicKey(ByVal sb As StringBuilder, ByVal j As List(Of OrmJoin), ByVal f As IFilter)
+            If f IsNot Nothing Then
+                sb.Append(f.ToString).Append("$")
+            End If
+
+            If j IsNot Nothing Then
+                For Each join As OrmJoin In j
+                    If Not OrmJoin.IsEmpty(join) Then
+                        sb.Append(join.ToString)
+                    End If
+                Next
+            End If
+
+            If _top IsNot Nothing Then
+                sb.Append(_top.GetDynamicKey).Append("$")
             End If
 
             Dim cnt As Integer = 0
@@ -263,17 +307,25 @@ Namespace Query
                 n = n.Previous
             Loop
             If cnt > 0 Then
-                id &= "sort=" & cnt & "$"
+                sb.Append("sort=").Append(cnt).Append("$")
             End If
 
             If _rn IsNot Nothing Then
-                id &= _rn.ToString
+                sb.Append(_rn.ToString)
             End If
-
-            Return id '& GetType(T).ToString
-        End Function
+        End Sub
 
 #Region " Properties "
+        Public Property OuterQuery() As QueryCmdBase
+            Get
+                Return _outer
+            End Get
+            Set(ByVal value As QueryCmdBase)
+                _outer = value
+                _mark = Environment.TickCount
+            End Set
+        End Property
+
         Public Const RowNumerColumn As String = "[worm.row_number]"
 
         Public Property RowNumberFilter() As Worm.Database.Criteria.Core.TableFilter
@@ -506,6 +558,7 @@ Namespace Query
                 ._table = _table
                 ._top = _top
                 ._rn = _rn
+                ._outer = _outer
             End With
         End Sub
 

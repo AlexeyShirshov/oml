@@ -95,7 +95,7 @@ Namespace Linq
                     Dim l As IList(Of TResult) = Nothing
                     
                     'Else
-                    If rt.IsValueType Then
+                    If rt.IsValueType OrElse rt Is GetType(String) Then
                         l = q.ExecSimple(Of TResult)(mgr)
                     Else
                         If GetType(OrmBase).IsAssignableFrom(rt) Then
@@ -299,19 +299,31 @@ Namespace Linq
                 Return _f
             End Get
         End Property
+        Private _prop As String
+        Public ReadOnly Property PropName() As String
+            Get
+                Return _prop
+            End Get
+        End Property
 
-        Sub New(ByVal schema As QueryGenerator)
+        Private _q As QueryVisitor
+
+        Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
             MyBase.new(schema)
+            _q = q
         End Sub
 
         Protected Overrides Function VisitMemberAccess(ByVal m As System.Linq.Expressions.MemberExpression) As System.Linq.Expressions.Expression
             If GetType(OrmBase).IsAssignableFrom(m.Expression.Type) Then
                 Dim p As ParameterExpression = CType(m.Expression, ParameterExpression)
-                _f = GetField(p.Type, m.Member.Name)
                 _t = p.Type
+                _prop = m.Member.Name
             Else
-                Throw New NotImplementedException
+                Dim pr As OrmProperty = _q.GetProperty(m.Member.Name)
+                _prop = pr.Field
+                _t = pr.Type
             End If
+            _f = GetField(_t, _prop)
             Return Nothing
         End Function
     End Class
@@ -329,13 +341,16 @@ Namespace Linq
             'End Set
         End Property
 
+        Private _q As QueryVisitor
+
         'Public Function Order(ByVal desc As Boolean) As SortVisitor
         '    _sort.Order(desc)
         '    Return Me
         'End Function
 
-        Sub New(ByVal schema As QueryGenerator)
+        Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
             MyBase.new(schema)
+            _q = q
         End Sub
 
         Protected Overrides Function VisitMemberAccess(ByVal m As System.Linq.Expressions.MemberExpression) As System.Linq.Expressions.Expression
@@ -347,11 +362,29 @@ Namespace Linq
                 Else
                     _sort.NextField(field)
                 End If
-                Return Nothing
             Else
-                Throw New NotImplementedException
+                Dim pr As OrmProperty = _q.GetProperty(m.Member.Name)
+                Dim s As String = pr.Field
+                If _sort Is Nothing Then
+                    _sort = Worm.Orm.Sorting.Field(s)
+                Else
+                    _sort.NextField(s)
+                End If
             End If
+            Return Nothing
         End Function
+
+        Protected Overrides Function VisitParameter(ByVal p As System.Linq.Expressions.ParameterExpression) As System.Linq.Expressions.Expression
+            Dim pr As OrmProperty = _q.GetProperty(p.Name)
+            Dim s As String = pr.Field
+            If _sort Is Nothing Then
+                _sort = Worm.Orm.Sorting.Field(s)
+            Else
+                _sort.NextField(s)
+            End If
+            Return Nothing
+        End Function
+
     End Class
 
     Public Class FilterVisitor
@@ -487,31 +520,69 @@ Namespace Linq
             Return MyBase.VisitWithLoad(w)
         End Function
 
+        Protected Friend Function GetProperties() As Orm.OrmProperty()
+            If _new Is Nothing Then
+                Throw New InvalidOperationException
+            End If
+
+            Dim l As New List(Of OrmProperty)
+            For i As Integer = 0 To _new.Arguments.Count - 1
+                l.Add(GetMember(i))
+            Next
+
+            Return l.ToArray
+        End Function
+
         Protected Friend Function GetProperty(ByVal name As String) As Orm.OrmProperty
             If _new Is Nothing Then
                 Return Me.GetProperty
             End If
 
-            For i As Integer = 0 To _new.Arguments.Count
+            For i As Integer = 0 To _new.Arguments.Count - 1
                 If _new.Constructor.GetParameters(i).Name = name Then
-                    Dim m As MemberExpression = CType(_new.Arguments(i), MemberExpression)
-                    Dim t As Type = m.Member.DeclaringType
-                    If t.FullName.StartsWith("Worm.Orm.OrmBaseT") Then
-                        t = t.GetGenericArguments(0)
-                    End If
-                    Return New Orm.OrmProperty(t, m.Member.Name)
+                    Return GetMember(i)
                 End If
             Next
 
             Return Nothing
         End Function
 
+        Protected Function GetMember(ByVal i As Integer) As OrmProperty
+            Dim m As MemberExpression = CType(_new.Arguments(i), MemberExpression)
+            Dim t As Type = m.Member.DeclaringType
+            If t.FullName.StartsWith("Worm.Orm.OrmBaseT") Then
+                t = t.GetGenericArguments(0)
+            End If
+            Return New Orm.OrmProperty(t, GetField(t, m.Member.Name))
+        End Function
+
+        Protected Friend Function GetIndex(ByVal tt As Type, ByVal name As String) As Integer
+            If _new Is Nothing Then
+                Throw New InvalidOperationException
+            End If
+
+            For i As Integer = 0 To _new.Arguments.Count - 1
+                If _new.Constructor.GetParameters(i).Name = name Then
+                    Dim m As MemberExpression = CType(_new.Arguments(i), MemberExpression)
+                    Dim t As Type = m.Member.DeclaringType
+                    If t.FullName.StartsWith("Worm.Orm.OrmBaseT") Then
+                        t = t.GetGenericArguments(0)
+                    End If
+                    If tt Is t Then
+                        Return i
+                    End If
+                End If
+            Next
+
+            Return -1
+        End Function
+
         Protected Friend Function GetProperty() As Orm.OrmProperty
             If _mem Is Nothing Then
                 Throw New InvalidOperationException
             End If
-
-            Return New Orm.OrmProperty(_mem.Member.DeclaringType, _mem.Member.Name)
+            Dim t As Type = _mem.Member.DeclaringType
+            Return New Orm.OrmProperty(t, GetField(t, _mem.Member.Name))
         End Function
 
         Protected Overrides Function VisitNew(ByVal nex As System.Linq.Expressions.NewExpression) As System.Linq.Expressions.NewExpression
@@ -560,30 +631,30 @@ Namespace Linq
                     _q.Filter = v.Filter
                 Case "OrderBy"
                     Me.Visit(m.Arguments(0))
-                    Dim sv As New SortVisitor(_schema)
+                    Dim sv As New SortVisitor(_schema, Me)
                     sv.Visit(m.Arguments(1))
                     _so = sv.Sort
                 Case "OrderByDescending"
                     Me.Visit(m.Arguments(0))
-                    Dim sv As New SortVisitor(_schema)
+                    Dim sv As New SortVisitor(_schema, Me)
                     sv.Visit(m.Arguments(1))
                     _so = sv.Sort
                     _so.Order(False)
                 Case "ThenBy"
                     Me.Visit(m.Arguments(0))
-                    Dim sv As New SortVisitor(_schema)
+                    Dim sv As New SortVisitor(_schema, Me)
                     sv.Visit(m.Arguments(1))
                     _so = sv.Sort.NextSort(_so)
                 Case "ThenByDescending"
                     Me.Visit(m.Arguments(0))
-                    Dim sv As New SortVisitor(_schema)
+                    Dim sv As New SortVisitor(_schema, Me)
                     sv.Visit(m.Arguments(1))
                     _so = sv.Sort.NextSort(_so)
                     _so.Order(False)
                 Case "Select"
                     Me.Visit(m.Arguments(0))
                     Me.Visit(m.Arguments(1))
-                    If _mem IsNot Nothing OrElse _new IsNot Nothing Then
+                    If (_mem IsNot Nothing OrElse _new IsNot Nothing) Then
                         _q.WithLoad = True
                     End If
                 Case "Distinct"
@@ -624,10 +695,13 @@ Namespace Linq
                     Me.Visit(m.Arguments(1))
                     _skip = False
                 Case "Sum"
-                    Me.Visit(m.Arguments(0))
-                    Dim ag As New AgVisitor(_schema)
-                    ag.Visit(m.Arguments(1))
-                    _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(AggregateFunction.Sum, ag.Type, ag.Field)})
+                    VisitAgg(m, AggregateFunction.Sum)
+                Case "Min"
+                    VisitAgg(m, AggregateFunction.Min)
+                Case "Max"
+                    VisitAgg(m, AggregateFunction.Max)
+                Case "Average"
+                    VisitAgg(m, AggregateFunction.Average)
                 Case "Contains", "DefaultIfEmpty", "Concat", "ElementAt", "ElementAtOrDefault", "SequenceEqual", "Union", "TakeWhile", "SkipWhile", "Reverse", "All", "Any", "Aggregate"
                     Throw New NotSupportedException
                 Case Else
@@ -635,6 +709,65 @@ Namespace Linq
             End Select
             Return Nothing
         End Function
+
+        Protected Sub VisitAgg(ByVal m As MethodCallExpression, ByVal af As AggregateFunction)
+            Me.Visit(m.Arguments(0))
+            If m.Arguments.Count > 1 Then
+                Dim ag As New AgVisitor(_schema, Me)
+                ag.Visit(m.Arguments(1))
+                If _q.Top IsNot Nothing OrElse _q.RowNumberFilter IsNot Nothing Then
+                    Dim aq As New Query.QueryCmdBase(Nothing)
+                    'Dim al As String = Nothing
+                    Dim num As Integer
+                    If _mem Is Nothing AndAlso _new Is Nothing Then
+                        Visit(m.Arguments(1))
+                        _q.WithLoad = False
+                        _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
+                        'If _mem IsNot Nothing Then
+                        '    al = GetField(ag.Type, ag.PropName)
+                        'End If
+                    ElseIf _mem IsNot Nothing Then
+                        _q.WithLoad = False
+                        _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
+                    ElseIf _new IsNot Nothing Then
+                        _q.WithLoad = False
+                        num = GetIndex(ag.Type, ag.Field)
+                        _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(GetProperties())
+                    End If
+                    aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, num)})
+                    _q.OuterQuery = aq
+                Else
+                    _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, ag.Type, ag.Field)})
+                    _q.WithLoad = False
+                    'If _mem IsNot Nothing Then
+                    '    _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
+                    'Else
+                    '    _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(GetProperties())
+                    'End If
+                End If
+            Else
+                If _q.Top IsNot Nothing OrElse _q.RowNumberFilter IsNot Nothing Then
+                    _q.WithLoad = False
+                    If _mem IsNot Nothing Then
+                        _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
+                    Else
+                        _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(GetProperties())
+                    End If
+
+                    Dim aq As New Query.QueryCmdBase(Nothing)
+                    aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, 0)})
+                    _q.OuterQuery = aq
+                Else
+                    Dim tt As Type = _mem.Member.DeclaringType
+                    If tt.FullName.StartsWith("Worm.Orm.OrmBaseT") Then
+                        tt = tt.GetGenericArguments(0)
+                    End If
+                    _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, tt, GetField(tt, _mem.Member.Name))})
+                    '_q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
+                    _q.WithLoad = False
+                End If
+            End If
+        End Sub
 
         Public Function GetNew(ByVal o As OrmBase) As Object
             If _new Is Nothing Then

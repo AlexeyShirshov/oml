@@ -565,10 +565,20 @@ Imports Worm.Linq
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
         Dim q = (From k In e Select k.Code).Average()
+        Assert.IsTrue(q.HasValue)
+        Assert.AreEqual(Of Double)(2990, q.Value)
 
-        q = (From k In e Select k).Average(Function(r) r.Code)
+        q = (From k In e Select k.ID).Average()
+        Assert.IsTrue(q.HasValue)
+        Assert.AreEqual(Of Double)(2, q.Value)
 
-        q = (From k In e Select k Where k.ID > 0).Average(Function(r) r.Code)
+        Dim q2 = (From k In e Where k.ID > 0 Select k.Code).Average()
+        Assert.IsTrue(q2.HasValue)
+        Assert.AreEqual(Of Double)(2990, q2.Value)
+
+        q2 = (From k In e Where k.ID > 0).Average(Function(o) o.Code + o.ID)
+        Assert.IsTrue(q2.HasValue)
+        Assert.AreEqual(Of Double)(2992, q2.Value)
     End Sub
 
     <TestMethod()> _
@@ -578,10 +588,10 @@ Imports Worm.Linq
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
         Dim q = (From k In e Select k.Code).Max()
+        Assert.AreEqual(8923, q)
 
-        q = (From k In e Select k).Max(Function(r) r.Code)
-
-        q = (From k In e Select k Where k.ID > 0).Max(Function(r) r.Code)
+        q = (From k In e Where k.ID > 2 Select k.Code).Max()
+        Assert.AreEqual(45, q)
     End Sub
 
     <TestMethod()> _
@@ -591,25 +601,32 @@ Imports Worm.Linq
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
         Dim q = (From k In e Select k.Code).Min()
+        Assert.AreEqual(2, q)
 
-        q = (From k In e Select k).Min(Function(r) r.Code)
+        q = (From k In e Select k Where k.ID > 0 Take 1 Select k.Code).Min()
+        Assert.AreEqual(2, q)
 
-        q = (From k In e Select k Where k.ID > 0).Min(Function(r) r.Code)
-
-        Dim q2 = (From k In e Select k Where k.ID > 0).Min(Function(r) r.Name)
+        Dim q2 = (From k In e Select k Where k.ID > 0 Select k.Name).Min()
+        Assert.AreEqual("first", q2)
     End Sub
 
     <TestMethod()> _
     Public Sub TestMin2()
-        Dim ctx As New WormDBContext(GetConn)
+        Dim ctx As New WormMSSQL2005DBContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
         Dim q = (From k In e Select k.Code Skip 1).Min()
+        Assert.AreEqual(45, q)
 
-        q = (From k In e Select k Take 2).Min(Function(r) r.Code)
+        q = (From k In e Select k Take 2 Select k.Code + 1).Min()
+        Assert.AreEqual(3, q)
 
-        q = (From k In e Select k Where k.ID > 0 Skip 1 Take 1 Order By k.Code Descending).Min(Function(r) r.Code)
+        q = (From k In e Select k.Code, k.ID Take 2 Select Code + ID).Min()
+        Assert.AreEqual(3, q)
+
+        q = (From k In e Where k.ID > 0 Skip 1 Take 1 Order By k.Name Descending Select k.Code).Min()
+        Assert.AreEqual(8923, q)
     End Sub
 
     <TestMethod()> _
@@ -624,9 +641,32 @@ Imports Worm.Linq
         q = (From k In e Select k Take 2).Sum(Function(r) r.Code)
         Assert.AreEqual(8925, q)
 
-        q = (From k In e Where k.ID > 0 Select k.Code Skip 1 Take 1 Order By Code Descending).Sum()
-        Assert.AreEqual(8923, q)
+    End Sub
 
+    <TestMethod(), ExpectedException(GetType(Reflection.TargetInvocationException))> _
+    Public Sub TestSum2()
+        Dim ctx As New WormDBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = (From k In e Where k.ID > 0 Select k.Code Skip 1 Take 1 Order By Code Descending).Sum()
+        Assert.AreEqual(8923, q)
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSum3()
+        Dim ctx As New WormMSSQL2005DBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = (From k In e Where k.ID > 0 Select k.Code Skip 1 Take 1 Order By Code Descending).Sum()
+        Assert.AreEqual(45, q)
+
+        q = (From k In e Select k.Code, k.Name).Sum(Function(r) r.Code)
+        Assert.AreEqual(8970, q)
+
+        q = (From k In e Where k.ID > 0 Select k.Code, k.Name Skip 1 Take 1 Order By Name Descending).Sum(Function(r) r.Code)
+        Assert.AreEqual(45, q)
     End Sub
 
     <TestMethod()> _

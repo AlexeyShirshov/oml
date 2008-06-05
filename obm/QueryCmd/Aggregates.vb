@@ -40,7 +40,7 @@ Namespace Query
             MyClass.New(agFunc, String.Empty)
         End Sub
 
-        Public MustOverride Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator) As String
+        Public MustOverride Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String)) As String
 
         Public ReadOnly Property AggFunc() As AggregateFunction
             Get
@@ -65,12 +65,20 @@ Namespace Query
                 _distinct = value
             End Set
         End Property
+
+        Public Function GetAlias() As String
+            If Not _dontAddAlias Then
+                Return _alias
+            End If
+            Return Nothing
+        End Function
     End Class
 
     Public Class [Aggregate]
         Inherits AggregateBase
 
         Private _prop As OrmProperty
+        Private _col As Integer
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnAlias As String, ByVal t As Type, ByVal field As String)
             MyBase.New(agFunc, columnAlias)
@@ -87,10 +95,15 @@ Namespace Query
             _prop = New OrmProperty(t, field)
         End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal field As String)
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal column As String)
             MyBase.New(agFunc)
             _prop = New OrmProperty(CType(Nothing, Type), Nothing)
-            _prop.Field = field
+            _prop.Column = column
+        End Sub
+
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnNum As Integer)
+            MyBase.New(agFunc)
+            _col = columnNum
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction)
@@ -103,8 +116,14 @@ Namespace Query
             _prop = New OrmProperty(table, column)
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator) As String
-            Return String.Format(GetFunc, GetColumn(t, schema))
+        Public Overrides Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String)) As String
+            Dim s As String = Nothing
+            If _prop IsNot Nothing Then
+                s = GetColumn(t, schema)
+            Else
+                s = columnAliases(_col)
+            End If
+            Return String.Format(GetFunc, s)
         End Function
 
         Protected Function GetFunc() As String
@@ -141,11 +160,20 @@ Namespace Query
             ElseIf Not String.IsNullOrEmpty(_prop.Field) Then
                 Dim tt As Type = _prop.Type
                 If tt Is Nothing Then tt = t
-                Return schema.GetColumnNameByFieldNameInternal(tt, _prop.Field)
+                
+                Return schema.GetColumnNameByFieldNameInternal(tt, _prop.Field, True)
+            ElseIf Not String.IsNullOrEmpty(_prop.Column) Then
+                Return _prop.Column
             Else
                 Return "*"
             End If
         End Function
+
+        Public ReadOnly Property Prop() As OrmProperty
+            Get
+                Return _prop
+            End Get
+        End Property
     End Class
 
     Public Class CustomAggregate
@@ -160,7 +188,7 @@ Namespace Query
             _params = params
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator) As String
+        Public Overrides Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String)) As String
 
         End Function
     End Class

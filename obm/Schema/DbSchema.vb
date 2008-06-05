@@ -1687,7 +1687,7 @@ l1:
             sb.Append(",").Append([alias]).Append(".").Append(id_clm)
             sb.Append(" ").Append(selectedType.Name).Append("ID")
             If withLoad Then
-                sb.Append(",").Append(GetSelectColumnList(selectedType))
+                sb.Append(",").Append(GetSelectColumnList(selectedType, Nothing))
                 appendMainTable = True
             End If
             sb.Append(" from ")
@@ -2082,7 +2082,7 @@ l1:
             '    al = almgr.Aliases(tbl)
             'End If
 
-            Dim n As String = GetColumnNameByFieldNameInternal(t, field, False)
+            Dim n As String = GetColumnNameByFieldNameInternal(t, field, False, Nothing)
             sb.Append("select left(")
             sb.Append(al).Append(".").Append(n)
             sb.Append(",").Append(level).Append(") name,count(*) cnt from ")

@@ -264,29 +264,34 @@ Public MustInherit Class QueryGenerator
         Throw New QueryGeneratorException("Cannot find column: " & columnName)
     End Function
 
-    Private Function GetColumnNameByFieldNameInternal(ByVal schema As IObjectSchemaBase, ByVal field As String, Optional ByVal add_alias As Boolean = True) As String
+    Private Function GetColumnNameByFieldNameInternal(ByVal schema As IObjectSchemaBase, ByVal field As String, ByVal add_alias As Boolean, ByVal columnAliases As List(Of String)) As String
         If String.IsNullOrEmpty(field) Then Throw New ArgumentNullException("field")
 
         Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
         Dim p As MapField2Column = Nothing
         If coll.TryGetValue(field, p) Then
+            Dim c As String = Nothing
             If add_alias AndAlso ShouldPrefix(p._columnName) Then
-                Return GetTableName(p._tableName) & "." & p._columnName
+                c = GetTableName(p._tableName) & "." & p._columnName
             Else
-                Return p._columnName
+                c = p._columnName
             End If
+            If columnAliases IsNot Nothing Then
+                columnAliases.Add(p._columnName)
+            End If
+            Return c
         End If
 
         Throw New QueryGeneratorException("Cannot find property: " & field)
     End Function
 
-    Protected Friend Function GetColumnNameByFieldNameInternal(ByVal type As Type, ByVal field As String, Optional ByVal add_alias As Boolean = True) As String
+    Protected Friend Function GetColumnNameByFieldNameInternal(ByVal type As Type, ByVal field As String, ByVal add_alias As Boolean, Optional ByVal columnAliases As List(Of String) = Nothing) As String
         If String.IsNullOrEmpty(field) Then Throw New ArgumentNullException("field")
 
         Dim schema As IObjectSchemaBase = GetObjectSchema(type)
 
-        Return GetColumnNameByFieldNameInternal(schema, field, add_alias)
+        Return GetColumnNameByFieldNameInternal(schema, field, add_alias, columnAliases)
     End Function
 
     '<CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1011")> _
@@ -569,7 +574,7 @@ Public MustInherit Class QueryGenerator
 #End Region
 
 #Region " Helpers "
-    Protected Friend Sub GetPKList(ByVal schema As IOrmObjectSchemaBase, ByVal ids As StringBuilder)
+    Protected Friend Sub GetPKList(ByVal schema As IOrmObjectSchemaBase, ByVal ids As StringBuilder, Optional ByVal columnAliases As List(Of String) = Nothing)
         'If ids Is Nothing Then
         '    Throw New ArgumentNullException("ids")
         'End If
@@ -580,6 +585,9 @@ Public MustInherit Class QueryGenerator
         'ids.Length -= 1            
         Dim p As MapField2Column = schema.GetFieldColumnMap("ID")
         ids.Append(GetTableName(p._tableName)).Append(".").Append(p._columnName)
+        If columnAliases IsNot Nothing Then
+            columnAliases.Add(p._columnName)
+        End If
     End Sub
 
     Public Function HasField(ByVal t As Type, ByVal field As String) As Boolean
@@ -685,7 +693,7 @@ Public MustInherit Class QueryGenerator
 
                     For Each c As ColumnAttribute In GetSortedFieldList(original_type)
                         If (GetAttributes(original_type, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            arr.Add(GetColumnNameByFieldNameInternal(original_type, c.FieldName, add_alias))
+                            arr.Add(GetColumnNameByFieldNameInternal(original_type, c.FieldName, add_alias, Nothing))
                         End If
                     Next
 
@@ -794,26 +802,26 @@ Public MustInherit Class QueryGenerator
     '    Return GetColumnValue(obj, pk_name)
     'End Function
 
-    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, Optional ByVal arr As Generic.ICollection(Of ColumnAttribute) = Nothing) As String
-        Dim add_c As Boolean = False
-        If arr Is Nothing Then
-            Dim s As String = CStr(sel(original_type))
-            If Not String.IsNullOrEmpty(s) Then
-                Return s
-            End If
-            add_c = True
-        End If
+    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal arr As Generic.ICollection(Of ColumnAttribute), Optional ByVal columnAliases As List(Of String) = Nothing) As String
+        'Dim add_c As Boolean = False
+        'If arr Is Nothing Then
+        '    Dim s As String = CStr(sel(original_type))
+        '    If Not String.IsNullOrEmpty(s) Then
+        '        Return s
+        '    End If
+        '    add_c = True
+        'End If
         Dim sb As New StringBuilder
         If arr Is Nothing Then arr = GetSortedFieldList(original_type)
         For Each c As ColumnAttribute In arr
-            sb.Append(GetColumns4Select(original_type, c.FieldName)).Append(", ")
+            sb.Append(GetColumns4Select(original_type, c.FieldName, columnAliases)).Append(", ")
         Next
 
         sb.Length -= 2
 
-        If add_c Then
-            sel(original_type) = sb.ToString
-        End If
+        'If add_c Then
+        '    sel(original_type) = sb.ToString
+        'End If
         Return sb.ToString
     End Function
 
@@ -877,12 +885,12 @@ Public MustInherit Class QueryGenerator
         Return r
     End Function
 
-    Protected Function GetColumnNameByFieldName(ByVal type As Type, ByVal field As String) As String
-        Return GetColumnNameByFieldNameInternal(type, field)
+    Protected Function GetColumnNameByFieldName(ByVal type As Type, ByVal field As String, Optional ByVal columnAliases As List(Of String) = Nothing) As String
+        Return GetColumnNameByFieldNameInternal(type, field, True, columnAliases)
     End Function
 
-    Protected Function GetColumnNameByFieldName(ByVal os As IObjectSchemaBase, ByVal field As String) As String
-        Return GetColumnNameByFieldNameInternal(os, field)
+    Protected Function GetColumnNameByFieldName(ByVal os As IObjectSchemaBase, ByVal field As String, Optional ByVal columnAliases As List(Of String) = Nothing) As String
+        Return GetColumnNameByFieldNameInternal(os, field, True, columnAliases)
     End Function
 
     Public Function GetFieldTypeByName(ByVal type As Type, ByVal field As String) As Type
@@ -933,8 +941,8 @@ Public MustInherit Class QueryGenerator
     '    Return GetColumnNameByFieldNameInternal(type, field, table_alias)
     'End Function
 
-    Protected Function GetColumns4Select(ByVal type As Type, ByVal field As String) As String
-        Return GetColumnNameByFieldName(type, field)
+    Protected Function GetColumns4Select(ByVal type As Type, ByVal field As String, ByVal columnAliases As List(Of String)) As String
+        Return GetColumnNameByFieldName(type, field, columnAliases)
     End Function
 
     Protected Function GetColumnsFromFieldType(ByVal main As Type, ByVal fieldtype As Type) As ColumnAttribute()
