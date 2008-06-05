@@ -86,10 +86,13 @@ Namespace Orm
             _field = field
         End Sub
 
-        Public ReadOnly Property Column() As String
+        Public Property Column() As String
             Get
                 Return _column
             End Get
+            Protected Friend Set(ByVal value As String)
+                _column = value
+            End Set
         End Property
 
         Public Property Field() As String

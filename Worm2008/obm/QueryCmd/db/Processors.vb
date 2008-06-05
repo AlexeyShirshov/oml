@@ -18,16 +18,16 @@ Namespace Query.Database
             Private _cmdType As System.Data.CommandType
 
             Private _mgr As OrmReadOnlyDBManager
-            Private _j As List(Of Worm.Criteria.Joins.OrmJoin)
-            Private _f As IFilter
+            Private _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
+            Private _f() As IFilter
             Private _q As QueryCmdBase
             Private _key As String
             Private _id As String
             Private _sync As String
             Private _dic As IDictionary
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
-                ByVal f As IFilter, ByVal q As QueryCmdBase)
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+                ByVal f() As IFilter, ByVal q As QueryCmdBase)
                 _mgr = mgr
                 _q = q
 
@@ -40,7 +40,8 @@ Namespace Query.Database
 
             Public Overrides ReadOnly Property Filter() As Criteria.Core.IFilter
                 Get
-                    Return _f
+                    'Throw New NotSupportedException
+                    Return _f(0)
                 End Get
             End Property
 
@@ -57,7 +58,7 @@ Namespace Query.Database
                         s = Now.Add(ts)
                     End If
                 End If
-                Return New OrmManagerBase.CachedItem(_q.Sort, s, _f, col, _mgr)
+                Return New OrmManagerBase.CachedItem(_q.Sort, s, _f(0), col, _mgr)
             End Function
 
             Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of ReturnType)
@@ -112,7 +113,24 @@ Namespace Query.Database
             End Sub
 
             Protected Overridable Function _MakeStatement() As String
-                Return MakeQueryStatement(Mgr.GetFilterInfo, Mgr.DbSchema, Query, _params, GetType(ReturnType), _j, _f, AliasMgr.Create)
+                Dim almgr As AliasMgr = AliasMgr.Create
+                Dim fi As Object = Mgr.GetFilterInfo
+                Dim t As Type = GetType(ReturnType)
+                Dim i As Integer = 0
+                Dim q As QueryCmdBase = Query
+                'Dim sb As New StringBuilder
+                Dim inner As String = Nothing
+                Dim innerColumns As List(Of String) = Nothing
+                Do While q IsNot Nothing
+                    Dim columnAliases As New List(Of String)
+                    Dim j As List(Of Worm.Criteria.Joins.OrmJoin) = _j(i)
+                    Dim f As IFilter = _f(i)
+                    inner = MakeQueryStatement(fi, Mgr.DbSchema, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i)
+                    innerColumns = New List(Of String)(columnAliases)
+                    q = q.OuterQuery
+                    i += 1
+                Loop
+                Return inner
             End Function
 
             Protected Overridable Function ExecStmt(Of T)(ByVal cmd As System.Data.Common.DbCommand) As IList(Of T)
@@ -171,7 +189,7 @@ Namespace Query.Database
                 _stmt = Nothing
             End Sub
 
-            Public Sub Reset(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter)
+            Public Sub Reset(ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal f() As IFilter)
                 _j = j
                 _f = f
                 _key = Query.GetStaticKey(_mgr.GetStaticKey(), _j, _f)
@@ -206,8 +224,8 @@ Namespace Query.Database
         Class M2MProcessor(Of ReturnType As {New, Orm.OrmBase})
             Inherits Processor(Of ReturnType)
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
-                ByVal f As IFilter, ByVal q As QueryCmdBase)
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+                ByVal f() As IFilter, ByVal q As QueryCmdBase)
                 MyBase.New(mgr, j, f, q)
             End Sub
 

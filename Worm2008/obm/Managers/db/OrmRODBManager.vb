@@ -904,7 +904,7 @@ Namespace Database
                         'Dim js As New List(Of OrmJoin)
                         'js.Add(j)
                         'js.AddRange(Schema.GetAllJoins(selectedType))
-                        Dim columns As String = DbSchema.GetSelectColumnList(selectedType)
+                        Dim columns As String = DbSchema.GetSelectColumnList(selectedType, Nothing)
                         sb.Append(DbSchema.Select(ct, almgr, params, q, arr, columns, cfi))
                     Else
                         sb.Append(DbSchema.Select(ct, almgr, params, q, arr, Nothing, cfi))
@@ -1546,10 +1546,22 @@ Namespace Database
             Dim l As New List(Of T)
             Dim b As ConnAction = TestConn(cmd)
             Try
+                Dim n As Boolean = GetType(T).FullName.StartsWith("System.Nullable")
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     Do While dr.Read
                         'l.Add(CType(Convert.ChangeType(dr.GetValue(0), GetType(T)), T))
-                        l.Add(CType(dr.GetValue(0), T))
+                        If dr.IsDBNull(0) Then
+                            l.Add(Nothing)
+                        Else
+                            If n Then
+                                Dim rt As Type = GetType(T).GetGenericArguments(0)
+                                Dim o As Object = Convert.ChangeType(dr.GetValue(0), rt)
+                                l.Add(CType(o, T))
+                            Else
+                                l.Add(CType(dr.GetValue(0), T))
+                            End If
+                        End If
+
                     Loop
                     Return l
                 End Using

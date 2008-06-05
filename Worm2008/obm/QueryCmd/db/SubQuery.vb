@@ -19,12 +19,16 @@ Namespace Query.Database.Filters
 
         Public Function _ToString() As String Implements Criteria.Values.IFilterValue._ToString
             Prepare(Nothing, Nothing)
-            Return _q.GetDynamicKey(_j, _f)
+            Dim sb As New StringBuilder
+            _q.GetDynamicKey(sb,_j, _f)
+            Return sb.ToString
         End Function
 
         Public Function GetStaticString() As String Implements Criteria.Values.INonTemplateValue.GetStaticString
             Prepare(Nothing, Nothing)
-            Return _q.GetStaticKey(String.Empty, _j, _f)
+            Dim sb As New StringBuilder
+            _q.GetStaticKey(sb, _j, _f)
+            Return sb.ToString
         End Function
 
         Public Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As Orm.Meta.ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam

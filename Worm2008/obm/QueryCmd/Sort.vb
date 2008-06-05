@@ -31,13 +31,13 @@ Namespace Sorting
             Me.Order = order
         End Sub
 
-        Public Overridable Sub MakeStmt(ByVal s As SQLGenerator, ByVal almgr As AliasMgr, _
+        Public Overridable Sub MakeStmt(ByVal s As SQLGenerator, ByVal almgr As AliasMgr, ByVal columnAliases As List(Of String), _
             ByVal sb As StringBuilder, ByVal t As Type, ByVal filterInfo As Object, ByVal params As ICreateParam)
             If _agr IsNot Nothing Then
                 Dim a As Boolean = _agr.AddAlias
                 _agr.AddAlias = False
                 sb.Append(" order by ")
-                sb.Append(_agr.MakeStmt(t, s))
+                sb.Append(_agr.MakeStmt(t, s, columnAliases))
                 If Order = Orm.SortType.Desc Then
                     sb.Append(" desc")
                 End If

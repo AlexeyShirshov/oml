@@ -144,6 +144,10 @@ Imports Worm.Criteria.Values
 
     End Sub
 
+    <TestMethod()> Public Sub TestInner()
+
+    End Sub
+
     <TestMethod()> Public Sub TestTop()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
