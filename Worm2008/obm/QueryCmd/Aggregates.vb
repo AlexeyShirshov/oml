@@ -2,6 +2,7 @@
 Imports System.Collections.Generic
 Imports Worm.Criteria.Values
 Imports Worm.Orm.Meta
+Imports Worm.Expressions
 
 Namespace Query
 
@@ -40,7 +41,7 @@ Namespace Query
             MyClass.New(agFunc, String.Empty)
         End Sub
 
-        Public MustOverride Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String)) As String
+        Public MustOverride Function MakeStmt(ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
 
         Public ReadOnly Property AggFunc() As AggregateFunction
             Get
@@ -74,64 +75,138 @@ Namespace Query
         End Function
     End Class
 
+    'Public Class [Aggregate]
+    '    Inherits AggregateBase
+
+    '    Private _prop As OrmProperty
+    '    Private _col As Integer
+
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnAlias As String, ByVal t As Type, ByVal field As String)
+    '        MyBase.New(agFunc, columnAlias)
+    '        _prop = New OrmProperty(t, field)
+    '    End Sub
+
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnAlias As String, ByVal table As SourceFragment, ByVal column As String)
+    '        MyBase.New(agFunc, columnAlias)
+    '        _prop = New OrmProperty(table, column)
+    '    End Sub
+
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As Type, ByVal field As String)
+    '        MyBase.New(agFunc)
+    '        _prop = New OrmProperty(t, field)
+    '    End Sub
+
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal column As String)
+    '        MyBase.New(agFunc)
+    '        _prop = New OrmProperty(CType(Nothing, Type), Nothing)
+    '        _prop.Column = column
+    '    End Sub
+
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnNum As Integer)
+    '        MyBase.New(agFunc)
+    '        _col = columnNum
+    '    End Sub
+
+    '    Public Sub New(ByVal agFunc As AggregateFunction)
+    '        MyBase.New(agFunc)
+    '        _prop = New OrmProperty(CType(Nothing, Type), Nothing)
+    '    End Sub
+
+    '    Public Sub New(ByVal agFunc As AggregateFunction, ByVal table As SourceFragment, ByVal column As String)
+    '        MyBase.New(agFunc)
+    '        _prop = New OrmProperty(table, column)
+    '    End Sub
+
+    '    Public Overrides Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
+    '        Dim s As String = Nothing
+    '        If _prop IsNot Nothing Then
+    '            s = GetColumn(t, schema)
+    '        Else
+    '            s = columnAliases(_col)
+    '        End If
+    '        Return String.Format(GetFunc, s)
+    '    End Function
+
+    '    Protected Function GetFunc() As String
+    '        Dim s As String = Nothing
+    '        Dim d As String = String.Empty
+    '        If Distinct Then
+    '            d = "distinct "
+    '        End If
+    '        s = FormatFunc(AggFunc, d)
+    '        If Not String.IsNullOrEmpty([Alias]) AndAlso AddAlias Then
+    '            s = s & " " & [Alias]
+    '        End If
+    '        Return s
+    '    End Function
+
+    '    Protected Function GetColumn(ByVal t As Type, ByVal schema As QueryGenerator) As String
+    '        If _prop.Table IsNot Nothing Then
+    '            Return schema.GetTableName(_prop.Table) & "." & _prop.Column
+    '        ElseIf Not String.IsNullOrEmpty(_prop.Field) Then
+    '            Dim tt As Type = _prop.Type
+    '            If tt Is Nothing Then tt = t
+
+    '            Return schema.GetColumnNameByFieldNameInternal(tt, _prop.Field, True)
+    '        ElseIf Not String.IsNullOrEmpty(_prop.Column) Then
+    '            Return _prop.Column
+    '        Else
+    '            Return "*"
+    '        End If
+    '    End Function
+
+    '    Public ReadOnly Property Prop() As OrmProperty
+    '        Get
+    '            Return _prop
+    '        End Get
+    '    End Property
+
+
+
+    'End Class
+
     Public Class [Aggregate]
         Inherits AggregateBase
 
-        Private _prop As OrmProperty
-        Private _col As Integer
+        Private _oper As UnaryExp
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnAlias As String, ByVal t As Type, ByVal field As String)
-            MyBase.New(agFunc, columnAlias)
-            _prop = New OrmProperty(t, field)
+        Public Sub New(ByVal agFunc As AggregateFunction)
+            MyClass.New(agFunc, New UnaryExp(New LiteralValue("*")))
         End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnAlias As String, ByVal table As SourceFragment, ByVal column As String)
-            MyBase.New(agFunc, columnAlias)
-            _prop = New OrmProperty(table, column)
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal num As Integer)
+            MyClass.New(agFunc, New UnaryExp(New RefValue(num)))
         End Sub
 
         Public Sub New(ByVal agFunc As AggregateFunction, ByVal t As Type, ByVal field As String)
-            MyBase.New(agFunc)
-            _prop = New OrmProperty(t, field)
+            MyClass.New(agFunc, New UnaryExp(New EntityPropValue(t, field)))
         End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal column As String)
-            MyBase.New(agFunc)
-            _prop = New OrmProperty(CType(Nothing, Type), Nothing)
-            _prop.Column = column
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String)
+            MyClass.New(agFunc, [alias], New UnaryExp(New LiteralValue("*")))
         End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal columnNum As Integer)
-            MyBase.New(agFunc)
-            _col = columnNum
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal operation As UnaryExp)
+            MyClass.New(agFunc, Nothing, operation)
         End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction)
-            MyBase.New(agFunc)
-            _prop = New OrmProperty(CType(Nothing, Type), Nothing)
+        Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String, _
+                       ByVal operation As UnaryExp)
+            MyBase.New(agFunc, [alias])
+            _oper = operation
         End Sub
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal table As SourceFragment, ByVal column As String)
-            MyBase.New(agFunc)
-            _prop = New OrmProperty(table, column)
-        End Sub
-
-        Public Overrides Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String)) As String
-            Dim s As String = Nothing
-            If _prop IsNot Nothing Then
-                s = GetColumn(t, schema)
-            Else
-                s = columnAliases(_col)
+        Public Overrides Function MakeStmt(ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
+            Dim s As String = FormatFunc(AggFunc, String.Empty)
+            s = String.Format(s, _oper.MakeStmt(schema, pmgr, almgr, columnAliases))
+            If Not String.IsNullOrEmpty([Alias]) AndAlso AddAlias Then
+                s = s & " " & [Alias]
             End If
-            Return String.Format(GetFunc, s)
+            Return s
         End Function
 
-        Protected Function GetFunc() As String
+        Public Shared Function FormatFunc(ByVal AggFunc As AggregateFunction, ByVal d As String) As String
             Dim s As String = Nothing
-            Dim d As String = String.Empty
-            If Distinct Then
-                d = "distinct "
-            End If
             Select Case AggFunc
                 Case AggregateFunction.Max
                     s = "max(" & d & "{0})"
@@ -148,47 +223,23 @@ Namespace Query
                 Case Else
                     Throw New NotImplementedException(AggFunc.ToString)
             End Select
-            If Not String.IsNullOrEmpty([Alias]) AndAlso AddAlias Then
-                s = s & " " & [Alias]
-            End If
             Return s
         End Function
-
-        Protected Function GetColumn(ByVal t As Type, ByVal schema As QueryGenerator) As String
-            If _prop.Table IsNot Nothing Then
-                Return schema.GetTableName(_prop.Table) & "." & _prop.Column
-            ElseIf Not String.IsNullOrEmpty(_prop.Field) Then
-                Dim tt As Type = _prop.Type
-                If tt Is Nothing Then tt = t
-                
-                Return schema.GetColumnNameByFieldNameInternal(tt, _prop.Field, True)
-            ElseIf Not String.IsNullOrEmpty(_prop.Column) Then
-                Return _prop.Column
-            Else
-                Return "*"
-            End If
-        End Function
-
-        Public ReadOnly Property Prop() As OrmProperty
-            Get
-                Return _prop
-            End Get
-        End Property
     End Class
 
-    Public Class CustomAggregate
+    Public Class CustomFuncAggregate
         Inherits AggregateBase
 
         Private _params As List(Of ScalarValue)
         Private _funcName As String
 
-        Public Sub New(ByVal agFunc As AggregateFunction, ByVal [alias] As String, ByVal funcName As String, ByVal params As List(Of ScalarValue))
-            MyBase.New(agFunc, [alias])
+        Public Sub New(ByVal [alias] As String, ByVal funcName As String, ByVal params As List(Of ScalarValue))
+            MyBase.New(AggregateFunction.Average, [alias])
             _funcName = funcName
             _params = params
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal t As Type, ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String)) As String
+        Public Overrides Function MakeStmt(ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
 
         End Function
     End Class

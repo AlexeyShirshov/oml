@@ -91,7 +91,7 @@ Namespace Linq
 
         Protected Sub New(ByVal ctx As WormContext)
             _provider = New WormLinqProvider(ctx)
-            _expression = Expressions.Expression.Constant(Me)
+            _expression = System.Linq.Expressions.Expression.Constant(Me)
         End Sub
 
         Protected Sub New(ByVal provider As WormLinqProvider, ByVal exp As Expression)

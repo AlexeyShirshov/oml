@@ -115,6 +115,15 @@ Namespace Orm
                 Return _table
             End Get
         End Property
+
+        Public Overrides Function ToString() As String
+            If _type IsNot Nothing Then
+                Return _type.ToString & "$" & _field
+            Else
+                Return _table.RawName & "$" & _column
+            End If
+        End Function
+
     End Class
 End Namespace
 

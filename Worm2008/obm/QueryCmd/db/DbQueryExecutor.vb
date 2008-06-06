@@ -212,7 +212,7 @@ Namespace Query.Database
                     Else
                         b = True
                     End If
-                    sb.Append(a.MakeStmt(t, s, innerColumns))
+                    sb.Append(a.MakeStmt(s, innerColumns, params, almgr))
                     If columnAliases IsNot Nothing Then
                         columnAliases.Add(a.GetAlias)
                     End If

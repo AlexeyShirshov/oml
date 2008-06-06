@@ -4,6 +4,7 @@ Imports Worm.Criteria.Values
 Imports Worm.Orm
 Imports Worm.Criteria.Joins
 Imports Worm.Criteria
+Imports System.Collections.Generic
 
 Namespace Criteria
 

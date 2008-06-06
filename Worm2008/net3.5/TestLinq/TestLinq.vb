@@ -682,6 +682,22 @@ Imports Worm.Linq
         Dim q3 = (From k In e Let r = k.ID + k.Code, r1 = k.Name Select r, r1, k.CreatedAt).ToList
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestWhere()
+        Dim ctx As New WormDBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = From k In e Where (k.Code > 0 AndAlso k.CreatedAt < Now) OrElse (k.ID > 0 Or k.ID <> 0) _
+                Select k.Code, k.CreatedAt _
+                Where Code = 2 AndAlso CreatedAt.Year = 3
+
+        'Dim q2 = From k In e Where (k.Code > 0 AndAlso k.CreatedAt < Now) OrElse (k.ID > 0 Or k.ID <> 0) _
+        '        Where k.Code = 2
+
+        Dim l = q.ToList
+
+    End Sub
     'Class cls
     '    Public Sub New(ByVal i As Integer?)
 
