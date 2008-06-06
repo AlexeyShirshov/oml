@@ -293,6 +293,29 @@ Namespace Database
             End Get
         End Property
 
+        Public Overridable ReadOnly Property GetDate() As String
+            Get
+                Return "getdate()"
+            End Get
+        End Property
+
+        Public Overridable ReadOnly Property GetUTCDate() As String
+            Get
+                Return "getutcdate()"
+            End Get
+        End Property
+
+        Public Overridable ReadOnly Property GetYear() As String
+            Get
+                Return "year({0})"
+            End Get
+        End Property
+
+        Public Overrides ReadOnly Property Selector() As String
+            Get
+                Return "."
+            End Get
+        End Property
 #End Region
 
 #Region " data factory "

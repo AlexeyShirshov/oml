@@ -32,6 +32,144 @@ Namespace Criteria.Values
         Function Eval(ByVal v As Object, ByVal template As OrmFilterTemplateBase) As EvalResult
     End Interface
 
+    Public Class RefValue
+        Implements IFilterValue
+
+        Private _num As Integer
+
+        Public Sub New(ByVal num As Integer)
+            _num = num
+        End Sub
+
+        Public Function _ToString() As String Implements IFilterValue._ToString
+            Return _num.ToString
+        End Function
+
+        Public Function GetParam(ByVal aliases As List(Of String)) As String
+            Return aliases(_num)
+        End Function
+    End Class
+
+    Public Class CustomValue
+        Implements IFilterValue
+
+        Private _f As String
+        Public ReadOnly Property Format() As String
+            Get
+                Return _f
+            End Get
+        End Property
+
+        Private _v() As Pair(Of Object, String)
+        Public ReadOnly Property Values() As Pair(Of Object, String)()
+            Get
+                Return _v
+            End Get
+        End Property
+
+        Public Sub New(ByVal format As String, ByVal values() As Pair(Of Object, String))
+            _f = format
+            _v = values
+        End Sub
+
+        Public Function _ToString() As String Implements IFilterValue._ToString
+            Dim l As New List(Of String)
+            For Each v As Pair(Of Object, String) In _v
+                Dim t As SourceFragment = TryCast(v.First, SourceFragment)
+                If t IsNot Nothing Then
+                    l.Add(t.RawName & "$" & v.Second)
+                Else
+                    l.Add(t.ToString & "$" & v.Second)
+                End If
+            Next
+            Return String.Format(_f, l.ToArray)
+        End Function
+
+        Public Function GetParam(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable) As String
+            Dim values As List(Of String) = schema.ExtractValues(schema, almgr.Aliases, _v)
+
+            Return String.Format(_f, values.ToArray)
+        End Function
+    End Class
+
+    Public Class EntityPropValue
+        Implements IFilterValue
+
+        Private _p As OrmProperty
+
+        Public Sub New(ByVal p As OrmProperty)
+            _p = p
+        End Sub
+
+        Public Sub New(ByVal t As Type, ByVal field As String)
+            _p = New OrmProperty(t, field)
+        End Sub
+
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String)
+            _p = New OrmProperty(table, column)
+        End Sub
+
+        Public ReadOnly Property OrmProp() As OrmProperty
+            Get
+                Return _p
+            End Get
+        End Property
+
+        Public Function _ToString() As String Implements IFilterValue._ToString
+            Return _p.ToString
+        End Function
+
+        Public Function GetParam(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable) As String
+            Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
+
+            If almgr IsNot Nothing Then
+                tableAliases = almgr.Aliases
+            End If
+
+            If schema Is Nothing Then
+                Throw New ArgumentNullException("schema")
+            End If
+
+            If _p.Type IsNot Nothing Then
+
+                Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(_p.Type)
+
+                Dim map As MapField2Column = Nothing
+                Try
+                    map = oschema.GetFieldColumnMap()(_p.Field)
+                Catch ex As KeyNotFoundException
+                    Throw New QueryGeneratorException(String.Format("There is not column for property {0} ", _p.Type.ToString & "." & _p.Field, ex))
+                End Try
+
+                Dim [alias] As String = String.Empty
+
+                If tableAliases IsNot Nothing Then
+                    'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+                    Try
+                        [alias] = tableAliases(map._tableName) & "."
+                    Catch ex As KeyNotFoundException
+                        Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+                    End Try
+                End If
+
+                Return [alias] & map._columnName
+            Else
+                Dim [alias] As String = String.Empty
+
+                If tableAliases IsNot Nothing Then
+                    'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+                    Try
+                        [alias] = tableAliases(_p.Table) & schema.Selector
+                    Catch ex As KeyNotFoundException
+                        Throw New QueryGeneratorException("There is not alias for table " & _p.Table.RawName, ex)
+                    End Try
+                End If
+
+                Return [alias] & _p.Column
+            End If
+        End Function
+    End Class
+
     Public Class ScalarValue
         Implements IEvaluableValue
 

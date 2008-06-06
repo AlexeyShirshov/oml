@@ -87,6 +87,12 @@ Namespace Xml
             End If
         End Function
 
+        Public Overrides ReadOnly Property Selector() As String
+            Get
+                Return String.Empty
+            End Get
+        End Property
+
         Public Overrides Function CreateExecutor() As Query.IExecutor
             Throw New NotImplementedException
         End Function

@@ -1519,6 +1519,7 @@ Public MustInherit Class QueryGenerator
         Return values
     End Function
 
+    Public MustOverride ReadOnly Property Selector() As String
     Public MustOverride Function CreateCriteria(ByVal t As Type) As Criteria.ICtor
     Public MustOverride Function CreateCriteria(ByVal t As Type, ByVal fieldName As String) As Criteria.CriteriaField
     Public MustOverride Function CreateConditionCtor() As Criteria.Conditions.Condition.ConditionConstructorBase

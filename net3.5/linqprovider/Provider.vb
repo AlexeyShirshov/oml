@@ -8,6 +8,7 @@ Imports System.Reflection
 Imports Worm.Orm.Meta
 Imports Worm.Sorting
 Imports Worm.Query
+Imports Worm.Expressions
 
 Namespace Linq
     Enum Constr
@@ -93,7 +94,7 @@ Namespace Linq
                 Else
                     q.SelectedType = ev.T
                     Dim l As IList(Of TResult) = Nothing
-                    
+
                     'Else
                     If rt.IsValueType OrElse rt Is GetType(String) Then
                         l = q.ExecSimple(Of TResult)(mgr)
@@ -208,60 +209,114 @@ Namespace Linq
 
     '    End Class
 
-    Public Class FilterValueVisitor
-        Inherits MyExpressionVisitor
+    'Public Class FilterValueVisitor
+    '    Inherits MyExpressionVisitor
 
-        Private _v As IParamFilterValue
-        Private _p As Orm.OrmProperty
-        Private _q As QueryVisitor
+    '    Private _v As IParamFilterValue
+    '    Private _p As Orm.OrmProperty
+    '    Private _q As QueryVisitor
+    '    Private _cust As CustomExp
 
-        Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
-            MyBase.new(schema)
-            _q = q
-        End Sub
+    '    Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
+    '        MyBase.new(schema)
+    '        _q = q
+    '    End Sub
 
-        Public ReadOnly Property Prop() As Orm.OrmProperty
-            Get
-                Return _p
-            End Get
-        End Property
+    '    Public ReadOnly Property Prop() As Orm.OrmProperty
+    '        Get
+    '            Return _p
+    '        End Get
+    '    End Property
 
-        Public ReadOnly Property Value() As IParamFilterValue
-            Get
-                Return _v
-            End Get
-        End Property
+    '    Public ReadOnly Property Value() As IParamFilterValue
+    '        Get
+    '            Return _v
+    '        End Get
+    '    End Property
 
-        Protected Overrides Function VisitConstant(ByVal c As System.Linq.Expressions.ConstantExpression) As System.Linq.Expressions.Expression
-            If c.Type.IsPrimitive OrElse GetType(String) Is c.Type Then
-                _v = New ScalarValue(c.Value)
-                'Else
-                '    _v = New ScalarValue(Eval(c))
-            End If
-            Return Nothing
-        End Function
+    '    Public ReadOnly Property Custom() As CustomExp
+    '        Get
+    '            Return _cust
+    '        End Get
+    '    End Property
 
-        Protected Overrides Function VisitMemberAccess(ByVal m As System.Linq.Expressions.MemberExpression) As System.Linq.Expressions.Expression
-            If GetType(OrmBase).IsAssignableFrom(m.Expression.Type) Then
-                Dim p As ParameterExpression = CType(m.Expression, ParameterExpression)
-                Dim field As String = GetField(p.Type, m.Member.Name)
-                _p = New Orm.OrmProperty(p.Type, field)
-                Return Nothing
-                '                ElseIf TypeOf m.Expression Is ConstantExpression Then
-                '    _v = New ScalarValue(Eval(m))
-                '    Return Nothing
-            ElseIf TypeOf m.Expression Is ParameterExpression Then
-                'If GetType(OrmBase).IsAssignableFrom(m.Expression.Type) Then
-                _p = _q.GetProperty(m.Member.Name)
-                'Else
-                '    _p = _q.GetProperty
-                'End If
-            Else
-                Return MyBase.VisitMemberAccess(m)
-            End If
-            Return Nothing
-        End Function
-    End Class
+    '    Protected Overrides Function VisitConstant(ByVal c As System.Linq.Expressions.ConstantExpression) As System.Linq.Expressions.Expression
+    '        If c.Type.IsPrimitive OrElse GetType(String) Is c.Type Then
+    '            _v = New ScalarValue(c.Value)
+    '            'Else
+    '            '    _v = New ScalarValue(Eval(c))
+    '        End If
+    '        Return Nothing
+    '    End Function
+
+    '    Protected Overrides Function VisitMemberAccess(ByVal m As System.Linq.Expressions.MemberExpression) As System.Linq.Expressions.Expression
+    '        If m.Expression Is Nothing Then
+    '            If m.Type Is GetType(Date) Then
+    '                Select Case m.Member.Name
+    '                    Case "Now"
+    '                        _v = New LiteralValue(CType(_schema, Database.SQLGenerator).GetDate)
+    '                    Case Else
+    '                        Throw New NotImplementedException(String.Format( _
+    '                            "Method {0} of type {1} is not implemented", m.Member.Name, m.Type.FullName))
+    '                End Select
+    '            Else
+    '                Throw New NotImplementedException("Type " & m.Type.FullName & " is not implemented")
+    '            End If
+    '        Else
+    '            Dim b As New FilterValueVisitor(_schema, _q)
+    '            b.Visit(m.Expression)
+    '            If b._p Is Nothing Then
+    '                Dim i = 10
+    '            Else
+    '                If b._p.Type Is Nothing Then
+    '                    _p = _q.GetProperty(m.Member.Name)
+    '                Else
+    '                    If Not String.IsNullOrEmpty(b._p.Field) Then
+    '                        If m.Expression.Type.FullName.StartsWith("System.Nullable") Then
+    '                            Select Case m.Member.Name
+    '                                Case "Value"
+    '                                    _p = b._p
+    '                                Case Else
+    '                                    Throw New NotImplementedException(String.Format( _
+    '                                        "Method {0} of type {1} is not implemented", m.Member.Name, m.Expression.Type.FullName))
+    '                            End Select
+    '                        ElseIf m.Expression.Type Is GetType(Date) Then
+    '                            Select Case m.Member.Name
+    '                                Case "Year"
+    '                                    _cust = New CustomExp(CType(_schema, Database.SQLGenerator).GetYear, _
+    '                                        New Pair(Of Object, String)() {New Pair(Of Object, String)(b._p.Type, b._p.Field)})
+    '                                Case Else
+    '                                    Throw New NotImplementedException(String.Format( _
+    '                                        "Method {0} of type {1} is not implemented", m.Member.Name, m.Expression.Type.FullName))
+    '                            End Select
+    '                        Else
+    '                            Throw New NotImplementedException("Type " & m.Type.FullName & " is not implemented")
+    '                        End If
+    '                    Else
+    '                        _p = New OrmProperty(b._p.Type, GetField(b._p.Type, m.Member.Name))
+    '                    End If
+    '                End If
+    '            End If
+    '        End If
+    '        Return Nothing
+    '    End Function
+
+    '    Protected Overrides Function VisitParameter(ByVal p As System.Linq.Expressions.ParameterExpression) As System.Linq.Expressions.Expression
+    '        If GetType(OrmBase).IsAssignableFrom(p.Type) Then
+    '            _p = New OrmProperty(p.Type, Nothing)
+    '        Else
+    '            _p = New OrmProperty(CType(Nothing, Type), Nothing)
+    '        End If
+    '        'If GetType(OrmBase).IsAssignableFrom(m.Expression.Type) Then
+    '        '    Dim field As String = GetField(p.Type, m.Member.Name)
+    '        '    _p = New Orm.OrmProperty(p.Type, field)
+    '        '    Return Nothing
+    '        'Else
+    '        '    _p = _q.GetProperty(m.Member.Name)
+    '        'End If
+    '        Return Nothing
+    '    End Function
+    'End Class
 
     Public Class FilterVisitorBase
         Inherits MyExpressionVisitor
@@ -283,47 +338,138 @@ Namespace Linq
 
     End Class
 
-    Public Class AgVisitor
-        Inherits FilterVisitorBase
+    Public Class SimpleExpVis
+        Inherits MyExpressionVisitor
 
-        Private _t As Type
-        Public ReadOnly Property Type() As Type
-            Get
-                Return _t
-            End Get
-        End Property
+        'Private _t As Type
+        'Public ReadOnly Property Type() As Type
+        '    Get
+        '        Return _t
+        '    End Get
+        'End Property
 
-        Private _f As String
-        Public ReadOnly Property Field() As String
+        'Private _f As String
+        'Public ReadOnly Property Field() As String
+        '    Get
+        '        Return _f
+        '    End Get
+        'End Property
+
+        'Private _prop As String
+        'Public ReadOnly Property PropName() As String
+        '    Get
+        '        Return _prop
+        '    End Get
+        'End Property
+
+        Private _exp As UnaryExp
+        Public ReadOnly Property Exp() As UnaryExp
             Get
-                Return _f
-            End Get
-        End Property
-        Private _prop As String
-        Public ReadOnly Property PropName() As String
-            Get
-                Return _prop
+                Return _exp
             End Get
         End Property
 
         Private _q As QueryVisitor
+        Private _mem As String
 
-        Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
+        Public Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
             MyBase.new(schema)
             _q = q
         End Sub
 
+        Protected Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor, ByVal mem As String)
+            MyBase.new(schema)
+            _q = q
+            _mem = mem
+        End Sub
+
+        Protected Overrides Function VisitBinary(ByVal b As System.Linq.Expressions.BinaryExpression) As System.Linq.Expressions.Expression
+            Select Case b.NodeType
+                Case ExpressionType.Add, ExpressionType.AddChecked
+                    Dim l As New SimpleExpVis(_schema, _q)
+                    l.Visit(b.Left)
+                    Dim r As New SimpleExpVis(_schema, _q)
+                    r.Visit(b.Right)
+                    _exp = New BinaryExp(ExpOperation.Add, l.Exp, r.Exp)
+                Case Else
+                    Throw New NotImplementedException
+            End Select
+            Return Nothing
+        End Function
+
         Protected Overrides Function VisitMemberAccess(ByVal m As System.Linq.Expressions.MemberExpression) As System.Linq.Expressions.Expression
-            If GetType(OrmBase).IsAssignableFrom(m.Expression.Type) Then
-                Dim p As ParameterExpression = CType(m.Expression, ParameterExpression)
-                _t = p.Type
-                _prop = m.Member.Name
+            If m.Expression Is Nothing Then
+                If m.Type Is GetType(Date) Then
+                    Select Case m.Member.Name
+                        Case "Now"
+                            _exp = New UnaryExp(New LiteralValue(CType(_schema, Database.SQLGenerator).GetDate))
+                        Case Else
+                            Throw New NotImplementedException(String.Format( _
+                                "Method {0} of type {1} is not implemented", m.Member.Name, m.Type.FullName))
+                    End Select
+                Else
+                    Throw New NotImplementedException("Type " & m.Type.FullName & " is not implemented")
+                End If
             Else
-                Dim pr As OrmProperty = _q.GetProperty(m.Member.Name)
-                _prop = pr.Field
-                _t = pr.Type
+                Dim b As New SimpleExpVis(_schema, _q, m.Member.Name)
+                b.Visit(m.Expression)
+                If b.Exp Is Nothing Then
+                    Dim i = 10
+                Else
+                    Dim i = 10
+                    'If b._p.Type Is Nothing Then
+                    '    _p = _q.GetProperty(m.Member.Name)
+                    'Else
+                    '    If Not String.IsNullOrEmpty(b._p.Field) Then
+                    '        If m.Expression.Type.FullName.StartsWith("System.Nullable") Then
+                    '            Select Case m.Member.Name
+                    '                Case "Value"
+                    '                    _p = b._p
+                    '                Case Else
+                    '                    Throw New NotImplementedException(String.Format( _
+                    '                        "Method {0} of type {1} is not implemented", m.Member.Name, m.Expression.Type.FullName))
+                    '            End Select
+                    '        ElseIf m.Expression.Type Is GetType(Date) Then
+                    '            Select Case m.Member.Name
+                    '                Case "Year"
+                    '                    _cust = New CustomExp(CType(_schema, Database.SQLGenerator).GetYear, _
+                    '                        New Pair(Of Object, String)() {New Pair(Of Object, String)(b._p.Type, b._p.Field)})
+                    '                Case Else
+                    '                    Throw New NotImplementedException(String.Format( _
+                    '                        "Method {0} of type {1} is not implemented", m.Member.Name, m.Expression.Type.FullName))
+                    '            End Select
+                    '        Else
+                    '            Throw New NotImplementedException("Type " & m.Type.FullName & " is not implemented")
+                    '        End If
+                    '    Else
+                    '        _p = New OrmProperty(b._p.Type, GetField(b._p.Type, m.Member.Name))
+                    '    End If
+                    'End If
+                End If
             End If
-            _f = GetField(_t, _prop)
+            Return Nothing
+        End Function
+
+        Protected Overrides Function VisitParameter(ByVal p As System.Linq.Expressions.ParameterExpression) As System.Linq.Expressions.Expression
+            If GetType(OrmBase).IsAssignableFrom(p.Type) Then
+                _exp = New UnaryExp(New EntityPropValue(p.Type, GetField(p.Type, _mem)))
+                '_t = p.Type
+                '_prop = m.Member.Name
+            Else
+                Dim pr As OrmProperty = _q.GetProperty(_mem)
+                _exp = New UnaryExp(New EntityPropValue(pr))
+                '_prop = pr.Field
+                '_t = pr.Type
+            End If
+            Return Nothing
+        End Function
+
+        Protected Overrides Function VisitConstant(ByVal c As System.Linq.Expressions.ConstantExpression) As System.Linq.Expressions.Expression
+            If c.Type.IsPrimitive OrElse GetType(String) Is c.Type Then
+                _exp = New UnaryExp(New ScalarValue(c.Value))
+                'Else
+                '    _v = New ScalarValue(Eval(c))
+            End If
             Return Nothing
         End Function
     End Class
@@ -419,8 +565,8 @@ Namespace Linq
         End Sub
 
         Protected Sub ExtractCondition(ByVal b As System.Linq.Expressions.BinaryExpression, ByVal fo As Criteria.FilterOperation)
-            Dim lf As New FilterValueVisitor(_schema, _q)
-            Dim rf As New FilterValueVisitor(_schema, _q)
+            Dim lf As New SimpleExpVis(_schema, _q)
+            Dim rf As New SimpleExpVis(_schema, _q)
             If TypeOf (b.Left) Is MethodCallExpression Then
                 Dim m As MethodCallExpression = CType(b.Left, MethodCallExpression)
                 If m.Method.Name = "CompareString" Then
@@ -431,11 +577,18 @@ Namespace Linq
                 lf.Visit(b.Left)
                 rf.Visit(b.Right)
             End If
-            If lf.Prop IsNot Nothing Then
-                Filter = New EntityFilter(lf.Prop.Type, lf.Prop.Field, rf.Value, fo)
-            Else
-                Filter = New EntityFilter(rf.Prop.Type, rf.Prop.Field, lf.Value, Invert(fo))
-            End If
+            Filter = UnaryExp.CreateFilter(lf.Exp, rf.Exp, fo)
+            'If lf.Prop IsNot Nothing Then
+            '    Filter = New EntityFilter(lf.Prop.Type, lf.Prop.Field, rf.Value, fo)
+            'ElseIf rf.Prop IsNot Nothing Then
+            '    Filter = New EntityFilter(rf.Prop.Type, rf.Prop.Field, lf.Value, Invert(fo))
+            'Else
+            '    If lf.Custom IsNot Nothing Then
+            '        Filter = New CustomFilter(lf.Custom.Format, rf.Value, fo, lf.Custom.Values)
+            '    ElseIf rf.Custom IsNot Nothing Then
+            '        Filter = New CustomFilter(rf.Custom.Format, lf.Value, Invert(fo), rf.Custom.Values)
+            '    End If
+            'End If
         End Sub
 
         Protected Overrides Function VisitBinary(ByVal b As System.Linq.Expressions.BinaryExpression) As System.Linq.Expressions.Expression
@@ -628,7 +781,14 @@ Namespace Linq
                     Me.Visit(m.Arguments(0))
                     Dim v = New FilterVisitor(_schema, Me)
                     v.Visit(m.Arguments(1))
-                    _q.Filter = v.Filter
+                    If _q.Filter IsNot Nothing Then
+                        Dim cnd As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
+                        cnd.AddFilter(_q.Filter.Filter)
+                        cnd.AddFilter(v.Filter, Criteria.Conditions.ConditionOperator.And)
+                        _q.Filter = cnd.Condition
+                    Else
+                        _q.Filter = v.Filter
+                    End If
                 Case "OrderBy"
                     Me.Visit(m.Arguments(0))
                     Dim sv As New SortVisitor(_schema, Me)
@@ -713,12 +873,12 @@ Namespace Linq
         Protected Sub VisitAgg(ByVal m As MethodCallExpression, ByVal af As AggregateFunction)
             Me.Visit(m.Arguments(0))
             If m.Arguments.Count > 1 Then
-                Dim ag As New AgVisitor(_schema, Me)
+                Dim ag As New SimpleExpVis(_schema, Me)
                 ag.Visit(m.Arguments(1))
                 If _q.Top IsNot Nothing OrElse _q.RowNumberFilter IsNot Nothing Then
                     Dim aq As New Query.QueryCmdBase(Nothing)
                     'Dim al As String = Nothing
-                    Dim num As Integer
+                    'Dim num As Integer
                     If _mem Is Nothing AndAlso _new Is Nothing Then
                         Visit(m.Arguments(1))
                         _q.WithLoad = False
@@ -731,13 +891,13 @@ Namespace Linq
                         _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
                     ElseIf _new IsNot Nothing Then
                         _q.WithLoad = False
-                        num = GetIndex(ag.Type, ag.Field)
+                        'num = GetIndex(ag.Type, ag.Field)
                         _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(GetProperties())
                     End If
-                    aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, num)})
+                    aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, ag.Exp)})
                     _q.OuterQuery = aq
                 Else
-                    _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, ag.Type, ag.Field)})
+                    _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, ag.Exp)})
                     _q.WithLoad = False
                     'If _mem IsNot Nothing Then
                     '    _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
