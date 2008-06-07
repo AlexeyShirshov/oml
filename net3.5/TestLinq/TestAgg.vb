@@ -60,9 +60,16 @@ Imports Worm.Linq
 
         q = (Aggregate k In e Where k.ID > 0 Select k.Code Into Count())
         Assert.AreEqual(3, q)
-
-        q = (Aggregate k In e Where k.ID > 0 Select k.Code Skip 2 Into Count())
-        Assert.AreEqual(1, q)
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestCountSkip()
+        Dim ctx As New WormDBContext(TestLinq.GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = (Aggregate k In e Where k.ID > 0 Select k.Code Skip 2 Into Count())
+        Assert.AreEqual(1, q)
+
+    End Sub
 End Class

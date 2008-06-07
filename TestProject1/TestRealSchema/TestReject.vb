@@ -211,7 +211,7 @@ Public Class TestReject
             Finally
                 mgr.Rollback()
                 Assert.IsTrue(mgr.IsInCachePrecise(t1))
-                Assert.AreNotEqual(a, t1.Version)
+                Assert.IsFalse(Worm.helper.IsEqualByteArray(a, t1.Version))
                 Assert.AreEqual(ObjectState.None, t1.InternalProperties.ObjectState)
 
                 Assert.IsTrue(mgr.IsInCachePrecise(t2))

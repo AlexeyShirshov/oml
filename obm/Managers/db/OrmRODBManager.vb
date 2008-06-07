@@ -2158,7 +2158,7 @@ l1:
                     Dim bf As IFilter = con.Condition
                     'Dim f As IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
                     'If f IsNot Nothing Then
-                    sb.Append(bf.MakeQueryStmt(DbSchema, GetFilterInfo, almgr, params))
+                    sb.Append(bf.MakeQueryStmt(DbSchema, GetFilterInfo, almgr, params, Nothing))
                     'Else
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
@@ -2181,7 +2181,7 @@ l1:
                             sb2.Append(")")
                             Dim f As New Database.Criteria.Core.EntityFilter(original_type, fieldName, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
-                            sb.Append(f.MakeQueryStmt(DbSchema, GetFilterInfo, almgr, params))
+                            sb.Append(f.MakeQueryStmt(DbSchema, GetFilterInfo, almgr, params, Nothing))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))
@@ -2231,7 +2231,7 @@ l1:
                     Dim bf As IFilter = con.Condition
                     'Dim f As Worm.Database.Criteria.Core.IFilter = TryCast(bf, Worm.Database.Criteria.Core.IFilter)
                     'If f IsNot Nothing Then
-                    sb.Append(bf.MakeQueryStmt(DbSchema, GetFilterInfo, almgr, params))
+                    sb.Append(bf.MakeQueryStmt(DbSchema, GetFilterInfo, almgr, params, Nothing))
                     'Else
                     'sb.Append(bf.MakeSQLStmt(DbSchema, params))
                     'End If
@@ -2254,7 +2254,7 @@ l1:
                             sb2.Append(")")
                             Dim f As New Database.Criteria.Core.TableFilter(table, column, New LiteralValue(sb2.ToString), Worm.Criteria.FilterOperation.In)
 
-                            sb.Append(f.MakeQueryStmt(DbSchema, GetFilterInfo, almgr, params))
+                            sb.Append(f.MakeQueryStmt(DbSchema, GetFilterInfo, almgr, params, Nothing))
 
                             sb.Insert(0, " and (")
                             l.Add(New Pair(Of String, Integer)(sb.ToString & ")", params.Params.Count))

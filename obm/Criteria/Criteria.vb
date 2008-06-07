@@ -27,6 +27,7 @@ Namespace Criteria
 
     Public Interface ICtor
         Function Field(ByVal fieldName As String) As CriteriaField
+        Function Column(ByVal columnName As String) As CriteriaColumn
     End Interface
 
     Public MustInherit Class CriteriaBase
@@ -179,11 +180,51 @@ Namespace Criteria
         End Property
     End Class
 
+    Public MustInherit Class CriteriaColumn
+        Inherits CriteriaBase
+
+        Private _tbl As Meta.SourceFragment
+        Private _col As String
+
+        Protected Friend Sub New(ByVal table As Meta.SourceFragment, ByVal column As String)
+            'If t Is Nothing Then
+            '    Throw New ArgumentNullException("t")
+            'End If
+
+            'If String.IsNullOrEmpty(fieldName) Then
+            '    Throw New ArgumentNullException("fieldName")
+            'End If
+
+            _tbl = table
+            _col = column
+        End Sub
+
+        Protected Friend Sub New(ByVal table As Meta.SourceFragment, ByVal column As String, _
+            ByVal con As Condition.ConditionConstructorBase, ByVal ct As ConditionOperator)
+            MyBase.New(con, ct)
+            _tbl = table
+            _col = column
+        End Sub
+
+        Protected ReadOnly Property Table() As Meta.SourceFragment
+            Get
+                Return _tbl
+            End Get
+        End Property
+
+        Protected ReadOnly Property Column() As String
+            Get
+                Return _col
+            End Get
+        End Property
+    End Class
+
     Public MustInherit Class CriteriaLink
         Implements IGetFilter, ICloneable
 
         Private _con As Condition.ConditionConstructorBase
         Private _t As Type
+        Private _tbl As Meta.SourceFragment
 
         Protected Friend Sub New(ByVal con As Condition.ConditionConstructorBase)
             _con = con
@@ -202,8 +243,18 @@ Namespace Criteria
             _t = t
         End Sub
 
+        Public Sub New(ByVal table As Meta.SourceFragment)
+            _tbl = table
+        End Sub
+
+        Protected Friend Sub New(ByVal table As Meta.SourceFragment, ByVal con As Condition.ConditionConstructorBase)
+            _con = con
+            _tbl = table
+        End Sub
+
         Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
         Protected MustOverride Function CreateField(ByVal t As Type, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
+        Protected MustOverride Function CreateColumn(ByVal table As Meta.SourceFragment, ByVal columnName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaColumn
 
         Public Function [And](ByVal t As Type, ByVal fieldName As String) As CriteriaField
             If String.IsNullOrEmpty(fieldName) Then
@@ -229,20 +280,52 @@ Namespace Criteria
             Return CreateField(t, fieldName, _con, ConditionOperator.Or)
         End Function
 
-        Public Function [And](ByVal fieldName As String) As CriteriaField
-            If String.IsNullOrEmpty(fieldName) Then
-                Throw New ArgumentNullException("fieldName")
+        Public Function [And](ByVal table As Meta.SourceFragment, ByVal columnName As String) As CriteriaColumn
+            If String.IsNullOrEmpty(columnName) Then
+                Throw New ArgumentNullException("columnName")
             End If
 
-            Return CreateField(_t, fieldName, _con, ConditionOperator.And)
+            If table Is Nothing Then
+                Throw New ArgumentNullException("t")
+            End If
+
+            Return CreateColumn(table, columnName, _con, ConditionOperator.And)
         End Function
 
-        Public Function [Or](ByVal fieldName As String) As CriteriaField
+        Public Function [Or](ByVal table As Meta.SourceFragment, ByVal columnName As String) As CriteriaColumn
+            If String.IsNullOrEmpty(columnName) Then
+                Throw New ArgumentNullException("columnName")
+            End If
+
+            If table Is Nothing Then
+                Throw New ArgumentNullException("t")
+            End If
+
+            Return CreateColumn(table, columnName, _con, ConditionOperator.Or)
+        End Function
+
+        Public Function [And](ByVal fieldName As String) As CriteriaBase
             If String.IsNullOrEmpty(fieldName) Then
                 Throw New ArgumentNullException("fieldName")
             End If
 
-            Return CreateField(_t, fieldName, _con, ConditionOperator.Or)
+            If _tbl IsNot Nothing Then
+                Return CreateColumn(_tbl, fieldName, _con, ConditionOperator.And)
+            Else
+                Return CreateField(_t, fieldName, _con, ConditionOperator.And)
+            End If
+        End Function
+
+        Public Function [Or](ByVal fieldName As String) As CriteriaBase
+            If String.IsNullOrEmpty(fieldName) Then
+                Throw New ArgumentNullException("fieldName")
+            End If
+
+            If _tbl IsNot Nothing Then
+                Return CreateColumn(_tbl, fieldName, _con, ConditionOperator.Or)
+            Else
+                Return CreateField(_t, fieldName, _con, ConditionOperator.Or)
+            End If
         End Function
 
         Public Function [And](ByVal link As CriteriaLink) As CriteriaLink
@@ -298,10 +381,34 @@ Namespace Criteria
             End Get
         End Property
 
+        Protected ReadOnly Property Table() As Meta.SourceFragment
+            Get
+                Return _tbl
+            End Get
+        End Property
+
+
         Public Function Clone() As CriteriaLink
             Return CType(_Clone(), CriteriaLink)
         End Function
     End Class
+
+    Module FilterHlp
+        Public Function Invert(ByVal fo As FilterOperation) As FilterOperation
+            Select Case fo
+                Case FilterOperation.GreaterEqualThan
+                    Return FilterOperation.LessEqualThan
+                Case FilterOperation.GreaterThan
+                    Return FilterOperation.LessThan
+                Case FilterOperation.LessThan
+                    Return FilterOperation.GreaterThan
+                Case FilterOperation.LessEqualThan
+                    Return FilterOperation.GreaterEqualThan
+                Case Else
+                    Return fo
+            End Select
+        End Function
+    End Module
 
     'Friend Class _CriteriaLink
     '    Inherits CriteriaLink

@@ -273,7 +273,7 @@ Public MustInherit Class QueryGenerator
         If coll.TryGetValue(field, p) Then
             Dim c As String = Nothing
             If add_alias AndAlso ShouldPrefix(p._columnName) Then
-                c = GetTableName(p._tableName) & "." & p._columnName
+                c = GetTableName(p._tableName) & Selector & p._columnName
             Else
                 c = p._columnName
             End If
@@ -584,7 +584,7 @@ Public MustInherit Class QueryGenerator
         'Next
         'ids.Length -= 1            
         Dim p As MapField2Column = schema.GetFieldColumnMap("ID")
-        ids.Append(GetTableName(p._tableName)).Append(".").Append(p._columnName)
+        ids.Append(GetTableName(p._tableName)).Append(Selector).Append(p._columnName)
         If columnAliases IsNot Nothing Then
             columnAliases.Add(p._columnName)
         End If
@@ -1395,7 +1395,7 @@ Public MustInherit Class QueryGenerator
 
     Public Function GetSharedSourceFragment(ByVal schema As String, ByVal tableName As String, ByVal key As String) As SourceFragment 'Implements IDbSchema.GetSharedTable
         If String.IsNullOrEmpty(key) Then
-            key = schema & "." & tableName
+            key = schema & Selector & tableName
         End If
         Dim t As SourceFragment = CType(_sharedTables(key), SourceFragment)
         If t Is Nothing Then
@@ -1491,7 +1491,7 @@ Public MustInherit Class QueryGenerator
                     End Try
                 End If
                 If Not String.IsNullOrEmpty([alias]) Then
-                    values.Add([alias] & "." & fld)
+                    values.Add([alias] & Selector & fld)
                 Else
                     values.Add(fld)
                 End If
@@ -1506,7 +1506,7 @@ Public MustInherit Class QueryGenerator
                     End Try
                 End If
                 If Not String.IsNullOrEmpty([alias]) Then
-                    values.Add([alias] & "." & p.Second)
+                    values.Add([alias] & Selector & p.Second)
                 Else
                     values.Add(p.Second)
                 End If
@@ -1522,6 +1522,9 @@ Public MustInherit Class QueryGenerator
     Public MustOverride ReadOnly Property Selector() As String
     Public MustOverride Function CreateCriteria(ByVal t As Type) As Criteria.ICtor
     Public MustOverride Function CreateCriteria(ByVal t As Type, ByVal fieldName As String) As Criteria.CriteriaField
+    Public MustOverride Function CreateCriteria(ByVal table As SourceFragment) As Criteria.ICtor
+    Public MustOverride Function CreateCriteria(ByVal table As SourceFragment, ByVal columnName As String) As Criteria.CriteriaColumn
+    Public MustOverride Function CreateCustom(ByVal format As String, ByVal value As Criteria.Values.IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String)) As Worm.Criteria.Core.CustomFilterBase
     Public MustOverride Function CreateConditionCtor() As Criteria.Conditions.Condition.ConditionConstructorBase
     Public MustOverride Function CreateCriteriaLink(ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase) As Criteria.CriteriaLink
     Public MustOverride Function CreateTopAspect(ByVal top As Integer) As Worm.Orm.Query.TopAspect

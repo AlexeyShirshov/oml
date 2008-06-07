@@ -861,9 +861,9 @@ l1:
                             Dim fl As IFilter = CType(item.Value._where4update.Condition, IFilter)
                             Dim ef As EntityFilterBase = TryCast(fl, EntityFilterBase)
                             If ef IsNot Nothing Then
-                                upd_cmd.Append(ef.MakeQueryStmt(esch, filterInfo, Me, amgr, params))
+                                upd_cmd.Append(ef.MakeQueryStmt(esch, filterInfo, Me, amgr, params, Nothing))
                             Else
-                                upd_cmd.Append(fl.MakeQueryStmt(Me, filterInfo, amgr, params))
+                                upd_cmd.Append(fl.MakeQueryStmt(Me, filterInfo, amgr, params, Nothing))
                             End If
                             If Not item.Key.Equals(pk_table) Then
                                 'Dim pcnt As Integer = 0
@@ -1017,7 +1017,7 @@ l1:
 
                     For Each de As KeyValuePair(Of SourceFragment, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(GetTableName(de.Key))
-                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(Me, filterInfo, Nothing, params))
+                        del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(Me, filterInfo, Nothing, params, Nothing))
                         del_cmd.Append(EndLine)
                     Next
                     del_cmd.Length -= EndLine.Length
@@ -1039,7 +1039,7 @@ l1:
 
             Dim del_cmd As New StringBuilder
             del_cmd.Append("delete from ").Append(GetTableName(GetTables(t)(0)))
-            del_cmd.Append(" where ").Append(filter.MakeQueryStmt(Me, Nothing, Nothing, params))
+            del_cmd.Append(" where ").Append(filter.MakeQueryStmt(Me, Nothing, Nothing, params, Nothing))
 
             Return del_cmd.ToString
         End Function
@@ -1529,11 +1529,11 @@ l1:
                 schema = GetObjectSchema(t)
             End If
 
-            Return AppendWhere(schema, filter, almgr, sb, filter_info, pmgr)
+            Return AppendWhere(schema, filter, almgr, sb, filter_info, pmgr, Nothing)
         End Function
 
         Public Overridable Function AppendWhere(ByVal schema As IOrmObjectSchema, ByVal filter As Worm.Criteria.Core.IFilter, _
-            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
+            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam, ByVal columns As List(Of String)) As Boolean
 
             Dim con As New Condition.ConditionConstructor
             con.AddFilter(filter)
@@ -1551,7 +1551,7 @@ l1:
                 'Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = TryCast(con.Condition, IFilter)
                 'If f IsNot Nothing Then
-                Dim s As String = f.MakeQueryStmt(Me, filter_info, almgr, pmgr)
+                Dim s As String = f.MakeQueryStmt(Me, filter_info, almgr, pmgr, columns)
                 If Not String.IsNullOrEmpty(s) Then
                     sb.Append(" where ").Append(s)
                 End If
@@ -2256,6 +2256,14 @@ l1:
             Return Criteria.Ctor.Field(t, fieldName)
         End Function
 
+        Public Overloads Overrides Function CreateCriteria(ByVal table As Orm.Meta.SourceFragment) As Worm.Criteria.ICtor
+            Return New Criteria.Ctor(table)
+        End Function
+
+        Public Overloads Overrides Function CreateCriteria(ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String) As Worm.Criteria.CriteriaColumn
+            Return Criteria.Ctor.Column(table, columnName)
+        End Function
+
         Public Overrides Function CreateConditionCtor() As Criteria.Conditions.Condition.ConditionConstructorBase
             Return New Criteria.Conditions.Condition.ConditionConstructor
         End Function
@@ -2308,6 +2316,10 @@ l1:
             Dim jt As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, type2join, "ID", Worm.Criteria.FilterOperation.Equal)
             Dim tj As New Database.Criteria.Joins.OrmJoin(GetTables(type2join)(0), Joins.JoinType.Join, jt)
             Return New Database.Criteria.Joins.OrmJoin() {mj, tj}
+        End Function
+
+        Public Overrides Function CreateCustom(ByVal format As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As CoreFramework.Structures.Pair(Of Object, String)) As Worm.Criteria.Core.CustomFilterBase
+            Return New Criteria.Core.CustomFilter(format, value, oper, values)
         End Function
     End Class
 

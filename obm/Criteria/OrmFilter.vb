@@ -2,6 +2,7 @@ Imports System.Collections.Generic
 Imports Worm.Orm.Meta
 Imports Worm.Criteria.Values
 Imports Worm.Orm
+Imports Worm.Expressions
 
 Namespace Criteria.Core
 
@@ -12,7 +13,8 @@ Namespace Criteria.Core
 
     Public Interface IFilter
         Inherits IGetFilter, ICloneable
-        Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+        'Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+        Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As List(Of String)) As String
         Function GetAllFilters() As ICollection(Of IFilter)
         Function Equals(ByVal f As IFilter) As Boolean
         Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter
@@ -76,7 +78,7 @@ Namespace Criteria.Core
 
         Protected MustOverride Function _ToString() As String Implements IFilter.ToString
         Protected MustOverride Function _Clone() As Object Implements ICloneable.Clone
-        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements IFilter.MakeQueryStmt
         Public MustOverride Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
         Public MustOverride Function ToStaticString() As String Implements IFilter.ToStaticString
 
@@ -160,6 +162,11 @@ Namespace Criteria.Core
                 Return Me
             End Get
         End Property
+
+        'Protected Function _MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeQueryStmt
+        '    Throw New NotSupportedException
+        '    'Return MakeQueryStmt(schema, Filter, almgr, pname)
+        'End Function
     End Class
 
     Public MustInherit Class TemplatedFilterBase
@@ -294,7 +301,11 @@ Namespace Criteria.Core
         '    Return _str.GetHashCode
         'End Function
 
-        Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+        Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+
+        Public Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Return MakeQueryStmt(oschema, filterInfo, schema, almgr, pname, Nothing)
+        End Function
 
         Public Overridable Overloads Function MakeSingleQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
             If _oschema Is Nothing Then
@@ -555,7 +566,7 @@ Namespace Criteria.Core
             Return New CustomFilterBase() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+        Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
             Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
             If schema Is Nothing Then
@@ -583,7 +594,7 @@ Namespace Criteria.Core
                     If p.First Is Nothing Then
                         values.Add(p.Second)
                     Else
-                        values.Add(p.First.ToString & "." & p.Second)
+                        values.Add(p.First.ToString & "^" & p.Second)
                     End If
                 Next
                 _sstr = String.Format(_format, values.ToArray) & OperationString
@@ -617,4 +628,99 @@ Namespace Criteria.Core
 
     End Class
 
+    Public MustInherit Class ExpFilter
+        Implements IFilter
+
+        Private _fo As FilterOperation
+        Private _left As UnaryExp
+        Private _right As UnaryExp
+
+        Public Sub New(ByVal left As UnaryExp, ByVal right As UnaryExp, ByVal fo As FilterOperation)
+            _left = left
+            _right = right
+            _fo = fo
+        End Sub
+
+        Public ReadOnly Property Left() As UnaryExp
+            Get
+                Return _left
+            End Get
+        End Property
+
+        Public ReadOnly Property Right() As UnaryExp
+            Get
+                Return _right
+            End Get
+        End Property
+
+        Public ReadOnly Property Operation() As FilterOperation
+            Get
+                Return _fo
+            End Get
+        End Property
+
+        Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
+        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements IFilter.MakeQueryStmt
+
+        Public Function Clone() As IFilter Implements IFilter.Clone
+            Return CType(_Clone(), IFilter)
+        End Function
+
+        Public Overloads Function Equals(ByVal f As IFilter) As Boolean Implements IFilter.Equals
+            If f Is Nothing Then
+                Return False
+            Else
+                Return _ToString.Equals(f.ToString)
+            End If
+        End Function
+
+        Public Overrides Function GetHashCode() As Integer
+            Return ToString.GetHashCode
+        End Function
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, ExpFilter))
+        End Function
+
+        Public Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
+            Return New IFilter() {Me}
+        End Function
+
+        'Public Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeQueryStmt
+        '    'Dim columns As List(Of String)
+        '    'Return _left.MakeStmt(schema, pname, almgr, columns)
+        '    Throw New NotSupportedException("Use MakeQueryStmt with columns parameter")
+        'End Function
+
+        Public Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter Implements IFilter.ReplaceFilter
+            If Equals(replacement) Then
+                Return replacer
+            End If
+            Return Nothing
+        End Function
+
+        Public Function ToStaticString() As String Implements IFilter.ToStaticString
+            Return _left.ToStaticString & _fo.ToString & _right.ToStaticString
+        End Function
+
+        Protected Function _ToString() As String Implements IFilter.ToString
+            Return _left.ToString & _fo.ToString & _right.ToString
+        End Function
+
+        Public Overrides Function ToString() As String
+            Return _ToString()
+        End Function
+
+        Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter
+            Get
+                Return Me
+            End Get
+        End Property
+
+        Public ReadOnly Property Filter(ByVal t As System.Type) As IFilter Implements IGetFilter.Filter
+            Get
+                Return Me
+            End Get
+        End Property
+    End Class
 End Namespace

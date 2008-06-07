@@ -12,7 +12,9 @@ Namespace Database
 
         Public Class Ctor
             Implements ICtor
+
             Private _t As Type
+            Private _tbl As Worm.Orm.Meta.SourceFragment
 
             Public Sub New(ByVal t As Type)
                 If t Is Nothing Then
@@ -20,6 +22,14 @@ Namespace Database
                 End If
 
                 _t = t
+            End Sub
+
+            Public Sub New(ByVal tbl As Orm.Meta.SourceFragment)
+                If tbl Is Nothing Then
+                    Throw New ArgumentNullException("tbl")
+                End If
+
+                _tbl = tbl
             End Sub
 
             Protected Function _Field(ByVal fieldName As String) As Worm.Criteria.CriteriaField Implements ICtor.Field
@@ -46,6 +56,18 @@ Namespace Database
                 Return New CriteriaField(t, fieldName)
             End Function
 
+            Public Shared Function Column(ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String) As CriteriaColumn
+                If table Is Nothing Then
+                    Throw New ArgumentNullException("table")
+                End If
+
+                If String.IsNullOrEmpty(columnName) Then
+                    Throw New ArgumentNullException("columnName")
+                End If
+
+                Return New CriteriaColumn(table, columnName)
+            End Function
+
             Public Shared Function AutoTypeField(ByVal fieldName As String) As CriteriaField
                 If String.IsNullOrEmpty(fieldName) Then
                     Throw New ArgumentNullException("fieldName")
@@ -69,6 +91,43 @@ Namespace Database
             'Public Shared Function Custom(ByVal t As Type, ByVal field As String, ByVal format As String) As CriteriaField
             '    Return New CustomCF(t, field, format)
             'End Function
+
+            Public Function Column(ByVal columnName As String) As CriteriaColumn
+                Return CType(_Column(columnName), CriteriaColumn)
+            End Function
+
+            Protected Function _Column(ByVal columnName As String) As Worm.Criteria.CriteriaColumn Implements Worm.Criteria.ICtor.Column
+                If String.IsNullOrEmpty(columnName) Then
+                    Throw New ArgumentNullException("columnName")
+                End If
+
+                Return New CriteriaColumn(_tbl, columnName)
+            End Function
+        End Class
+
+        Public Class CriteriaColumn
+            Inherits Worm.Criteria.CriteriaColumn
+
+            Protected Friend Sub New(ByVal table As Orm.Meta.SourceFragment, ByVal column As String)
+                MyBase.New(table, column)
+            End Sub
+
+            Protected Friend Sub New(ByVal table As Orm.Meta.SourceFragment, ByVal column As String, _
+                ByVal con As Condition.ConditionConstructorBase, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
+                MyBase.New(table, column, con, ct)
+            End Sub
+
+            Protected Overrides Function CreateFilter(ByVal v As Worm.Criteria.Values.IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.IFilter
+                Return New TableFilter(Table, Column, v, oper)
+            End Function
+
+            Protected Overrides Function GetLink(ByVal fl As Worm.Criteria.Core.IFilter) As Worm.Criteria.CriteriaLink
+                If ConditionCtor Is Nothing Then
+                    ConditionCtor = New Condition.ConditionConstructor
+                End If
+                ConditionCtor.AddFilter(fl, ConditionOper)
+                Return New CriteriaLink(Table, CType(ConditionCtor, Condition.ConditionConstructor))
+            End Function
         End Class
 
         Public Class CriteriaField
@@ -260,6 +319,14 @@ Namespace Database
                 MyBase.New(t, con)
             End Sub
 
+            Public Sub New(ByVal table As Orm.Meta.SourceFragment)
+                MyBase.New(table)
+            End Sub
+
+            Protected Friend Sub New(ByVal table As Orm.Meta.SourceFragment, ByVal con As Condition.ConditionConstructorBase)
+                MyBase.New(table, con)
+            End Sub
+
             Protected Overrides Function CreateField(ByVal t As System.Type, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaField
                 Return New CriteriaField(t, fieldName, CType(con, Condition.ConditionConstructor), oper)
             End Function
@@ -297,7 +364,15 @@ Namespace Database
             End Function
 
             Protected Overrides Function _Clone() As Object
-                Return New CriteriaLink(Type, CType(ConditionCtor.Clone, Condition.ConditionConstructor))
+                If Table IsNot Nothing Then
+                    Return New CriteriaLink(Table, CType(ConditionCtor.Clone, Condition.ConditionConstructor))
+                Else
+                    Return New CriteriaLink(Type, CType(ConditionCtor.Clone, Condition.ConditionConstructor))
+                End If
+            End Function
+
+            Protected Overrides Function CreateColumn(ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String, ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaColumn
+                Return New CriteriaColumn(table, columnName, CType(con, Condition.ConditionConstructor), oper)
             End Function
         End Class
     End Namespace

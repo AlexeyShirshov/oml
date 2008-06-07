@@ -363,7 +363,7 @@ Namespace Query.Database
                 FormJoins(filterInfo, query, params, joins, almgr, sb, s)
             End If
 
-            s.AppendWhere(os, f, almgr, sb, filterInfo, params)
+            s.AppendWhere(os, f, almgr, sb, filterInfo, params, innerColumns)
 
             FormGroupBy(query, almgr, sb, s, t)
 

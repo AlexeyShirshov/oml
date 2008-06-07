@@ -1,6 +1,7 @@
 ﻿Imports Worm.Orm.Meta
 Imports Worm.Criteria.Values
 Imports System.Collections.Generic
+Imports Worm.Expressions
 
 'Imports Worm.Criteria.Core
 
@@ -151,13 +152,13 @@ Namespace Database
                 Return New NonTemplateFilter() {Me}
             End Function
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 'Return TemplateBase.Oper2String(_oper) & GetParam(schema, pname)
                 Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
                 If id IsNot Nothing Then
                     Return TemplateBase.Oper2String(_oper) & id.GetParam(CType(schema, SQLGenerator), filterInfo, pname, CType(almgr, AliasMgr))
                 Else
-                    Return MakeQueryStmt(schema, filterInfo, almgr, pname)
+                    Return MakeQueryStmt(schema, filterInfo, almgr, pname, columns)
                 End If
             End Function
 
@@ -218,7 +219,11 @@ Namespace Database
                 End Get
             End Property
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
+            Public Overloads Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+                Return MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
+            End Function
+
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If ParamValue.ShouldUse Then
                     If Template.Table.Name = TempTable Then
                         Return Template.Column & Template.OperToStmt & GetParam(schema, pname)
@@ -345,7 +350,11 @@ Namespace Database
             '    End If
             'End Function
 
-            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+                Return MakeQueryStmt(oschema, filterInfo, schema, almgr, pname, Nothing)
+            End Function
+
+            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If _oschema Is Nothing Then
                     _oschema = oschema
                 End If
@@ -375,7 +384,7 @@ Namespace Database
                     If tableAliases IsNot Nothing Then
                         'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
                         Try
-                            [alias] = tableAliases(map._tableName) & "."
+                            [alias] = tableAliases(map._tableName) & schema.Selector
                         Catch ex As KeyNotFoundException
                             Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
                         End Try
@@ -391,7 +400,11 @@ Namespace Database
                 End If
             End Function
 
-            Public Overloads Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overloads Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+                Return MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
+            End Function
+
+            Public Overloads Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If schema Is Nothing Then
                     Throw New ArgumentNullException("schema")
                 End If
@@ -400,7 +413,7 @@ Namespace Database
                     _oschema = schema.GetObjectSchema(Template.Type)
                 End If
 
-                Return MakeQueryStmt(_oschema, filterInfo, schema, almgr, pname)
+                Return MakeQueryStmt(_oschema, filterInfo, schema, almgr, pname, columns)
             End Function
 
             Protected Overrides Function GetParam(ByVal schema As QueryGenerator, ByVal pmgr As ICreateParam) As String
@@ -445,6 +458,22 @@ Namespace Database
                 Dim c As New CustomFilter(ParamValue)
                 CopyTo(c)
                 Return c
+            End Function
+        End Class
+
+        Public Class ExpFilter
+            Inherits Worm.Criteria.Core.ExpFilter
+
+            Public Sub New(ByVal left As UnaryExp, ByVal right As UnaryExp, ByVal fo As Worm.Criteria.FilterOperation)
+                MyBase.New(left, right, fo)
+            End Sub
+
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+                Return Left.MakeStmt(schema, pname, almgr, columns) & TemplateBase.Oper2String(Operation) & Right.MakeStmt(schema, pname, almgr, columns)
+            End Function
+
+            Protected Overrides Function _Clone() As Object
+                Return New ExpFilter(Left, Right, Operation)
             End Function
         End Class
     End Namespace
