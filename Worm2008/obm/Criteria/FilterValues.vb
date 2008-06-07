@@ -138,18 +138,23 @@ Namespace Criteria.Values
                 Try
                     map = oschema.GetFieldColumnMap()(_p.Field)
                 Catch ex As KeyNotFoundException
-                    Throw New QueryGeneratorException(String.Format("There is not column for property {0} ", _p.Type.ToString & "." & _p.Field, ex))
+                    Throw New QueryGeneratorException(String.Format("There is not column for property {0} ", _p.Type.ToString & schema.Selector & _p.Field, ex))
                 End Try
 
                 Dim [alias] As String = String.Empty
 
                 If tableAliases IsNot Nothing Then
                     'Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
-                    Try
-                        [alias] = tableAliases(map._tableName) & "."
-                    Catch ex As KeyNotFoundException
-                        Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
-                    End Try
+                    If tableAliases.ContainsKey(map._tableName) Then
+                        [alias] = tableAliases(map._tableName) & schema.Selector
+                    Else
+                        [alias] = schema.GetTableName(map._tableName) & schema.Selector
+                    End If
+                    'Try
+                    '    [alias] = tableAliases(map._tableName) & schema.Selector
+                    'Catch ex As KeyNotFoundException
+                    '    Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+                    'End Try
                 End If
 
                 Return [alias] & map._columnName

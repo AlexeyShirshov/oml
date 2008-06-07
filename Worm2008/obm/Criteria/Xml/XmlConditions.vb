@@ -51,11 +51,15 @@ Namespace Xml
                 Return New Condition(left, right, [operator])
             End Function
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            'Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            '    Throw New NotSupportedException("Use MakeQueryStmt with columns parameter")
+            'End Function
+
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal colums As System.Collections.Generic.List(Of String)) As String
                 If _right Is Nothing Then
-                    Return _left.MakeQueryStmt(schema, filterInfo, almgr, pname)
+                    Return _left.MakeQueryStmt(schema, filterInfo, almgr, pname, colums)
                 End If
-                Return "(" & _left.MakeQueryStmt(schema, filterInfo, almgr, pname) & Condition2String() & _right.MakeQueryStmt(schema, filterInfo, almgr, pname) & ")"
+                Return "(" & _left.MakeQueryStmt(schema, filterInfo, almgr, pname, colums) & Condition2String() & _right.MakeQueryStmt(schema, filterInfo, almgr, pname, colums) & ")"
             End Function
 
             Public Overrides ReadOnly Property Template() As Worm.Criteria.Core.ITemplate
@@ -98,12 +102,16 @@ Namespace Xml
                 Return New Condition(CType(left, IFilter), CType(right, IFilter), [operator])
             End Function
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            'Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            '    Throw New NotSupportedException("Use MakeQueryStmt with columns parameter")
+            'End Function
+
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal colums As System.Collections.Generic.List(Of String)) As String
                 If _right Is Nothing Then
-                    Return CType(_left, IEntityFilter).MakeQueryStmt(schema, filterInfo, almgr, pname)
+                    Return CType(_left, IEntityFilter).MakeQueryStmt(schema, filterInfo, almgr, pname, colums)
                 End If
 
-                Return "(" & CType(_left, IEntityFilter).MakeQueryStmt(schema, filterInfo, almgr, pname) & Condition2String() & CType(_right, IEntityFilter).MakeQueryStmt(schema, filterInfo, almgr, pname) & ")"
+                Return "(" & CType(_left, IEntityFilter).MakeQueryStmt(schema, filterInfo, almgr, pname, colums) & Condition2String() & CType(_right, IEntityFilter).MakeQueryStmt(schema, filterInfo, almgr, pname, colums) & ")"
             End Function
 
             Public Overrides ReadOnly Property Template() As Worm.Criteria.Core.ITemplate

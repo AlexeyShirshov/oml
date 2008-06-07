@@ -54,7 +54,7 @@ Imports Worm.Database.Criteria.Core
     <TestMethod()> Public Sub TestMax()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim q As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create(New AggregateBase() { _
-                New Aggregate(AggregateFunction.Max, "ID") _
+                New Aggregate(AggregateFunction.Max, GetType(Entity4), "ID") _
             })
 
             Dim i As Integer = q.ToSimpleList(Of Integer)(mgr)(0)

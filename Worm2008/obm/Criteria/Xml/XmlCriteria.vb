@@ -8,6 +8,7 @@ Namespace Xml
 
         Public Class Ctor
             Implements Worm.Criteria.ICtor
+
             Private _t As Type
 
             Public Sub New(ByVal t As Type)
@@ -28,6 +29,10 @@ Namespace Xml
 
             Public Function Field(ByVal fieldName As String) As XmlCriteriaField
                 Return CType(_Field(fieldName), XmlCriteriaField)
+            End Function
+
+            Public Function Column(ByVal columnName As String) As Worm.Criteria.CriteriaColumn Implements Worm.Criteria.ICtor.Column
+                Throw New NotImplementedException
             End Function
         End Class
 
@@ -80,6 +85,10 @@ Namespace Xml
 
             Protected Overrides Function _Clone() As Object
                 Return New XmlCriteriaLink(Type, CType(ConditionCtor, Condition.ConditionConstructor))
+            End Function
+
+            Protected Overrides Function CreateColumn(ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String, ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaColumn
+                Throw New NotImplementedException
             End Function
         End Class
     End Namespace

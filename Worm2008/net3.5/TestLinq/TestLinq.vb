@@ -670,6 +670,27 @@ Imports Worm.Linq
     End Sub
 
     <TestMethod()> _
+    Public Sub TestSum4()
+        Dim ctx As New WormMSSQL2005DBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = (From k In e Select k.Code, k.Name).Sum(Function(r) r.Code + 1)
+        Assert.AreEqual(8973, q)
+
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestSum5()
+        Dim ctx As New WormDBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = (From k In e Select p = k.Code + k.ID, k.CreatedAt).Sum(Function(r) r.p)
+        Assert.AreEqual(45, q)
+    End Sub
+
+    <TestMethod()> _
     Public Sub TestLet()
         Dim ctx As New WormDBContext(GetConn)
 

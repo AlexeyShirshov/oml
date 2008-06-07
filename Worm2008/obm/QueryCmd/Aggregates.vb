@@ -142,7 +142,7 @@ Namespace Query
 
     '    Protected Function GetColumn(ByVal t As Type, ByVal schema As QueryGenerator) As String
     '        If _prop.Table IsNot Nothing Then
-    '            Return schema.GetTableName(_prop.Table) & "." & _prop.Column
+    '            Return schema.GetTableName(_prop.Table) & schema.Selector & _prop.Column
     '        ElseIf Not String.IsNullOrEmpty(_prop.Field) Then
     '            Dim tt As Type = _prop.Type
     '            If tt Is Nothing Then tt = t

@@ -127,7 +127,8 @@ Namespace Criteria.Joins
             Return _ToString()
         End Function
 
-        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
+        'Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
 
         Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
             Get
@@ -156,6 +157,10 @@ Namespace Criteria.Joins
                 ._t2 = _t2
             End With
         End Sub
+
+        Public Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements Core.IFilter.MakeQueryStmt
+            Return MakeQueryStmt(schema, filterInfo, almgr, pname)
+        End Function
     End Class
 
     Public MustInherit Class OrmJoin
@@ -313,7 +318,7 @@ Namespace Database
                 If tableAliases IsNot Nothing Then
                     Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
                     Try
-                        [alias] = tableAliases(map._tableName) & "."
+                        [alias] = tableAliases(map._tableName) & schema.Selector
                     Catch ex As KeyNotFoundException
                         Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
                     End Try
@@ -323,7 +328,7 @@ Namespace Database
                 If map2._tableName IsNot Nothing AndAlso tableAliases IsNot Nothing AndAlso tableAliases.ContainsKey(map2._tableName) Then
                     Debug.Assert(tableAliases.ContainsKey(map2._tableName), "There is not alias for table " & map2._tableName.RawName)
                     Try
-                        alias2 = tableAliases(map2._tableName) & "."
+                        alias2 = tableAliases(map2._tableName) & schema.Selector
                     Catch ex As KeyNotFoundException
                         Throw New QueryGeneratorException("There is not alias for table " & map2._tableName.RawName, ex)
                     End Try
@@ -428,7 +433,7 @@ Namespace Database
                 Dim tableAliases As IDictionary(Of SourceFragment, String) = almgr.Aliases
                 'Dim table As String = _table
                 'Dim sch as IOrmObjectSchema = schema.GetObjectSchema(
-                Return JoinTypeString() & schema.GetTableName(_table) & " " & tableAliases(_table) & " on " & Condition.MakeQueryStmt(schema, filterInfo, almgr, pname)
+                Return JoinTypeString() & schema.GetTableName(_table) & " " & tableAliases(_table) & " on " & Condition.MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
             End Function
 
             Protected Overrides Function CreateOrmFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase

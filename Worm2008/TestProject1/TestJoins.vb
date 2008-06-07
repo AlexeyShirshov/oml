@@ -226,7 +226,7 @@ End Class
 
         Assert.AreEqual(1, c.GetAllFilters.Count)
 
-        c.MakeQueryStmt(Nothing, Nothing, Nothing, Nothing)
+        c.MakeQueryStmt(Nothing, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -236,7 +236,7 @@ End Class
 
         Dim schema As New SQLGenerator("1")
 
-        c.MakeQueryStmt(schema, Nothing, Nothing, Nothing)
+        c.MakeQueryStmt(schema, Nothing, Nothing, Nothing, Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
@@ -247,7 +247,7 @@ End Class
         Dim schema As New SQLGenerator("1")
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).GetTables(0))
-        c.MakeQueryStmt(schema, Nothing, almgr, Nothing)
+        c.MakeQueryStmt(schema, Nothing, almgr, Nothing, Nothing)
     End Sub
 
     <TestMethod()> _
@@ -259,7 +259,7 @@ End Class
         Dim almgr As AliasMgr = AliasMgr.Create
         almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).GetTables(0))
         Dim pmgr As New ParamMgr(schema, "p")
-        Assert.AreEqual("t1.id = @p1", c.MakeQueryStmt(schema, Nothing, almgr, pmgr))
+        Assert.AreEqual("t1.id = @p1", c.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
     End Sub
 
     <TestMethod()> _
@@ -280,7 +280,7 @@ End Class
         almgr.AddTable(schema.GetObjectSchema(GetType(Entity)).GetTables(0))
         almgr.AddTable(tbl)
         Dim pmgr As New ParamMgr(schema, "p")
-        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
     End Sub
 
     <TestMethod()> _
@@ -297,7 +297,7 @@ End Class
         almgr.AddTable(tbl)
         Dim pmgr As New ParamMgr(schema, "p")
 
-        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.id > @p2)", c.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
 
         Dim f3 As New TableFilter(tbl, "id", New ScalarValue(10), Worm.Criteria.FilterOperation.NotEqual)
 
@@ -305,23 +305,23 @@ End Class
 
         Assert.AreNotEqual(c, c2)
 
-        Assert.AreEqual("(t1.id = @p1 or t2.id <> @p3)", c2.MakeQueryStmt(schema, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.id <> @p3)", c2.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
 
         Dim c3 As New Criteria.Conditions.Condition(c, f3, ConditionOperator.And)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and t2.id <> @p3)", c3.MakeQueryStmt(schema, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and t2.id <> @p3)", c3.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
 
         Dim c4 As IFilter = CType(c3.ReplaceFilter(f2, f3), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3)", c4.MakeQueryStmt(schema, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3)", c4.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
 
         Dim c5 As IFilter = CType(c3.ReplaceFilter(f3, c4), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and ((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3))", c5.MakeQueryStmt(schema, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and ((t1.id = @p1 or t2.id <> @p3) and t2.id <> @p3))", c5.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
 
         Dim c6 As IFilter = CType(c5.ReplaceFilter(f3, Nothing), IFilter)
 
-        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and (t1.id = @p1 or t2.id <> @p3))", c6.MakeQueryStmt(schema, Nothing, almgr, pmgr))
+        Assert.AreEqual("((t1.id = @p1 or t2.id > @p2) and (t1.id = @p1 or t2.id <> @p3))", c6.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
     End Sub
 
     <TestMethod()> _
@@ -350,7 +350,7 @@ End Class
         almgr.AddTable(schema.GetObjectSchema(GetType(Entity4)).GetTables(0))
         Dim pmgr As New ParamMgr(schema, "p")
 
-        Assert.AreEqual("(t1.id = @p1 or t2.name = @p2)", c.MakeQueryStmt(schema, Nothing, almgr, pmgr))
+        Assert.AreEqual("(t1.id = @p1 or t2.name = @p2)", c.MakeQueryStmt(schema, Nothing, almgr, pmgr, Nothing))
     End Sub
 
 End Class

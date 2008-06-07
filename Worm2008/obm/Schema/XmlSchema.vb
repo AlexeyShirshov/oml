@@ -36,6 +36,15 @@ Namespace Xml
             Return New Criteria.Ctor(t).Field(fieldName)
         End Function
 
+        Public Overloads Overrides Function CreateCriteria(ByVal table As Orm.Meta.SourceFragment) As Worm.Criteria.ICtor
+            Throw New NotImplementedException
+        End Function
+
+        Public Overloads Overrides Function CreateCriteria(ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String) As Worm.Criteria.CriteriaColumn
+            Throw New NotImplementedException
+        End Function
+
+
         Public Overrides Function CreateCriteriaLink(ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase) As Worm.Criteria.CriteriaLink
             Return New Criteria.XmlCriteriaLink(con)
         End Function
@@ -66,7 +75,7 @@ Namespace Xml
             If Not con.IsEmpty Then
                 Dim bf As Worm.Criteria.Core.IFilter = TryCast(con.Condition, Worm.Criteria.Core.IFilter)
                 Dim f As IFilter = con.Condition
-                sb.Append("[").Append(bf.MakeQueryStmt(Me, filter_info, Nothing, Nothing)).Append("]")
+                sb.Append("[").Append(bf.MakeQueryStmt(Me, filter_info, Nothing, Nothing, Nothing)).Append("]")
                 Return True
             End If
             Return False
@@ -102,6 +111,10 @@ Namespace Xml
         End Function
 
         Protected Friend Overrides Function MakeM2MJoin(ByVal m2m As Orm.Meta.M2MRelation, ByVal type2join As System.Type) As Worm.Criteria.Joins.OrmJoin()
+            Throw New NotImplementedException
+        End Function
+
+        Public Overrides Function CreateCustom(ByVal format As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As CoreFramework.Structures.Pair(Of Object, String)) As Worm.Criteria.Core.CustomFilterBase
             Throw New NotImplementedException
         End Function
     End Class

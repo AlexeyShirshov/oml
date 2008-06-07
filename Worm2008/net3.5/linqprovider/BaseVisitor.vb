@@ -402,19 +402,5 @@ Namespace Linq
             Throw New ArgumentException(String.Format("Property {0} of type {1} is not mapped", prop, t.ToString))
         End Function
 
-        Protected Function Invert(ByVal fo As FilterOperation) As FilterOperation
-            Select Case fo
-                Case FilterOperation.GreaterEqualThan
-                    Return FilterOperation.LessEqualThan
-                Case FilterOperation.GreaterThan
-                    Return FilterOperation.LessThan
-                Case FilterOperation.LessThan
-                    Return FilterOperation.GreaterThan
-                Case FilterOperation.LessEqualThan
-                    Return FilterOperation.GreaterEqualThan
-                Case Else
-                    Return fo
-            End Select
-        End Function
     End Class
 End Namespace

@@ -416,7 +416,37 @@ Namespace Linq
                 If b.Exp Is Nothing Then
                     Dim i = 10
                 Else
-                    Dim i = 10
+                    If Not String.IsNullOrEmpty(b._mem) Then
+                        If m.Expression.Type.FullName.StartsWith("System.Nullable") Then
+                            Select Case m.Member.Name
+                                Case "Value"
+                                    _exp = b._exp
+                                Case Else
+                                    Throw New NotImplementedException(String.Format( _
+                                        "Method {0} of type {1} is not implemented", m.Member.Name, m.Expression.Type.FullName))
+                            End Select
+                        ElseIf m.Expression.Type Is GetType(Date) Then
+                            Select Case m.Member.Name
+                                Case "Year"
+                                    Dim p As Pair(Of Object, String) = Nothing
+                                    Dim ev As EntityPropValue = TryCast(b._exp.Value, EntityPropValue)
+                                    If ev IsNot Nothing Then
+                                        p = New Pair(Of Object, String)(ev.OrmProp.Type, ev.OrmProp.Field)
+                                    Else
+                                        p = New Pair(Of Object, String)(ev.OrmProp.Table, ev.OrmProp.Column)
+                                    End If
+                                    _exp = New UnaryExp(New CustomValue(CType(_schema, Database.SQLGenerator).GetYear, _
+                                        New Pair(Of Object, String)() {p}))
+                                Case Else
+                                    Throw New NotImplementedException(String.Format( _
+                                        "Method {0} of type {1} is not implemented", m.Member.Name, m.Expression.Type.FullName))
+                            End Select
+                        Else
+                            Throw New NotImplementedException("Type " & m.Type.FullName & " is not implemented")
+                        End If
+                    Else
+                        _exp = b._exp
+                    End If
                     'If b._p.Type Is Nothing Then
                     '    _p = _q.GetProperty(m.Member.Name)
                     'Else
@@ -453,11 +483,13 @@ Namespace Linq
         Protected Overrides Function VisitParameter(ByVal p As System.Linq.Expressions.ParameterExpression) As System.Linq.Expressions.Expression
             If GetType(OrmBase).IsAssignableFrom(p.Type) Then
                 _exp = New UnaryExp(New EntityPropValue(p.Type, GetField(p.Type, _mem)))
+                _mem = Nothing
                 '_t = p.Type
                 '_prop = m.Member.Name
             Else
                 Dim pr As OrmProperty = _q.GetProperty(_mem)
                 _exp = New UnaryExp(New EntityPropValue(pr))
+                _mem = Nothing
                 '_prop = pr.Field
                 '_t = pr.Type
             End If
@@ -577,7 +609,7 @@ Namespace Linq
                 lf.Visit(b.Left)
                 rf.Visit(b.Right)
             End If
-            Filter = UnaryExp.CreateFilter(lf.Exp, rf.Exp, fo)
+            Filter = UnaryExp.CreateFilter(_schema, lf.Exp, rf.Exp, fo)
             'If lf.Prop IsNot Nothing Then
             '    Filter = New EntityFilter(lf.Prop.Type, lf.Prop.Field, rf.Value, fo)
             'ElseIf rf.Prop IsNot Nothing Then
@@ -631,11 +663,23 @@ Namespace Linq
 
         Private _q As Query.QueryCmdBase
         Private _so As SortOrder
-        Private _new As NewExpression
-        Private _mem As MemberExpression
+        'Private _new As NewExpression
+        'Private _mem As MemberExpression
         Private _t As Type
         Private _ct As Constr
         Private _skip As Boolean
+        Private _sel As List(Of UnaryExp)
+
+        Public Function IsSubQueryRequiredBySelect() As Boolean
+            If _sel IsNot Nothing Then
+                For Each e As UnaryExp In _sel
+                    If e.GetType Is GetType(BinaryExp) Then
+                        Return True
+                    End If
+                Next
+            End If
+            Return False
+        End Function
 
         Sub New(ByVal schema As QueryGenerator)
             MyBase.new(schema)
@@ -879,22 +923,23 @@ Namespace Linq
                     Dim aq As New Query.QueryCmdBase(Nothing)
                     'Dim al As String = Nothing
                     'Dim num As Integer
+                    Dim a As [Aggregate] = Nothing
                     If _mem Is Nothing AndAlso _new Is Nothing Then
-                        Visit(m.Arguments(1))
+                        'Visit(m.Arguments(1))
                         _q.WithLoad = False
-                        _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
-                        'If _mem IsNot Nothing Then
-                        '    al = GetField(ag.Type, ag.PropName)
-                        'End If
+                        _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {CType(ag.Exp.Value, EntityPropValue).OrmProp})
+                        a = New Aggregate(af, 0)
                     ElseIf _mem IsNot Nothing Then
                         _q.WithLoad = False
                         _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty()})
+                        a = New Aggregate(af, 0)
                     ElseIf _new IsNot Nothing Then
                         _q.WithLoad = False
-                        'num = GetIndex(ag.Type, ag.Field)
+                        Dim e As EntityPropValue = CType(ag.Exp.Value, EntityPropValue)
+                        a = New Aggregate(af, GetIndex(e.OrmProp.Type, e.OrmProp.Field))
                         _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(GetProperties())
                     End If
-                    aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, ag.Exp)})
+                    aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {a})
                     _q.OuterQuery = aq
                 Else
                     _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, ag.Exp)})

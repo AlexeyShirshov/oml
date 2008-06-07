@@ -51,19 +51,19 @@ Namespace Xml
                 MyBase.New(value, tmp)
             End Sub
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If _oschema Is Nothing Then
                     _oschema = schema.GetObjectSchema(Template.Type)
                 End If
 
-                Return MakeQueryStmt(_oschema, filterInfo, schema, almgr, pname)
+                Return MakeQueryStmt(_oschema, filterInfo, schema, almgr, pname, columns)
             End Function
 
             Protected Overrides Function _Clone() As Object
                 Return New XmlEntityFilter(val, CType(Template, XmlEntityTemplate))
             End Function
 
-            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As Orm.Meta.IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As Orm.Meta.IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If schema Is Nothing Then
                     Throw New ArgumentNullException("schema")
                 End If
