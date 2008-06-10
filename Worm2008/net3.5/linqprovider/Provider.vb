@@ -498,7 +498,7 @@ Namespace Linq
                     _exp = New UnaryExp(New EntityPropValue(pr))
                     _mem = Nothing
                 ElseIf p.Type.Name.Contains("$") Then
-                    _exp = New UnaryExp(New ComputedValue(p.Name))
+                    _exp = New UnaryExp(New ComputedValue(_mem))
                     _mem = Nothing
                 Else
                     _exp = _q.Sel(0)
@@ -812,16 +812,35 @@ Namespace Linq
         'End Function
 
         Protected Friend Function Translate(ByVal exp As UnaryExp) As UnaryExp
-            Dim c As ComputedValue = TryCast(exp.Value, ComputedValue)
-            If c IsNot Nothing AndAlso _sel IsNot Nothing Then
-                For Each e As UnaryExp In _sel
-                    If e.Alias = c.Alias Then
-                        Dim ev As EntityPropValue = TryCast(e.Value, EntityPropValue)
-                        If ev IsNot Nothing Then
-                            Return e
+
+            If _sel IsNot Nothing Then
+                Dim c As ComputedValue = TryCast(exp.Value, ComputedValue)
+                If c IsNot Nothing Then
+                    For Each e As UnaryExp In _sel
+                        If e.Alias = c.Alias Then
+                            Dim ev As EntityPropValue = TryCast(e.Value, EntityPropValue)
+                            If ev IsNot Nothing Then
+                                Return e
+                            End If
+                        End If
+                    Next
+                Else
+                    Dim be As BinaryExp = TryCast(exp, BinaryExp)
+                    If be IsNot Nothing Then
+                        Dim l As UnaryExp = Translate(be.Left)
+                        If l.Equals(be.Left) Then
+                            Dim r As UnaryExp = Translate(be.Right)
+                            If Not r.Equals(be.Right) Then
+                                exp = New BinaryExp(be.Operation, l, r)
+                                exp.Alias = be.Alias
+                            End If
+                        Else
+                            Dim r As UnaryExp = Translate(be.Right)
+                            exp = New BinaryExp(be.Operation, l, r)
+                            exp.Alias = be.Alias
                         End If
                     End If
-                Next
+                End If
             End If
 
             Return exp
@@ -911,13 +930,19 @@ Namespace Linq
             End If
             _new = nex
             For i As Integer = 0 To _new.Arguments.Count - 1
-                Dim name As String = _new.Constructor.GetParameters(i).Name
-                Dim m As MemberExpression = CType(_new.Arguments(i), MemberExpression)
-                Dim tt As Type = m.Expression.Type
-                If tt.FullName.StartsWith("Worm.Orm.OrmBaseT") Then
-                    tt = tt.GetGenericArguments(0)
-                End If
-                _sel.Add(New UnaryExp(m.Member.Name, New EntityPropValue(tt, GetField(tt, m.Member.Name))))
+                Dim s As New SimpleExpVis(_schema, Me)
+                s.Visit(_new.Arguments(i))
+                Dim e As UnaryExp = s.Exp
+                _sel.Add(e)
+                e.Alias = _new.Constructor.GetParameters(i).Name
+                _sub = _sub OrElse e.GetType IsNot GetType(UnaryExp)
+                'Dim name As String = _new.Constructor.GetParameters(i).Name
+                'Dim m As MemberExpression = CType(_new.Arguments(i), MemberExpression)
+                'Dim tt As Type = m.Expression.Type
+                'If tt.FullName.StartsWith("Worm.Orm.OrmBaseT") Then
+                '    tt = tt.GetGenericArguments(0)
+                'End If
+                '_sel.Add(New UnaryExp(m.Member.Name, New EntityPropValue(tt, GetField(tt, m.Member.Name))))
             Next
 
             Return Nothing
@@ -1002,7 +1027,6 @@ Namespace Linq
                     Me.Visit(m.Arguments(0))
                     Me.Visit(m.Arguments(1))
                     _q.WithLoad = IsLoadRequired()
-                    _q.SelectList = GetSelectList()
                 Case "Distinct"
                     Me.Visit(m.Arguments(0))
                     _q.Distinct = True
@@ -1069,7 +1093,14 @@ Namespace Linq
                     Dim a As New Aggregate(af, GetIndex(ag.Exp))
                     aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {a})
                     _q.OuterQuery = aq
-                    _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {GetProperty(ag.Exp.Alias)})
+                    Dim ev As EntityPropValue = TryCast(ag.Exp.Value, EntityPropValue)
+                    Dim pr As OrmProperty = Nothing
+                    If ev IsNot Nothing Then
+                        pr = ev.OrmProp
+                    Else
+                        pr = GetProperty(ag.Exp.Alias)
+                    End If
+                    _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {pr})
                     'If _mem Is Nothing AndAlso _new Is Nothing Then
                     '    'Visit(m.Arguments(1))
                     '    _q.WithLoad = False
