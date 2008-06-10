@@ -40,10 +40,13 @@ Public Class Expressions
             _o = operation
         End Sub
 
-        Public ReadOnly Property [Alias]() As String
+        Public Property [Alias]() As String
             Get
                 Return _alias
             End Get
+            Set(ByVal value As String)
+                _alias = value
+            End Set
         End Property
 
         Public ReadOnly Property Operation() As ExpOperation
