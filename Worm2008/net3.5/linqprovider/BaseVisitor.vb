@@ -384,7 +384,7 @@ Namespace Linq
             _schema = schema
         End Sub
 
-        Protected Function Eval(ByVal exp As Expression) As Object
+        Protected Shared Function Eval(ByVal exp As Expression) As Object
             Dim l As LambdaExpression = Expression.Lambda(exp)
             Dim f = l.Compile()
             Return f.DynamicInvoke(Nothing)

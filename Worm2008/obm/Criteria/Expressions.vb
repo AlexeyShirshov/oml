@@ -20,6 +20,7 @@ Public Class Expressions
     Public Class UnaryExp
         Private _o As ExpOperation
         Private _v As IFilterValue
+        Private _alias As String
 
         Public Sub New(ByVal operation As ExpOperation, ByVal value As IFilterValue)
             _o = operation
@@ -30,9 +31,20 @@ Public Class Expressions
             _v = value
         End Sub
 
+        Public Sub New(ByVal [alias] As String, ByVal value As IFilterValue)
+            _v = value
+            _alias = [alias]
+        End Sub
+
         Public Sub New(ByVal operation As ExpOperation)
             _o = operation
         End Sub
+
+        Public ReadOnly Property [Alias]() As String
+            Get
+                Return _alias
+            End Get
+        End Property
 
         Public ReadOnly Property Operation() As ExpOperation
             Get
