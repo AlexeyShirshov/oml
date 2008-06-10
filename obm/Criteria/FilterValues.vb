@@ -92,6 +92,26 @@ Namespace Criteria.Values
         End Function
     End Class
 
+    Public Class ComputedValue
+        Implements IFilterValue
+
+        Private _alias As String
+
+        Public Sub New(ByVal [alias] As String)
+            _alias = [alias]
+        End Sub
+
+        Public ReadOnly Property [Alias]() As String
+            Get
+                Return _alias
+            End Get
+        End Property
+
+        Public Function _ToString() As String Implements IFilterValue._ToString
+            Return _alias
+        End Function
+    End Class
+
     Public Class EntityPropValue
         Implements IFilterValue
 

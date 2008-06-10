@@ -174,7 +174,21 @@ Imports Worm.Linq
     End Sub
 
     <TestMethod()> _
-    Public Sub TestDistinct()
+   Public Sub TestSelect4()
+        Dim ctx As New WormDBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim q = From k In e Select k.Code, k.CreatedAt, k.Enum, k.EnumStr, k.ID Where CreatedAt < Now _
+                Select r = Code + ID, CreatedAt, [Enum], EnumStr _
+                Where r > 0 _
+                Select r, CreatedAt
+
+        'Dim q2 = From k In e Select From h In e Select g = k.ID + k.Code + h.ID
+    End Sub
+
+    <TestMethod()> _
+        Public Sub TestDistinct()
         Dim ctx As New WormDBContext(GetConn)
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
@@ -251,6 +265,8 @@ Imports Worm.Linq
         Assert.AreEqual(45, i)
         Assert.AreEqual(45, (From k In e Where k.Code = 45 Select k.Code).First)
 
+        i = (From k In e Select k.Code).First(Function(l) l.Value + 2 = 45)
+        Assert.IsFalse(i.HasValue)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentOutOfRangeException))> _
