@@ -133,10 +133,14 @@ Imports Worm.Linq
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
+        Dim q2 = From k In e
+
         Dim q = From k In e Where TestProject1.Enum1.first < k.Enum Order By k.ID Select k.Code
 
         Dim l = q.ToList
         Dim f = l(0)
+
+        e.Where(Function(k) (TestProject1.Enum1.first < k.Enum).Value).OrderBy(Function(k) k.ID).Select(Function(k) k.Code)
     End Sub
 
     <TestMethod()> _
@@ -712,7 +716,7 @@ Imports Worm.Linq
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
-        Dim q = (From k In e Let r = k.Name + "d" Select r).ToList
+        Dim q = (From k In e Let r = k.CreatedAt Select r).ToList
 
         Dim q2 = (From k In e Let r = k.ID + k.Code Select r).ToList
 

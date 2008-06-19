@@ -418,9 +418,9 @@ Namespace Database
                                     End If
                                 Else
 l1:
-                                    If GetType(OrmBase).IsAssignableFrom(v.GetType) Then
-                                        If CType(v, OrmBase).ObjectState = ObjectState.Created Then
-                                            Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(v, OrmBase).ObjName)
+                                    If GetType(OrmBase).IsAssignableFrom(current.GetType) Then
+                                        If CType(current, OrmBase).ObjectState = ObjectState.Created Then
+                                            Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, OrmBase).ObjName)
                                         End If
                                     End If
                                     f = New dc.EntityFilter(real_t, c.FieldName, New ScalarValue(v), FilterOperation.Equal)
