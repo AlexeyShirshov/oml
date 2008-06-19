@@ -583,7 +583,7 @@ Namespace Database
             Public Function CreateNewObject(ByVal t As Type, ByVal id As Integer) As OrmBase
                 For Each mi As Reflection.MethodInfo In Me.GetType.GetMember("CreateNewObject", Reflection.MemberTypes.Method, _
                     Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public)
-                    If mi.IsGenericMethod Then
+                    If mi.IsGenericMethod AndAlso mi.GetParameters.Length = 1 Then
                         mi = mi.MakeGenericMethod(New Type() {t})
                         Return CType(mi.Invoke(Me, New Object() {id}), OrmBase)
                     End If
