@@ -145,6 +145,7 @@
     <Compile Include="Criteria\Xml\XmlConditions.vb" />
     <Compile Include="Criteria\Xml\XmlCriteria.vb" />
     <Compile Include="Criteria\Xml\XmlFilters.vb" />
+    <Compile Include="Entity.vb" />
     <Compile Include="Managers\db\DataProviders.vb" />
     <Compile Include="Managers\xml\DataProviders.vb" />
     <Compile Include="Managers\xml\XmlManager.vb" />

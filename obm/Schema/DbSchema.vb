@@ -418,7 +418,7 @@ Namespace Database
                                     End If
                                 Else
 l1:
-                                    If GetType(OrmBase).IsAssignableFrom(current.GetType) Then
+                                    If current IsNot Nothing AndAlso GetType(OrmBase).IsAssignableFrom(current.GetType) Then
                                         If CType(current, OrmBase).ObjectState = ObjectState.Created Then
                                             Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, OrmBase).ObjName)
                                         End If
