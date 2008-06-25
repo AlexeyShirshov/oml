@@ -11,7 +11,7 @@ Imports System.Collections.Generic
 
 #Const DontUseStringIntern = True
 #Const TraceM2M = False
-#Const TraceCreation = False
+#Const TraceManagerCreation = True
 
 'Namespace Managers
 
@@ -41,8 +41,14 @@ Public NotInheritable Class OrmManagerException
     End Sub
 End Class
 
+Public Interface IGetManager
+    Inherits IDisposable
+
+    ReadOnly Property Manager() As OrmManagerBase
+End Interface
+
 Public MustInherit Class OrmManagerBase
-    Implements IDisposable
+    Implements IDisposable, IGetManager
 
 #Region " Interfaces and classes "
 
@@ -910,6 +916,9 @@ Public MustInherit Class OrmManagerBase
         End Get
     End Property
 
+    'Protected Friend _raiseCreated As Boolean
+    Public Event ObjectCreated(ByVal sender As OrmBase, ByVal mgr As OrmManagerBase)
+
     Public Event BeginUpdate(ByVal o As OrmBase)
     Public Event BeginDelete(ByVal o As OrmBase)
     'Public Event ObjectRejected(ByVal o As OrmBase)
@@ -1057,7 +1066,7 @@ _callstack = environment.StackTrace
 
     Protected Sub WriteLineInfo(ByVal str As String)
         For Each l As TraceListener In _listeners
-            l.WriteLine(Str)
+            l.WriteLine(str)
             If Trace.AutoFlush Then l.Flush()
         Next
     End Sub
@@ -1081,6 +1090,10 @@ _callstack = environment.StackTrace
 
     Friend Sub RaiseBeginDelete(ByVal o As OrmBase)
         RaiseEvent BeginDelete(o)
+    End Sub
+
+    Protected Sub RaiseObjectCreated(ByVal obj As OrmBase)
+        RaiseEvent ObjectCreated(obj, Me)
     End Sub
 
     'Public Property FindNewDelegate() As FindNew
@@ -1401,29 +1414,29 @@ _callstack = environment.StackTrace
                                 target.Add(CreateDBObject(Of T)(id))
                             End If
                         Next
-						'Cache.AddRelationValue(o.GetType, type2load)
-					Else
-						el = New EditableList(o.Identifier, New List(Of Integer), type, type2load, Nothing)
-					End If
+                        'Cache.AddRelationValue(o.GetType, type2load)
+                    Else
+                        el = New EditableList(o.Identifier, New List(Of Integer), type, type2load, Nothing)
+                    End If
 
-					If Not _dont_cache_lists Then
-						Dim tt1 As Type = o.GetType
-						Dim key As String = GetM2MKey(tt1, type2load, direct)
-						If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-							key &= criteria.Filter(type2load).ToStaticString
-						End If
+                    If Not _dont_cache_lists Then
+                        Dim tt1 As Type = o.GetType
+                        Dim key As String = GetM2MKey(tt1, type2load, direct)
+                        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+                            key &= criteria.Filter(type2load).ToStaticString
+                        End If
 
-						Dim dic As IDictionary = GetDic(_cache, key)
+                        Dim dic As IDictionary = GetDic(_cache, key)
 
-						Dim id As String = o.Identifier.ToString
-						If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-							id &= criteria.Filter(type2load).ToString
-						End If
+                        Dim id As String = o.Identifier.ToString
+                        If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
+                            id &= criteria.Filter(type2load).ToString
+                        End If
 
-						'Dim sync As String = GetSync(key, id)
-						el.Accept(Nothing)
-						dic(id) = New M2MCache(Nothing, GetFilter(criteria, type2load), el, Me)
-					End If
+                        'Dim sync As String = GetSync(key, id)
+                        el.Accept(Nothing)
+                        dic(id) = New M2MCache(Nothing, GetFilter(criteria, type2load), el, Me)
+                    End If
                 Next
             End If
         End Using
@@ -2776,7 +2789,7 @@ l1:
     End Function
 
     Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As Boolean) As String
-		Return tt1.Name & Const_JoinStaticString & direct & " - new version - " & tt2.Name & "$" & GetStaticKey()
+        Return tt1.Name & Const_JoinStaticString & direct & " - new version - " & tt2.Name & "$" & GetStaticKey()
     End Function
 
     Protected Friend Function FindMany2Many2(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal criteria As IGetFilter, _
@@ -3603,7 +3616,7 @@ l1:
     Public Overridable Function ConvertIds2Objects(Of T As {OrmBase, New})(ByVal ids As ICollection(Of Integer), ByVal check As Boolean) As ReadOnlyList(Of T)
         Dim arr As New ReadOnlyList(Of T)
 
-        
+
         If Not check Then
             Dim type As Type = GetType(T)
 
@@ -4257,6 +4270,49 @@ l1:
         Return joins.Length > 0
     End Function
 
+    Public ReadOnly Property Manager() As OrmManagerBase Implements IGetManager.Manager
+        Get
+            Return Me
+        End Get
+    End Property
 End Class
 
+Class ManagerWrapper
+    Implements IGetManager
+
+    Private _mgr As OrmManagerBase
+
+    Public Sub New(ByVal mgr As OrmManagerBase)
+        _mgr = mgr
+    End Sub
+
+    Public ReadOnly Property Manager() As OrmManagerBase Implements IGetManager.Manager
+        Get
+            Return _mgr
+        End Get
+    End Property
+
+    Private disposedValue As Boolean = False        ' To detect redundant calls
+
+    ' IDisposable
+    Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+        If Not Me.disposedValue Then
+            If disposing Then
+                ' TODO: free other state (managed objects).
+            End If
+
+        End If
+        Me.disposedValue = True
+    End Sub
+
+#Region " IDisposable Support "
+    ' This code added by Visual Basic to correctly implement the disposable pattern.
+    Public Sub Dispose() Implements IDisposable.Dispose
+        ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+        Dispose(True)
+        GC.SuppressFinalize(Me)
+    End Sub
+#End Region
+
+End Class
 'End Namespace

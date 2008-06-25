@@ -203,7 +203,9 @@ Public Class ReadOnlyList(Of T As {Orm.OrmBase, New})
     Public Function LoadObjects() As ReadOnlyList(Of T)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
-            Return o.GetMgr.LoadObjects(Of T)(Me)
+            Using mc As IGetManager = o.GetMgr()
+                Return mc.Manager.LoadObjects(Of T)(Me)
+            End Using
         Else
             Return Me
         End If
@@ -212,7 +214,9 @@ Public Class ReadOnlyList(Of T As {Orm.OrmBase, New})
     Public Function LoadObjects(ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
-            Return o.GetMgr.LoadObjects(Of T)(Me, start, length)
+            Using mc As IGetManager = o.GetMgr()
+                Return mc.Manager.LoadObjects(Of T)(Me, start, length)
+            End Using
         Else
             Return Me
         End If
@@ -221,7 +225,9 @@ Public Class ReadOnlyList(Of T As {Orm.OrmBase, New})
     Public Function LoadObjects(ByVal fields() As String, ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
-            Return o.GetMgr.LoadObjects(Of T)(Me, fields, start, length)
+            Using mc As IGetManager = o.GetMgr()
+                Return mc.Manager.LoadObjects(Of T)(Me, fields, start, length)
+            End Using
         Else
             Return Me
         End If
@@ -230,7 +236,9 @@ Public Class ReadOnlyList(Of T As {Orm.OrmBase, New})
     Public Function ApplyFilter(ByVal filter As IFilter, ByRef evaluated As Boolean) As ReadOnlyList(Of T)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
-            Return o.GetMgr.ApplyFilter(Of T)(Me, filter, evaluated)
+            Using mc As IGetManager = o.GetMgr()
+                Return mc.Manager.ApplyFilter(Of T)(Me, filter, evaluated)
+            End Using
         Else
             Return Me
         End If

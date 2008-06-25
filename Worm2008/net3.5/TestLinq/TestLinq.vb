@@ -85,6 +85,7 @@ Imports Worm.Linq
         Assert.AreEqual(1, l.Count)
         Assert.AreEqual(1, l(0).ID)
         Assert.IsFalse(l(0).InternalProperties.IsLoaded)
+        Assert.AreEqual(2, l(0).Code)
 
         Dim o = (From k In e.WithLoad Where k.Code = 2).ToList(0)
         Assert.IsTrue(o.InternalProperties.IsLoaded)

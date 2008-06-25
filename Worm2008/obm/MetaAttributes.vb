@@ -2,6 +2,11 @@ Imports System
 
 Namespace Orm.Meta
 
+    Public Delegate Function CreateValueDelegate(ByVal c As ColumnAttribute, ByVal obj As IEntity, ByVal value As Object) As Object
+
+    Public Interface ICreator
+
+    End Interface
     <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
     Public NotInheritable Class ColumnAttribute
         Inherits Attribute
@@ -12,6 +17,7 @@ Namespace Orm.Meta
         'Private _table As String
         Private _column As String
         Private _idx As Integer = -1
+        Private _del As CreateValueDelegate
 
         Public Sub New()
         End Sub
@@ -23,6 +29,12 @@ Namespace Orm.Meta
         Public Sub New(ByVal fieldName As String)
             _fieldName = fieldName
             Me._behavior = Field2DbRelations.None
+        End Sub
+
+        Public Sub New(ByVal fieldName As String, ByVal del As ICreator)
+            _fieldName = fieldName
+            Me._behavior = Field2DbRelations.None
+            _del = del
         End Sub
 
         Public Sub New(ByVal fieldName As String, ByVal behavior As Field2DbRelations)
@@ -50,6 +62,15 @@ Namespace Orm.Meta
         '    '    behavior = value
         '    'End Set
         'End Property
+
+        Public Property CreateValue() As CreateValueDelegate
+            Get
+                Return _del
+            End Get
+            Set(ByVal value As CreateValueDelegate)
+                _del = value
+            End Set
+        End Property
 
         Public Property Column() As String
             Get
@@ -96,6 +117,14 @@ Namespace Orm.Meta
         Public Overrides Function GetHashCode() As Integer
             Return _fieldName.GetHashCode
         End Function
+
+        Friend Function _CreateValue(ByVal value As Object, ByVal obj As IEntity) As Object
+            If _del IsNot Nothing Then
+                Return _del(Me, obj, value)
+            Else
+                Return value
+            End If
+        End Function
     End Class
 
     <FlagsAttribute(), CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2217")> _
@@ -118,7 +147,7 @@ Namespace Orm.Meta
         ''' <remarks></remarks>
         PrimaryKey = 37
         [Private] = 64
-        Factory = 128
+        'Factory = 128
     End Enum
 
     <AttributeUsage(AttributeTargets.Class, allowmultiple:=True, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _

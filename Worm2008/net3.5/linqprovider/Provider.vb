@@ -66,8 +66,18 @@ Namespace Linq
             End Using
         End Function
 
+        Protected Sub GetManager(ByVal o As OrmBase, ByVal args As OrmBase.ManagerRequiredArgs)
+            args.Manager = _ctx.CreateReadonlyManager
+        End Sub
+
+        Protected Sub ObjectCreated(ByVal o As OrmBase, ByVal mgr As OrmManagerBase)
+            AddHandler o.ManagerRequired, AddressOf GetManager
+        End Sub
+
         Public Function Execute(Of TResult)(ByVal expression As System.Linq.Expressions.Expression) As TResult Implements System.Linq.IQueryProvider.Execute
-            Using mgr = _ctx.CreateReadonlyManager
+            Dim mgr = _ctx.CreateReadonlyManager
+            Try
+                AddHandler mgr.ObjectCreated, AddressOf ObjectCreated
                 Dim ev As New QueryVisitor(_ctx.Schema)
                 ev.Visit(expression)
                 'Dim q As New Worm.Query.QueryCmd(Of TResult)(ev.Query)
@@ -156,7 +166,11 @@ Namespace Linq
                             Throw New NotImplementedException
                     End Select
                 End If
-            End Using
+            Finally
+                If mgr IsNot Nothing Then
+                    mgr.Dispose()
+                End If
+            End Try
         End Function
     End Class
 
