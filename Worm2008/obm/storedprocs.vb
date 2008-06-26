@@ -207,7 +207,7 @@ Namespace Database.Storedprocs
             Return l
         End Function
 
-        Public Overridable Function ValidateOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String)) As ValidateResult
+        Public Overridable Function ValidateOnUpdate(ByVal obj As CachedEntity, ByVal fields As ICollection(Of String)) As ValidateResult
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If

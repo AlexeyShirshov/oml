@@ -145,7 +145,8 @@
     <Compile Include="Criteria\Xml\XmlConditions.vb" />
     <Compile Include="Criteria\Xml\XmlCriteria.vb" />
     <Compile Include="Criteria\Xml\XmlFilters.vb" />
-    <Compile Include="Entity.vb" />
+    <Compile Include="Entity\CachedEntity.vb" />
+    <Compile Include="Entity\Entity.vb" />
     <Compile Include="Managers\db\DataProviders.vb" />
     <Compile Include="Managers\xml\DataProviders.vb" />
     <Compile Include="Managers\xml\XmlManager.vb" />
@@ -185,7 +186,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="OrmBase.vb" />
+    <Compile Include="Entity\OrmBase.vb" />
     <Compile Include="other.vb" />
     <Compile Include="search.vb" />
     <Compile Include="Schema\SQL2005Schema.vb" />

@@ -21,12 +21,12 @@ Namespace Cache
             _t = type
         End Sub
 
-        Public Sub New(ByVal o As OrmBase)
-            _id = o.Identifier
+        Public Sub New(ByVal o As ICachedEntity)
+            _id = o.Key
             _t = o.GetType
         End Sub
 
-        Public Function GetEntity() As OrmBase
+        Public Function GetEntity() As CachedEntity
             Return OrmManagerBase.CurrentManager.Find(_id, _t)
         End Function
 
@@ -247,8 +247,9 @@ Namespace Cache
 
         Public Delegate Function EnumM2MCache(ByVal entity As OrmManagerBase.M2MCache) As Boolean
 
+        Public Event RegisterEntityCreation(ByVal e As IEntity)
         Public Event RegisterObjectCreation(ByVal t As Type, ByVal id As Integer)
-        Public Event RegisterObjectRemoval(ByVal obj As OrmBase)
+        Public Event RegisterObjectRemoval(ByVal obj As CachedEntity)
         Public Event RegisterCollectionCreation(ByVal t As Type)
         Public Event RegisterCollectionRemoval(ByVal ce As OrmManagerBase.CachedItem)
 
@@ -264,7 +265,7 @@ Namespace Cache
 
         'Public Delegate Sub OnUpdateAfterDeleteEnd(ByVal o As OrmBase, ByVal mgr As OrmManagerBase)
         'Public Delegate Sub OnUpdateAfterAddEnd(ByVal o As OrmBase, ByVal mgr As OrmManagerBase, ByVal contextKey As Object)
-        Public Delegate Sub OnUpdated(ByVal o As OrmBase, ByVal mgr As OrmManagerBase, ByVal contextKey As Object)
+        Public Delegate Sub OnUpdated(ByVal o As CachedEntity, ByVal mgr As OrmManagerBase, ByVal contextKey As Object)
 
         Sub New()
             _filters = Hashtable.Synchronized(New Hashtable)
@@ -288,13 +289,13 @@ Namespace Cache
             End Using
         End Function
 
-        Public Function Modified(ByVal obj As OrmBase) As ModifiedObject
+        Public Function Modified(ByVal obj As _ICachedEntity) As ModifiedObject
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
-                Dim name As String = obj.GetType().Name & ":" & obj.Identifier
+                Dim name As String = obj.GetType().Name & ":" & obj.Key
                 Return CType(_modifiedobjects(name), ModifiedObject)
             End Using
         End Function
@@ -395,14 +396,14 @@ Namespace Cache
             Next
         End Function
 #End If
-        Protected Friend Sub UnregisterModification(ByVal obj As OrmBase)
+        Protected Friend Sub UnregisterModification(ByVal obj As CachedEntity)
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
                 If _modifiedobjects.Count > 0 Then
-                    Dim name As String = obj.GetType().Name & ":" & obj.Identifier
+                    Dim name As String = obj.GetType().Name & ":" & obj.Key
                     _modifiedobjects.Remove(name)
                     obj.RaiseCopyRemoved()
 #If TraceCreation Then
@@ -463,6 +464,10 @@ Namespace Cache
         End Function
 #End If
 
+        Public Overridable Sub RegisterCreation(ByVal obj As IEntity)
+            RaiseEvent RegisterEntityCreation(obj)
+        End Sub
+
         Public Overridable Sub RegisterCreation(ByVal t As Type, ByVal id As Integer)
             RaiseEvent RegisterObjectCreation(t, id)
 #If TraceCreation Then
@@ -470,7 +475,7 @@ Namespace Cache
 #End If
         End Sub
 
-        Public Overridable Sub RegisterRemoval(ByVal obj As OrmBase)
+        Public Overridable Sub RegisterRemoval(ByVal obj As CachedEntity)
             Debug.Assert(Modified(obj) Is Nothing)
             RaiseEvent RegisterObjectRemoval(obj)
             obj.RemoveFromCache(Me)
@@ -504,7 +509,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Friend Sub RegisterDelete(ByVal obj As OrmBase)
+        Friend Sub RegisterDelete(ByVal obj As CachedEntity)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -514,7 +519,7 @@ Namespace Cache
             Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
                 Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
                 If _trackDelete.TryGetValue(t, p) Then 'AndAlso Not p.Second.Contains(obj.Identifier)
-                    p.Second.Add(obj.Identifier)
+                    p.Second.Add(obj.Key)
                     'Else
                     '    Throw New OrmCacheException("I have to call BeginTrackDelete")
                 End If
@@ -685,7 +690,7 @@ Namespace Cache
             End Using
         End Function
 
-        Protected Friend Sub AddUpdatedFields(ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
+        Protected Friend Sub AddUpdatedFields(ByVal obj As CachedEntity, ByVal fields As ICollection(Of String))
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -1198,7 +1203,7 @@ l1:
         ''' </summary>
         ''' <param name="obj"></param>
         ''' <remarks></remarks>
-        Protected Friend Sub RemoveDepends(ByVal obj As OrmBase)
+        Protected Friend Sub RemoveDepends(ByVal obj As CachedEntity)
             Dim op As New EntityProxy(obj)
             If _object_depends.ContainsKey(op) Then
 #If DebugLocks Then
@@ -1277,7 +1282,7 @@ l1:
             End If
         End Sub
 
-        Private Sub ValidateUpdateSPByType(ByVal t As Type, ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
+        Private Sub ValidateUpdateSPByType(ByVal t As Type, ByVal obj As CachedEntity, ByVal fields As ICollection(Of String))
             Dim l As List(Of StoredProcBase) = Nothing
             If _procTypes.TryGetValue(t, l) Then
                 For Each sp As StoredProcBase In l
@@ -1302,7 +1307,7 @@ l1:
             End Using
         End Sub
 
-        Protected Friend Sub ValidateSPOnUpdate(ByVal obj As OrmBase, ByVal fields As ICollection(Of String))
+        Protected Friend Sub ValidateSPOnUpdate(ByVal obj As CachedEntity, ByVal fields As ICollection(Of String))
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
 #Else

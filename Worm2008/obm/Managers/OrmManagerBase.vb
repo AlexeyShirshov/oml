@@ -774,9 +774,9 @@ Public MustInherit Class OrmManagerBase
 
     Public Interface INewObjects
         Function GetIdentity() As Integer
-        Function GetNew(ByVal t As Type, ByVal id As Integer) As OrmBase
-        Sub AddNew(ByVal obj As OrmBase)
-        Sub RemoveNew(ByVal obj As OrmBase)
+        Function GetNew(ByVal t As Type, ByVal id As Integer) As _ICachedEntity
+        Sub AddNew(ByVal obj As _ICachedEntity)
+        Sub RemoveNew(ByVal obj As _ICachedEntity)
         Sub RemoveNew(ByVal t As Type, ByVal id As Integer)
     End Interface
 
@@ -2151,7 +2151,7 @@ l1:
         Return True
     End Function
 
-    Protected Friend Sub InvalidateCache(ByVal obj As OrmBase, ByVal upd As ICollection)
+    Protected Friend Sub InvalidateCache(ByVal obj As CachedEntity, ByVal upd As ICollection)
         Dim t As Type = obj.GetType
         Dim l As List(Of String) = Nothing
         If upd IsNot Nothing Then
@@ -2267,7 +2267,13 @@ l1:
         Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, load, checkOnCreate}, Nothing), OrmBase)
     End Function
 
-    Protected Function LoadTypeInternal(Of T As {OrmBase, New})(ByVal id As Integer, _
+    Protected Function CreateEntity(Of T As {_IEntity, New})() As T
+        Dim o As New T
+        o.Init(_cache, _schema, IdentityString)
+        Return o
+    End Function
+
+    Protected Function _LoadTypeInternal(Of T As {ICachedEntity, New})(ByVal obj As T, _
         ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Integer, T), ByVal addOnCreate As Boolean) As T
 
         Dim type As Type = GetType(T)
@@ -2278,6 +2284,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 #End If
+        Dim id As Integer = obj.Key
         Dim created As Boolean = False ', checked As Boolean = False
         Dim a As T = Nothing
         If Not dic.TryGetValue(id, a) AndAlso _newMgr IsNot Nothing Then
@@ -2292,9 +2299,7 @@ l1:
                     If QueryGenerator.GetUnions(type) IsNot Nothing Then
                         Throw New NotSupportedException
                     Else
-                        a = New T
-                        a.Init(id, _cache, _schema)
-                        a._mgrStr = IdentityString
+                        a = obj
                     End If
 
                     If load Then
@@ -2328,6 +2333,14 @@ l1:
         End If
 
         Return a
+    End Function
+
+    Protected Function LoadTypeInternal(Of T As {_ICachedEntity, New})(ByVal id As Integer, _
+        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Integer, T), ByVal addOnCreate As Boolean) As T
+
+        Dim o As T = CreateEntity(Of T)()
+        o.SetKey(id)
+        Return _LoadTypeInternal(o, load, checkOnCreate, dic, addOnCreate)
     End Function
 
     Protected Function GetObjectFromCache(Of T As {OrmBase, New})(ByVal obj As T, ByVal dic As IDictionary(Of Integer, T), _
@@ -2489,7 +2502,7 @@ l1:
         End SyncLock
     End Sub
 
-    Public Function RemoveObjectFromCache(ByVal obj As OrmBase) As Boolean
+    Public Function RemoveObjectFromCache(ByVal obj As CachedEntity) As Boolean
 
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj parameter cannot be nothing")
@@ -2504,7 +2517,7 @@ l1:
         End Using
     End Function
 
-    Protected Friend Function _RemoveObjectFromCache(ByVal obj As OrmBase) As Boolean
+    Protected Friend Function _RemoveObjectFromCache(ByVal obj As CachedEntity) As Boolean
         'Debug.Assert(Not obj.IsLoaded)
         Dim t As System.Type = obj.GetType
 
@@ -2516,7 +2529,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        Dim id As Integer = obj.Identifier
+        Dim id As Integer = obj.Key
         Dim sync_key As String = "LoadType" & id & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
@@ -2524,7 +2537,7 @@ l1:
                 Return False
             End If
 
-            dic.Remove(obj.Identifier)
+            dic.Remove(obj.Key)
 
             _cache.RemoveDepends(obj)
 
@@ -2542,7 +2555,7 @@ l1:
         Return True
     End Function
 
-    Public Function IsInCachePrecise(ByVal obj As OrmBase) As Boolean
+    Public Function IsInCachePrecise(ByVal obj As CachedEntity) As Boolean
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -2557,7 +2570,7 @@ l1:
             Throw New OrmManagerException("Collection for " & t.Name & " not exists")
         End If
 
-        Return ReferenceEquals(dic(obj.Identifier), obj)
+        Return ReferenceEquals(dic(obj.Key), obj)
     End Function
 
     Public Function IsInCache(ByVal id As Integer, ByVal t As Type) As Boolean
@@ -3934,7 +3947,7 @@ l1:
     Protected MustOverride Function GetObjects(Of T As {OrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Integer), ByVal f As IFilter, _
        ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Integer, EditableList)
 
-    Protected Friend MustOverride Sub LoadObject(ByVal obj As OrmBase)
+    Protected Friend MustOverride Sub LoadObject(ByVal obj As ICachedEntity)
 
     Protected Friend MustOverride Function LoadObjectsInternal(Of T As {OrmBase, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
@@ -3946,7 +3959,7 @@ l1:
 
     Protected Friend MustOverride Sub DeleteObject(ByVal obj As OrmBase)
 
-    Protected MustOverride Sub M2MSave(ByVal obj As OrmBase, ByVal t As Type, ByVal direct As Boolean, ByVal el As EditableList)
+    Protected MustOverride Sub M2MSave(ByVal obj As OrmBase, ByVal t As Type, ByVal direct As Boolean, ByVal el As EditableListBase)
 
     'Protected MustOverride Function FindObmsByOwnerInternal(ByVal id As Integer, ByVal original_type As Type, ByVal type As Type, ByVal sort As String, ByVal sort_type As SortType) As OrmBase()
 

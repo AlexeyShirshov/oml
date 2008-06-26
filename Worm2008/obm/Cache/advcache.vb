@@ -156,8 +156,8 @@ Namespace Cache
             Private t As Type
             Private ref As WeakReference
 
-            Public Sub New(ByVal o As OrmBase)
-                id = o.Identifier
+            Public Sub New(ByVal o As _ICachedEntity)
+                id = o.Key
                 t = o.GetType
                 ref = New WeakReference(o)
             End Sub
@@ -173,8 +173,8 @@ Namespace Cache
                 Return o
             End Function
 
-            Public Function GetObject(ByVal mc As OrmManagerBase) As OrmBase
-                Dim o As OrmBase = CType(ref.Target, OrmBase)
+            Public Function GetObject(ByVal mc As OrmManagerBase) As _ICachedEntity
+                Dim o As _ICachedEntity = CType(ref.Target, _ICachedEntity)
                 If o Is Nothing Then
                     o = mc.CreateDBObject(id, t) 'mc.FindObject(id, t)
                     If o Is Nothing AndAlso mc.NewObjectManager IsNot Nothing Then

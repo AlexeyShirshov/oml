@@ -2138,7 +2138,7 @@ l1:
             Return sb.ToString
         End Function
 
-        Public Function SaveM2M(ByVal obj As OrmBase, ByVal relation As M2MRelation, ByVal entry As EditableList, _
+        Public Function SaveM2M(ByVal obj As OrmBase, ByVal relation As M2MRelation, ByVal entry As EditableListBase, _
             ByVal pmgr As ParamMgr) As String
 
             If obj Is Nothing Then

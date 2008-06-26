@@ -300,11 +300,11 @@ Namespace Xml
                                 Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                             End If
                             obj.SetValue(_schema.GetProperty(original_type, c), c, nodes.Current.Value)
-                            obj.SetLoaded(c, True)
+                            obj.SetLoaded(c, True, True)
                             sn = True
                         Loop
                     Else
-                        obj.SetLoaded(c, True)
+                        obj.SetLoaded(c, True, True)
                     End If
                 Next
                 obj._loading = False

@@ -88,13 +88,7 @@ Public Class Table3
         End Select
     End Sub
 
-    Protected Function CreateValueDelegate(ByVal c As ColumnAttribute, ByVal obj As IEntity, ByVal value As Object) As Object
-
-    End Function
-
-    Private Const c As ICreator = New cls
-
-    <Column("Ref", c)> _
+    <Column("Ref", Field2DbRelations.Factory)> _
     Public Property RefObject() As OrmBase
         Get
             Using SyncHelper(True, "Ref")
