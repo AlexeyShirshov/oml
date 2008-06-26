@@ -727,7 +727,7 @@ Public MustInherit Class QueryGenerator
     '    Return arr.ToArray
     'End Function
 
-    Public Shared Function GetFieldValueSchemaless(ByVal obj As OrmBase, ByVal fieldName As String, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Object
+    Public Shared Function GetFieldValueSchemaless(ByVal obj As Entity, ByVal fieldName As String, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -745,7 +745,7 @@ Public MustInherit Class QueryGenerator
         End Using
     End Function
 
-    Public Function GetFieldValue(ByVal obj As OrmBase, ByVal fieldName As String, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Object
+    Public Function GetFieldValue(ByVal obj As Entity, ByVal fieldName As String, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If

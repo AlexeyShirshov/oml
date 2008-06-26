@@ -219,7 +219,7 @@ Namespace Database
             Return True
         End Function
 
-        Protected Overrides Sub M2MSave(ByVal obj As OrmBase, ByVal t As Type, ByVal direct As Boolean, ByVal el As EditableList)
+        Protected Overrides Sub M2MSave(ByVal obj As OrmBase, ByVal t As Type, ByVal direct As Boolean, ByVal el As EditableListBase)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If

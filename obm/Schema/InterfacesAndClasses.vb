@@ -11,6 +11,7 @@ Namespace Orm.Meta
 
 #Region " Interfaces "
 
+    <Obsolete()> _
     Public Interface IRelation
         Structure RelationDesc
             Public PropertyName As String
@@ -80,6 +81,22 @@ Namespace Orm.Meta
     Public Interface IReadonlyObjectSchema
         Function GetEditableSchema() As IRelMapObjectSchema
     End Interface
+
+    Public Interface IDBValueFilter
+        Function CreateValue(ByVal c As ColumnAttribute, ByVal obj As IEntity, ByVal value As Object) As Object
+    End Interface
+
+    Public Interface IFactory
+        Sub CreateObject(ByVal field As String, ByVal value As Object)
+    End Interface
+
+    'Public Interface IGetFilterValue
+    '    ReadOnly Property FilterValue() As IDBValueFilter
+    'End Interface
+
+    'Public Interface IGetFactory
+    '    ReadOnly Property Factory() As IFactory
+    'End Interface
 
     'Public Interface IOrmTableFunction
     '    Function GetFunction(ByVal table As SourceFragment, ByVal pmgr As ParamMgr) As SourceFragment

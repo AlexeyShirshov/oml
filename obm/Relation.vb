@@ -4,19 +4,142 @@ Imports Worm.Orm.Meta
 Imports Worm.Orm
 
 Namespace Cache
+    Public Class EditableListBase
+        Protected _mainId As Integer
+        Protected _addedList As New List(Of Integer)
+        Protected _deletedList As New List(Of Integer)
+        Protected _mainType As Type
+        Protected _subType As Type
+        Private _new As Generic.List(Of Integer)
+
+        Private _syncRoot As New Object
+
+        Public ReadOnly Property Deleted() As IList(Of Integer)
+            Get
+                Return _deletedList
+            End Get
+        End Property
+
+        Public ReadOnly Property Added() As IList(Of Integer)
+            Get
+                Return _addedList
+            End Get
+        End Property
+
+        Public ReadOnly Property HasDeleted() As Boolean
+            Get
+                Return _deletedList.Count > 0
+            End Get
+        End Property
+
+        Public ReadOnly Property HasAdded() As Boolean
+            Get
+                Return _addedList.Count > 0
+            End Get
+        End Property
+
+        Public Sub Reject(ByVal rejectDual As Boolean)
+            Using SyncRoot
+                If rejectDual Then
+                    For Each id As Integer In _addedList
+                        RejectRelated(id, True)
+                    Next
+                End If
+                _addedList.Clear()
+                If rejectDual Then
+                    For Each id As Integer In _deletedList
+                        RejectRelated(id, False)
+                    Next
+                End If
+                _deletedList.Clear()
+                RemoveNew()
+            End Using
+        End Sub
+
+        Public Sub AddRange(ByVal ids As IEnumerable(Of Integer))
+            For Each id As Integer In ids
+                Add(id)
+            Next
+        End Sub
+
+        Public Sub Add(ByVal id As Integer)
+            Using SyncRoot
+                If _deletedList.Contains(id) Then
+                    _deletedList.Remove(id)
+                Else
+                    PreAdd(id)
+                    _addedList.Add(id)
+                End If
+            End Using
+        End Sub
+
+        Public Sub Add(ByVal id As Integer, ByVal idx As Integer)
+            Using SyncRoot
+                If _deletedList.Contains(id) Then
+                    _deletedList.Remove(id)
+                Else
+                    _addedList.Insert(idx, id)
+                End If
+            End Using
+        End Sub
+
+        Public Sub Delete(ByVal id As Integer)
+            Using SyncRoot
+                If _addedList.Contains(id) Then
+                    _addedList.Remove(id)
+                Else
+                    _deletedList.Add(id)
+                End If
+            End Using
+        End Sub
+
+        Protected Sub RejectRelated(ByVal id As Integer, ByVal add As Boolean)
+            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
+
+            Dim l As IList(Of Integer) = m.Entry.Added
+            If Not add Then
+                l = m.Entry.Deleted
+            End If
+            If l.Contains(_mainId) Then
+                l.Remove(_mainId)
+            End If
+
+        End Sub
+
+        Protected Sub RemoveNew()
+            If _new IsNot Nothing Then
+                _new.Clear()
+            End If
+        End Sub
+
+        Protected Overridable Sub PreAdd(ByVal id As Integer)
+
+        End Sub
+
+        Protected ReadOnly Property SyncRoot() As IDisposable
+            Get
+#If DebugLocks Then
+                Return New CSScopeMgr_DebugWithStack(_syncRoot, "d:\temp\")
+#Else
+                Return New CSScopeMgr(_syncRoot)
+#End If
+            End Get
+        End Property
+    End Class
+
     Public Class EditableList
-        Private _mainId As Integer
+        Inherits EditableListBase
+
+        'Private _mainId As Integer
         Private _mainList As IList(Of Integer)
-        Private _addedList As New List(Of Integer)
-        Private _deletedList As New List(Of Integer)
+        'Private _addedList As New List(Of Integer)
+        'Private _deletedList As New List(Of Integer)
         Private _key As String
         Private _saved As Boolean
-        Private _mainType As Type
-        Private _subType As Type
-        Private _new As Generic.List(Of Integer)
         Private _sort As Sort
         Private _cantgetCurrent As Boolean
-        Private _syncRoot As New Object
+
 
         Private ReadOnly Property _non_direct() As Boolean
             Get
@@ -125,30 +248,6 @@ Namespace Cache
         Public ReadOnly Property Original() As IList(Of Integer)
             Get
                 Return _mainList
-            End Get
-        End Property
-
-        Public ReadOnly Property Deleted() As IList(Of Integer)
-            Get
-                Return _deletedList
-            End Get
-        End Property
-
-        Public ReadOnly Property Added() As IList(Of Integer)
-            Get
-                Return _addedList
-            End Get
-        End Property
-
-        Public ReadOnly Property HasDeleted() As Boolean
-            Get
-                Return _deletedList.Count > 0
-            End Get
-        End Property
-
-        Public ReadOnly Property HasAdded() As Boolean
-            Get
-                Return _addedList.Count > 0
             End Get
         End Property
 
@@ -319,87 +418,35 @@ Namespace Cache
             Return True
         End Function
 
-        Public Sub Reject(ByVal rejectDual As Boolean)
-            Using SyncRoot
-                If rejectDual Then
-                    For Each id As Integer In _addedList
-                        RejectRelated(id, True)
-                    Next
-                End If
-                _addedList.Clear()
-                If rejectDual Then
-                    For Each id As Integer In _deletedList
-                        RejectRelated(id, False)
-                    Next
-                End If
-                _deletedList.Clear()
-                RemoveNew()
-            End Using
-        End Sub
-
-        Public Sub AddRange(ByVal ids As IEnumerable(Of Integer))
-            For Each id As Integer In ids
-                Add(id)
-            Next
-        End Sub
-
-        Public Sub Add(ByVal id As Integer)
-            Using SyncRoot
-                If _deletedList.Contains(id) Then
-                    _deletedList.Remove(id)
-                Else
-                    If _sort IsNot Nothing Then
-                        Dim sr As IOrmSorting = Nothing
-                        Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
-                        Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _addedList, False))
-                        If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
-                            Dim c As IComparer = Nothing
-                            If sr Is Nothing Then
-                                c = New OrmComparer(Of OrmBase)(_subType, _sort)
-                            Else
-                                c = sr.CreateSortComparer(_sort)
-                            End If
-                            If c IsNot Nothing Then
-                                Dim pos As Integer = col.BinarySearch(mgr.CreateDBObject(id, _subType), c)
-                                If pos < 0 Then
-                                    _addedList.Insert(Not pos, id)
-                                    Return
-                                End If
-                            Else
-                                _cantgetCurrent = True
-                            End If
-                        Else
-                            _cantgetCurrent = True
-                        End If
-                    End If
-                    _addedList.Add(id)
-                End If
-            End Using
-        End Sub
-
-        Public Sub Add(ByVal id As Integer, ByVal idx As Integer)
-            Using SyncRoot
-                If _deletedList.Contains(id) Then
-                    _deletedList.Remove(id)
-                Else
-                    _addedList.Insert(idx, id)
-                End If
-            End Using
-        End Sub
-
-        Public Sub Delete(ByVal id As Integer)
-            Using SyncRoot
-                If _addedList.Contains(id) Then
-                    _addedList.Remove(id)
-                Else
-                    _deletedList.Add(id)
-                End If
-            End Using
-        End Sub
-
 #End Region
 
 #Region " Protected functions "
+        Protected Overrides Sub PreAdd(ByVal id As Integer)
+            If _sort IsNot Nothing Then
+                Dim sr As IOrmSorting = Nothing
+                Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+                Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _addedList, False))
+                If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
+                    Dim c As IComparer = Nothing
+                    If sr Is Nothing Then
+                        c = New OrmComparer(Of OrmBase)(_subType, _sort)
+                    Else
+                        c = sr.CreateSortComparer(_sort)
+                    End If
+                    If c IsNot Nothing Then
+                        Dim pos As Integer = col.BinarySearch(mgr.CreateDBObject(id, _subType), c)
+                        If pos < 0 Then
+                            _addedList.Insert(Not pos, id)
+                            Return
+                        End If
+                    Else
+                        _cantgetCurrent = True
+                    End If
+                Else
+                    _cantgetCurrent = True
+                End If
+            End If
+        End Sub
 
         Protected Sub AcceptDual()
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
@@ -414,20 +461,6 @@ Namespace Cache
                     End If
                 End If
             Next
-        End Sub
-
-        Protected Sub RejectRelated(ByVal id As Integer, ByVal add As Boolean)
-            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
-            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
-
-            Dim l As IList(Of Integer) = m.Entry.Added
-            If Not add Then
-                l = m.Entry.Deleted
-            End If
-            If l.Contains(_mainId) Then
-                l.Remove(_mainId)
-            End If
-
         End Sub
 
         Protected Function GetRealDirect() As Boolean
@@ -497,12 +530,6 @@ Namespace Cache
             End If
         End Sub
 
-        Protected Sub RemoveNew()
-            If _new IsNot Nothing Then
-                _new.Clear()
-            End If
-        End Sub
-
 #End Region
 
 #Region " Protected properties "
@@ -514,17 +541,6 @@ Namespace Cache
             Set(ByVal value As Boolean)
                 _saved = value
             End Set
-        End Property
-
-
-        Protected ReadOnly Property SyncRoot() As IDisposable
-            Get
-#If DebugLocks Then
-                Return New CSScopeMgr_DebugWithStack(_syncRoot, "d:\temp\")
-#Else
-                Return New CSScopeMgr(_syncRoot)
-#End If
-            End Get
         End Property
 
 #End Region

@@ -71,7 +71,7 @@ Namespace Orm
     ''' </remarks>
     <Serializable()> _
     Public MustInherit Class OrmBase
-        Implements IComparable, Serialization.IXmlSerializable, ICloneable
+        Inherits CachedEntity
 
 #Region " Classes "
         <EditorBrowsable(EditorBrowsableState.Never)> _
@@ -870,6 +870,12 @@ Namespace Orm
         '    End Get
         'End Property
 
+        Private ReadOnly Property _os() As ObjectState Implements IEntity.ObjectState
+            Get
+                Return ObjectState
+            End Get
+        End Property
+
         Protected Friend Property ObjectState() As ObjectState
             Get
                 Return _state
@@ -1049,7 +1055,7 @@ Namespace Orm
             End Set
         End Property
 
-        Friend Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, Optional ByVal check As Boolean = True) As Boolean
+        Friend Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean) As Boolean Implements IEntity.SetLoaded
 
             Dim idx As Integer = c.Index
             If idx = -1 Then
@@ -1071,7 +1077,7 @@ Namespace Orm
             End If
         End Function
 
-        Friend Function CheckIsAllLoaded(ByVal schema As QueryGenerator, ByVal loadedColumns As Integer) As Boolean
+        Friend Function CheckIsAllLoaded(ByVal schema As QueryGenerator, ByVal loadedColumns As Integer) As Boolean Implements IEntity.CheckIsAllLoaded
             Using SyncHelper(False)
                 Dim allloaded As Boolean = True
                 If Not _loaded OrElse _loaded_members.Count <= loadedColumns Then
@@ -1571,7 +1577,7 @@ Namespace Orm
             End Set
         End Property
 
-        Friend Function GetSyncRoot() As IDisposable
+        Friend Function GetSyncRoot() As IDisposable Implements IEntity.GetSyncRoot
             Return SyncHelper(False)
         End Function
 
@@ -1936,7 +1942,7 @@ Namespace Orm
             End Using
         End Function
 
-        Public Overridable Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
+        Public Overridable Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object) Implements IEntity.SetValue
             If pi Is Nothing Then
                 Throw New ArgumentNullException("pi")
             End If
@@ -1944,7 +1950,7 @@ Namespace Orm
             pi.SetValue(Me, value, Nothing)
         End Sub
 
-        Public Overridable Function GetValue(ByVal propAlias As String) As Object
+        Public Overridable Function GetValue(ByVal propAlias As String) As Object Implements IEntity.GetValue
             If propAlias = "ID" Then
                 'Throw New OrmObjectException("Use Identifier property to get ID")
                 Return Identifier
@@ -1958,7 +1964,7 @@ Namespace Orm
             End If
         End Function
 
-        Public Overridable Function GetValue(ByVal propAlias As String, ByVal schema As IOrmObjectSchemaBase) As Object
+        Public Overridable Function GetValue(ByVal propAlias As String, ByVal schema As IOrmObjectSchemaBase) As Object Implements IEntity.GetValue
             If propAlias = "ID" Then
                 'Throw New OrmObjectException("Use Identifier property to get ID")
                 Return Identifier
@@ -2082,13 +2088,13 @@ l1:
                     Dim x As New XmlDocument
                     x.LoadXml(reader.Value)
                     pi.SetValue(Me, x, Nothing)
-                    SetLoaded(c, True)
+                    SetLoaded(c, True, True)
                 Case XmlNodeType.Text
                     Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
                     Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
                     Dim v As String = reader.Value
                     pi.SetValue(Me, Convert.FromBase64String(CStr(v)), Nothing)
-                    SetLoaded(c, True)
+                    SetLoaded(c, True, True)
                     'Using ms As New IO.MemoryStream(Convert.FromBase64String(CStr(v)))
                     '    Dim f As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
                     '    pi.SetValue(Me, f.Deserialize(ms), Nothing)
@@ -2100,10 +2106,16 @@ l1:
         Protected Sub ReadValues(ByVal reader As XmlReader)
             With reader
                 .MoveToFirstAttribute()
-                Do
-                    Dim t As Type = Me.GetType
+                Dim t As Type = Me.GetType
+                Dim oschema As IOrmObjectSchemaBase = Nothing
+                If OrmSchema IsNot Nothing Then
+                    oschema = OrmSchema.GetObjectSchema(t)
+                End If
 
-                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(t, .Name)
+                Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
+                Do
+
+                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(t, oschema, .Name)
                     Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(t, .Name)
 
                     Dim att As Field2DbRelations = OrmSchema.GetAttributes(t, c)
@@ -2111,7 +2123,10 @@ l1:
 
                     'Me.IsLoaded = not_pk
 
-                    Dim value As String = c._CreateValue(.Value, Me)
+                    Dim value As String = .Value
+                    If fv IsNot Nothing Then
+                        value = CStr(fv.CreateValue(c, Me, value))
+                    End If
 
                     If GetType(OrmBase).IsAssignableFrom(pi.PropertyType) Then
                         'If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
@@ -2122,7 +2137,7 @@ l1:
                             Dim v As OrmBase = mc.Manager.CreateDBObject(CInt(value), pi.PropertyType)
                             If pi IsNot Nothing Then
                                 pi.SetValue(Me, v, Nothing)
-                                SetLoaded(c, True)
+                                SetLoaded(c, True, True)
                             End If
                         End Using
                         'End If
@@ -2130,7 +2145,7 @@ l1:
                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                         If pi IsNot Nothing Then
                             pi.SetValue(Me, v, Nothing)
-                            SetLoaded(c, True)
+                            SetLoaded(c, True, True)
                         End If
                     End If
 
@@ -2279,6 +2294,25 @@ l1:
         Protected Friend Overridable Function ValidateDelete(ByVal mgr As OrmManagerBase) As Boolean
             Return True
         End Function
+
+        Public Sub BeginLoading() Implements IEntity.BeginLoading
+            _loading = True
+        End Sub
+
+        Public Sub CreateCopyForSaveNewEntry() Implements IEntity.CreateCopyForSaveNewEntry
+            Dim modified As OrmBase = CreateOriginalVersion()
+            ObjectState = Orm.ObjectState.Modified
+            Using mc As IGetManager = GetMgr()
+                mc.Manager.Cache.RegisterModification(modified, Key, ModifiedObject.ReasonEnum.Unknown)
+                'If Not _loading AndAlso reason <> ModifiedObject.ReasonEnum.Delete Then
+                '    mc.Manager.RaiseBeginUpdate(Me)
+                'End If
+            End Using
+        End Sub
+
+        Public Sub EndLoading() Implements IEntity.EndLoading
+            _loading = False
+        End Sub
     End Class
 
     Public Enum ObjectState
