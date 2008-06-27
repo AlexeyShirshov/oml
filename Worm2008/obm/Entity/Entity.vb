@@ -8,13 +8,13 @@ Namespace Orm
         Sub BeginLoading()
         Sub EndLoading()
         Sub Init(ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
+        Function GetMgr() As IGetManager
     End Interface
 
     Public Interface IEntity
         Inherits ICloneable
-        Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
-        Function GetValue(ByVal propAlias As String) As Object
-        Function GetValue(ByVal propAlias As String, ByVal schema As IOrmObjectSchemaBase) As Object
+        Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IOrmObjectSchemaBase, ByVal value As Object)
+        Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IOrmObjectSchemaBase) As Object
         Function GetSyncRoot() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
     End Interface
@@ -22,10 +22,10 @@ Namespace Orm
     Public Interface _ICachedEntity
         Inherits ICachedEntity
         Sub PKLoaded()
-        Sub SetKey(ByVal key As Integer)
         Sub SetLoaded(ByVal value As Boolean)
         Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean) As Boolean
         Function CheckIsAllLoaded(ByVal schema As QueryGenerator, ByVal loadedColumns As Integer) As Boolean
+        ReadOnly Property IsPKLoaded() As Boolean
     End Interface
 
     Public Interface ICachedEntity
@@ -35,6 +35,13 @@ Namespace Orm
         Sub CreateCopyForSaveNewEntry()
         Sub Load()
         Sub RemoveFromCache(ByVal cache As OrmCacheBase)
+        Function GetPKValues() As Pair(Of String, Object)()
+    End Interface
+
+    Public Interface IOrmBase
+        Inherits _ICachedEntity
+        Overloads Sub Init(ByVal id As Object, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
+        Property Identifier() As Object
     End Interface
 
     <Serializable()> _
@@ -193,7 +200,7 @@ Public Class Entity
             Return d
         End Function
 
-        Protected Friend Function GetMgr() As IGetManager
+        Protected Function GetMgr() As IGetManager Implements _IEntity.GetMgr
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
             If Not String.IsNullOrEmpty(_mgrStr) Then
                 Do While mgr IsNot Nothing AndAlso mgr.IdentityString <> _mgrStr
@@ -250,7 +257,7 @@ Public Class Entity
                 For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                    sb.Append(c.FieldName).Append("=").Append(GetValue(c.FieldName)).Append(";")
+                    sb.Append(c.FieldName).Append("=").Append(QueryGenerator.GetFieldValue(Me, c.FieldName, pi)).Append(";")
                 Next
             End Using
             Return sb.ToString
@@ -260,21 +267,16 @@ Public Class Entity
             Return SyncHelper(False)
         End Function
 
-        Public Function GetValue(ByVal propAlias As String) As Object Implements _IEntity.GetValue
-            Dim s As QueryGenerator = OrmSchema
-            If s Is Nothing Then
-                Return QueryGenerator.GetFieldValueSchemaless(Me, propAlias)
-            Else
-                Return s.GetFieldValue(Me, propAlias, Nothing)
-            End If
+        Public Function GetValue(ByVal fieldName As String) As Object
+            Return GetValue(Nothing, New ColumnAttribute(fieldName), Nothing)
         End Function
 
-        Public Function GetValue(ByVal propAlias As String, ByVal schema As Meta.IOrmObjectSchemaBase) As Object Implements _IEntity.GetValue
+        Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IOrmObjectSchemaBase) As Object Implements IEntity.GetValue
             Dim s As QueryGenerator = OrmSchema
             If s Is Nothing Then
-                Return QueryGenerator.GetFieldValueSchemaless(Me, propAlias, schema)
+                Return QueryGenerator.GetFieldValueSchemaless(Me, c.FieldName, oschema, pi)
             Else
-                Return s.GetFieldValue(Me, propAlias, schema)
+                Return s.GetFieldValue(Me, c.FieldName, oschema, pi)
             End If
         End Function
 
@@ -305,7 +307,7 @@ Public Class Entity
             End Using
         End Sub
 
-        Public Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal value As Object) Implements _IEntity.SetValue
+        Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As IOrmObjectSchemaBase, ByVal value As Object) Implements IEntity.SetValue
             If pi Is Nothing Then
                 Throw New ArgumentNullException("pi")
             End If
@@ -337,11 +339,12 @@ Public Class Entity
 
         Protected Overridable Sub CopyBodyInternal(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
             Using mc As IGetManager = GetMgr()
+                Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
                 [to].BeginLoading()
                 For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                    [to].SetValue(pi, c, [from].GetValue(c.FieldName))
+                    [to].SetValue(pi, c, oschema, [from].GetValue(pi, c, oschema))
                 Next
                 [to].EndLoading()
             End Using

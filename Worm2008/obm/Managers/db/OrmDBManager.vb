@@ -19,7 +19,7 @@ Namespace Database
             MyBase.New(schema, connectionString)
         End Sub
 
-        Protected Friend Overrides Function UpdateObject(ByVal obj As OrmBase) As Boolean
+        Protected Friend Overrides Function UpdateObject(ByVal obj As ICachedEntity) As Boolean
             Invariant()
 
             If obj Is Nothing Then

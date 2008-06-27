@@ -13,16 +13,16 @@ Namespace Cache
 
     <Serializable()> _
     Public Class EntityProxy
-        Private _id As Integer
+        Private _id() As Pair(Of String, Object)
         Private _t As Type
 
-        Public Sub New(ByVal id As Integer, ByVal type As Type)
+        Public Sub New(ByVal id() As Pair(Of String, Object), ByVal type As Type)
             _id = id
             _t = type
         End Sub
 
         Public Sub New(ByVal o As ICachedEntity)
-            _id = o.Key
+            _id = o.GetPKValues
             _t = o.GetType
         End Sub
 
@@ -36,7 +36,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public ReadOnly Property ID() As Integer
+        Public ReadOnly Property ID() As Pair(Of String, Object)()
             Get
                 Return _id
             End Get
@@ -50,11 +50,39 @@ Namespace Cache
             If obj Is Nothing Then
                 Return False
             End If
-            Return _t Is obj._t AndAlso _id = obj._id
+            Return _t Is obj._t AndAlso IdEquals(obj.ID)
+        End Function
+
+        Protected Function IdEquals(ByVal ids() As Pair(Of String, Object)) As Boolean
+            If _id.Length <> ids.Length Then Return False
+            For i As Integer = 0 To _id.Length - 1
+                Dim p As Pair(Of String, Object) = _id(i)
+                Dim p2 As Pair(Of String, Object) = ids(i)
+                If p.First <> p2.First OrElse Not p.Second.Equals(p.Second) Then
+                    Return False
+                End If
+            Next
+            Return True
         End Function
 
         Public Overrides Function GetHashCode() As Integer
-            Return _t.GetHashCode() Xor _id.GetHashCode
+            Return _t.GetHashCode() Xor GetIdsHashCode
+        End Function
+
+        Protected Function GetIdsHashCode() As Integer
+            Return GetIdsString.GetHashCode
+        End Function
+
+        Protected Function GetIdsString() As String
+            Dim sb As New StringBuilder
+            For Each p As Pair(Of String, Object) In _id
+                sb.Append(p.First).Append(":").Append(p.Second).Append(",")
+            Next
+            Return sb.ToString
+        End Function
+
+        Public Overrides Function ToString() As String
+            Return _t.ToString & "^" & GetIdsString()
         End Function
     End Class
 
@@ -145,6 +173,7 @@ Namespace Cache
     End Interface
 
     Public MustInherit Class OrmCacheBase
+        Inherits ReadonlyCache
 
 #Region " Classes "
 
@@ -204,9 +233,9 @@ Namespace Cache
 
 #End Region
 
-        Public ReadOnly DateTimeCreated As Date
+        'Public ReadOnly DateTimeCreated As Date
 
-        Protected _filters As IDictionary
+        'Protected _filters As IDictionary
         Private _modifiedobjects As IDictionary
         'Private _invalidate_types As New List(Of Type)
         ''' <summary>
@@ -247,9 +276,7 @@ Namespace Cache
 
         Public Delegate Function EnumM2MCache(ByVal entity As OrmManagerBase.M2MCache) As Boolean
 
-        Public Event RegisterEntityCreation(ByVal e As IEntity)
-        Public Event RegisterObjectCreation(ByVal t As Type, ByVal id As Integer)
-        Public Event RegisterObjectRemoval(ByVal obj As CachedEntity)
+        Public Event RegisterObjectRemoval(ByVal obj As ICachedEntity)
         Public Event RegisterCollectionCreation(ByVal t As Type)
         Public Event RegisterCollectionRemoval(ByVal ce As OrmManagerBase.CachedItem)
 
@@ -268,8 +295,9 @@ Namespace Cache
         Public Delegate Sub OnUpdated(ByVal o As CachedEntity, ByVal mgr As OrmManagerBase, ByVal contextKey As Object)
 
         Sub New()
-            _filters = Hashtable.Synchronized(New Hashtable)
-            DateTimeCreated = Now
+            MyBase.new()
+            '_filters = Hashtable.Synchronized(New Hashtable)
+            'DateTimeCreated = Now
             _modifiedobjects = Hashtable.Synchronized(New Hashtable)
             _list_converter = CreateListConverter()
         End Sub
@@ -289,7 +317,7 @@ Namespace Cache
             End Using
         End Function
 
-        Public Function Modified(ByVal obj As _ICachedEntity) As ModifiedObject
+        Public Function Modified(ByVal obj As ICachedEntity) As ModifiedObject
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
@@ -310,14 +338,14 @@ Namespace Cache
             End Get
         End Property
 
-        Protected Friend Function RegisterModification(ByVal obj As OrmBase, ByVal reason As ModifiedObject.ReasonEnum) As ModifiedObject
+        Protected Friend Function RegisterModification(ByVal obj As _ICachedEntity, ByVal reason As ModifiedObject.ReasonEnum) As ModifiedObject
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
                 Dim mo As ModifiedObject = Nothing
-                Dim name As String = obj.GetType().Name & ":" & obj.Identifier
+                Dim name As String = obj.GetType().Name & ":" & obj.Key
                 'Using SyncHelper.AcquireDynamicLock(name)
                 Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
                 Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
@@ -464,18 +492,7 @@ Namespace Cache
         End Function
 #End If
 
-        Public Overridable Sub RegisterCreation(ByVal obj As IEntity)
-            RaiseEvent RegisterEntityCreation(obj)
-        End Sub
-
-        Public Overridable Sub RegisterCreation(ByVal t As Type, ByVal id As Integer)
-            RaiseEvent RegisterObjectCreation(t, id)
-#If TraceCreation Then
-            _added.add(new Pair(Of date,Pair(Of type,Integer))(Now,New Pair(Of type,Integer)(t,id)))
-#End If
-        End Sub
-
-        Public Overridable Sub RegisterRemoval(ByVal obj As CachedEntity)
+        Public Overridable Sub RegisterRemoval(ByVal obj As ICachedEntity)
             Debug.Assert(Modified(obj) Is Nothing)
             RaiseEvent RegisterObjectRemoval(obj)
             obj.RemoveFromCache(Me)
@@ -527,14 +544,14 @@ Namespace Cache
 
         End Sub
 
-        Friend Function IsDeleted(ByVal obj As OrmBase) As Boolean
+        Friend Function IsDeleted(ByVal obj As ICachedEntity) As Boolean
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
 
             Dim t As Type = obj.GetType
 
-            Return IsDeleted(t, obj.Identifier)
+            Return IsDeleted(t, obj.Key)
         End Function
 
         Friend Function IsDeleted(ByVal t As Type, ByVal id As Integer) As Boolean
@@ -1203,7 +1220,7 @@ l1:
         ''' </summary>
         ''' <param name="obj"></param>
         ''' <remarks></remarks>
-        Protected Friend Sub RemoveDepends(ByVal obj As CachedEntity)
+        Protected Friend Sub RemoveDepends(ByVal obj As ICachedEntity)
             Dim op As New EntityProxy(obj)
             If _object_depends.ContainsKey(op) Then
 #If DebugLocks Then
@@ -1396,7 +1413,7 @@ l1:
 
         Public ReadOnly User As Object
         <CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104")> _
-        Public ReadOnly Obj As OrmBase
+        Public ReadOnly Obj As _ICachedEntity
         Public ReadOnly DateTime As Date
 
         Public ReadOnly Reason As ReasonEnum
@@ -1409,7 +1426,7 @@ l1:
             End Get
         End Property
 #End If
-        Sub New(ByVal obj As OrmBase, ByVal user As Object, ByVal reason As ReasonEnum)
+        Sub New(ByVal obj As _ICachedEntity, ByVal user As Object, ByVal reason As ReasonEnum)
             DateTime = Now
             Me.Obj = obj
             Me.User = user

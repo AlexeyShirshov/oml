@@ -476,8 +476,8 @@ Namespace Cache
         End Function
     End Class
 
-    Public Class OrmDictionary(Of TValue As OrmBase)
-        Implements IDictionary(Of Integer, TValue), IDictionary
+    Public Class OrmDictionary(Of TValue As ICachedEntity)
+        Implements IDictionary(Of Object, TValue), IDictionary
 
         'Private _mask As Integer
         'Private _code As Integer
@@ -506,9 +506,9 @@ Namespace Cache
             _dic.CacheItemRemovedCallback = AddressOf CacheItemRemovedCallback1
         End Sub
 
-        Protected Function GetKey(ByVal key As Integer) As String
-            Return key.ToString
-        End Function
+        'Protected Function GetKey(ByVal key As Object) As String
+        '    Return key.ToString
+        'End Function
 
         Protected Function GetKey(ByVal key As Object) As String
             Return key.ToString
@@ -518,7 +518,7 @@ Namespace Cache
             Return CInt(key)
         End Function
 
-        Protected Function GetPair(ByVal item As KeyValuePair(Of Integer, TValue)) As KeyValuePair(Of String, TValue)
+        Protected Function GetPair(ByVal item As KeyValuePair(Of Object, TValue)) As KeyValuePair(Of String, TValue)
             If IsNothing(item) Then
                 Throw New ArgumentNullException("item")
             End If
@@ -543,47 +543,47 @@ Namespace Cache
             End Get
         End Property
 
-        Public Sub AddItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Integer, TValue)) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).Add
+        Public Sub AddItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Object, TValue)) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Add
             collection.Add(GetPair(item))
         End Sub
 
-        Public Sub Clear() Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).Clear
+        Public Sub Clear() Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Clear
             collection.Clear()
         End Sub
 
-        Public Function ContainsItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Integer, TValue)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).Contains
+        Public Function ContainsItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Object, TValue)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Contains
             collection.Contains(GetPair(item))
         End Function
 
-        Public Sub CopyTo(ByVal array() As System.Collections.Generic.KeyValuePair(Of Integer, TValue), ByVal arrayIndex As Integer) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).CopyTo
+        Public Sub CopyTo(ByVal array() As System.Collections.Generic.KeyValuePair(Of Object, TValue), ByVal arrayIndex As Integer) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).CopyTo
             Throw New NotImplementedException()
         End Sub
 
-        Protected ReadOnly Property Count1() As Integer Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).Count
+        Protected ReadOnly Property Count1() As Integer Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Count
             Get
                 Return collection.Count
             End Get
         End Property
 
-        Protected ReadOnly Property IsReadOnly() As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).IsReadOnly
+        Protected ReadOnly Property IsReadOnly() As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).IsReadOnly
             Get
                 Return collection.IsReadOnly
             End Get
         End Property
 
-        Public Function RemoveItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Integer, TValue)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).Remove
+        Public Function RemoveItem(ByVal item As System.Collections.Generic.KeyValuePair(Of Object, TValue)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).Remove
             Return collection.Remove(GetPair(item))
         End Function
 
-        Public Sub Add(ByVal key As Integer, ByVal value As TValue) Implements System.Collections.Generic.IDictionary(Of Integer, TValue).Add
+        Public Sub Add(ByVal key As Object, ByVal value As TValue) Implements System.Collections.Generic.IDictionary(Of Object, TValue).Add
             _dic.Add(GetKey(key), value)
         End Sub
 
-        Public Function ContainsKey(ByVal key As Integer) As Boolean Implements System.Collections.Generic.IDictionary(Of Integer, TValue).ContainsKey
+        Public Function ContainsKey(ByVal key As Object) As Boolean Implements System.Collections.Generic.IDictionary(Of Object, TValue).ContainsKey
             Return _dic.ContainsKey(GetKey(key))
         End Function
 
-        Default Public Property Item(ByVal key As Integer) As TValue Implements System.Collections.Generic.IDictionary(Of Integer, TValue).Item
+        Default Public Property Item(ByVal key As Object) As TValue Implements System.Collections.Generic.IDictionary(Of Object, TValue).Item
             Get
                 Return _dic.Item(GetKey(key))
             End Get
@@ -592,9 +592,9 @@ Namespace Cache
             End Set
         End Property
 
-        Public ReadOnly Property Keys() As System.Collections.Generic.ICollection(Of Integer) Implements System.Collections.Generic.IDictionary(Of Integer, TValue).Keys
+        Public ReadOnly Property Keys() As System.Collections.Generic.ICollection(Of Object) Implements System.Collections.Generic.IDictionary(Of Object, TValue).Keys
             Get
-                Dim l As New Generic.List(Of Integer)
+                Dim l As New Generic.List(Of Object)
                 For Each k As String In _dic.Keys
                     l.Add(GetID(k))
                 Next
@@ -602,21 +602,21 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function Remove(ByVal key As Integer) As Boolean Implements System.Collections.Generic.IDictionary(Of Integer, TValue).Remove
+        Public Function Remove(ByVal key As Object) As Boolean Implements System.Collections.Generic.IDictionary(Of Object, TValue).Remove
             Return _dic.Remove(GetKey(key))
         End Function
 
-        Public Function TryGetValue(ByVal key As Integer, ByRef value As TValue) As Boolean Implements System.Collections.Generic.IDictionary(Of Integer, TValue).TryGetValue
+        Public Function TryGetValue(ByVal key As Object, ByRef value As TValue) As Boolean Implements System.Collections.Generic.IDictionary(Of Object, TValue).TryGetValue
             Return _dic.TryGetValue(GetKey(key), value)
         End Function
 
-        Public ReadOnly Property Values() As System.Collections.Generic.ICollection(Of TValue) Implements System.Collections.Generic.IDictionary(Of Integer, TValue).Values
+        Public ReadOnly Property Values() As System.Collections.Generic.ICollection(Of TValue) Implements System.Collections.Generic.IDictionary(Of Object, TValue).Values
             Get
                 Return _dic.Values
             End Get
         End Property
 
-        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)) Implements System.Collections.Generic.IEnumerable(Of System.Collections.Generic.KeyValuePair(Of Integer, TValue)).GetEnumerator
+        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)) Implements System.Collections.Generic.IEnumerable(Of System.Collections.Generic.KeyValuePair(Of Object, TValue)).GetEnumerator
             Throw New NotImplementedException
         End Function
 
