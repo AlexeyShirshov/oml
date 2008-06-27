@@ -39,7 +39,7 @@ Namespace Criteria.Core
     End Interface
 
     Public Interface IEntityFilterBase
-        Function Eval(ByVal schema As QueryGenerator, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult
+        Function Eval(ByVal schema As QueryGenerator, ByVal obj As IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult
         Function GetFilterTemplate() As IOrmFilterTemplate
         Function PrepareValue(ByVal schema As QueryGenerator, ByVal v As Object) As Object
         Function MakeHash() As String

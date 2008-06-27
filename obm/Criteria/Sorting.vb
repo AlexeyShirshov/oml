@@ -602,10 +602,10 @@ Namespace Sorting
         End Function
     End Class
 
-    Public Class OrmComparer(Of T As {OrmBase})
+    Public Class OrmComparer(Of T As {Entity})
         Implements Generic.IComparer(Of T), IComparer
 
-        Public Delegate Function GetObjectDelegate(ByVal x As T, ByVal t As Type) As OrmBase
+        Public Delegate Function GetObjectDelegate(ByVal x As T, ByVal t As Type) As IEntity
 
         'Private _q As Generic.List(Of Sort)
         Private _mgr As OrmManagerBase
@@ -709,23 +709,23 @@ Namespace Sorting
         End Function
 
         Private Function GetValue(ByVal x As T, ByVal s As Sort, ByRef oschema As IOrmObjectSchemaBase) As Object
-            Dim xo As OrmBase = x
+            Dim xo As IEntity = x
             If s.Type IsNot Nothing AndAlso _t IsNot s.Type Then
                 Dim schema As QueryGenerator = _mgr.ObjectSchema
                 If _getobj IsNot Nothing Then
                     xo = _getobj(x, s.Type)
                 Else
-                    xo = schema.GetJoinObj(schema.GetObjectSchema(_t), xo, s.Type)
+                    xo = schema.GetJoinObj(oschema, xo, s.Type)
                 End If
                 If oschema Is Nothing Then
                     oschema = schema.GetObjectSchema(s.Type)
                 End If
                 Dim ss As IOrmSorting = TryCast(oschema, IOrmSorting)
                 If ss IsNot Nothing Then
-                    Return New Pair(Of OrmBase, IOrmSorting)(xo, ss)
+                    Return New Pair(Of IEntity, IOrmSorting)(xo, ss)
                 End If
             End If
-            Return xo.GetValue(s.FieldName)
+            Return xo.GetValue(Nothing, New ColumnAttribute(s.FieldName), oschema)
         End Function
 
         Private Function _Compare(ByVal x As Object, ByVal y As Object) As Integer Implements System.Collections.IComparer.Compare

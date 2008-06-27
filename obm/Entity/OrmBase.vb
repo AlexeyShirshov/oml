@@ -72,6 +72,7 @@ Namespace Orm
     <Serializable()> _
     Public MustInherit Class OrmBase
         Inherits CachedEntity
+        Implements IOrmBase
 
 #Region " Classes "
         <EditorBrowsable(EditorBrowsableState.Never)> _
@@ -672,7 +673,7 @@ Namespace Orm
         ''' <summary>
         ''' Идентификатор объекта
         ''' </summary>
-        Private _id As Integer
+        Private _id As Object
         '<NonSerialized()> _
         'Protected cache As MediaCacheBase
         <NonSerialized()> _
@@ -704,17 +705,17 @@ Namespace Orm
         <NonSerialized()> _
         Protected Friend _valProcs As Boolean
 
-        Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
-        Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
-        Public Event Deleted(ByVal sender As OrmBase, ByVal args As EventArgs)
-        Public Event Updated(ByVal sender As OrmBase, ByVal args As EventArgs)
-        Public Event PropertyChanged(ByVal sender As OrmBase, ByVal args As PropertyChangedEventArgs)
-        Public Event OriginalCopyRemoved(ByVal sender As OrmBase)
-        Public Event ManagerRequired(ByVal sender As OrmBase, ByVal args As ManagerRequiredArgs)
+        '        Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
+        '        Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
+        '        Public Event Deleted(ByVal sender As OrmBase, ByVal args As EventArgs)
+        '        Public Event Updated(ByVal sender As OrmBase, ByVal args As EventArgs)
+        '        Public Event PropertyChanged(ByVal sender As OrmBase, ByVal args As PropertyChangedEventArgs)
+        '        Public Event OriginalCopyRemoved(ByVal sender As OrmBase)
+        '        Public Event ManagerRequired(ByVal sender As OrmBase, ByVal args As ManagerRequiredArgs)
 
-#If DEBUG Then
-        Protected Event ObjectStateChanged(ByVal oldState As ObjectState)
-#End If
+        '#If DEBUG Then
+        '        Protected Event ObjectStateChanged(ByVal oldState As ObjectState)
+        '#End If
         'for xml serialization
         Public Sub New()
             'Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
@@ -730,11 +731,21 @@ Namespace Orm
             End Get
         End Property
 
-        Protected Friend ReadOnly Property HasM2MChanges() As Boolean
-            Get
-                Return _needAccept IsNot Nothing AndAlso _needAccept.Count > 0
-            End Get
-        End Property
+
+        Public Overrides Function HasM2MChanges(ByVal mgr As OrmManagerBase) As Boolean
+            For Each el As EditableListBase In mgr.Cache.GetM2M(Me)
+                If el.HasChanges Then
+                    Return True
+                End If
+            Next
+            Return MyBase.HasM2MChanges(mgr)
+        End Function
+
+        'Protected Friend ReadOnly Property HasM2MChanges() As Boolean
+        '    Get
+        '        Return _needAccept IsNot Nothing AndAlso _needAccept.Count > 0
+        '    End Get
+        'End Property
 
         Protected Friend ReadOnly Property HasChanges() As Boolean
             Get
@@ -979,21 +990,15 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
-            Init(id, cache, schema)
-            Init()
-        End Sub
+        'Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
+        '    Init(id, cache, schema)
+        '    Init()
+        'End Sub
 
-        <Obsolete()> _
-        Friend Sub Init(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
+        Friend Sub Init(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrString As String) Implements IOrmBase.Init
+            MyBase.Init(cache, cache, mgrString)
             Me._id = id
-
-            If schema IsNot Nothing Then
-                Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
-                _loaded_members = New BitArray(arr.Count)
-            End If
-
-            If cache IsNot Nothing Then cache.RegisterCreation(Me.GetType, id)
+            PKLoaded()
         End Sub
 
         Friend Sub Init(ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
@@ -1226,7 +1231,7 @@ Namespace Orm
             Return mo
         End Function
 
-        Protected Sub AcceptRelationalChanges(ByVal mc As OrmManagerBase)
+        Protected Overrides Sub AcceptRelationalChanges(ByVal mc As OrmManagerBase)
             Dim t As Type = Me.GetType
             For Each acs As AcceptState2 In _needAccept
                 acs.Accept(Me, mc)
@@ -1238,7 +1243,14 @@ Namespace Orm
                 Dim c As New OrmManagerBase.M2MEnum(rel, Me, mc.ObjectSchema)
                 mc.Cache.ConnectedEntityEnum(t, AddressOf c.Accept)
             End If
+
+            For Each el As EditableListBase In OrmCache.GetM2M(Me)
+                If el.HasChanges Then
+                    el.Accept()
+                End If
+            Next
         End Sub
+
 
         Protected Friend Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As OrmBase
             CheckCash()
@@ -1546,13 +1558,13 @@ Namespace Orm
         ''' </summary>
         ''' <remarks>Если производный класс имеет составной первичный ключ, это свойство лучше переопределить</remarks>
         <ColumnAttribute("ID", Field2DbRelations.PrimaryKey)> _
-        Public Overridable Property Identifier() As Integer
+        Public Overridable Property Identifier() As Object Implements IOrmBase.Identifier
             Get
                 'Using SyncHelper(True)
                 Return _id
                 'End Using
             End Get
-            Protected Friend Set(ByVal value As Integer)
+            Protected Friend Set(ByVal value As Object)
                 Using SyncHelper(False)
                     'If _id <> value Then
                     If _state = Orm.ObjectState.Created Then
@@ -2295,9 +2307,9 @@ l1:
             Return True
         End Function
 
-        Public Sub BeginLoading() Implements IEntity.BeginLoading
-            _loading = True
-        End Sub
+        'Public Sub BeginLoading() Implements IEntity.BeginLoading
+        '    _loading = True
+        'End Sub
 
         Public Sub CreateCopyForSaveNewEntry() Implements IEntity.CreateCopyForSaveNewEntry
             Dim modified As OrmBase = CreateOriginalVersion()
@@ -2310,9 +2322,13 @@ l1:
             End Using
         End Sub
 
-        Public Sub EndLoading() Implements IEntity.EndLoading
-            _loading = False
-        End Sub
+        'Public Sub EndLoading() Implements IEntity.EndLoading
+        '    _loading = False
+        'End Sub
+
+        Protected Overrides Function GetCacheKey() As Integer
+            Return _id.GetHashCode
+        End Function
     End Class
 
     Public Enum ObjectState

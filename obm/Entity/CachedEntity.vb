@@ -22,8 +22,15 @@ Namespace Orm
         Protected Friend _upd As IList(Of Worm.Criteria.Core.EntityFilterBase)
         <NonSerialized()> _
         Protected Friend _valProcs As Boolean
+        '<NonSerialized()> _
+        'Protected Friend _needAccept As New Generic.List(Of AcceptState)
         <NonSerialized()> _
-        Protected Friend _needAccept As New Generic.List(Of AcceptState2)
+        Protected _hasPK As Boolean
+
+        '<EditorBrowsable(EditorBrowsableState.Never)> _
+        'Public Class AcceptState
+
+        'End Class
 
         Public Class ObjectSavedArgs
             Inherits EventArgs
@@ -69,10 +76,7 @@ Namespace Orm
 
         Private Sub PKLoaded() Implements _ICachedEntity.PKLoaded
             _key = GetCacheKey()
-        End Sub
-
-        Private Sub SetKey(ByVal key As Integer) Implements _ICachedEntity.SetKey
-            _key = key
+            _hasPK = True
         End Sub
 
         Private Function CheckIsAllLoaded(ByVal schema As QueryGenerator, ByVal loadedColumns As Integer) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
@@ -234,8 +238,8 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Friend Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As OrmBase
-            Dim mo As OrmBase = Nothing
+        Protected Friend Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As _ICachedEntity
+            Dim mo As _ICachedEntity = Nothing
             Using SyncHelper(False)
                 If ObjectState = Orm.ObjectState.Created OrElse ObjectState = Orm.ObjectState.Clone Then 'OrElse _state = Orm.ObjectState.NotLoaded Then
                     Throw New OrmObjectException(ObjName & "accepting changes allowed in state Modified, deleted or none")
@@ -243,7 +247,7 @@ Namespace Orm
 
                 Using gmc As IGetManager = GetMgr()
                     Dim mc As OrmManagerBase = gmc.Manager
-                    _valProcs = _needAccept.Count > 0
+                    _valProcs = HasM2MChanges(mc)
 
                     AcceptRelationalChanges(mc)
 
@@ -286,21 +290,25 @@ Namespace Orm
             Return mo
         End Function
 
+        Public Overridable Function HasM2MChanges(ByVal mgr As OrmManagerBase) As Boolean
+            Return False
+        End Function
+
         Protected Friend Shared Sub ClearCacheFlags(ByVal obj As CachedEntity, ByVal mc As OrmManagerBase, _
             ByVal contextKey As Object)
             obj._needAdd = False
             obj._needDelete = False
         End Sub
 
-        Friend ReadOnly Property OriginalCopy() As OrmBase
+        Friend ReadOnly Property OriginalCopy() As _ICachedEntity
             Get
                 If OrmCache.Modified(Me) Is Nothing Then Return Nothing
                 Return OrmCache.Modified(Me).Obj
             End Get
         End Property
 
-        Protected Function RemoveVersionData(ByVal setState As Boolean) As OrmBase
-            Dim mo As OrmBase = Nothing
+        Protected Function RemoveVersionData(ByVal setState As Boolean) As _ICachedEntity
+            Dim mo As _ICachedEntity = Nothing
 
             'unreg = unreg OrElse _state <> Orm.ObjectState.Created
             If setState Then
@@ -323,12 +331,8 @@ Namespace Orm
             RaiseEvent OriginalCopyRemoved(Me)
         End Sub
 
-        Protected Sub AcceptRelationalChanges(ByVal mc As OrmManagerBase)
-            Dim t As Type = Me.GetType
-            For Each acs As AcceptState2 In _needAccept
-                acs.Accept(Me, mc)
-            Next
-            _needAccept.Clear()
+        Protected Overridable Sub AcceptRelationalChanges(ByVal mc As OrmManagerBase)
+            '_needAccept.Clear()
 
             'Dim rel As IRelation = mc.ObjectSchema.GetConnectedTypeRelation(t)
             'If rel IsNot Nothing Then
@@ -554,6 +558,24 @@ l1:
 
 #End Region
 
+        Private ReadOnly Property IsPKLoaded() As Boolean Implements _ICachedEntity.IsPKLoaded
+            Get
+                Return _hasPK
+            End Get
+        End Property
+
+        Public Overridable Function GetPKValues() As Pair(Of String, Object)() Implements ICachedEntity.GetPKValues
+            Dim l As New List(Of Pair(Of String, Object))
+            Using mc As IGetManager = GetMgr()
+                Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
+                For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
+                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+                    Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
+                    l.Add(New Pair(Of String, Object)(c.FieldName, GetValue(pi, c, oschema)))
+                Next
+            End Using
+            Return l.ToArray
+        End Function
     End Class
 
 End Namespace
