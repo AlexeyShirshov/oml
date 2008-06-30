@@ -820,13 +820,13 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function GetM2MEntries(ByVal obj As OrmBase, ByVal name As String) As ICollection(Of Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)))
+        Protected Friend Function GetM2MEntries(ByVal obj As IOrmBase, ByVal name As String) As ICollection(Of Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)))
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
 
             If String.IsNullOrEmpty(name) Then
-                name = obj.GetName
+                name = CType(obj, OrmBase).GetName
             End If
 
 #If DebugLocks Then
@@ -854,7 +854,7 @@ Namespace Cache
             End Using
         End Function
 
-        Protected Friend Sub UpdateM2MEntries(ByVal obj As OrmBase, ByVal oldId As Integer, ByVal name As String)
+        Protected Friend Sub UpdateM2MEntries(ByVal obj As OrmBase, ByVal oldId As Object, ByVal name As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If

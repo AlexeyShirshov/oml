@@ -554,10 +554,10 @@ Public MustInherit Class OrmManagerBase
                         successed = IListObjectConverter.ExtractListResult.NeedLoad
                         Return r
                     Else
-                        r = mgr.LoadObjectsIds(tt, Entry.Current, mgr.GetStart, mgr.GetLength)
+                        r = mgr.LoadObjectsIds(Of T)(tt, Entry.Current, mgr.GetStart, mgr.GetLength)
                     End If
                 Else
-                    r = mgr.LoadObjectsIds(tt, Entry.Current, mgr.GetStart, mgr.GetLength)
+                    r = mgr.LoadObjectsIds(Of T)(tt, Entry.Current, mgr.GetStart, mgr.GetLength)
                 End If
                 Dim s As Boolean = True
                 r = CType(mgr.ApplyFilter(r, mgr._externalFilter, s), Global.Worm.ReadOnlyEntityList(Of T))
@@ -787,7 +787,7 @@ Public MustInherit Class OrmManagerBase
         Overloads Function GetNew(Of T As _ICachedEntity)() As ICollection(Of T)
     End Interface
 
-    Public MustInherit Class CustDelegate(Of T As {OrmBase, New})
+    Public MustInherit Class CustDelegate(Of T As {IOrmBase, New})
         Implements ICustDelegate(Of T)
 
         Private _created As Boolean
@@ -827,7 +827,7 @@ Public MustInherit Class OrmManagerBase
         Public MustOverride ReadOnly Property Sort() As Sort Implements ICustDelegate(Of T).Sort
         'Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
         Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem Implements ICustDelegate(Of T).GetCacheItem
-        Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyList(Of T)) As CachedItem Implements ICustDelegate(Of T).GetCacheItem
+        Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem Implements ICustDelegate(Of T).GetCacheItem
     End Class
 
     'Public Interface IComplexDelegate
@@ -1469,9 +1469,9 @@ _callstack = environment.StackTrace
         Return o
     End Function
 
-    Public Function CreateDBObject(Of T As {OrmBase, New})(ByVal id As Integer, _
-        ByVal dic As IDictionary(Of Integer, T), ByVal addOnCreate As Boolean) As OrmBase
-        Dim o As OrmBase = LoadTypeInternal(Of T)(id, False, False, dic, addOnCreate)
+    Public Function CreateDBObject(Of T As {IOrmBase, New})(ByVal id As Object, _
+        ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As IOrmBase
+        Dim o As IOrmBase = LoadTypeInternal(Of T)(id, False, False, dic, addOnCreate)
         Dim type As Type = GetType(T)
         'Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
         'Dim mi_real As Reflection.MethodInfo = CType(_realLoadTypeDic(type), Reflection.MethodInfo)
@@ -1492,7 +1492,7 @@ _callstack = environment.StackTrace
         Using o.GetSyncRoot()
             If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(type, id) Then
                 Debug.Assert(Not o.IsLoaded)
-                o.ObjectState = ObjectState.NotLoaded
+                CType(o, Entity).SetObjectState(ObjectState.NotLoaded)
                 'AddObject(o)
             End If
         End Using
@@ -1579,7 +1579,7 @@ _callstack = environment.StackTrace
 
     'End Function
 
-    Protected Function FindWithJoinsGetKey(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, _
+    Protected Function FindWithJoinsGetKey(Of T As {IOrmBase, New})(ByVal aspect As QueryAspect, _
         ByVal joins As OrmJoin(), ByVal criteria As IGetFilter) As String
         Dim key As String = String.Empty
 
@@ -1604,7 +1604,7 @@ _callstack = environment.StackTrace
         Return key & GetStaticKey()
     End Function
 
-    Protected Function FindWithJoinGetId(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, ByVal joins As OrmJoin(), ByVal criteria As IGetFilter) As String
+    Protected Function FindWithJoinGetId(Of T As {IOrmBase, New})(ByVal aspect As QueryAspect, ByVal joins As OrmJoin(), ByVal criteria As IGetFilter) As String
         Dim id As String = String.Empty
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
@@ -1635,13 +1635,13 @@ _callstack = environment.StackTrace
         RaiseEvent DataAvailable(Me, New ExecutionResult(count, execTime, fetchTime, hit, Nothing))
     End Sub
 
-    Private Function GetResultset(Of T As {OrmBase, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, _
-        ByVal id As String, ByVal sync As String, ByVal del As ICustDelegate(Of T), ByRef succeeded As Boolean) As ReadOnlyList(Of T)
+    Private Function GetResultset(Of T As {ICachedEntity, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, _
+        ByVal id As String, ByVal sync As String, ByVal del As ICustDelegate(Of T), ByRef succeeded As Boolean) As ReadOnlyEntityList(Of T)
         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
         Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
         RaiseOnDataAvailable()
         Dim s As IListObjectConverter.ExtractListResult
-        Dim r As ReadOnlyList(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.Created, s)
+        Dim r As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me, withLoad, del.Created, s)
         succeeded = True
 
         If s = IListObjectConverter.ExtractListResult.NeedLoad Then
@@ -1669,7 +1669,7 @@ l1:
                     End If
                     If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
                         'Dim objs As ICollection(Of T) = r
-                        ce = del.GetCacheItem(_schema.ExternalSort(Of T)(Me, psort, r))
+                        ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, r), ReadOnlyEntityList(Of T)))
                         dic(id) = ce
                     End If
                 Else
@@ -1678,11 +1678,11 @@ l1:
                         GoTo l1
                     Else
                         'Dim loaded As Integer = 0
-                        Dim objs As ReadOnlyList(Of T) = r
+                        Dim objs As ReadOnlyEntityList(Of T) = r
                         If objs IsNot Nothing AndAlso objs.Count > 0 Then
                             Dim srt As IOrmSorting = Nothing
                             If psort.IsExternal Then
-                                ce = del.GetCacheItem(_schema.ExternalSort(Of T)(Me, psort, objs))
+                                ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
                                 dic(id) = ce
                             ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
                                 Using SyncHelper.AcquireDynamicLock(sync)
@@ -1693,7 +1693,7 @@ l1:
                                         sc = New OrmComparer(Of T)(psort)
                                     End If
                                     If sc IsNot Nothing Then
-                                        Dim os As New ReadOnlyList(Of T)(objs)
+                                        Dim os As ReadOnlyEntityList(Of T) = CType(CreateReadonlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
                                         os.Sort(sc)
                                         ce = del.GetCacheItem(os)
                                         dic(id) = ce
@@ -1718,13 +1718,13 @@ l1:
         Return r
     End Function
 
-    Public Function FindWithJoins(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, _
+    Public Function FindWithJoins(Of T As {IOrmBase, New})(ByVal aspect As QueryAspect, _
         ByVal joins() As OrmJoin, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
         Return FindWithJoins(Of T)(aspect, joins, criteria, sort, withLoad, Nothing)
     End Function
 
-    Public Function FindWithJoins(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, _
+    Public Function FindWithJoins(Of T As {IOrmBase, New})(ByVal aspect As QueryAspect, _
         ByVal joins() As OrmJoin, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean, ByVal cols() As String) As ReadOnlyList(Of T)
 
@@ -1757,7 +1757,7 @@ l1:
 
         Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(aspect, joins, GetFilter(criteria, GetType(T)), sort, key, id, l)
         Dim s As Boolean = True
-        Dim r As ReadOnlyList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
+        Dim r As ReadOnlyEntityList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
         If Not s Then
             Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
             Using ac As New ApplyCriteria(Me, Nothing)
@@ -1766,7 +1766,7 @@ l1:
                 r = FindWithJoins(Of T)(aspect, joins, ObjectSchema.CreateCriteriaLink(c), sort, withLoad, cols)
             End Using
         End If
-        Return r
+        Return CType(r, Global.Worm.ReadOnlyList(Of T))
     End Function
 
     'Public Function FindDistinct(Of T As {OrmBase, New})(ByVal joins() As OrmJoin, ByVal criteria As CriteriaLink, _
@@ -1811,20 +1811,20 @@ l1:
     '    Return ce.GetObjectList(Of T)(Me, withLoad, del.Created)
     'End Function
 
-    Public Function FindJoin(Of T As {OrmBase, New})(ByVal type2join As Type, ByVal joinField As String, ByVal criteria As IGetFilter, _
+    Public Function FindJoin(Of T As {IOrmBase, New})(ByVal type2join As Type, ByVal joinField As String, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
         Return FindJoin(Of T)(type2join, joinField, FilterOperation.Equal, JoinType.Join, criteria, sort, withLoad)
     End Function
 
-    Public Function FindJoin(Of T As {OrmBase, New})(ByVal type2join As Type, ByVal joinField As String, _
+    Public Function FindJoin(Of T As {IOrmBase, New})(ByVal type2join As Type, ByVal joinField As String, _
         ByVal joinOperation As FilterOperation, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
         Return FindJoin(Of T)(type2join, joinField, joinOperation, JoinType.Join, criteria, sort, withLoad)
     End Function
 
-    Public Function FindJoin(Of T As {OrmBase, New})(ByVal type2join As Type, ByVal joinField As String, _
+    Public Function FindJoin(Of T As {IOrmBase, New})(ByVal type2join As Type, ByVal joinField As String, _
         ByVal joinOperation As FilterOperation, ByVal joinType As JoinType, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
@@ -1832,7 +1832,7 @@ l1:
             criteria, sort, withLoad)
     End Function
 
-    Public Function FindJoin(Of T As {OrmBase, New})(ByVal top As Integer, ByVal type2join As Type, ByVal joinField As String, _
+    Public Function FindJoin(Of T As {IOrmBase, New})(ByVal top As Integer, ByVal type2join As Type, ByVal joinField As String, _
         ByVal joinOperation As FilterOperation, ByVal joinType As JoinType, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
@@ -1844,12 +1844,12 @@ l1:
         Return filter.ToStaticString & GetStaticKey() & _schema.GetEntityKey(GetFilterInfo, t)
     End Function
 
-    Public Function Find(Of T As {OrmBase, New})(ByVal criteria As IGetFilter) As ReadOnlyList(Of T)
+    Public Function Find(Of T As {IOrmBase, New})(ByVal criteria As IGetFilter) As ReadOnlyList(Of T)
         Return Find(Of T)(criteria, Nothing, False)
     End Function
 
-    Public Function FindDistinct(Of T As {OrmBase, New})(ByVal criteria As IGetFilter, _
-        ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+    Public Function FindDistinct(Of T As {IOrmBase, New})(ByVal criteria As IGetFilter, _
+        ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyEntityList(Of T)
         Dim filter As IFilter = Nothing
         If criteria IsNot Nothing Then
             filter = criteria.Filter(GetType(T))
@@ -1860,7 +1860,7 @@ l1:
         Return FindWithJoins(Of T)(New DistinctAspect(), joins, filter, sort, withLoad)
     End Function
 
-    Public Function Find(Of T As {OrmBase, New})(ByVal criteria As IGetFilter, _
+    Public Function Find(Of T As {IOrmBase, New})(ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
         If criteria Is Nothing Then
@@ -1888,7 +1888,7 @@ l1:
             Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, key, id)
             'Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
             Dim s As Boolean = True
-            Dim r As ReadOnlyList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
+            Dim r As ReadOnlyList(Of T) = CType(GetResultset(Of T)(withLoad, dic, id, sync, del, s), Global.Worm.ReadOnlyList(Of T))
             If Not s Then
                 Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
                 Using ac As New ApplyCriteria(Me, Nothing)
@@ -1901,7 +1901,7 @@ l1:
         End If
     End Function
 
-    Public Function Find(Of T As {OrmBase, New})(ByVal criteria As IGetFilter, _
+    Public Function Find(Of T As {IOrmBase, New})(ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal cols() As String) As ReadOnlyList(Of T)
 
         If criteria Is Nothing Then
@@ -1921,7 +1921,7 @@ l1:
 
         Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, key, id, cols)
         Dim s As Boolean = True
-        Dim r As ReadOnlyList(Of T) = GetResultset(Of T)(True, dic, id, sync, del, s)
+        Dim r As ReadOnlyList(Of T) = CType(GetResultset(Of T)(True, dic, id, sync, del, s), Global.Worm.ReadOnlyList(Of T))
         If Not s Then
             Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
             Using ac As New ApplyCriteria(Me, Nothing)
@@ -1933,17 +1933,17 @@ l1:
         Return r
     End Function
 
-    Public Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal criteria As IGetFilter, _
+    Public Function FindTop(Of T As {IOrmBase, New})(ByVal top As Integer, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
         Return FindTop(Of T)(top, criteria, sort, withLoad, Nothing)
     End Function
 
-    Public Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal criteria As IGetFilter, _
+    Public Function FindTop(Of T As {IOrmBase, New})(ByVal top As Integer, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal cols() As String) As ReadOnlyList(Of T)
         Return FindTop(Of T)(top, criteria, sort, True, cols)
     End Function
 
-    Protected Function FindTop(Of T As {OrmBase, New})(ByVal top As Integer, ByVal criteria As IGetFilter, _
+    Protected Function FindTop(Of T As {IOrmBase, New})(ByVal top As Integer, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean, ByVal cols() As String) As ReadOnlyList(Of T)
 
         Dim filter As IFilter = Nothing
@@ -2080,7 +2080,7 @@ l1:
                     End If
                     If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
                         Dim objs As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me)
-                        ce = del.GetCacheItem(_schema.ExternalSort(Of T)(Me, psort, objs))
+                        ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
                         dic(id) = ce
                     End If
                 Else
@@ -2089,7 +2089,7 @@ l1:
                     If objs IsNot Nothing AndAlso objs.Count > 0 Then
                         Dim srt As IOrmSorting = Nothing
                         If psort.IsExternal Then
-                            ce = del.GetCacheItem(_schema.ExternalSort(Of T)(Me, psort, objs))
+                            ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
                             dic(id) = ce
                         ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
                             Using SyncHelper.AcquireDynamicLock(sync)
@@ -2270,13 +2270,13 @@ l1:
         Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, load, checkOnCreate}, Nothing), OrmBase)
     End Function
 
-    Protected Function CreateEntity(Of T As {IOrmBase, New})(ByVal id As Object) As T
+    Protected Friend Function CreateEntity(Of T As {IOrmBase, New})(ByVal id As Object) As T
         Dim o As New T
         o.Init(id, _cache, _schema, IdentityString)
         Return o
     End Function
 
-    Protected Function CreateEntity(Of T As {_IEntity, New})() As T
+    Protected Friend Function CreateEntity(Of T As {_IEntity, New})() As T
         Dim o As New T
         o.Init(_cache, _schema, IdentityString)
         Return o
@@ -2352,14 +2352,14 @@ l1:
         Return a
     End Function
 
-    Protected Function LoadTypeInternal(Of T As {IOrmBase, New})(ByVal id As Integer, _
-        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Integer, T), ByVal addOnCreate As Boolean) As T
+    Protected Function LoadTypeInternal(Of T As {IOrmBase, New})(ByVal id As Object, _
+        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As T
 
         Dim o As T = CreateEntity(Of T)(id)
-        Return _LoadTypeInternal(o, load, checkOnCreate, dic, addOnCreate)
+        Return CType(_LoadTypeInternal(o, load, checkOnCreate, CType(dic, System.Collections.IDictionary), addOnCreate), T)
     End Function
 
-    Protected Function GetObjectFromCache(Of T As {OrmBase, New})(ByVal obj As T, ByVal dic As IDictionary(Of Integer, T), _
+    Protected Function GetObjectFromCache(Of T As {IOrmBase, New})(ByVal obj As T, ByVal dic As IDictionary(Of Object, T), _
         ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal addOnCreate As Boolean) As T
 
         If obj Is Nothing Then
@@ -2382,12 +2382,12 @@ l1:
 #End If
         Dim created As Boolean = False ', checked As Boolean = False
         Dim a As T = Nothing
-        Dim id As Integer = obj.Identifier
+        Dim id As Object = obj.Identifier
         If Not dic.TryGetValue(id, a) AndAlso _newMgr IsNot Nothing Then
             a = CType(_newMgr.GetNew(type, id), T)
             If a IsNot Nothing Then Return a
         End If
-        Dim sync_key As String = "LoadType" & id & type.ToString
+        Dim sync_key As String = "LoadType" & id.ToString & type.ToString
         If a Is Nothing Then
             Using SyncHelper.AcquireDynamicLock(sync_key)
                 If Not dic.TryGetValue(id, a) Then
@@ -2395,7 +2395,7 @@ l1:
                         Throw New NotSupportedException
                     Else
                         a = obj
-                        a.Init(_cache, _schema)
+                        'a.Init(_cache, _schema)
                     End If
 
                     If load Then
@@ -2430,10 +2430,10 @@ l1:
         Return a
     End Function
 
-    Protected Friend Function LoadType(Of T As {OrmBase, New})(ByVal id As Integer, _
+    Protected Friend Function LoadType(Of T As {OrmBase, New})(ByVal id As Object, _
         ByVal load As Boolean, ByVal checkOnCreate As Boolean) As T
 
-        Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
+        Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
 
 #If DEBUG Then
         If dic Is Nothing Then
@@ -2557,11 +2557,13 @@ l1:
 
             _cache.RemoveDepends(obj)
 
-            'Dim l As List(Of Type) = Nothing
-            For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
-                Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
-                mdic.Remove(o.Second.Second)
-            Next
+            Dim orm As IOrmBase = TryCast(obj, IOrmBase)
+            If orm IsNot Nothing Then
+                For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(orm, Nothing)
+                    Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
+                    mdic.Remove(o.Second.Second)
+                Next
+            End If
 
             _cache.RegisterRemoval(obj)
 
@@ -2620,7 +2622,7 @@ l1:
         Return _cache.GetOrmDictionary(GetFilterInfo, t, _schema)
     End Function
 
-    Public Function GetDictionary(Of T)() As Generic.IDictionary(Of Integer, T)
+    Public Function GetDictionary(Of T)() As Generic.IDictionary(Of Object, T)
         Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema)
     End Function
 
@@ -2805,7 +2807,7 @@ l1:
         Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(relation, GetFilter(criteria, GetType(T)), sort, key, id)
         'Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
         Dim s As Boolean = True
-        Dim r As ReadOnlyList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
+        Dim r As ReadOnlyList(Of T) = CType(GetResultset(Of T)(withLoad, dic, id, sync, del, s), Global.Worm.ReadOnlyList(Of T))
         If Not s Then
             Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
             Using ac As New ApplyCriteria(Me, Nothing)
@@ -2852,7 +2854,7 @@ l1:
         End If
         Dim s As Boolean = True
         Dim sync As String = GetSync(key, id)
-        Dim r As ReadOnlyList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
+        Dim r As ReadOnlyList(Of T) = CType(GetResultset(Of T)(withLoad, dic, id, sync, del, s), Global.Worm.ReadOnlyList(Of T))
         If Not s Then
             Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
             Using ac As New ApplyCriteria(Me, Nothing)
@@ -2998,7 +3000,7 @@ l1:
 
     End Function
 
-    Protected Sub M2MUpdate(ByVal obj As OrmBase, ByVal oldId As Integer)
+    Protected Sub M2MUpdate(ByVal obj As OrmBase, ByVal oldId As Object)
         For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, obj.GetOldName(oldId))
             Dim key As String = o.Second.First
             Dim id As String = o.Second.Second
@@ -3035,7 +3037,7 @@ l1:
         Next
     End Sub
 
-    Protected Sub M2MSubUpdate(ByVal obj As OrmBase, ByVal id As Integer, ByVal oldId As Integer, ByVal t As Type)
+    Protected Sub M2MSubUpdate(ByVal obj As OrmBase, ByVal id As Object, ByVal oldId As Object, ByVal t As Type)
         For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
             Dim m As M2MCache = o.First
             If m.Entry.SubType Is t Then
@@ -3270,6 +3272,17 @@ l1:
         Dim slt As Double = 0.0005 '(fetchTime.TotalMilliseconds / totalCount)
         Dim ttl As TimeSpan = TimeSpan.FromSeconds(slt * (totalCount - loadedCount))
         Return tt > ttl
+    End Function
+
+    Public Function GetLoadedCount(ByVal t As Type, ByVal ids As IList(Of Object)) As Integer
+        Dim r As Integer = 0
+        Dim dic As IDictionary = GetDictionary(t)
+        For Each id As Integer In ids
+            If dic.Contains(id) Then
+                r += 1
+            End If
+        Next
+        Return r
     End Function
 
     Public Function GetLoadedCount(Of T As {ICachedEntity, New})(ByVal col As ReadOnlyEntityList(Of T)) As Integer
@@ -3740,6 +3753,13 @@ l1:
         Return arr
     End Function
 
+    Public Function LoadObjectsIds(Of T As {ICachedEntity, New})(ByVal tt As Type, ByVal ids As ICollection(Of Object), ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
+        Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
+        Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadObjectsIds", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Type), GetType(ICollection(Of Object)), GetType(Integer), GetType(Integer)}, Nothing)
+        Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {tt})
+        Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {ids, start, length}, Nothing), ReadOnlyEntityList(Of T))
+    End Function
+
     Public Function LoadObjectsIds(Of T As {IOrmBase, New})(ByVal ids As ICollection(Of Object)) As ReadOnlyList(Of T)
         Return LoadObjects(Of T)(ConvertIds2Objects(Of T)(ids, False))
     End Function
@@ -3961,36 +3981,36 @@ l1:
     '    ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
     '    ByVal limit As Integer, ByVal del As DbSchema.ValueForSearchDelegate) As ICollection(Of T)
 
-    Protected MustOverride Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, _
+    Protected MustOverride Function SearchEx(Of T As {IOrmBase, New})(ByVal type2search As Type, _
         ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
         ByVal limit As Integer, ByVal frmt As IFtsStringFormater) As ReadOnlyList(Of T)
 
-    Protected MustOverride Function Search(Of T As {OrmBase, New})( _
+    Protected MustOverride Function Search(Of T As {IOrmBase, New})( _
         ByVal type2search As Type, ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, _
         ByVal frmt As IFtsStringFormater, Optional ByVal joins() As OrmJoin = Nothing) As ReadOnlyList(Of T)
 
     Protected Friend MustOverride Function GetStaticKey() As String
 
-    Protected MustOverride Function GetCustDelegate(Of T As {OrmBase, New})(ByVal filter As IFilter, _
+    Protected MustOverride Function GetCustDelegate(Of T As {IOrmBase, New})(ByVal filter As IFilter, _
         ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
 
-    Protected MustOverride Function GetCustDelegate(Of T As {OrmBase, New})(ByVal filter As IFilter, _
+    Protected MustOverride Function GetCustDelegate(Of T As {IOrmBase, New})(ByVal filter As IFilter, _
         ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As ICustDelegate(Of T)
 
-    Protected MustOverride Function GetCustDelegate(Of T As {OrmBase, New})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IFilter, _
+    Protected MustOverride Function GetCustDelegate(Of T As {IOrmBase, New})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IFilter, _
         ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As ICustDelegate(Of T)
 
-    Protected MustOverride Function GetCustDelegate(Of T As {OrmBase, New})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
+    Protected MustOverride Function GetCustDelegate(Of T As {IOrmBase, New})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
         ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
 
     'Protected MustOverride Function GetCustDelegate4Top(Of T As {OrmBase, New})(ByVal top As Integer, ByVal filter As IOrmFilter, _
     '    ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
 
-    Protected MustOverride Function GetCustDelegate(Of T2 As {OrmBase, New})( _
+    Protected MustOverride Function GetCustDelegate(Of T2 As {IOrmBase, New})( _
         ByVal obj As OrmBase, ByVal filter As IFilter, _
         ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As Boolean) As ICustDelegate(Of T2)
 
-    Protected MustOverride Function GetCustDelegate(Of T2 As {OrmBase, New})( _
+    Protected MustOverride Function GetCustDelegate(Of T2 As {IOrmBase, New})( _
         ByVal obj As OrmBase, ByVal filter As IFilter, _
         ByVal sort As Sort, ByVal id As String, ByVal key As String, ByVal direct As Boolean) As ICustDelegate(Of T2)
 

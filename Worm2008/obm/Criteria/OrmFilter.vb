@@ -235,7 +235,7 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public Function Eval(ByVal schema As QueryGenerator, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        Public Function Eval(ByVal schema As QueryGenerator, ByVal obj As IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             Dim evval As IEvaluableValue = TryCast(val, IEvaluableValue)
             If evval IsNot Nothing Then
                 If schema Is Nothing Then
@@ -249,7 +249,7 @@ Namespace Criteria.Core
                 Dim t As Type = obj.GetType
                 If Template.Type Is t Then
                     Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
-                    Dim v As Object = obj.GetValue(Template.FieldName, oschema) 'schema.GetFieldValue(obj, _fieldname)
+                    Dim v As Object = obj.GetValue(Nothing, New ColumnAttribute(Template.FieldName), oschema) 'schema.GetFieldValue(obj, _fieldname)
                     r = evval.Eval(v, Template)
                     'If v IsNot Nothing Then
                     '    r = evval.Eval(v, Template)

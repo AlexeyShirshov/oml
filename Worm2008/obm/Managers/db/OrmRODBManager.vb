@@ -33,7 +33,7 @@ Namespace Database
             'Private _disposeMgr As Boolean
             Private _commited As Boolean
             Private _lockList As New Dictionary(Of ObjectWrap(Of OrmBase), IDisposable)
-            Private _removed As New List(Of OrmBase)
+            Private _removed As New List(Of CachedEntity)
             Private _dontTrackRemoved As Boolean
             Private _startSave As Boolean
 
@@ -214,7 +214,7 @@ Namespace Database
                 Next
             End Sub
 
-            Protected Sub ObjRejected(ByVal o As OrmBase)
+            Protected Sub ObjRejected(ByVal o As CachedEntity)
                 If Not _startSave Then _removed.Add(o)
             End Sub
 
@@ -368,7 +368,7 @@ Namespace Database
                                         '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                         '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
                                         _mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
-                                            AddressOf OrmBase.ClearCacheFlags, Nothing, _callbacks)
+                                            AddressOf CachedEntity.ClearCacheFlags, Nothing, _callbacks)
                                     Next
                                 Else
                                     For Each p As Pair(Of ObjectState, OrmBase) In saved
@@ -556,15 +556,16 @@ Namespace Database
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
 
-                Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetIdentity)
+                Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetIdentity(GetType(T)))
             End Function
 
-            Public Overridable Function CreateNewObject(Of T As {OrmBase, New})(ByVal id As Integer) As T
+            Public Overridable Function CreateNewObject(Of T As {OrmBase, New})(ByVal id As Object) As T
                 If _mgr.NewObjectManager Is Nothing Then
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
-                Dim o As New T
-                o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
+                Dim o As T = _mgr.CreateEntity(Of T)()
+                'Dim o As New T
+                'o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
                 _mgr.NewObjectManager.AddNew(o)
                 '_objs.Add(o)
                 '_saver.Add(o)
@@ -577,10 +578,10 @@ Namespace Database
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
 
-                Return CreateNewObject(t, _mgr.NewObjectManager.GetIdentity)
+                Return CreateNewObject(t, _mgr.NewObjectManager.GetIdentity(t))
             End Function
 
-            Public Function CreateNewObject(ByVal t As Type, ByVal id As Integer) As OrmBase
+            Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As OrmBase
                 For Each mi As Reflection.MethodInfo In Me.GetType.GetMember("CreateNewObject", Reflection.MemberTypes.Method, _
                     Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public)
                     If mi.IsGenericMethod AndAlso mi.GetParameters.Length = 1 Then
@@ -811,22 +812,22 @@ Namespace Database
             End Get
         End Property
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, CType(filter, IFilter), sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal aspect As QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal filter As IFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal aspect As QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManagerBase.ICustDelegate(Of T)
             Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect, cols)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, OrmBase})(ByVal filter As IFilter, _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManagerBase.ICustDelegate(Of T)
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
@@ -854,13 +855,13 @@ Namespace Database
         '    Return New FilterCustDelegate4Top(Of T)(Me, top, filter, sort, key, id)
         'End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
+        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
             ByVal obj As OrmBase, ByVal filter As IFilter, ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
             ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, queryAscpect, id, key, direct)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, OrmBase})( _
+        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
             ByVal obj As OrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, New QueryAspect() {}, id, key, direct)
