@@ -290,7 +290,7 @@ Public Class Entity
             _state = value
         End Sub
 
-        Protected Overridable Sub SetObjectState(ByVal value As ObjectState)
+        Protected Friend Overridable Sub SetObjectState(ByVal value As ObjectState)
             Using SyncHelper(False)
                 Debug.Assert(_state <> Orm.ObjectState.Deleted)
                 If _state = Orm.ObjectState.Deleted Then

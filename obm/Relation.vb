@@ -219,6 +219,22 @@ Namespace Cache
             Next
         End Sub
 
+        Protected Friend Sub Update(ByVal id As Object, ByVal oldId As Object)
+            Dim idx As Integer = _addedList.IndexOf(oldId)
+            If idx < 0 Then
+                Throw New ArgumentException("Old id is not found: " & oldId)
+            End If
+
+            _addedList.RemoveAt(idx)
+            _addedList.Add(id)
+
+            If HasNew Then
+                If _new.Remove(oldId) Then
+                    '_new.Add(id)
+                End If
+            End If
+        End Sub
+
         Protected Sub RemoveNew()
             If _new IsNot Nothing Then
                 _new.Clear()
@@ -653,22 +669,6 @@ Namespace Cache
             End If
             Return newl
         End Function
-
-        Protected Friend Sub Update(ByVal id As Integer, ByVal oldId As Integer)
-            Dim idx As Integer = _addedList.IndexOf(oldId)
-            If idx < 0 Then
-                Throw New ArgumentException("Old id is not found: " & oldId)
-            End If
-
-            _addedList.RemoveAt(idx)
-            _addedList.Add(id)
-
-            If HasNew Then
-                If _new.Remove(oldId) Then
-                    '_new.Add(id)
-                End If
-            End If
-        End Sub
 
 #End Region
 

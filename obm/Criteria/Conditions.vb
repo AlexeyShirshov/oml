@@ -358,7 +358,7 @@ Namespace Criteria.Conditions
 
         'Protected MustOverride Function CreateMeE(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As Condition
 
-        Public Function Eval(ByVal schema As QueryGenerator, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        Public Function Eval(ByVal schema As QueryGenerator, ByVal obj As IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If

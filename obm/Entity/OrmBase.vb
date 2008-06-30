@@ -1496,8 +1496,8 @@ Namespace Orm
             Return Me.GetType.Name & _id
         End Function
 
-        Protected Friend Function GetOldName(ByVal id As Integer) As String
-            Return Me.GetType.Name & id
+        Protected Friend Function GetOldName(ByVal id As Object) As String
+            Return Me.GetType.Name & id.ToString
         End Function
 
         Friend Overridable Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean

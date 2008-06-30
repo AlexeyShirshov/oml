@@ -576,7 +576,7 @@ Namespace Sorting
             End Get
         End Property
 
-        Public Overridable Function ExternalSort(Of T As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal schema As QueryGenerator, ByVal objs As ReadOnlyList(Of T)) As ReadOnlyList(Of T)
+        Public Overridable Function ExternalSort(Of T As {_IEntity, New})(ByVal mgr As OrmManagerBase, ByVal schema As QueryGenerator, ByVal objs As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
             If Not IsExternal Then
                 Throw New InvalidOperationException("Sort is not external")
             End If
@@ -586,7 +586,7 @@ Namespace Sorting
             End If
 
             If _del IsNot Nothing Then
-                Return CType(_del(mgr, schema, Me, objs), Global.Worm.ReadOnlyList(Of T))
+                Return CType(_del(mgr, schema, Me, objs), Global.Worm.ReadOnlyObjectList(Of T))
             Else
                 Throw New InvalidOperationException("Delegate is not set")
             End If
@@ -602,7 +602,7 @@ Namespace Sorting
         End Function
     End Class
 
-    Public Class OrmComparer(Of T As {Entity})
+    Public Class OrmComparer(Of T As {_IEntity})
         Implements Generic.IComparer(Of T), IComparer
 
         Public Delegate Function GetObjectDelegate(ByVal x As T, ByVal t As Type) As IEntity
@@ -729,7 +729,7 @@ Namespace Sorting
         End Function
 
         Private Function _Compare(ByVal x As Object, ByVal y As Object) As Integer Implements System.Collections.IComparer.Compare
-            Return Compare(TryCast(x, T), TryCast(y, T))
+            Return Compare(CType(TryCast(x, _IEntity), T), CType(TryCast(y, _IEntity), T))
         End Function
     End Class
 End Namespace

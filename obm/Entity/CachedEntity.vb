@@ -196,7 +196,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Overrides Sub SetObjectState(ByVal value As ObjectState)
+        Protected Friend Overrides Sub SetObjectState(ByVal value As ObjectState)
             Using SyncHelper(False)
                 Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
                 If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
