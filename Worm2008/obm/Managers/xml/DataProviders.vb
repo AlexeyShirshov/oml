@@ -9,7 +9,7 @@ Imports Worm.Orm.Meta
 Namespace Xml
     Partial Public Class QueryManager
 
-        Protected MustInherit Class BaseDataProvider(Of T As {New, OrmBase})
+        Protected MustInherit Class BaseDataProvider(Of T As {New, IOrmBase})
             Inherits CustDelegate(Of T)
             Implements ICacheValidator
 
@@ -124,7 +124,7 @@ Namespace Xml
                 Return New CachedItem(_sort, s, _f, GetValues(withLoad), _mgr)
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of T)) As OrmManagerBase.CachedItem
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManagerBase.CachedItem
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
@@ -138,7 +138,7 @@ Namespace Xml
         End Class
 
 
-        Protected Class FilterCustDelegate(Of T As {New, OrmBase})
+        Protected Class FilterCustDelegate(Of T As {New, IOrmBase})
             Inherits BaseDataProvider(Of T)
 
             Private _cols As List(Of ColumnAttribute)
@@ -187,7 +187,7 @@ Namespace Xml
                 Dim r As ReadOnlyList(Of T) = _mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, Nothing)
 
                 If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-                    r = Schema.ExternalSort(Of T)(_mgr, _sort, r)
+                    r = CType(Schema.ExternalSort(Of T)(_mgr, _sort, r), Global.Worm.ReadOnlyList(Of T))
                 End If
                 Return r
             End Function

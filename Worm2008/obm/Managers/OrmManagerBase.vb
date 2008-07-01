@@ -1324,7 +1324,7 @@ _callstack = environment.StackTrace
         LoadObjects(Of T)(relation, criteria, col, target, 0, col.Count)
     End Sub
 
-    Public Sub LoadObjects(Of T As {OrmBase, New})(ByVal relation As M2MRelation, ByVal criteria As CriteriaLink, _
+    Public Sub LoadObjects(Of T As {IOrmBase, New})(ByVal relation As M2MRelation, ByVal criteria As CriteriaLink, _
         ByVal col As ICollection, ByVal target As ICollection(Of T), ByVal start As Integer, ByVal length As Integer)
         Dim type2load As Type = GetType(T)
 
@@ -1356,7 +1356,7 @@ _callstack = environment.StackTrace
 
         'Dim l As New List(Of T)
         Dim newc As New List(Of OrmBase)
-        Dim direct As Boolean = Not relation.non_direct
+        Dim direct As String = relation.Key
         Using SyncHelper.AcquireDynamicLock("13498nfb134g8l;adnfvioh")
             If Not _dont_cache_lists Then
                 Dim i As Integer = start
@@ -2445,7 +2445,7 @@ l1:
         Return LoadTypeInternal(Of T)(id, load, checkOnCreate, dic, True)
     End Function
 
-    Protected Sub Add2Cache(ByVal obj As OrmBase)
+    Protected Sub Add2Cache(ByVal obj As ICachedEntity)
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -2471,7 +2471,7 @@ l1:
         AddObjectInternal(obj, dic)
     End Sub
 
-    Protected Sub AddObjectInternal(ByVal obj As _ICachedEntity, ByVal dic As IDictionary)
+    Protected Sub AddObjectInternal(ByVal obj As ICachedEntity, ByVal dic As IDictionary)
         Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
         Dim trace As Boolean = False
         Dim id As Integer = obj.Key
@@ -2819,12 +2819,12 @@ l1:
         Return r
     End Function
 
-    Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As Boolean) As String
+    Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As String) As String
         Return tt1.Name & Const_JoinStaticString & direct & " - new version - " & tt2.Name & "$" & GetStaticKey()
     End Function
 
-    Protected Friend Function FindMany2Many2(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal criteria As IGetFilter, _
-        ByVal sort As Sort, ByVal direct As Boolean, ByVal withLoad As Boolean, Optional ByVal top As Integer = -1) As ReadOnlyList(Of T)
+    Protected Friend Function FindMany2Many2(Of T As {IOrmBase, New})(ByVal obj As OrmBase, ByVal criteria As IGetFilter, _
+        ByVal sort As Sort, ByVal direct As String, ByVal withLoad As Boolean, Optional ByVal top As Integer = -1) As ReadOnlyList(Of T)
         '    Dim p As Pair(Of M2MCache, Boolean) = FindM2M(Of T)(obj, direct, criteria, sort, withLoad)
         '    'Return p.First.GetObjectList(Of T)(Me, withLoad, p.Second.Created)
         '    return GetResultset(of T)(withload,dic,
@@ -2866,7 +2866,7 @@ l1:
         Return r
     End Function
 
-    Protected Function FindM2M(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean, ByVal criteria As IGetFilter, _
+    Protected Function FindM2M(Of T As {OrmBase, New})(ByVal obj As IOrmBase, ByVal direct As String, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As Pair(Of M2MCache, Boolean)
         Dim tt1 As Type = obj.GetType
         Dim tt2 As Type = GetType(T)
@@ -2893,11 +2893,11 @@ l1:
         Return p
     End Function
 
-    Protected Function FindM2MReturnKeysNonGeneric(ByVal mainobj As OrmBase, ByVal t As Type, ByVal direct As Boolean) As Pair(Of M2MCache, Pair(Of String))
+    Protected Function FindM2MReturnKeysNonGeneric(ByVal mainobj As IOrmBase, ByVal t As Type, ByVal direct As String) As Pair(Of M2MCache, Pair(Of String))
         Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
         'Dim pm As New Reflection.ParameterModifier(6)
         'pm(5) = True
-        Dim types As Type() = New Type() {GetType(OrmBase), GetType(Boolean)}
+        Dim types As Type() = New Type() {GetType(IOrmBase), GetType(String)}
         Dim o() As Object = New Object() {mainobj, direct}
         'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
         '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
@@ -2907,7 +2907,7 @@ l1:
         Return p
     End Function
 
-    Protected Function FindM2MReturnKeys(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean) As Pair(Of M2MCache, Pair(Of String))
+    Protected Function FindM2MReturnKeys(Of T As {IOrmBase, New})(ByVal obj As IOrmBase, ByVal direct As String) As Pair(Of M2MCache, Pair(Of String))
         Dim tt1 As Type = obj.GetType
         Dim tt2 As Type = GetType(T)
 
@@ -2935,7 +2935,7 @@ l1:
         Next
     End Sub
 
-    Protected Friend Sub M2MDelete(ByVal mainobj As OrmBase, ByVal subobj As OrmBase, ByVal direct As Boolean)
+    Protected Friend Sub M2MDelete(ByVal mainobj As IOrmBase, ByVal subobj As IOrmBase, ByVal direct As Boolean)
         If mainobj Is Nothing Then
             Throw New ArgumentNullException("mainobj")
         End If
@@ -3129,7 +3129,7 @@ l1:
         mainobj.AddAccept(New OrmBase.AcceptState2(m, p.Second.First, p.Second.Second))
     End Sub
 
-    Protected Sub M2MDeleteInternal(ByVal mainobj As OrmBase, ByVal subobj As OrmBase, ByVal direct As Boolean)
+    Protected Sub M2MDeleteInternal(ByVal mainobj As IOrmBase, ByVal subobj As IOrmBase, ByVal direct As String)
         If mainobj Is Nothing Then
             Throw New ArgumentNullException("mainobj")
         End If
@@ -3299,7 +3299,7 @@ l1:
 
     Public Function GetLoadedCount(Of T As IOrmBase)(ByVal ids As IList(Of Object)) As Integer
         Dim r As Integer = 0
-        Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
+        Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
         For Each id As Integer In ids
             If dic.ContainsKey(id) Then
                 r += 1
@@ -3818,7 +3818,7 @@ l1:
         Return Nothing
     End Function
 
-    Public Function SaveChanges(ByVal obj As OrmBase, ByVal AcceptChanges As Boolean) As Boolean
+    Public Function SaveChanges(ByVal obj As ICachedEntity, ByVal AcceptChanges As Boolean) As Boolean
         Try
             Dim b As Boolean = True
             Select Case obj.ObjectState
@@ -3835,13 +3835,14 @@ l1:
             End If
 
             Dim t As Type = obj.GetType
+            Dim orm As IOrmBase = TryCast(obj, IOrmBase)
             'Using obj.GetSyncRoot
             Using GetSyncForSave(t, obj)
-                Dim old_id As Integer = 0
+                Dim old_id As Object = Nothing
                 Dim sa As SaveAction
                 Dim state As ObjectState = obj.ObjectState
                 If state = ObjectState.Created Then
-                    old_id = obj.Identifier
+                    old_id = orm.Identifier
                     sa = SaveAction.Insert
                 End If
 
@@ -4007,12 +4008,12 @@ l1:
     '    ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
 
     Protected MustOverride Function GetCustDelegate(Of T2 As {IOrmBase, New})( _
-        ByVal obj As OrmBase, ByVal filter As IFilter, _
-        ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As Boolean) As ICustDelegate(Of T2)
+        ByVal obj As IOrmBase, ByVal filter As IFilter, _
+        ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As ICustDelegate(Of T2)
 
     Protected MustOverride Function GetCustDelegate(Of T2 As {IOrmBase, New})( _
-        ByVal obj As OrmBase, ByVal filter As IFilter, _
-        ByVal sort As Sort, ByVal id As String, ByVal key As String, ByVal direct As Boolean) As ICustDelegate(Of T2)
+        ByVal obj As IOrmBase, ByVal filter As IFilter, _
+        ByVal sort As Sort, ByVal id As String, ByVal key As String, ByVal direct As String) As ICustDelegate(Of T2)
 
     'Protected MustOverride Function GetCustDelegateTag(Of T As {OrmBase, New})( _
     '    ByVal obj As T, ByVal filter As IOrmFilter, ByVal sort As String, ByVal sortType As SortType, ByVal id As String, ByVal sync As String, ByVal key As String) As ICustDelegate(Of T)
@@ -4037,7 +4038,7 @@ l1:
 
     Protected Friend MustOverride Sub DeleteObject(ByVal obj As ICachedEntity)
 
-    Protected MustOverride Sub M2MSave(ByVal obj As OrmBase, ByVal t As Type, ByVal direct As Boolean, ByVal el As EditableListBase)
+    Protected MustOverride Sub M2MSave(ByVal obj As IOrmBase, ByVal t As Type, ByVal key As String, ByVal el As EditableListBase)
 
     'Protected MustOverride Function FindObmsByOwnerInternal(ByVal id As Integer, ByVal original_type As Type, ByVal type As Type, ByVal sort As String, ByVal sort_type As SortType) As OrmBase()
 

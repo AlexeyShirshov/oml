@@ -856,14 +856,14 @@ Namespace Database
         'End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
-            ByVal obj As OrmBase, ByVal filter As IFilter, ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
-            ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
+            ByVal obj As IOrmBase, ByVal filter As IFilter, ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
+            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManagerBase.ICustDelegate(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, queryAscpect, id, key, direct)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
-            ByVal obj As OrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
-            ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
+            ByVal obj As IOrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
+            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManagerBase.ICustDelegate(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, New QueryAspect() {}, id, key, direct)
         End Function
 
@@ -1040,14 +1040,16 @@ Namespace Database
                         Throw New OrmManagerException("Cannot get second primary key ordinal", ex)
                     End Try
 
+                    Dim dic1 As IDictionary = GetDictionary(firstType)
+                    Dim dic2 As IDictionary = GetDictionary(secondType)
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        Dim id1 As Integer = CInt(dr.GetValue(firstidx))
+                        Dim id1 As Object = dr.GetValue(firstidx)
                         Dim obj1 As OrmBase = CreateDBObject(id1, firstType)
                         If Not _cache.IsDeleted(firstType, id1) AndAlso obj1.ObjectState <> ObjectState.Modified Then
                             Using obj1.GetSyncRoot()
                                 'If obj1.IsLoaded Then obj1.IsLoaded = False
-                                LoadFromDataReader(obj1, dr, first_cols, False)
+                                LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1)
                                 If obj1.ObjectState = ObjectState.NotLoaded AndAlso obj1.IsLoaded Then obj1.ObjectState = ObjectState.None
                                 values.Add(obj1)
                             End Using
@@ -1055,13 +1057,13 @@ Namespace Database
                             values.Add(obj1)
                         End If
 
-                        Dim id2 As Integer = CInt(dr.GetValue(secidx))
+                        Dim id2 As Object = dr.GetValue(secidx)
                         If Not _cache.IsDeleted(secondType, id2) Then
                             Dim obj2 As OrmBase = CreateDBObject(id2, secondType)
                             If obj2.ObjectState <> ObjectState.Modified Then
                                 Using obj2.GetSyncRoot()
                                     'If obj2.IsLoaded Then obj2.IsLoaded = False
-                                    LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count)
+                                    LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2)
                                     If obj2.ObjectState = ObjectState.NotLoaded AndAlso obj2.IsLoaded Then obj2.ObjectState = ObjectState.None
                                 End Using
                             End If
@@ -1172,7 +1174,7 @@ Namespace Database
         'End Function
 
         Protected Overrides Function GetObjects(Of T As {IOrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, _
-            ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Integer, EditableList)
+            ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Object, EditableList)
             Invariant()
 
             If ids Is Nothing Then
@@ -1189,13 +1191,13 @@ Namespace Database
             Dim sb As New StringBuilder
             Dim type2load As Type = GetType(T)
             Dim ct As Type = DbSchema.GetConnectedType(type, type2load)
-            Dim direct As Boolean = Not relation.non_direct
+            Dim direct As String = relation.Key
 
             'Dim dt As New System.Data.DataTable()
             'dt.TableName = "table1"
             'dt.Locale = System.Globalization.CultureInfo.CurrentCulture
 
-            Dim edic As New Dictionary(Of Integer, EditableList)
+            Dim edic As New Dictionary(Of Object, EditableList)
 
             If ct IsNot Nothing Then
                 'If Not direct Then
@@ -1204,7 +1206,7 @@ Namespace Database
 
                 'Dim oschema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(type2load)
                 'Dim r2 As M2MRelation = DbSchema.GetM2MRelation(type2load, type, direct)
-                Dim f1 As String = DbSchema.GetConnectedTypeField(ct, type, Not direct)
+                Dim f1 As String = DbSchema.GetConnectedTypeField(ct, type, M2MRelation.GetRevKey(direct))
                 Dim f2 As String = DbSchema.GetConnectedTypeField(ct, type2load, direct)
                 'Dim col1 As String = type.Name & "ID"
                 'Dim col2 As String = orig_type.Name & "ID"
@@ -1217,8 +1219,8 @@ Namespace Database
                     Dim o1 As OrmBase = CType(o.GetValue(f1), OrmBase)
                     Dim o2 As OrmBase = CType(o.GetValue(f2), OrmBase)
 
-                    Dim id1 As Integer = o1.Identifier
-                    Dim id2 As Integer = o2.Identifier
+                    Dim id1 As Object = o1.Identifier
+                    Dim id2 As Object = o2.Identifier
                     'Dim k As Integer = o1.Identifier
                     'Dim v As Integer = o2.Identifier
                     If o2.GetType Is type Then
@@ -1230,7 +1232,7 @@ Namespace Database
                     If edic.TryGetValue(id1, el) Then
                         el.Add(id2)
                     Else
-                        Dim l As New List(Of Integer)
+                        Dim l As New List(Of Object)
                         l.Add(id2)
                         el = New EditableList(id1, l, type, type2load, Nothing)
                         edic.Add(id1, el)
@@ -1282,13 +1284,13 @@ Namespace Database
 
                                 Dim ft As New PerfCounter
                                 Do While dr.Read
-                                    Dim id1 As Integer = CInt(dr.GetValue(0))
-                                    Dim id2 As Integer = CInt(dr.GetValue(1))
+                                    Dim id1 As Object = dr.GetValue(0)
+                                    Dim id2 As Object = dr.GetValue(1)
                                     Dim el As EditableList = Nothing
                                     If edic.TryGetValue(id1, el) Then
                                         el.Add(id2)
                                     Else
-                                        Dim l As New List(Of Integer)
+                                        Dim l As New List(Of Object)
                                         l.Add(id2)
                                         el = New EditableList(id1, l, type, type2load, Nothing)
                                         edic.Add(id1, el)
@@ -1349,7 +1351,7 @@ Namespace Database
 
             Dim pcnt As Integer = params.Params.Count
             Dim nidx As Integer = pcnt
-            For Each cmd_str As Pair(Of String, Integer) In GetFilters(CType(ids, List(Of Integer)), fieldName, almgr, params, original_type, idsSorted)
+            For Each cmd_str As Pair(Of String, Integer) In GetFilters(CType(ids, List(Of Object)), fieldName, almgr, params, original_type, idsSorted)
                 Dim sb_cmd As New StringBuilder
                 sb_cmd.Append(sb.ToString).Append(cmd_str.First)
                 'Dim msort As Boolean = False
@@ -1410,7 +1412,7 @@ Namespace Database
 
             Dim pcnt As Integer = params.Params.Count
             Dim nidx As Integer = pcnt
-            For Each cmd_str As Pair(Of String, Integer) In GetFilters(CType(ids, List(Of Integer)), fieldName, almgr, params, original_type, idsSorted)
+            For Each cmd_str As Pair(Of String, Integer) In GetFilters(CType(ids, List(Of Object)), fieldName, almgr, params, original_type, idsSorted)
                 Dim sb_cmd As New StringBuilder
                 sb_cmd.Append(sb.ToString).Append(cmd_str.First)
                 'Dim msort As Boolean = False
@@ -1451,7 +1453,7 @@ Namespace Database
         '    Return o
         'End Function
 
-        Protected Friend Overrides Sub LoadObject(ByVal obj As OrmBase)
+        Protected Friend Overrides Sub LoadObject(ByVal obj As ICachedEntity)
             Invariant()
 
             If obj Is Nothing Then
@@ -1460,8 +1462,13 @@ Namespace Database
 
             Dim original_type As Type = obj.GetType
 
-            Dim filter As New Database.Criteria.Core.EntityFilter(original_type, "ID", _
-                New EntityValue(obj), Worm.Criteria.FilterOperation.Equal)
+            'Dim filter As New Database.Criteria.Core.EntityFilter(original_type, "ID", _
+            '    New EntityValue(obj), Worm.Criteria.FilterOperation.Equal)
+            Dim c As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
+            For Each p As Pair(Of String, Object) In obj.GetPKValues
+                c.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, p.First, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.Equal))
+            Next
+            Dim filter As IFilter = c.Condition
 
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
                 Dim arr As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
@@ -1490,10 +1497,11 @@ Namespace Database
         End Sub
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal arr As Generic.IList(Of ColumnAttribute), ByVal obj As OrmBase, _
+            ByVal arr As Generic.IList(Of ColumnAttribute), ByVal obj As ICachedEntity, _
             ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
             Invariant()
 
+            Dim dic As IDictionary = GetDictionary(obj.GetType)
             Dim b As ConnAction = TestConn(cmd)
             Try
                 If load Then
@@ -1511,7 +1519,7 @@ Namespace Database
                                 Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
                             End If
                             If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse Not _cache.IsDeleted(obj)) Then
-                                LoadFromDataReader(obj, dr, arr, check_pk)
+                                LoadFromDataReader(obj, dr, arr, check_pk, 0, dic)
                             End If
                             loaded = True
                         Loop
@@ -1521,15 +1529,17 @@ Namespace Database
 
                         If Not obj.IsLoaded Then
                             If load Then
-                                obj.ObjectState = ObjectState.NotFoundInSource
-                                RemoveObjectFromCache(obj)
+                                Throw New ApplicationException
+                                'obj.ObjectState = ObjectState.NotFoundInSource
+                                'RemoveObjectFromCache(obj)
                             End If
                         Else
                             If obj.ObjectState = ObjectState.Created Then
                                 'obj.ObjectState = ObjectState.None
-                                obj._loading = True
-                                obj.Identifier = obj.Identifier
-                                obj._loading = False
+                                Throw New ApplicationException
+                                obj.BeginLoading()
+                                'obj.Identifier = obj.Identifier
+                                obj.EndLoading()
                             End If
                         End If
                     End Using
@@ -1608,7 +1618,7 @@ Namespace Database
                     'If arr Is Nothing Then arr = Schema.GetSortedFieldList(original_type)
 
                     Dim idx As Integer = GetPrimaryKeyIdx(cmd.CommandText, original_type, dr)
-                    Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
+                    Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         LoadFromResultSet(Of T)(withLoad, CType(values, System.Collections.IList), arr, dr, idx, dic, _loadedInLastFetch)
@@ -1644,7 +1654,7 @@ Namespace Database
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
             ByVal dr As System.Data.IDataReader, ByVal idx As Integer, _
-            ByVal dic As IDictionary(Of Integer, T), ByRef loaded As Integer)
+            ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer)
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
@@ -2129,29 +2139,30 @@ l1:
             Next
 
             Dim result As New ReadOnlyList(Of T)
-            Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
+            Dim ar As IListEdit = result
+            Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
             If remove_not_found Then
                 For Each o As T In objs
                     If Not withLoad Then
                         If values.Contains(o) OrElse Not ids.Contains(o.Identifier) Then
-                            result.Add(o)
+                            ar.Add(o)
                         Else
                             o.ObjectState = ObjectState.NotFoundInSource
                         End If
                     Else
                         If o.IsLoaded Then
-                            result.Add(o)
+                            ar.Add(o)
                         ElseIf ListConverter.IsWeak Then
                             Dim obj As T = Nothing
                             If dic.TryGetValue(o.Identifier, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
-                                result.Add(obj)
+                                ar.Add(obj)
                             Else
                                 Dim idx As Integer = values.IndexOf(o)
                                 If idx >= 0 Then
                                     Dim ro As T = values(idx)
                                     Debug.Assert(ro.IsLoaded)
                                     Add2Cache(ro)
-                                    result.Add(ro)
+                                    ar.Add(ro)
                                 End If
                             End If
                         End If
@@ -2162,9 +2173,9 @@ l1:
                     For Each o As T In objs
                         Dim obj As T = Nothing
                         If dic.TryGetValue(o.Identifier, obj) Then
-                            result.Add(obj)
+                            ar.Add(obj)
                         Else
-                            result.Add(o)
+                            ar.Add(o)
                         End If
                     Next
                 Else
@@ -2175,12 +2186,28 @@ l1:
             'Return New ReadOnlyList(Of T)(values)
         End Function
 
-        Protected Function GetFilters(ByVal ids As Generic.List(Of Integer), ByVal fieldName As String, _
+        Protected Function GetFilters(ByVal ids_ As Generic.List(Of Object), ByVal fieldName As String, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal original_type As Type, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
 
-            Dim mr As MergeResult = MergeIds(ids, Not idsSorted)
-
+            Dim mr As MergeResult = Nothing
             Dim l As New Generic.List(Of Pair(Of String, Integer))
+
+            If ids_.Count > 0 Then
+                Dim int As Integer
+                Dim ids As Generic.List(Of Integer) = Nothing
+                If Integer.TryParse(ids_(0).ToString, int) Then
+                    ids = ids_.ConvertAll(Function(i) Convert.ToInt32(i))
+                    mr = MergeIds(ids, Not idsSorted)
+                Else
+                    Dim sb As New StringBuilder
+                    For Each o As Object In ids_
+                        sb.Append(o.ToString).Append(",")
+                    Next
+                    sb.Length -= 1
+                    Dim f As New Database.Criteria.Core.EntityFilter(original_type, fieldName, New LiteralValue(sb.ToString), Worm.Criteria.FilterOperation.In)
+                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(DbSchema, GetFilterInfo, almgr, params), params.Params.Count))
+                End If
+            End If
 
             If mr IsNot Nothing Then
                 Dim sb As New StringBuilder
@@ -2321,7 +2348,7 @@ l1:
             Return l
         End Function
 
-        Protected Overrides Function Search(Of T As {New, OrmBase})(ByVal type2search As Type, _
+        Protected Overrides Function Search(Of T As {New, IOrmBase})(ByVal type2search As Type, _
             ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, _
             ByVal frmt As IFtsStringFormater, Optional ByVal js() As OrmJoin = Nothing) As ReadOnlyList(Of T)
 
@@ -2406,7 +2433,7 @@ l1:
                     For Each p As Pair(Of String, Type) In fields
                         'If p.Second Is selectType Then
                         Dim f As String = p.First
-                        Dim s As String = CStr(o.GetValue(f, searchSchema))
+                        Dim s As String = CStr(o.GetValue(Nothing, New ColumnAttribute(f), searchSchema))
                         If s IsNot Nothing Then
                             If s.Equals(query, StringComparison.InvariantCultureIgnoreCase) Then
                                 full.Add(o)
@@ -2498,7 +2525,7 @@ l2:
             End If
 
             If col2 IsNot Nothing AndAlso res.Count < _length Then
-                Dim dic As New Dictionary(Of Integer, T)
+                Dim dic As New Dictionary(Of Object, T)
                 For Each o As T In res
                     dic.Add(o.Identifier, o)
                 Next
@@ -2518,7 +2545,7 @@ l2:
             Return New ReadOnlyList(Of T)(res)
         End Function
 
-        Protected Overrides Function SearchEx(Of T As {OrmBase, New})(ByVal type2search As Type, _
+        Protected Overrides Function SearchEx(Of T As {IOrmBase, New})(ByVal type2search As Type, _
             ByVal contextKey As Object, ByVal sort As Sort, ByVal filter As IFilter, ByVal ftsText As String, _
             ByVal limit As Integer, ByVal fts As IFtsStringFormater) As ReadOnlyList(Of T)
 
@@ -2828,11 +2855,11 @@ l2:
         '    Throw New NotImplementedException()
         'End Function
 
-        Protected Overrides Function InsertObject(ByVal obj As Orm.OrmBase) As Boolean
+        Protected Overrides Function InsertObject(ByVal obj As ICachedEntity) As Boolean
             Throw New NotImplementedException()
         End Function
 
-        Protected Friend Overrides Sub DeleteObject(ByVal obj As OrmBase)
+        Protected Friend Overrides Sub DeleteObject(ByVal obj As ICachedEntity)
             Throw New NotImplementedException()
         End Sub
 
@@ -2840,7 +2867,7 @@ l2:
         '    Throw New NotImplementedException()
         'End Sub
 
-        Protected Overrides Sub M2MSave(ByVal obj As OrmBase, ByVal t As System.Type, ByVal direct As Boolean, ByVal el As EditableList)
+        Protected Overrides Sub M2MSave(ByVal obj As Orm.IOrmBase, ByVal t As System.Type, ByVal key As String, ByVal el As EditableListBase)
             Throw New NotImplementedException
         End Sub
 
@@ -2864,8 +2891,8 @@ l2:
             End Get
         End Property
 
-        Protected Friend Function LoadM2M(Of T As {OrmBase, New})(ByVal cmd As System.Data.Common.DbCommand, ByVal withLoad As Boolean, _
-            ByVal obj As OrmBase, ByVal sort As Sort, ByVal columns As IList(Of ColumnAttribute)) As List(Of Integer)
+        Protected Friend Function LoadM2M(Of T As {IOrmBase, New})(ByVal cmd As System.Data.Common.DbCommand, ByVal withLoad As Boolean, _
+            ByVal obj As OrmBase, ByVal sort As Sort, ByVal columns As IList(Of ColumnAttribute)) As List(Of Object)
             Dim b As ConnAction = TestConn(cmd)
             Dim tt As Type = GetType(T)
             Try
@@ -2873,24 +2900,25 @@ l2:
                     _cache.BeginTrackDelete(tt)
                 End If
                 _loadedInLastFetch = 0
+                Dim dic As IDictionary = CType(GetDictionary(Of T)(), System.Collections.IDictionary)
                 Dim et As New PerfCounter
-                Dim l As New List(Of Integer)
+                Dim l As New List(Of Object)
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        Dim id1 As Integer = CInt(dr.GetValue(0))
-                        If id1 <> obj.Identifier Then
+                        Dim id1 As Object = dr.GetValue(0)
+                        If id1.Equals(obj.Identifier) Then
                             Throw New OrmManagerException("Wrong relation statement")
                         End If
-                        Dim id2 As Integer = CInt(dr.GetValue(1))
+                        Dim id2 As Object = dr.GetValue(1)
                         l.Add(id2)
                         If withLoad AndAlso Not _cache.IsDeleted(tt, id2) Then
                             Dim o As T = CreateDBObject(Of T)(id2)
                             If o.ObjectState <> ObjectState.Modified Then
                                 Using o.GetSyncRoot()
                                     'If obj.IsLoaded Then obj.IsLoaded = False
-                                    LoadFromDataReader(o, dr, columns, False, 2)
+                                    LoadFromDataReader(o, dr, columns, False, 2, dic)
                                     If o.ObjectState = ObjectState.NotLoaded AndAlso o.IsLoaded Then o.ObjectState = ObjectState.None
                                     _loadedInLastFetch += 1
                                 End Using
@@ -2901,7 +2929,7 @@ l2:
                 End Using
 
                 If sort IsNot Nothing AndAlso sort.IsExternal Then
-                    Dim l2 As New List(Of Integer)
+                    Dim l2 As New List(Of Object)
                     For Each o As T In DbSchema.ExternalSort(Of T)(Me, sort, ConvertIds2Objects(Of T)(l, False))
                         l2.Add(o.Identifier)
                     Next

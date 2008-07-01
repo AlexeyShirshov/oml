@@ -950,7 +950,7 @@ l1:
         End Sub
 
         Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of SourceFragment, IFilter), ByVal filterInfo As Object, _
-            ByVal type As Type, ByVal obj As OrmBase, ByVal oschema As IOrmObjectSchema, ByVal relSchema As IOrmRelationalSchema)
+            ByVal type As Type, ByVal obj As ICachedEntity, ByVal oschema As IOrmObjectSchema, ByVal relSchema As IOrmRelationalSchema)
             'Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
             Dim tables() As SourceFragment = GetTables(oschema)
             Dim pk_table As SourceFragment = tables(0)
@@ -964,7 +964,7 @@ l1:
                         If c IsNot Nothing Then
                             Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.FieldName).GetAttributes(c) 'GetAttributes(type, c)
                             If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                o.AddFilter(New dc.EntityFilter(type, c.FieldName, New LiteralValue("@id"), FilterOperation.Equal))
+                                o.AddFilter(New dc.EntityFilter(type, c.FieldName, New LiteralValue("@id_" & c.FieldName), FilterOperation.Equal))
                             ElseIf (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
                                 Dim v As Object = pi.GetValue(obj, Nothing)
                                 o.AddFilter((New dc.EntityFilter(type, c.FieldName, New ScalarValue(v), FilterOperation.Equal)))
@@ -988,7 +988,7 @@ l1:
             Next
         End Sub
 
-        Public Overridable Function Delete(ByVal obj As OrmBase, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
+        Public Overridable Function Delete(ByVal obj As ICachedEntity, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
             ByVal filterInfo As Object) As String
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
@@ -1010,8 +1010,10 @@ l1:
                     Dim params As New ParamMgr(Me, "p")
                     Dim deleted_tables As New Generic.Dictionary(Of SourceFragment, IFilter)
 
-                    del_cmd.Append(DeclareVariable("@id", "int")).Append(EndLine)
-                    del_cmd.Append("set @id = ").Append(params.CreateParam(obj.Identifier)).Append(EndLine)
+                    For Each p As Pair(Of String, Object) In obj.GetPKValues
+                        del_cmd.Append(DeclareVariable("@id_" & p.First, "int")).Append(EndLine)
+                        del_cmd.Append("set @id_").Append(p.First).Append(" = ").Append(params.CreateParam(p.Second)).Append(EndLine)
+                    Next
 
                     GetDeletedConditions(deleted_tables, filterInfo, type, obj, oschema, TryCast(relSchema, IOrmRelationalSchema))
 
@@ -1663,7 +1665,7 @@ l1:
 
         Public Function SelectM2M(ByVal selectedType As Type, ByVal filteredType As Type, ByVal aspects() As QueryAspect, _
             ByVal appendMainTable As Boolean, ByVal appJoins As Boolean, ByVal filterInfo As Object, _
-            ByVal pmgr As ParamMgr, ByVal almgr As AliasMgr, ByVal withLoad As Boolean, ByVal direct As Boolean) As String
+            ByVal pmgr As ParamMgr, ByVal almgr As AliasMgr, ByVal withLoad As Boolean, ByVal key As String) As String
 
             Dim schema As IOrmObjectSchema = GetObjectSchema(selectedType)
             'Dim schema2 As IOrmObjectSchema = GetObjectSchema(filteredType)
@@ -1673,8 +1675,8 @@ l1:
             'column - filter
             Dim filtered_r As M2MRelation = Nothing
 
-            filtered_r = GetM2MRelation(selectedType, filteredType, direct)
-            selected_r = GetRevM2MRelation(selectedType, filteredType, direct)
+            filtered_r = GetM2MRelation(selectedType, filteredType, key)
+            selected_r = GetRevM2MRelation(selectedType, filteredType, key)
 
             If selected_r Is Nothing Then
                 Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
@@ -1751,7 +1753,7 @@ l1:
 
         Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As OrmBase, ByVal type As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal filter_info As Object, ByVal appJoins As Boolean, ByVal withLoad As Boolean, ByVal appendMain As Boolean, _
-            ByRef params As IList(Of System.Data.Common.DbParameter), ByVal direct As Boolean, ByVal aspects() As QueryAspect) As String
+            ByRef params As IList(Of System.Data.Common.DbParameter), ByVal key As String, ByVal aspects() As QueryAspect) As String
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -1767,13 +1769,13 @@ l1:
             Dim schema2 As IOrmObjectSchema = GetObjectSchema(type)
 
             Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(filter_info) IsNot Nothing OrElse appendMain OrElse SQLGenerator.NeedJoin(schema2)
-            sb.Append(SelectM2M(type, t, aspects, appendMainTable, appJoins, filter_info, pmgr, almgr, withLoad, direct))
+            sb.Append(SelectM2M(type, t, aspects, appendMainTable, appJoins, filter_info, pmgr, almgr, withLoad, key))
 
             Dim selected_r As M2MRelation = Nothing
             Dim filtered_r As M2MRelation = Nothing
 
-            filtered_r = GetM2MRelation(type, t, direct)
-            selected_r = GetRevM2MRelation(type, t, direct)
+            filtered_r = GetM2MRelation(type, t, key)
+            selected_r = GetRevM2MRelation(type, t, key)
 
             If selected_r Is Nothing Then
                 Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", t.Name, type.Name))
@@ -2199,7 +2201,7 @@ l1:
 
 #End Region
 
-        Public Function PrepareConcurrencyException(ByVal obj As OrmBase) As OrmManagerException
+        Public Function PrepareConcurrencyException(ByVal obj As ICachedEntity) As OrmManagerException
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If

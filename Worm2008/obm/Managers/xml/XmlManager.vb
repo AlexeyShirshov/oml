@@ -43,15 +43,15 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Friend Overrides Sub DeleteObject(ByVal obj As Orm.OrmBase)
+        Protected Friend Overrides Sub DeleteObject(ByVal obj As ICachedEntity)
             Throw New NotImplementedException
         End Sub
 
-        Protected Overloads Overrides Sub M2MSave(ByVal obj As Orm.OrmBase, ByVal t As System.Type, ByVal direct As Boolean, ByVal el As Cache.EditableList)
+        Protected Overloads Overrides Sub M2MSave(ByVal obj As IOrmBase, ByVal t As System.Type, ByVal direct As String, ByVal el As EditableListBase)
             Throw New NotImplementedException
         End Sub
 
-        Protected Overrides Function InsertObject(ByVal obj As Orm.OrmBase) As Boolean
+        Protected Overrides Function InsertObject(ByVal obj As ICachedEntity) As Boolean
             Throw New NotImplementedException()
         End Function
 
@@ -59,7 +59,7 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Friend Overrides Function UpdateObject(ByVal obj As Orm.OrmBase) As Boolean
+        Protected Friend Overrides Function UpdateObject(ByVal obj As ICachedEntity) As Boolean
             Throw New NotImplementedException
         End Function
 
@@ -83,13 +83,13 @@ Namespace Xml
             End Get
         End Property
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, Orm.OrmBase})( _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
             ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, Orm.OrmBase})( _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
             ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManagerBase.ICustDelegate(Of T)
             If cols Is Nothing Then
@@ -113,47 +113,47 @@ Namespace Xml
             Return New FilterCustDelegate(Of T)(Me, filter, l, sort, key, id)
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, Orm.OrmBase})( _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal relation As Orm.Meta.M2MRelation, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
 
             Throw New NotImplementedException
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, Orm.OrmBase})( _
-            ByVal obj As Orm.OrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
+        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
+            ByVal obj As IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
+            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManagerBase.ICustDelegate(Of T2)
 
             Throw New NotImplementedException
         End Function
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, Orm.OrmBase})( _
-            ByVal obj As Orm.OrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal queryAspect() As Orm.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As Boolean) As OrmManagerBase.ICustDelegate(Of T2)
+        Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
+            ByVal obj As IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
+            ByVal queryAspect() As Orm.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManagerBase.ICustDelegate(Of T2)
 
             Throw New NotImplementedException
         End Function
 
 
-        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, Orm.OrmBase})( _
+        Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal aspect As Orm.Query.QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManagerBase.ICustDelegate(Of T)
 
             Throw New NotImplementedException
         End Function
 
-        Protected Overloads Overrides Function GetObjects(Of T As {New, Orm.OrmBase})( _
-            ByVal ids As System.Collections.Generic.IList(Of Integer), ByVal f As Worm.Criteria.Core.IFilter, _
+        Protected Overloads Overrides Function GetObjects(Of T As {New, IOrmBase})( _
+            ByVal ids As System.Collections.Generic.IList(Of Object), ByVal f As Worm.Criteria.Core.IFilter, _
             ByVal objs As System.Collections.Generic.List(Of T), ByVal withLoad As Boolean, _
             ByVal fieldName As String, ByVal idsSorted As Boolean) As System.Collections.Generic.IList(Of T)
 
             Throw New NotImplementedException
         End Function
 
-        Protected Overloads Overrides Function GetObjects(Of T As {New, Orm.OrmBase})( _
-            ByVal type As System.Type, ByVal ids As System.Collections.Generic.IList(Of Integer), _
+        Protected Overloads Overrides Function GetObjects(Of T As {New, IOrmBase})( _
+            ByVal type As System.Type, ByVal ids As System.Collections.Generic.IList(Of Object), _
             ByVal f As Worm.Criteria.Core.IFilter, ByVal relation As Orm.Meta.M2MRelation, _
-            ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As System.Collections.Generic.IDictionary(Of Integer, Cache.EditableList)
+            ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As System.Collections.Generic.IDictionary(Of Object, Cache.EditableList)
 
             Throw New NotImplementedException
         End Function
@@ -166,7 +166,7 @@ Namespace Xml
             Return Nothing
         End Function
 
-        Protected Friend Overrides Sub LoadObject(ByVal obj As Orm.OrmBase)
+        Protected Friend Overrides Sub LoadObject(ByVal obj As ICachedEntity)
             Throw New NotImplementedException
         End Sub
 
@@ -176,7 +176,7 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, Orm.OrmBase})( _
+        Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, IOrmBase})( _
             ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
             Throw New NotImplementedException
@@ -190,18 +190,18 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Overloads Overrides Function Search(Of T As {New, Orm.OrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Orm.Meta.IFtsStringFormater, Optional ByVal joins() As OrmJoin = Nothing) As ReadOnlyList(Of T)
+        Protected Overloads Overrides Function Search(Of T As {New, IOrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal frmt As Orm.Meta.IFtsStringFormater, Optional ByVal joins() As OrmJoin = Nothing) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 
-        Protected Overrides Function SearchEx(Of T As {New, Orm.OrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Orm.Meta.IFtsStringFormater) As ReadOnlyList(Of T)
+        Protected Overrides Function SearchEx(Of T As {New, IOrmBase})(ByVal type2search As System.Type, ByVal contextKey As Object, ByVal sort As Sorting.Sort, ByVal filter As Worm.Criteria.Core.IFilter, ByVal ftsText As String, ByVal limit As Integer, ByVal frmt As Orm.Meta.IFtsStringFormater) As ReadOnlyList(Of T)
             Throw New NotImplementedException
         End Function
 
 #End Region
 
-        Protected Friend Function LoadMultipleObjects(Of T As {New, Orm.OrmBase})(ByVal xpath As String, ByVal withLoad As Boolean, _
-            ByRef values As Generic.IList(Of T)) As ReadOnlyList(Of T)
+        Protected Friend Function LoadMultipleObjects(Of T As {New, _ICachedEntity})(ByVal xpath As String, ByVal withLoad As Boolean, _
+            ByRef values As Generic.IList(Of T)) As ReadOnlyEntityList(Of T)
 
             Dim original_type As Type = GetType(T)
             Dim nav As XPathNavigator = GetNavigator()
@@ -213,15 +213,15 @@ Namespace Xml
                 values = New Generic.List(Of T)
             End If
 
-            Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
+            Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
             Dim oschema As IOrmObjectSchema = CType(_schema.GetObjectSchema(original_type), IOrmObjectSchema)
             Dim ft As New PerfCounter
             Do While nodes.MoveNext
                 LoadFromNodeIterator(Of T)(nodes.Current.Clone, dic, values, _loadedInLastFetch, oschema)
             Loop
             _fetch = ft.GetTime
-
-            Return New ReadOnlyList(Of T)(CType(values, List(Of T)))
+            Return CType(CreateReadonlyList(original_type, CType(values, System.Collections.IList)), Global.Worm.ReadOnlyEntityList(Of T))
+            'Return New ReadOnlyList(Of T)(CType(values, List(Of T)))
         End Function
 
         Protected Function GetNavigator() As XPathNavigator
@@ -234,35 +234,39 @@ Namespace Xml
             Return d.CreateNavigator
         End Function
 
-        Protected Sub LoadFromNodeIterator(Of T As {New, Orm.OrmBase})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Integer, T), _
+        Protected Sub LoadFromNodeIterator(Of T As {New, _ICachedEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Object, T), _
             ByVal values As IList(Of T), ByRef loaded As Integer, ByVal oschema As IOrmObjectSchema)
             'Dim id As Integer = CInt(dr.GetValue(idx))
-            Dim obj As New T '= CType(CreateDBObject(Of T)(id, dic, False), T)
-            If LoadPK(oschema, node, obj) Then
-                obj = GetObjectFromCache(Of T)(obj, dic, False, False, True)
-                If obj.ObjectState = ObjectState.NotLoaded Then
-                    Using obj.GetSyncRoot()
-                        obj.RaiseBeginModification(ModifiedObject.ReasonEnum.Unknown)
-                        'If obj.IsLoaded Then obj.IsLoaded = False
-                        LoadData(oschema, node, obj)
-                        If obj.ObjectState = ObjectState.Modified AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
+            Dim obj As T = CreateEntity(Of T)() '= CType(CreateDBObject(Of T)(id, dic, False), T)
+            Using obj.GetSyncRoot()
+                obj.BeginLoading()
+                If LoadPK(oschema, node, obj) Then
+                    obj = GetObjectFromCache(Of T)(obj, dic, False, False, True)
+                    If obj.ObjectState = ObjectState.NotLoaded Then
+                        Using obj.GetSyncRoot()
+                            obj.RaiseBeginModification(ModifiedObject.ReasonEnum.Unknown)
+                            'If obj.IsLoaded Then obj.IsLoaded = False
+                            LoadData(oschema, node, obj)
+                            If obj.ObjectState = ObjectState.Modified AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
+                            values.Add(obj)
+                            loaded += 1
+                        End Using
+                    Else
                         values.Add(obj)
-                        loaded += 1
-                    End Using
+                        If obj.IsLoaded Then
+                            loaded += 1
+                        End If
+                    End If
                 Else
-                    values.Add(obj)
-                    If obj.IsLoaded Then
-                        loaded += 1
+                    If _mcSwitch.TraceVerbose Then
+                        WriteLine("Attempt to load unallowed object " & GetType(T).Name & " (" & node.InnerXml & ")")
                     End If
                 End If
-            Else
-                If _mcSwitch.TraceVerbose Then
-                    WriteLine("Attempt to load unallowed object " & GetType(T).Name & " (" & node.InnerXml & ")")
-                End If
-            End If
+                obj.EndLoading()
+            End Using
         End Sub
 
-        Protected Function LoadPK(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As OrmBase) As Boolean
+        Protected Function LoadPK(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim seted As Boolean
             For Each c As ColumnAttribute In _schema.GetSortedFieldList(original_type)
@@ -275,7 +279,7 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        obj.SetPK(c.FieldName, nodes.Current.Value)
+                        obj.SetValue(Nothing, c, oschema, nodes.Current.Value)
                         seted = True
                         sn = True
                     Loop
@@ -284,32 +288,28 @@ Namespace Xml
             Return seted
         End Function
 
-        Protected Function LoadData(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As OrmBase) As Boolean
+        Protected Function LoadData(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
-            Using obj.GetSyncRoot()
-                obj._loading = True
-                Dim columns As List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
-                For Each c As ColumnAttribute In columns
-                    If (_schema.GetAttributes(original_type, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                        Dim attr As String = _schema.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
-                        Dim n As XPathNavigator = node.Clone
-                        Dim nodes As XPathNodeIterator = n.Select(attr)
-                        Dim sn As Boolean
-                        Do While nodes.MoveNext
-                            If sn Then
-                                Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
-                            End If
-                            obj.SetValue(_schema.GetProperty(original_type, c), c, nodes.Current.Value)
-                            obj.SetLoaded(c, True, True)
-                            sn = True
-                        Loop
-                    Else
+            Dim columns As List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
+            For Each c As ColumnAttribute In columns
+                If (_schema.GetAttributes(original_type, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                    Dim attr As String = _schema.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
+                    Dim n As XPathNavigator = node.Clone
+                    Dim nodes As XPathNodeIterator = n.Select(attr)
+                    Dim sn As Boolean
+                    Do While nodes.MoveNext
+                        If sn Then
+                            Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
+                        End If
+                        obj.SetValue(_schema.GetProperty(original_type, c), c, oschema, nodes.Current.Value)
                         obj.SetLoaded(c, True, True)
-                    End If
-                Next
-                obj._loading = False
-                obj.CheckIsAllLoaded(ObjectSchema, columns.Count)
-            End Using
+                        sn = True
+                    Loop
+                Else
+                    obj.SetLoaded(c, True, True)
+                End If
+            Next
+            obj.CheckIsAllLoaded(ObjectSchema, columns.Count)
         End Function
     End Class
 End Namespace

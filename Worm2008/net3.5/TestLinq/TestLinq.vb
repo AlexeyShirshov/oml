@@ -92,10 +92,15 @@ Imports Worm.Linq
 
         Assert.IsTrue(q.ToList(0).InternalProperties.IsLoaded)
 
-        'Dim p As New WormLinqProvider(ctx)
-        'Dim exp As Expressions.Expression(Of Func(Of Integer, Boolean)) = Function(num) num = 2
-        'q = p.CreateQuery(Of TestProject1.Table1)(exp)
-        'l = q.ToList
+        Dim p As New WormLinqProvider(ctx)
+        Dim le As Expressions.Expression(Of Func(Of TestProject1.Table1, Boolean)) = Function(k As TestProject1.Table1) (k.Code = 2).Value
+        Dim mi As Reflection.MethodInfo = GetType(TestProject1.Table1).GetMethod("Where", _
+            New Type() {GetType(IQueryable(Of TestProject1.Table1)), _
+                        GetType(Expressions.Expression(Of Func(Of TestProject1.Table1, Boolean)))})
+        Dim exp As Expressions.MethodCallExpression = Expressions.Expression.Call(Nothing, mi, _
+            New Expressions.Expression() {le})
+        q = p.CreateQuery(Of TestProject1.Table1)(exp)
+        l = q.ToList
 
         'Assert.AreEqual(1, l.Count)
         'Assert.AreEqual(1, l(0).ID)

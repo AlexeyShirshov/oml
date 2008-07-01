@@ -323,14 +323,14 @@ Namespace Database
         'End Using
         'End Sub
 
-        Protected Friend Overrides Sub DeleteObject(ByVal obj As OrmBase)
+        Protected Friend Overrides Sub DeleteObject(ByVal obj As ICachedEntity)
             Invariant()
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
             End If
 
-            Assert(obj.ObjectState = ObjectState.Deleted, "Object " & obj.Identifier & " should be in Deleted state")
+            Assert(obj.ObjectState = ObjectState.Deleted, "Object " & obj.objname & " should be in Deleted state")
 
             'Dim t As Type = obj.GetType
 

@@ -349,19 +349,19 @@ Namespace Database
 
         End Class
 
-        Protected Class M2MDataProvider(Of T As {New, OrmBase})
+        Protected Class M2MDataProvider(Of T As {New, IOrmBase})
             Inherits BaseDataProvider(Of T)
 
-            Private _obj As OrmBase
-            Private _direct As Boolean
+            Private _obj As IOrmBase
+            Private _direct As String
             'Private _sync As String
             'Private _rev As Boolean
             'Private _soft_renew As Boolean
             Private _qa() As QueryAspect
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As OrmBase, ByVal filter As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As IOrmBase, ByVal filter As IFilter, _
                 ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
-                ByVal id As String, ByVal key As String, ByVal direct As Boolean)
+                ByVal id As String, ByVal key As String, ByVal direct As String)
                 MyBase.New(mgr, filter, sort, key, id)
                 _obj = obj
                 _direct = direct
@@ -498,8 +498,8 @@ Namespace Database
                 End If
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of T)) As OrmManagerBase.CachedItem
-                Dim ids As New List(Of Integer)
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManagerBase.CachedItem
+                Dim ids As New List(Of Object)
                 For Each o As T In col
                     ids.Add(o.Identifier)
                 Next
