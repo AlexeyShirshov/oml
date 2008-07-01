@@ -221,55 +221,55 @@ Namespace Query.Database
         'End Class
 
 
-        Class M2MProcessor(Of ReturnType As {New, Orm.OrmBase})
-            Inherits Processor(Of ReturnType)
+        'Class M2MProcessor(Of ReturnType As {New, IOrmBase})
+        '    Inherits Processor(Of ReturnType)
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmdBase)
-                MyBase.New(mgr, j, f, q)
-            End Sub
+        '    Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+        '        ByVal f() As IFilter, ByVal q As QueryCmdBase)
+        '        MyBase.New(mgr, j, f, q)
+        '    End Sub
 
-            Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyList(Of ReturnType)
-                Throw New NotSupportedException
-            End Function
+        '    Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyList(Of ReturnType)
+        '        Throw New NotSupportedException
+        '    End Function
 
-            Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of ReturnType)
-                Throw New NotSupportedException
-            End Function
+        '    Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of ReturnType)
+        '        Throw New NotSupportedException
+        '    End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of ReturnType)) As OrmManagerBase.CachedItem
-                Dim ids As New List(Of Integer)
-                For Each o As ReturnType In col
-                    ids.Add(o.Identifier)
-                Next
-                Return GetCacheItem(ids)
-            End Function
+        '    Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of ReturnType)) As OrmManagerBase.CachedItem
+        '        Dim ids As New List(Of Object)
+        '        For Each o As ReturnType In col
+        '            ids.Add(o.Identifier)
+        '        Next
+        '        Return GetCacheItem(ids)
+        '    End Function
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
-                Return GetCacheItem(GetValuesInternal(withLoad))
-            End Function
+        '    Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
+        '        Return GetCacheItem(GetValuesInternal(withLoad))
+        '    End Function
 
-            Protected Overloads Function GetCacheItem(ByVal ids As List(Of Integer)) As OrmManagerBase.CachedItem
-                Return New OrmManagerBase.M2MCache(Query.Sort, Filter, Query.Obj.Identifier, ids, Mgr, Query.Obj.GetType, GetType(ReturnType), Query.Key)
-            End Function
+        '    Protected Overloads Function GetCacheItem(ByVal ids As List(Of Object)) As OrmManagerBase.CachedItem
+        '        Return New OrmManagerBase.M2MCache(Query.Sort, Filter, Query.Obj.Identifier, ids, Mgr, Query.Obj.GetType, GetType(ReturnType), Query.Key)
+        '    End Function
 
-            Protected Function GetValuesInternal(ByVal withLoad As Boolean) As List(Of Integer)
-                Using cmd As System.Data.Common.DbCommand = Mgr.DbSchema.CreateDBCommand
-                    ', dbm, Query, GetType(ReturnType), _j, _f
-                    MakeStatement(cmd)
+        '    Protected Function GetValuesInternal(ByVal withLoad As Boolean) As List(Of Object)
+        '        Using cmd As System.Data.Common.DbCommand = Mgr.DbSchema.CreateDBCommand
+        '            ', dbm, Query, GetType(ReturnType), _j, _f
+        '            MakeStatement(cmd)
 
-                    Return ExecStmtInternal(cmd)
-                End Using
-            End Function
+        '            Return ExecStmtInternal(cmd)
+        '        End Using
+        '    End Function
 
-            Protected Function ExecStmtInternal(ByVal cmd As System.Data.Common.DbCommand) As List(Of Integer)
-                Throw New NotImplementedException
-            End Function
+        '    Protected Function ExecStmtInternal(ByVal cmd As System.Data.Common.DbCommand) As List(Of Object)
+        '        Throw New NotImplementedException
+        '    End Function
 
-            Protected Overrides Function _MakeStatement() As String
+        '    Protected Overrides Function _MakeStatement() As String
 
-            End Function
-        End Class
+        '    End Function
+        'End Class
     End Class
 
 End Namespace

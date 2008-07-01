@@ -475,23 +475,23 @@ Namespace Criteria.Values
 
         Private _t As Type
 
-        Public Sub New(ByVal o As OrmBase)
+        Public Sub New(ByVal o As IOrmBase)
             MyBase.New()
             If o IsNot Nothing Then
                 _t = o.GetType
                 SetValue(o.Identifier)
             Else
-                _t = GetType(OrmBase)
+                _t = GetType(IOrmBase)
             End If
         End Sub
 
-        Public Sub New(ByVal o As OrmBase, ByVal caseSensitive As Boolean)
+        Public Sub New(ByVal o As IOrmBase, ByVal caseSensitive As Boolean)
             MyClass.New(o)
             Me.CaseSensitive = caseSensitive
         End Sub
 
-        Public Function GetOrmValue(ByVal mgr As OrmManagerBase) As OrmBase
-            Return mgr.CreateDBObject(CInt(Value), _t)
+        Public Function GetOrmValue(ByVal mgr As OrmManagerBase) As IOrmBase
+            Return mgr.CreateDBObject(Value, _t)
         End Function
 
         Public ReadOnly Property OrmType() As Type

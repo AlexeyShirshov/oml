@@ -16,7 +16,13 @@ Namespace Orm.Meta
         Structure RelationDesc
             Public PropertyName As String
             Public EntityType As Type
-            Public Direction As Boolean
+            Public Key As String
+
+            Public ReadOnly Property Direction() As Boolean
+                Get
+                    Return Not (M2MRelation.RevKey = Key)
+                End Get
+            End Property
 
             Public Sub New(ByVal propertyName As String, ByVal entityType As Type)
                 Me.PropertyName = propertyName
@@ -26,7 +32,7 @@ Namespace Orm.Meta
             Public Sub New(ByVal propertyName As String, ByVal entityType As Type, ByVal direction As Boolean)
                 Me.PropertyName = propertyName
                 Me.EntityType = entityType
-                Me.Direction = direction
+                Me.Key = M2MRelation.GetKey(direction)
             End Sub
         End Structure
 

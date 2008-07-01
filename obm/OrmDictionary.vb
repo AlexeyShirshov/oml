@@ -372,12 +372,14 @@ Namespace Orm
                         Next
                         Dim result As New ReadOnlyList(Of T)
                         For Each ar As T In c.Values
-                            result.Add(ar)
+                            CType(result, IListEdit).Add(ar)
                             'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
                             Dim fv As String = CStr(ar.GetValue(fname, oschema))
                             Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
                             If addt IsNot Nothing Then
-                                result.AddRange(addt)
+                                For Each kl As T In addt
+                                    CType(result, IListEdit).Add(kl)
+                                Next
                             End If
                         Next
                         col = result

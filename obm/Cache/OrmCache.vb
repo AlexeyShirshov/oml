@@ -467,7 +467,7 @@ Namespace Cache
 
         Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As QueryGenerator) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Integer, T)
+        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Object, T)
 
 #If TraceCreation Then
         Private _added As ArrayList = arraylist.Synchronized( New ArrayList)
@@ -554,11 +554,11 @@ Namespace Cache
             Return IsDeleted(t, obj.Key)
         End Function
 
-        Friend Function IsDeleted(ByVal t As Type, ByVal id As Integer) As Boolean
+        Friend Function IsDeleted(ByVal t As Type, ByVal key As Integer) As Boolean
             Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
                 Dim p As Pair(Of Integer, List(Of Integer)) = Nothing
                 If _trackDelete.TryGetValue(t, p) Then
-                    Dim idx As Integer = p.Second.IndexOf(id)
+                    Dim idx As Integer = p.Second.IndexOf(key)
                     'If idx >= 0 Then
                     '    l.RemoveAt(idx)
                     'End If
@@ -595,7 +595,7 @@ Namespace Cache
             Return p
         End Function
 
-        Protected Friend Sub LogLoadTime(ByVal obj As OrmBase, ByVal time As TimeSpan)
+        Protected Friend Sub LogLoadTime(ByVal obj As IEntity, ByVal time As TimeSpan)
             Dim t As Type = obj.GetType
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("q89rbvadfk" & t.ToString,"d:\temp\")
@@ -1185,7 +1185,7 @@ l1:
         ''' <param name="key"></param>
         ''' <param name="id"></param>
         ''' <remarks></remarks>
-        Protected Friend Sub AddDepend(ByVal obj As OrmBase, ByVal key As String, ByVal id As String)
+        Protected Friend Sub AddDepend(ByVal obj As ICachedEntity, ByVal key As String, ByVal id As String)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("1380fbhj145g90h2evgrqervg","d:\temp\")
 #Else
