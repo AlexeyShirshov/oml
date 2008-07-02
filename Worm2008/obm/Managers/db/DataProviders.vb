@@ -195,7 +195,7 @@ Namespace Database
 
                     Dim r As New ReadOnlyList(Of T)(_mgr.LoadMultipleObjects(Of T)(cmd, withLoad, Nothing, arr))
                     If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-                        r = _mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, r)
+                        r = CType(_mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, r), ReadOnlyList(Of T))
                     End If
                     Return r
                 End Using

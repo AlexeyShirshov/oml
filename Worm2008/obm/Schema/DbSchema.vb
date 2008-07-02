@@ -349,7 +349,7 @@ Namespace Database
 
 #Region " Statements "
 
-        Public Function Insert(ByVal obj As OrmBase, ByVal filterInfo As Object, _
+        Public Function Insert(ByVal obj As ICachedEntity, ByVal filterInfo As Object, _
             ByRef dbparams As ICollection(Of System.Data.Common.DbParameter), _
             ByRef select_columns As Generic.IList(Of ColumnAttribute)) As String
 
@@ -623,7 +623,7 @@ l1:
 
         End Structure
 
-        Protected Sub GetChangedFields(ByVal obj As OrmBase, ByVal oschema As IOrmPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate), _
+        Protected Sub GetChangedFields(ByVal obj As ICachedEntity, ByVal oschema As IOrmPropertyMap, ByVal tables As IDictionary(Of SourceFragment, TableUpdate), _
             ByVal sel_columns As Generic.List(Of ColumnAttribute), ByVal unions As String())
 
             Dim rt As Type = obj.GetType
@@ -647,9 +647,9 @@ l1:
                             If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
                              (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse obj.ForseUpdate(c) Then
 
-                                If current IsNot Nothing AndAlso GetType(OrmBase).IsAssignableFrom(current.GetType) Then
-                                    If CType(current, OrmBase).ObjectState = ObjectState.Created Then
-                                        Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, OrmBase).ObjName)
+                                If current IsNot Nothing AndAlso GetType(ICachedEntity).IsAssignableFrom(current.GetType) Then
+                                    If CType(current, ICachedEntity).ObjectState = ObjectState.Created Then
+                                        Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, ICachedEntity).ObjName)
                                     End If
                                 End If
 
@@ -785,7 +785,7 @@ l1:
             Next
         End Sub
 
-        Public Overridable Function Update(ByVal obj As OrmBase, ByVal filterInfo As Object, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
+        Public Overridable Function Update(ByVal obj As ICachedEntity, ByVal filterInfo As Object, ByRef dbparams As IEnumerable(Of System.Data.Common.DbParameter), _
             ByRef select_columns As Generic.IList(Of ColumnAttribute), ByRef updated_fields As IList(Of EntityFilterBase)) As String
 
             If obj Is Nothing Then
@@ -1745,13 +1745,13 @@ l1:
             Return r
         End Function
 
-        Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As OrmBase, ByVal type As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
+        Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As IOrmBase, ByVal type As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal filter_info As Object, ByVal appJoins As Boolean, ByVal withLoad As Boolean, ByVal appendMain As Boolean, _
-            ByRef params As IList(Of System.Data.Common.DbParameter), ByVal direct As Boolean) As String
+            ByRef params As IList(Of System.Data.Common.DbParameter), ByVal direct As String) As String
             Return SelectM2M(almgr, obj, type, filter, filter_info, appJoins, withLoad, appendMain, params, direct, New QueryAspect() {})
         End Function
 
-        Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As OrmBase, ByVal type As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
+        Public Function SelectM2M(ByVal almgr As AliasMgr, ByVal obj As IOrmBase, ByVal type As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
             ByVal filter_info As Object, ByVal appJoins As Boolean, ByVal withLoad As Boolean, ByVal appendMain As Boolean, _
             ByRef params As IList(Of System.Data.Common.DbParameter), ByVal key As String, ByVal aspects() As QueryAspect) As String
 
@@ -2140,7 +2140,7 @@ l1:
             Return sb.ToString
         End Function
 
-        Public Function SaveM2M(ByVal obj As OrmBase, ByVal relation As M2MRelation, ByVal entry As EditableListBase, _
+        Public Function SaveM2M(ByVal obj As IOrmBase, ByVal relation As M2MRelation, ByVal entry As EditableListBase, _
             ByVal pmgr As ParamMgr) As String
 
             If obj Is Nothing Then

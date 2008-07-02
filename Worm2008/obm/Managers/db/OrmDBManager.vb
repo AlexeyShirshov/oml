@@ -26,7 +26,7 @@ Namespace Database
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
             End If
 
-            Assert(obj.ObjectState = ObjectState.Modified, "Object " & obj.Identifier & " should be in Modified state")
+            Assert(obj.ObjectState = ObjectState.Modified, "Object " & obj.ObjName & " should be in Modified state")
             'Dim t As Type = obj.GetType
 
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
@@ -129,14 +129,14 @@ Namespace Database
             Return True
         End Function
 
-        Protected Overrides Function InsertObject(ByVal obj As OrmBase) As Boolean
+        Protected Overrides Function InsertObject(ByVal obj As ICachedEntity) As Boolean
             Invariant()
 
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
             End If
 
-            Assert(obj.ObjectState = ObjectState.Created, "Object " & obj.Identifier & " should be in Created state")
+            Assert(obj.ObjectState = ObjectState.Created, "Object " & obj.ObjName & " should be in Created state")
 
             Dim oldl As Boolean = obj.IsLoaded
             Dim err As Boolean = True
@@ -219,7 +219,7 @@ Namespace Database
             Return True
         End Function
 
-        Protected Overrides Sub M2MSave(ByVal obj As OrmBase, ByVal t As Type, ByVal direct As Boolean, ByVal el As EditableListBase)
+        Protected Overrides Sub M2MSave(ByVal obj As IOrmBase, ByVal t As Type, ByVal direct As String, ByVal el As EditableListBase)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -230,7 +230,7 @@ Namespace Database
 
             Dim tt As Type = obj.GetType
             Dim p As New ParamMgr(DbSchema, "p")
-            Dim cmd_text As String = DbSchema.SaveM2M(obj, DbSchema.GetM2MRelationForEdit(tt, t, Not direct), el, p)
+            Dim cmd_text As String = DbSchema.SaveM2M(obj, DbSchema.GetM2MRelationForEdit(tt, t, direct), el, p)
 
             If Not String.IsNullOrEmpty(cmd_text) Then
                 Dim [error] As Boolean = True

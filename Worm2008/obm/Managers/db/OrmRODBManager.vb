@@ -25,30 +25,30 @@ Namespace Database
             Implements IDisposable
 
             Private _disposedValue As Boolean
-            Private _objects As New List(Of OrmBase)
+            Private _objects As New List(Of ICachedEntity)
             Private _mgr As OrmReadOnlyDBManager
             Private _acceptInBatch As Boolean
             Private _callbacks As OrmCacheBase.IUpdateCacheCallbacks
             Private _save As Nullable(Of Boolean)
             'Private _disposeMgr As Boolean
             Private _commited As Boolean
-            Private _lockList As New Dictionary(Of ObjectWrap(Of OrmBase), IDisposable)
-            Private _removed As New List(Of CachedEntity)
+            Private _lockList As New Dictionary(Of ObjectWrap(Of ICachedEntity), IDisposable)
+            Private _removed As New List(Of ICachedEntity)
             Private _dontTrackRemoved As Boolean
             Private _startSave As Boolean
 
 #If DEBUG Then
-            Friend _deleted As New List(Of OrmBase)
-            Friend _updated As New List(Of OrmBase)
+            Friend _deleted As New List(Of ICachedEntity)
+            Friend _updated As New List(Of ICachedEntity)
 #End If
 
             Public Class CancelEventArgs
                 Inherits EventArgs
 
                 Private _cancel As Boolean
-                Private _o As OrmBase
+                Private _o As ICachedEntity
 
-                Public Sub New(ByVal o As OrmBase)
+                Public Sub New(ByVal o As ICachedEntity)
                     _o = o
                 End Sub
 
@@ -61,11 +61,11 @@ Namespace Database
                     End Set
                 End Property
 
-                Public Property SavedObject() As OrmBase
+                Public Property SavedObject() As ICachedEntity
                     Get
                         Return _o
                     End Get
-                    Set(ByVal value As OrmBase)
+                    Set(ByVal value As ICachedEntity)
                         _o = value
                     End Set
                 End Property
@@ -84,14 +84,14 @@ Namespace Database
                     End Set
                 End Property
 
-                Private _objs As List(Of OrmBase)
-                Public ReadOnly Property Objects() As List(Of OrmBase)
+                Private _objs As List(Of ICachedEntity)
+                Public ReadOnly Property Objects() As List(Of ICachedEntity)
                     Get
                         Return _objs
                     End Get
                 End Property
 
-                Public Sub New(ByVal objs As List(Of OrmBase))
+                Public Sub New(ByVal objs As List(Of ICachedEntity))
                     _objs = objs
                 End Sub
 
@@ -101,12 +101,12 @@ Namespace Database
             Public Event CannotSave(ByVal sender As BatchSaver, ByVal args As CannotSaveEventArgs)
             Public Event EndSave()
             Public Event ObjectSaving(ByVal sender As BatchSaver, ByVal args As CancelEventArgs)
-            Public Event ObjectSaved(ByVal o As OrmBase)
-            Public Event ObjectAccepting(ByVal o As OrmBase)
-            Public Event ObjectAccepted(ByVal o As OrmBase)
-            Public Event ObjectRejecting(ByVal o As OrmBase)
-            Public Event ObjectRejected(ByVal o As OrmBase)
-            Public Event ObjectRestored(ByVal o As OrmBase)
+            Public Event ObjectSaved(ByVal o As ICachedEntity)
+            Public Event ObjectAccepting(ByVal o As ICachedEntity)
+            Public Event ObjectAccepted(ByVal o As ICachedEntity)
+            Public Event ObjectRejecting(ByVal o As ICachedEntity)
+            Public Event ObjectRejected(ByVal o As ICachedEntity)
+            Public Event ObjectRestored(ByVal o As ICachedEntity)
             Public Event SaveSuccessed()
             Public Event SaveFailed()
             Public Event BeginRejecting()
@@ -125,10 +125,10 @@ Namespace Database
             '    _mgr = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
             'End Sub
 
-            Public ReadOnly Property AffectedObjects() As ICollection(Of OrmBase)
+            Public ReadOnly Property AffectedObjects() As ICollection(Of ICachedEntity)
                 Get
-                    Dim l As New List(Of OrmBase)(_objects)
-                    For Each o As OrmBase In _removed
+                    Dim l As New List(Of ICachedEntity)(_objects)
+                    For Each o As ICachedEntity In _removed
                         l.Remove(o)
                     Next
                     Return l
@@ -185,7 +185,7 @@ Namespace Database
                 End Set
             End Property
 
-            Public Sub Add(ByVal o As OrmBase)
+            Public Sub Add(ByVal o As CachedEntity)
                 If Not _objects.Contains(o) Then
                     _objects.Add(o)
                     AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
@@ -204,22 +204,22 @@ Namespace Database
                 End If
             End Sub
 
-            Public Sub AddRange(ByVal col As ICollection(Of OrmBase))
+            Public Sub AddRange(ByVal col As ICollection(Of CachedEntity))
                 '_objects.AddRange(col)
                 'For Each o As OrmBase In col
                 '    AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
                 'Next
-                For Each o As OrmBase In col
+                For Each o As CachedEntity In col
                     Add(o)
                 Next
             End Sub
 
-            Protected Sub ObjRejected(ByVal o As CachedEntity)
+            Protected Sub ObjRejected(ByVal o As ICachedEntity)
                 If Not _startSave Then _removed.Add(o)
             End Sub
 
-            Protected Function GetObjWrap(ByVal obj As OrmBase) As ObjectWrap(Of OrmBase)
-                For Each o As ObjectWrap(Of OrmBase) In _lockList.Keys
+            Protected Function GetObjWrap(ByVal obj As ICachedEntity) As ObjectWrap(Of ICachedEntity)
+                For Each o As ObjectWrap(Of ICachedEntity) In _lockList.Keys
                     If ReferenceEquals(o.Value, obj) Then
                         Return o
                     End If
@@ -227,24 +227,24 @@ Namespace Database
                 Throw New InvalidOperationException("Cannot find object")
             End Function
 
-            Protected Sub ObjectAcceptedHandler(ByVal obj As OrmBase) Handles Me.ObjectAccepted
-                Dim o As ObjectWrap(Of OrmBase) = GetObjWrap(obj)
+            Protected Sub ObjectAcceptedHandler(ByVal obj As ICachedEntity) Handles Me.ObjectAccepted
+                Dim o As ObjectWrap(Of ICachedEntity) = GetObjWrap(obj)
                 _lockList(o).Dispose()
                 _lockList.Remove(o)
             End Sub
 
-            Protected Sub ObjectRejectedHandler(ByVal obj As OrmBase) Handles Me.ObjectRejected
-                Dim o As ObjectWrap(Of OrmBase) = GetObjWrap(obj)
+            Protected Sub ObjectRejectedHandler(ByVal obj As ICachedEntity) Handles Me.ObjectRejected
+                Dim o As ObjectWrap(Of ICachedEntity) = GetObjWrap(obj)
                 _lockList(o).Dispose()
                 _lockList.Remove(o)
             End Sub
 
-            Protected Sub SaveObj(ByVal o As OrmBase, ByVal need2save As List(Of OrmBase), ByVal saved As List(Of Pair(Of ObjectState, OrmBase)))
+            Protected Sub SaveObj(ByVal o As ICachedEntity, ByVal need2save As List(Of ICachedEntity), ByVal saved As List(Of Pair(Of ObjectState, ICachedEntity)))
                 Try
                     Dim args As New CancelEventArgs(o)
                     RaiseEvent ObjectSaving(Me, args)
                     If Not args.Cancel Then
-                        Dim owr As New ObjectWrap(Of OrmBase)(o)
+                        Dim owr As New ObjectWrap(Of ICachedEntity)(o)
                         _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
                         Dim os As ObjectState = o.ObjectState
                         If o.SaveChanges(False) Then
@@ -252,7 +252,7 @@ Namespace Database
                             _lockList.Remove(owr)
                             need2save.Add(o)
                         Else
-                            saved.Add(New Pair(Of ObjectState, OrmBase)(os, o))
+                            saved.Add(New Pair(Of ObjectState, ICachedEntity)(os, o))
                             RaiseEvent ObjectSaved(o)
                         End If
                     End If
@@ -264,8 +264,8 @@ Namespace Database
             Protected Sub Save()
                 Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
                 Dim [error] As Boolean = True
-                Dim saved As New List(Of Pair(Of ObjectState, OrmBase)), copies As New List(Of Pair(Of OrmBase))
-                Dim rejectList As New List(Of OrmBase), need2save As New List(Of OrmBase)
+                Dim saved As New List(Of Pair(Of ObjectState, ICachedEntity)), copies As New List(Of Pair(Of ICachedEntity))
+                Dim rejectList As New List(Of ICachedEntity), need2save As New List(Of ICachedEntity)
                 _startSave = True
 #If DebugLocks Then
                 Using New CSScopeMgr_Debug(_mgr.Cache, "d:\temp\")
@@ -275,11 +275,11 @@ Namespace Database
                     _mgr.BeginTransaction()
                     Try
                         RaiseEvent BeginSave(_objects.Count)
-                        For Each o As OrmBase In _objects
+                        For Each o As ICachedEntity In _objects
                             If o.ObjectState = ObjectState.Created Then
                                 rejectList.Add(o)
                             ElseIf o.ObjectState = ObjectState.Modified Then
-                                copies.Add(New Pair(Of OrmBase)(o, o.CreateOriginalVersion))
+                                copies.Add(New Pair(Of ICachedEntity)(o, CType(o.CreateClone, ICachedEntity)))
                             End If
                             SaveObj(o, need2save, saved)
                             'Try
@@ -302,9 +302,9 @@ Namespace Database
                         Next
 
                         For i As Integer = 0 To 4
-                            Dim ns As New List(Of OrmBase)(need2save)
+                            Dim ns As New List(Of ICachedEntity)(need2save)
                             need2save.Clear()
-                            For Each o As OrmBase In ns
+                            For Each o As ICachedEntity In ns
                                 SaveObj(o, need2save, saved)
                             Next
                             If need2save.Count = 0 Then
@@ -340,46 +340,46 @@ Namespace Database
                                 RaiseEvent BeginAccepting()
                                 If _acceptInBatch Then
                                     'Dim l As New Dictionary(Of OrmBase, OrmBase)
-                                    Dim l2 As New Dictionary(Of Type, List(Of OrmBase))
-                                    Dim val As New List(Of OrmBase)
-                                    For Each p As Pair(Of ObjectState, OrmBase) In saved
-                                        Dim o As OrmBase = p.Second
+                                    Dim l2 As New Dictionary(Of Type, List(Of ICachedEntity))
+                                    Dim val As New List(Of ICachedEntity)
+                                    For Each p As Pair(Of ObjectState, ICachedEntity) In saved
+                                        Dim o As ICachedEntity = p.Second
                                         RaiseEvent ObjectAccepting(o)
-                                        Dim mo As OrmBase = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
+                                        Dim mo As ICachedEntity = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
                                         Debug.Assert(_mgr.Cache.Modified(o) Is Nothing)
                                         'l.Add(o, mo)
                                         RaiseEvent ObjectAccepted(o)
                                         If o._upd IsNot Nothing OrElse o._valProcs Then
                                             val.Add(o)
                                         Else
-                                            Dim ls As List(Of OrmBase) = Nothing
+                                            Dim ls As List(Of ICachedEntity) = Nothing
                                             If Not l2.TryGetValue(o.GetType, ls) Then
-                                                ls = New List(Of OrmBase)
+                                                ls = New List(Of ICachedEntity)
                                                 l2.Add(o.GetType, ls)
                                             End If
                                             ls.Add(o)
                                         End If
                                     Next
-                                    For Each o As OrmBase In val
+                                    For Each o As ICachedEntity In val
                                         _mgr.InvalidateCache(o, CType(o._upd, System.Collections.ICollection))
                                     Next
                                     For Each t As Type In l2.Keys
-                                        Dim ls As List(Of OrmBase) = l2(t)
+                                        Dim ls As List(Of ICachedEntity) = l2(t)
                                         '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                         '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
                                         _mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                             AddressOf CachedEntity.ClearCacheFlags, Nothing, _callbacks)
                                     Next
                                 Else
-                                    For Each p As Pair(Of ObjectState, OrmBase) In saved
-                                        Dim o As OrmBase = p.Second
+                                    For Each p As Pair(Of ObjectState, ICachedEntity) In saved
+                                        Dim o As ICachedEntity = p.Second
                                         RaiseEvent ObjectAccepting(o)
                                         o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
                                         Debug.Assert(_mgr.Cache.Modified(o) Is Nothing)
                                         RaiseEvent ObjectAccepted(o)
                                     Next
-                                    For Each p As Pair(Of ObjectState, OrmBase) In saved
-                                        Dim o As OrmBase = p.Second
+                                    For Each p As Pair(Of ObjectState, ICachedEntity) In saved
+                                        Dim o As ICachedEntity = p.Second
                                         o.UpdateCache()
                                     Next
                                 End If
@@ -388,8 +388,8 @@ Namespace Database
                             End If
                         Finally
                             Do While _lockList.Count > 0
-                                Dim o As ObjectWrap(Of OrmBase) = Nothing
-                                For Each kv As KeyValuePair(Of ObjectWrap(Of OrmBase), IDisposable) In _lockList
+                                Dim o As ObjectWrap(Of ICachedEntity) = Nothing
+                                For Each kv As KeyValuePair(Of ObjectWrap(Of ICachedEntity), IDisposable) In _lockList
                                     o = kv.Key
                                     kv.Value.Dispose()
                                 Next
@@ -400,21 +400,21 @@ Namespace Database
                 End Using
             End Sub
 
-            Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, OrmBase)), ByVal rejectList As List(Of OrmBase), ByVal copies As List(Of Pair(Of OrmBase)))
-                For Each o As OrmBase In rejectList
+            Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, ICachedEntity)), ByVal rejectList As List(Of ICachedEntity), ByVal copies As List(Of Pair(Of ICachedEntity)))
+                For Each o As ICachedEntity In rejectList
                     RaiseEvent ObjectRejecting(o)
                     _dontTrackRemoved = True
                     o.RejectChanges()
                     _dontTrackRemoved = False
                     RaiseEvent ObjectRejected(o)
                 Next
-                For Each o As Pair(Of OrmBase) In copies
-                    o.First.CopyBodyInternal(o.Second, o.First)
-                    o.First.ObjectState = o.Second._old_state
+                For Each o As Pair(Of ICachedEntity) In copies
+                    o.First.CopyBody(o.Second, o.First)
+                    CType(o.First, Entity).SetObjectState(o.Second.GetOldState)
                     RaiseEvent ObjectRestored(o.First)
                 Next
-                For Each p As Pair(Of ObjectState, OrmBase) In saved
-                    Dim o As OrmBase = p.Second
+                For Each p As Pair(Of ObjectState, ICachedEntity) In saved
+                    Dim o As ICachedEntity = p.Second
                     If Not rejectList.Contains(o) Then
                         RaiseEvent ObjectRejecting(o)
                         o.RejectRelationChanges()
@@ -510,7 +510,7 @@ Namespace Database
                 End Get
             End Property
 
-            Public Overridable Sub AddRange(ByVal objs As ICollection(Of OrmBase))
+            Public Overridable Sub AddRange(ByVal objs As ICollection(Of CachedEntity))
                 If objs Is Nothing Then
                     Throw New ArgumentNullException("objects")
                 End If
@@ -523,7 +523,7 @@ Namespace Database
                 _saver.AddRange(objs)
             End Sub
 
-            Public Overridable Sub Add(ByVal obj As OrmBase)
+            Public Overridable Sub Add(ByVal obj As ICachedEntity)
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("object")
                 End If
@@ -533,10 +533,10 @@ Namespace Database
                 End If
 
                 '_objs.Add(obj)
-                _saver.Add(obj)
+                _saver.Add(CType(obj, CachedEntity))
             End Sub
 
-            Protected Sub Delete(ByVal obj As OrmBase)
+            Protected Sub Delete(ByVal obj As ICachedEntity)
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("object")
                 End If
@@ -547,7 +547,7 @@ Namespace Database
 
                 'If Not _objs.Contains(obj) Then
                 '    _objs.Add(obj)
-                _saver.Add(obj)
+                _saver.Add(CType(obj, CachedEntity))
                 'End If
             End Sub
 
@@ -994,120 +994,120 @@ Namespace Database
         '    End Using
         'End Function
 
-        Protected Function LoadMultipleObjects(ByVal firstType As Type, _
-            ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal first_cols As List(Of ColumnAttribute), ByVal sec_cols As List(Of ColumnAttribute)) As IList
+        'Protected Function LoadMultipleObjects(ByVal firstType As Type, _
+        '    ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, _
+        '    ByVal first_cols As List(Of ColumnAttribute), ByVal sec_cols As List(Of ColumnAttribute)) As IList
 
-            Dim values As IList
-            values = CType(GetType(List(Of )).MakeGenericType(New Type() {firstType}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
-            If first_cols Is Nothing Then
-                first_cols = DbSchema.GetSortedFieldList(firstType)
-            End If
+        '    Dim values As IList
+        '    values = CType(GetType(List(Of )).MakeGenericType(New Type() {firstType}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
+        '    If first_cols Is Nothing Then
+        '        first_cols = DbSchema.GetSortedFieldList(firstType)
+        '    End If
 
-            If sec_cols Is Nothing Then
-                sec_cols = DbSchema.GetSortedFieldList(secondType)
-            End If
+        '    If sec_cols Is Nothing Then
+        '        sec_cols = DbSchema.GetSortedFieldList(secondType)
+        '    End If
 
-            Dim b As ConnAction = TestConn(cmd)
-            Try
-                _cache.BeginTrackDelete(firstType)
-                _cache.BeginTrackDelete(secondType)
+        '    Dim b As ConnAction = TestConn(cmd)
+        '    Try
+        '        _cache.BeginTrackDelete(firstType)
+        '        _cache.BeginTrackDelete(secondType)
 
-                Dim et As New PerfCounter
-                Using dr As System.Data.IDataReader = cmd.ExecuteReader
-                    _exec = et.GetTime
-                    Dim firstidx As Integer = 0
-                    Dim pk_name As String = _schema.GetPrimaryKeysName(firstType, False)(0)
-                    Try
-                        firstidx = dr.GetOrdinal(pk_name)
-                    Catch ex As IndexOutOfRangeException
-                        If _mcSwitch.TraceError Then
-                            Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
-                            Trace.WriteLine(Environment.StackTrace)
-                        End If
-                        Throw New OrmManagerException("Cannot get first primary key ordinal", ex)
-                    End Try
+        '        Dim et As New PerfCounter
+        '        Using dr As System.Data.IDataReader = cmd.ExecuteReader
+        '            _exec = et.GetTime
+        '            Dim firstidx As Integer = 0
+        '            Dim pk_name As String = _schema.GetPrimaryKeysName(firstType, False)(0)
+        '            Try
+        '                firstidx = dr.GetOrdinal(pk_name)
+        '            Catch ex As IndexOutOfRangeException
+        '                If _mcSwitch.TraceError Then
+        '                    Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
+        '                    Trace.WriteLine(Environment.StackTrace)
+        '                End If
+        '                Throw New OrmManagerException("Cannot get first primary key ordinal", ex)
+        '            End Try
 
-                    Dim secidx As Integer = 0
-                    Dim pk2_name As String = _schema.GetPrimaryKeysName(secondType, False)(0)
-                    Try
-                        secidx = dr.GetOrdinal(pk2_name)
-                    Catch ex As IndexOutOfRangeException
-                        If _mcSwitch.TraceError Then
-                            Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
-                            Trace.WriteLine(Environment.StackTrace)
-                        End If
-                        Throw New OrmManagerException("Cannot get second primary key ordinal", ex)
-                    End Try
+        '            Dim secidx As Integer = 0
+        '            Dim pk2_name As String = _schema.GetPrimaryKeysName(secondType, False)(0)
+        '            Try
+        '                secidx = dr.GetOrdinal(pk2_name)
+        '            Catch ex As IndexOutOfRangeException
+        '                If _mcSwitch.TraceError Then
+        '                    Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
+        '                    Trace.WriteLine(Environment.StackTrace)
+        '                End If
+        '                Throw New OrmManagerException("Cannot get second primary key ordinal", ex)
+        '            End Try
 
-                    Dim dic1 As IDictionary = GetDictionary(firstType)
-                    Dim dic2 As IDictionary = GetDictionary(secondType)
-                    Dim ft As New PerfCounter
-                    Do While dr.Read
-                        Dim id1 As Object = dr.GetValue(firstidx)
-                        Dim obj1 As OrmBase = CreateDBObject(id1, firstType)
-                        If Not _cache.IsDeleted(firstType, id1) AndAlso obj1.ObjectState <> ObjectState.Modified Then
-                            Using obj1.GetSyncRoot()
-                                'If obj1.IsLoaded Then obj1.IsLoaded = False
-                                LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1)
-                                If obj1.ObjectState = ObjectState.NotLoaded AndAlso obj1.IsLoaded Then obj1.ObjectState = ObjectState.None
-                                values.Add(obj1)
-                            End Using
-                        Else
-                            values.Add(obj1)
-                        End If
+        '            Dim dic1 As IDictionary = GetDictionary(firstType)
+        '            Dim dic2 As IDictionary = GetDictionary(secondType)
+        '            Dim ft As New PerfCounter
+        '            Do While dr.Read
+        '                Dim id1 As Object = dr.GetValue(firstidx)
+        '                Dim obj1 As OrmBase = CreateDBObject(id1, firstType)
+        '                If Not _cache.IsDeleted(firstType, id1) AndAlso obj1.ObjectState <> ObjectState.Modified Then
+        '                    Using obj1.GetSyncRoot()
+        '                        'If obj1.IsLoaded Then obj1.IsLoaded = False
+        '                        LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1)
+        '                        If obj1.ObjectState = ObjectState.NotLoaded AndAlso obj1.IsLoaded Then obj1.ObjectState = ObjectState.None
+        '                        values.Add(obj1)
+        '                    End Using
+        '                Else
+        '                    values.Add(obj1)
+        '                End If
 
-                        Dim id2 As Object = dr.GetValue(secidx)
-                        If Not _cache.IsDeleted(secondType, id2) Then
-                            Dim obj2 As OrmBase = CreateDBObject(id2, secondType)
-                            If obj2.ObjectState <> ObjectState.Modified Then
-                                Using obj2.GetSyncRoot()
-                                    'If obj2.IsLoaded Then obj2.IsLoaded = False
-                                    LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2)
-                                    If obj2.ObjectState = ObjectState.NotLoaded AndAlso obj2.IsLoaded Then obj2.ObjectState = ObjectState.None
-                                End Using
-                            End If
-                        End If
-                    Loop
-                    _fetch = ft.GetTime
+        '                Dim id2 As Object = dr.GetValue(secidx)
+        '                If Not _cache.IsDeleted(secondType, id2) Then
+        '                    Dim obj2 As OrmBase = CreateDBObject(id2, secondType)
+        '                    If obj2.ObjectState <> ObjectState.Modified Then
+        '                        Using obj2.GetSyncRoot()
+        '                            'If obj2.IsLoaded Then obj2.IsLoaded = False
+        '                            LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2)
+        '                            If obj2.ObjectState = ObjectState.NotLoaded AndAlso obj2.IsLoaded Then obj2.ObjectState = ObjectState.None
+        '                        End Using
+        '                    End If
+        '                End If
+        '            Loop
+        '            _fetch = ft.GetTime
 
-                    Return values
-                End Using
-            Finally
-                _cache.EndTrackDelete(secondType)
-                _cache.EndTrackDelete(firstType)
-                CloseConn(b)
-            End Try
+        '            Return values
+        '        End Using
+        '    Finally
+        '        _cache.EndTrackDelete(secondType)
+        '        _cache.EndTrackDelete(firstType)
+        '        CloseConn(b)
+        '    End Try
 
-        End Function
+        'End Function
 
-        Protected Function LoadMultipleObjects(ByVal t As Type, _
-            ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal withLoad As Boolean, _
-            ByVal arr As Generic.List(Of ColumnAttribute)) As IList
-            'Dim ltg As Type = GetType(IList(Of ))
-            'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
-            Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
+        'Protected Function LoadMultipleObjects(ByVal t As Type, _
+        '    ByVal cmd As System.Data.Common.DbCommand, _
+        '    ByVal withLoad As Boolean, _
+        '    ByVal arr As Generic.List(Of ColumnAttribute)) As IList
+        '    'Dim ltg As Type = GetType(IList(Of ))
+        '    'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
+        '    Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
 
-            If _LoadMultipleObjectsMI Is Nothing Then
-                For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
-                    If mi2.Name = "LoadMultipleObjects" And mi2.IsGenericMethod Then
-                        _LoadMultipleObjectsMI = mi2
-                        Exit For
-                    End If
-                Next
+        '    If _LoadMultipleObjectsMI Is Nothing Then
+        '        For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
+        '            If mi2.Name = "LoadMultipleObjects" And mi2.IsGenericMethod Then
+        '                _LoadMultipleObjectsMI = mi2
+        '                Exit For
+        '            End If
+        '        Next
 
-                If _LoadMultipleObjectsMI Is Nothing Then
-                    Throw New OrmManagerException("Cannot find method LoadMultipleObjects")
-                End If
-            End If
+        '        If _LoadMultipleObjectsMI Is Nothing Then
+        '            Throw New OrmManagerException("Cannot find method LoadMultipleObjects")
+        '        End If
+        '    End If
 
-            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
+        '    Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
 
-            Return CType(mi_real.Invoke(Me, flags, Nothing, _
-                New Object() {cmd, withLoad, Nothing, arr}, Nothing), IList)
+        '    Return CType(mi_real.Invoke(Me, flags, Nothing, _
+        '        New Object() {cmd, withLoad, Nothing, arr}, Nothing), IList)
 
-        End Function
+        'End Function
 
         'Protected Overrides Function GetDataTableInternal(ByVal t As System.Type, ByVal obj As OrmBase, _
         '    ByVal filter As IOrmFilter, ByVal appendJoins As Boolean, Optional ByVal tag As String = Nothing) As System.Data.DataTable
@@ -1295,8 +1295,8 @@ Namespace Database
                                         el = New EditableList(id1, l, type, type2load, Nothing)
                                         edic.Add(id1, el)
                                     End If
-                                    If withLoad AndAlso Not _cache.IsDeleted(type2load, id2) Then
-                                        Dim obj As T = CreateDBObject(Of T)(id2)
+                                    Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id2)
+                                    If withLoad AndAlso Not _cache.IsDeleted(type2load, obj.Key) Then
                                         If obj.ObjectState <> ObjectState.Modified Then
                                             Using obj.GetSyncRoot()
                                                 'If obj.IsLoaded Then obj.IsLoaded = False
@@ -1618,7 +1618,7 @@ Namespace Database
                     'If arr Is Nothing Then arr = Schema.GetSortedFieldList(original_type)
 
                     Dim idx As Integer = GetPrimaryKeyIdx(cmd.CommandText, original_type, dr)
-                    Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
+                    Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         LoadFromResultSet(Of T)(withLoad, CType(values, System.Collections.IList), arr, dr, idx, dic, _loadedInLastFetch)
@@ -1654,7 +1654,7 @@ Namespace Database
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
             ByVal dr As System.Data.IDataReader, ByVal idx As Integer, _
-            ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer)
+            ByVal dic As IDictionary(Of Integer, T), ByRef loaded As Integer)
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
@@ -1835,9 +1835,9 @@ l1:
                                     '    '    obj.SetValue(pi, c, o)
                                     '    '    obj.SetLoaded(c, True)
                                     '    'End If
-                                ElseIf GetType(OrmBase).IsAssignableFrom(pi.PropertyType) Then
+                                ElseIf GetType(IOrmBase).IsAssignableFrom(pi.PropertyType) Then
                                     Dim type_created As Type = pi.PropertyType
-                                    Dim o As OrmBase = CreateDBObject(CInt(value), type_created)
+                                    Dim o As IOrmBase = GetOrmBaseFromCacheOrCreate(value, type_created)
                                     obj.SetValue(pi, c, oschema, o)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
                                 ElseIf GetType(System.Xml.XmlDocument) Is pi.PropertyType AndAlso TypeOf (value) Is String Then
@@ -2140,7 +2140,7 @@ l1:
 
             Dim result As New ReadOnlyList(Of T)
             Dim ar As IListEdit = result
-            Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
+            Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
             If remove_not_found Then
                 For Each o As T In objs
                     If Not withLoad Then
@@ -2154,7 +2154,7 @@ l1:
                             ar.Add(o)
                         ElseIf ListConverter.IsWeak Then
                             Dim obj As T = Nothing
-                            If dic.TryGetValue(o.Identifier, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
+                            If dic.TryGetValue(o.Key, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
                                 ar.Add(obj)
                             Else
                                 Dim idx As Integer = values.IndexOf(o)
@@ -2172,7 +2172,7 @@ l1:
                 If ListConverter.IsWeak Then
                     For Each o As T In objs
                         Dim obj As T = Nothing
-                        If dic.TryGetValue(o.Identifier, obj) Then
+                        If dic.TryGetValue(o.Key, obj) Then
                             ar.Add(obj)
                         Else
                             ar.Add(o)
@@ -2913,8 +2913,8 @@ l2:
                         End If
                         Dim id2 As Object = dr.GetValue(1)
                         l.Add(id2)
-                        If withLoad AndAlso Not _cache.IsDeleted(tt, id2) Then
-                            Dim o As T = CreateDBObject(Of T)(id2)
+                        Dim o As T = GetOrmBaseFromCacheOrCreate(Of T)(id2)
+                        If withLoad AndAlso Not _cache.IsDeleted(tt, o.Key) Then
                             If o.ObjectState <> ObjectState.Modified Then
                                 Using o.GetSyncRoot()
                                     'If obj.IsLoaded Then obj.IsLoaded = False

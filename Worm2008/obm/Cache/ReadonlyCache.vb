@@ -18,7 +18,7 @@ Namespace Cache
             DateTimeCreated = Now
         End Sub
 
-        Public Function GetM2M(ByVal o As OrmBase) As List(Of EditableListBase)
+        Public Function GetM2M(ByVal o As IOrmBase) As List(Of EditableListBase)
             Dim l As New List(Of EditableListBase)
             Dim l2 As List(Of EditableListBase) = Nothing
             If _m2m.TryGetValue(o.Key, l2) Then
@@ -31,7 +31,7 @@ Namespace Cache
             Return l
         End Function
 
-        Public Function GetM2M(ByVal o As OrmBase, ByVal subType As Type, ByVal key As String) As EditableListBase
+        Public Function GetM2M(ByVal o As IOrmBase, ByVal subType As Type, ByVal key As String) As EditableListBase
             For Each el As EditableListBase In GetM2M(o)
                 If el.SubType Is subType AndAlso el.Key = key Then
                     Return el

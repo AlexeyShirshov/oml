@@ -9,6 +9,8 @@ Namespace Orm
         Sub EndLoading()
         Sub Init(ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
         Function GetMgr() As IGetManager
+        ReadOnly Property ObjName() As String
+        Function GetOldState() As ObjectState
     End Interface
 
     Public Interface IEntity
@@ -17,10 +19,13 @@ Namespace Orm
         Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IOrmObjectSchemaBase) As Object
         Function GetSyncRoot() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
+        Function CreateClone() As Entity
+        Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
     End Interface
 
     Public Interface _ICachedEntity
         Inherits ICachedEntity
+        Overloads Sub Init(ByVal pk() As Pair(Of String, Object), ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
         Sub PKLoaded()
         Sub SetLoaded(ByVal value As Boolean)
         Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean) As Boolean
@@ -32,20 +37,92 @@ Namespace Orm
         Inherits _IEntity, IComparable, System.Xml.Serialization.IXmlSerializable
         ReadOnly Property Key() As Integer
         ReadOnly Property IsLoaded() As Boolean
+        ReadOnly Property OriginalCopy() As ICachedEntity
         Sub CreateCopyForSaveNewEntry()
         Sub Load()
         Sub RemoveFromCache(ByVal cache As OrmCacheBase)
+        Sub UpdateCache()
         Function GetPKValues() As Pair(Of String, Object)()
+        Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean
+        Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity
+        Sub RejectChanges()
+        Sub RejectRelationChanges()
     End Interface
 
     Public Interface IOrmBase
         Inherits _ICachedEntity
         Overloads Sub Init(ByVal id As Object, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
         Property Identifier() As Object
+        Function GetOldName(ByVal id As Object) As String
+        Function GetName() As String
     End Interface
 
+    Public Interface _IOrmBase
+        Inherits IOrmBase
+        Function AddAccept(ByVal acs As AcceptState2) As Boolean
+        Function GetAccept(ByVal m As OrmManagerBase.M2MCache) As AcceptState2
+    End Interface
+
+    <ComponentModel.EditorBrowsable(ComponentModel.EditorBrowsableState.Never)> _
+        Public Class AcceptState2
+        'Public ReadOnly el As EditableList
+        'Public ReadOnly sort As Sort
+        'Public added As Generic.List(Of Integer)
+
+        Private _key As String
+        Private _id As String
+        Private _e As OrmManagerBase.M2MCache
+        'Public Sub New(ByVal el As EditableList, ByVal sort As Sort, ByVal key As String, ByVal id As String)
+        '    Me.el = el
+        '    Me.sort = sort
+        '    _key = key
+        '    _id = id
+        'End Sub
+
+        Public ReadOnly Property CacheItem() As OrmManagerBase.M2MCache
+            Get
+                Return _e
+            End Get
+        End Property
+
+        Public ReadOnly Property el() As EditableList
+            Get
+                Return _e.Entry
+            End Get
+        End Property
+
+        Public Sub New(ByVal e As OrmManagerBase.M2MCache, ByVal key As String, ByVal id As String)
+            _e = e
+            _key = key
+            _id = id
+        End Sub
+
+        Public Function Accept(ByVal obj As OrmBase, ByVal mgr As OrmManagerBase) As Boolean
+            If _e IsNot Nothing Then
+                Dim leave As Boolean = _e.Filter Is Nothing AndAlso _e.Entry.Accept(mgr)
+                If Not leave Then
+                    Dim dic As IDictionary = mgr.GetDic(mgr.Cache, _key)
+                    dic.Remove(_id)
+                End If
+            End If
+            'If el IsNot Nothing Then
+            '    If Not el.Accept(mgr, Sort) Then
+            '        Return False
+            '    End If
+            'End If
+            'For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In mgr.Cache.GetM2MEtries(obj, Nothing)
+            '    Dim m As OrmManagerBase.M2MCache = o.First
+            '    If m.Entry.SubType Is el.SubType AndAlso m.Filter IsNot Nothing Then
+            '        Dim dic As IDictionary = OrmManagerBase.GetDic(mgr.Cache, o.Second.First)
+            '        dic.Remove(o.Second.Second)
+            '    End If
+            'Next
+            Return True
+        End Function
+    End Class
+
     <Serializable()> _
-Public Class Entity
+    Public Class Entity
         Implements _IEntity
 
         Public Class ManagerRequiredArgs
@@ -123,6 +200,8 @@ Public Class Entity
         Public _mgrStr As String
         <NonSerialized()> _
         Protected _dontRaisePropertyChange As Boolean
+        <NonSerialized()> _
+        Private _old_state As ObjectState
 
 
         Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
@@ -132,6 +211,11 @@ Public Class Entity
         Protected Event ObjectStateChanged(ByVal oldState As ObjectState)
 #End If
 
+        Protected ReadOnly Property IsLoading() As Boolean
+            Get
+                Return _loading
+            End Get
+        End Property
 
         Private Sub BeginLoading() Implements _IEntity.BeginLoading
             _loading = True
@@ -245,13 +329,13 @@ Public Class Entity
             _loading = False
         End Sub
 
-        Friend Overridable ReadOnly Property ObjName() As String
+        Protected Overridable ReadOnly Property ObjName() As String Implements _IEntity.ObjName
             Get
-                Return Me.GetType.Name & " - " & ObjectState.ToString & " (" & DumpState & "): "
+                Return Me.GetType.Name & " - " & ObjectState.ToString & " (" & DumpState() & "): "
             End Get
         End Property
 
-        Protected Function DumpState() As String
+        Protected Overridable Function DumpState() As String
             Dim sb As New StringBuilder
             Using mc As IGetManager = GetMgr()
                 For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
@@ -324,20 +408,25 @@ Public Class Entity
         End Sub
 
         Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-            Dim o As Entity = CType(Activator.CreateInstance(Me.GetType), Entity)
-            o.Init(OrmCache, OrmSchema, _mgrStr)
+            Dim o As Entity = CreateObject()
             Using SyncHelper(True)
 #If TraceSetState Then
                 o.SetObjectState(ObjectState, ModifiedObject.ReasonEnum.Unknown, String.Empty, Nothing)
 #Else
                 o.SetObjectStateClear(_state)
 #End If
-                CopyBodyInternal(Me, o)
+                CopyBody(Me, o)
             End Using
             Return o
         End Function
 
-        Protected Overridable Sub CopyBodyInternal(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
+        Protected Overridable Function CreateObject() As Entity
+            Using gm As IGetManager = GetMgr()
+                Return CType(gm.Manager.CreateEntity(Me.GetType), Entity)
+            End Using
+        End Function
+
+        Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
             Using mc As IGetManager = GetMgr()
                 Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
                 [to].BeginLoading()
@@ -349,6 +438,18 @@ Public Class Entity
                 [to].EndLoading()
             End Using
         End Sub
+
+        Protected Function CreateClone() As Entity Implements IEntity.CreateClone
+            Dim clone As Entity = CreateObject()
+            CopyBody(Me, clone)
+            clone._old_state = ObjectState
+            clone.SetObjectState(Orm.ObjectState.Clone)
+            Return clone
+        End Function
+
+        Private Function GetOldState() As ObjectState Implements _IEntity.GetOldState
+            Return _old_state
+        End Function
     End Class
 
 End Namespace

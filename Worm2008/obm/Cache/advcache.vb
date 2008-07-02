@@ -16,8 +16,8 @@ Namespace Cache
         End Enum
 
         Function ToWeakList(ByVal objects As IEnumerable) As Object
-        Function FromWeakList(Of T As {ICachedEntity, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
-        Function FromWeakList(Of T As {ICachedEntity, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase, _
+        Function FromWeakList(Of T As {_ICachedEntity, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
+        Function FromWeakList(Of T As {_ICachedEntity, New})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As ExtractListResult) As ReadOnlyEntityList(Of T)
         Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As ICachedEntity, ByVal sort As Sort) As Boolean
         Function GetCount(ByVal weak_list As Object) As Integer
@@ -28,7 +28,7 @@ Namespace Cache
     Public Class FakeListConverter
         Implements IListObjectConverter
 
-        Public Function FromWeakList(Of T As {ICachedEntity, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
+        Public Function FromWeakList(Of T As {_ICachedEntity, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             Dim c As ReadOnlyEntityList(Of T) = CType(weak_list, ReadOnlyEntityList(Of T))
@@ -142,7 +142,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function FromWeakList(Of T As {New, ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(Of T As {New, _ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             Dim c As ReadOnlyEntityList(Of T) = CType(weak_list, ReadOnlyEntityList(Of T))
             Return c
         End Function
@@ -160,23 +160,23 @@ Namespace Cache
                 ref = New WeakReference(o)
             End Sub
 
-            Public Function GetObject(Of T As {ICachedEntity, New})(ByVal mc As OrmManagerBase) As T
+            Public Function GetObject(Of T As {_ICachedEntity, New})(ByVal mc As OrmManagerBase) As T
                 Dim o As T = CType(ref.Target, T)
                 If o Is Nothing Then
-                    o = mc.CreateDBObject(Of T)(id) 'mc.FindObject(id, t)
+                    o = mc.GetEntityFromCacheOrCreate(Of T)(_e.PK) 'mc.FindObject(id, t)
                     If o Is Nothing AndAlso mc.NewObjectManager IsNot Nothing Then
-                        o = CType(mc.NewObjectManager.GetNew(GetType(T), id), T)
+                        o = CType(mc.NewObjectManager.GetNew(GetType(T), _e.PK), T)
                     End If
                 End If
                 Return o
             End Function
 
-            Public Function GetObject(ByVal mc As OrmManagerBase) As _ICachedEntity
-                Dim o As _ICachedEntity = CType(ref.Target, _ICachedEntity)
+            Public Function GetObject(ByVal mc As OrmManagerBase) As ICachedEntity
+                Dim o As ICachedEntity = CType(ref.Target, ICachedEntity)
                 If o Is Nothing Then
-                    o = mc.CreateDBObject(id, t) 'mc.FindObject(id, t)
+                    o = mc.GetEntityFromCacheOrCreate(_e.PK, _e.EntityType) 'mc.FindObject(id, t)
                     If o Is Nothing AndAlso mc.NewObjectManager IsNot Nothing Then
-                        o = mc.NewObjectManager.GetNew(t, id)
+                        o = mc.NewObjectManager.GetNew(_e.EntityType, _e.PK)
                     End If
                 End If
                 Return o
@@ -232,7 +232,7 @@ Namespace Cache
             End Sub
         End Class
 
-        Public Function FromWeakList(Of T As {ICachedEntity, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
+        Public Function FromWeakList(Of T As {_ICachedEntity, New})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             successed = IListObjectConverter.ExtractListResult.Successed
@@ -350,7 +350,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function FromWeakList(Of T As {New, ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(Of T As {New, _ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             If weak_list Is Nothing Then Return Nothing
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
