@@ -8,7 +8,7 @@ Public Class Table3
     Inherits OrmBaseT(Of Table3)
     Implements IOrmEditable(Of Table3)
 
-    Private _obj As OrmBase
+    Private _obj As IOrmBase
     Private _code As Byte
     Private _trigger As Boolean
     Private _id As Integer
@@ -69,7 +69,7 @@ Public Class Table3
         If _code = 0 Then
             _trigger = True
         Else
-            _obj = Worm.OrmManagerBase.CurrentManager.CreateDBObject(_id, GetObjectType())
+            _obj = Worm.OrmManagerBase.CurrentManager.GetOrmBaseFromCacheOrCreate(_id, GetObjectType())
         End If
     End Sub
 
@@ -114,7 +114,7 @@ Public Class Table3
                 _code = value
                 If _trigger Then
                     _trigger = False
-                    _obj = Worm.OrmManagerBase.CurrentManager.CreateDBObject(_id, GetObjectType())
+                    _obj = Worm.OrmManagerBase.CurrentManager.GetOrmBaseFromCacheOrCreate(_id, GetObjectType())
                 End If
             End Using
         End Set

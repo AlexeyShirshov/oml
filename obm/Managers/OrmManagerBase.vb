@@ -57,18 +57,19 @@ Public MustInherit Class OrmManagerBase
         'Public ReadOnly obj As OrmBase
         Dim p1 As IRelation.RelationDesc 'Pair(Of String, Type)
         Dim p2 As IRelation.RelationDesc 'Pair(Of String, Type)
-        Dim o1 As OrmBase
-        Dim o2 As OrmBase
+        Dim o1 As IOrmBase
+        Dim o2 As IOrmBase
 
-        Public Sub New(ByVal r As IRelation, ByVal obj As OrmBase, ByVal schema As QueryGenerator)
+        Public Sub New(ByVal r As IRelation, ByVal obj As IOrmBase, ByVal schema As QueryGenerator)
             Me.o = r
             'Me.obj = obj
             p1 = o.GetFirstType
             p2 = o.GetSecondType
             'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
             'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
-            o1 = CType(obj.GetValue(p1.PropertyName), OrmBase)
-            o2 = CType(obj.GetValue(p2.PropertyName), OrmBase)
+            Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(obj.GetType)
+            o1 = CType(obj.GetValue(Nothing, New ColumnAttribute(p1.PropertyName), oschema), IOrmBase)
+            o2 = CType(obj.GetValue(Nothing, New ColumnAttribute(p2.PropertyName), oschema), IOrmBase)
         End Sub
 
         Public Function Add(ByVal e As M2MCache) As Boolean
@@ -78,7 +79,7 @@ Public MustInherit Class OrmManagerBase
 
             Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
             Dim el As EditableList = e.Entry
-            Dim obj As OrmBase = Nothing, subobj As OrmBase = Nothing
+            Dim obj As IOrmBase = Nothing, subobj As IOrmBase = Nothing
             If el.Main.Equals(o1) Then
                 obj = o1
                 subobj = o2
@@ -410,14 +411,14 @@ Public MustInherit Class OrmManagerBase
             End If
         End Function
 
-        Public Overridable Function GetObjectList(Of T As {ICachedEntity, New})(ByVal mgr As OrmManagerBase, _
+        Public Overridable Function GetObjectList(Of T As {_ICachedEntity, New})(ByVal mgr As OrmManagerBase, _
             ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
             'Using p As New CoreFramework.Debuging.OutputTimer("From week list")
             Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr, mgr.GetStart, mgr.GetLength, withLoad, created, successed)
             'End Using
         End Function
 
-        Public Overridable Function GetObjectList(Of T As {ICachedEntity, New})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
+        Public Overridable Function GetObjectList(Of T As {_ICachedEntity, New})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
             Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr)
         End Function
 
@@ -537,11 +538,11 @@ Public MustInherit Class OrmManagerBase
             Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {mgr, withLoad, created, New IListObjectConverter.ExtractListResult}, Nothing), System.Collections.ICollection)
         End Function
 
-        Public Overrides Function GetObjectList(Of T As {New, ICachedEntity})(ByVal mgr As OrmManagerBase, _
+        Public Overrides Function GetObjectList(Of T As {New, _ICachedEntity})(ByVal mgr As OrmManagerBase, _
             ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
             successed = IListObjectConverter.ExtractListResult.Successed
             Dim tt As Type = GetType(T)
-            Dim r As ReadOnlyEntityList(Of T) = CType(mgr.CreateReadonlyList(tt), Global.Worm.ReadOnlyEntityList(Of T))
+            Dim r As ReadOnlyEntityList(Of T) = CType(OrmManagerBase.CreateReadonlyList(tt), Global.Worm.ReadOnlyEntityList(Of T))
             If withLoad OrElse mgr._externalFilter IsNot Nothing Then
                 Dim c As Integer = mgr.GetLoadedCount(tt, Entry.Current)
                 Dim cnt As Integer = Entry.CurrentCount
@@ -577,7 +578,7 @@ Public MustInherit Class OrmManagerBase
             Return r
         End Function
 
-        Public Overrides Function GetObjectList(Of T As {New, ICachedEntity})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
+        Public Overrides Function GetObjectList(Of T As {New, _ICachedEntity})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
             Try
 #If TraceM2M Then
                 Debug.WriteLine(Entry.Current.Count)
@@ -920,8 +921,8 @@ Public MustInherit Class OrmManagerBase
     'Protected Friend _raiseCreated As Boolean
     Public Event ObjectCreated(ByVal sender As OrmBase, ByVal mgr As OrmManagerBase)
 
-    Public Event BeginUpdate(ByVal o As OrmBase)
-    Public Event BeginDelete(ByVal o As OrmBase)
+    Public Event BeginUpdate(ByVal o As ICachedEntity)
+    Public Event BeginDelete(ByVal o As ICachedEntity)
     'Public Event ObjectRejected(ByVal o As OrmBase)
     Public Event DataAvailable(ByVal mgr As OrmManagerBase, ByVal r As ExecutionResult)
 
@@ -1085,11 +1086,11 @@ _callstack = environment.StackTrace
         End Get
     End Property
 
-    Friend Sub RaiseBeginUpdate(ByVal o As OrmBase)
+    Friend Sub RaiseBeginUpdate(ByVal o As ICachedEntity)
         RaiseEvent BeginUpdate(o)
     End Sub
 
-    Friend Sub RaiseBeginDelete(ByVal o As OrmBase)
+    Friend Sub RaiseBeginDelete(ByVal o As ICachedEntity)
         RaiseEvent BeginDelete(o)
     End Sub
 
@@ -1412,9 +1413,9 @@ _callstack = environment.StackTrace
                 For Each o As OrmBase In col
                     Dim el As EditableList = Nothing
                     If edic.TryGetValue(o.Identifier, el) Then
-                        For Each id As Integer In el.Current
+                        For Each id As Object In el.Current
                             If target IsNot Nothing Then
-                                target.Add(CreateDBObject(Of T)(id))
+                                target.Add(GetOrmBaseFromCacheOrCreate(Of T)(id))
                             End If
                         Next
                         'Cache.AddRelationValue(o.GetType, type2load)
@@ -1445,7 +1446,7 @@ _callstack = environment.StackTrace
         End Using
     End Sub
 
-    Protected Friend Function Find(ByVal id As Integer, ByVal t As Type) As OrmBase
+    Protected Friend Function Find(ByVal id As Integer, ByVal t As Type) As IOrmBase
         Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
         Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("Find", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Integer)}, Nothing)
         Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
@@ -1455,83 +1456,104 @@ _callstack = environment.StackTrace
     ''' <summary>
     ''' Поиск объекта по Id
     ''' </summary>
-    Public Function Find(Of T As {OrmBase, New})(ByVal id As Integer) As T
+    Public Function Find(Of T As {IOrmBase, New})(ByVal id As Object) As T
         Invariant()
 
         Return LoadType(Of T)(id, _findload, True)
     End Function
 
-    Public Function CreateObject(Of T As {OrmBase, New})(ByVal id As Integer) As T
-        Invariant()
+    'Public Function CreateObject(Of T As {IOrmBase, New})(ByVal id As Object) As T
+    '    Invariant()
 
-        Dim o As T = LoadType(Of T)(id, False, False)
-        'o.ObjectState = ObjectState.Created
-        Return o
+    '    Dim o As T = LoadType(Of T)(id, False, False)
+    '    'o.ObjectState = ObjectState.Created
+    '    Return o
+    'End Function
+
+    'Public Function CreateDBObject(Of T As {IOrmBase, New})(ByVal id As Object, _
+    '    ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As IOrmBase
+    '    Dim o As IOrmBase = LoadTypeInternal(Of T)(id, False, False, dic, addOnCreate)
+    '    Dim type As Type = GetType(T)
+    '    'Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
+    '    'Dim mi_real As Reflection.MethodInfo = CType(_realLoadTypeDic(type), Reflection.MethodInfo)
+    '    'If (mi_real Is Nothing) Then
+    '    '    SyncLock _realLoadTypeDic.SyncRoot
+    '    '        mi_real = CType(_realLoadTypeDic(type), Reflection.MethodInfo)
+    '    '        If (mi_real Is Nothing) Then
+    '    '            Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadTypeInternal", flags, Nothing, Reflection.CallingConventions.Any, _
+    '    '                New Type() {GetType(Integer), GetType(Boolean), GetType(Boolean), GetType(IDictionary)}, Nothing)
+    '    '            mi_real = mi.MakeGenericMethod(New Type() {type})
+    '    '            _realLoadTypeDic(type) = mi_real
+    '    '        End If
+    '    '    End SyncLock
+    '    'End If
+    '    'o = CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, False, False, dic}, Nothing), OrmBase)
+
+    '    'Assert(o IsNot Nothing, "Object must be created: " & id & ". Type - " & type.ToString)
+    '    Using o.GetSyncRoot()
+    '        If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(type, id) Then
+    '            Debug.Assert(Not o.IsLoaded)
+    '            Throw New ApplicationException
+    '            'CType(o, Entity).SetObjectState(ObjectState.NotLoaded)
+    '            'AddObject(o)
+    '        End If
+    '    End Using
+    '    Return o
+    'End Function
+
+    Public Function GetEntityFromCacheOrDB(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As ICachedEntity
+        Dim o As _ICachedEntity = CreateEntity(pk, type)
+        Return GetFromCacheOrLoadFromDB(o, GetDictionary(type))
     End Function
 
-    Public Function CreateDBObject(Of T As {IOrmBase, New})(ByVal id As Object, _
-        ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As IOrmBase
-        Dim o As IOrmBase = LoadTypeInternal(Of T)(id, False, False, dic, addOnCreate)
-        Dim type As Type = GetType(T)
-        'Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
-        'Dim mi_real As Reflection.MethodInfo = CType(_realLoadTypeDic(type), Reflection.MethodInfo)
-        'If (mi_real Is Nothing) Then
-        '    SyncLock _realLoadTypeDic.SyncRoot
-        '        mi_real = CType(_realLoadTypeDic(type), Reflection.MethodInfo)
-        '        If (mi_real Is Nothing) Then
-        '            Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadTypeInternal", flags, Nothing, Reflection.CallingConventions.Any, _
-        '                New Type() {GetType(Integer), GetType(Boolean), GetType(Boolean), GetType(IDictionary)}, Nothing)
-        '            mi_real = mi.MakeGenericMethod(New Type() {type})
-        '            _realLoadTypeDic(type) = mi_real
+    Public Function GetEntityFromCacheOrCreate(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As ICachedEntity
+        Dim o As _ICachedEntity = CreateEntity(pk, type)
+        Return NormalizeObject(o, GetDictionary(type))
+    End Function
+
+    Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk() As Pair(Of String, Object)) As T
+        Dim o As T = CreateEntity(Of T)(pk)
+        Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
+    End Function
+
+    Public Function GetOrmBaseFromCacheOrCreate(ByVal id As Object, ByVal type As Type) As IOrmBase
+        '#If DEBUG Then
+        '        If Not GetType(IOrmBase).IsAssignableFrom(type) Then
+        '            Throw New ArgumentException(String.Format("The type {0} must be derived from iOrmBase", type))
         '        End If
-        '    End SyncLock
-        'End If
-        'o = CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, False, False, dic}, Nothing), OrmBase)
+        '#End If
 
-        'Assert(o IsNot Nothing, "Object must be created: " & id & ". Type - " & type.ToString)
-        Using o.GetSyncRoot()
-            If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(type, id) Then
-                Debug.Assert(Not o.IsLoaded)
-                CType(o, Entity).SetObjectState(ObjectState.NotLoaded)
-                'AddObject(o)
-            End If
-        End Using
-        Return o
+        '        Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance
+        '        Dim mi_real As Reflection.MethodInfo = CType(_realCreateDbObjectDic(type), Reflection.MethodInfo)
+        '        If (mi_real Is Nothing) Then
+        '            SyncLock _realCreateDbObjectDic.SyncRoot
+        '                mi_real = CType(_realCreateDbObjectDic(type), Reflection.MethodInfo)
+        '                If (mi_real Is Nothing) Then
+        '                    Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("GetOrCreateOrmBase", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Object)}, Nothing)
+        '                    mi_real = mi.MakeGenericMethod(New Type() {type})
+        '                    _realCreateDbObjectDic(type) = mi_real
+        '                End If
+        '            End SyncLock
+        '        End If
+        '        Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id}, Nothing), IOrmBase)
+        Dim o As IOrmBase = CreateOrmBase(id, type)
+        Return CType(NormalizeObject(o, GetDictionary(type)), IOrmBase)
     End Function
 
-    Public Function CreateDBObject(ByVal id As Integer, ByVal type As Type) As OrmBase
-#If DEBUG Then
-        If Not GetType(OrmBase).IsAssignableFrom(type) Then
-            Throw New ArgumentException(String.Format("The type {0} must be derived from Ormbase", type))
-        End If
-#End If
-
-        Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance
-        Dim mi_real As Reflection.MethodInfo = CType(_realCreateDbObjectDic(type), Reflection.MethodInfo)
-        If (mi_real Is Nothing) Then
-            SyncLock _realCreateDbObjectDic.SyncRoot
-                mi_real = CType(_realCreateDbObjectDic(type), Reflection.MethodInfo)
-                If (mi_real Is Nothing) Then
-                    Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("CreateDBObject", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Integer)}, Nothing)
-                    mi_real = mi.MakeGenericMethod(New Type() {type})
-                    _realCreateDbObjectDic(type) = mi_real
-                End If
-            End SyncLock
-        End If
-        Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id}, Nothing), OrmBase)
-    End Function
-
-    Public Function CreateDBObject(Of T As {OrmBase, New})(ByVal id As Integer) As T
-        Dim o As T = CreateObject(Of T)(id)
-        Assert(o IsNot Nothing, "Object must be created: " & id & ". Type - " & GetType(T).ToString)
-        Using o.GetSyncRoot()
-            If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(GetType(T), id) Then
-                Debug.Assert(Not o.IsLoaded)
-                o.ObjectState = ObjectState.NotLoaded
-                'AddObject(o)
-            End If
-        End Using
-        Return o
+    Public Function GetOrmBaseFromCacheOrCreate(Of T As {IOrmBase, New})(ByVal id As Object) As T
+        'Dim o As T = CreateObject(Of T)(id)
+        'Assert(o IsNot Nothing, "Object must be created: " & id.ToString & ". Type - " & GetType(T).ToString)
+        'Using o.GetSyncRoot()
+        '    If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(GetType(T), id) Then
+        '        Debug.Assert(Not o.IsLoaded)
+        '        Throw New ApplicationException
+        '        'o.ObjectState = ObjectState.NotLoaded
+        '        'AddObject(o)
+        '    End If
+        'End Using
+        'Return o
+        Dim o As T = CreateOrmBase(Of T)(id)
+        Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
     '        Public Function Find(Of T As {OrmBase, New}, T1)(ByVal value As T1, ByVal fieldName As String, ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As ICollection(Of T)
@@ -1635,7 +1657,7 @@ _callstack = environment.StackTrace
         RaiseEvent DataAvailable(Me, New ExecutionResult(count, execTime, fetchTime, hit, Nothing))
     End Sub
 
-    Private Function GetResultset(Of T As {ICachedEntity, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, _
+    Private Function GetResultset(Of T As {_ICachedEntity, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, _
         ByVal id As String, ByVal sync As String, ByVal del As ICustDelegate(Of T), ByRef succeeded As Boolean) As ReadOnlyEntityList(Of T)
         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
         Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
@@ -2017,7 +2039,7 @@ l1:
 
 #Region " Cache "
 
-    Protected Friend Function GetFromCache(Of T As {ICachedEntity, New})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+    Protected Friend Function GetFromCache(Of T As {_ICachedEntity, New})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICustDelegate(Of T)) As CachedItem
 
         Invariant()
@@ -2270,9 +2292,33 @@ l1:
         Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id, load, checkOnCreate}, Nothing), OrmBase)
     End Function
 
-    Protected Friend Function CreateEntity(Of T As {IOrmBase, New})(ByVal id As Object) As T
+    Protected Friend Function CreateOrmBase(ByVal id As Object, ByVal t As Type) As IOrmBase
+        Dim o As IOrmBase = CType(Activator.CreateInstance(t), IOrmBase)
+        o.Init(id, _cache, _schema, IdentityString)
+        Return o
+    End Function
+
+    Protected Friend Function CreateOrmBase(Of T As {IOrmBase, New})(ByVal id As Object) As T
         Dim o As New T
         o.Init(id, _cache, _schema, IdentityString)
+        Return o
+    End Function
+
+    Protected Friend Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk() As Pair(Of String, Object)) As T
+        Dim o As New T
+        o.Init(pk, _cache, _schema, IdentityString)
+        Return o
+    End Function
+
+    Protected Friend Function CreateEntity(ByVal pk() As Pair(Of String, Object), ByVal t As Type) As _ICachedEntity
+        Dim o As _ICachedEntity = CType(Activator.CreateInstance(t), _ICachedEntity)
+        o.Init(pk, _cache, _schema, IdentityString)
+        Return o
+    End Function
+
+    Protected Friend Function CreateEntity(ByVal t As Type) As IEntity
+        Dim o As _IEntity = CType(Activator.CreateInstance(t), _IEntity)
+        o.Init(_cache, _schema, IdentityString)
         Return o
     End Function
 
@@ -2282,8 +2328,16 @@ l1:
         Return o
     End Function
 
-    Protected Friend Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
+    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
         Return _LoadTypeInternal(obj, False, False, dic, True)
+    End Function
+
+    Public Function GetFromCacheOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
+        Return _LoadTypeInternal(obj, False, True, dic, True)
+    End Function
+
+    Public Function GetLoadedObjectFromDBOrCache(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
+        Return _LoadTypeInternal(obj, True, True, dic, True)
     End Function
 
     Protected Function _LoadTypeInternal(ByVal obj As _ICachedEntity, _
@@ -2353,9 +2407,9 @@ l1:
     End Function
 
     Protected Function LoadTypeInternal(Of T As {IOrmBase, New})(ByVal id As Object, _
-        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As T
+        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Integer, T), ByVal addOnCreate As Boolean) As T
 
-        Dim o As T = CreateEntity(Of T)(id)
+        Dim o As T = CreateOrmBase(Of T)(id)
         Return CType(_LoadTypeInternal(o, load, checkOnCreate, CType(dic, System.Collections.IDictionary), addOnCreate), T)
     End Function
 
@@ -2430,10 +2484,10 @@ l1:
         Return a
     End Function
 
-    Protected Friend Function LoadType(Of T As {OrmBase, New})(ByVal id As Object, _
+    Protected Friend Function LoadType(Of T As {IOrmBase, New})(ByVal id As Object, _
         ByVal load As Boolean, ByVal checkOnCreate As Boolean) As T
 
-        Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
+        Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
 
 #If DEBUG Then
         If dic Is Nothing Then
@@ -2492,7 +2546,7 @@ l1:
         End If
     End Sub
 
-    Protected Friend Sub EnsureInCache(ByVal obj As OrmBase)
+    Protected Friend Sub EnsureInCache(ByVal obj As ICachedEntity)
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -2510,7 +2564,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        Dim id As Object = obj.Identifier
+        Dim id As Integer = obj.Key
         SyncLock dic.SyncRoot
             If Not dic.Contains(id) Then
                 dic.Add(id, obj)
@@ -2557,7 +2611,7 @@ l1:
 
             _cache.RemoveDepends(obj)
 
-            Dim orm As IOrmBase = TryCast(obj, IOrmBase)
+            Dim orm As _IOrmBase = TryCast(obj, _IOrmBase)
             If orm IsNot Nothing Then
                 For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(orm, Nothing)
                     Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
@@ -2622,7 +2676,7 @@ l1:
         Return _cache.GetOrmDictionary(GetFilterInfo, t, _schema)
     End Function
 
-    Public Function GetDictionary(Of T)() As Generic.IDictionary(Of Object, T)
+    Public Function GetDictionary(Of T)() As Generic.IDictionary(Of Integer, T)
         Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema)
     End Function
 
@@ -2765,11 +2819,11 @@ l1:
 #End Region
 
 #Region " Many2Many "
-    Public Function GetM2MList(Of T As {OrmBase, New})(ByVal obj As OrmBase, ByVal direct As Boolean) As EditableList
+    Public Function GetM2MList(Of T As {IOrmBase, New})(ByVal obj As IOrmBase, ByVal direct As String) As EditableList
         Return FindM2MReturnKeys(Of T)(obj, direct).First.Entry
     End Function
 
-    Public Function FindDistinct(Of T As {OrmBase, New})(ByVal relation As M2MRelation, _
+    Public Function FindDistinct(Of T As {IOrmBase, New})(ByVal relation As M2MRelation, _
         ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
@@ -2927,7 +2981,7 @@ l1:
         Return p
     End Function
 
-    Protected Friend Sub M2MCancel(ByVal mainobj As OrmBase, ByVal t As Type)
+    Protected Friend Sub M2MCancel(ByVal mainobj As _IOrmBase, ByVal t As Type)
         For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
             If o.First.Entry.SubType Is t Then
                 o.First.Entry.Reject(True)
@@ -2935,7 +2989,7 @@ l1:
         Next
     End Sub
 
-    Protected Friend Sub M2MDelete(ByVal mainobj As IOrmBase, ByVal subobj As IOrmBase, ByVal direct As Boolean)
+    Protected Friend Sub M2MDelete(ByVal mainobj As _IOrmBase, ByVal subobj As _IOrmBase, ByVal direct As String)
         If mainobj Is Nothing Then
             Throw New ArgumentNullException("mainobj")
         End If
@@ -2947,21 +3001,21 @@ l1:
         M2MDeleteInternal(mainobj, subobj, direct)
 
         If mainobj.GetType Is subobj.GetType Then
-            M2MDeleteInternal(subobj, mainobj, Not direct)
+            M2MDeleteInternal(subobj, mainobj, M2MRelation.GetRevKey(direct))
         Else
             M2MDeleteInternal(subobj, mainobj, direct)
         End If
     End Sub
 
-    Protected Friend Sub M2MDelete(ByVal mainobj As OrmBase, ByVal t As Type, ByVal direct As Boolean)
+    Protected Friend Sub M2MDelete(ByVal mainobj As _IOrmBase, ByVal t As Type, ByVal direct As String)
         Dim m As M2MCache = FindM2MNonGeneric(mainobj, t, direct).First
         For Each id As Integer In m.Entry.Current
             'm.Entry.Delete(id)
-            M2MDelete(mainobj, CreateDBObject(id, t), direct)
+            M2MDelete(mainobj, CType(GetOrmBaseFromCacheOrCreate(id, t), _IOrmBase), direct)
         Next
     End Sub
 
-    Protected Function M2MSave(ByVal mainobj As OrmBase, ByVal t As Type, ByVal direct As Boolean) As OrmBase.AcceptState2
+    Protected Function M2MSave(ByVal mainobj As _IOrmBase, ByVal t As Type, ByVal direct As String) As AcceptState2
         Invariant()
 
         If mainobj Is Nothing Then
@@ -2980,15 +3034,15 @@ l1:
             If m2me Is Nothing Then
                 Throw New OrmManagerException(String.Format("M2MCache entry is nothing for key:[{0}] and id:[{1}]. Quering type {2} for {3}; direct={4}", o.Second.First, o.Second.Second, t, mainobj.ObjName, direct))
             End If
-            If m2me.Entry.SubType Is t AndAlso m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso m2me.Entry.Direct = direct Then
+            If m2me.Entry.SubType Is t AndAlso m2me.Filter Is Nothing AndAlso m2me.Entry.HasChanges AndAlso m2me.Entry.Key = direct Then
                 Using SyncHelper.AcquireDynamicLock(GetSync(o.Second.First, o.Second.Second))
-                    Dim sv As EditableList = m2me.Entry.PrepareSave(Me)
+                    Dim sv As EditableListBase = m2me.Entry.PrepareSave(Me)
                     If sv IsNot Nothing Then
                         M2MSave(mainobj, t, direct, sv)
                         m2me.Entry.Saved = True
                     End If
                     'Return New OrmBase.AcceptState2(m2me, o.Second.First, o.Second.Second)
-                    Dim acs As OrmBase.AcceptState2 = mainobj.GetAccept(m2me)
+                    Dim acs As AcceptState2 = mainobj.GetAccept(m2me)
                     If acs Is Nothing Then
                         Throw New InvalidOperationException("Accept state must exist")
                     End If
@@ -3000,7 +3054,7 @@ l1:
 
     End Function
 
-    Protected Sub M2MUpdate(ByVal obj As OrmBase, ByVal oldId As Object)
+    Protected Sub M2MUpdate(ByVal obj As _IOrmBase, ByVal oldId As Object)
         For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, obj.GetOldName(oldId))
             Dim key As String = o.Second.First
             Dim id As String = o.Second.Second
@@ -3021,7 +3075,7 @@ l1:
 
         For Each r As M2MRelation In _schema.GetM2MRelations(obj.GetType)
 
-            Dim key As String = GetM2MKey(tt1, r.Type, Not r.non_direct)
+            Dim key As String = GetM2MKey(tt1, r.Type, r.Key)
             Dim dic As IDictionary = GetDic(_cache, key)
             Dim id As String = obj.Identifier.ToString
             'Dim sync As String = GetSync(key, id)
@@ -3030,14 +3084,14 @@ l1:
                 Dim m As M2MCache = CType(dic(id), M2MCache)
 
                 For Each oid As Integer In m.Entry.Current
-                    Dim o As OrmBase = CreateDBObject(oid, r.Type)
+                    Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(oid, r.Type), _IOrmBase)
                     M2MSubUpdate(o, obj.Identifier, oldId, obj.GetType)
                 Next
             End If
         Next
     End Sub
 
-    Protected Sub M2MSubUpdate(ByVal obj As OrmBase, ByVal id As Object, ByVal oldId As Object, ByVal t As Type)
+    Protected Sub M2MSubUpdate(ByVal obj As _IOrmBase, ByVal id As Object, ByVal oldId As Object, ByVal t As Type)
         For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
             Dim m As M2MCache = o.First
             If m.Entry.SubType Is t Then
@@ -3051,7 +3105,7 @@ l1:
         Next
     End Sub
 
-    Protected Friend Sub M2MAdd(ByVal mainobj As OrmBase, ByVal subobj As OrmBase, ByVal direct As Boolean)
+    Protected Friend Sub M2MAdd(ByVal mainobj As _IOrmBase, ByVal subobj As _IOrmBase, ByVal direct As String)
         If mainobj Is Nothing Then
             Throw New ArgumentNullException("mainobj")
         End If
@@ -3063,17 +3117,17 @@ l1:
         M2MAddInternal(mainobj, subobj, direct)
 
         If mainobj.GetType Is subobj.GetType Then
-            M2MAddInternal(subobj, mainobj, Not direct)
+            M2MAddInternal(subobj, mainobj, M2MRelation.GetRevKey(direct))
         Else
             M2MAddInternal(subobj, mainobj, direct)
         End If
     End Sub
 
-    Protected Friend Function FindM2MNonGeneric(ByVal mainobj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As Pair(Of M2MCache, Boolean)
+    Protected Friend Function FindM2MNonGeneric(ByVal mainobj As IOrmBase, ByVal tt2 As Type, ByVal direct As String) As Pair(Of M2MCache, Boolean)
         Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
         'Dim pm As New Reflection.ParameterModifier(6)
         'pm(5) = True
-        Dim types As Type() = New Type() {GetType(OrmBase), GetType(Boolean), GetType(IGetFilter), GetType(Sort), GetType(Boolean)}
+        Dim types As Type() = New Type() {GetType(IOrmBase), GetType(Boolean), GetType(IGetFilter), GetType(Sort), GetType(Boolean)}
         Dim o() As Object = New Object() {mainobj, direct, Nothing, Nothing, False}
         'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
         '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
@@ -3083,7 +3137,7 @@ l1:
         Return p
     End Function
 
-    Protected Friend Function GetM2MNonGeneric(ByVal obj As OrmBase, ByVal tt2 As Type, ByVal direct As Boolean) As M2MCache
+    Protected Friend Function GetM2MNonGeneric(ByVal obj As OrmBase, ByVal tt2 As Type, ByVal direct As String) As M2MCache
         Dim tt1 As Type = obj.GetType
 
         Dim id As Object = obj.Identifier
@@ -3091,7 +3145,7 @@ l1:
         Return GetM2MNonGeneric(id, tt1, tt2, direct)
     End Function
 
-    Protected Friend Function GetM2MNonGeneric(ByVal id As Object, ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As Boolean) As M2MCache
+    Protected Friend Function GetM2MNonGeneric(ByVal id As Object, ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As String) As M2MCache
         Dim key As String = GetM2MKey(tt1, tt2, direct)
 
         Dim dic As IDictionary = GetDic(_cache, key)
@@ -3099,7 +3153,7 @@ l1:
         Return CType(dic(id), M2MCache)
     End Function
 
-    Protected Sub M2MAddInternal(ByVal mainobj As OrmBase, ByVal subobj As OrmBase, ByVal direct As Boolean)
+    Protected Sub M2MAddInternal(ByVal mainobj As _IOrmBase, ByVal subobj As IOrmBase, ByVal direct As String)
         If mainobj Is Nothing Then
             Throw New ArgumentNullException("mainobj")
         End If
@@ -3126,10 +3180,10 @@ l1:
 #If DEBUG Then
         Debug.Assert(Not check OrElse m.Entry.Added.Count = cnt + 1)
 #End If
-        mainobj.AddAccept(New OrmBase.AcceptState2(m, p.Second.First, p.Second.Second))
+        mainobj.AddAccept(New AcceptState2(m, p.Second.First, p.Second.Second))
     End Sub
 
-    Protected Sub M2MDeleteInternal(ByVal mainobj As IOrmBase, ByVal subobj As IOrmBase, ByVal direct As String)
+    Protected Sub M2MDeleteInternal(ByVal mainobj As _IOrmBase, ByVal subobj As IOrmBase, ByVal direct As String)
         If mainobj Is Nothing Then
             Throw New ArgumentNullException("mainobj")
         End If
@@ -3150,12 +3204,12 @@ l1:
 
         m.Entry.Delete(subobj.Identifier)
 
-        mainobj.AddAccept(New OrmBase.AcceptState2(m, p.Second.First, p.Second.Second))
+        mainobj.AddAccept(New AcceptState2(m, p.Second.First, p.Second.Second))
     End Sub
 
 #End Region
 
-    Friend Function CreateReadonlyList(ByVal t As Type) As IListEdit
+    Friend Shared Function CreateReadonlyList(ByVal t As Type) As IListEdit
         Dim rt As Type = Nothing
         If GetType(IOrmBase).IsAssignableFrom(t) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -3167,7 +3221,7 @@ l1:
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t})), IListEdit)
     End Function
 
-    Friend Function CreateReadonlyList(ByVal t As Type, ByVal l As IList) As IListEdit
+    Friend Shared Function CreateReadonlyList(ByVal t As Type, ByVal l As IList) As IListEdit
         Dim rt As Type = Nothing
         If GetType(IOrmBase).IsAssignableFrom(t) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -3297,11 +3351,16 @@ l1:
         Return r
     End Function
 
-    Public Function GetLoadedCount(Of T As IOrmBase)(ByVal ids As IList(Of Object)) As Integer
+    Public Function GetKeyFromPK(Of T As {New, IOrmBase})(ByVal id As Object) As Integer
+        Dim o As T = CreateOrmBase(Of T)(id)
+        Return o.Key
+    End Function
+
+    Public Function GetLoadedCount(Of T As {New, IOrmBase})(ByVal ids As IList(Of Object)) As Integer
         Dim r As Integer = 0
-        Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
-        For Each id As Integer In ids
-            If dic.ContainsKey(id) Then
+        Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
+        For Each id As Object In ids
+            If dic.ContainsKey(GetKeyFromPK(Of T)(id)) Then
                 r += 1
             End If
         Next
@@ -3704,10 +3763,8 @@ l1:
         If Not check Then
             Dim type As Type = GetType(T)
 
-            For Each id As Integer In ids
-                Dim obj As T = Nothing
-
-                obj = CreateDBObject(Of T)(id)
+            For Each id As Object In ids
+                Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id)
 
                 If obj IsNot Nothing Then
                     CType(arr, IListEdit).Add(obj)
@@ -3734,9 +3791,7 @@ l1:
                 length = Math.Min(length + start, ids.Count)
                 For i As Integer = start To length - 1
                     Dim id As Object = ids(i)
-                    Dim obj As T = Nothing
-
-                    obj = CreateDBObject(Of T)(id)
+                    Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id)
 
                     If obj IsNot Nothing Then
                         CType(arr, IListEdit).Add(obj)
@@ -3818,7 +3873,7 @@ l1:
         Return Nothing
     End Function
 
-    Public Function SaveChanges(ByVal obj As ICachedEntity, ByVal AcceptChanges As Boolean) As Boolean
+    Public Function SaveChanges(ByVal obj As CachedEntity, ByVal AcceptChanges As Boolean) As Boolean
         Try
             Dim b As Boolean = True
             Select Case obj.ObjectState
@@ -3835,7 +3890,7 @@ l1:
             End If
 
             Dim t As Type = obj.GetType
-            Dim orm As IOrmBase = TryCast(obj, IOrmBase)
+            Dim orm As _IOrmBase = TryCast(obj, _IOrmBase)
             'Using obj.GetSyncRoot
             Using GetSyncForSave(t, obj)
                 Dim old_id As Object = Nothing
@@ -3854,23 +3909,26 @@ l1:
                 Dim err As Boolean = True
                 Try
                     Dim processedType As New List(Of Type)
-                    If sa = SaveAction.Delete Then
-                        For Each r As M2MRelation In ObjectSchema.GetM2MRelations(t)
-                            Dim acs As OrmBase.AcceptState2 = Nothing
-                            If r.ConnectedType Is Nothing Then
-                                If r.DeleteCascade Then
-                                    M2MDelete(obj, r.Type, Not r.non_direct)
-                                End If
-                                acs = M2MSave(obj, r.Type, Not r.non_direct)
-                                processedType.Add(r.Type)
-                            End If
-                            If acs IsNot Nothing Then obj.AddAccept(acs)
-                        Next
 
-                        Dim oo As IRelation = TryCast(ObjectSchema.GetObjectSchema(t), IRelation)
-                        If oo IsNot Nothing Then
-                            Dim o As New M2MEnum(oo, obj, ObjectSchema)
-                            Cache.ConnectedEntityEnum(t, AddressOf o.Remove)
+                    If sa = SaveAction.Delete Then
+                        If orm IsNot Nothing Then
+                            For Each r As M2MRelation In ObjectSchema.GetM2MRelations(t)
+                                Dim acs As AcceptState2 = Nothing
+                                If r.ConnectedType Is Nothing Then
+                                    If r.DeleteCascade Then
+                                        M2MDelete(orm, r.Type, r.Key)
+                                    End If
+                                    acs = M2MSave(orm, r.Type, r.Key)
+                                    processedType.Add(r.Type)
+                                End If
+                                If acs IsNot Nothing Then orm.AddAccept(acs)
+                            Next
+
+                            Dim oo As IRelation = TryCast(ObjectSchema.GetObjectSchema(t), IRelation)
+                            If oo IsNot Nothing Then
+                                Dim o As New M2MEnum(oo, orm, ObjectSchema)
+                                Cache.ConnectedEntityEnum(t, AddressOf o.Remove)
+                            End If
                         End If
                     End If
 
@@ -3884,16 +3942,16 @@ l1:
                     If sa = SaveAction.Insert Then
                         Dim oo As IRelation = TryCast(ObjectSchema.GetObjectSchema(t), IRelation)
                         If oo IsNot Nothing Then
-                            Dim o As New M2MEnum(oo, obj, ObjectSchema)
+                            Dim o As New M2MEnum(oo, orm, ObjectSchema)
                             Cache.ConnectedEntityEnum(t, AddressOf o.Add)
                         End If
 
-                        M2MUpdate(obj, old_id)
+                        M2MUpdate(orm, old_id)
 
                         For Each r As M2MRelation In ObjectSchema.GetM2MRelations(t)
                             Dim tt As Type = r.Type
                             If Not ObjectSchema.IsMany2ManyReadonly(t, tt) Then
-                                Dim acs As OrmBase.AcceptState2 = M2MSave(obj, tt, Not r.non_direct)
+                                Dim acs As AcceptState2 = M2MSave(orm, tt, r.Key)
                                 If acs IsNot Nothing Then
                                     hasNew = hasNew OrElse acs.el.HasNew
                                     'obj.AddAccept(acs)
@@ -3902,7 +3960,7 @@ l1:
                         Next
                     ElseIf sa = SaveAction.Update Then
                         If obj._needAccept IsNot Nothing Then
-                            For Each acp As OrmBase.AcceptState2 In obj._needAccept
+                            For Each acp As AcceptState2 In obj._needAccept
                                 'Dim el As EditableList = acp.el.PrepareNewSave(Me)
                                 Dim el As EditableList = acp.el.PrepareSave(Me)
                                 If el IsNot Nothing Then
@@ -3941,20 +3999,21 @@ l1:
                         End If
 
                         state = old_state
-                    Else
-                        obj.ObjSaved = True
+                        'Else
+                        '    obj.ObjSaved = True
                     End If
                 End Try
                 Return hasNew
             End Using
         Finally
-            If obj.ObjSaved AndAlso AcceptChanges Then
+            '            If obj.ObjSaved AndAlso AcceptChanges Then
+            If AcceptChanges Then
                 obj.UpdateCache()
             End If
         End Try
     End Function
 
-    Public Function AddObject(ByVal obj As OrmBase) As OrmBase
+    Public Function AddObject(ByVal obj As ICachedEntity) As ICachedEntity
         Invariant()
 
         If obj Is Nothing Then
@@ -4070,11 +4129,11 @@ l1:
         Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
     End Function
 
-    Protected Friend Sub RegisterInCashe(ByVal obj As OrmBase)
+    Protected Friend Sub RegisterInCashe(ByVal obj As ICachedEntity)
         If Not IsInCachePrecise(obj) Then
             Add2Cache(obj)
             If obj.OriginalCopy IsNot Nothing Then
-                Me.Cache.RegisterExistingModification(obj, obj.Identifier)
+                Me.Cache.RegisterExistingModification(obj, obj.Key)
             End If
         End If
     End Sub

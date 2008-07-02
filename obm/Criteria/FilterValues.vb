@@ -491,7 +491,7 @@ Namespace Criteria.Values
         End Sub
 
         Public Function GetOrmValue(ByVal mgr As OrmManagerBase) As IOrmBase
-            Return mgr.CreateDBObject(Value, _t)
+            Return mgr.GetOrmBaseFromCacheOrCreate(Value, _t)
         End Function
 
         Public ReadOnly Property OrmType() As Type

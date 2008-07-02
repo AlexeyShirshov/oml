@@ -26,17 +26,17 @@ Namespace Cache
             _t = o.GetType
         End Sub
 
-        Public Function GetEntity() As CachedEntity
-            Return OrmManagerBase.CurrentManager.Find(_id, _t)
+        Public Function GetEntity() As ICachedEntity
+            Return OrmManagerBase.CurrentManager.GetEntityFromCacheOrDB(_id, _t)
         End Function
 
-        Public ReadOnly Property OrmType() As Type
+        Public ReadOnly Property EntityType() As Type
             Get
                 Return _t
             End Get
         End Property
 
-        Public ReadOnly Property ID() As Pair(Of String, Object)()
+        Public ReadOnly Property PK() As Pair(Of String, Object)()
             Get
                 Return _id
             End Get
@@ -50,7 +50,7 @@ Namespace Cache
             If obj Is Nothing Then
                 Return False
             End If
-            Return _t Is obj._t AndAlso IdEquals(obj.ID)
+            Return _t Is obj._t AndAlso IdEquals(obj.PK)
         End Function
 
         Protected Function IdEquals(ByVal ids() As Pair(Of String, Object)) As Boolean
@@ -400,13 +400,13 @@ Namespace Cache
             End Using
         End Function
 
-        Protected Friend Sub RegisterExistingModification(ByVal obj As OrmBase, ByVal id As Integer)
+        Protected Friend Sub RegisterExistingModification(ByVal obj As ICachedEntity, ByVal key As Integer)
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
-                Dim name As String = obj.GetType().Name & ":" & id
+                Dim name As String = obj.GetType().Name & ":" & key
                 _modifiedobjects.Add(name, obj.OriginalCopy)
                 If _modifiedobjects.Count = 1 Then
                     RaiseEvent CacheHasModification(Me, EventArgs.Empty)
@@ -467,7 +467,7 @@ Namespace Cache
 
         Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As QueryGenerator) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Object, T)
+        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Integer, T)
 
 #If TraceCreation Then
         Private _added As ArrayList = arraylist.Synchronized( New ArrayList)
@@ -787,7 +787,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Sub AddM2MObjDependent(ByVal obj As OrmBase, ByVal key As String, ByVal id As String)
+        Protected Friend Sub AddM2MObjDependent(ByVal obj As _IOrmBase, ByVal key As String, ByVal id As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -820,13 +820,13 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function GetM2MEntries(ByVal obj As IOrmBase, ByVal name As String) As ICollection(Of Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)))
+        Protected Friend Function GetM2MEntries(ByVal obj As _IOrmBase, ByVal name As String) As ICollection(Of Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)))
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
 
             If String.IsNullOrEmpty(name) Then
-                name = CType(obj, OrmBase).GetName
+                name = obj.GetName
             End If
 
 #If DebugLocks Then
@@ -854,7 +854,7 @@ Namespace Cache
             End Using
         End Function
 
-        Protected Friend Sub UpdateM2MEntries(ByVal obj As OrmBase, ByVal oldId As Object, ByVal name As String)
+        Protected Friend Sub UpdateM2MEntries(ByVal obj As _IOrmBase, ByVal oldId As Object, ByVal name As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If

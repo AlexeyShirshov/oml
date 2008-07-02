@@ -48,6 +48,40 @@ Namespace Orm
             End Property
         End Class
 
+        Public Class RelatedObject
+            Private _dst As CachedEntity
+            Private _props() As String
+
+            Public Sub New(ByVal src As OrmBase, ByVal dst As OrmBase, ByVal properties() As String)
+                _dst = dst
+                _props = properties
+                AddHandler src.Saved, AddressOf Added
+            End Sub
+
+            Public Sub Added(ByVal source As CachedEntity, ByVal args As ObjectSavedArgs)
+                Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+                Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(_dst.GetType)
+                For Each p As String In _props
+                    If p = "ID" Then
+                        Dim nm As OrmManagerBase.INewObjects = mgr.NewObjectManager
+                        If nm IsNot Nothing Then
+                            nm.RemoveNew(_dst)
+                        End If
+                        _dst.SetPK(source.GetPKValues)
+                        If nm IsNot Nothing Then
+                            mgr.NewObjectManager.AddNew(_dst)
+                        End If
+                    Else
+                        Dim o As Object = source.GetValue(p)
+                        Dim c As New ColumnAttribute(p)
+                        Dim pi As Reflection.PropertyInfo = mgr.ObjectSchema.GetProperty(_dst.GetType, oschema, c)
+                        _dst.SetValue(pi, c, oschema, o)
+                    End If
+                Next
+                RemoveHandler source.Saved, AddressOf Added
+            End Sub
+        End Class
+
         Public Event Saved(ByVal sender As CachedEntity, ByVal args As ObjectSavedArgs)
         Public Event Added(ByVal sender As CachedEntity, ByVal args As EventArgs)
         Public Event Deleted(ByVal sender As CachedEntity, ByVal args As EventArgs)
@@ -67,11 +101,7 @@ Namespace Orm
         Protected MustOverride Function GetCacheKey() As Integer
 
         Protected Overrides Sub Init(ByVal cache As Cache.OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
-            MyBase.Init(cache, schema, mgrIdentityString)
-            If schema IsNot Nothing Then
-                Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
-                _loaded_members = New BitArray(arr.Count)
-            End If
+            Throw New NotSupportedException
         End Sub
 
         Private Sub PKLoaded() Implements _ICachedEntity.PKLoaded
@@ -212,11 +242,11 @@ Namespace Orm
             End Using
         End Sub
 
-        Friend Overrides ReadOnly Property ObjName() As String
-            Get
-                Return Me.GetType.Name & " - " & ObjectState.ToString & " (" & _key & "): "
-            End Get
-        End Property
+        'Friend Overrides ReadOnly Property ObjName() As String
+        '    Get
+        '        Return Me.GetType.Name & " - " & ObjectState.ToString & " (" & _key & "): "
+        '    End Get
+        'End Property
 
         Private Sub SetLoaded(ByVal value As Boolean) Implements _ICachedEntity.SetLoaded
             Using SyncHelper(False)
@@ -238,7 +268,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Friend Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As _ICachedEntity
+        Public Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity Implements ICachedEntity.AcceptChanges
             Dim mo As _ICachedEntity = Nothing
             Using SyncHelper(False)
                 If ObjectState = Orm.ObjectState.Created OrElse ObjectState = Orm.ObjectState.Clone Then 'OrElse _state = Orm.ObjectState.NotLoaded Then
@@ -300,13 +330,6 @@ Namespace Orm
             obj._needDelete = False
         End Sub
 
-        Friend ReadOnly Property OriginalCopy() As _ICachedEntity
-            Get
-                If OrmCache.Modified(Me) Is Nothing Then Return Nothing
-                Return OrmCache.Modified(Me).Obj
-            End Get
-        End Property
-
         Protected Function RemoveVersionData(ByVal setState As Boolean) As _ICachedEntity
             Dim mo As _ICachedEntity = Nothing
 
@@ -319,7 +342,7 @@ Namespace Orm
                 End If
             End If
             'If unreg Then
-            mo = OriginalCopy
+            mo = CType(OriginalCopy, _ICachedEntity)
             OrmCache.UnregisterModification(Me)
             '_mo = Nothing
             'End If
@@ -363,6 +386,31 @@ Namespace Orm
                     nm.RemoveNew(mo)
                 End If
             End If
+        End Sub
+
+        Protected Sub _Init(ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
+            MyBase.Init(cache, schema, mgrIdentityString)
+            If schema IsNot Nothing Then
+                Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
+                _loaded_members = New BitArray(arr.Count)
+            End If
+        End Sub
+
+        Protected Overridable Sub SetPK(ByVal pk As Pair(Of String, Object)())
+            Using m As IGetManager = GetMgr()
+                Dim tt As Type = Me.GetType
+                Dim oschema As IOrmObjectSchemaBase = m.Manager.ObjectSchema.GetObjectSchema(tt)
+                For Each p As Pair(Of String, Object) In pk
+                    Dim c As New ColumnAttribute(p.First)
+                    SetValue(m.Manager.ObjectSchema.GetProperty(tt, oschema, c), c, oschema, p.Second)
+                Next
+            End Using
+        End Sub
+
+        Protected Overridable Overloads Sub Init(ByVal pk() As Pair(Of String, Object), ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String) Implements _ICachedEntity.Init
+            _Init(cache, schema, mgrIdentityString)
+            SetPK(pk)
+            PKLoaded()
         End Sub
 
 #Region " Xml Serialization "
@@ -516,7 +564,7 @@ l1:
                         '    SetLoaded(c, True)
                         'Else
                         Using mc As IGetManager = GetMgr()
-                            Dim v As OrmBase = mc.Manager.CreateDBObject(CInt(value), pi.PropertyType)
+                            Dim v As IOrmBase = mc.Manager.GetOrmBaseFromCacheOrCreate(value, pi.PropertyType)
                             If pi IsNot Nothing Then
                                 pi.SetValue(Me, v, Nothing)
                                 SetLoaded(c, True, True)
@@ -575,6 +623,306 @@ l1:
                 Next
             End Using
             Return l.ToArray
+        End Function
+
+        Public ReadOnly Property OriginalCopy() As ICachedEntity Implements ICachedEntity.OriginalCopy
+            Get
+                If OrmCache.Modified(Me) Is Nothing Then Return Nothing
+                Return OrmCache.Modified(Me).Obj
+            End Get
+        End Property
+
+        Public Overridable ReadOnly Property ChangeDescription() As String
+            Get
+                Dim sb As New StringBuilder
+                sb.Append("Аттрибуты:").Append(vbCrLf)
+                If ObjectState = Orm.ObjectState.Modified Then
+                    For Each c As ColumnAttribute In Changes(OriginalCopy)
+                        sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
+                    Next
+                Else
+                    Dim t As Type = Me.GetType
+                    'Dim o As OrmBase = CType(t.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
+                    '    New Object() {Identifier, OrmCache, _schema}), OrmBase)
+                    'Dim o As OrmBase = GetNew()
+                    Dim o As ICachedEntity = CType(CreateObject(), ICachedEntity)
+                    For Each c As ColumnAttribute In Changes(o)
+                        sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
+                    Next
+                End If
+                Return sb.ToString
+            End Get
+        End Property
+
+        Public ReadOnly Property Changes(ByVal obj As ICachedEntity) As ColumnAttribute()
+            Get
+                Dim columns As New Generic.List(Of ColumnAttribute)
+                Dim t As Type = obj.GetType
+                Dim oschema As IOrmObjectSchemaBase = OrmSchema.GetObjectSchema(t)
+                For Each de As DictionaryEntry In OrmSchema.GetProperties(t, oschema)
+                    Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                    Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                    Dim original As Object = obj.GetValue(pi, c, oschema)
+                    If (OrmSchema.GetAttributes(t, c) And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
+                        Dim current As Object = GetValue(pi, c, oschema)
+                        If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
+                            (current IsNot Nothing AndAlso Not current.Equals(original)) Then
+                            columns.Add(c)
+                        End If
+                    End If
+                Next
+                Return columns.ToArray
+            End Get
+        End Property
+
+        Protected Overrides Function CreateObject() As Entity
+            Using gm As IGetManager = GetMgr()
+                Return CType(gm.Manager.CreateEntity(GetPKValues, Me.GetType), Entity)
+            End Using
+        End Function
+
+        Protected Overrides Sub _PrepareUpdate()
+            If Not IsLoaded Then
+                If ObjectState = Orm.ObjectState.None Then
+                    Throw New InvalidOperationException(String.Format("Object {0} is not loaded while the state is None", ObjName))
+                End If
+
+                If ObjectState = Orm.ObjectState.NotLoaded Then
+                    Load()
+                    If ObjectState = Orm.ObjectState.NotFoundInSource Then
+                        Throw New OrmObjectException(ObjName & "Object is not editable 'cause it is not found in source")
+                    End If
+                Else
+                    Return
+                End If
+            End If
+
+            Dim mo As ModifiedObject = OrmCache.Modified(Me)
+            If mo IsNot Nothing Then
+                Using mc As IGetManager = GetMgr()
+                    If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mc.Manager.CurrentUser) Then
+                        Throw New OrmObjectException(ObjName & "Object has already altered by another user")
+                    End If
+                End Using
+                If ObjectState = Orm.ObjectState.Deleted Then SetObjectState(ObjectState.Modified)
+            Else
+                Debug.Assert(ObjectState = Orm.ObjectState.None) ' OrElse state = Obm.ObjectState.Created)
+                'CreateModified(_id)
+                CreateModified()
+                EnsureInCache()
+                'If modified.old_state = Obm.ObjectState.Created Then
+                '    _mo = mo
+                'End If
+            End If
+        End Sub
+
+        Protected Sub EnsureInCache()
+            Using mc As IGetManager = GetMgr()
+                mc.Manager.EnsureInCache(Me)
+            End Using
+        End Sub
+
+        Protected Sub CreateModified()
+            Dim clone As Entity = CreateClone()
+            SetObjectState(Orm.ObjectState.Modified)
+            Using mc As IGetManager = GetMgr()
+                mc.Manager.Cache.RegisterModification(CType(CreateClone(), _ICachedEntity), ModifiedObject.ReasonEnum.Edit)
+                'OrmCache.RegisterModification(modified).Reason = ModifiedObject.ReasonEnum.Edit
+                If Not IsLoading Then
+                    mc.Manager.RaiseBeginUpdate(Me)
+                End If
+            End Using
+        End Sub
+
+        Public Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean Implements ICachedEntity.SaveChanges
+            Using mc As IGetManager = GetMgr()
+                Return mc.Manager.SaveChanges(Me, AcceptChanges)
+            End Using
+        End Function
+
+        Public Sub UpdateCache() Implements ICachedEntity.UpdateCache
+            Using gmc As IGetManager = GetMgr()
+                Dim mc As OrmManagerBase = gmc.Manager
+                If _upd IsNot Nothing OrElse _valProcs Then
+                    mc.InvalidateCache(Me, CType(_upd, System.Collections.ICollection))
+                Else
+                    mc.Cache.UpdateCache(mc.ObjectSchema, New ICachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
+                End If
+            End Using
+        End Sub
+
+        Friend ReadOnly Property IsReadOnly() As Boolean
+            Get
+                Using SyncHelper(True)
+                    If ObjectState = Orm.ObjectState.Modified Then
+                        Dim mo As ModifiedObject = OrmCache.Modified(Me)
+                        'If mo Is Nothing Then mo = _mo
+                        If mo IsNot Nothing Then
+                            Using mc As IGetManager = GetMgr()
+                                If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mc.Manager.CurrentUser) Then
+                                    Return True
+                                End If
+                            End Using
+                        End If
+                        'ElseIf state = Obm.ObjectState.Deleted Then
+                        'Return True
+                    End If
+                    Return False
+                End Using
+            End Get
+        End Property
+
+        Public Overridable Sub RejectRelationChanges() Implements ICachedEntity.RejectRelationChanges
+
+        End Sub
+
+        ''' <summary>
+        ''' Отмена изменений
+        ''' </summary>
+        Public Sub RejectChanges() Implements ICachedEntity.RejectChanges
+            Using SyncHelper(False)
+                RejectRelationChanges()
+
+                If ObjectState = ObjectState.Modified OrElse ObjectState = Orm.ObjectState.Deleted OrElse ObjectState = Orm.ObjectState.Created Then
+                    If IsReadOnly Then
+                        Throw New OrmObjectException(ObjName & " object in readonly state")
+                    End If
+
+                    If OriginalCopy Is Nothing Then
+                        If ObjectState <> Orm.ObjectState.Created AndAlso ObjectState <> Orm.ObjectState.Deleted Then
+                            Throw New OrmObjectException(ObjName & ": When object is in modified state it has to have an original copy")
+                        End If
+                        Return
+                    End If
+
+                    Dim mo As ModifiedObject = OrmCache.Modified(Me)
+                    If ObjectState = Orm.ObjectState.Deleted AndAlso mo.Reason <> ModifiedObject.ReasonEnum.Delete Then
+                        'Debug.Assert(False)
+                        'Throw New OrmObjectException
+                        Return
+                    End If
+
+                    If ObjectState = Orm.ObjectState.Modified AndAlso (mo.Reason = ModifiedObject.ReasonEnum.Delete) Then
+                        Debug.Assert(False)
+                        Throw New OrmObjectException
+                    End If
+
+                    'Debug.WriteLine(Environment.StackTrace)
+                    _needAdd = False
+                    _needDelete = False
+                    _upd = Nothing
+
+                    Dim olds As ObjectState = OriginalCopy.GetOldState
+
+                    Dim oldkey As Integer = Key
+                    Dim newid() As Pair(Of String, Object) = OriginalCopy.GetPKValues
+                    If olds <> Orm.ObjectState.Created Then
+                        '_loaded_members = 
+                        RevertToOriginalVersion()
+                        RemoveVersionData(False)
+                    End If
+                    SetPK(newid)
+#If TraceSetState Then
+                    SetObjectState(olds, mo.Reason, mo.StackTrace, mo.DateTime)
+#Else
+                    SetObjectState(olds)
+#End If
+                    If ObjectState = Orm.ObjectState.Created Then
+                        Dim name As String = Me.GetType.Name
+                        Using gmc As IGetManager = GetMgr()
+                            Dim mc As OrmManagerBase = gmc.Manager
+                            Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
+                            If dic Is Nothing Then
+                                Throw New OrmObjectException("Collection for " & name & " not exists")
+                            End If
+
+                            dic.Remove(oldkey)
+                        End Using
+
+                        OrmCache.UnregisterModification(Me)
+
+                        _loaded = False
+                        '_loaded_members = New BitArray(_loaded_members.Count)
+                    End If
+
+                    'ElseIf state = Obm.ObjectState.Deleted Then
+                    '    CheckCash()
+                    '    using SyncHelper(false)
+                    '        state = ObjectState.None
+                    '        OrmCache.UnregisterModification(Me)
+                    '    End SyncLock
+                    'Else
+                    '    Throw New OrmObjectException(ObjName & "Rejecting changes in the state " & _state.ToString & " is not allowed")
+                End If
+                Invariant()
+            End Using
+        End Sub
+
+        Protected Sub RevertToOriginalVersion()
+            Dim original As ICachedEntity = OriginalCopy
+            If original IsNot Nothing Then
+                CopyBody(original, Me)
+            End If
+        End Sub
+
+        Protected Friend Overridable Function ValidateNewObject(ByVal mgr As OrmManagerBase) As Boolean
+            Return True
+        End Function
+
+        Protected Friend Overridable Function ValidateUpdate(ByVal mgr As OrmManagerBase) As Boolean
+            Return True
+        End Function
+
+        Protected Friend Overridable Function ValidateDelete(ByVal mgr As OrmManagerBase) As Boolean
+            Return True
+        End Function
+
+        Protected Friend Sub RaiseSaved(ByVal sa As OrmManagerBase.SaveAction)
+            RaiseEvent Saved(Me, New ObjectSavedArgs(sa))
+        End Sub
+
+        Protected Friend Function Save(ByVal mc As OrmManagerBase) As Boolean
+            If IsReadOnly Then
+                Throw New OrmObjectException(ObjName & "Object in readonly state")
+            End If
+
+            Dim r As Boolean = True
+            If ObjectState = Orm.ObjectState.Modified Then
+#If TraceSetState Then
+                Dim mo As ModifiedObject = mc.Cache.Modified(Me)
+                If mo Is Nothing OrElse mo.Reason = ModifiedObject.ReasonEnum.Delete Then
+                    Debug.Assert(False)
+                    Throw New OrmObjectException
+                End If
+#End If
+                r = mc.UpdateObject(Me)
+            ElseIf ObjectState = Orm.ObjectState.Created OrElse ObjectState = Orm.ObjectState.NotFoundInSource Then
+                If OriginalCopy IsNot Nothing Then
+                    Throw New OrmObjectException(ObjName & " already exists.")
+                End If
+                Dim o As ICachedEntity = mc.AddObject(Me)
+                If o Is Nothing Then
+                    r = False
+                Else
+                    Debug.Assert(ObjectState = Orm.ObjectState.Modified) ' OrElse _state = Orm.ObjectState.None
+                    _needAdd = True
+                End If
+            ElseIf ObjectState = Orm.ObjectState.Deleted Then
+#If TraceSetState Then
+                Dim mo As ModifiedObject = mc.Cache.Modified(Me)
+                If mo Is Nothing OrElse (mo.Reason <> ModifiedObject.ReasonEnum.Delete AndAlso mo.Reason <> ModifiedObject.ReasonEnum.Edit) Then
+                    Debug.Assert(False)
+                    Throw New OrmObjectException
+                End If
+#End If
+                mc.DeleteObject(Me)
+                _needDelete = True
+#If TraceSetState Then
+            Else
+                Debug.Assert(False)
+#End If
+            End If
+            Return r
         End Function
     End Class
 

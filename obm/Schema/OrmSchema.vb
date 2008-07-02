@@ -376,9 +376,9 @@ Public MustInherit Class QueryGenerator
         Return Nothing
     End Function
 
-    Public Function GetM2MRelationForEdit(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As Boolean) As M2MRelation
+    Public Function GetM2MRelationForEdit(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As String) As M2MRelation
         For Each r As M2MRelation In GetM2MRelationsForEdit(maintype)
-            If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
+            If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.Key = direct) Then
                 Return r
             End If
         Next
@@ -828,21 +828,21 @@ Public MustInherit Class QueryGenerator
         End Using
     End Function
 
-    Public Sub SetFieldValue(ByVal obj As OrmBase, ByVal fieldName As String, ByVal value As Object)
-        If obj Is Nothing Then
-            Throw New ArgumentNullException("obj")
-        End If
+    'Public Sub SetFieldValue(ByVal obj As OrmBase, ByVal fieldName As String, ByVal value As Object)
+    '    If obj Is Nothing Then
+    '        Throw New ArgumentNullException("obj")
+    '    End If
 
-        Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, fieldName)
+    '    Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, fieldName)
 
-        If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", obj.ObjName, fieldName))
-        End If
+    '    If pi Is Nothing Then
+    '        Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", obj.ObjName, fieldName))
+    '    End If
 
-        Using obj.SyncHelper(False, fieldName)
-            obj.SetValue(pi, GetColumnByFieldName(obj.GetType, fieldName), value)
-        End Using
-    End Sub
+    '    Using obj.SyncHelper(False, fieldName)
+    '        obj.SetValue(pi, GetColumnByFieldName(obj.GetType, fieldName), value)
+    '    End Using
+    'End Sub
 
     'Protected Function GetPrimaryKeysValue(ByVal obj As OrmBase) As Object()
     '    If obj Is Nothing Then

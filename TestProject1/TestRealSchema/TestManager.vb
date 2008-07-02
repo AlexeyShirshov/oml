@@ -703,7 +703,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestDeleteNotLoaded()
         Using mgr As OrmDBManager = CType(CreateManager(GetSchema("1")), OrmDBManager)
-            Dim t As Table1 = mgr.CreateDBObject(Of Table1)(1)
+            Dim t As Table1 = mgr.GetOrmBaseFromCacheOrCreate(Of Table1)(1)
             Assert.AreEqual(ObjectState.NotLoaded, t.InternalProperties.ObjectState)
             t.Delete()
             Assert.AreEqual(ObjectState.Deleted, t.InternalProperties.ObjectState)
