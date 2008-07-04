@@ -59,7 +59,7 @@ Namespace Criteria.Core
 
     Public Interface IOrmFilterTemplate
         Inherits ITemplate
-        Function MakeHash(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As String
+        Function MakeHash(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String
         'Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter
         Sub SetType(ByVal t As Type)
     End Interface
@@ -437,7 +437,7 @@ Namespace Criteria.Core
             '_appl = appl
         End Sub
 
-        Public Overridable Function MakeFilter(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
+        Public Overridable Function MakeFilter(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -449,7 +449,7 @@ Namespace Criteria.Core
                 End If
                 Return MakeFilter(schema, schema.GetObjectSchema(_t), o)
             Else
-                Dim v As Object = schema.GetFieldValue(obj, _fieldname, oschema)
+                Dim v As Object = obj.GetValue(Nothing, New ColumnAttribute(_fieldname), oschema)
 
                 Return CreateEntityFilter(_t, _fieldname, New ScalarValue(v), Operation)
             End If
@@ -492,7 +492,7 @@ Namespace Criteria.Core
             Return _t.ToString & _fieldname & OperToString()
         End Function
 
-        Public Function MakeHash(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As String Implements IOrmFilterTemplate.MakeHash
+        Public Function MakeHash(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
             If Operation = FilterOperation.Equal Then
                 Return MakeFilter(schema, oschema, obj).ToString
             Else

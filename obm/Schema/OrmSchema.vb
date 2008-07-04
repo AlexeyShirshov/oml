@@ -758,7 +758,7 @@ Public MustInherit Class QueryGenerator
     '    Return arr.ToArray
     'End Function
 
-    Public Shared Function GetFieldValueSchemaless(ByVal obj As Entity, ByVal fieldName As String, ByVal schema As IOrmObjectSchemaBase, ByVal pi As Reflection.PropertyInfo) As Object
+    Public Shared Function GetFieldValueSchemaless(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IOrmObjectSchemaBase, ByVal pi As Reflection.PropertyInfo) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -772,13 +772,13 @@ Public MustInherit Class QueryGenerator
         End If
 
         If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", obj.ObjName, fieldName))
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, fieldName))
         End If
 
-        Return GetFieldValue(obj, fieldName, pi)
+        Return GetFieldValue(obj, fieldName, pi, schema)
     End Function
 
-    Public Function GetFieldValue(ByVal obj As Entity, ByVal fieldName As String, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Object
+    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IOrmObjectSchemaBase) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -792,13 +792,13 @@ Public MustInherit Class QueryGenerator
         End If
 
         If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", obj.ObjName, fieldName))
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, fieldName))
         End If
 
-        Return GetFieldValue(obj, fieldName, pi)
+        Return GetFieldValue(obj, fieldName, pi, schema)
     End Function
 
-    Public Function GetFieldValue(ByVal obj As Entity, ByVal fieldName As String, ByVal schema As IOrmObjectSchemaBase, ByVal pi As Reflection.PropertyInfo) As Object
+    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IOrmObjectSchemaBase, ByVal pi As Reflection.PropertyInfo) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -812,37 +812,39 @@ Public MustInherit Class QueryGenerator
         End If
 
         If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", obj.ObjName, fieldName))
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, fieldName))
         End If
 
-        Return GetFieldValue(obj, fieldName, pi)
+        Return GetFieldValue(obj, fieldName, pi, schema)
     End Function
 
-    Public Shared Function GetFieldValue(ByVal obj As Entity, ByVal fieldName As String, ByVal pi As Reflection.PropertyInfo) As Object
+    Public Shared Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal pi As Reflection.PropertyInfo, ByVal oschema As IOrmObjectSchemaBase) As Object
         If pi Is Nothing Then
             Throw New ArgumentNullException("pi")
         End If
 
-        Using .SyncHelper(True, fieldName)
-            Return pi.GetValue(obj, Nothing)
+        Using obj.SyncHelper(True, fieldName)
+            'Return pi.GetValue(obj, Nothing)
+            Return obj.GetValue(pi, New ColumnAttribute(fieldName), oschema)
         End Using
     End Function
 
-    'Public Sub SetFieldValue(ByVal obj As OrmBase, ByVal fieldName As String, ByVal value As Object)
-    '    If obj Is Nothing Then
-    '        Throw New ArgumentNullException("obj")
-    '    End If
+    Public Sub SetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal value As Object, ByVal oschema As IOrmObjectSchemaBase)
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
 
-    '    Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, fieldName)
+        Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, fieldName)
 
-    '    If pi Is Nothing Then
-    '        Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", obj.ObjName, fieldName))
-    '    End If
+        If pi Is Nothing Then
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, fieldName))
+        End If
 
-    '    Using obj.SyncHelper(False, fieldName)
-    '        obj.SetValue(pi, GetColumnByFieldName(obj.GetType, fieldName), value)
-    '    End Using
-    'End Sub
+        Using obj.SyncHelper(False, fieldName)
+            obj.SetValue(pi, GetColumnByFieldName(obj.GetType, fieldName), oschema, value)
+            'pi.SetValue(obj, value, Nothing)
+        End Using
+    End Sub
 
     'Protected Function GetPrimaryKeysValue(ByVal obj As OrmBase) As Object()
     '    If obj Is Nothing Then
@@ -924,13 +926,13 @@ Public MustInherit Class QueryGenerator
     End Function
 
     Public Function GetJoinObj(ByVal oschema As IOrmObjectSchemaBase, _
-        ByVal obj As IEntity, ByVal subType As Type) As OrmBase
+        ByVal obj As _IEntity, ByVal subType As Type) As OrmBase
         Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, oschema)
         Dim r As OrmBase = Nothing
         If Not String.IsNullOrEmpty(c) Then
             Dim o As Object = Nothing
             If obj.IsFieldLoaded(c) Then
-                o = obj.GetValue(c)
+                o = obj.GetValue(Nothing, New ColumnAttribute(c), oschema)
             Else
                 o = GetFieldValue(obj, c, oschema)
             End If

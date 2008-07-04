@@ -322,7 +322,7 @@ Namespace Criteria.Conditions
             '    Return s.ToString
             'End Function
 
-            Public Function MakeHash(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As String Implements IOrmFilterTemplate.MakeHash
+            Public Function MakeHash(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
                 Dim l As String = Con.Left.GetFilterTemplate.MakeHash(schema, oschema, obj)
                 If Con._right IsNot Nothing Then
                     Dim r As String = Con.Right.GetFilterTemplate.MakeHash(schema, oschema, obj)

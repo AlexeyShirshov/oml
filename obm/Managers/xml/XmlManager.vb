@@ -59,9 +59,9 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Friend Overrides Function UpdateObject(ByVal obj As ICachedEntity) As Boolean
-            Throw New NotImplementedException
-        End Function
+        'Protected Friend Overrides Function UpdateObject(ByVal obj As ICachedEntity) As Boolean
+        '    Throw New NotImplementedException
+        'End Function
 
         Protected Overrides Function BuildDictionary(Of T As {New, Orm.OrmBase})(ByVal level As Integer, ByVal filter As Worm.Criteria.Core.IFilter, ByVal join() As Worm.Criteria.Joins.OrmJoin) As Orm.DicIndex(Of T)
             Throw New NotImplementedException
@@ -121,14 +121,14 @@ Namespace Xml
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
-            ByVal obj As IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
+            ByVal obj As _IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManagerBase.ICustDelegate(Of T2)
 
             Throw New NotImplementedException
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
-            ByVal obj As IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
+            ByVal obj As _IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
             ByVal queryAspect() As Orm.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManagerBase.ICustDelegate(Of T2)
 
             Throw New NotImplementedException
@@ -213,7 +213,7 @@ Namespace Xml
                 values = New Generic.List(Of T)
             End If
 
-            Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
+            Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
             Dim oschema As IOrmObjectSchema = CType(_schema.GetObjectSchema(original_type), IOrmObjectSchema)
             Dim ft As New PerfCounter
             Do While nodes.MoveNext
@@ -234,20 +234,25 @@ Namespace Xml
             Return d.CreateNavigator
         End Function
 
-        Protected Sub LoadFromNodeIterator(Of T As {New, _ICachedEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Object, T), _
+        Protected Sub LoadFromNodeIterator(Of T As {New, _ICachedEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Integer, T), _
             ByVal values As IList(Of T), ByRef loaded As Integer, ByVal oschema As IOrmObjectSchema)
             'Dim id As Integer = CInt(dr.GetValue(idx))
             Dim obj As T = CreateEntity(Of T)() '= CType(CreateDBObject(Of T)(id, dic, False), T)
             Using obj.GetSyncRoot()
                 obj.BeginLoading()
                 If LoadPK(oschema, node, obj) Then
-                    obj = GetObjectFromCache(Of T)(obj, dic, False, False, True)
+                    If obj.ObjectState = ObjectState.Created Then
+                        obj.CreateCopyForSaveNewEntry()
+                        'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                    Else
+                        obj = CType(NormalizeObject(obj, CType(dic, System.Collections.IDictionary)), T)
+                    End If
                     If obj.ObjectState = ObjectState.NotLoaded Then
                         Using obj.GetSyncRoot()
-                            obj.RaiseBeginModification(ModifiedObject.ReasonEnum.Unknown)
+                            'obj.RaiseBeginModification(ModifiedObject.ReasonEnum.Unknown)
                             'If obj.IsLoaded Then obj.IsLoaded = False
                             LoadData(oschema, node, obj)
-                            If obj.ObjectState = ObjectState.Modified AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
+                            obj.CorrectStateAfterLoading()
                             values.Add(obj)
                             loaded += 1
                         End Using
@@ -266,9 +271,9 @@ Namespace Xml
             End Using
         End Sub
 
-        Protected Function LoadPK(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As ICachedEntity) As Boolean
+        Protected Function LoadPK(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
-            Dim seted As Boolean
+            Dim cnt As Integer
             For Each c As ColumnAttribute In _schema.GetSortedFieldList(original_type)
                 If (_schema.GetAttributes(original_type, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     Dim attr As String = _schema.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
@@ -280,18 +285,21 @@ Namespace Xml
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
                         obj.SetValue(Nothing, c, oschema, nodes.Current.Value)
-                        seted = True
                         sn = True
+                        cnt += 1
                     Loop
                 End If
             Next
-            Return seted
+            obj.PKLoaded(cnt)
+            Return cnt > 0
         End Function
 
         Protected Function LoadData(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim columns As List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
-            For Each c As ColumnAttribute In columns
+            For Each de As DictionaryEntry In ObjectSchema.GetProperties(original_type)
+                Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If (_schema.GetAttributes(original_type, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                     Dim attr As String = _schema.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
                     Dim n As XPathNavigator = node.Clone
@@ -301,7 +309,7 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        obj.SetValue(_schema.GetProperty(original_type, c), c, oschema, nodes.Current.Value)
+                        obj.SetValue(pi, c, oschema, nodes.Current.Value)
                         obj.SetLoaded(c, True, True)
                         sn = True
                     Loop

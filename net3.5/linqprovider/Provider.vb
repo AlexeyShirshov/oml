@@ -110,7 +110,7 @@ Namespace Linq
                         l = q.ExecSimple(Of TResult)(mgr)
                     Else
                         If GetType(OrmBase).IsAssignableFrom(rt) Then
-                            l = CType(q.ExecTypelessToList(mgr), IList(Of TResult))
+                            l = CType(q.ToListTypeless(mgr), IList(Of TResult))
                         Else
                             l = New List(Of TResult)
                             Dim e As IEnumerator = q.ExecTypeless(mgr)

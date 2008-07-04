@@ -123,7 +123,7 @@ Public Class TestSchema
             Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
             mgr.LoadObjects(col)
 
-            col = mgr.LoadObjectsIds(Of Table1)(New Integer() {1, 2, 10, 11, 34, 45, 20})
+            col = mgr.LoadObjectsIds(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20})
 
             Assert.AreEqual(2, col.Count)
         End Using
@@ -134,7 +134,7 @@ Public Class TestSchema
         Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim l As New List(Of Integer)
+            Dim l As New List(Of Object)
             l.Add(1)
             Dim rnd As New Random
             For i As Integer = 293485 To 293485 + 1000
@@ -156,7 +156,7 @@ Public Class TestSchema
             col = mgr.LoadObjects(col, 0, col.Count, New List(Of Meta.ColumnAttribute)(New Meta.ColumnAttribute() {New Meta.ColumnAttribute("ID")}))
             Assert.AreEqual(0, col.Count)
 
-            col = mgr.ConvertIds2Objects(Of Table1)(New Integer() {1, 2, 10, 11, 34, 45, 20}, True)
+            col = mgr.ConvertIds2Objects(Of Table1)(New Object() {1, 2, 10, 11, 34, 45, 20}, True)
 
             Assert.AreEqual(2, col.Count)
 

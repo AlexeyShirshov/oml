@@ -332,7 +332,7 @@ Namespace Orm
                         Dim add As New Hashtable
                         For Each ar As T In col2
                             If col.Contains(ar) Then Continue For
-                            Dim fv As String = CStr(ar.GetValue(sname, oschema))
+                            Dim fv As String = CStr(ar.GetValue(Nothing, New ColumnAttribute(sname), oschema))
                             Dim ar2 As T = CType(c(fv), T)
                             If ar2 IsNot Nothing Then
                                 If ar2 = ar Then
@@ -352,7 +352,7 @@ Namespace Orm
                         Next
                         For Each ar As T In col
                             'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                            Dim fv As String = CStr(ar.GetValue(fname, oschema))
+                            Dim fv As String = CStr(ar.GetValue(Nothing, New ColumnAttribute(fname), oschema))
                             Dim ar2 As T = CType(c(fv), T)
                             If ar2 IsNot Nothing Then
                                 If ar2 = ar Then
@@ -374,7 +374,7 @@ Namespace Orm
                         For Each ar As T In c.Values
                             CType(result, IListEdit).Add(ar)
                             'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                            Dim fv As String = CStr(ar.GetValue(fname, oschema))
+                            Dim fv As String = CStr(ar.GetValue(Nothing, New ColumnAttribute(fname), oschema))
                             Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
                             If addt IsNot Nothing Then
                                 For Each kl As T In addt

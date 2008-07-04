@@ -352,14 +352,14 @@ Namespace Database
         Protected Class M2MDataProvider(Of T As {New, IOrmBase})
             Inherits BaseDataProvider(Of T)
 
-            Private _obj As IOrmBase
+            Private _obj As _IOrmBase
             Private _direct As String
             'Private _sync As String
             'Private _rev As Boolean
             'Private _soft_renew As Boolean
             Private _qa() As QueryAspect
 
-            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As IOrmBase, ByVal filter As IFilter, _
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal obj As _IOrmBase, ByVal filter As IFilter, _
                 ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
                 ByVal id As String, ByVal key As String, ByVal direct As String)
                 MyBase.New(mgr, filter, sort, key, id)
@@ -374,7 +374,7 @@ Namespace Database
                 Throw New NotSupportedException
             End Function
 
-            Protected Function GetValuesInternal(ByVal withLoad As Boolean) As System.Collections.Generic.IList(Of Integer)
+            Protected Function GetValuesInternal(ByVal withLoad As Boolean) As System.Collections.Generic.IList(Of Object)
                 Dim t As Type = GetType(T)
 
                 Using cmd As System.Data.Common.DbCommand = _mgr.DbSchema.CreateDBCommand
@@ -457,23 +457,23 @@ Namespace Database
                     'If Not _direct Then
                     '    Throw New NotSupportedException("Tag is not supported with connected type")
                     'End If
-                    Dim f1 As String = _mgr.DbSchema.GetConnectedTypeField(ct, mt, Not _direct)
+                    Dim f1 As String = _mgr.DbSchema.GetConnectedTypeField(ct, mt, M2MRelation.GetRevKey(_direct))
                     Dim f2 As String = _mgr.DbSchema.GetConnectedTypeField(ct, t, _direct)
                     Dim fl As New Worm.Database.Criteria.Core.EntityFilter(ct, f1, New EntityValue(_obj), Worm.Criteria.FilterOperation.Equal)
-                    Dim l As New List(Of Integer)
+                    Dim l As New List(Of Object)
                     'Dim external_sort As Boolean = False
 
                     'If Not String.IsNullOrEmpty(_sort) AndAlso _mgr.DbSchema.GetObjectSchema(t).IsExternalSort(_sort) Then
                     '    external_sort = True
                     'End If
-
-                    For Each o As OrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
+                    Dim oschema As IOrmObjectSchemaBase = _mgr.ObjectSchema.GetObjectSchema(ct)
+                    For Each o As IOrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
                         'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
-                        Dim id1 As Integer = CType(o.GetValue(f1), OrmBase).Identifier
-                        Dim id2 As Integer = CType(o.GetValue(f2), OrmBase).Identifier
+                        Dim id1 As Object = CType(o.GetValue(Nothing, New ColumnAttribute(f1), oschema), IOrmBase).Identifier
+                        Dim id2 As Object = CType(o.GetValue(Nothing, New ColumnAttribute(f2), oschema), IOrmBase).Identifier
 
-                        If id1 <> _obj.Identifier Then
+                        If Not id1.Equals(_obj.Identifier) Then
                             Throw New OrmManagerException("Wrong relation statement")
                         End If
 
@@ -481,7 +481,7 @@ Namespace Database
                     Next
 
                     If _sort IsNot Nothing AndAlso Sort.IsExternal Then
-                        Dim l2 As New List(Of Integer)
+                        Dim l2 As New List(Of Object)
                         For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False))
                             l2.Add(o.Identifier)
                         Next

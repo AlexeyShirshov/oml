@@ -102,7 +102,7 @@ Namespace Cache
 
         Public ReadOnly Property Direct() As Boolean
             Get
-                Return Not _non_direct
+                Return _key <> M2MRelation.RevKey
             End Get
         End Property
 
@@ -161,13 +161,13 @@ Namespace Cache
             End Using
         End Sub
 
-        'Protected Function GetRealDirect() As Boolean
-        '    If SubType Is MainType Then
-        '        Return Not Direct
-        '    Else
-        '        Return Direct
-        '    End If
-        'End Function
+        Protected Function GetRealDirect() As String
+            If SubType Is MainType Then
+                Return M2MRelation.GetRevKey(_key)
+            Else
+                Return _key
+            End If
+        End Function
 
         'Private ReadOnly Property _non_direct() As Boolean
         '    Get
@@ -196,10 +196,10 @@ Namespace Cache
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManagerBase) As List(Of EditableListBase)
             Dim l As New List(Of EditableListBase)
-            For Each o As IOrmBase In mgr.Find(Me)
+            For Each o As IOrmBase In Main.Find(SubType).ToListTypeless(mgr)
                 Dim el As EditableListBase = mgr.Cache.GetM2M(o, MainType, _key)
                 If el IsNot Nothing Then
-                    l.Add()
+                    l.Add(el)
                 End If
             Next
             Return l
@@ -213,7 +213,7 @@ Namespace Cache
                 If el.Added.Contains(_mainId) OrElse el.Deleted.Contains(_mainId) Then
                     If Not el.Accept(mgr, _mainId) Then
                         'Dim obj As OrmBase = mgr.CreateDBObject(id, SubType)
-                        mgr.M2MCancel(el.Main, MainType)
+                        mgr.M2MCancel(CType(el.Main, _IOrmBase), MainType)
                     End If
                 End If
                 'End If

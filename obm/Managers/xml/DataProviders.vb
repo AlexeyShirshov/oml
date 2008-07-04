@@ -184,7 +184,7 @@ Namespace Xml
                     Schema.AppendOrder(original_type, _sort, sb)
                 End If
 
-                Dim r As ReadOnlyList(Of T) = _mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, Nothing)
+                Dim r As ReadOnlyList(Of T) = CType(_mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, Nothing), Global.Worm.ReadOnlyList(Of T))
 
                 If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                     r = CType(Schema.ExternalSort(Of T)(_mgr, _sort, r), Global.Worm.ReadOnlyList(Of T))

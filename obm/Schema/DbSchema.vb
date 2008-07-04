@@ -420,7 +420,7 @@ Namespace Database
 l1:
                                     If current IsNot Nothing AndAlso GetType(OrmBase).IsAssignableFrom(current.GetType) Then
                                         If CType(current, OrmBase).ObjectState = ObjectState.Created Then
-                                            Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, OrmBase).ObjName)
+                                            Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, _IEntity).ObjName)
                                         End If
                                     End If
                                     f = New dc.EntityFilter(real_t, c.FieldName, New ScalarValue(v), FilterOperation.Equal)
@@ -645,7 +645,7 @@ l1:
 
                             Dim current As Object = pi.GetValue(obj, Nothing)
                             If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
-                             (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse obj.ForseUpdate(c) Then
+                             (current IsNot Nothing AndAlso Not current.Equals(original)) OrElse CType(obj, _ICachedEntity).ForseUpdate(c) Then
 
                                 If current IsNot Nothing AndAlso GetType(ICachedEntity).IsAssignableFrom(current.GetType) Then
                                     If CType(current, ICachedEntity).ObjectState = ObjectState.Created Then
@@ -721,7 +721,7 @@ l1:
             Next
         End Sub
 
-        Protected Sub GetUpdateConditions(ByVal obj As OrmBase, ByVal oschema As IObjectSchemaBase, _
+        Protected Sub GetUpdateConditions(ByVal obj As ICachedEntity, ByVal oschema As IObjectSchemaBase, _
          ByVal updated_tables As IDictionary(Of SourceFragment, TableUpdate), ByVal unions() As String, ByVal filterInfo As Object)
 
             Dim rt As Type = obj.GetType
@@ -932,7 +932,7 @@ l1:
         End Function
 
         Protected Overridable Sub CorrectUpdateWithInsert(ByVal oschema As IOrmObjectSchema, ByVal table As SourceFragment, ByVal tableinfo As TableUpdate, _
-            ByVal upd_cmd As StringBuilder, ByVal obj As OrmBase, ByVal params As ICreateParam)
+            ByVal upd_cmd As StringBuilder, ByVal obj As ICachedEntity, ByVal params As ICreateParam)
 
             Dim dic As New List(Of Pair(Of SourceFragment, List(Of ITemplateFilter)))
             Dim l As New List(Of ITemplateFilter)

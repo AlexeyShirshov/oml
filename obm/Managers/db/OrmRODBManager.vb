@@ -349,19 +349,19 @@ Namespace Database
                                         Debug.Assert(_mgr.Cache.Modified(o) Is Nothing)
                                         'l.Add(o, mo)
                                         RaiseEvent ObjectAccepted(o)
-                                        If o._upd IsNot Nothing OrElse o._valProcs Then
-                                            val.Add(o)
-                                        Else
+                                        If CType(o, _ICachedEntity).UpdateCtx.Added OrElse CType(o, _ICachedEntity).UpdateCtx.Deleted Then
                                             Dim ls As List(Of ICachedEntity) = Nothing
                                             If Not l2.TryGetValue(o.GetType, ls) Then
                                                 ls = New List(Of ICachedEntity)
                                                 l2.Add(o.GetType, ls)
                                             End If
                                             ls.Add(o)
+                                        Else
+                                            val.Add(o)
                                         End If
                                     Next
-                                    For Each o As ICachedEntity In val
-                                        _mgr.InvalidateCache(o, CType(o._upd, System.Collections.ICollection))
+                                    For Each o As CachedEntity In val
+                                        o.UpdateCacheAfterUpdate()
                                     Next
                                     For Each t As Type In l2.Keys
                                         Dim ls As List(Of ICachedEntity) = l2(t)
@@ -856,13 +856,13 @@ Namespace Database
         'End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
-            ByVal obj As IOrmBase, ByVal filter As IFilter, ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
+            ByVal obj As _IOrmBase, ByVal filter As IFilter, ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
             ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManagerBase.ICustDelegate(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, queryAscpect, id, key, direct)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
-            ByVal obj As IOrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
+            ByVal obj As _IOrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
             ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManagerBase.ICustDelegate(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, New QueryAspect() {}, id, key, direct)
         End Function
@@ -1301,7 +1301,7 @@ Namespace Database
                                             Using obj.GetSyncRoot()
                                                 'If obj.IsLoaded Then obj.IsLoaded = False
                                                 LoadFromDataReader(obj, dr, arr, False, 2, dic)
-                                                If obj.ObjectState = ObjectState.NotLoaded AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
+                                                obj.CorrectStateAfterLoading()
                                             End Using
                                         End If
                                     End If
@@ -1658,7 +1658,7 @@ Namespace Database
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
-            Dim obj As ICachedEntity = CreateEntity(Of T)()
+            Dim obj As _ICachedEntity = CType(CreateEntity(Of T)(), _ICachedEntity)
             'If obj IsNot Nothing Then
             'If _raiseCreated Then
             RaiseObjectCreated(obj)
@@ -1673,7 +1673,7 @@ Namespace Database
                         '    obj.ObjectState = ObjectState.NotFoundInDB
                         '    RemoveObjectFromCache(obj)
                         'Else
-                        If obj.ObjectState = ObjectState.NotLoaded AndAlso obj.IsLoaded Then obj.ObjectState = ObjectState.None
+                        obj.CorrectStateAfterLoading()
                         values.Add(obj)
                         loaded += 1
                         'End If
@@ -1710,6 +1710,7 @@ l1:
             Using obj.GetSyncRoot()
                 obj.BeginLoading()
                 Try
+                    Dim pk_count As Integer = 0
                     Dim has_pk As Boolean = False
                     Dim pi_cache(arr.Count - 1) As Reflection.PropertyInfo
                     Dim idic As IDictionary = _schema.GetProperties(original_type)
@@ -1778,6 +1779,7 @@ l1:
                                         obj.SetValue(pi, c, oschema, v)
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
                                     End Try
+                                    pk_count += 1
                                 End If
                             End If
                         End If
@@ -1785,7 +1787,7 @@ l1:
 
                     If has_pk Then
                         If ce IsNot Nothing Then
-                            ce.PKLoaded()
+                            ce.PKLoaded(pk_count)
 
                             If obj.ObjectState = ObjectState.Created Then
                                 ce.CreateCopyForSaveNewEntry()
@@ -2847,7 +2849,7 @@ l2:
             Return root
         End Function
 
-        Protected Friend Overrides Function UpdateObject(ByVal obj As ICachedEntity) As Boolean
+        Protected Friend Overrides Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
             Throw New NotImplementedException()
         End Function
 
@@ -2892,7 +2894,7 @@ l2:
         End Property
 
         Protected Friend Function LoadM2M(Of T As {IOrmBase, New})(ByVal cmd As System.Data.Common.DbCommand, ByVal withLoad As Boolean, _
-            ByVal obj As OrmBase, ByVal sort As Sort, ByVal columns As IList(Of ColumnAttribute)) As List(Of Object)
+            ByVal obj As IOrmBase, ByVal sort As Sort, ByVal columns As IList(Of ColumnAttribute)) As List(Of Object)
             Dim b As ConnAction = TestConn(cmd)
             Dim tt As Type = GetType(T)
             Try
@@ -2919,7 +2921,7 @@ l2:
                                 Using o.GetSyncRoot()
                                     'If obj.IsLoaded Then obj.IsLoaded = False
                                     LoadFromDataReader(o, dr, columns, False, 2, dic)
-                                    If o.ObjectState = ObjectState.NotLoaded AndAlso o.IsLoaded Then o.ObjectState = ObjectState.None
+                                    o.CorrectStateAfterLoading()
                                     _loadedInLastFetch += 1
                                 End Using
                             End If
