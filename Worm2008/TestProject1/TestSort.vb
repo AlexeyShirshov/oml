@@ -61,7 +61,7 @@ Imports System.Collections
 
     Protected Function ExternalSort(ByVal mgr As OrmManagerBase, ByVal generator As QueryGenerator, ByVal sort As Sorting.Sort, ByVal objs As ICollection) As ICollection
         Dim col As ReadOnlyList(Of Entity) = CType(objs, Global.Worm.ReadOnlyList(Of Global.TestProject1.Entity))
-        Dim r As New ReadOnlyList(Of Entity)
+        Dim r As New List(Of Entity)
         Select Case sort.FieldName
             Case "xxx"
                 r.Add(col(0))
@@ -71,6 +71,6 @@ Imports System.Collections
             Case Else
                 Throw New NotSupportedException(sort.FieldName)
         End Select
-        Return r
+        Return New ReadOnlyList(Of Entity)(r)
     End Function
 End Class

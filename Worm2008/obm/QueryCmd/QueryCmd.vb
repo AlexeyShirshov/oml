@@ -81,7 +81,7 @@ Namespace Query
         Protected _smark As Integer = Environment.TickCount
         Protected _t As Type
         Protected _o As OrmBase
-        Protected _key As String
+        Protected _m2mKey As String
         Protected _rn As Worm.Database.Criteria.Core.TableFilter
         Protected _outer As QueryCmdBase
 
@@ -93,9 +93,9 @@ Namespace Query
             End Get
         End Property
 
-        Protected Friend ReadOnly Property Key() As String
+        Protected Friend ReadOnly Property M2MKey() As String
             Get
-                Return _key
+                Return _m2mKey
             End Get
         End Property
 
@@ -176,8 +176,8 @@ Namespace Query
                 'column - filter
                 Dim filtered_r As M2MRelation = Nothing
 
-                filtered_r = schema.GetM2MRelation(selectedType, filteredType, _key)
-                selected_r = schema.GetM2MRelation(filteredType, selectedType, M2MRelation.GetRevKey(_key))
+                filtered_r = schema.GetM2MRelation(selectedType, filteredType, _m2mKey)
+                selected_r = schema.GetM2MRelation(filteredType, selectedType, M2MRelation.GetRevKey(_m2mKey))
 
                 If selected_r Is Nothing Then
                     Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
@@ -511,7 +511,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Function ExecTypelessToList(ByVal mgr As OrmManagerBase) As IList
+        Public Function ToListTypeless(ByVal mgr As OrmManagerBase) As IList
             Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
             Dim e As IList = CType(q.GetType.InvokeMember("_Exec", Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.InvokeMethod, _
                                    Nothing, q, New Object() {mgr}), System.Collections.IList)
@@ -519,7 +519,7 @@ Namespace Query
         End Function
 
         Public Function ExecTypeless(ByVal mgr As OrmManagerBase) As IEnumerator
-            Return ExecTypelessToList(mgr).GetEnumerator
+            Return ToListTypeless(mgr).GetEnumerator
         End Function
 
         Public Function ExecSimple(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
@@ -547,7 +547,7 @@ Namespace Query
                 ._group = _group
                 ._hint = _hint
                 ._joins = _joins
-                ._key = _key
+                ._m2mKey = _m2mKey
                 ._load = _load
                 ._mark = ._mark
                 ._o = _o
@@ -569,7 +569,7 @@ Namespace Query
         End Function
     End Class
 
-    Public Class QueryCmd(Of ReturnType As {OrmBase, New})
+    Public Class QueryCmd(Of ReturnType As {IEntity, New})
         Inherits QueryCmdBase
 
         Protected Function _Exec(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
@@ -677,7 +677,7 @@ Namespace Query
             Dim q As QueryCmd(Of ReturnType) = Create(filter, sort, withLoad)
             With q
                 ._o = o
-                ._key = key
+                ._m2mKey = key
             End With
 
             Return q

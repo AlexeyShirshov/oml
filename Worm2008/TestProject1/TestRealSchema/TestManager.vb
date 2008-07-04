@@ -517,7 +517,7 @@ Public Class TestManagerRS
             Dim tt1 As Table1 = mgr.Find(Of Table1)(1)
             Dim tt2 As Table1 = mgr.Find(Of Table1)(2)
 
-            Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Integer() {1, 2}, False)
+            Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Object() {1, 2}, False)
             Dim t10s As ICollection(Of Table10) = mgr.LoadObjects(Of Table10)("Table1", Nothing, CType(t1s, Collections.ICollection))
 
             Assert.AreEqual(3, t10s.Count)
@@ -541,7 +541,7 @@ Public Class TestManagerRS
             Dim t1 As ICollection(Of Table10) = mgr.Find(Of Table10)(New Criteria.Ctor(GetType(Table10)).Field("Table1").Eq(tt1), Nothing, WithLoad)
             Assert.AreEqual(2, t1.Count)
 
-            Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Integer() {1, 2}, False)
+            Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Object() {1, 2}, False)
             Dim t10s As ICollection(Of Table10) = mgr.LoadObjects(Of Table10)("Table1", Nothing, CType(t1s, Collections.ICollection))
             Assert.AreEqual(3, t10s.Count)
 
@@ -557,7 +557,7 @@ Public Class TestManagerRS
             Dim tt1 As Table1 = mgr.Find(Of Table1)(1)
             Dim tt2 As Table1 = mgr.Find(Of Table1)(2)
 
-            Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Integer() {1, 2}, False)
+            Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Object() {1, 2}, False)
             Dim t10s As ICollection(Of Table10) = mgr.LoadObjects(Of Table10)("Table1", New Criteria.Ctor(GetType(Table10)).Field("ID").Eq(1), CType(t1s, Collections.ICollection))
             Assert.AreEqual(1, t10s.Count)
 
@@ -740,7 +740,7 @@ Public Class TestManagerRS
                 s1.Title = "555"
                 s1.SaveChanges(True)
             Finally
-                Assert.IsTrue(s1.Identifier > 0)
+                Assert.IsTrue(s1.ID > 0)
                 Assert.AreEqual("555", s1.Title)
                 mgr.Rollback()
             End Try

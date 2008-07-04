@@ -287,12 +287,12 @@ Namespace Cache
             Sub EndUpdateProcs()
             Sub BeginUpdateList(ByVal key As String, ByVal id As String)
             Sub EndUpdateList(ByVal key As String, ByVal id As String)
-            Sub ObjectDependsUpdated(ByVal o As OrmBase)
+            Sub ObjectDependsUpdated(ByVal o As ICachedEntity)
         End Interface
 
         'Public Delegate Sub OnUpdateAfterDeleteEnd(ByVal o As OrmBase, ByVal mgr As OrmManagerBase)
         'Public Delegate Sub OnUpdateAfterAddEnd(ByVal o As OrmBase, ByVal mgr As OrmManagerBase, ByVal contextKey As Object)
-        Public Delegate Sub OnUpdated(ByVal o As CachedEntity, ByVal mgr As OrmManagerBase, ByVal contextKey As Object)
+        Public Delegate Sub OnUpdated(ByVal o As _ICachedEntity, ByVal mgr As OrmManagerBase, ByVal contextKey As Object)
 
         Sub New()
             MyBase.new()
@@ -707,7 +707,7 @@ Namespace Cache
             End Using
         End Function
 
-        Protected Friend Sub AddUpdatedFields(ByVal obj As CachedEntity, ByVal fields As ICollection(Of String))
+        Protected Friend Sub AddUpdatedFields(ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String))
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -730,7 +730,6 @@ Namespace Cache
                             l.Add(field)
                         End If
                     Next
-                    obj._upd = Nothing
                 End Using
             End If
 
@@ -972,7 +971,7 @@ Namespace Cache
                             If callbacks IsNot Nothing Then
                                 callbacks.BeginUpdate(0)
                             End If
-                            For Each obj As OrmBase In objs
+                            For Each obj As _ICachedEntity In objs
                                 If obj Is Nothing Then
                                     Throw New ArgumentException("At least one element in objs is nothing")
                                 End If
@@ -998,7 +997,7 @@ Namespace Cache
                                             callbacks.BeginUpdateList(p.Key, id)
                                         End If
 
-                                        If obj._needAdd OrElse obj._needDelete OrElse forseEval Then
+                                        If obj.UpdateCtx.Deleted OrElse obj.UpdateCtx.Added OrElse forseEval Then
                                             Dim r As Boolean = False
                                             Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
                                             If f IsNot Nothing Then
@@ -1011,11 +1010,11 @@ Namespace Cache
                                             ElseIf er = IEvaluableValue.EvalResult.Found Then
                                                 Dim sync As String = id & mgr.GetStaticKey
                                                 Using SyncHelper.AcquireDynamicLock(sync)
-                                                    If obj._needAdd Then
+                                                    If obj.UpdateCtx.Added Then
                                                         If Not ce.Add(mgr, obj) Then
                                                             dic.Remove(id)
                                                         End If
-                                                    ElseIf obj._needDelete Then
+                                                    ElseIf obj.UpdateCtx.Deleted Then
                                                         ce.Delete(mgr, obj)
                                                         'Else
                                                         '    Throw New InvalidOperationException
@@ -1088,14 +1087,14 @@ l1:
             If callbacks IsNot Nothing Then
                 callbacks.BeginUpdateProcs()
             End If
-            For Each obj As OrmBase In objs
+            For Each obj As _ICachedEntity In objs
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
-                If obj._needAdd Then
+                If obj.UpdateCtx.Added Then
                     ValidateSPOnInsertDelete(obj)
-                ElseIf obj._needDelete Then
+                ElseIf obj.UpdateCtx.Deleted Then
                     ValidateSPOnInsertDelete(obj)
                     'Else
                     '    Throw New InvalidOperationException
@@ -1281,7 +1280,7 @@ l1:
             End Using
         End Sub
 
-        Private Sub ValidateSPByType(ByVal t As Type, ByVal obj As OrmBase)
+        Private Sub ValidateSPByType(ByVal t As Type, ByVal obj As ICachedEntity)
             Dim l As List(Of StoredProcBase) = Nothing
             If _procTypes.TryGetValue(t, l) Then
                 For Each sp As StoredProcBase In l
@@ -1299,7 +1298,7 @@ l1:
             End If
         End Sub
 
-        Private Sub ValidateUpdateSPByType(ByVal t As Type, ByVal obj As CachedEntity, ByVal fields As ICollection(Of String))
+        Private Sub ValidateUpdateSPByType(ByVal t As Type, ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String))
             Dim l As List(Of StoredProcBase) = Nothing
             If _procTypes.TryGetValue(t, l) Then
                 For Each sp As StoredProcBase In l
@@ -1313,7 +1312,7 @@ l1:
             End If
         End Sub
 
-        Protected Sub ValidateSPOnInsertDelete(ByVal obj As OrmBase)
+        Protected Sub ValidateSPOnInsertDelete(ByVal obj As ICachedEntity)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
 #Else
@@ -1324,7 +1323,7 @@ l1:
             End Using
         End Sub
 
-        Protected Friend Sub ValidateSPOnUpdate(ByVal obj As CachedEntity, ByVal fields As ICollection(Of String))
+        Protected Friend Sub ValidateSPOnUpdate(ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String))
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
 #Else

@@ -11,6 +11,7 @@ Namespace Orm
         Function GetMgr() As IGetManager
         ReadOnly Property ObjName() As String
         Function GetOldState() As ObjectState
+        Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable
     End Interface
 
     Public Interface IEntity
@@ -21,16 +22,20 @@ Namespace Orm
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity
         Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
+        Function IsFieldLoaded(ByVal fieldName As String) As Boolean
     End Interface
 
     Public Interface _ICachedEntity
         Inherits ICachedEntity
         Overloads Sub Init(ByVal pk() As Pair(Of String, Object), ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
-        Sub PKLoaded()
+        Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
         Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean) As Boolean
         Function CheckIsAllLoaded(ByVal schema As QueryGenerator, ByVal loadedColumns As Integer) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
+        Sub CorrectStateAfterLoading()
+        ReadOnly Property UpdateCtx() As UpdateCtx
+        Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean
     End Interface
 
     Public Interface ICachedEntity
@@ -55,6 +60,10 @@ Namespace Orm
         Property Identifier() As Object
         Function GetOldName(ByVal id As Object) As String
         Function GetName() As String
+        Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmd(Of T)
+        Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmd(Of T)
+        Function Find(ByVal t As Type) As Worm.Query.QueryCmdBase
+        Function Find(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmdBase
     End Interface
 
     Public Interface _IOrmBase
@@ -119,6 +128,13 @@ Namespace Orm
             'Next
             Return True
         End Function
+    End Class
+
+    Public Class UpdateCtx
+        Public UpdatedFields As Generic.IList(Of Worm.Criteria.Core.EntityFilterBase)
+        Public Relation As M2MRelation
+        Public Added As Boolean
+        Public Deleted As Boolean
     End Class
 
     <Serializable()> _
@@ -261,7 +277,7 @@ Namespace Orm
 
         End Sub
 
-        Protected Friend Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable
+        Protected Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable Implements _IEntity.SyncHelper
             Dim err As Boolean = True
             Dim d As IDisposable = New BlankSyncHelper(Nothing)
             Try
@@ -449,6 +465,10 @@ Namespace Orm
 
         Private Function GetOldState() As ObjectState Implements _IEntity.GetOldState
             Return _old_state
+        End Function
+
+        Public Overridable Function IsFieldLoaded(ByVal fieldName As String) As Boolean Implements IEntity.IsFieldLoaded
+            Return True
         End Function
     End Class
 

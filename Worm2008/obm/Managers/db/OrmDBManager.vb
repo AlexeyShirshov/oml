@@ -19,7 +19,7 @@ Namespace Database
             MyBase.New(schema, connectionString)
         End Sub
 
-        Protected Friend Overrides Function UpdateObject(ByVal obj As ICachedEntity) As Boolean
+        Protected Friend Overrides Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
             Invariant()
 
             If obj Is Nothing Then
@@ -121,7 +121,7 @@ Namespace Database
                 End If
 
                 If inv Then
-                    obj._upd = upd
+                    obj.UpdateCtx.UpdatedFields = upd
                     'Это было вне юзинга
                     'InvalidateCache(obj, CType(upd, System.Collections.ICollection))
                 End If
@@ -141,7 +141,7 @@ Namespace Database
             Dim oldl As Boolean = obj.IsLoaded
             Dim err As Boolean = True
             Try
-                obj.IsLoaded = True
+                'obj.IsLoaded = True
 
                 'Dim t As Type = obj.GetType
 
@@ -214,7 +214,7 @@ Namespace Database
                 End Using
                 err = False
             Finally
-                If err Then obj.IsLoaded = oldl
+                'If err Then obj.IsLoaded = oldl
             End Try
             Return True
         End Function

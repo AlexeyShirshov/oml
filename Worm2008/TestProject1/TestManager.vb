@@ -527,7 +527,7 @@ Imports Worm.Orm
             Try
                 e.SaveChanges(True)
 
-                Assert.IsTrue(e.Identifier <> -100)
+                Assert.IsTrue(e.ID <> -100)
             Finally
                 mgr.Rollback()
             End Try
@@ -563,7 +563,7 @@ Imports Worm.Orm
             Try
                 e.SaveChanges(True)
 
-                Assert.IsTrue(e.Identifier <> -100)
+                Assert.IsTrue(e.ID <> -100)
             Finally
                 mgr.Rollback()
             End Try
@@ -1015,10 +1015,10 @@ Imports Worm.Orm
             mgr.NewObjectManager = Me
             Dim e As New Entity(GetIdentity, mgr.Cache, mgr.ObjectSchema)
             AddNew(e)
-            Dim id As Integer = e.Identifier
+            Dim id As Integer = e.ID
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.ObjectSchema)
             AddNew(e4)
-            Dim id4 As Integer = e4.Identifier
+            Dim id4 As Integer = e4.ID
             e4.Title = "kqndrg90h5"
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(0, c.Count)

@@ -75,7 +75,7 @@ Module Module2
         End Property
 
         Public Sub ObjectSaving(ByVal sender As BatchSaver, ByVal args As CancelEventArgs)
-            _s = args.SavedObject.InternalProperties.ObjectState
+            _s = args.SavedObject.ObjectState
         End Sub
 
         'Protected _rs As Orm.ObjectState
@@ -93,9 +93,9 @@ Module Module2
 
         End Sub
 
-        Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
-            MyBase.New(id, cache, schema)
-        End Sub
+        'Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
+        '    MyBase.New(id, cache, schema)
+        'End Sub
 
         Protected Overrides Sub Init()
             _stack = Environment.StackTrace
@@ -209,7 +209,7 @@ Module Module2
                     Try
                         Dim min As Integer, max As Integer, cnt As Integer
                         GetMinMax(mgr, min, max)
-                        Dim l As New List(Of Integer)
+                        Dim l As New List(Of Object)
                         Do
                             Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
                             If t IsNot Nothing AndAlso r.NextDouble > 0.5 Then
@@ -354,7 +354,8 @@ Module Module2
                 Do
                     Try
                         Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
-                            Dim t As New TestEditTable(GetIdentity, mgr.Cache, mgr.ObjectSchema)
+                            'Dim t As New TestEditTable(GetIdentity, mgr.Cache, mgr.ObjectSchema)
+                            Dim t As TestEditTable = mgr.CreateOrmBase(Of TestEditTable)(GetIdentity)
                             t.Name = Guid.NewGuid.ToString
                             If r.NextDouble > 0.3 Then
                                 t.Code = r.Next(1000)
