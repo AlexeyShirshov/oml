@@ -354,10 +354,11 @@ Namespace Orm
         Protected Overridable Function DumpState() As String
             Dim sb As New StringBuilder
             Using mc As IGetManager = GetMgr()
+                Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
                 For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                    sb.Append(c.FieldName).Append("=").Append(QueryGenerator.GetFieldValue(Me, c.FieldName, pi)).Append(";")
+                    sb.Append(c.FieldName).Append("=").Append(QueryGenerator.GetFieldValue(Me, c.FieldName, pi, oschema)).Append(";")
                 Next
             End Using
             Return sb.ToString

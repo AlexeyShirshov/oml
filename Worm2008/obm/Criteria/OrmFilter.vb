@@ -39,7 +39,7 @@ Namespace Criteria.Core
     End Interface
 
     Public Interface IEntityFilterBase
-        Function Eval(ByVal schema As QueryGenerator, ByVal obj As IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult
+        Function Eval(ByVal schema As QueryGenerator, ByVal obj As _IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult
         Function GetFilterTemplate() As IOrmFilterTemplate
         Function PrepareValue(ByVal schema As QueryGenerator, ByVal v As Object) As Object
         Function MakeHash() As String
@@ -235,7 +235,7 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public Function Eval(ByVal schema As QueryGenerator, ByVal obj As IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        Public Function Eval(ByVal schema As QueryGenerator, ByVal obj As _IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             Dim evval As IEvaluableValue = TryCast(val, IEvaluableValue)
             If evval IsNot Nothing Then
                 If schema Is Nothing Then

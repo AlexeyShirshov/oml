@@ -605,7 +605,7 @@ Namespace Sorting
     Public Class OrmComparer(Of T As {_IEntity})
         Implements Generic.IComparer(Of T), IComparer
 
-        Public Delegate Function GetObjectDelegate(ByVal x As T, ByVal t As Type) As IEntity
+        Public Delegate Function GetObjectDelegate(ByVal x As T, ByVal t As Type) As _IEntity
 
         'Private _q As Generic.List(Of Sort)
         Private _mgr As OrmManagerBase
@@ -709,7 +709,7 @@ Namespace Sorting
         End Function
 
         Private Function GetValue(ByVal x As T, ByVal s As Sort, ByRef oschema As IOrmObjectSchemaBase) As Object
-            Dim xo As IEntity = x
+            Dim xo As _IEntity = x
             If s.Type IsNot Nothing AndAlso _t IsNot s.Type Then
                 Dim schema As QueryGenerator = _mgr.ObjectSchema
                 If _getobj IsNot Nothing Then
