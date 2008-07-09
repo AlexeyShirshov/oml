@@ -994,92 +994,100 @@ Namespace Database
         '    End Using
         'End Function
 
-        'Protected Function LoadMultipleObjects(ByVal firstType As Type, _
-        '    ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, _
-        '    ByVal first_cols As List(Of ColumnAttribute), ByVal sec_cols As List(Of ColumnAttribute)) As IList
+        Protected Function LoadMultipleObjects(ByVal firstType As Type, _
+            ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, _
+            ByVal first_cols As List(Of ColumnAttribute), ByVal sec_cols As List(Of ColumnAttribute)) As IList
 
-        '    Dim values As IList
-        '    values = CType(GetType(List(Of )).MakeGenericType(New Type() {firstType}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
-        '    If first_cols Is Nothing Then
-        '        first_cols = DbSchema.GetSortedFieldList(firstType)
-        '    End If
+            Dim values As IList
+            values = CType(GetType(List(Of )).MakeGenericType(New Type() {firstType}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
+            If first_cols Is Nothing Then
+                first_cols = DbSchema.GetSortedFieldList(firstType)
+            End If
 
-        '    If sec_cols Is Nothing Then
-        '        sec_cols = DbSchema.GetSortedFieldList(secondType)
-        '    End If
+            If sec_cols Is Nothing Then
+                sec_cols = DbSchema.GetSortedFieldList(secondType)
+            End If
 
-        '    Dim b As ConnAction = TestConn(cmd)
-        '    Try
-        '        _cache.BeginTrackDelete(firstType)
-        '        _cache.BeginTrackDelete(secondType)
+            Dim b As ConnAction = TestConn(cmd)
+            Try
+                _cache.BeginTrackDelete(firstType)
+                _cache.BeginTrackDelete(secondType)
 
-        '        Dim et As New PerfCounter
-        '        Using dr As System.Data.IDataReader = cmd.ExecuteReader
-        '            _exec = et.GetTime
-        '            Dim firstidx As Integer = 0
-        '            Dim pk_name As String = _schema.GetPrimaryKeysName(firstType, False)(0)
-        '            Try
-        '                firstidx = dr.GetOrdinal(pk_name)
-        '            Catch ex As IndexOutOfRangeException
-        '                If _mcSwitch.TraceError Then
-        '                    Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
-        '                    Trace.WriteLine(Environment.StackTrace)
-        '                End If
-        '                Throw New OrmManagerException("Cannot get first primary key ordinal", ex)
-        '            End Try
+                Dim et As New PerfCounter
+                Using dr As System.Data.IDataReader = cmd.ExecuteReader
+                    _exec = et.GetTime
+                    Dim firstidx As Integer = 0
+                    Dim ss() As String = _schema.GetPrimaryKeysName(firstType, False)
+                    If ss.Length > 1 Then
+                        Throw New OrmManagerException("Connected type must use single primary key")
+                    End If
+                    Dim pk_name As String = ss(0)
+                    Try
+                        firstidx = dr.GetOrdinal(pk_name)
+                    Catch ex As IndexOutOfRangeException
+                        If _mcSwitch.TraceError Then
+                            Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
+                            Trace.WriteLine(Environment.StackTrace)
+                        End If
+                        Throw New OrmManagerException("Cannot get first primary key ordinal", ex)
+                    End Try
 
-        '            Dim secidx As Integer = 0
-        '            Dim pk2_name As String = _schema.GetPrimaryKeysName(secondType, False)(0)
-        '            Try
-        '                secidx = dr.GetOrdinal(pk2_name)
-        '            Catch ex As IndexOutOfRangeException
-        '                If _mcSwitch.TraceError Then
-        '                    Trace.WriteLine("Invalid column name " & pk_name & " in " & cmd.CommandText)
-        '                    Trace.WriteLine(Environment.StackTrace)
-        '                End If
-        '                Throw New OrmManagerException("Cannot get second primary key ordinal", ex)
-        '            End Try
+                    Dim secidx As Integer = 0
+                    ss = _schema.GetPrimaryKeysName(secondType, False)
+                    If ss.Length > 1 Then
+                        Throw New OrmManagerException("Connected type must use single primary key")
+                    End If
+                    Dim pk2_name As String = ss(0)
+                    Try
+                        secidx = dr.GetOrdinal(pk2_name)
+                    Catch ex As IndexOutOfRangeException
+                        If _mcSwitch.TraceError Then
+                            Trace.WriteLine("Invalid column name " & pk2_name & " in " & cmd.CommandText)
+                            Trace.WriteLine(Environment.StackTrace)
+                        End If
+                        Throw New OrmManagerException("Cannot get second primary key ordinal", ex)
+                    End Try
 
-        '            Dim dic1 As IDictionary = GetDictionary(firstType)
-        '            Dim dic2 As IDictionary = GetDictionary(secondType)
-        '            Dim ft As New PerfCounter
-        '            Do While dr.Read
-        '                Dim id1 As Object = dr.GetValue(firstidx)
-        '                Dim obj1 As OrmBase = CreateDBObject(id1, firstType)
-        '                If Not _cache.IsDeleted(firstType, id1) AndAlso obj1.ObjectState <> ObjectState.Modified Then
-        '                    Using obj1.GetSyncRoot()
-        '                        'If obj1.IsLoaded Then obj1.IsLoaded = False
-        '                        LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1)
-        '                        If obj1.ObjectState = ObjectState.NotLoaded AndAlso obj1.IsLoaded Then obj1.ObjectState = ObjectState.None
-        '                        values.Add(obj1)
-        '                    End Using
-        '                Else
-        '                    values.Add(obj1)
-        '                End If
+                    Dim dic1 As IDictionary = GetDictionary(firstType)
+                    Dim dic2 As IDictionary = GetDictionary(secondType)
+                    Dim ft As New PerfCounter
+                    Do While dr.Read
+                        Dim id1 As Object = dr.GetValue(firstidx)
+                        Dim obj1 As IOrmBase = GetOrmBaseFromCacheOrCreate(id1, firstType)
+                        If Not _cache.IsDeleted(obj1) AndAlso obj1.ObjectState <> ObjectState.Modified Then
+                            Using obj1.GetSyncRoot()
+                                'If obj1.IsLoaded Then obj1.IsLoaded = False
+                                LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1)
+                                obj1.CorrectStateAfterLoading()
+                                values.Add(obj1)
+                            End Using
+                        Else
+                            values.Add(obj1)
+                        End If
 
-        '                Dim id2 As Object = dr.GetValue(secidx)
-        '                If Not _cache.IsDeleted(secondType, id2) Then
-        '                    Dim obj2 As OrmBase = CreateDBObject(id2, secondType)
-        '                    If obj2.ObjectState <> ObjectState.Modified Then
-        '                        Using obj2.GetSyncRoot()
-        '                            'If obj2.IsLoaded Then obj2.IsLoaded = False
-        '                            LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2)
-        '                            If obj2.ObjectState = ObjectState.NotLoaded AndAlso obj2.IsLoaded Then obj2.ObjectState = ObjectState.None
-        '                        End Using
-        '                    End If
-        '                End If
-        '            Loop
-        '            _fetch = ft.GetTime
+                        Dim id2 As Object = dr.GetValue(secidx)
+                        Dim obj2 As IOrmBase = GetOrmBaseFromCacheOrCreate(id2, secondType)
+                        If Not _cache.IsDeleted(obj2) Then
+                            If obj2.ObjectState <> ObjectState.Modified Then
+                                Using obj2.GetSyncRoot()
+                                    'If obj2.IsLoaded Then obj2.IsLoaded = False
+                                    LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2)
+                                    obj2.CorrectStateAfterLoading()
+                                End Using
+                            End If
+                        End If
+                    Loop
+                    _fetch = ft.GetTime
 
-        '            Return values
-        '        End Using
-        '    Finally
-        '        _cache.EndTrackDelete(secondType)
-        '        _cache.EndTrackDelete(firstType)
-        '        CloseConn(b)
-        '    End Try
+                    Return values
+                End Using
+            Finally
+                _cache.EndTrackDelete(secondType)
+                _cache.EndTrackDelete(firstType)
+                CloseConn(b)
+            End Try
 
-        'End Function
+        End Function
 
         'Protected Function LoadMultipleObjects(ByVal t As Type, _
         '    ByVal cmd As System.Data.Common.DbCommand, _
@@ -2733,7 +2741,7 @@ l2:
             Return appendMain
         End Function
 
-        Public Function MakeSqlStmtSearch(Of T As {OrmBase, New})(ByVal type2search As Type, _
+        Public Function MakeSqlStmtSearch(Of T As {IOrmBase, New})(ByVal type2search As Type, _
             ByVal selectType As Type, ByVal fields As ICollection(Of Pair(Of String, Type)), ByVal queryFields() As String, _
             ByVal joins() As OrmJoin, ByVal sort As Sort, ByVal appendMain As Boolean, ByVal filter As IFilter, _
             ByVal selCols As List(Of ColumnAttribute), ByVal searchCols As List(Of ColumnAttribute), _

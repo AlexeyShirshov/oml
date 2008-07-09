@@ -829,6 +829,17 @@ Public MustInherit Class QueryGenerator
         End Using
     End Function
 
+    'Public Shared Function GetFieldValue(ByVal obj As _IEntity, ByVal c As ColumnAttribute, ByVal pi As Reflection.PropertyInfo, ByVal oschema As IOrmObjectSchemaBase) As Object
+    '    If pi Is Nothing Then
+    '        Throw New ArgumentNullException("pi")
+    '    End If
+
+    '    Using obj.SyncHelper(True, c.FieldName)
+    '        'Return pi.GetValue(obj, Nothing)
+    '        Return obj.GetValue(pi, c, oschema)
+    '    End Using
+    'End Function
+
     Public Sub SetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal value As Object, ByVal oschema As IOrmObjectSchemaBase)
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
