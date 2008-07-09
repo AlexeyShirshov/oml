@@ -4,6 +4,7 @@ Imports Worm.Orm
 Imports System.Configuration
 Imports Worm.Database
 Imports Worm.Database.Criteria
+Imports Worm.Orm.Meta
 
 Namespace Web
     Public MustInherit Class ProfileBase
@@ -372,7 +373,8 @@ Namespace Web
             If _updateLastActivity AndAlso Not String.IsNullOrEmpty(_lastActivityField) Then
                 If user IsNot Nothing Then
                     Using mgr As OrmDBManager = _getMgr()
-                        mgr.ObjectSchema.SetFieldValue(user, _lastActivityField, GetNow)
+                        Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(user.GetType)
+                        mgr.ObjectSchema.SetFieldValue(user, _lastActivityField, GetNow, oschema)
                     End Using
                 End If
                 If cok IsNot Nothing Then
@@ -422,7 +424,8 @@ Namespace Web
                         Else
                             Using mgr As OrmDBManager = _getMgr()
                                 Using user.BeginEdit
-                                    mgr.ObjectSchema.SetFieldValue(user, p.Name, p.PropertyValue)
+                                    Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(user.GetType)
+                                    mgr.ObjectSchema.SetFieldValue(user, p.Name, p.PropertyValue, oschema)
                                 End Using
                             End Using
                         End If
@@ -442,13 +445,14 @@ Namespace Web
                 End If
                 If user IsNot Nothing Then
                     Using mgr As OrmDBManager = _getMgr()
+                        Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(user.GetType)
                         Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                             Using user.BeginEdit
                                 If Not String.IsNullOrEmpty(_lastActivityField) Then
-                                    mgr.ObjectSchema.SetFieldValue(user, _lastActivityField, d)
+                                    mgr.ObjectSchema.SetFieldValue(user, _lastActivityField, d, oschema)
                                 End If
                                 If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                                    mgr.ObjectSchema.SetFieldValue(user, _lastUpdateField, d)
+                                    mgr.ObjectSchema.SetFieldValue(user, _lastUpdateField, d, oschema)
                                 End If
                             End Using
                             st.Add(user)
@@ -534,21 +538,22 @@ Namespace Web
                 Catch ex As ArgumentException When ex.Message.Contains("not found")
                     user = CreateUser(mgr, HttpContext.Current.Profile.UserName, AnonymousId)
                     Dim schema As QueryGenerator = mgr.ObjectSchema
+                    Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(user.GetType)
                     For Each p As SettingsProperty In System.Web.Profile.ProfileBase.Properties
                         If Not p.IsReadOnly Then
                             If cok IsNot Nothing Then
-                                schema.SetFieldValue(user, p.Name, cok(p.Name))
+                                schema.SetFieldValue(user, p.Name, cok(p.Name), oschema)
                             ElseIf p.DefaultValue IsNot Nothing Then
-                                schema.SetFieldValue(user, p.Name, p.DefaultValue)
+                                schema.SetFieldValue(user, p.Name, p.DefaultValue, oschema)
                             End If
                         End If
                     Next
                     Dim d As Date = GetNow()
                     If Not String.IsNullOrEmpty(_lastActivityField) Then
-                        schema.SetFieldValue(user, _lastActivityField, d)
+                        schema.SetFieldValue(user, _lastActivityField, d, oschema)
                     End If
                     If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                        schema.SetFieldValue(user, _lastUpdateField, d)
+                        schema.SetFieldValue(user, _lastUpdateField, d, oschema)
                     End If
                     user.SaveChanges(True)
                 End Try

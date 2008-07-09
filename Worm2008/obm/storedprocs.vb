@@ -610,7 +610,7 @@ Namespace Database.Storedprocs
         End Function
     End Class
 
-    Public MustInherit Class QueryOrmStoredProcBase(Of T As {OrmBase, New})
+    Public MustInherit Class QueryOrmStoredProcBase(Of T As {_IEntity, New})
         Inherits StoredProcBase
 
         Private _exec As TimeSpan
@@ -658,7 +658,7 @@ Namespace Database.Storedprocs
             Return ce
         End Function
 
-        Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ReadOnlyList(Of T)
+        Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ReadOnlyObjectList(Of T)
             Dim ce As OrmManagerBase.CachedItem = CType(MyBase.GetResult(mgr), OrmManagerBase.CachedItem)
             _count = ce.GetCount(mgr)
             mgr.RaiseOnDataAvailable(_count, _exec, _fecth, Not _donthit)

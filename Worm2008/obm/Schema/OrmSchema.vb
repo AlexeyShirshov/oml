@@ -937,21 +937,21 @@ Public MustInherit Class QueryGenerator
     End Function
 
     Public Function GetJoinObj(ByVal oschema As IOrmObjectSchemaBase, _
-        ByVal obj As _IEntity, ByVal subType As Type) As OrmBase
+        ByVal obj As _IEntity, ByVal subType As Type) As IOrmBase
         Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, oschema)
-        Dim r As OrmBase = Nothing
+        Dim r As IOrmBase = Nothing
         If Not String.IsNullOrEmpty(c) Then
-            Dim o As Object = Nothing
+            Dim id As Object = Nothing
             If obj.IsFieldLoaded(c) Then
-                o = obj.GetValue(Nothing, New ColumnAttribute(c), oschema)
+                id = obj.GetValue(Nothing, New ColumnAttribute(c), oschema)
             Else
-                o = GetFieldValue(obj, c, oschema)
+                id = GetFieldValue(obj, c, oschema)
             End If
-            r = TryCast(o, OrmBase)
-            If r Is Nothing AndAlso o IsNot Nothing Then
+            r = TryCast(id, OrmBase)
+            If r Is Nothing AndAlso id IsNot Nothing Then
                 Try
                     'Dim id As Integer = Convert.ToInt32(o)
-                    r = OrmManagerBase.CurrentManager.Find(o, subType)
+                    r = OrmManagerBase.CurrentManager.GetOrmBaseFromCacheOrCreate(id, subType)
                 Catch ex As InvalidCastException
                 End Try
             End If
