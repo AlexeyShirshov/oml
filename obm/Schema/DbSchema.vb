@@ -916,7 +916,12 @@ l1:
                                 amgr.Replace(Me, pk_table, sel_sb)
                                 sel_sb.Append(" from ").Append(GetTableName(pk_table)).Append(" ").Append([alias]).Append(" where ")
                                 'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
-                                sel_sb.Append(New dc.EntityFilter(rt, "ID", New EntityValue(obj), FilterOperation.Equal).MakeQueryStmt(esch, filterInfo, Me, amgr, params))
+                                Dim cn As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
+                                For Each p As Pair(Of String, Object) In obj.GetPKValues
+                                    cn.AddFilter(New dc.TableFilter(esch.GetTables(0), p.First, New ScalarValue(p.Second), FilterOperation.Equal))
+                                Next
+                                Dim f As IFilter = cn.Condition
+                                sel_sb.Append(f.MakeQueryStmt(Me, filterInfo, amgr, params, Nothing))
 
                                 upd_cmd.Append(sel_sb)
                             End If

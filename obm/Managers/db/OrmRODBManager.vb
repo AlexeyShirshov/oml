@@ -1089,33 +1089,33 @@ Namespace Database
 
         End Function
 
-        'Protected Function LoadMultipleObjects(ByVal t As Type, _
-        '    ByVal cmd As System.Data.Common.DbCommand, _
-        '    ByVal withLoad As Boolean, _
-        '    ByVal arr As Generic.List(Of ColumnAttribute)) As IList
-        '    'Dim ltg As Type = GetType(IList(Of ))
-        '    'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
-        '    Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
+        Protected Function LoadMultipleObjects(ByVal t As Type, _
+            ByVal cmd As System.Data.Common.DbCommand, _
+            ByVal withLoad As Boolean, _
+            ByVal arr As Generic.List(Of ColumnAttribute)) As IList
+            'Dim ltg As Type = GetType(IList(Of ))
+            'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
+            Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
 
-        '    If _LoadMultipleObjectsMI Is Nothing Then
-        '        For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
-        '            If mi2.Name = "LoadMultipleObjects" And mi2.IsGenericMethod Then
-        '                _LoadMultipleObjectsMI = mi2
-        '                Exit For
-        '            End If
-        '        Next
+            If _LoadMultipleObjectsMI Is Nothing Then
+                For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
+                    If mi2.Name = "LoadMultipleObjects" And mi2.IsGenericMethod Then
+                        _LoadMultipleObjectsMI = mi2
+                        Exit For
+                    End If
+                Next
 
-        '        If _LoadMultipleObjectsMI Is Nothing Then
-        '            Throw New OrmManagerException("Cannot find method LoadMultipleObjects")
-        '        End If
-        '    End If
+                If _LoadMultipleObjectsMI Is Nothing Then
+                    Throw New OrmManagerException("Cannot find method LoadMultipleObjects")
+                End If
+            End If
 
-        '    Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
+            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
 
-        '    Return CType(mi_real.Invoke(Me, flags, Nothing, _
-        '        New Object() {cmd, withLoad, Nothing, arr}, Nothing), IList)
+            Return CType(mi_real.Invoke(Me, flags, Nothing, _
+                New Object() {cmd, withLoad, Nothing, arr}, Nothing), IList)
 
-        'End Function
+        End Function
 
         'Protected Overrides Function GetDataTableInternal(ByVal t As System.Type, ByVal obj As OrmBase, _
         '    ByVal filter As IOrmFilter, ByVal appendJoins As Boolean, Optional ByVal tag As String = Nothing) As System.Data.DataTable

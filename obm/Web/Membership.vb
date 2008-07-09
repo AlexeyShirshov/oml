@@ -5,6 +5,7 @@ Imports Worm.Orm
 Imports System.Configuration
 Imports Worm.Database
 Imports Worm.Database.Criteria
+Imports Worm.Orm.Meta
 
 Namespace Web
     Public Class MembershipBase
@@ -153,12 +154,13 @@ Namespace Web
                 End If
                 If u IsNot Nothing Then
                     Dim schema As QueryGenerator = mgr.ObjectSchema
+                    Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
                     Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                         Using u.BeginEdit()
-                            schema.SetFieldValue(u, GetField("Password"), HashPassword(newPassword))
+                            schema.SetFieldValue(u, GetField("Password"), HashPassword(newPassword), oschema)
                             Dim lpcf As String = GetField("LastPasswordChangeDate")
                             If schema.HasField(u.GetType, lpcf) Then
-                                schema.SetFieldValue(u, lpcf, ProfileProvider.GetNow)
+                                schema.SetFieldValue(u, lpcf, ProfileProvider.GetNow, oschema)
                             End If
                         End Using
                         st.Commit()
@@ -215,28 +217,29 @@ Namespace Web
 
                 Dim u As OrmBase = ProfileProvider.CreateUser(mgr, username, Nothing)
                 Dim schema As QueryGenerator = mgr.ObjectSchema
-                
-                schema.SetFieldValue(u, GetField("Email"), email)
-                schema.SetFieldValue(u, GetField("Password"), HashPassword(password))
+                Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
+
+                schema.SetFieldValue(u, GetField("Email"), email, oschema)
+                schema.SetFieldValue(u, GetField("Password"), HashPassword(password), oschema)
 
                 Dim d As Date = ProfileProvider.GetNow()
 
                 If Not String.IsNullOrEmpty(ProfileProvider._lastActivityField) Then
-                    schema.SetFieldValue(u, ProfileProvider._lastActivityField, d)
+                    schema.SetFieldValue(u, ProfileProvider._lastActivityField, d, oschema)
                 End If
 
                 If Not String.IsNullOrEmpty(ProfileProvider._isAnonymousField) Then
-                    schema.SetFieldValue(u, ProfileProvider._isAnonymousField, False)
+                    schema.SetFieldValue(u, ProfileProvider._isAnonymousField, False, oschema)
                 End If
 
                 Dim llf As String = GetField("LastLoginDate")
                 If schema.HasField(u.GetType, llf) Then
-                    schema.SetFieldValue(u, llf, d)
+                    schema.SetFieldValue(u, llf, d, oschema)
                 End If
 
                 Dim crf As String = GetField("CreationDate")
                 If schema.HasField(u.GetType, crf) Then
-                    schema.SetFieldValue(u, crf, d)
+                    schema.SetFieldValue(u, crf, d, oschema)
                 End If
 
                 u.SaveChanges(True)
@@ -286,12 +289,13 @@ Namespace Web
                 End If
                 If u IsNot Nothing Then
                     Dim schema As QueryGenerator = mgr.ObjectSchema
+                    Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
                     Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                         Using u.BeginEdit()
-                            schema.SetFieldValue(u, GetField("Password"), HashPassword(psw))
+                            schema.SetFieldValue(u, GetField("Password"), HashPassword(psw), oschema)
                             Dim lpcf As String = GetField("LastPasswordChangeDate")
                             If schema.HasField(u.GetType, lpcf) Then
-                                schema.SetFieldValue(u, lpcf, ProfileProvider.GetNow)
+                                schema.SetFieldValue(u, lpcf, ProfileProvider.GetNow, oschema)
                             End If
                         End Using
                         st.Commit()
@@ -315,9 +319,10 @@ Namespace Web
                     Dim schema As QueryGenerator = mgr.ObjectSchema
                     Dim lf As String = GetField("IsLockedOut")
                     If schema.HasField(u.GetType, lf) Then
+                        Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
                         Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                             Using u.BeginEdit()
-                                schema.SetFieldValue(u, lf, False)
+                                schema.SetFieldValue(u, lf, False, oschema)
                                 'Dim llf As String = GetField("LastLockoutDate")
                                 'If schema.HasField(u.GetType, llf) Then
                                 '    schema.SetFieldValue(u, llf, ProfileProvider.GetNow)
@@ -339,9 +344,10 @@ Namespace Web
                     FindUserByEmail(mgr, user.Email, Nothing)
                     If u IsNot Nothing Then
                         Dim schema As QueryGenerator = mgr.ObjectSchema
+                        Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
                         Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                             Using u.BeginEdit()
-                                schema.SetFieldValue(u, ProfileProvider._userNameField, user.Comment)
+                                schema.SetFieldValue(u, ProfileProvider._userNameField, user.Comment, oschema)
                             End Using
                             st.Commit()
                         End Using
@@ -386,14 +392,15 @@ Namespace Web
                 Dim ret As Boolean = CanLogin(mgr, u)
                 If ret Then
                     Dim st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                    Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
                     Try
                         Using u.BeginEdit()
                             Dim llf As String = GetField("LastLoginDate")
                             If schema.HasField(tt, llf) Then
-                                schema.SetFieldValue(u, llf, ProfileProvider.GetNow)
+                                schema.SetFieldValue(u, llf, ProfileProvider.GetNow, oschema)
                             End If
                             If schema.HasField(tt, GetField("FailedPasswordAttemtCount")) Then
-                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), 0)
+                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), 0, oschema)
                             End If
                         End Using
                         st.Commit()
@@ -686,9 +693,10 @@ Namespace Web
                         Dim dt As Date = CDate(u.GetValue(laf))
                         Dim n As Date = ProfileProvider.GetNow
                         If n.Subtract(dt).TotalSeconds > 1 Then
+                            Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
                             Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                                 Using u.BeginEdit
-                                    schema.SetFieldValue(u, laf, n)
+                                    schema.SetFieldValue(u, laf, n, oschema)
                                 End Using
                                 st.Commit()
                             End Using
@@ -720,13 +728,14 @@ Namespace Web
                 Dim endFail As Date = startFail.AddMinutes(PasswordAttemptWindow)
                 Dim nowd As Date = ProfileProvider.GetNow
                 failCnt += 1
+                Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
                 Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                     Using u.BeginEdit
                         If failCnt < MaxInvalidPasswordAttempts Then
 l1:
-                            schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), failCnt)
+                            schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), failCnt, oschema)
                             If failCnt = 1 Then
-                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtStart"), nowd)
+                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtStart"), nowd, oschema)
                             End If
                         Else
                             If nowd > endFail Then
@@ -734,12 +743,12 @@ l1:
                                 GoTo l1
                             Else
                                 Dim ldf As String = GetField("LastLockoutDate")
-                                schema.SetFieldValue(u, GetField("IsLockedOut"), True)
+                                schema.SetFieldValue(u, GetField("IsLockedOut"), True, oschema)
                                 If schema.HasField(ut, ldf) Then
-                                    schema.SetFieldValue(u, ldf, nowd)
+                                    schema.SetFieldValue(u, ldf, nowd, oschema)
                                 End If
-                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), 0)
-                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtStart"), Nothing)
+                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtCount"), 0, oschema)
+                                schema.SetFieldValue(u, GetField("FailedPasswordAttemtStart"), Nothing, oschema)
 
                                 UserBlocked(u)
                             End If

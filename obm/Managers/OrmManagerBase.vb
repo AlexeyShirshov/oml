@@ -3249,7 +3249,7 @@ l1:
         End If
     End Function
 
-    Public Shared Function ApplySort(Of T As {OrmBase})(ByVal c As ICollection(Of T), ByVal s As Sort, ByVal getObj As OrmComparer(Of T).GetObjectDelegate) As ICollection(Of T)
+    Public Shared Function ApplySort(Of T As {_IEntity})(ByVal c As ICollection(Of T), ByVal s As Sort, ByVal getObj As OrmComparer(Of T).GetObjectDelegate) As ICollection(Of T)
         Dim q As New Stack(Of Sort)
         If s IsNot Nothing AndAlso Not s.IsExternal Then
             Dim ns As Sort = s
@@ -3271,7 +3271,7 @@ l1:
         Return c
     End Function
 
-    Public Shared Function ApplySort(Of T As {OrmBase})(ByVal c As ICollection(Of T), ByVal s As Sort) As ICollection(Of T)
+    Public Shared Function ApplySort(Of T As {_IEntity})(ByVal c As ICollection(Of T), ByVal s As Sort) As ICollection(Of T)
         Return ApplySort(c, s, Nothing)
     End Function
 

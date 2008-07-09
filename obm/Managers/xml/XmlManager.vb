@@ -59,9 +59,9 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        'Protected Friend Overrides Function UpdateObject(ByVal obj As ICachedEntity) As Boolean
-        '    Throw New NotImplementedException
-        'End Function
+        Protected Friend Overrides Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
+            Throw New NotImplementedException
+        End Function
 
         Protected Overrides Function BuildDictionary(Of T As {New, Orm.OrmBase})(ByVal level As Integer, ByVal filter As Worm.Criteria.Core.IFilter, ByVal join() As Worm.Criteria.Joins.OrmJoin) As Orm.DicIndex(Of T)
             Throw New NotImplementedException
