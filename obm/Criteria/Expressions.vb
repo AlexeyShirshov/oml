@@ -163,6 +163,7 @@ Public Class Expressions
                 End If
             Else
 l1:
+                Throw New NotImplementedException
             End If
         End Function
     End Class

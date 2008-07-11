@@ -46,7 +46,7 @@ Public Class Composite
         End Set
     End Property
 
-    Public Sub CopyBody(ByVal from As Composite, ByVal [to] As Composite) Implements IOrmEditable(Of Composite).CopyBody
+    Public Sub CopyBody2(ByVal from As Composite, ByVal [to] As Composite) Implements IOrmEditable(Of Composite).CopyBody
         With [from]
             [to]._m = ._m
             [to]._m2 = ._m2

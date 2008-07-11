@@ -183,7 +183,7 @@ Imports Worm.Orm
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, False)
             Assert.AreEqual(10, c.Count)
             For Each e4 As Entity4 In c
-                If e4.Identifier = 12 Then
+                If e4.ID = 12 Then
                     Assert.IsTrue(e4.InternalProperties.IsLoaded)
                 Else
                     Assert.IsFalse(e4.InternalProperties.IsLoaded)
@@ -217,7 +217,7 @@ Imports Worm.Orm
 
             'mgr.Find(Of Entity4)(12).Reload()
 
-            mgr.ConvertIds2Objects(Of Entity4)(New Integer() {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12}, False)
+            mgr.ConvertIds2Objects(Of Entity4)(New Object() {1, 2, 3, 4, 6, 7, 8, 9, 10, 11, 12}, False)
 
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(New Criteria.Ctor(GetType(Entity4)).Field("Title").NotEq("bt"), Sorting.Field("Title").Asc, True)
             Assert.AreEqual(10, c.Count)
@@ -481,7 +481,7 @@ Imports Worm.Orm
                 e.SaveChanges(True)
                 Assert.IsNull(e.InternalProperties.OriginalCopy)
 
-                Assert.IsTrue(e.Identifier <> -100)
+                Assert.IsTrue(e.ID <> -100)
             Finally
                 mgr.Rollback()
             End Try
@@ -498,7 +498,7 @@ Imports Worm.Orm
                 e.SaveChanges(False)
                 Assert.IsNotNull(e.InternalProperties.OriginalCopy)
 
-                Assert.IsTrue(e.Identifier <> -100)
+                Assert.IsTrue(e.ID <> -100)
             Finally
                 Assert.IsNotNull(e.InternalProperties.OriginalCopy)
                 e.RejectChanges()
@@ -573,20 +573,24 @@ Imports Worm.Orm
     Private _id As Integer = -100
     Private _l As New Dictionary(Of Integer, OrmBase)
 
-    Private Function GetIdentity() As Integer Implements Worm.OrmManagerBase.INewObjects.GetIdentity
+    Private Function GetIdentity() As Integer
+        Return CInt(GetIdentity(Nothing))
+    End Function
+
+    Private Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManagerBase.INewObjects.GetIdentity
         Dim i As Integer = _id
         _id += -1
         Return i
     End Function
 
-    Private Function GetNew(ByVal t As Type, ByVal id As Integer) As OrmBase Implements Worm.OrmManagerBase.INewObjects.GetNew
+    Private Function GetNew(ByVal t As Type, ByVal id As Object) As _ICachedEntity Implements Worm.OrmManagerBase.INewObjects.GetNew
         Dim o As OrmBase = Nothing
-        _l.TryGetValue(id, o)
+        _l.TryGetValue(CInt(id), o)
         Return o
     End Function
 
-    Private Sub AddNew(ByVal obj As OrmBase) Implements Worm.OrmManagerBase.INewObjects.AddNew
-        _l.Add(obj.Identifier, obj)
+    Private Sub AddNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.AddNew
+        _l.Add(CInt(CType(obj, OrmBase).Identifier), CType(obj, OrmBase))
     End Sub
 
     <TestMethod(), ExpectedException(GetType(OrmObjectException))> _
@@ -938,7 +942,7 @@ Imports Worm.Orm
             Dim e As Entity = mgr.Find(Of Entity)(1)
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.ObjectSchema)
             AddNew(e4)
-            Dim id As Integer = e4.Identifier
+            Dim id As Integer = e4.ID
             e4.Title = "90bu13n4gf0bh185g8b18bg81bg8b5gfvlojkqndrg90h5"
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(4, c.Count)
@@ -976,7 +980,7 @@ Imports Worm.Orm
             Dim e As Entity = mgr.Find(Of Entity)(1)
             Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.ObjectSchema)
             AddNew(e4)
-            Dim id As Integer = e4.Identifier
+            Dim id As Integer = e4.ID
             e4.Title = "kqndrg90h5"
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Nothing, True)
             Assert.AreEqual(4, c.Count)
@@ -1090,7 +1094,7 @@ Imports Worm.Orm
     <TestMethod()> _
     Public Sub TestLoadM2M()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim col As ICollection(Of Entity) = mgr.ConvertIds2Objects(Of Entity)(New Integer() {1, 2}, False)
+            Dim col As ICollection(Of Entity) = mgr.ConvertIds2Objects(Of Entity)(New Object() {1, 2}, False)
 
             Dim rel As Meta.M2MRelation = mgr.ObjectSchema.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
 
@@ -1112,7 +1116,7 @@ Imports Worm.Orm
     <TestMethod()> _
     Public Sub TestLoadM2M2()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim col As ICollection(Of Entity) = mgr.ConvertIds2Objects(Of Entity)(New Integer() {1, 2}, False)
+            Dim col As ICollection(Of Entity) = mgr.ConvertIds2Objects(Of Entity)(New Object() {1, 2}, False)
             Dim col4 As New List(Of Entity4)
             mgr.LoadObjects(Of Entity4)(mgr.ObjectSchema.GetM2MRelation(GetType(Entity), GetType(Entity4), True), Nothing, CType(col, System.Collections.ICollection), col4)
             Assert.AreEqual(15, col4.Count)
@@ -1275,7 +1279,7 @@ Imports Worm.Orm
             _prev = s
         End Sub
 
-        Public Sub changed(ByVal sender As OrmBase, ByVal args As OrmBase.PropertyChangedEventArgs)
+        Public Sub changed(ByVal sender As IEntity, ByVal args As Worm.Orm.Entity.PropertyChangedEventArgs)
             Assert.AreEqual("34f0asdofmasdf", args.CurrentValue)
             Assert.AreEqual(_prev, args.PreviousValue)
             Assert.AreEqual("Str", args.FieldName)
@@ -1289,11 +1293,11 @@ Imports Worm.Orm
         End Property
     End Class
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Integer) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Object) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
 
     End Sub
 
-    Public Sub RemoveNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
 
     End Sub
 End Class

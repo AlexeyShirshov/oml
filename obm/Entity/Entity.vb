@@ -12,6 +12,8 @@ Namespace Orm
         ReadOnly Property ObjName() As String
         Function GetOldState() As ObjectState
         Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable
+        Sub CorrectStateAfterLoading()
+        Sub SetObjectState(ByVal o As ObjectState)
     End Interface
 
     Public Interface IEntity
@@ -23,6 +25,7 @@ Namespace Orm
         Function CreateClone() As Entity
         Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
         Function IsFieldLoaded(ByVal fieldName As String) As Boolean
+        ReadOnly Property IsLoaded() As Boolean
     End Interface
 
     Public Interface _ICachedEntity
@@ -33,7 +36,6 @@ Namespace Orm
         Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean) As Boolean
         Function CheckIsAllLoaded(ByVal schema As QueryGenerator, ByVal loadedColumns As Integer) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
-        Sub CorrectStateAfterLoading()
         ReadOnly Property UpdateCtx() As UpdateCtx
         Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean
     End Interface
@@ -41,7 +43,6 @@ Namespace Orm
     Public Interface ICachedEntity
         Inherits _IEntity, IComparable, System.Xml.Serialization.IXmlSerializable
         ReadOnly Property Key() As Integer
-        ReadOnly Property IsLoaded() As Boolean
         ReadOnly Property OriginalCopy() As ICachedEntity
         Sub CreateCopyForSaveNewEntry()
         Sub Load()
@@ -391,7 +392,7 @@ Namespace Orm
             _state = value
         End Sub
 
-        Protected Friend Overridable Sub SetObjectState(ByVal value As ObjectState)
+        Protected Overridable Sub SetObjectState(ByVal value As ObjectState) Implements _IEntity.SetObjectState
             Using SyncHelper(False)
                 Debug.Assert(_state <> Orm.ObjectState.Deleted)
                 If _state = Orm.ObjectState.Deleted Then
@@ -470,6 +471,20 @@ Namespace Orm
 
         Public Overridable Function IsFieldLoaded(ByVal fieldName As String) As Boolean Implements IEntity.IsFieldLoaded
             Return True
+        End Function
+
+        Public Overridable ReadOnly Property IsLoaded() As Boolean Implements IEntity.IsLoaded
+            Get
+                Return True
+            End Get
+        End Property
+
+        Private Sub CorrectStateAfterLoading() Implements _IEntity.CorrectStateAfterLoading
+            If ObjectState = ObjectState.NotLoaded AndAlso IsLoaded Then SetObjectState(ObjectState.None)
+        End Sub
+
+        Public Shared Function IsGoodState(ByVal state As ObjectState) As Boolean
+            Return state = ObjectState.Modified OrElse state = ObjectState.Created 'OrElse state = ObjectState.Deleted
         End Function
     End Class
 

@@ -35,7 +35,7 @@ Namespace Query.Database
         Private _m As Integer
         Private _sm As Integer
 
-        Protected Function GetProcessor(Of ReturnType As {New, Orm.OrmBase})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As Processor(Of ReturnType)
+        Protected Function GetProcessor(Of ReturnType As {New, ICachedEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As Processor(Of ReturnType)
             If _proc Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                 'If query.Joins IsNot Nothing Then
@@ -77,14 +77,14 @@ Namespace Query.Database
             Return CType(_proc, Processor(Of ReturnType))
         End Function
 
-        Public Function Exec(Of SelectType As {New, Orm.OrmBase}, ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.Exec
+        Public Function Exec(Of SelectType As {New, _ICachedEntity}, ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.Exec
             Dim p As Processor(Of SelectType) = GetProcessor(Of SelectType)(mgr, query)
 
             Return p.GetSimpleValues(Of ReturnType)()
         End Function
 
-        Public Function Exec(Of ReturnType As {New, Orm.OrmBase})(ByVal mgr As OrmManagerBase, _
-            ByVal query As QueryCmdBase) As ReadOnlyList(Of ReturnType) Implements IExecutor.Exec
+        Public Function Exec(Of ReturnType As {New, _ICachedEntity})(ByVal mgr As OrmManagerBase, _
+            ByVal query As QueryCmdBase) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
 
             Dim dontcache As Boolean = query.DontCache
 
@@ -121,8 +121,9 @@ Namespace Query.Database
             mgr.RaiseOnDataAvailable()
 
             Dim s As Cache.IListObjectConverter.ExtractListResult
-            Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
-            Return r
+            'Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
+            'Return r
+            Return ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
         End Function
 
 #Region " Shared helpers "
@@ -398,6 +399,10 @@ Namespace Query.Database
         End Function
 
 #End Region
+
+        Public Function ExecEntity(Of ReturnType As {New, Orm._IEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
+            Throw New NotImplementedException
+        End Function
     End Class
 
 End Namespace

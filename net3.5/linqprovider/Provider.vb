@@ -62,11 +62,11 @@ Namespace Linq
 
         Public Function Execute(ByVal expression As System.Linq.Expressions.Expression) As Object Implements System.Linq.IQueryProvider.Execute
             Using _ctx.CreateReadonlyManager
-
+                Throw New NotImplementedException
             End Using
         End Function
 
-        Protected Sub GetManager(ByVal o As OrmBase, ByVal args As OrmBase.ManagerRequiredArgs)
+        Protected Sub GetManager(ByVal o As IEntity, ByVal args As Entity.ManagerRequiredArgs)
             args.Manager = _ctx.CreateReadonlyManager
         End Sub
 

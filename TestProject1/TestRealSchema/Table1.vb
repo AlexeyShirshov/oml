@@ -73,7 +73,7 @@ Public Class Table1
     '    Return New Table1(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
+    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IOrmObjectSchemaBase, ByVal value As Object)
         Select Case c.FieldName
             Case "Title"
                 Name = CStr(value)
@@ -90,15 +90,15 @@ Public Class Table1
             Case "ddd"
                 Name = CStr(value)
             Case Else
-                MyBase.SetValue(pi, c, value)
+                MyBase.SetValue(pi, c, oschema, value)
         End Select
     End Sub
 
-    Public Overrides Function GetValue(ByVal propAlias As String) As Object
-        If propAlias = "ddd" Then
+    Public Overrides Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IOrmObjectSchemaBase) As Object
+        If c.FieldName = "ddd" Then
             Return Name
         Else
-            Return MyBase.GetValue(propAlias)
+            Return MyBase.GetValue(pi, c, oschema)
         End If
     End Function
 
@@ -272,7 +272,7 @@ Public Class Table1Implementation
         Return Nothing
     End Function
 
-    Public Function CreateSortComparer1(Of T As {New, Worm.Orm.OrmBase})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
+    Public Function CreateSortComparer1(Of T As {New, _IEntity})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
         If s.FieldName = "DT" Then
             Return CType(New Comparer(Table1Sort.DateTime, s.Order), Global.System.Collections.Generic.IComparer(Of T))
         ElseIf s.FieldName = "Enum" Then

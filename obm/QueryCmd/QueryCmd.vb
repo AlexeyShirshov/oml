@@ -9,8 +9,9 @@ Imports System.Reflection
 Namespace Query
 
     Public Interface IExecutor
-        Function Exec(Of ReturnType As {OrmBase, New})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyList(Of ReturnType)
-        Function Exec(Of SelectType As {OrmBase, New}, ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As IList(Of ReturnType)
+        Function ExecEntity(Of ReturnType As {_IEntity, New})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyObjectList(Of ReturnType)
+        Function Exec(Of ReturnType As {_ICachedEntity, New})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyEntityList(Of ReturnType)
+        Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As IList(Of ReturnType)
     End Interface
 
     Public Class Top
@@ -567,50 +568,27 @@ Namespace Query
             CopyTo(q)
             Return q
         End Function
-    End Class
 
-    Public Class QueryCmd(Of ReturnType As {IEntity, New})
-        Inherits QueryCmdBase
+#Region " Factory "
 
-        Protected Function _Exec(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
-            Return GetExecutor(mgr).Exec(Of ReturnType)(mgr, Me)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})() As QueryCmd(Of ReturnType)
+            Return Create(Of ReturnType)(Nothing, Nothing, False)
         End Function
 
-        Public Function Exec(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
-            Return GetExecutor(mgr).Exec(Of ReturnType)(mgr, Me)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal filter As IGetFilter) As QueryCmd(Of ReturnType)
+            Return Create(Of ReturnType)(filter, Nothing, False)
         End Function
 
-        Public Function Exec(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
-            Return GetExecutor(mgr).Exec(Of ReturnType, T)(mgr, Me)
-        End Function
-
-        Public Overrides Property SelectedType() As System.Type
-            Get
-                Return GetType(ReturnType)
-            End Get
-            Set(ByVal value As System.Type)
-                Throw New NotSupportedException
-            End Set
-        End Property
-
-        Public Shared Function Create() As QueryCmd(Of ReturnType)
-            Return Create(Nothing, Nothing, False)
-        End Function
-
-        Public Shared Function Create(ByVal filter As IGetFilter) As QueryCmd(Of ReturnType)
-            Return Create(filter, Nothing, False)
-        End Function
-
-        Public Shared Function Create(ByVal table As SourceFragment, ByVal field As String) As QueryCmd(Of ReturnType)
-            Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal field As String) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(table, Nothing, Nothing, False)
             Dim l As New List(Of OrmProperty)
             l.Add(New OrmProperty(table, field))
             q._fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(l)
             Return q
         End Function
 
-        Public Shared Function Create(ByVal table As SourceFragment, ByVal fields() As String) As QueryCmd(Of ReturnType)
-            Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal fields() As String) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(table, Nothing, Nothing, False)
             Dim l As New List(Of OrmProperty)
             For Each f As String In fields
                 l.Add(New OrmProperty(table, f))
@@ -619,23 +597,23 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal table As SourceFragment, ByVal fields() As OrmProperty) As QueryCmd(Of ReturnType)
-            Dim q As QueryCmd(Of ReturnType) = Create(table, Nothing, Nothing, False)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal fields() As OrmProperty) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(table, Nothing, Nothing, False)
             Dim l As New List(Of OrmProperty)
             l.AddRange(fields)
             q._fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(l)
             Return q
         End Function
 
-        Public Shared Function Create(ByVal filter As IGetFilter, ByVal sort As Sort) As QueryCmd(Of ReturnType)
-            Return Create(filter, sort, False)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal filter As IGetFilter, ByVal sort As Sort) As QueryCmd(Of ReturnType)
+            Return Create(Of ReturnType)(filter, sort, False)
         End Function
 
-        Public Shared Function Create(ByVal table As SourceFragment, ByVal filter As IGetFilter, ByVal sort As Sort) As QueryCmd(Of ReturnType)
-            Return Create(table, filter, sort, False)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal filter As IGetFilter, ByVal sort As Sort) As QueryCmd(Of ReturnType)
+            Return Create(Of ReturnType)(table, filter, sort, False)
         End Function
 
-        Public Shared Function Create(ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
             Dim q As New QueryCmd(Of ReturnType)
             With q
                 ._filter = filter
@@ -648,21 +626,21 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal table As SourceFragment, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
-            Dim q As QueryCmd(Of ReturnType) = Create(filter, sort, withLoad)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(filter, sort, withLoad)
             q._table = table
             Return q
         End Function
 
-        Public Shared Function Create(ByVal o As OrmBase) As QueryCmd(Of ReturnType)
-            Return Create(o, Nothing, Nothing, False, Nothing)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal o As OrmBase) As QueryCmd(Of ReturnType)
+            Return Create(Of ReturnType)(o, Nothing, Nothing, False, Nothing)
         End Function
 
-        Public Shared Function Create(ByVal o As OrmBase, ByVal key As String) As QueryCmd(Of ReturnType)
-            Return Create(o, Nothing, Nothing, False, key)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal o As OrmBase, ByVal key As String) As QueryCmd(Of ReturnType)
+            Return Create(Of ReturnType)(o, Nothing, Nothing, False, key)
         End Function
 
-        Public Shared Function Create(ByVal o As OrmBase, ByVal direct As Boolean) As QueryCmd(Of ReturnType)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal o As OrmBase, ByVal direct As Boolean) As QueryCmd(Of ReturnType)
             Dim key As String
             If direct Then
                 key = M2MRelation.DirKey
@@ -670,11 +648,11 @@ Namespace Query
                 key = M2MRelation.RevKey
             End If
 
-            Return Create(o, Nothing, Nothing, False, key)
+            Return Create(Of ReturnType)(o, Nothing, Nothing, False, key)
         End Function
 
-        Public Shared Function Create(ByVal o As OrmBase, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean, ByVal key As String) As QueryCmd(Of ReturnType)
-            Dim q As QueryCmd(Of ReturnType) = Create(filter, sort, withLoad)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal o As OrmBase, ByVal filter As IGetFilter, ByVal sort As Sort, ByVal withLoad As Boolean, ByVal key As String) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(filter, sort, withLoad)
             With q
                 ._o = o
                 ._m2mKey = key
@@ -683,16 +661,34 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal aggregates() As AggregateBase) As QueryCmd(Of ReturnType)
-            Dim q As QueryCmd(Of ReturnType) = Create(CType(Nothing, IFilter))
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal aggregates() As AggregateBase) As QueryCmd(Of ReturnType)
+            Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(CType(Nothing, IFilter))
             q._aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(aggregates)
             Return q
         End Function
 
-#Region " Extensions "
+#End Region
+
+    End Class
+
+    Public Class QueryCmd(Of ReturnType As {_ICachedEntity, New})
+        Inherits QueryCmdBase
+
+        Public Overrides Property SelectedType() As System.Type
+            Get
+                Return GetType(ReturnType)
+            End Get
+            Set(ByVal value As System.Type)
+                Throw New NotSupportedException
+            End Set
+        End Property
+
+        Public Function Exec(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of ReturnType)
+            Return GetExecutor(mgr).Exec(Of ReturnType)(mgr, Me)
+        End Function
 
         Public Function [Single](ByVal mgr As OrmManagerBase) As ReturnType
-            Dim r As ReadOnlyList(Of ReturnType) = Exec(mgr)
+            Dim r As ReadOnlyEntityList(Of ReturnType) = Exec(mgr)
             If r.Count <> 1 Then
                 Throw New InvalidOperationException
             Else
@@ -700,14 +696,43 @@ Namespace Query
             End If
         End Function
 
-        Public Function ToList(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
-            Return Exec(mgr)
+        Public Function Exec(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
+            Return GetExecutor(mgr).Exec(Of ReturnType, T)(mgr, Me)
+        End Function
+    End Class
+
+    Public Class QueryEntity(Of ReturnType As {_IEntity, New})
+        Inherits QueryCmdBase
+
+        'Protected Function _Exec(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
+        '    Return GetExecutor(mgr).Exec(Of ReturnType)(mgr, Me)
+        'End Function
+
+        Public Function Exec(ByVal mgr As OrmManagerBase) As ReadOnlyObjectList(Of ReturnType)
+            Return GetExecutor(mgr).ExecEntity(Of ReturnType)(mgr, Me)
         End Function
 
-        Public Function ToSimpleList(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
-            Return Exec(Of T)(mgr)
+        'Public Function Exec(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
+        '    Return GetExecutor(mgr).Exec(Of ReturnType, T)(mgr, Me)
+        'End Function
+
+        Public Overrides Property SelectedType() As System.Type
+            Get
+                Return GetType(ReturnType)
+            End Get
+            Set(ByVal value As System.Type)
+                Throw New NotSupportedException
+            End Set
+        End Property
+
+        Public Function [Single](ByVal mgr As OrmManagerBase) As ReturnType
+            Dim r As ReadOnlyObjectList(Of ReturnType) = Exec(mgr)
+            If r.Count <> 1 Then
+                Throw New InvalidOperationException
+            Else
+                Return r(0)
+            End If
         End Function
-#End Region
 
     End Class
 

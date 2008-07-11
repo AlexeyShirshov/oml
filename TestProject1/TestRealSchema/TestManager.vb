@@ -567,8 +567,8 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestLoadObjects4()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim tt1 As Table1 = mgr.CreateObject(Of Table1)(1)
-            Dim tt2 As Table1 = mgr.CreateObject(Of Table1)(1)
+            Dim tt1 As Table1 = mgr.CreateOrmBase(Of Table1)(1)
+            Dim tt2 As Table1 = mgr.CreateOrmBase(Of Table1)(1)
 
             mgr.LoadObjects(New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(New Table1() {tt1, tt2})))
         End Using
@@ -577,7 +577,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestLoadObjects5()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim tt1 As Table2 = mgr.CreateObject(Of Table2)(1)
+            Dim tt1 As Table2 = mgr.CreateOrmBase(Of Table2)(1)
 
             Dim t As ICollection(Of Table2) = mgr.LoadObjects(Of Table2)( _
                 New Worm.ReadOnlyList(Of Table2)(New List(Of Table2)(New Table2() {tt1})), New String() {"Table1"}, 0, 1)
@@ -592,7 +592,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestLoadObjectsM2M()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Integer() {1, 2}, False)
+            Dim t1s As ICollection(Of Table1) = mgr.ConvertIds2Objects(Of Table1)(New Object() {1, 2}, False)
 
             mgr.LoadObjects(Of Table33)(mgr.ObjectSchema.GetM2MRelation(GetType(Table1), GetType(Table33), True), Nothing, CType(t1s, Collections.ICollection), Nothing)
 
@@ -949,7 +949,7 @@ Public Class TestManagerRS
     <TestMethod()> _
     Public Sub TestIn()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim t As Worm.ReadOnlyList(Of Table1) = mgr.Find(Of Table1)(Criteria.Ctor.AutoTypeField("EnumStr").In( _
+            Dim t As Worm.ReadOnlyObjectList(Of Table1) = mgr.Find(Of Table1)(Criteria.Ctor.AutoTypeField("EnumStr").In( _
                 New String() {"first", "sec"}), Nothing, False)
 
             Assert.AreEqual(3, t.Count)
@@ -1200,35 +1200,39 @@ Public Class TestManagerRS
     Private _id As Integer = -100
     Private _new_objects As New Dictionary(Of Integer, OrmBase)
 
-    Public Sub AddNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.OrmManagerBase.INewObjects.AddNew
+    Public Sub AddNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.AddNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Add(obj.Identifier, obj)
+        _new_objects.Add(CInt(CType(obj, IOrmBase).Identifier), CType(obj, OrmBase))
     End Sub
 
-    Public Function GetIdentity() As Integer Implements Worm.OrmManagerBase.INewObjects.GetIdentity
+    Public Function GetIdentity(ByVal type As Type) As Object Implements Worm.OrmManagerBase.INewObjects.GetIdentity
         Dim i As Integer = _id
         _id += -1
         Return i
     End Function
 
-    Public Function GetNew(ByVal t As System.Type, ByVal id As Integer) As Worm.Orm.OrmBase Implements Worm.OrmManagerBase.INewObjects.GetNew
+    Public Function GetIdentity() As Integer
+        Return CInt(GetIdentity(Nothing))
+    End Function
+
+    Public Function GetNew(ByVal t As System.Type, ByVal id As Object) As _ICachedEntity Implements Worm.OrmManagerBase.INewObjects.GetNew
         Dim o As OrmBase = Nothing
-        _new_objects.TryGetValue(id, o)
+        _new_objects.TryGetValue(CInt(id), o)
         Return o
     End Function
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Integer) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
-        _new_objects.Remove(id)
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Object) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
+        _new_objects.Remove(CInt(id))
     End Sub
 
-    Public Sub RemoveNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Remove(obj.Identifier)
+        _new_objects.Remove(CInt(CType(obj, IOrmBase).Identifier))
     End Sub
 End Class

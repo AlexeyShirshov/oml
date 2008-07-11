@@ -546,8 +546,11 @@ Namespace Cache
 
         Friend Function IsDeleted(ByVal obj As ICachedEntity) As Boolean
             If obj Is Nothing Then
-                Throw New ArgumentNullException("obj")
+                Return False
             End If
+            'If obj Is Nothing Then
+            '    Throw New ArgumentNullException("obj")
+            'End If
 
             Dim t As Type = obj.GetType
 
@@ -1069,10 +1072,10 @@ l1:
                                 Throw New ArgumentException("Collection contains different types")
                             End If
 
-                            Dim o As OrmBase = schema.GetJoinObj(oschema, obj, t)
+                            Dim o As IOrmBase = schema.GetJoinObj(oschema, obj, t)
 
                             If o IsNot Nothing Then
-                                UpdateCache(schema, New OrmBase() {o}, mgr, afterDelegate, contextKey, callbacks, True)
+                                UpdateCache(schema, New IOrmBase() {o}, mgr, afterDelegate, contextKey, callbacks, True)
                             End If
                         Next
                     Next

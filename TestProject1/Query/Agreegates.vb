@@ -53,11 +53,11 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> Public Sub TestMax()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create(New AggregateBase() { _
+            Dim q As QueryCmd(Of Entity4) = QueryCmdBase.Create(Of Entity4)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Max, GetType(Entity4), "ID") _
             })
 
-            Dim i As Integer = q.ToSimpleList(Of Integer)(mgr)(0)
+            Dim i As Integer = q.Exec(Of Integer)(mgr)(0)
 
             Assert.AreEqual(12, i)
 
@@ -66,11 +66,11 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> Public Sub TestCount()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create(New AggregateBase() { _
+            Dim q As QueryCmd(Of Entity4) = QueryCmdBase.Create(Of Entity4)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
             })
 
-            Dim i As Integer = q.ToSimpleList(Of Integer)(mgr)(0)
+            Dim i As Integer = q.Exec(Of Integer)(mgr)(0)
 
             Assert.AreEqual(12, i)
 
@@ -90,10 +90,10 @@ Imports Worm.Database.Criteria.Core
                 New Aggregate(AggregateFunction.Count) _
             })
 
-            Dim q As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create
+            Dim q As QueryCmd(Of Entity4) = QueryCmdBase.Create(Of Entity4)()
             q.Sort = New Worm.Sorting.SortAdv(inner, SortType.Desc)
 
-            Dim l As ReadOnlyList(Of Entity4) = q.ToList(mgr)
+            Dim l As ReadOnlyEntityList(Of Entity4) = q.Exec(mgr)
 
             Assert.AreEqual(12, l.Count)
             Assert.AreEqual(10, l(0).Identifier)
@@ -111,7 +111,7 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> Public Sub TestGroup()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As QueryCmd(Of Entity4) = QueryCmd(Of Entity4).Create(New AggregateBase() { _
+            Dim q As QueryCmd(Of Entity4) = QueryCmdBase.Create(Of Entity4)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
             })
 
@@ -124,25 +124,25 @@ Imports Worm.Database.Criteria.Core
             Dim jf As New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
             q.Joins = New OrmJoin() {New OrmJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
 
-            Assert.AreEqual(39, q.ToSimpleList(Of Integer)(mgr)(0))
+            Assert.AreEqual(39, q.Exec(Of Integer)(mgr)(0))
 
             q.Group = New ObjectModel.ReadOnlyCollection(Of OrmProperty)( _
                 New OrmProperty() {New OrmProperty(table, r.Column)} _
             )
 
-            Dim l As IList(Of Integer) = q.ToSimpleList(Of Integer)(mgr)
+            Dim l As IList(Of Integer) = q.Exec(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
 
             q.Sort = Sorting.Custom("cnt desc")
-            l = q.ToSimpleList(Of Integer)(mgr)
+            l = q.Exec(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
             Assert.AreEqual(11, l(0))
             Assert.AreEqual(4, l(1))
 
             q.Sort = New Worm.Sorting.SortAdv(q.Aggregates(0), SortType.Desc)
-            l = q.ToSimpleList(Of Integer)(mgr)
+            l = q.Exec(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
             Assert.AreEqual(11, l(0))

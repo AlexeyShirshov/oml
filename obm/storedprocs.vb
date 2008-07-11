@@ -38,6 +38,7 @@ Namespace Database.Storedprocs
         Private _reseted As New Dictionary(Of String, Boolean)
         Private _expireDate As Date
         Private _cacheHit As Boolean
+        Protected Shared _fromWeakList As New Dictionary(Of Type, Reflection.MethodInfo)
 
         Public Enum ValidateResult
             DontReset
@@ -646,28 +647,56 @@ Namespace Database.Storedprocs
                 Throw New InvalidOperationException("External filter is not applicable for store procedures")
             End If
             _donthit = True
-            Dim ce As New OrmManagerBase.CachedItem(Nothing, New ReadOnlyList(Of T)(mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
-            _exec = ce.ExecutionTime
-            _fecth = ce.FetchTime
+            'Dim ce As New OrmManagerBase.CachedItem(Nothing, OrmManagerBase.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
+            Dim l As IListEdit = OrmManagerBase.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns))
+            _exec = mgr.Exec 'ce.ExecutionTime
+            _fecth = mgr.Fecth 'ce.FetchTime
+
+            Dim wl As Object = Nothing
+            If GetType(ICachedEntity).IsAssignableFrom(GetType(T)) Then
+                wl = mgr.ListConverter.ToWeakList(l)
+            Else
+                wl = l
+            End If
+
             For Each p As OutParam In GetOutParams()
                 If _out Is Nothing Then
                     _out = New Dictionary(Of String, Object)
                 End If
                 _out.Add(p.Name, cmd.Parameters(p.Name).Value)
             Next
-            Return ce
+            Return wl
         End Function
 
         Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ReadOnlyObjectList(Of T)
-            Dim ce As OrmManagerBase.CachedItem = CType(MyBase.GetResult(mgr), OrmManagerBase.CachedItem)
-            _count = ce.GetCount(mgr)
-            mgr.RaiseOnDataAvailable(_count, _exec, _fecth, Not _donthit)
-            Dim s As IListObjectConverter.ExtractListResult
-            Dim r As ReadOnlyList(Of T) = ce.GetObjectList(Of T)(mgr, GetWithLoad, Not CacheHit, s)
-            If s <> IListObjectConverter.ExtractListResult.Successed Then
-                Throw New InvalidOperationException("External filter is not applicable for store procedures")
+            'Dim ce As OrmManagerBase.CachedItem = CType(MyBase.GetResult(mgr), OrmManagerBase.CachedItem)
+            '_count = ce.GetCount(mgr)
+            Dim wl As Object = MyBase.GetResult(mgr)
+            Dim tt As Type = GetType(T)
+            If GetType(ICachedEntity).IsAssignableFrom(tt) Then
+                _count = mgr.ListConverter.GetCount(wl)
+            Else
+                _count = CType(wl, IList).Count
             End If
-            Return r
+            mgr.RaiseOnDataAvailable(_count, _exec, _fecth, Not _donthit)
+            If GetType(ICachedEntity).IsAssignableFrom(tt) Then
+                Dim mi As Reflection.MethodInfo = Nothing
+                If Not _fromWeakList.TryGetValue(tt, mi) Then
+                    Dim tmi As Reflection.MethodInfo = GetType(IListObjectConverter).GetMethod("FromWeakList", New Type() {GetType(Object), GetType(OrmManagerBase)})
+                    mi = tmi.MakeGenericMethod(New Type() {tt})
+                    _fromWeakList(tt) = mi
+                End If
+                Return CType(mi.Invoke(mgr.ListConverter, New Object() {wl, mgr}), Global.Worm.ReadOnlyObjectList(Of T))
+            Else
+                Return CType(wl, Global.Worm.ReadOnlyObjectList(Of T))
+            End If
+            'Dim s As IListObjectConverter.ExtractListResult
+            'Dim r As ReadOnlyObjectList(Of T) = Nothing
+            'mgr.ListConverter.FromWeakList(wl, mgr) 'ce.GetObjectList(Of T)(mgr, GetWithLoad, Not CacheHit, s)
+            'If s <> IListObjectConverter.ExtractListResult.Successed Then
+            '    Throw New InvalidOperationException("External filter is not applicable for store procedures")
+            'End If
+            'Return r
         End Function
 
         Protected Overrides Function GetDepends() As System.Collections.Generic.IEnumerable(Of Pair(Of System.Type, Dependency))
@@ -698,7 +727,7 @@ Namespace Database.Storedprocs
             End Get
         End Property
 
-        Protected Class QueryOrmStoredProcSimple(Of T2 As {OrmBase, New})
+        Protected Class QueryOrmStoredProcSimple(Of T2 As {_IEntity, New})
             Inherits QueryOrmStoredProcBase(Of T2)
 
             Private _name As String
@@ -768,7 +797,7 @@ Namespace Database.Storedprocs
 
 #Region " Exec "
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyObjectList(Of T)
             Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
@@ -776,7 +805,7 @@ Namespace Database.Storedprocs
             Return New QueryOrmStoredProcSimple(Of T)(name, ss, params).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyObjectList(Of T)
             Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
@@ -784,7 +813,7 @@ Namespace Database.Storedprocs
             Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, cache).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyObjectList(Of T)
             Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
@@ -792,7 +821,7 @@ Namespace Database.Storedprocs
             Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, timeout).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyObjectList(Of T)
             Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
@@ -800,7 +829,7 @@ Namespace Database.Storedprocs
             Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, columns).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal cache As Boolean, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyObjectList(Of T)
             Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
@@ -808,7 +837,7 @@ Namespace Database.Storedprocs
             Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, columns, cache).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal timeout As TimeSpan, ByVal paramNames As String, ByVal ParamArray params() As Object) As ReadOnlyObjectList(Of T)
             Dim ss() As String = paramNames.Split(","c)
             If ss.Length <> params.Length Then
                 Throw New ArgumentException("Number of parameter names is not equals to parameter values")
@@ -816,27 +845,27 @@ Namespace Database.Storedprocs
             Return New QueryOrmStoredProcSimple(Of T)(name, ss, params, columns, timeout).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String) As ReadOnlyObjectList(Of T)
             Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal cache As Boolean) As ReadOnlyObjectList(Of T)
             Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, cache).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal timeout As TimeSpan) As ReadOnlyObjectList(Of T)
             Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, timeout).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String) As ReadOnlyObjectList(Of T)
             Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, columns).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal cache As Boolean) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal cache As Boolean) As ReadOnlyObjectList(Of T)
             Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, columns, cache).GetResult(mgr)
         End Function
 
-        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal timeout As TimeSpan) As ReadOnlyList(Of T)
+        Public Shared Function Exec(ByVal mgr As OrmReadOnlyDBManager, ByVal name As String, ByVal columns() As String, ByVal timeout As TimeSpan) As ReadOnlyObjectList(Of T)
             Return New QueryOrmStoredProcSimple(Of T)(name, New String() {}, New Object() {}, columns, timeout).GetResult(mgr)
         End Function
 
@@ -855,12 +884,12 @@ Namespace Database.Storedprocs
             Sub EndProcess(ByVal mgr As OrmManagerBase)
         End Interface
 
-        Public MustInherit Class OrmDescriptor(Of T As {OrmBase, New})
+        Public MustInherit Class OrmDescriptor(Of T As {_IEntity, New})
             Implements IResultSetDescriptor
 
             Private _l As List(Of T)
             Private _created As Boolean
-            Private _ce As OrmManagerBase.CachedItem
+            Private _o As Object
             Private _count As Integer
             Private _loaded As Integer
 
@@ -882,17 +911,32 @@ Namespace Database.Storedprocs
             Protected MustOverride Function GetWithLoad() As Boolean
             Protected MustOverride Function GetPrimaryKeyIndex() As Integer
 
-            Public Function GetObjects(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
-                If _ce Is Nothing Then
+            Public Function GetObjects(ByVal mgr As OrmManagerBase) As ReadOnlyObjectList(Of T)
+                If _o Is Nothing Then
                     Throw New InvalidOperationException("Stored procedure is not executed")
                 End If
-                _count = _ce.GetCount(mgr)
-                Dim s As IListObjectConverter.ExtractListResult
-                Dim r As ReadOnlyList(Of T) = _ce.GetObjectList(Of T)(mgr, GetWithLoad, _created, s)
-                If s <> IListObjectConverter.ExtractListResult.Successed Then
-                    Throw New InvalidOperationException("External filter is not applicable for store procedures")
+                Dim tt As Type = GetType(T)
+                If GetType(ICachedEntity).IsAssignableFrom(tt) Then
+                    _count = mgr.ListConverter.GetCount(_o)
+                    Dim mi As Reflection.MethodInfo = Nothing
+                    If Not _fromWeakList.TryGetValue(tt, mi) Then
+                        Dim tmi As Reflection.MethodInfo = GetType(IListObjectConverter).GetMethod("FromWeakList", New Type() {GetType(Object), GetType(OrmManagerBase)})
+                        mi = tmi.MakeGenericMethod(New Type() {tt})
+                        _fromWeakList(tt) = mi
+                    End If
+                    Return CType(mi.Invoke(mgr.ListConverter, New Object() {_o, mgr}), Global.Worm.ReadOnlyObjectList(Of T))
+                Else
+                    Dim l As ReadOnlyObjectList(Of T) = CType(_o, Global.Worm.ReadOnlyObjectList(Of T))
+                    _count = l.Count
+                    Return l
                 End If
-                Return r
+
+                'Dim s As IListObjectConverter.ExtractListResult
+                'Dim r As ReadOnlyList(Of T) = _ce.GetObjectList(Of T)(mgr, GetWithLoad, _created, s)
+                'If s <> IListObjectConverter.ExtractListResult.Successed Then
+                '    Throw New InvalidOperationException("External filter is not applicable for store procedures")
+                'End If
+                'Return r
             End Function
 
             Public ReadOnly Property Count() As Integer
@@ -908,7 +952,12 @@ Namespace Database.Storedprocs
             End Property
 
             Public Overridable Sub EndProcess(ByVal mgr As OrmManagerBase) Implements IResultSetDescriptor.EndProcess
-                _ce = New OrmManagerBase.CachedItem(Nothing, New ReadOnlyList(Of T)(_l), mgr)
+                Dim l As ReadOnlyObjectList(Of T) = CType(OrmManagerBase.CreateReadonlyList(GetType(T), _l), Global.Worm.ReadOnlyObjectList(Of T))
+                If GetType(ICachedEntity).IsAssignableFrom(GetType(T)) Then
+                    _o = mgr.ListConverter.ToWeakList(l)
+                Else
+                    _o = l
+                End If
                 _l = Nothing
             End Sub
 

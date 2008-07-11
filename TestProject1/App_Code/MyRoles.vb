@@ -29,7 +29,7 @@ Public Class MyRoles
             Throw New ArgumentException("Duplicate role name " & name)
         ElseIf col.Count = 0 Then
             If createIfNotExist Then
-                Dim r As New MyRole(-100, mgr.Cache, mgr.ObjectSchema)
+                Dim r As MyRole = mgr.CreateOrmBase(Of MyRole)(-100)
                 r.RoleName = name
                 r.SaveChanges(True)
                 Return r

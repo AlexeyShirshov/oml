@@ -7,11 +7,16 @@ Imports Worm.Criteria.Values
 Imports Worm.Sorting
 Imports Worm.Criteria.Core
 
+Public Interface IEnt
+
+End Interface
+
 <Worm.Orm.Meta.Entity(GetType(EntitySchema1v1Implementation), "1"), _
 Worm.Orm.Meta.Entity(GetType(EntitySchema1v2Implementation), "2"), _
 Worm.Orm.Meta.Entity(GetType(EntitySchema1v3Implementation), "3")> _
 Public Class Entity
     Inherits OrmBaseT(Of Entity)
+    Implements IEnt
 
     Public Sub New()
         MyBase.New()
@@ -193,10 +198,10 @@ Public Class Entity2
         MyBase.New(id, cache, schema)
     End Sub
 
-    Public Overrides Function Clone() As Object
-        Dim e As New Entity2(Identifier, InternalProperties.OrmCache, OrmSchema)
-        Return e
-    End Function
+    'Public Overrides Function Clone() As Object
+    '    Dim e As New Entity2(Identifier, InternalProperties.OrmCache, OrmSchema)
+    '    Return e
+    'End Function
 
     <Column("Str")> _
     Public Property Str() As String
@@ -277,9 +282,9 @@ End Class
 Public Class Entity3
     Inherits Entity
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator)
-        MyBase.New(id, cache, schema)
-    End Sub
+    'Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator)
+    '    MyBase.New(id, cache, schema)
+    'End Sub
 End Class
 
 <Entity(GetType(EntitySchema4v1Implementation), "1"), Entity(GetType(EntitySchema4v2Implementation), "2")> _
@@ -390,7 +395,7 @@ Public Class EntitySchema4v1Implementation
         Return Nothing
     End Function
 
-    Public Function CreateSortComparer1(Of T As {New, OrmBase})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
+    Public Function CreateSortComparer1(Of T As {New, _IEntity})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
         If s.FieldName = "Title" Then
             Return CType(New Comparer(Entity4Sort.Name, s.Order), Global.System.Collections.Generic.IComparer(Of T))
         End If

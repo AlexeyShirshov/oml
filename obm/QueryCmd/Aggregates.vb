@@ -240,7 +240,7 @@ Namespace Query
         End Sub
 
         Public Overrides Function MakeStmt(ByVal schema As QueryGenerator, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
-
+            Throw New NotImplementedException
         End Function
     End Class
 End Namespace

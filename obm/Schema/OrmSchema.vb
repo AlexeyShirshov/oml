@@ -778,6 +778,28 @@ Public MustInherit Class QueryGenerator
         Return GetFieldValue(obj, fieldName, pi, schema)
     End Function
 
+    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String) As Object
+        If obj Is Nothing Then
+            Throw New ArgumentNullException("obj")
+        End If
+
+        Dim schema As IOrmObjectSchemaBase = GetObjectSchema(obj.GetType)
+
+        Dim pi As Reflection.PropertyInfo = Nothing
+
+        If schema IsNot Nothing Then
+            pi = GetProperty(obj.GetType, schema, fieldName)
+        Else
+            pi = GetProperty(obj.GetType, fieldName)
+        End If
+
+        If pi Is Nothing Then
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, fieldName))
+        End If
+
+        Return GetFieldValue(obj, fieldName, pi, schema)
+    End Function
+
     Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IOrmObjectSchemaBase) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
