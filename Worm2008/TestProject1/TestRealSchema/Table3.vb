@@ -89,13 +89,13 @@ Public Class Table3
     End Sub
 
     <Column("Ref", Field2DbRelations.Factory)> _
-    Public Property RefObject() As OrmBase
+    Public Property RefObject() As IOrmBase
         Get
             Using SyncHelper(True, "Ref")
                 Return _obj
             End Using
         End Get
-        Set(ByVal value As OrmBase)
+        Set(ByVal value As IOrmBase)
             Using SyncHelper(False, "Ref")
                 _obj = value
             End Using

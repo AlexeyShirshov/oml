@@ -261,7 +261,7 @@ Namespace Criteria.Core
 
                     Return r
                 Else
-                    Dim o As OrmBase = schema.GetJoinObj(oschema, obj, Template.Type)
+                    Dim o As IOrmBase = schema.GetJoinObj(oschema, obj, Template.Type)
                     If o IsNot Nothing Then
                         Return Eval(schema, o, schema.GetObjectSchema(Template.Type))
                     End If
@@ -443,7 +443,7 @@ Namespace Criteria.Core
             End If
 
             If obj.GetType IsNot _t Then
-                Dim o As OrmBase = schema.GetJoinObj(oschema, obj, _t)
+                Dim o As IOrmBase = schema.GetJoinObj(oschema, obj, _t)
                 If o Is Nothing Then
                     Throw New ArgumentException(String.Format("Template type {0} is not match {1}", _t.ToString, obj.GetType))
                 End If

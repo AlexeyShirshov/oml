@@ -498,7 +498,7 @@ End Class
     <TestMethod()> _
     Public Sub TestAlter()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim c As IList(Of Entity4) = CType(mgr.ConvertIds2Objects(Of Entity4)(New Integer() {2}, False), Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
+            Dim c As IList(Of Entity4) = CType(mgr.ConvertIds2Objects(Of Entity4)(New Object() {2}, False), Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
             Dim e As Entity4 = c(0)
             Assert.AreEqual(ObjectState.NotLoaded, e.InternalProperties.ObjectState)
             Dim expected As String = "wrtbg"
@@ -531,7 +531,7 @@ End Class
 
             e3.GetHashCode()
 
-            e2.CreateObject(Nothing, 1)
+            'e2.CreateObject(Nothing, 1)
 
             Assert.IsTrue(CType(e3, IComparable).CompareTo(1) > 0)
         End Using

@@ -135,7 +135,7 @@ Public Class TestProcs
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim p As New P2OrmProc(2)
 
-            Dim c As Worm.ReadOnlyList(Of Table1) = p.GetResult(mgr)
+            Dim c As Worm.ReadOnlyObjectList(Of Table1) = p.GetResult(mgr)
 
             Assert.AreEqual(1, c.Count)
             Dim t1 As Table1 = c(0)
@@ -152,7 +152,7 @@ Public Class TestProcs
     <TestMethod()> _
     Public Sub TestP2OrmSimple()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
-            Dim c As Worm.ReadOnlyList(Of Table1) = Worm.Database.Storedprocs.QueryOrmStoredProcBase(Of Table1).Exec(mgr, "dbo.p2", _
+            Dim c As Worm.ReadOnlyObjectList(Of Table1) = Worm.Database.Storedprocs.QueryOrmStoredProcBase(Of Table1).Exec(mgr, "dbo.p2", _
                 New String() {"ID", "Title", "Code", "Enum", "EnumStr", "DT"}, "i", 2)
 
             Assert.AreEqual(1, c.Count)
@@ -386,9 +386,9 @@ Public Class P4Proc
         _params.Add(New Pair(Of String, Object)("i", i))
     End Sub
 
-    Public Overrides Function ValidateOnUpdate(ByVal obj As Worm.Orm.OrmBase, ByVal fields As ICollection(Of String)) As Storedprocs.StoredProcBase.ValidateResult
+    Public Overrides Function ValidateOnUpdate(ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String)) As Storedprocs.StoredProcBase.ValidateResult
         Dim t1 As Table1 = TryCast(obj, Table1)
-        If t1 IsNot Nothing AndAlso t1.Identifier = CInt(_params(0).Second) Then
+        If t1 IsNot Nothing AndAlso t1.ID = CInt(_params(0).Second) Then
             Return ValidateResult.ResetCache
         End If
         Return MyBase.ValidateOnUpdate(obj, fields)

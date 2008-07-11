@@ -410,7 +410,7 @@ Namespace Database
                 Next
                 For Each o As Pair(Of ICachedEntity) In copies
                     o.First.CopyBody(o.Second, o.First)
-                    CType(o.First, Entity).SetObjectState(o.Second.GetOldState)
+                    o.First.SetObjectState(o.Second.GetOldState)
                     RaiseEvent ObjectRestored(o.First)
                 Next
                 For Each p As Pair(Of ObjectState, ICachedEntity) In saved
@@ -1590,7 +1590,7 @@ Namespace Database
             End Try
         End Function
 
-        Protected Friend Function LoadMultipleObjects(Of T As {ICachedEntity, New})( _
+        Protected Friend Function LoadMultipleObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, ByVal values As Generic.List(Of T), _
             ByVal arr As Generic.List(Of ColumnAttribute)) As Generic.List(Of T)
@@ -1658,7 +1658,7 @@ Namespace Database
             Return idx
         End Function
 
-        Protected Friend Sub LoadFromResultSet(Of T As {ICachedEntity, New})( _
+        Protected Friend Sub LoadFromResultSet(Of T As {_IEntity, New})( _
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
             ByVal dr As System.Data.IDataReader, ByVal idx As Integer, _
@@ -1666,13 +1666,14 @@ Namespace Database
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
-            Dim obj As _ICachedEntity = CType(CreateEntity(Of T)(), _ICachedEntity)
+            Dim obj As New T
+            'Dim obj As _ICachedEntity = CType(CreateEntity(Of T)(), _ICachedEntity)
             'If obj IsNot Nothing Then
             'If _raiseCreated Then
-            RaiseObjectCreated(obj)
+            'RaiseObjectCreated(obj)
             'End If
 
-            If withLoad AndAlso Not _cache.IsDeleted(obj) Then
+            If withLoad AndAlso Not _cache.IsDeleted(TryCast(obj, ICachedEntity)) Then
                 Using obj.GetSyncRoot()
                     If obj.ObjectState <> ObjectState.Modified AndAlso obj.ObjectState <> ObjectState.Deleted Then
                         'If obj.IsLoaded Then obj.IsLoaded = False
@@ -2157,7 +2158,7 @@ l1:
                         If values.Contains(o) OrElse Not ids.Contains(o.Identifier) Then
                             ar.Add(o)
                         Else
-                            o.ObjectState = ObjectState.NotFoundInSource
+                            o.SetObjectState(ObjectState.NotFoundInSource)
                         End If
                     Else
                         If o.IsLoaded Then
@@ -2889,13 +2890,13 @@ l2:
             Return String.Empty
         End Function
 
-        Protected Overrides ReadOnly Property Exec() As System.TimeSpan
+        Protected Friend Overrides ReadOnly Property Exec() As System.TimeSpan
             Get
                 Return _exec
             End Get
         End Property
 
-        Protected Overrides ReadOnly Property Fecth() As System.TimeSpan
+        Protected Friend Overrides ReadOnly Property Fecth() As System.TimeSpan
             Get
                 Return _fetch
             End Get

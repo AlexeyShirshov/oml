@@ -90,7 +90,7 @@ Namespace Cache
                             End If
                         Next
                     End If
-                    c = CType(mc.CreateReadonlyList(GetType(T), l), Global.Worm.ReadOnlyEntityList(Of T))
+                    c = CType(OrmManagerBase.CreateReadonlyList(GetType(T), l), Global.Worm.ReadOnlyEntityList(Of T))
                 End If
             End If
             Return c
@@ -239,7 +239,7 @@ Namespace Cache
             If weak_list Is Nothing Then Return Nothing
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
-            Dim c As ReadOnlyEntityList(Of T) = CType(mc.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
+            Dim c As ReadOnlyEntityList(Of T) = CType(OrmManagerBase.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
             If mc._externalFilter Is Nothing Then
                 If start < l.Count Then
                     length = Math.Min(start + length, l.Count)
@@ -276,7 +276,7 @@ Namespace Cache
                         c.LoadObjects()
                     Else
                         successed = IListObjectConverter.ExtractListResult.NeedLoad
-                        Return CType(mc.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
+                        Return CType(OrmManagerBase.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
                     End If
                 End If
                 Dim s As Boolean = True
@@ -363,7 +363,7 @@ Namespace Cache
                     OrmManagerBase.WriteWarning("Unable to create " & loe.ObjName)
                 End If
             Next
-            Return CType(mgr.CreateReadonlyList(GetType(T), objects), Global.Worm.ReadOnlyEntityList(Of T))
+            Return CType(OrmManagerBase.CreateReadonlyList(GetType(T), objects), Global.Worm.ReadOnlyEntityList(Of T))
         End Function
     End Class
 

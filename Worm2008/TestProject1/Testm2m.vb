@@ -129,7 +129,7 @@ Imports Worm.Orm.Meta
 
         Dim e As New Entity5(10, Nothing, schema)
 
-        Dim el As New EditableList(10, New Integer() {9, 10, 20}, Nothing, Nothing, True, Nothing)
+        Dim el As New EditableList(10, New Object() {9, 10, 20}, Nothing, Nothing, True, Nothing)
         el.Delete(10)
         el.Add(234)
 

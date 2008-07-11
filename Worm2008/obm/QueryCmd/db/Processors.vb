@@ -9,8 +9,8 @@ Namespace Query.Database
 
     Partial Public Class DbQueryExecutor
 
-        Class Processor(Of ReturnType As {New, Orm.OrmBase})
-            Inherits OrmManagerBase.CustDelegate(Of ReturnType)
+        Class Processor(Of ReturnType As {New, ICachedEntity})
+            Inherits OrmManagerBase.CustDelegateBase(Of ReturnType)
             Implements OrmManagerBase.ICacheValidator
 
             Private _stmt As String
@@ -46,10 +46,10 @@ Namespace Query.Database
             End Property
 
             Public Overloads Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
-                Return GetCacheItem(GetValues(withLoad))
+                Return GetCacheItem(GetEntities(withLoad))
             End Function
 
-            Public Overloads Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of ReturnType)) As OrmManagerBase.CachedItem
+            Public Overloads Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManagerBase.CachedItem
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(ReturnType)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
@@ -61,8 +61,8 @@ Namespace Query.Database
                 Return New OrmManagerBase.CachedItem(_q.Sort, s, _f(0), col, _mgr)
             End Function
 
-            Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of ReturnType)
-                Dim r As ReadOnlyList(Of ReturnType)
+            Public Overrides Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of ReturnType)
+                Dim r As ReadOnlyEntityList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
 
                 Using cmd As System.Data.Common.DbCommand = dbm.DbSchema.CreateDBCommand
@@ -73,7 +73,7 @@ Namespace Query.Database
                 End Using
 
                 If Query.Sort IsNot Nothing AndAlso Query.Sort.IsExternal Then
-                    r = dbm.DbSchema.ExternalSort(Of ReturnType)(dbm, Query.Sort, r)
+                    r = CType(dbm.DbSchema.ExternalSort(Of ReturnType)(dbm, Query.Sort, r), Global.Worm.ReadOnlyEntityList(Of ReturnType))
                 End If
 
                 Return r
@@ -104,7 +104,7 @@ Namespace Query.Database
                     _cmdType = Data.CommandType.Text
 
                     _params = New ParamMgr(Mgr.DbSchema, "p")
-                    _stmt = _MakeStatement
+                    _stmt = _MakeStatement()
                 End If
 
                 cmd.CommandText = _stmt
@@ -137,10 +137,10 @@ Namespace Query.Database
                 Return _mgr.GetSimpleValues(Of T)(cmd)
             End Function
 
-            Protected Overridable Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyList(Of ReturnType)
+            Protected Overridable Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyEntityList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
-                Return New ReadOnlyList(Of ReturnType)(dbm.LoadMultipleObjects(Of ReturnType)( _
-                        cmd, Query.WithLoad, Nothing, GetFields(dbm.DbSchema, GetType(ReturnType), Query.SelectList)))
+                Return CType(OrmManagerBase.CreateReadonlyList(GetType(ReturnType), dbm.LoadMultipleObjects(Of ReturnType)( _
+                        cmd, Query.WithLoad, Nothing, GetFields(dbm.DbSchema, GetType(ReturnType), Query.SelectList))), Global.Worm.ReadOnlyEntityList(Of ReturnType))
             End Function
 
             Protected ReadOnly Property Mgr() As OrmReadOnlyDBManager

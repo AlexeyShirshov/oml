@@ -183,7 +183,7 @@ Namespace Orm
 
         End Sub
 
-        Public ReadOnly Property IsLoaded() As Boolean Implements ICachedEntity.IsLoaded
+        Public Overrides ReadOnly Property IsLoaded() As Boolean
             Get
                 Return _loaded
             End Get
@@ -233,7 +233,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Friend Overrides Sub SetObjectState(ByVal value As ObjectState)
+        Protected Overrides Sub SetObjectState(ByVal value As ObjectState)
             Using SyncHelper(False)
                 Debug.Assert(value <> Orm.ObjectState.None OrElse IsLoaded)
                 If value = Orm.ObjectState.None AndAlso Not IsLoaded Then
@@ -273,6 +273,10 @@ Namespace Orm
                     Debug.Assert(_loaded = value)
                 End Using
             End Using
+        End Sub
+
+        Public Sub AcceptChanges()
+            AcceptChanges(True, IsGoodState(ObjectState))
         End Sub
 
         Public Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity Implements ICachedEntity.AcceptChanges
@@ -1014,10 +1018,6 @@ l1:
                 Return ObjectState <> Orm.ObjectState.Deleted AndAlso ObjectState <> Orm.ObjectState.Modified
             End Get
         End Property
-
-        Private Sub CorrectStateAfterLoading() Implements _ICachedEntity.CorrectStateAfterLoading
-            If ObjectState = ObjectState.NotLoaded AndAlso IsLoaded Then SetObjectState(ObjectState.None)
-        End Sub
 
         Private ReadOnly Property UpdateCtx() As UpdateCtx Implements _ICachedEntity.UpdateCtx
             Get

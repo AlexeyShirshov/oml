@@ -547,36 +547,36 @@ Namespace Orm
             End Function
         End Class
 
-        Public Class PropertyChangedEventArgs
-            Inherits EventArgs
+        'Public Class PropertyChangedEventArgs
+        '    Inherits EventArgs
 
-            Private _prev As Object
-            Public ReadOnly Property PreviousValue() As Object
-                Get
-                    Return _prev
-                End Get
-            End Property
+        '    Private _prev As Object
+        '    Public ReadOnly Property PreviousValue() As Object
+        '        Get
+        '            Return _prev
+        '        End Get
+        '    End Property
 
-            Private _current As Object
-            Public ReadOnly Property CurrentValue() As Object
-                Get
-                    Return _current
-                End Get
-            End Property
+        '    Private _current As Object
+        '    Public ReadOnly Property CurrentValue() As Object
+        '        Get
+        '            Return _current
+        '        End Get
+        '    End Property
 
-            Private _fieldName As String
-            Public ReadOnly Property FieldName() As String
-                Get
-                    Return _fieldName
-                End Get
-            End Property
+        '    Private _fieldName As String
+        '    Public ReadOnly Property FieldName() As String
+        '        Get
+        '            Return _fieldName
+        '        End Get
+        '    End Property
 
-            Public Sub New(ByVal fieldName As String, ByVal prevValue As Object, ByVal currentValue As Object)
-                _fieldName = fieldName
-                _prev = prevValue
-                _current = currentValue
-            End Sub
-        End Class
+        '    Public Sub New(ByVal fieldName As String, ByVal prevValue As Object, ByVal currentValue As Object)
+        '        _fieldName = fieldName
+        '        _prev = prevValue
+        '        _current = currentValue
+        '    End Sub
+        'End Class
 
         Private Class ChangedEventHelper
             Implements IDisposable
@@ -599,20 +599,20 @@ Namespace Orm
             End Sub
         End Class
 
-        Public Class ManagerRequiredArgs
-            Inherits EventArgs
+        'Public Class ManagerRequiredArgs
+        '    Inherits EventArgs
 
-            Private _mgr As OrmManagerBase
-            Public Property Manager() As OrmManagerBase
-                Get
-                    Return _mgr
-                End Get
-                Set(ByVal value As OrmManagerBase)
-                    _mgr = value
-                End Set
-            End Property
+        '    Private _mgr As OrmManagerBase
+        '    Public Property Manager() As OrmManagerBase
+        '        Get
+        '            Return _mgr
+        '        End Get
+        '        Set(ByVal value As OrmManagerBase)
+        '            _mgr = value
+        '        End Set
+        '    End Property
 
-        End Class
+        'End Class
 #End Region
 
         '''' <summary>
@@ -796,17 +796,17 @@ Namespace Orm
         '    End Set
         'End Property
 
-        Friend ReadOnly Property OrmCache() As OrmCacheBase
-            Get
-                Using mc As IGetManager = GetMgr()
-                    If mc IsNot Nothing Then
-                        Return mc.Manager.Cache
-                    Else
-                        Return Nothing
-                    End If
-                End Using
-            End Get
-        End Property
+        'Friend ReadOnly Property OrmCache() As OrmCacheBase
+        '    Get
+        '        Using mc As IGetManager = GetMgr()
+        '            If mc IsNot Nothing Then
+        '                Return mc.Manager.Cache
+        '            Else
+        '                Return Nothing
+        '            End If
+        '        End Using
+        '    End Get
+        'End Property
 
         '''' <summary>
         '''' Объект, на котором можно синхронизировать загрузку
@@ -817,11 +817,11 @@ Namespace Orm
         '    End Get
         'End Property
 
-        Private ReadOnly Property _os() As ObjectState Implements IEntity.ObjectState
-            Get
-                Return ObjectState
-            End Get
-        End Property
+        'Private ReadOnly Property _os() As ObjectState Implements IEntity.ObjectState
+        '    Get
+        '        Return ObjectState
+        '    End Get
+        'End Property
 
         '        Protected Friend Property ObjectState() As ObjectState
         '            Get
@@ -1264,29 +1264,29 @@ Namespace Orm
         '    obj._needDelete = False
         'End Sub
 
-        Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As OrmBase, ByVal mc As OrmManagerBase)
-            mc._RemoveObjectFromCache(obj)
-            mc.Cache.RegisterDelete(obj)
-            'obj._needDelete = False
-        End Sub
+        'Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As OrmBase, ByVal mc As OrmManagerBase)
+        '    mc._RemoveObjectFromCache(obj)
+        '    mc.Cache.RegisterDelete(obj)
+        '    'obj._needDelete = False
+        'End Sub
 
-        Friend Shared Sub Accept_AfterUpdateCacheAdd(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
-            ByVal contextKey As Object)
-            'obj._needAdd = False
-            Dim nm As OrmManagerBase.INewObjects = mc.NewObjectManager
-            If nm IsNot Nothing Then
-                Dim mo As OrmBase = TryCast(contextKey, OrmBase)
-                If mo Is Nothing Then
-                    Dim dic As Generic.Dictionary(Of OrmBase, OrmBase) = TryCast(contextKey, Generic.Dictionary(Of OrmBase, OrmBase))
-                    If dic IsNot Nothing Then
-                        dic.TryGetValue(obj, mo)
-                    End If
-                End If
-                If mo IsNot Nothing Then
-                    nm.RemoveNew(mo)
-                End If
-            End If
-        End Sub
+        'Friend Shared Sub Accept_AfterUpdateCacheAdd(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
+        '    ByVal contextKey As Object)
+        '    'obj._needAdd = False
+        '    Dim nm As OrmManagerBase.INewObjects = mc.NewObjectManager
+        '    If nm IsNot Nothing Then
+        '        Dim mo As OrmBase = TryCast(contextKey, OrmBase)
+        '        If mo Is Nothing Then
+        '            Dim dic As Generic.Dictionary(Of OrmBase, OrmBase) = TryCast(contextKey, Generic.Dictionary(Of OrmBase, OrmBase))
+        '            If dic IsNot Nothing Then
+        '                dic.TryGetValue(obj, mo)
+        '            End If
+        '        End If
+        '        If mo IsNot Nothing Then
+        '            nm.RemoveNew(mo)
+        '        End If
+        '    End If
+        'End Sub
 
         'Protected Friend Sub PrepareUpdate()
         '    If _state = Orm.ObjectState.Clone Then
@@ -1424,9 +1424,9 @@ Namespace Orm
             Return Me.GetType.Name & id.ToString
         End Function
 
-        Friend Overridable Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean
-            Return False
-        End Function
+        'Friend Overridable Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean
+        '    Return False
+        'End Function
 
         'Protected Friend Sub SetPK(ByVal fieldName As String, ByVal value As Object)
         '    _id = CInt(value)
@@ -2072,9 +2072,6 @@ Namespace Orm
 
         '#End Region
 
-        Public Shared Function IsGoodState(ByVal state As ObjectState) As Boolean
-            Return state = ObjectState.Modified OrElse state = ObjectState.Created 'OrElse state = ObjectState.Deleted
-        End Function
 
 #Region " Operators "
 
@@ -2244,19 +2241,19 @@ Namespace Orm
         End Sub
 
         Public Function Find(ByVal t As System.Type) As Worm.Query.QueryCmdBase Implements IOrmBase.Find
-
+            Throw New NotImplementedException
         End Function
 
         Public Function Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmdBase Implements IOrmBase.Find
-
+            Throw New NotImplementedException
         End Function
 
         Public Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmd(Of T) Implements IOrmBase.Find
-            Return Worm.Query.QueryCmd(Of T).Create(Me)
+            Return Worm.Query.QueryCmdBase.Create(Of T)(Me)
         End Function
 
         Public Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmd(Of T) Implements IOrmBase.Find
-            Return Worm.Query.QueryCmd(Of T).Create(Me, key)
+            Return Worm.Query.QueryCmdBase.Create(Of T)(Me, key)
         End Function
     End Class
 
@@ -2314,7 +2311,7 @@ Namespace Orm
     <Serializable()> _
     Public MustInherit Class OrmBaseT(Of T As {New, OrmBaseT(Of T)})
         Inherits OrmBase
-        Implements IComparable(Of T)
+        Implements IComparable(Of T), IFactory
         'Implements IComparable(Of T), IOrmProxy(Of T)
 
         Private _id As Object
@@ -2323,9 +2320,11 @@ Namespace Orm
 
         End Sub
 
-        'Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
-        '    MyBase.New(id, cache, schema)
-        'End Sub
+        Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
+            MyBase.New()
+            MyBase.Init(id, cache, schema, Nothing)
+            'Throw New NotSupportedException
+        End Sub
 
         'Protected Overridable Function GetNew() As T
         '    Return New T()
@@ -2423,6 +2422,23 @@ Namespace Orm
 
         Protected Overrides Sub SetPK(ByVal pk() As Pair(Of String, Object))
             _id = pk(0).Second
+        End Sub
+
+        Protected Overrides Sub CopyBody(ByVal from As _IEntity, ByVal [to] As _IEntity)
+            Dim editable As IOrmEditable(Of T) = TryCast(Me, IOrmEditable(Of T))
+            If editable IsNot Nothing Then
+                editable.CopyBody(CType(from, T), CType([to], T))
+            Else
+                MyBase.CopyBody(from, [to])
+            End If
+        End Sub
+
+        Public Overridable Overloads Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
+            MyBase.SetValue(pi, c, Nothing, value)
+        End Sub
+
+        Public Overridable Overloads Sub CreateObject(ByVal field As String, ByVal value As Object) Implements Meta.IFactory.CreateObject
+
         End Sub
     End Class
 

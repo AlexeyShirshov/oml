@@ -132,7 +132,7 @@ Module Module2
             End Set
         End Property
 
-        Public Sub CopyBody(ByVal from As TestEditTable, ByVal [to] As TestEditTable) Implements Worm.Orm.Meta.IOrmEditable(Of TestEditTable).CopyBody
+        Public Sub CopyBodys(ByVal from As TestEditTable, ByVal [to] As TestEditTable) Implements Worm.Orm.Meta.IOrmEditable(Of TestEditTable).CopyBody
             With [to]
                 ._name = from._name
                 ._code = from._code
@@ -263,7 +263,7 @@ Module Module2
     End Sub
 
     Private _saved As ArrayList = ArrayList.Synchronized(New ArrayList)
-    Sub ObjectSaved(ByVal o As Orm.OrmBase)
+    Sub ObjectSaved(ByVal o As Orm.ICachedEntity)
         _saved.Add(o)
     End Sub
 
@@ -431,7 +431,7 @@ Module Module2
         Next
     End Sub
 
-    Sub throwEx(ByVal o As Orm.OrmBase)
+    Sub throwEx(ByVal o As Orm.ICachedEntity)
         Throw New Exception("xxx")
     End Sub
 

@@ -71,13 +71,13 @@ Namespace Xml
             Throw New NotImplementedException
         End Function
 
-        Protected Overrides ReadOnly Property Exec() As System.TimeSpan
+        Protected Friend Overrides ReadOnly Property Exec() As System.TimeSpan
             Get
 
             End Get
         End Property
 
-        Protected Overrides ReadOnly Property Fecth() As System.TimeSpan
+        Protected Friend Overrides ReadOnly Property Fecth() As System.TimeSpan
             Get
 
             End Get

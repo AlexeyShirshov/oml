@@ -13,42 +13,46 @@ Public Class TestTracker
     Private _id As Integer = -100
     Private _new_objects As New Dictionary(Of Integer, OrmBase)
 
-    Public Sub AddNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.OrmManagerBase.INewObjects.AddNew
+    Public Sub AddNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.AddNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Add(obj.Identifier, obj)
+        _new_objects.Add(CInt(CType(obj, OrmBase).Identifier), CType(obj, OrmBase))
     End Sub
 
-    Public Function GetIdentity() As Integer Implements Worm.OrmManagerBase.INewObjects.GetIdentity
+    Public Function GetIdentity() As Integer
+        Return CInt(GetIdentity(Nothing))
+    End Function
+
+    Public Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManagerBase.INewObjects.GetIdentity
         Dim i As Integer = _id
         _id += -1
         Return i
     End Function
 
-    Public Function GetNew(ByVal t As System.Type, ByVal id As Integer) As Worm.Orm.OrmBase Implements Worm.OrmManagerBase.INewObjects.GetNew
+    Public Function GetNew(ByVal t As System.Type, ByVal id As Object) As _ICachedEntity Implements Worm.OrmManagerBase.INewObjects.GetNew
         Dim o As OrmBase = Nothing
-        _new_objects.TryGetValue(id, o)
+        _new_objects.TryGetValue(CInt(id), o)
         Return o
     End Function
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Integer) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
-        _new_objects.Remove(id)
-        Debug.WriteLine("removed: " & id)
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Object) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
+        _new_objects.Remove(CInt(id))
+        Debug.WriteLine("removed: " & id.ToString)
     End Sub
 
-    Public Sub RemoveNew(ByVal obj As Worm.Orm.OrmBase) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
-        _new_objects.Remove(obj.Identifier)
-        Debug.WriteLine("removed: " & obj.Identifier)
+        _new_objects.Remove(CInt(CType(obj, OrmBase).Identifier))
+        Debug.WriteLine("removed: " & CType(obj, OrmBase).Identifier.ToString)
     End Sub
 
-    Protected Sub Objr(ByVal o As OrmBase)
-        Debug.WriteLine(o.InternalProperties.ObjName)
+    Protected Sub Objr(ByVal o As ICachedEntity)
+        Debug.WriteLine(o.ObjName)
     End Sub
 
     Protected Sub br(ByVal cnt As Integer)
@@ -71,11 +75,11 @@ Public Class TestTracker
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
-                    Assert.IsTrue(_new_objects.ContainsKey(t.Identifier))
+                    Assert.IsTrue(_new_objects.ContainsKey(t.ID))
 
                     Dim t2 As Table2 = tracker.CreateNewObject(Of Table2)()
                     Assert.IsNotNull(t2)
-                    Assert.IsTrue(_new_objects.ContainsKey(t2.Identifier))
+                    Assert.IsTrue(_new_objects.ContainsKey(t2.ID))
                     t2.Money = 1000
 
                     tracker.Commit()
@@ -105,11 +109,11 @@ Public Class TestTracker
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
-                    Assert.IsTrue(_new_objects.ContainsKey(t.Identifier))
+                    Assert.IsTrue(_new_objects.ContainsKey(t.ID))
 
                     Dim t2 As Table2 = tracker.CreateNewObject(Of Table2)()
                     Assert.IsNotNull(t2)
-                    Assert.IsTrue(_new_objects.ContainsKey(t2.Identifier))
+                    Assert.IsTrue(_new_objects.ContainsKey(t2.ID))
                     t2.Money = 1000
 
                     tt.Code = 10
@@ -139,7 +143,7 @@ Public Class TestTracker
                     t.CreatedAt = Now
 
                     Assert.IsNotNull(t)
-                    Assert.IsTrue(_new_objects.ContainsKey(t.Identifier))
+                    Assert.IsTrue(_new_objects.ContainsKey(t.ID))
 
                     tt.Code = 10
 

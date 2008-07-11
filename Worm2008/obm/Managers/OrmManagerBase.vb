@@ -788,7 +788,7 @@ Public MustInherit Class OrmManagerBase
         Overloads Function GetNew(Of T As _ICachedEntity)() As ICollection(Of T)
     End Interface
 
-    Public MustInherit Class CustDelegate(Of T As {IOrmBase, New})
+    Public MustInherit Class CustDelegateBase(Of T As {ICachedEntity, New})
         Implements ICustDelegate(Of T)
 
         Private _created As Boolean
@@ -822,13 +822,23 @@ Public MustInherit Class OrmManagerBase
             End Get
         End Property
 
-        Public MustOverride Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T) 'Implements ICustDelegate(Of T).GetValues
+        Public MustOverride Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of T) 'Implements ICustDelegate(Of T).GetValues
         Public MustOverride Sub CreateDepends() Implements ICustDelegate(Of T).CreateDepends
         Public MustOverride ReadOnly Property Filter() As IFilter Implements ICustDelegate(Of T).Filter
         Public MustOverride ReadOnly Property Sort() As Sort Implements ICustDelegate(Of T).Sort
         'Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
         Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem Implements ICustDelegate(Of T).GetCacheItem
         Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem Implements ICustDelegate(Of T).GetCacheItem
+    End Class
+
+    Public MustInherit Class CustDelegate(Of T As {IOrmBase, New})
+        Inherits CustDelegateBase(Of T)
+
+        Public Overrides Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of T)
+            Return GetValues(withLoad)
+        End Function
+
+        Public MustOverride Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
     End Class
 
     'Public Interface IComplexDelegate
@@ -4100,8 +4110,8 @@ l1:
 
     'Protected MustOverride Sub Obj2ObjRelationSave2(ByVal obj As OrmBase, ByVal dt As System.Data.DataTable, ByVal sync As String, ByVal t As System.Type)
 
-    Protected MustOverride ReadOnly Property Exec() As TimeSpan
-    Protected MustOverride ReadOnly Property Fecth() As TimeSpan
+    Protected Friend MustOverride ReadOnly Property Exec() As TimeSpan
+    Protected Friend MustOverride ReadOnly Property Fecth() As TimeSpan
 
 #End Region
 

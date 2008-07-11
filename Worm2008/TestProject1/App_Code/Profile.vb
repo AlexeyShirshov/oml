@@ -79,7 +79,7 @@ Public Class MyProfile
                 Throw New ArgumentException("User with a name " & name & " is not found")
             Else
                 If createIfNotExist Then
-                    Dim u As New MyUser(-100, mgr.Cache, mgr.ObjectSchema)
+                    Dim u As MyUser = mgr.CreateOrmBase(Of MyUser)(-100)
                     u.LastActivity = GetNow()
                     u.IsAnonymous = True
                     u.UserName = name
@@ -107,7 +107,7 @@ Public Class MyProfile
     End Function
 
     Protected Overrides Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String) As Worm.Orm.OrmBase
-        Dim u As New MyUser(-100, mgr.Cache, mgr.ObjectSchema)
+        Dim u As MyUser = mgr.CreateOrmBase(Of MyUser)(-100)
         u.UserName = name
         Return u
     End Function
@@ -340,7 +340,7 @@ Public Class MyUserDef
 
     Public Overrides Function GetM2MRelations() As M2MRelation()
         Return New M2MRelation() { _
-                New M2MRelation(GetType(MyRole), _schema.GetSharedTable("dbo.UserRoles"), "role_id", False, New System.Data.Common.DataTableMapping, CType(Nothing, Type)) _
+                New M2MRelation(GetType(MyRole), _schema.GetSharedTable("dbo.UserRoles"), "role_id", False, New System.Data.Common.DataTableMapping) _
             }
     End Function
 
@@ -357,9 +357,9 @@ Public Class MyRole
 
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
-        MyBase.New(id, cache, schema)
-    End Sub
+    'Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
+    '    MyBase.New(id, cache, schema)
+    'End Sub
 
     'Protected Overrides Sub CopyBody(ByVal from As Worm.Orm.OrmBase, ByVal [to] As Worm.Orm.OrmBase)
     '    CopyRole(CType(from, MyRole), CType([to], MyRole))
@@ -421,7 +421,7 @@ Public Class MyRoleDef
 
     Public Overrides Function GetM2MRelations() As M2MRelation()
         Return New M2MRelation() { _
-                New M2MRelation(GetType(MyUser), _schema.GetSharedTable("dbo.UserRoles"), "user_id", False, New System.Data.Common.DataTableMapping, CType(Nothing, Type)) _
+                New M2MRelation(GetType(MyUser), _schema.GetSharedTable("dbo.UserRoles"), "user_id", False, New System.Data.Common.DataTableMapping) _
             }
     End Function
 
