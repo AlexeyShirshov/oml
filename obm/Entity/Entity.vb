@@ -355,12 +355,16 @@ Namespace Orm
         Protected Overridable Function DumpState() As String
             Dim sb As New StringBuilder
             Using mc As IGetManager = GetMgr()
-                Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
-                For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
-                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                    Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                    sb.Append(c.FieldName).Append("=").Append(QueryGenerator.GetFieldValue(Me, c.FieldName, pi, oschema)).Append(";")
-                Next
+                If mc Is Nothing Then
+                    sb.Append("Cannot get object dump")
+                Else
+                    Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
+                    For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
+                        Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+                        Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
+                        sb.Append(c.FieldName).Append("=").Append(QueryGenerator.GetFieldValue(Me, c.FieldName, pi, oschema)).Append(";")
+                    Next
+                End If
             End Using
             Return sb.ToString
         End Function
@@ -414,7 +418,9 @@ Namespace Orm
 
         Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As IOrmObjectSchemaBase, ByVal value As Object) Implements IEntity.SetValue
             If pi Is Nothing Then
-                Throw New ArgumentNullException("pi")
+                Using m As IGetManager = GetMgr()
+                    pi = m.Manager.ObjectSchema.GetProperty(Me.GetType, schema, c)
+                End Using
             End If
 
             pi.SetValue(Me, value, Nothing)

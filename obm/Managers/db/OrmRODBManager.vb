@@ -1058,8 +1058,8 @@ Namespace Database
                             Using obj1.GetSyncRoot()
                                 'If obj1.IsLoaded Then obj1.IsLoaded = False
                                 Dim ro As _IEntity = LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1)
-                                obj1.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj1))
-                                values.Add(obj1)
+                                ro.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj1))
+                                values.Add(ro)
                             End Using
                         Else
                             values.Add(obj1)
@@ -1072,7 +1072,7 @@ Namespace Database
                                 Using obj2.GetSyncRoot()
                                     'If obj2.IsLoaded Then obj2.IsLoaded = False
                                     Dim ro2 As _IEntity = LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2)
-                                    obj2.CorrectStateAfterLoading(Object.ReferenceEquals(ro2, obj2))
+                                    ro2.CorrectStateAfterLoading(Object.ReferenceEquals(ro2, obj2))
                                 End Using
                             End If
                         End If
@@ -1309,7 +1309,7 @@ Namespace Database
                                             Using obj.GetSyncRoot()
                                                 'If obj.IsLoaded Then obj.IsLoaded = False
                                                 Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 2, dic)
-                                                obj.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj))
+                                                ro.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj))
                                             End Using
                                         End If
                                     End If
@@ -1527,7 +1527,7 @@ Namespace Database
                                 Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
                             End If
                             If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse Not _cache.IsDeleted(obj)) Then
-                                LoadFromDataReader(obj, dr, arr, check_pk, 0, dic)
+                                obj = CType(LoadFromDataReader(obj, dr, arr, check_pk, 0, dic), ICachedEntity)
                             End If
                             loaded = True
                         Loop
@@ -1537,9 +1537,9 @@ Namespace Database
 
                         If Not obj.IsLoaded Then
                             If load Then
-                                Throw New ApplicationException
-                                'obj.ObjectState = ObjectState.NotFoundInSource
-                                'RemoveObjectFromCache(obj)
+                                'Throw New ApplicationException
+                                obj.SetObjectState(ObjectState.NotFoundInSource)
+                                RemoveObjectFromCache(obj)
                             End If
                         Else
                             If obj.ObjectState = ObjectState.Created Then
@@ -1676,10 +1676,10 @@ Namespace Database
             'End If
             Dim obj As New T
             Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 0, CType(dic, System.Collections.IDictionary))
-            obj.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj))
+            ro.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj))
 
-            values.Add(obj)
-            If obj.IsLoaded Then
+            values.Add(ro)
+            If ro.IsLoaded Then
                 loaded += 1
             End If
 
@@ -2946,7 +2946,7 @@ l2:
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         Dim id1 As Object = dr.GetValue(0)
-                        If id1.Equals(obj.Identifier) Then
+                        If Not id1.Equals(obj.Identifier) Then
                             Throw New OrmManagerException("Wrong relation statement")
                         End If
                         Dim id2 As Object = dr.GetValue(1)
@@ -2957,7 +2957,7 @@ l2:
                                 Using o.GetSyncRoot()
                                     'If obj.IsLoaded Then obj.IsLoaded = False
                                     Dim ro As _IEntity = LoadFromDataReader(o, dr, columns, False, 2, dic)
-                                    o.CorrectStateAfterLoading(Object.ReferenceEquals(ro, o))
+                                    ro.CorrectStateAfterLoading(Object.ReferenceEquals(ro, o))
                                     _loadedInLastFetch += 1
                                 End Using
                             End If

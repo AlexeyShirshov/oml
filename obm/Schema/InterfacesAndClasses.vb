@@ -276,6 +276,7 @@ Namespace Orm.Meta
             Me.Column = column
             Me.DeleteCascade = delete
             Me.Mapping = mapping
+            Me.Key = DirKey
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
