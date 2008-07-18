@@ -420,7 +420,8 @@ Namespace Orm
                 Dim oschema As IOrmObjectSchemaBase = m.Manager.ObjectSchema.GetObjectSchema(tt)
                 For Each p As Pair(Of String, Object) In pk
                     Dim c As New ColumnAttribute(p.First)
-                    SetValue(m.Manager.ObjectSchema.GetProperty(tt, oschema, c), c, oschema, p.Second)
+                    SetValue(Nothing, c, oschema, p.Second)
+                    SetLoaded(c, True, True)
                 Next
             End Using
         End Sub

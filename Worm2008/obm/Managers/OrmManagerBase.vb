@@ -3121,7 +3121,7 @@ l1:
         Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
         'Dim pm As New Reflection.ParameterModifier(6)
         'pm(5) = True
-        Dim types As Type() = New Type() {GetType(IOrmBase), GetType(Boolean), GetType(IGetFilter), GetType(Sort), GetType(Boolean)}
+        Dim types As Type() = New Type() {GetType(_IOrmBase), GetType(String), GetType(IGetFilter), GetType(Sort), GetType(Boolean)}
         Dim o() As Object = New Object() {mainobj, direct, Nothing, Nothing, False}
         'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
         '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)

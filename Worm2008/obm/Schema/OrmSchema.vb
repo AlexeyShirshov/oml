@@ -264,7 +264,7 @@ Public MustInherit Class QueryGenerator
         Throw New QueryGeneratorException("Cannot find column: " & columnName)
     End Function
 
-    Private Function GetColumnNameByFieldNameInternal(ByVal schema As IObjectSchemaBase, ByVal field As String, ByVal add_alias As Boolean, ByVal columnAliases As List(Of String)) As String
+    Protected Friend Function GetColumnNameByFieldNameInternal(ByVal schema As IObjectSchemaBase, ByVal field As String, ByVal add_alias As Boolean, ByVal columnAliases As List(Of String)) As String
         If String.IsNullOrEmpty(field) Then Throw New ArgumentNullException("field")
 
         Dim coll As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()

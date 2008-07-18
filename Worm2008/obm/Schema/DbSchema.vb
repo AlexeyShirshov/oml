@@ -918,7 +918,8 @@ l1:
                                 'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
                                 Dim cn As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
                                 For Each p As Pair(Of String, Object) In obj.GetPKValues
-                                    cn.AddFilter(New dc.TableFilter(esch.GetTables(0), p.First, New ScalarValue(p.Second), FilterOperation.Equal))
+                                    Dim clm As String = GetColumnNameByFieldNameInternal(esch, p.First, False, Nothing)
+                                    cn.AddFilter(New dc.TableFilter(esch.GetTables(0), clm, New ScalarValue(p.Second), FilterOperation.Equal))
                                 Next
                                 Dim f As IFilter = cn.Condition
                                 sel_sb.Append(f.MakeQueryStmt(Me, filterInfo, amgr, params, Nothing))
@@ -980,7 +981,18 @@ l1:
                 ElseIf relSchema IsNot Nothing Then
                     Dim join As OrmJoin = CType(GetJoins(relSchema, tables(0), table, filterInfo), OrmJoin)
                     If Not OrmJoin.IsEmpty(join) Then
-                        Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(join.Condition, type, "ID", "@id")
+                        Dim f As IFilter = join.Condition
+
+                        For Each de As DictionaryEntry In GetProperties(type, oschema)
+                            Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                            Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
+                            If c IsNot Nothing Then
+                                Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.FieldName).GetAttributes(c) 'GetAttributes(type, c)
+                                If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                                    f = JoinFilter.ChangeEntityJoinToLiteral(f, type, c.FieldName, "@id_" & c.FieldName)
+                                End If
+                            End If
+                        Next
 
                         If f Is Nothing Then
                             Throw New QueryGeneratorException("Cannot replace join")
@@ -1711,7 +1723,7 @@ l1:
             End If
             sb.Append([alias]).Append(".")
             sb.Append(filtered_r.Column).Append(" ").Append(filteredType.Name).Append("ID")
-            If filtered_r Is selectedType Then
+            If filteredType Is selectedType Then
                 sb.Append("Rev")
             End If
             sb.Append(",").Append([alias]).Append(".").Append(id_clm)

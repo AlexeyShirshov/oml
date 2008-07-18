@@ -2323,7 +2323,13 @@ Namespace Orm
         Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
             MyBase.New()
             MyBase.Init(id, cache, schema, Nothing)
+            SetObjectStateClear(Orm.ObjectState.Created)
             'Throw New NotSupportedException
+        End Sub
+
+        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
+            MyBase.Init(id, cache, schema, mgrIdentityString)
+            CType(Me, _ICachedEntity).SetLoaded(New ColumnAttribute("ID"), True, True)
         End Sub
 
         'Protected Overridable Function GetNew() As T
@@ -2440,6 +2446,14 @@ Namespace Orm
         Public Overridable Overloads Sub CreateObject(ByVal field As String, ByVal value As Object) Implements Meta.IFactory.CreateObject
 
         End Sub
+
+        Public Overrides Function IsFieldLoaded(ByVal fieldName As String) As Boolean
+            If fieldName = "ID" Then
+                Return True
+            Else
+                Return MyBase.IsFieldLoaded(fieldName)
+            End If
+        End Function
     End Class
 
 End Namespace

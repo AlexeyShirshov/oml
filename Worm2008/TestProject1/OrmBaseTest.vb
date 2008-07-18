@@ -193,9 +193,9 @@ Imports Worm.Database.Criteria.Core
 
             o.Delete()
 
-            Dim expected As String = "declare @id int" & vbCrLf & _
-                "set @id = @p1" & vbCrLf & _
-                "delete from dbo.ent1 where id = @id"
+            Dim expected As String = "declare @id_ID int" & vbCrLf & _
+                "set @id_ID = @p1" & vbCrLf & _
+                "delete from dbo.ent1 where id = @id_ID"
 
             Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
 
@@ -222,10 +222,10 @@ Imports Worm.Database.Criteria.Core
 
             o.Delete()
 
-            Dim expected As String = "declare @id int" & vbCrLf & _
-                "set @id = @p1" & vbCrLf & _
-                "delete from dbo.ent1 where id = @id" & vbCrLf & _
-                "delete from dbo.t1 where i = @id"
+            Dim expected As String = "declare @id_ID int" & vbCrLf & _
+                "set @id_ID = @p1" & vbCrLf & _
+                "delete from dbo.ent1 where id = @id_ID" & vbCrLf & _
+                "delete from dbo.t1 where i = @id_ID"
 
             Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
 
@@ -255,10 +255,10 @@ Imports Worm.Database.Criteria.Core
 
             Assert.AreEqual(ObjectState.Deleted, o.InternalProperties.ObjectState)
 
-            Dim expected As String = "declare @id int" & vbCrLf & _
-                "set @id = @p1" & vbCrLf & _
-                "delete from dbo.ent1 where id = @id" & vbCrLf & _
-                "delete from dbo.t1 where i = @id"
+            Dim expected As String = "declare @id_ID int" & vbCrLf & _
+                "set @id_ID = @p1" & vbCrLf & _
+                "delete from dbo.ent1 where id = @id_ID" & vbCrLf & _
+                "delete from dbo.t1 where i = @id_ID"
 
             Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
 
@@ -288,9 +288,9 @@ Imports Worm.Database.Criteria.Core
 
             Assert.AreEqual(ObjectState.Deleted, o.InternalProperties.ObjectState)
 
-            Dim expected As String = "declare @id int" & vbCrLf & _
-                "set @id = @p1" & vbCrLf & _
-                "delete from dbo.ent3 where (id = @id and version = @p2)"
+            Dim expected As String = "declare @id_ID int" & vbCrLf & _
+                "set @id_ID = @p1" & vbCrLf & _
+                "delete from dbo.ent3 where (id = @id_ID and version = @p2)"
 
             Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
 
