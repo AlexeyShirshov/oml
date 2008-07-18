@@ -93,6 +93,7 @@ Namespace Orm
 
         Public ReadOnly Property Key() As Integer Implements ICachedEntity.Key
             Get
+                If Not IsPKLoaded Then Throw New OrmObjectException("Object has no primary key")
                 Return _key
             End Get
         End Property
@@ -1053,6 +1054,15 @@ l1:
                 Return _members_load_state(idx)
             End Using
         End Function
+
+        Protected Overrides Sub PrepareRead(ByVal fieldName As String, ByRef d As System.IDisposable)
+            If Not IsLoaded AndAlso (ObjectState = Orm.ObjectState.NotLoaded OrElse ObjectState = Orm.ObjectState.None) Then
+                d = SyncHelper(True)
+                If Not IsLoaded AndAlso (ObjectState = Orm.ObjectState.NotLoaded OrElse ObjectState = Orm.ObjectState.None) AndAlso Not IsFieldLoaded(fieldName) Then
+                    Load()
+                End If
+            End If
+        End Sub
     End Class
 
 End Namespace

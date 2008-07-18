@@ -12,7 +12,7 @@ Namespace Orm
         ReadOnly Property ObjName() As String
         Function GetOldState() As ObjectState
         Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable
-        Sub CorrectStateAfterLoading()
+        Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean)
         Sub SetObjectState(ByVal o As ObjectState)
     End Interface
 
@@ -374,12 +374,15 @@ Namespace Orm
         End Function
 
         Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IOrmObjectSchemaBase) As Object Implements IEntity.GetValue
-            Dim s As QueryGenerator = OrmSchema
-            If s Is Nothing Then
-                Return QueryGenerator.GetFieldValueSchemaless(Me, c.FieldName, oschema, pi)
-            Else
-                Return s.GetFieldValue(Me, c.FieldName, oschema, pi)
+            If pi Is Nothing Then
+                Dim s As QueryGenerator = OrmSchema
+                If s Is Nothing Then
+                    Return QueryGenerator.GetFieldValueSchemaless(Me, c.FieldName, oschema, pi)
+                Else
+                    Return s.GetFieldValue(Me, c.FieldName, oschema, pi)
+                End If
             End If
+            Return pi.GetValue(Me, Nothing)
         End Function
 
         Public ReadOnly Property ObjectState() As ObjectState Implements _IEntity.ObjectState
@@ -479,8 +482,23 @@ Namespace Orm
             End Get
         End Property
 
-        Private Sub CorrectStateAfterLoading() Implements _IEntity.CorrectStateAfterLoading
-            If ObjectState = ObjectState.NotLoaded AndAlso IsLoaded Then SetObjectState(ObjectState.None)
+        Private Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean) Implements _IEntity.CorrectStateAfterLoading
+            If objectWasCreated Then
+                If ObjectState = Orm.ObjectState.Modified Then
+                    If IsLoaded Then
+                        SetObjectState(ObjectState.None)
+                    Else
+                        SetObjectState(ObjectState.NotLoaded)
+                    End If
+                ElseIf ObjectState = Orm.ObjectState.Created Then
+                    Debug.Assert(Not IsLoaded)
+                    SetObjectState(ObjectState.NotLoaded)
+                Else
+                    Debug.Assert(True)
+                End If
+            Else
+                If ObjectState = ObjectState.NotLoaded AndAlso IsLoaded Then SetObjectState(ObjectState.None)
+            End If
         End Sub
 
         Public Shared Function IsGoodState(ByVal state As ObjectState) As Boolean

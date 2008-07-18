@@ -1057,8 +1057,8 @@ Namespace Database
                         If Not _cache.IsDeleted(obj1) AndAlso obj1.ObjectState <> ObjectState.Modified Then
                             Using obj1.GetSyncRoot()
                                 'If obj1.IsLoaded Then obj1.IsLoaded = False
-                                LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1)
-                                obj1.CorrectStateAfterLoading()
+                                Dim ro As _IEntity = LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1)
+                                obj1.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj1))
                                 values.Add(obj1)
                             End Using
                         Else
@@ -1071,8 +1071,8 @@ Namespace Database
                             If obj2.ObjectState <> ObjectState.Modified Then
                                 Using obj2.GetSyncRoot()
                                     'If obj2.IsLoaded Then obj2.IsLoaded = False
-                                    LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2)
-                                    obj2.CorrectStateAfterLoading()
+                                    Dim ro2 As _IEntity = LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2)
+                                    obj2.CorrectStateAfterLoading(Object.ReferenceEquals(ro2, obj2))
                                 End Using
                             End If
                         End If
@@ -1308,8 +1308,8 @@ Namespace Database
                                         If obj.ObjectState <> ObjectState.Modified Then
                                             Using obj.GetSyncRoot()
                                                 'If obj.IsLoaded Then obj.IsLoaded = False
-                                                LoadFromDataReader(obj, dr, arr, False, 2, dic)
-                                                obj.CorrectStateAfterLoading()
+                                                Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 2, dic)
+                                                obj.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj))
                                             End Using
                                         End If
                                     End If
@@ -1675,10 +1675,9 @@ Namespace Database
             'RaiseObjectCreated(obj)
             'End If
             Dim obj As New T
-            LoadFromDataReader(obj, dr, withLoad, arr, False, 0, CType(dic, System.Collections.IDictionary))
-            If obj.ObjectState <> ObjectState.Modified AndAlso obj.ObjectState <> ObjectState.Deleted Then
-                obj.CorrectStateAfterLoading()
-            End If
+            Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 0, CType(dic, System.Collections.IDictionary))
+            obj.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj))
+
             values.Add(obj)
             If obj.IsLoaded Then
                 loaded += 1
@@ -1715,9 +1714,9 @@ Namespace Database
             'End If
         End Sub
 
-        Protected Sub LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.IDataReader, ByVal withLoad As Boolean, _
+        Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.IDataReader, _
             ByVal arr As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer, _
-            ByVal dic As IDictionary)
+            ByVal dic As IDictionary) As _IEntity
 
             Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
 
@@ -1727,6 +1726,7 @@ Namespace Database
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim fac As New List(Of Pair(Of String, Object))
             Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
+            'Dim load As Boolean = a
             Using obj.GetSyncRoot()
                 obj.BeginLoading()
                 Try
@@ -1806,23 +1806,32 @@ Namespace Database
                     Next
 
                     If has_pk Then
-                        If _cache.IsDeleted(TryCast(obj, ICachedEntity)) Then
-                            Return
-                        End If
                         If ce IsNot Nothing Then
                             ce.PKLoaded(pk_count)
 
-                            If obj.ObjectState = ObjectState.Created Then
-                                ce.CreateCopyForSaveNewEntry()
-                                'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                            If _cache.IsDeleted(ce) Then
+                                Return obj
+                            End If
+
+                            obj = NormalizeObject(ce, dic)
+                            ce = CType(obj, _ICachedEntity)
+
+                            'load = withLoad AndAlso 
+
+                            If obj.ObjectState <> ObjectState.Modified AndAlso obj.ObjectState <> ObjectState.Deleted Then
+                                If obj.ObjectState = ObjectState.Created Then
+                                    ce.CreateCopyForSaveNewEntry()
+                                    'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                                Else
+                                    obj.BeginLoading()
+                                End If
                             Else
-                                obj = NormalizeObject(ce, dic)
-                                ce = CType(obj, _ICachedEntity)
+                                Return obj
                             End If
                         End If
                     End If
 
-                    If withLoad Then
+                    If pk_count < arr.Count Then
                         For idx As Integer = 0 To arr.Count - 1
                             Dim c As ColumnAttribute = arr(idx)
                             Dim pi As Reflection.PropertyInfo = pi_cache(idx) '_schema.GetProperty(original_type, c)
@@ -1970,9 +1979,11 @@ Namespace Database
                     obj.EndLoading()
                 End Try
 
-                If ce IsNot Nothing AndAlso withLoad Then ce.CheckIsAllLoaded(ObjectSchema, arr.Count)
+                If ce IsNot Nothing Then ce.CheckIsAllLoaded(ObjectSchema, arr.Count)
             End Using
-        End Sub
+
+            Return obj
+        End Function
 
         Protected Friend Function TestConn(ByVal cmd As System.Data.Common.DbCommand) As ConnAction
             Invariant()
@@ -2945,8 +2956,8 @@ l2:
                             If o.ObjectState <> ObjectState.Modified Then
                                 Using o.GetSyncRoot()
                                     'If obj.IsLoaded Then obj.IsLoaded = False
-                                    LoadFromDataReader(o, dr, columns, False, 2, dic)
-                                    o.CorrectStateAfterLoading()
+                                    Dim ro As _IEntity = LoadFromDataReader(o, dr, columns, False, 2, dic)
+                                    o.CorrectStateAfterLoading(Object.ReferenceEquals(ro, o))
                                     _loadedInLastFetch += 1
                                 End Using
                             End If
