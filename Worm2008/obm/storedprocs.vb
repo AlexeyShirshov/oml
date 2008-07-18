@@ -903,7 +903,7 @@ Namespace Database.Storedprocs
                 End If
                 Dim dic As Generic.IDictionary(Of Integer, T) = mgr.GetDictionary(Of T)()
                 Dim loaded As Integer
-                mgr.LoadFromResultSet(Of T)(GetWithLoad, _l, GetColumns, dr, GetPrimaryKeyIndex, dic, loaded)
+                mgr.LoadFromResultSet(Of T)(GetWithLoad, _l, GetColumns, dr, dic, loaded)
                 _loaded += loaded
             End Sub
 

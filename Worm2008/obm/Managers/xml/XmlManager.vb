@@ -217,7 +217,7 @@ Namespace Xml
             Dim oschema As IOrmObjectSchema = CType(_schema.GetObjectSchema(original_type), IOrmObjectSchema)
             Dim ft As New PerfCounter
             Do While nodes.MoveNext
-                LoadFromNodeIterator(Of T)(nodes.Current.Clone, dic, values, _loadedInLastFetch, oschema)
+                LoadFromNodeIterator(Of T)(nodes.Current.Clone, dic, values, _loadedInLastFetch, oschema, withLoad)
             Loop
             _fetch = ft.GetTime
             Return CType(CreateReadonlyList(original_type, CType(values, System.Collections.IList)), Global.Worm.ReadOnlyEntityList(Of T))
@@ -235,32 +235,30 @@ Namespace Xml
         End Function
 
         Protected Sub LoadFromNodeIterator(Of T As {New, _ICachedEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Integer, T), _
-            ByVal values As IList(Of T), ByRef loaded As Integer, ByVal oschema As IOrmObjectSchema)
+            ByVal values As IList(Of T), ByRef loaded As Integer, ByVal oschema As IOrmObjectSchema, ByVal withLoad As Boolean)
             'Dim id As Integer = CInt(dr.GetValue(idx))
-            Dim obj As T = CreateEntity(Of T)() '= CType(CreateDBObject(Of T)(id, dic, False), T)
+            Dim obj As T = New T '= CType(CreateDBObject(Of T)(id, dic, False), T)
+            Dim oo As T = obj
             Using obj.GetSyncRoot()
                 obj.BeginLoading()
                 If LoadPK(oschema, node, obj) Then
+                    obj = CType(NormalizeObject(obj, CType(dic, System.Collections.IDictionary)), T)
                     If obj.ObjectState = ObjectState.Created Then
                         obj.CreateCopyForSaveNewEntry()
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
-                    Else
-                        obj = CType(NormalizeObject(obj, CType(dic, System.Collections.IDictionary)), T)
                     End If
-                    If obj.ObjectState = ObjectState.NotLoaded Then
+
+                    If withLoad Then
                         Using obj.GetSyncRoot()
                             'obj.RaiseBeginModification(ModifiedObject.ReasonEnum.Unknown)
                             'If obj.IsLoaded Then obj.IsLoaded = False
                             LoadData(oschema, node, obj)
-                            obj.CorrectStateAfterLoading()
-                            values.Add(obj)
-                            loaded += 1
+                            obj.CorrectStateAfterLoading(Object.ReferenceEquals(oo, obj))
                         End Using
-                    Else
-                        values.Add(obj)
-                        If obj.IsLoaded Then
-                            loaded += 1
-                        End If
+                    End If
+                    values.Add(obj)
+                    If obj.IsLoaded Then
+                        loaded += 1
                     End If
                 Else
                     If _mcSwitch.TraceVerbose Then

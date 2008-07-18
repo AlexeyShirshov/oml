@@ -2404,15 +2404,15 @@ Namespace Orm
                 'End Using
             End Get
             Set(ByVal value As Object)
-                Using SyncHelper(False)
-                    'If _id <> value Then
-                    'If _state = Orm.ObjectState.Created Then
-                    '    CreateModified(value, ModifiedObject.ReasonEnum.Unknown)
-                    'End If
-                    _id = value
-                    Debug.Assert(_id.Equals(value))
-                    'End If
-                End Using
+                'Using SyncHelper(False)
+                'If _id <> value Then
+                'If _state = Orm.ObjectState.Created Then
+                '    CreateModified(value, ModifiedObject.ReasonEnum.Unknown)
+                'End If
+                _id = value
+                'Debug.Assert(_id.Equals(value))
+                'End If
+                'End Using
             End Set
         End Property
 
