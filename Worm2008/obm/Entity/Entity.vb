@@ -488,7 +488,7 @@ Namespace Orm
             End Get
         End Property
 
-        Private Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean) Implements _IEntity.CorrectStateAfterLoading
+        Protected Overridable Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean) Implements _IEntity.CorrectStateAfterLoading
             If objectWasCreated Then
                 If ObjectState = Orm.ObjectState.Modified Then
                     If IsLoaded Then
@@ -499,8 +499,11 @@ Namespace Orm
                 ElseIf ObjectState = Orm.ObjectState.Created Then
                     Debug.Assert(Not IsLoaded)
                     SetObjectState(ObjectState.NotLoaded)
+                ElseIf ObjectState = ObjectState.NotLoaded Then
+                    If IsLoaded Then SetObjectState(ObjectState.None)
+                ElseIf ObjectState = Orm.ObjectState.None Then
                 Else
-                    Debug.Assert(True)
+                    Debug.Assert(False)
                 End If
             Else
                 If ObjectState = ObjectState.NotLoaded AndAlso IsLoaded Then SetObjectState(ObjectState.None)
