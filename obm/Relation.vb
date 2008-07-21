@@ -552,7 +552,7 @@ Namespace Cache
                 End If
 
                 For Each o As Integer In _deletedList
-                    CType(_mainList, List(Of Integer)).Remove(o)
+                    CType(_mainList, List(Of Object)).Remove(o)
                 Next
                 needaccept = needaccept OrElse _deletedList.Count > 0
                 _deletedList.Clear()
@@ -663,7 +663,7 @@ Namespace Cache
         'End Sub
 
         Protected Overrides Function CheckDual(ByVal mgr As OrmManagerBase, ByVal id As Object) As Boolean
-            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.GetOrmBaseFromCacheOrCreate(id, SubType), MainType, Key).First
+            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateOrmBase(id, SubType), MainType, Key).First
             Dim c As Boolean = True
             For Each i As Object In m.Entry.Original
                 If i.Equals(_mainId) Then

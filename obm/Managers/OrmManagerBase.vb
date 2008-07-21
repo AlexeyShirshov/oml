@@ -2945,7 +2945,7 @@ l1:
         Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
         'Dim pm As New Reflection.ParameterModifier(6)
         'pm(5) = True
-        Dim types As Type() = New Type() {GetType(IOrmBase), GetType(String)}
+        Dim types As Type() = New Type() {GetType(_IOrmBase), GetType(String)}
         Dim o() As Object = New Object() {mainobj, direct}
         'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
         '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
@@ -3744,7 +3744,7 @@ l1:
                 Dim mi As Reflection.MethodInfo = CType(mmi, Reflection.MethodInfo)
                 If mi.IsGenericMethod AndAlso mi.GetParameters.Length = 4 Then
                     mi = mi.MakeGenericMethod(New Type() {t})
-                    Return CType(mi.Invoke(Me, New Object() {ids, check, start, length}), System.Collections.ICollection)
+                    Return CType(mi.Invoke(Me, New Object() {ids, start, length, check}), System.Collections.ICollection)
                 End If
             End If
         Next
@@ -3802,9 +3802,9 @@ l1:
         Return arr
     End Function
 
-    Public Function LoadObjectsIds(Of T As {ICachedEntity, New})(ByVal tt As Type, ByVal ids As ICollection(Of Object), ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
+    Public Function LoadObjectsIds(Of T As {ICachedEntity, New})(ByVal tt As Type, ByVal ids As IList(Of Object), ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
         Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
-        Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadObjectsIds", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(Type), GetType(ICollection(Of Object)), GetType(Integer), GetType(Integer)}, Nothing)
+        Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadObjectsIds", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(IList(Of Object)), GetType(Integer), GetType(Integer)}, Nothing)
         Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {tt})
         Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {ids, start, length}, Nothing), ReadOnlyEntityList(Of T))
     End Function
