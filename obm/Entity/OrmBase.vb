@@ -2323,7 +2323,7 @@ Namespace Orm
         Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
             MyBase.New()
             MyBase.Init(id, cache, schema, Nothing)
-            SetObjectStateClear(Orm.ObjectState.Created)
+            'SetObjectStateClear(Orm.ObjectState.Created)
             'Throw New NotSupportedException
         End Sub
 

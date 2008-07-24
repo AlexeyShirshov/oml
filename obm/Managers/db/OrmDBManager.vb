@@ -129,7 +129,7 @@ Namespace Database
             Return True
         End Function
 
-        Protected Overrides Function InsertObject(ByVal obj As ICachedEntity) As Boolean
+        Protected Overrides Function InsertObject(ByVal obj As _ICachedEntity) As Boolean
             Invariant()
 
             If obj Is Nothing Then
@@ -214,7 +214,7 @@ Namespace Database
                 End Using
                 err = False
             Finally
-                'If err Then obj.IsLoaded = oldl
+                If Not err Then obj.SetLoaded(True)
             End Try
             Return True
         End Function

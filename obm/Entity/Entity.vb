@@ -44,7 +44,7 @@ Namespace Orm
         Inherits _IEntity, IComparable, System.Xml.Serialization.IXmlSerializable
         ReadOnly Property Key() As Integer
         ReadOnly Property OriginalCopy() As ICachedEntity
-        Sub CreateCopyForSaveNewEntry()
+        Sub CreateCopyForSaveNewEntry(ByVal pk() As Pair(Of String, Object))
         Sub Load()
         Sub RemoveFromCache(ByVal cache As OrmCacheBase)
         Sub UpdateCache()
@@ -271,10 +271,16 @@ Namespace Orm
                 End If
 
                 _PrepareUpdate()
+            ElseIf ObjectState = Orm.ObjectState.Created Then
+                _PrepareLoadingUpdate()
             End If
         End Sub
 
         Protected Overridable Sub _PrepareUpdate()
+
+        End Sub
+
+        Protected Overridable Sub _PrepareLoadingUpdate()
 
         End Sub
 
@@ -431,7 +437,7 @@ Namespace Orm
 
             If cache IsNot Nothing Then cache.RegisterCreation(Me)
 
-            _state = Orm.ObjectState.NotLoaded
+            _state = Orm.ObjectState.Created
         End Sub
 
         Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
@@ -468,9 +474,9 @@ Namespace Orm
 
         Protected Function CreateClone() As Entity Implements IEntity.CreateClone
             Dim clone As Entity = CreateObject()
-            CopyBody(Me, clone)
             clone._old_state = ObjectState
             clone.SetObjectState(Orm.ObjectState.Clone)
+            CopyBody(Me, clone)
             Return clone
         End Function
 

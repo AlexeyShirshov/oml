@@ -153,7 +153,7 @@ Public Class TestProcs
     Public Sub TestP2OrmSimple()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim c As Worm.ReadOnlyObjectList(Of Table1) = Worm.Database.Storedprocs.QueryOrmStoredProcBase(Of Table1).Exec(mgr, "dbo.p2", _
-                New String() {"ID", "Title", "Code", "Enum", "EnumStr", "DT"}, "i", 2)
+                New String() {"ID", "Title", "Code", "Enum", "EnumStr", "DT"}, New Integer() {0}, "i", 2)
 
             Assert.AreEqual(1, c.Count)
             Dim t1 As Table1 = c(0)
@@ -309,7 +309,7 @@ Public Class P2OrmProc
 
     Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of ColumnAttribute)
         Dim l As New List(Of ColumnAttribute)
-        l.Add(New ColumnAttribute("ID"))
+        l.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
         l.Add(New ColumnAttribute("Title"))
         l.Add(New ColumnAttribute("Code"))
         l.Add(New ColumnAttribute("Enum"))

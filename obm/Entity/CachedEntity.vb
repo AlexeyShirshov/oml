@@ -98,11 +98,12 @@ Namespace Orm
             End Get
         End Property
 
-        Public Sub CreateCopyForSaveNewEntry() Implements ICachedEntity.CreateCopyForSaveNewEntry
-            Dim clone As Entity = CreateClone()
+        Public Overridable Sub CreateCopyForSaveNewEntry(ByVal pk() As Pair(Of String, Object)) Implements ICachedEntity.CreateCopyForSaveNewEntry
+            Dim clone As CachedEntity = CType(CreateClone(), CachedEntity)
             SetObjectState(Orm.ObjectState.Modified)
             Using mc As IGetManager = GetMgr()
-                mc.Manager.Cache.RegisterModification(CType(clone, _ICachedEntity), ModifiedObject.ReasonEnum.Unknown)
+                mc.Manager.Cache.RegisterModification(clone, ModifiedObject.ReasonEnum.Unknown)
+                If pk IsNot Nothing Then clone.SetPK(pk)
             End Using
         End Sub
 
@@ -497,6 +498,7 @@ l1:
 
                 Dim elems As New Generic.List(Of Pair(Of String, Object))
                 Dim xmls As New Generic.List(Of Pair(Of String, String))
+                Dim objs As New List(Of Pair(Of String, Pair(Of String, Object)()))
 
                 For Each de As DictionaryEntry In OrmSchema.GetProperties(t)
                     Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
@@ -505,15 +507,22 @@ l1:
                         If IsLoaded Then
                             Dim v As Object = pi.GetValue(Me, Nothing)
                             Dim tt As Type = pi.PropertyType
-                            If v IsNot Nothing Then
-                                If GetType(OrmBase).IsAssignableFrom(tt) Then
-                                    .WriteAttributeString(c.FieldName, CType(v, OrmBase).Identifier.ToString)
-                                ElseIf tt.IsArray Then
-                                    elems.Add(New Pair(Of String, Object)(c.FieldName, pi.GetValue(Me, Nothing)))
-                                ElseIf tt Is GetType(XmlDocument) Then
-                                    xmls.Add(New Pair(Of String, String)(c.FieldName, CType(pi.GetValue(Me, Nothing), XmlDocument).OuterXml))
+                            If GetType(ICachedEntity).IsAssignableFrom(tt) Then
+                                '.WriteAttributeString(c.FieldName, CType(v, ICachedEntity).Identifier.ToString)
+                                If v IsNot Nothing Then
+                                    objs.Add(New Pair(Of String, Pair(Of String, Object)())(c.FieldName, CType(v, ICachedEntity).GetPKValues))
                                 Else
+                                    objs.Add(New Pair(Of String, Pair(Of String, Object)())(c.FieldName, Nothing))
+                                End If
+                            ElseIf tt.IsArray Then
+                                elems.Add(New Pair(Of String, Object)(c.FieldName, pi.GetValue(Me, Nothing)))
+                            ElseIf tt Is GetType(XmlDocument) Then
+                                xmls.Add(New Pair(Of String, String)(c.FieldName, CType(pi.GetValue(Me, Nothing), XmlDocument).OuterXml))
+                            Else
+                                If v IsNot Nothing Then
                                     .WriteAttributeString(c.FieldName, Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture))
+                                Else
+                                    .WriteAttributeString(c.FieldName, "xxx:nil")
                                 End If
                             End If
                         ElseIf (OrmSchema.GetAttributes(t, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -531,6 +540,22 @@ l1:
                 For Each p As Pair(Of String, String) In xmls
                     .WriteStartElement(p.First)
                     .WriteCData(p.Second)
+                    .WriteEndElement()
+                Next
+
+                For Each p As Pair(Of String, Pair(Of String, Object)()) In objs
+                    .WriteStartElement(p.First)
+                    If p.Second IsNot Nothing Then
+                        For Each pk As Pair(Of String, Object) In p.Second
+                            .WriteStartElement("pk")
+                            'Dim v As String = "xxx:nil"
+                            'If pk.Second IsNot Nothing Then
+                            '    v = pk.Second.ToString
+                            'End If
+                            .WriteAttributeString(pk.First, pk.Second.ToString)
+                            .WriteEndElement()
+                        Next
+                    End If
                     .WriteEndElement()
                 Next
                 '.WriteEndElement() 't.Name
@@ -559,8 +584,38 @@ l1:
                     '    pi.SetValue(Me, f.Deserialize(ms), Nothing)
                     '    SetLoaded(c, True)
                     'End Using
+                Case XmlNodeType.EndElement
+                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
+                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
+                    pi.SetValue(Me, Nothing, Nothing)
+                    SetLoaded(c, True, True)
+                Case XmlNodeType.Element
+                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
+                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
+                    Dim o As ICachedEntity = Nothing
+                    Dim pk() As Pair(Of String, Object) = GetPKs(reader)
+                    Using mc As IGetManager = GetMgr()
+                        o = mc.Manager.CreateObject(pk, pi.PropertyType)
+                    End Using
+                    pi.SetValue(Me, o, Nothing)
+                    SetLoaded(c, True, True)
             End Select
         End Sub
+
+        Private Function GetPKs(ByVal reader As XmlReader) As Pair(Of String, Object)()
+            Dim l As New List(Of Pair(Of String, Object))
+            Do While reader.Read
+                If reader.NodeType = XmlNodeType.Element AndAlso reader.Name = "pk" Then
+                    reader.MoveToFirstAttribute()
+                    Do
+                        'Dim v As String = reader.Value
+                        'If v = "xxx:nil" Then v = Nothing
+                        l.Add(New Pair(Of String, Object)(reader.Name, reader.Value))
+                    Loop While reader.MoveToNextAttribute
+                End If
+            Loop
+            Return l.ToArray
+        End Function
 
         Protected Sub ReadValues(ByVal reader As XmlReader)
             With reader
@@ -572,6 +627,56 @@ l1:
                 End If
 
                 Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
+                Dim pk_count As Integer
+
+                Do
+
+                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(t, oschema, .Name)
+                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(t, .Name)
+
+                    Dim att As Field2DbRelations = OrmSchema.GetAttributes(t, c)
+
+                    If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        Dim value As String = .Value
+                        If value = "xxx:nil" Then value = Nothing
+                        If fv IsNot Nothing Then
+                            value = CStr(fv.CreateValue(c, Me, value))
+                        End If
+
+                        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                        If pi IsNot Nothing Then
+                            pi.SetValue(Me, v, Nothing)
+                            SetLoaded(c, True, True)
+                            pk_count += 1
+                        End If
+                    End If
+                Loop While .MoveToNextAttribute
+                Dim obj As _ICachedEntity = Me
+
+                If pk_count > 0 Then
+                    PKLoaded(pk_count)
+
+                    If OrmCache.IsDeleted(Me) Then
+                        Return
+                    End If
+
+                    If ObjectState = ObjectState.Created Then
+                        CreateCopyForSaveNewEntry(Nothing)
+                        'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                    Else
+                        Using mc As IGetManager = GetMgr()
+                            obj = mc.Manager.NormalizeObject(Me, mc.Manager.GetDictionary(Me.GetType))
+                        End Using
+
+                        If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                            Return
+                        End If
+
+                        obj.BeginLoading()
+                    End If
+                End If
+
+                .MoveToFirstAttribute()
                 Do
 
                     Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(t, oschema, .Name)
@@ -581,37 +686,38 @@ l1:
                     'Dim not_pk As Boolean = (att And Field2DbRelations.PK) = 0
 
                     'Me.IsLoaded = not_pk
+                    If (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                        Dim value As String = .Value
+                        If value = "xxx:nil" Then value = Nothing
+                        If fv IsNot Nothing Then
+                            value = CStr(fv.CreateValue(c, obj, value))
+                        End If
 
-                    Dim value As String = .Value
-                    If fv IsNot Nothing Then
-                        value = CStr(fv.CreateValue(c, Me, value))
-                    End If
-
-                    If GetType(OrmBase).IsAssignableFrom(pi.PropertyType) Then
-                        'If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
-                        '    CreateObject(.Name, value)
-                        '    SetLoaded(c, True)
-                        'Else
-                        Using mc As IGetManager = GetMgr()
-                            Dim v As IOrmBase = mc.Manager.GetOrmBaseFromCacheOrCreate(value, pi.PropertyType)
+                        If GetType(OrmBase).IsAssignableFrom(pi.PropertyType) Then
+                            'If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
+                            '    CreateObject(.Name, value)
+                            '    SetLoaded(c, True)
+                            'Else
+                            Using mc As IGetManager = GetMgr()
+                                Dim v As IOrmBase = mc.Manager.GetOrmBaseFromCacheOrCreate(value, pi.PropertyType)
+                                If pi IsNot Nothing Then
+                                    pi.SetValue(obj, v, Nothing)
+                                    SetLoaded(c, True, True)
+                                End If
+                            End Using
+                            'End If
+                        Else
+                            Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                             If pi IsNot Nothing Then
-                                pi.SetValue(Me, v, Nothing)
+                                pi.SetValue(obj, v, Nothing)
                                 SetLoaded(c, True, True)
                             End If
-                        End Using
-                        'End If
-                    Else
-                        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                        If pi IsNot Nothing Then
-                            pi.SetValue(Me, v, Nothing)
-                            SetLoaded(c, True, True)
                         End If
+
+                        'If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        '    If OrmCache IsNot Nothing Then OrmCache.RegisterCreation(Me.GetType, Identifier)
+                        'End If
                     End If
-
-                    'If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    '    If OrmCache IsNot Nothing Then OrmCache.RegisterCreation(Me.GetType, Identifier)
-                    'End If
-
                 Loop While .MoveToNextAttribute
             End With
         End Sub
@@ -709,6 +815,10 @@ l1:
                 Return CType(gm.Manager.CreateEntity(GetPKValues, Me.GetType), Entity)
             End Using
         End Function
+
+        Protected Overrides Sub _PrepareLoadingUpdate()
+            CreateCopyForSaveNewEntry(Nothing)
+        End Sub
 
         Protected Overrides Sub _PrepareUpdate()
             If Not IsLoaded Then
@@ -861,7 +971,7 @@ l1:
 #If TraceSetState Then
                     SetObjectState(olds, mo.Reason, mo.StackTrace, mo.DateTime)
 #Else
-                    SetObjectState(olds)
+                    SetObjectStateClear(olds)
 #End If
                     If ObjectState = Orm.ObjectState.Created Then
                         Dim name As String = Me.GetType.Name

@@ -192,7 +192,10 @@ Public Class TestReject
     Public Sub TestUpdate3()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As Table3 = mgr.Find(Of Table3)(1)
+            Assert.IsNotNull(t1)
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
+            Assert.IsNotNull(t2)
+
             mgr.BeginTransaction()
             Dim a As Byte() = Nothing
             Try
