@@ -135,8 +135,9 @@ Namespace Cache
                 If _deletedList.Contains(id) Then
                     _deletedList.Remove(id)
                 Else
-                    PreAdd(id)
-                    _addedList.Add(id)
+                    If Not PreAdd(id) Then
+                        _addedList.Add(id)
+                    End If
                 End If
             End Using
         End Sub
@@ -242,9 +243,9 @@ Namespace Cache
             End If
         End Sub
 
-        Protected Overridable Sub PreAdd(ByVal id As Object)
-
-        End Sub
+        Protected Overridable Function PreAdd(ByVal id As Object) As Boolean
+            Return False
+        End Function
 
         Protected ReadOnly Property SyncRoot() As IDisposable
             Get
@@ -601,7 +602,7 @@ Namespace Cache
             Return True
         End Function
 
-        Protected Overrides Sub PreAdd(ByVal id As Object)
+        Protected Overrides Function PreAdd(ByVal id As Object) As Boolean
             If _sort IsNot Nothing Then
                 Dim sr As IOrmSorting = Nothing
                 Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
@@ -617,7 +618,7 @@ Namespace Cache
                         Dim pos As Integer = col.BinarySearch(mgr.GetOrmBaseFromCacheOrCreate(id, _subType), c)
                         If pos < 0 Then
                             _addedList.Insert(Not pos, id)
-                            Return
+                            Return True
                         End If
                     Else
                         _cantgetCurrent = True
@@ -626,7 +627,8 @@ Namespace Cache
                     _cantgetCurrent = True
                 End If
             End If
-        End Sub
+            Return False
+        End Function
 
         Protected Overrides Function GetRevert(ByVal mgr As OrmManagerBase) As System.Collections.Generic.List(Of EditableListBase)
             Dim l As New List(Of EditableListBase)

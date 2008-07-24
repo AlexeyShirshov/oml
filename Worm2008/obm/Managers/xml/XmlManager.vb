@@ -51,7 +51,7 @@ Namespace Xml
             Throw New NotImplementedException
         End Sub
 
-        Protected Overrides Function InsertObject(ByVal obj As ICachedEntity) As Boolean
+        Protected Overrides Function InsertObject(ByVal obj As _ICachedEntity) As Boolean
             Throw New NotImplementedException()
         End Function
 
@@ -241,10 +241,11 @@ Namespace Xml
             Dim oo As T = obj
             Using obj.GetSyncRoot()
                 obj.BeginLoading()
+                Dim pk() As Pair(Of String, Object) = obj.GetPKValues
                 If LoadPK(oschema, node, obj) Then
                     obj = CType(NormalizeObject(obj, CType(dic, System.Collections.IDictionary)), T)
                     If obj.ObjectState = ObjectState.Created Then
-                        obj.CreateCopyForSaveNewEntry()
+                        obj.CreateCopyForSaveNewEntry(pk)
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                     End If
 

@@ -1270,14 +1270,14 @@ Public MustInherit Class OrmManagerBase
                 Next
             End If
 
-            Dim ids As New ArrayList
+            Dim ids As New List(Of Object)
             For Each o As OrmBase In newc
                 ids.Add(o.Identifier)
             Next
             Dim c As New List(Of T)
 
             'If ids.Ints.Count > 0 Then
-            GetObjects(Of T)(ids.ToArray, GetFilter(criteria, tt), c, True, fieldName, False)
+            GetObjects(Of T)(ids, GetFilter(criteria, tt), c, True, fieldName, False)
 
             Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(tt)
             For Each o As T In c
@@ -1408,7 +1408,7 @@ Public MustInherit Class OrmManagerBase
                 Next
             End If
 
-            Dim ids As New ArrayList
+            Dim ids As New List(Of Object)
             Dim type As Type = Nothing
             For Each o As OrmBase In newc
                 ids.Add(o.Identifier)
@@ -1416,7 +1416,7 @@ Public MustInherit Class OrmManagerBase
                     type = o.GetType
                 End If
             Next
-            Dim edic As IDictionary(Of Object, EditableList) = GetObjects(Of T)(type, ids.ToArray, GetFilter(criteria, type2load), relation, False, True)
+            Dim edic As IDictionary(Of Object, EditableList) = GetObjects(Of T)(type, ids, GetFilter(criteria, type2load), relation, False, True)
             'l.AddRange(c)
 
             If (target IsNot Nothing OrElse Not _dont_cache_lists) AndAlso edic IsNot Nothing Then
@@ -2298,13 +2298,29 @@ l1:
         Return o
     End Function
 
-    Protected Friend Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk() As Pair(Of String, Object)) As T
+    Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As Pair(Of String, Object)) As T
+        If GetType(IOrmBase).IsAssignableFrom(GetType(T)) Then
+            Return CType(CreateOrmBase(pk(0).Second, GetType(T)), T)
+        Else
+            Return CreateEntity(Of T)(pk)
+        End If
+    End Function
+
+    Public Function CreateObject(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As ICachedEntity
+        If GetType(IOrmBase).IsAssignableFrom(type) Then
+            Return CreateOrmBase(pk(0).Second, type)
+        Else
+            Return CreateEntity(pk, type)
+        End If
+    End Function
+
+    Public Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk() As Pair(Of String, Object)) As T
         Dim o As New T
         o.Init(pk, _cache, _schema, IdentityString)
         Return o
     End Function
 
-    Protected Friend Function CreateEntity(ByVal pk() As Pair(Of String, Object), ByVal t As Type) As _ICachedEntity
+    Public Function CreateEntity(ByVal pk() As Pair(Of String, Object), ByVal t As Type) As _ICachedEntity
         Dim o As _ICachedEntity = CType(Activator.CreateInstance(t), _ICachedEntity)
         o.Init(pk, _cache, _schema, IdentityString)
         Return o
@@ -4011,7 +4027,7 @@ l1:
         End Try
     End Function
 
-    Public Function AddObject(ByVal obj As ICachedEntity) As ICachedEntity
+    Public Function AddObject(ByVal obj As _ICachedEntity) As ICachedEntity
         Invariant()
 
         If obj Is Nothing Then
@@ -4091,7 +4107,7 @@ l1:
 
     Protected Friend MustOverride Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
 
-    Protected MustOverride Function InsertObject(ByVal obj As ICachedEntity) As Boolean
+    Protected MustOverride Function InsertObject(ByVal obj As _ICachedEntity) As Boolean
 
     Protected Friend MustOverride Sub DeleteObject(ByVal obj As ICachedEntity)
 

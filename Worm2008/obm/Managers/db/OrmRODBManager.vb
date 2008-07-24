@@ -551,7 +551,7 @@ Namespace Database
                 'End If
             End Sub
 
-            Public Function CreateNewObject(Of T As {OrmBase, New})() As T
+            Public Function CreateNewObject(Of T As {IOrmBase, New})() As T
                 If _mgr.NewObjectManager Is Nothing Then
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
@@ -559,11 +559,11 @@ Namespace Database
                 Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetIdentity(GetType(T)))
             End Function
 
-            Public Overridable Function CreateNewObject(Of T As {OrmBase, New})(ByVal id As Object) As T
+            Public Overridable Function CreateNewObject(Of T As {_ICachedEntity, New})(ByVal pk() As Pair(Of String, Object)) As T
                 If _mgr.NewObjectManager Is Nothing Then
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
-                Dim o As T = _mgr.CreateEntity(Of T)()
+                Dim o As T = _mgr.CreateEntity(Of T)(pk)
                 'Dim o As New T
                 'o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
                 _mgr.NewObjectManager.AddNew(o)
@@ -573,7 +573,21 @@ Namespace Database
                 Return o
             End Function
 
-            Public Function CreateNewObject(ByVal t As Type) As OrmBase
+            Public Overridable Function CreateNewObject(Of T As {IOrmBase, New})(ByVal id As Object) As T
+                If _mgr.NewObjectManager Is Nothing Then
+                    Throw New InvalidOperationException("NewObjectManager is not set")
+                End If
+                Dim o As T = _mgr.CreateOrmBase(Of T)(id)
+                'Dim o As New T
+                'o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
+                _mgr.NewObjectManager.AddNew(o)
+                '_objs.Add(o)
+                '_saver.Add(o)
+                Add(o)
+                Return o
+            End Function
+
+            Public Function CreateNewObject(ByVal t As Type) As IOrmBase
                 If _mgr.NewObjectManager Is Nothing Then
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
@@ -1259,7 +1273,7 @@ Namespace Database
 
                 Dim pcnt As Integer = params.Params.Count
                 Dim nidx As Integer = pcnt
-                For Each cmd_str As Pair(Of String, Integer) In GetFilters(CType(ids, List(Of Integer)), relation.Table, r2.Column, almgr, params, idsSorted)
+                For Each cmd_str As Pair(Of String, Integer) In GetFilters(CType(ids, List(Of Object)), relation.Table, r2.Column, almgr, params, idsSorted)
                     Dim sb_cmd As New StringBuilder
                     sb_cmd.Append(sb.ToString).Append(cmd_str.First)
                     'Dim msort As Boolean = False
@@ -1734,6 +1748,9 @@ Namespace Database
                     Dim has_pk As Boolean = False
                     Dim pi_cache(arr.Count - 1) As Reflection.PropertyInfo
                     Dim idic As IDictionary = _schema.GetProperties(original_type)
+                    'Dim bl As Boolean
+                    Dim oldpk() As Pair(Of String, Object) = Nothing
+                    If ce IsNot Nothing Then oldpk = ce.GetPKValues()
                     For idx As Integer = 0 To arr.Count - 1
                         Dim c As ColumnAttribute = arr(idx)
                         Dim pi As Reflection.PropertyInfo = CType(idic(c), Reflection.PropertyInfo)
@@ -1761,6 +1778,11 @@ Namespace Database
                                 End If
 
                                 If Not dr.IsDBNull(idx + displacement) Then
+                                    'If ce IsNot Nothing AndAlso obj.ObjectState = ObjectState.Created Then
+                                    '    ce.CreateCopyForSaveNewEntry()
+                                    '    'bl = True
+                                    'End If
+
                                     Try
                                         If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
                                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
@@ -1813,20 +1835,18 @@ Namespace Database
                                 Return obj
                             End If
 
-                            obj = NormalizeObject(ce, dic)
-                            ce = CType(obj, _ICachedEntity)
-
-                            'load = withLoad AndAlso 
-
-                            If obj.ObjectState <> ObjectState.Modified AndAlso obj.ObjectState <> ObjectState.Deleted Then
-                                If obj.ObjectState = ObjectState.Created Then
-                                    ce.CreateCopyForSaveNewEntry()
-                                    'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
-                                Else
-                                    obj.BeginLoading()
-                                End If
+                            If obj.ObjectState = ObjectState.Created Then
+                                ce.CreateCopyForSaveNewEntry(oldpk)
+                                'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                             Else
-                                Return obj
+                                obj = NormalizeObject(ce, dic)
+
+                                If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                                    Return obj
+                                End If
+
+                                ce = CType(obj, _ICachedEntity)
+                                obj.BeginLoading()
                             End If
                         End If
                     End If
@@ -1858,6 +1878,7 @@ Namespace Database
                                 ElseIf Not dr.IsDBNull(idx + displacement) AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                                     If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
                                         fac.Add(New Pair(Of String, Object)(c.FieldName, value))
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
                                         '    'obj.CreateObject(c.FieldName, value)
                                         '    obj.SetValue(pi, c, )
                                         '    obj.SetLoaded(c, True, True)
@@ -2313,12 +2334,28 @@ Namespace Database
             Return l
         End Function
 
-        Protected Function GetFilters(ByVal ids As Generic.List(Of Integer), ByVal table As SourceFragment, ByVal column As String, _
+        Protected Function GetFilters(ByVal ids_ As Generic.List(Of Object), ByVal table As SourceFragment, ByVal column As String, _
             ByVal almgr As AliasMgr, ByVal params As ParamMgr, ByVal idsSorted As Boolean) As Generic.IEnumerable(Of Pair(Of String, Integer))
 
-            Dim mr As MergeResult = MergeIds(ids, Not idsSorted)
-
+            Dim mr As MergeResult = Nothing
             Dim l As New Generic.List(Of Pair(Of String, Integer))
+
+            If ids_.Count > 0 Then
+                Dim int As Integer
+                Dim ids As Generic.List(Of Integer) = Nothing
+                If Integer.TryParse(ids_(0).ToString, int) Then
+                    ids = ids_.ConvertAll(Function(i) Convert.ToInt32(i))
+                    mr = MergeIds(ids, Not idsSorted)
+                Else
+                    Dim sb As New StringBuilder
+                    For Each o As Object In ids_
+                        sb.Append(o.ToString).Append(",")
+                    Next
+                    sb.Length -= 1
+                    Dim f As New Database.Criteria.Core.TableFilter(table, column, New LiteralValue(sb.ToString), Worm.Criteria.FilterOperation.In)
+                    l.Add(New Pair(Of String, Integer)(f.MakeQueryStmt(DbSchema, GetFilterInfo, almgr, params), params.Params.Count))
+                End If
+            End If
 
             If mr IsNot Nothing Then
                 Dim sb As New StringBuilder
@@ -2893,7 +2930,7 @@ l2:
         '    Throw New NotImplementedException()
         'End Function
 
-        Protected Overrides Function InsertObject(ByVal obj As ICachedEntity) As Boolean
+        Protected Overrides Function InsertObject(ByVal obj As _ICachedEntity) As Boolean
             Throw New NotImplementedException()
         End Function
 

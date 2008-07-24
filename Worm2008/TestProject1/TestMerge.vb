@@ -85,7 +85,7 @@ Imports Worm.Database
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
             Dim pa As New Worm_Orm_OrmReadOnlyDBManagerAccessor(mgr)
 
-            Dim l As New List(Of Integer)
+            Dim l As New List(Of Object)
             Dim i As Integer = 0
             Do
                 l.Add(i)
@@ -111,7 +111,7 @@ Imports Worm.Database
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
             Dim pa As New Worm_Orm_OrmReadOnlyDBManagerAccessor(mgr)
 
-            Dim l As New List(Of Integer)
+            Dim l As New List(Of Object)
             Dim i As Integer = 0
             Do
                 l.Add(i)
