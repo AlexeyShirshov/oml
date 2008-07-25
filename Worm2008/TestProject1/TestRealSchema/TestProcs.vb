@@ -526,7 +526,7 @@ Public Class PartialLoadProc
 
     Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of ColumnAttribute)
         Dim l As New List(Of ColumnAttribute)
-        l.Add(New ColumnAttribute("ID"))
+        l.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
         l.Add(New ColumnAttribute("ddd"))
         Return l
     End Function

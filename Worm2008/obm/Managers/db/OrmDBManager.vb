@@ -214,7 +214,12 @@ Namespace Database
                 End Using
                 err = False
             Finally
-                If Not err Then obj.SetLoaded(True)
+                If Not err Then
+                    obj.SetLoaded(True)
+                    'If obj.ObjectState = ObjectState.Modified Then
+                    '    obj.SetObjectState(ObjectState.None)
+                    'End If
+                End If
             End Try
             Return True
         End Function

@@ -474,9 +474,10 @@ Namespace Orm
 
         Protected Function CreateClone() As Entity Implements IEntity.CreateClone
             Dim clone As Entity = CreateObject()
+            clone.SetObjectState(Orm.ObjectState.NotLoaded)
+            CopyBody(Me, clone)
             clone._old_state = ObjectState
             clone.SetObjectState(Orm.ObjectState.Clone)
-            CopyBody(Me, clone)
             Return clone
         End Function
 

@@ -1513,16 +1513,19 @@ Public MustInherit Class OrmManagerBase
 
     Public Function GetEntityFromCacheOrDB(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As ICachedEntity
         Dim o As _ICachedEntity = CreateEntity(pk, type)
+        o.SetObjectState(ObjectState.NotLoaded)
         Return GetFromCacheOrLoadFromDB(o, GetDictionary(type))
     End Function
 
     Public Function GetEntityFromCacheOrCreate(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As ICachedEntity
         Dim o As _ICachedEntity = CreateEntity(pk, type)
+        o.SetObjectState(ObjectState.NotLoaded)
         Return NormalizeObject(o, GetDictionary(type))
     End Function
 
     Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk() As Pair(Of String, Object)) As T
         Dim o As T = CreateEntity(Of T)(pk)
+        o.SetObjectState(ObjectState.NotLoaded)
         Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
@@ -1547,6 +1550,7 @@ Public MustInherit Class OrmManagerBase
         '        End If
         '        Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {id}, Nothing), IOrmBase)
         Dim o As IOrmBase = CreateOrmBase(id, type)
+        o.SetObjectState(ObjectState.NotLoaded)
         Return CType(NormalizeObject(o, GetDictionary(type)), IOrmBase)
     End Function
 
@@ -1563,6 +1567,7 @@ Public MustInherit Class OrmManagerBase
         'End Using
         'Return o
         Dim o As T = CreateOrmBase(Of T)(id)
+        o.SetObjectState(ObjectState.NotLoaded)
         Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
@@ -3065,40 +3070,42 @@ l1:
     End Function
 
     Protected Sub M2MUpdate(ByVal obj As _IOrmBase, ByVal oldId As Object)
-        For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, obj.GetOldName(oldId))
-            Dim key As String = o.Second.First
-            Dim id As String = o.Second.Second
-            Dim m As M2MCache = o.First
-            Dim dic As IDictionary = GetDic(Cache, key)
-            dic.Remove(id)
-            m.Entry.MainId = obj.Identifier
+        If oldId IsNot Nothing Then
+            For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, obj.GetOldName(oldId))
+                Dim key As String = o.Second.First
+                Dim id As String = o.Second.Second
+                Dim m As M2MCache = o.First
+                Dim dic As IDictionary = GetDic(Cache, key)
+                dic.Remove(id)
+                m.Entry.MainId = obj.Identifier
 
-            id = obj.Identifier.ToString
-            If m.Filter IsNot Nothing Then
-                id &= CObj(m.Filter).ToString
-            End If
-            dic.Add(id, m)
-        Next
+                id = obj.Identifier.ToString
+                If m.Filter IsNot Nothing Then
+                    id &= CObj(m.Filter).ToString
+                End If
+                dic.Add(id, m)
+            Next
 
-        Cache.UpdateM2MEntries(obj, oldId, obj.GetOldName(oldId))
-        Dim tt1 As Type = obj.GetType
+            Cache.UpdateM2MEntries(obj, oldId, obj.GetOldName(oldId))
+            Dim tt1 As Type = obj.GetType
 
-        For Each r As M2MRelation In _schema.GetM2MRelations(obj.GetType)
+            For Each r As M2MRelation In _schema.GetM2MRelations(obj.GetType)
 
-            Dim key As String = GetM2MKey(tt1, r.Type, r.Key)
-            Dim dic As IDictionary = GetDic(_cache, key)
-            Dim id As String = obj.Identifier.ToString
-            'Dim sync As String = GetSync(key, id)
+                Dim key As String = GetM2MKey(tt1, r.Type, r.Key)
+                Dim dic As IDictionary = GetDic(_cache, key)
+                Dim id As String = obj.Identifier.ToString
+                'Dim sync As String = GetSync(key, id)
 
-            If dic.Contains(id) Then
-                Dim m As M2MCache = CType(dic(id), M2MCache)
+                If dic.Contains(id) Then
+                    Dim m As M2MCache = CType(dic(id), M2MCache)
 
-                For Each oid As Integer In m.Entry.Current
-                    Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(oid, r.Type), _IOrmBase)
-                    M2MSubUpdate(o, obj.Identifier, oldId, obj.GetType)
-                Next
-            End If
-        Next
+                    For Each oid As Integer In m.Entry.Current
+                        Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(oid, r.Type), _IOrmBase)
+                        M2MSubUpdate(o, obj.Identifier, oldId, obj.GetType)
+                    Next
+                End If
+            Next
+        End If
     End Sub
 
     Protected Sub M2MSubUpdate(ByVal obj As _IOrmBase, ByVal id As Object, ByVal oldId As Object, ByVal t As Type)
