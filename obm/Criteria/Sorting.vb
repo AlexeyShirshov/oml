@@ -718,11 +718,13 @@ Namespace Sorting
                     xo = schema.GetJoinObj(oschema, xo, s.Type)
                 End If
                 If oschema Is Nothing Then
-                    oschema = schema.GetObjectSchema(s.Type)
+                    oschema = schema.GetObjectSchema(_t)
                 End If
                 Dim ss As IOrmSorting = TryCast(oschema, IOrmSorting)
                 If ss IsNot Nothing Then
                     Return New Pair(Of IEntity, IOrmSorting)(xo, ss)
+                Else
+                    Return xo.GetValue(Nothing, New ColumnAttribute(s.FieldName), Nothing)
                 End If
             End If
             Return xo.GetValue(Nothing, New ColumnAttribute(s.FieldName), oschema)

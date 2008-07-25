@@ -1043,7 +1043,7 @@ l1:
 #End If
                 r = mc.UpdateObject(Me)
             ElseIf ObjectState = Orm.ObjectState.Created OrElse ObjectState = Orm.ObjectState.NotFoundInSource Then
-                If OriginalCopy IsNot Nothing Then
+                If IsPKLoaded AndAlso OriginalCopy IsNot Nothing Then
                     Throw New OrmObjectException(ObjName & " already exists.")
                 End If
                 Dim o As ICachedEntity = mc.AddObject(Me)

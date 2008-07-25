@@ -1549,7 +1549,7 @@ Namespace Database
                             Throw DbSchema.PrepareConcurrencyException(obj)
                         End If
 
-                        If Not obj.IsLoaded Then
+                        If Not obj.IsLoaded AndAlso loaded Then
                             If load Then
                                 'Throw New ApplicationException
                                 obj.SetObjectState(ObjectState.NotFoundInSource)
@@ -1557,11 +1557,12 @@ Namespace Database
                             End If
                         Else
                             If obj.ObjectState = ObjectState.Created Then
+                                obj.CreateCopyForSaveNewEntry(Nothing)
                                 'obj.ObjectState = ObjectState.None
-                                Throw New ApplicationException
-                                obj.BeginLoading()
+                                'Throw New ApplicationException
+                                'obj.BeginLoading()
                                 'obj.Identifier = obj.Identifier
-                                obj.EndLoading()
+                                'obj.EndLoading()
                             End If
                         End If
                     End Using
@@ -1835,17 +1836,15 @@ Namespace Database
                                 Return obj
                             End If
 
+                            obj = NormalizeObject(ce, dic)
+                            ce = CType(obj, _ICachedEntity)
+
                             If obj.ObjectState = ObjectState.Created Then
                                 ce.CreateCopyForSaveNewEntry(oldpk)
                                 'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                            ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                                Return obj
                             Else
-                                obj = NormalizeObject(ce, dic)
-
-                                If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
-                                    Return obj
-                                End If
-
-                                ce = CType(obj, _ICachedEntity)
                                 obj.BeginLoading()
                             End If
                         End If
@@ -2224,6 +2223,8 @@ Namespace Database
                                     ar.Add(ro)
                                 End If
                             End If
+                        Else
+
                         End If
                     End If
                 Next
