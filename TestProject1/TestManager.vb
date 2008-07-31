@@ -760,6 +760,7 @@ Imports Worm.Orm
                 e.SaveChanges(True)
 
                 Assert.IsFalse(mgr.IsInCachePrecise(e))
+                Assert.AreEqual(ObjectState.Deleted, e.ObjectState)
 
                 e = mgr.Find(Of Entity2)(10)
 

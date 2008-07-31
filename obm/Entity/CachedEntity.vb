@@ -1177,7 +1177,7 @@ l1:
         End Function
 
         Protected Overrides Sub PrepareRead(ByVal fieldName As String, ByRef d As System.IDisposable)
-            If Not IsLoaded AndAlso (ObjectState = Orm.ObjectState.NotLoaded OrElse ObjectState = Orm.ObjectState.None) Then
+            If (Not IsLoaded AndAlso (ObjectState = Orm.ObjectState.NotLoaded OrElse ObjectState = Orm.ObjectState.None)) OrElse _readRaw Then
                 d = SyncHelper(True)
                 If Not IsLoaded AndAlso (ObjectState = Orm.ObjectState.NotLoaded OrElse ObjectState = Orm.ObjectState.None) AndAlso Not IsFieldLoaded(fieldName) Then
                     Load()

@@ -219,7 +219,8 @@ Namespace Orm
         Protected _dontRaisePropertyChange As Boolean
         <NonSerialized()> _
         Private _old_state As ObjectState
-
+        <NonSerialized()> _
+        Protected _readRaw As Boolean
 
         Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
         Public Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
@@ -365,11 +366,17 @@ Namespace Orm
                     sb.Append("Cannot get object dump")
                 Else
                     Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
-                    For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
-                        Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                        Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                        sb.Append(c.FieldName).Append("=").Append(QueryGenerator.GetFieldValue(Me, c.FieldName, pi, oschema)).Append(";")
-                    Next
+                    Dim olr As Boolean = _readRaw
+                    _readRaw = True
+                    Try
+                        For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
+                            Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+                            Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
+                            sb.Append(c.FieldName).Append("=").Append(QueryGenerator.GetFieldValue(Me, c.FieldName, pi, oschema)).Append(";")
+                        Next
+                    Finally
+                        _readRaw = olr
+                    End Try
                 End If
             End Using
             Return sb.ToString
