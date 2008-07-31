@@ -1541,7 +1541,9 @@ Namespace Database
                                 Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
                             End If
                             If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse Not _cache.IsDeleted(obj)) Then
-                                obj = CType(LoadFromDataReader(obj, dr, arr, check_pk, 0, dic), ICachedEntity)
+                                Dim o As ICachedEntity = CType(LoadFromDataReader(obj, dr, arr, check_pk, 0, dic), ICachedEntity)
+                                o.CorrectStateAfterLoading(Object.ReferenceEquals(o, obj))
+                                obj = o
                             End If
                             loaded = True
                         Loop
@@ -1556,13 +1558,16 @@ Namespace Database
                                 RemoveObjectFromCache(obj)
                             End If
                         Else
-                            If obj.ObjectState = ObjectState.Created Then
+                            If dr.RecordsAffected <> -1 Then
                                 obj.CreateCopyForSaveNewEntry(Nothing)
                                 'obj.ObjectState = ObjectState.None
                                 'Throw New ApplicationException
                                 'obj.BeginLoading()
                                 'obj.Identifier = obj.Identifier
                                 'obj.EndLoading()
+                            Else
+                                obj.SetObjectState(ObjectState.NotFoundInSource)
+                                RemoveObjectFromCache(obj)
                             End If
                         End If
                     End Using
@@ -2200,47 +2205,56 @@ Namespace Database
             Dim ar As IListEdit = result
             Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
             If remove_not_found Then
-                For Each o As T In objs
-                    If Not withLoad Then
-                        If values.Contains(o) OrElse Not ids.Contains(o.Identifier) Then
-                            ar.Add(o)
-                        Else
-                            o.SetObjectState(ObjectState.NotFoundInSource)
-                        End If
-                    Else
-                        If o.IsLoaded Then
-                            ar.Add(o)
-                        ElseIf ListConverter.IsWeak Then
-                            Dim obj As T = Nothing
-                            If dic.TryGetValue(o.Key, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
-                                ar.Add(obj)
-                            Else
-                                Dim idx As Integer = values.IndexOf(o)
-                                If idx >= 0 Then
-                                    Dim ro As T = values(idx)
-                                    Debug.Assert(ro.IsLoaded)
-                                    Add2Cache(ro)
-                                    ar.Add(ro)
-                                End If
-                            End If
-                        Else
+                'For Each o As T In objs
+                '    If Not withLoad Then
+                '        If values.Contains(o) OrElse Not ids.Contains(o.Identifier) Then
+                '            ar.Add(o)
+                '        Else
+                '            o.SetObjectState(ObjectState.NotFoundInSource)
+                '        End If
+                '    Else
+                '        If o.IsLoaded Then
+                '            ar.Add(o)
+                '        ElseIf ListConverter.IsWeak Then
+                '            Dim obj As T = Nothing
+                '            If dic.TryGetValue(o.Key, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
+                '                ar.Add(obj)
+                '            Else
+                '                Dim idx As Integer = values.IndexOf(o)
+                '                If idx >= 0 Then
+                '                    Dim ro As T = values(idx)
+                '                    Debug.Assert(ro.IsLoaded)
+                '                    Add2Cache(ro)
+                '                    ar.Add(ro)
+                '                End If
+                '            End If
+                '        Else
 
+                '        End If
+                '    End If
+                'Next
+                For Each o As T In objs
+                    Dim pos As Integer = values.IndexOf(o)
+                    If pos >= 0 Then
+                        If values(pos).IsLoaded Then
+                            ar.Add(values(pos))
                         End If
                     End If
                 Next
             Else
-                If ListConverter.IsWeak Then
-                    For Each o As T In objs
-                        Dim obj As T = Nothing
-                        If dic.TryGetValue(o.Key, obj) Then
-                            ar.Add(obj)
-                        Else
-                            ar.Add(o)
-                        End If
-                    Next
-                Else
-                    Return objs
-                End If
+                result = New ReadOnlyList(Of T)(values)
+                'If ListConverter.IsWeak Then
+                '    For Each o As T In objs
+                '        Dim obj As T = Nothing
+                '        If dic.TryGetValue(o.Key, obj) Then
+                '            ar.Add(obj)
+                '        Else
+                '            ar.Add(o)
+                '        End If
+                '    Next
+                'Else
+                '    Return objs
+                'End If
             End If
             Return result
             'Return New ReadOnlyList(Of T)(values)
