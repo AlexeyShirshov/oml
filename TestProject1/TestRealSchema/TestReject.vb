@@ -106,6 +106,7 @@ Public Class TestReject
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t2 As Table1 = mgr.Find(Of Table1)(1)
             Dim t1 As New Table2(-100, mgr.Cache, mgr.ObjectSchema)
+            Assert.IsNull(t2.OriginalCopy)
 
             mgr.BeginTransaction()
             Try

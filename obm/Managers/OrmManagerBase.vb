@@ -4106,7 +4106,7 @@ l1:
     Protected MustOverride Function GetObjects(Of T As {IOrmBase, New})(ByVal type As Type, ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, _
        ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Object, EditableList)
 
-    Protected Friend MustOverride Sub LoadObject(ByVal obj As ICachedEntity)
+    Protected Friend MustOverride Sub LoadObject(ByVal obj As _ICachedEntity)
 
     Protected Friend MustOverride Function LoadObjectsInternal(Of T As {IOrmBase, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 

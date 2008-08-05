@@ -1475,7 +1475,7 @@ Namespace Database
         '    Return o
         'End Function
 
-        Protected Friend Overrides Sub LoadObject(ByVal obj As ICachedEntity)
+        Protected Friend Overrides Sub LoadObject(ByVal obj As _ICachedEntity)
             Invariant()
 
             If obj Is Nothing Then
@@ -1519,7 +1519,7 @@ Namespace Database
         End Sub
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal arr As Generic.IList(Of ColumnAttribute), ByVal obj As ICachedEntity, _
+            ByVal arr As Generic.IList(Of ColumnAttribute), ByVal obj As _ICachedEntity, _
             ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
             Invariant()
 
@@ -1536,14 +1536,15 @@ Namespace Database
                         'If Not modifiedloaded Then obj.IsLoaded = False
                         'obj.IsLoaded = False
                         Dim loaded As Boolean = False
+                        obj = NormalizeObject(obj, dic)
                         Do While dr.Read
                             If loaded Then
                                 Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
                             End If
                             If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse Not _cache.IsDeleted(obj)) Then
-                                Dim o As ICachedEntity = CType(LoadFromDataReader(obj, dr, arr, check_pk, 0, dic), ICachedEntity)
-                                o.CorrectStateAfterLoading(Object.ReferenceEquals(o, obj))
-                                obj = o
+                                LoadFromDataReader(obj, dr, arr, check_pk, 0, dic)
+                                obj.CorrectStateAfterLoading(False)
+                                'obj = o
                             End If
                             loaded = True
                         Loop
@@ -1559,15 +1560,15 @@ Namespace Database
                             End If
                         Else
                             If dr.RecordsAffected <> -1 Then
-                                obj.CreateCopyForSaveNewEntry(Nothing)
+                                'obj.CreateCopyForSaveNewEntry(Nothing)
                                 'obj.ObjectState = ObjectState.None
                                 'Throw New ApplicationException
                                 'obj.BeginLoading()
                                 'obj.Identifier = obj.Identifier
                                 'obj.EndLoading()
-                            Else
-                                obj.SetObjectState(ObjectState.NotFoundInSource)
-                                RemoveObjectFromCache(obj)
+                                'Else
+                                '    obj.SetObjectState(ObjectState.NotFoundInSource)
+                                '    RemoveObjectFromCache(obj)
                             End If
                         End If
                     End Using

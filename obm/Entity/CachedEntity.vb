@@ -349,15 +349,15 @@ Namespace Orm
             obj.UpdateCtx.Deleted = False
         End Sub
 
-        Protected Overrides Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean)
-            Dim os As ObjectState = ObjectState
-            MyBase.CorrectStateAfterLoading(objectWasCreated)
-            If objectWasCreated Then
-                If os = Orm.ObjectState.Modified Then
-                    OrmCache.UnregisterModification(Me)
-                End If
-            End If
-        End Sub
+        'Protected Overrides Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean)
+        '    Dim os As ObjectState = ObjectState
+        '    MyBase.CorrectStateAfterLoading(objectWasCreated)
+        '    If objectWasCreated Then
+        '        If os = Orm.ObjectState.Modified Then
+        '            OrmCache.UnregisterModification(Me)
+        '        End If
+        '    End If
+        'End Sub
 
         Protected Function RemoveVersionData(ByVal setState As Boolean) As _ICachedEntity
             Dim mo As _ICachedEntity = Nothing
