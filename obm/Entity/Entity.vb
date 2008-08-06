@@ -38,6 +38,7 @@ Namespace Orm
         ReadOnly Property IsPKLoaded() As Boolean
         ReadOnly Property UpdateCtx() As UpdateCtx
         Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean
+        Sub RaiseCopyRemoved()
     End Interface
 
     Public Interface ICachedEntity

@@ -1068,7 +1068,7 @@ Imports Worm.Orm
             'Dim l As IList(Of Entity2) = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity2))
 
             Dim e As Entity2 = c(0)
-
+            Assert.IsNull(e.OriginalCopy)
             Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
             Dim oldv As String = e.Str
             e.Str = "ioquv"
@@ -1254,7 +1254,10 @@ Imports Worm.Orm
     <TestMethod()> _
     Public Sub TestPartialLoad2()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            mgr.FindTop(Of Entity5)(10, Nothing, Nothing, New String() {"Title"})
+            Dim r As Worm.ReadOnlyList(Of Entity5) = mgr.FindTop(Of Entity5)(10, Nothing, Nothing, New String() {"Title"})
+
+            Assert.IsTrue(mgr.IsInCachePrecise(r(0)))
+
             Dim e As Entity5 = mgr.Find(Of Entity5)(1)
 
             Assert.IsFalse(e.InternalProperties.IsLoaded)
