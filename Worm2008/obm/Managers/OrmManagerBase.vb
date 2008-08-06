@@ -2344,7 +2344,11 @@ l1:
     End Function
 
     Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _LoadTypeInternal(obj, False, False, dic, True)
+        Return NormalizeObject(obj, dic, True)
+    End Function
+
+    Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary, ByVal add2Cache As Boolean) As _ICachedEntity
+        Return _LoadTypeInternal(obj, False, False, dic, add2Cache)
     End Function
 
     Public Function GetFromCacheOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity

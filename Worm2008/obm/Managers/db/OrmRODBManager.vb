@@ -1509,7 +1509,23 @@ Namespace Database
                 End With
 
                 'Dim olds As ObjectState = obj.ObjectState
-                LoadSingleObject(cmd, arr, obj, True, True, False)
+                Dim b As ConnAction = TestConn(cmd)
+                Try
+                    'Dim newObj As Boolean = obj.ObjectState = ObjectState.Created
+                    Using obj.GetSyncRoot()
+                        LoadSingleObject(cmd, arr, obj, True, True, False)
+                        'If newObj AndAlso obj.ObjectState = ObjectState.None OrElse obj.ObjectState = ObjectState.NotLoaded Then
+                        '    _cache.UnregisterModification(obj)
+                        '    NormalizeObject(obj, GetDictionary(obj.GetType))
+                        'End If
+                        If obj.ObjectState <> ObjectState.NotFoundInSource Then
+                            Add2Cache(obj)
+                            obj.AcceptChanges(True, True)
+                        End If
+                    End Using
+                Finally
+                    CloseConn(b)
+                End Try
                 'If olds = obj.ObjectState OrElse obj.ObjectState = ObjectState.Created Then obj.ObjectState = ObjectState.None
                 '(olds = ObjectState.Created AndAlso obj.ObjectState = ObjectState.Modified) OrElse
                 'If olds = obj.ObjectState Then
@@ -1524,7 +1540,7 @@ Namespace Database
             Invariant()
 
             Dim dic As IDictionary = GetDictionary(obj.GetType)
-            Dim b As ConnAction = TestConn(cmd)
+            'Dim b As ConnAction = TestConn(cmd)
             Try
                 If load Then
                     _cache.BeginTrackDelete(obj.GetType)
@@ -1536,7 +1552,7 @@ Namespace Database
                         'If Not modifiedloaded Then obj.IsLoaded = False
                         'obj.IsLoaded = False
                         Dim loaded As Boolean = False
-                        obj = NormalizeObject(obj, dic)
+                        'obj = NormalizeObject(obj, dic)
                         Do While dr.Read
                             If loaded Then
                                 Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
@@ -1558,6 +1574,9 @@ Namespace Database
                                 obj.SetObjectState(ObjectState.NotFoundInSource)
                                 RemoveObjectFromCache(obj)
                             End If
+                        ElseIf Not obj.IsLoaded AndAlso Not loaded AndAlso dr.RecordsAffected > 0 Then
+                            'insert without select
+                            obj.CreateCopyForSaveNewEntry(Nothing)
                         Else
                             If dr.RecordsAffected <> -1 Then
                                 'obj.CreateCopyForSaveNewEntry(Nothing)
@@ -1566,9 +1585,12 @@ Namespace Database
                                 'obj.BeginLoading()
                                 'obj.Identifier = obj.Identifier
                                 'obj.EndLoading()
-                                'Else
-                                '    obj.SetObjectState(ObjectState.NotFoundInSource)
-                                '    RemoveObjectFromCache(obj)
+                            Else
+                                If Not obj.IsLoaded Then
+                                    'loading non-existent object
+                                    obj.SetObjectState(ObjectState.NotFoundInSource)
+                                    RemoveObjectFromCache(obj)
+                                End If
                             End If
                         End If
                     End Using
@@ -1578,7 +1600,7 @@ Namespace Database
                 If load Then
                     _cache.EndTrackDelete(obj.GetType)
                 End If
-                CloseConn(b)
+                'CloseConn(b)
             End Try
 
         End Sub
@@ -1697,8 +1719,19 @@ Namespace Database
             'End If
             Dim obj As New T
             Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 0, CType(dic, System.Collections.IDictionary))
-            ro.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj))
-
+            Dim notFromCache As Boolean = Object.ReferenceEquals(ro, obj)
+            ro.CorrectStateAfterLoading(notFromCache)
+            If notFromCache Then
+                If ro.ObjectState = ObjectState.None OrElse ro.ObjectState = ObjectState.NotLoaded Then
+                    Dim co As _ICachedEntity = TryCast(ro, _ICachedEntity)
+                    If co IsNot Nothing Then
+                        _cache.UnregisterModification(co)
+                        If co.IsPKLoaded Then
+                            ro = NormalizeObject(co, CType(dic, System.Collections.IDictionary))
+                        End If
+                    End If
+                End If
+            End If
             values.Add(ro)
             If ro.IsLoaded Then
                 loaded += 1
@@ -1748,72 +1781,55 @@ Namespace Database
             Dim fac As New List(Of Pair(Of String, Object))
             Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
             'Dim load As Boolean = a
-            Using obj.GetSyncRoot()
-                obj.BeginLoading()
-                Try
-                    Dim pk_count As Integer = 0
-                    Dim has_pk As Boolean = False
-                    Dim pi_cache(arr.Count - 1) As Reflection.PropertyInfo
-                    Dim idic As IDictionary = _schema.GetProperties(original_type)
-                    'Dim bl As Boolean
-                    Dim oldpk() As Pair(Of String, Object) = Nothing
-                    If ce IsNot Nothing Then oldpk = ce.GetPKValues()
-                    For idx As Integer = 0 To arr.Count - 1
-                        Dim c As ColumnAttribute = arr(idx)
-                        Dim pi As Reflection.PropertyInfo = CType(idic(c), Reflection.PropertyInfo)
-                        pi_cache(idx) = pi
-                        If pi IsNot Nothing Then
-                            If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                Assert(idx + displacement < dr.FieldCount, c.FieldName)
-                                'If dr.FieldCount <= idx + displacement Then
-                                '    If _mcSwitch.TraceError Then
-                                '        Dim dt As System.Data.DataTable = dr.GetSchemaTable
-                                '        Dim sb As New StringBuilder
-                                '        For Each drow As System.Data.DataRow In dt.Rows
-                                '            If sb.Length > 0 Then
-                                '                sb.Append(", ")
-                                '            End If
-                                '            sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
-                                '        Next
-                                '        WriteLine(sb.ToString)
-                                '    End If
+            'Using obj.GetSyncRoot()
+            'Dim d As IDisposable = Nothing
+            obj.BeginLoading()
+            Try
+                Dim pk_count As Integer = 0
+                Dim has_pk As Boolean = False
+                Dim pi_cache(arr.Count - 1) As Reflection.PropertyInfo
+                Dim idic As IDictionary = _schema.GetProperties(original_type)
+                'Dim bl As Boolean
+                Dim oldpk() As Pair(Of String, Object) = Nothing
+                If ce IsNot Nothing Then oldpk = ce.GetPKValues()
+                For idx As Integer = 0 To arr.Count - 1
+                    Dim c As ColumnAttribute = arr(idx)
+                    Dim pi As Reflection.PropertyInfo = CType(idic(c), Reflection.PropertyInfo)
+                    pi_cache(idx) = pi
+                    If pi IsNot Nothing Then
+                        If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                            Assert(idx + displacement < dr.FieldCount, c.FieldName)
+                            'If dr.FieldCount <= idx + displacement Then
+                            '    If _mcSwitch.TraceError Then
+                            '        Dim dt As System.Data.DataTable = dr.GetSchemaTable
+                            '        Dim sb As New StringBuilder
+                            '        For Each drow As System.Data.DataRow In dt.Rows
+                            '            If sb.Length > 0 Then
+                            '                sb.Append(", ")
+                            '            End If
+                            '            sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
+                            '        Next
+                            '        WriteLine(sb.ToString)
+                            '    End If
+                            'End If
+                            has_pk = True
+                            Dim value As Object = dr.GetValue(idx + displacement)
+                            If fv IsNot Nothing Then
+                                value = fv.CreateValue(c, obj, value)
+                            End If
+
+                            If Not dr.IsDBNull(idx + displacement) Then
+                                'If ce IsNot Nothing AndAlso obj.ObjectState = ObjectState.Created Then
+                                '    ce.CreateCopyForSaveNewEntry()
+                                '    'bl = True
                                 'End If
-                                has_pk = True
-                                Dim value As Object = dr.GetValue(idx + displacement)
-                                If fv IsNot Nothing Then
-                                    value = fv.CreateValue(c, obj, value)
-                                End If
 
-                                If Not dr.IsDBNull(idx + displacement) Then
-                                    'If ce IsNot Nothing AndAlso obj.ObjectState = ObjectState.Created Then
-                                    '    ce.CreateCopyForSaveNewEntry()
-                                    '    'bl = True
-                                    'End If
-
-                                    Try
-                                        If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
-                                            Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                            obj.SetValue(pi, c, oschema, v)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
-                                        ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
-                                            Dim dt As DateTime = CDate(value)
-                                            Dim l As Long = dt.ToBinary
-                                            Using ms As New IO.MemoryStream
-                                                Dim sw As New IO.StreamWriter(ms)
-                                                sw.Write(l)
-                                                sw.Flush()
-                                                obj.SetValue(pi, c, oschema, ms.ToArray)
-                                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
-                                            End Using
-                                        Else
-                                            'If c.FieldName = "ID" Then
-                                            '    obj.Identifier = CInt(value)
-                                            'Else
-                                            obj.SetValue(pi, c, oschema, value)
-                                            'End If
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
-                                        End If
-                                    Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
+                                Try
+                                    If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
+                                        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                        obj.SetValue(pi, c, oschema, v)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                    ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                                         Dim dt As DateTime = CDate(value)
                                         Dim l As Long = dt.ToBinary
                                         Using ms As New IO.MemoryStream
@@ -1823,40 +1839,59 @@ Namespace Database
                                             obj.SetValue(pi, c, oschema, ms.ToArray)
                                             If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
                                         End Using
-                                    Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-                                        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                        obj.SetValue(pi, c, oschema, v)
+                                    Else
+                                        'If c.FieldName = "ID" Then
+                                        '    obj.Identifier = CInt(value)
+                                        'Else
+                                        obj.SetValue(pi, c, oschema, value)
+                                        'End If
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
-                                    End Try
-                                    pk_count += 1
-                                End If
-                            End If
-                        End If
-                    Next
-
-                    If has_pk Then
-                        If ce IsNot Nothing Then
-                            ce.PKLoaded(pk_count)
-
-                            If _cache.IsDeleted(ce) Then
-                                Return obj
-                            End If
-
-                            obj = NormalizeObject(ce, dic)
-                            ce = CType(obj, _ICachedEntity)
-
-                            If obj.ObjectState = ObjectState.Created Then
-                                ce.CreateCopyForSaveNewEntry(oldpk)
-                                'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
-                            ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
-                                Return obj
-                            Else
-                                obj.BeginLoading()
+                                    End If
+                                Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
+                                    Dim dt As DateTime = CDate(value)
+                                    Dim l As Long = dt.ToBinary
+                                    Using ms As New IO.MemoryStream
+                                        Dim sw As New IO.StreamWriter(ms)
+                                        sw.Write(l)
+                                        sw.Flush()
+                                        obj.SetValue(pi, c, oschema, ms.ToArray)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                    End Using
+                                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
+                                    Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                    obj.SetValue(pi, c, oschema, v)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                End Try
+                                pk_count += 1
                             End If
                         End If
                     End If
+                Next
 
-                    If pk_count < arr.Count Then
+                If has_pk Then
+                    If ce IsNot Nothing Then
+                        ce.PKLoaded(pk_count)
+
+                        If _cache.IsDeleted(ce) Then
+                            Return obj
+                        End If
+
+                        obj = NormalizeObject(ce, dic, False)
+                        ce = CType(obj, _ICachedEntity)
+
+                        If obj.ObjectState = ObjectState.Created Then
+                            ce.CreateCopyForSaveNewEntry(oldpk)
+                            'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                        ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                            Return obj
+                        Else
+                            obj.BeginLoading()
+                        End If
+                    End If
+                End If
+
+                If pk_count < arr.Count Then
+                    Using obj.GetSyncRoot()
                         For idx As Integer = 0 To arr.Count - 1
                             Dim c As ColumnAttribute = arr(idx)
                             Dim pi As Reflection.PropertyInfo = pi_cache(idx) '_schema.GetProperty(original_type, c)
@@ -2000,13 +2035,14 @@ Namespace Database
                                 f.CreateObject(p.First, p.Second)
                             Next
                         End If
-                    End If
-                Finally
-                    obj.EndLoading()
-                End Try
+                    End Using
+                End If
+            Finally
+                obj.EndLoading()
+            End Try
 
-                If ce IsNot Nothing Then ce.CheckIsAllLoaded(ObjectSchema, arr.Count)
-            End Using
+            If ce IsNot Nothing Then ce.CheckIsAllLoaded(ObjectSchema, arr.Count)
+            'End Using
 
             Return obj
         End Function
@@ -2237,7 +2273,11 @@ Namespace Database
                 For Each o As T In objs
                     Dim pos As Integer = values.IndexOf(o)
                     If pos >= 0 Then
-                        If values(pos).IsLoaded Then
+                        If withLoad Then
+                            If values(pos).IsLoaded Then
+                                ar.Add(values(pos))
+                            End If
+                        Else
                             ar.Add(values(pos))
                         End If
                     End If

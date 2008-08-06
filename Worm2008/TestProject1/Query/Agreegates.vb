@@ -80,8 +80,10 @@ Imports Worm.Database.Criteria.Core
     <TestMethod()> Public Sub TestOrder()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim t As Type = GetType(Entity4)
-            Dim r As M2MRelation = mgr.DbSchema.GetM2MRelation(t, GetType(Entity), CStr(Nothing))
-            Dim r2 As M2MRelation = mgr.DbSchema.GetM2MRelation(GetType(Entity), t, CStr(Nothing))
+            Dim r As M2MRelation = mgr.DbSchema.GetM2MRelation(t, GetType(Entity), True)
+            Dim r2 As M2MRelation = mgr.DbSchema.GetM2MRelation(GetType(Entity), t, True)
+            Assert.IsNotNull(r)
+
             Dim table As SourceFragment = r.Table
 
             Dim inner As QueryCmdBase = New QueryCmdBase(table)

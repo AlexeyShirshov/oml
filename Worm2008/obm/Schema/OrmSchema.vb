@@ -357,6 +357,7 @@ Public MustInherit Class QueryGenerator
     End Function
 
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelation
+        If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
         For Each r As M2MRelation In GetM2MRelations(maintype)
             If r.Type Is subtype AndAlso String.Equals(r.Key, key) Then
                 Return r
@@ -734,6 +735,31 @@ Public MustInherit Class QueryGenerator
         End If
 
         Return arr.ToArray
+    End Function
+
+    Public Function GetPrimaryKeys(ByVal original_type As Type) As List(Of ColumnAttribute)
+        Dim cl_type As String = "clm_pklist" & original_type.ToString
+
+        Dim arr As Generic.List(Of ColumnAttribute) = CType(map(cl_type), Generic.List(Of ColumnAttribute))
+
+        If arr Is Nothing Then
+            Using SyncHelper.AcquireDynamicLock(cl_type)
+                arr = CType(map(cl_type), Generic.List(Of ColumnAttribute))
+                If arr Is Nothing Then
+                    arr = New Generic.List(Of ColumnAttribute)
+
+                    For Each c As ColumnAttribute In GetSortedFieldList(original_type)
+                        If (GetAttributes(original_type, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                            arr.Add(c)
+                        End If
+                    Next
+
+                    map.Add(cl_type, arr)
+                End If
+            End Using
+        End If
+
+        Return arr
     End Function
 
     'Protected Function GetPrimaryKeysName(ByVal type As Type, ByVal table As String) As String()

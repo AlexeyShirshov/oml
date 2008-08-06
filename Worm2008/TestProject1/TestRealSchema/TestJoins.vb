@@ -142,8 +142,9 @@ Public Class TestJoinsRS
                 And("Code").Eq(2), Nothing, False)
             Assert.AreEqual(2, c.Count)
 
-            Dim t2 As New Table2(1, mgr.Cache, mgr.ObjectSchema)
+            Dim t2 As New Table2(tm.GetIdentity(), mgr.Cache, mgr.ObjectSchema)
             t2.Tbl = mgr.Find(Of Table1)(1)
+            Assert.IsNull(t2.OriginalCopy)
             mgr.BeginTransaction()
             Try
                 t2.SaveChanges(True)
@@ -191,7 +192,9 @@ Public Class TestJoinsRS
             Assert.AreEqual(2, c.Count)
 
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
+            Assert.AreEqual(ObjectState.None, t1.ObjectState)
             t1.Name = "sdfasdf"
+            Assert.AreEqual(ObjectState.Modified, t1.ObjectState)
             mgr.BeginTransaction()
             Try
                 t1.SaveChanges(True)

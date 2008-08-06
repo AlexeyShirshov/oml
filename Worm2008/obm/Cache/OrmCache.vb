@@ -424,7 +424,7 @@ Namespace Cache
             Next
         End Function
 #End If
-        Protected Friend Sub UnregisterModification(ByVal obj As CachedEntity)
+        Protected Friend Sub UnregisterModification(ByVal obj As _ICachedEntity)
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")

@@ -140,7 +140,7 @@ Namespace Query.Database
             Protected Overridable Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyEntityList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Return CType(OrmManagerBase.CreateReadonlyList(GetType(ReturnType), dbm.LoadMultipleObjects(Of ReturnType)( _
-                        cmd, Query.WithLoad, Nothing, GetFields(dbm.DbSchema, GetType(ReturnType), Query.SelectList))), Global.Worm.ReadOnlyEntityList(Of ReturnType))
+                        cmd, Query.WithLoad, Nothing, GetFields(dbm.DbSchema, GetType(ReturnType), Query))), Global.Worm.ReadOnlyEntityList(Of ReturnType))
             End Function
 
             Protected ReadOnly Property Mgr() As OrmReadOnlyDBManager

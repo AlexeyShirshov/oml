@@ -128,7 +128,8 @@ Namespace Query.Database
 
 #Region " Shared helpers "
 
-        Protected Shared Function GetFields(ByVal gen As QueryGenerator, ByVal type As Type, ByVal c As IList(Of OrmProperty)) As List(Of ColumnAttribute)
+        Protected Shared Function GetFields(ByVal gen As QueryGenerator, ByVal type As Type, ByVal q As QueryCmdBase) As List(Of ColumnAttribute)
+            Dim c As IList(Of OrmProperty) = q.SelectList
             If c IsNot Nothing Then
                 Dim l As New List(Of ColumnAttribute)
                 For Each p As OrmProperty In c
@@ -146,7 +147,11 @@ Namespace Query.Database
                 'l.Sort()
                 Return l
             Else
-                Return gen.GetSortedFieldList(type)
+                If q.WithLoad Then
+                    Return gen.GetSortedFieldList(type)
+                Else
+                    Return gen.GetPrimaryKeys(type)
+                End If
             End If
         End Function
 
@@ -185,7 +190,7 @@ Namespace Query.Database
                         sb.Append(cols.ToString)
                         b = True
                     ElseIf query.SelectList IsNot Nothing Then
-                        cols.Append(s.GetSelectColumnList(t, GetFields(s, t, query.SelectList), columnAliases))
+                        cols.Append(s.GetSelectColumnList(t, GetFields(s, t, query), columnAliases))
                         sb.Append(cols.ToString)
                         b = True
                     End If
