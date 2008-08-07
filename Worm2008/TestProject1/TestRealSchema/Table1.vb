@@ -272,7 +272,7 @@ Public Class Table1Implementation
         Return Nothing
     End Function
 
-    Public Function CreateSortComparer1(Of T As {New, _IEntity})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
+    Public Function CreateSortComparer1(Of T As {_IEntity})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
         If s.FieldName = "DT" Then
             Return CType(New Comparer(Table1Sort.DateTime, s.Order), Global.System.Collections.Generic.IComparer(Of T))
         ElseIf s.FieldName = "Enum" Then

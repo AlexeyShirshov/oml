@@ -193,7 +193,9 @@ Namespace Database
                         .CommandText = sb.ToString
                     End With
 
-                    Dim r As New ReadOnlyList(Of T)(_mgr.LoadMultipleObjects(Of T)(cmd, withLoad, Nothing, arr))
+                    Dim r As New ReadOnlyList(Of T)
+                    _mgr.LoadMultipleObjects(Of T)(cmd, withLoad, r, arr)
+
                     If _sort IsNot Nothing AndAlso _sort.IsExternal Then
                         r = CType(_mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, r), ReadOnlyList(Of T))
                     End If

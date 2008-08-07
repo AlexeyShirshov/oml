@@ -69,7 +69,7 @@ Imports Worm.Criteria.Values
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
             Dim t As SourceFragment = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
-            Dim q As QueryCmd(Of Entity) = QueryCmdBase.Create(Of Entity)(t, "ID")
+            Dim q As QueryCmd(Of Entity) = QueryCmdBase.Create(Of Entity)(t, "id", "ID")
             Assert.IsNotNull(q)
 
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
@@ -83,11 +83,11 @@ Imports Worm.Criteria.Values
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
             Dim t As SourceFragment = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
-            Dim q As QueryCmd(Of Entity) = QueryCmdBase.Create(Of Entity)(t, "ID")
+            Dim q As QueryCmd(Of Entity) = QueryCmdBase.Create(Of Entity)(t, "id", "ID")
             Assert.IsNotNull(q)
 
             Dim c As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
-            c.AddFilter(New TableFilter(t, "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
+            c.AddFilter(New TableFilter(t, "id", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))
 
             q.Filter = c.Condition
 
@@ -267,8 +267,30 @@ Imports Worm.Criteria.Values
     End Sub
 
     <TestMethod()> Public Sub TestInterface()
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New MSSQL2005Generator("1"))
-            Dim q As QueryCmd(Of Entity) = QueryCmdBase.Create(Of Entity)()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim q As QueryCmdBase = New QueryCmdBase(GetType(Entity))
+            Dim r As ReadOnlyList(Of IEnt) = q.ToList(Of IEnt)(mgr)
+
+            Assert.IsNotNull(r)
+            Assert.AreEqual(13, r.Count)
+            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+            q = New QueryCmdBase()
+            r = q.ToList(Of Entity, IEnt)(mgr)
+            Assert.IsNotNull(r)
+            Assert.AreEqual(13, r.Count)
+            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+            q = New QueryCmdBase(GetType(Entity))
+            Dim r2 As ReadOnlyList(Of Entity) = q.ToList(Of Entity)(mgr)
+            Assert.IsNotNull(r2)
+            Assert.AreEqual(13, r2.Count)
+            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+            'q.SelectedType = GetType(Entity)
+            'Dim r As List(Of Entity)
+            'Dim r2 As List(Of IEnt) = r
+            'r2(0) = r(0)
         End Using
     End Sub
 End Class

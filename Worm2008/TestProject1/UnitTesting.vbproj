@@ -147,6 +147,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ASPHosting\Web\testwebcache.aspx">
+      <SubType>ASPXCodeBehind</SubType>
+    </Content>
     <Content Include="ASPHosting\Web\testhttpdic.aspx">
       <SubType>ASPXCodeBehind</SubType>
     </Content>

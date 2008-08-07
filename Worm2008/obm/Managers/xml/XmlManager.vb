@@ -176,9 +176,15 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, IOrmBase})( _
-            ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
-            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+        Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, IOrmBase}, T2 As IOrmBase)( _
+            ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
+            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+            Throw New NotImplementedException
+        End Function
+
+        Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T2 As IOrmBase)(ByVal realType As Type, _
+            ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
+            ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
             Throw New NotImplementedException
         End Function
 

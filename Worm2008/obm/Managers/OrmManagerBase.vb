@@ -411,14 +411,14 @@ Public MustInherit Class OrmManagerBase
             End If
         End Function
 
-        Public Overridable Function GetObjectList(Of T As {_ICachedEntity, New})(ByVal mgr As OrmManagerBase, _
+        Public Overridable Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
             ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
             'Using p As New CoreFramework.Debuging.OutputTimer("From week list")
             Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr, mgr.GetStart, mgr.GetLength, withLoad, created, successed)
             'End Using
         End Function
 
-        Public Overridable Function GetObjectList(Of T As {_ICachedEntity, New})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
+        Public Overridable Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
             Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr)
         End Function
 
@@ -538,7 +538,7 @@ Public MustInherit Class OrmManagerBase
             Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {mgr, withLoad, created, New IListObjectConverter.ExtractListResult}, Nothing), System.Collections.ICollection)
         End Function
 
-        Public Overrides Function GetObjectList(Of T As {New, _ICachedEntity})(ByVal mgr As OrmManagerBase, _
+        Public Overrides Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
             ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
             successed = IListObjectConverter.ExtractListResult.Successed
             Dim tt As Type = GetType(T)
@@ -578,7 +578,7 @@ Public MustInherit Class OrmManagerBase
             Return r
         End Function
 
-        Public Overrides Function GetObjectList(Of T As {New, _ICachedEntity})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
+        Public Overrides Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
             Try
 #If TraceM2M Then
                 Debug.WriteLine(Entry.Current.Count)
@@ -652,7 +652,7 @@ Public MustInherit Class OrmManagerBase
         End Function
     End Structure
 
-    Public Interface ICustDelegate(Of T As {ICachedEntity, New})
+    Public Interface ICustDelegate(Of T As {ICachedEntity})
         'Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
         Property Created() As Boolean
         Property Renew() As Boolean
@@ -788,7 +788,7 @@ Public MustInherit Class OrmManagerBase
         Overloads Function GetNew(Of T As _ICachedEntity)() As ICollection(Of T)
     End Interface
 
-    Public MustInherit Class CustDelegateBase(Of T As {ICachedEntity, New})
+    Public MustInherit Class CustDelegateBase(Of T As {ICachedEntity})
         Implements ICustDelegate(Of T)
 
         Private _created As Boolean
@@ -1235,7 +1235,7 @@ Public MustInherit Class OrmManagerBase
         Using SyncHelper.AcquireDynamicLock("9h13bhpqergfbjadflbq34f89h134g")
             If Not _dont_cache_lists Then
                 Dim i As Integer
-                For Each o As OrmBase In ecol
+                For Each o As IOrmBase In ecol
                     If i < start Then
                         i += 1
                         Continue For
@@ -1271,7 +1271,7 @@ Public MustInherit Class OrmManagerBase
             End If
 
             Dim ids As New List(Of Object)
-            For Each o As OrmBase In newc
+            For Each o As IOrmBase In newc
                 ids.Add(o.Identifier)
             Next
             Dim c As New List(Of T)
@@ -1512,13 +1512,13 @@ Public MustInherit Class OrmManagerBase
     'End Function
 
     Public Function GetEntityFromCacheOrDB(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As ICachedEntity
-        Dim o As _ICachedEntity = CreateEntity(pk, type)
+        Dim o As _ICachedEntity = CreateObject(pk, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return GetFromCacheOrLoadFromDB(o, GetDictionary(type))
     End Function
 
     Public Function GetEntityFromCacheOrCreate(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As ICachedEntity
-        Dim o As _ICachedEntity = CreateEntity(pk, type)
+        Dim o As _ICachedEntity = CreateObject(pk, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return NormalizeObject(o, GetDictionary(type))
     End Function
@@ -2054,7 +2054,7 @@ l1:
 
 #Region " Cache "
 
-    Protected Friend Function GetFromCache(Of T As {_ICachedEntity, New})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+    Protected Friend Function GetFromCache(Of T As {_ICachedEntity})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICustDelegate(Of T)) As CachedItem
 
         Invariant()
@@ -2311,7 +2311,7 @@ l1:
         End If
     End Function
 
-    Public Function CreateObject(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As ICachedEntity
+    Public Function CreateObject(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As _ICachedEntity
         If GetType(IOrmBase).IsAssignableFrom(type) Then
             Return CreateOrmBase(pk(0).Second, type)
         Else
@@ -2721,7 +2721,7 @@ l1:
 
 #Region " shared helpers "
 
-    Private Shared Sub InsertObject(Of T As {IOrmBase, New})(ByVal mgr As OrmManagerBase, ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IOrmBase)
+    Private Shared Sub InsertObject(Of T As {IOrmBase})(ByVal mgr As OrmManagerBase, ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IOrmBase)
         If o IsNot Nothing Then
             If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
                 If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
@@ -2734,14 +2734,14 @@ l1:
         End If
     End Sub
 
-    Private Shared Sub InsertObject(Of T As {IOrmBase, New})(ByVal mgr As OrmManagerBase, _
+    Private Shared Sub InsertObject(Of T As {IOrmBase})(ByVal mgr As OrmManagerBase, _
         ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IOrmBase, _
         ByVal columns As List(Of ColumnAttribute))
 
         Throw New NotImplementedException
     End Sub
 
-    Protected Shared Function FormPKValues(Of T As {IOrmBase, New})(ByVal mgr As OrmManagerBase, ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+    Protected Shared Function FormPKValues(Of T As {IOrmBase})(ByVal mgr As OrmManagerBase, ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
         Optional ByVal check_loaded As Boolean = True) As List(Of Object)
 
         Dim l As New Generic.List(Of Object)
@@ -3254,7 +3254,7 @@ l1:
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t}), New Object() {l}), IListEdit)
     End Function
 
-    Public Function ApplyFilter(Of T As {_IEntity, New})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
+    Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
         evaluated = True
         Dim f As IEntityFilter = TryCast(filter, IEntityFilter)
         If f Is Nothing Then
@@ -3360,15 +3360,15 @@ l1:
         Return r
     End Function
 
-    Public Function GetLoadedCount(Of T As {ICachedEntity, New})(ByVal col As ReadOnlyEntityList(Of T)) As Integer
+    Public Function GetLoadedCount(Of T As {ICachedEntity})(ByVal col As ReadOnlyEntityList(Of T)) As Integer
         Dim r As Integer = 0
-        If GetType(IOrmBase).IsAssignableFrom(GetType(T)) Then
-            For Each o As IOrmBase In col
-                If o.IsLoaded Then
-                    r += 1
-                End If
-            Next
-        End If
+        'If GetType(IOrmBase).IsAssignableFrom(GetType(T)) Then
+        For Each o As ICachedEntity In col
+            If o.IsLoaded Then
+                r += 1
+            End If
+        Next
+        'End If
         Return r
     End Function
 
@@ -3390,7 +3390,7 @@ l1:
 
 #Region " Search "
 
-    Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String) As ReadOnlyList(Of T)
+    Public Function Search(Of T As {IOrmBase, New})(ByVal [string] As String) As ReadOnlyList(Of T)
         Invariant()
 
         If [string] IsNot Nothing AndAlso [string].Length > 0 Then
@@ -3400,11 +3400,11 @@ l1:
         Return New ReadOnlyList(Of T)()
     End Function
 
-    Public Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal [string] As String, ByVal contextKey As Object) As ReadOnlyList(Of T)
+    Public Function Search(Of T As {IOrmBase, New})(ByVal type2search As Type, ByVal [string] As String, ByVal contextKey As Object) As ReadOnlyList(Of T)
         Return Search(Of T)(type2search, [string], Nothing, contextKey)
     End Function
 
-    Public Function Search(Of T As {OrmBase, New})(ByVal type2search As Type, ByVal [string] As String, _
+    Public Function Search(Of T As {IOrmBase, New})(ByVal type2search As Type, ByVal [string] As String, _
         ByVal sort As Sort, ByVal contextKey As Object) As ReadOnlyList(Of T)
         Dim selectType As Type = GetType(T)
         'If selectType IsNot type2search Then
@@ -3425,7 +3425,7 @@ l1:
         End If
     End Function
 
-    Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal sort As Sort, ByVal contextKey As Object) As ReadOnlyList(Of T)
+    Public Function Search(Of T As {IOrmBase, New})(ByVal [string] As String, ByVal sort As Sort, ByVal contextKey As Object) As ReadOnlyList(Of T)
         Return Search(Of T)([string], sort, contextKey, Nothing)
     End Function
 
@@ -3480,7 +3480,7 @@ l1:
         End Function
     End Class
 
-    Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal sort As Sort, _
+    Public Function Search(Of T As {IOrmBase, New})(ByVal [string] As String, ByVal sort As Sort, _
         ByVal contextKey As Object, ByVal filter As IFilter) As ReadOnlyList(Of T)
         Invariant()
 
@@ -3490,7 +3490,7 @@ l1:
         Return New ReadOnlyList(Of T)()
     End Function
 
-    Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal sort As Sort, _
+    Public Function Search(Of T As {IOrmBase, New})(ByVal [string] As String, ByVal sort As Sort, _
         ByVal contextKey As Object, ByVal filter As IFilter, ByVal ftsText As String, _
         ByVal limit As Integer, ByVal del As ValueForSearchDelegate) As ReadOnlyList(Of T)
         Invariant()
@@ -3501,7 +3501,7 @@ l1:
         Return New ReadOnlyList(Of T)()
     End Function
 
-    Public Function Search(Of T As {OrmBase, New})(ByVal [string] As String, ByVal sort As Sort, _
+    Public Function Search(Of T As {IOrmBase, New})(ByVal [string] As String, ByVal sort As Sort, _
        ByVal contextKey As Object, ByVal filter As IFilter, ByVal ftsText As String, _
        ByVal limit As Integer, ByVal frmt As IFtsStringFormater) As ReadOnlyList(Of T)
         Invariant()
@@ -3675,7 +3675,7 @@ l1:
     ''' <param name="length">Length of loaded window</param>
     ''' <returns>Collection of child objects</returns>
     ''' <remarks></remarks>
-    Public Function LoadObjects(Of T As {ICachedEntity, New})(ByVal objs As ReadOnlyEntityList(Of T), ByVal fields() As String, _
+    Public Function LoadObjects(Of T As {ICachedEntity})(ByVal objs As ReadOnlyEntityList(Of T), ByVal fields() As String, _
         ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
 
         Dim col As ReadOnlyEntityList(Of T) = objs.LoadObjects(start, length)
@@ -3730,6 +3730,10 @@ l1:
         Return col
     End Function
 
+    Protected Function LoadObjectsInternal(Of T As {IOrmBase, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+        Return LoadObjectsInternal(Of T, T)(objs, start, length, remove_not_found, columns, withLoad)
+    End Function
+
     Public Function LoadObjects(Of T As {IOrmBase, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal columns As List(Of ColumnAttribute)) As ReadOnlyList(Of T)
         Return LoadObjectsInternal(objs, start, length, True, columns, _schema.GetSortedFieldList(GetType(T)).Count = columns.Count)
     End Function
@@ -3742,9 +3746,21 @@ l1:
         Return LoadObjectsInternal(objs, 0, objs.Count, True)
     End Function
 
-    'Protected Sub SetIsLoaded(ByVal obj As OrmBase, Optional ByVal loaded As Boolean = True)
-    '    obj.IsLoaded = loaded
-    'End Sub
+    Public Function LoadObjects(Of T As {IOrmBase, New}, T2 As IOrmBase)(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T2)
+        Return LoadObjectsInternal(Of T, T2)(objs, start, length, True, _schema.GetSortedFieldList(GetType(T)), True)
+    End Function
+
+    Public Function LoadObjects(Of T As {IOrmBase, New}, T2 As IOrmBase)(ByVal objs As ReadOnlyList(Of T2)) As ReadOnlyList(Of T2)
+        Return LoadObjectsInternal(Of T, T2)(objs, 0, objs.Count, True, _schema.GetSortedFieldList(GetType(T)), True)
+    End Function
+
+    Public Function LoadObjects(Of T2 As IOrmBase)(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T2)
+        Return LoadObjectsInternal(Of T2)(realType, objs, start, length, True, _schema.GetSortedFieldList(realType), True)
+    End Function
+
+    Public Function LoadObjects(Of T2 As IOrmBase)(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2)) As ReadOnlyList(Of T2)
+        Return LoadObjectsInternal(Of T2)(realType, objs, 0, objs.Count, True, _schema.GetSortedFieldList(realType), True)
+    End Function
 
     Public Overridable Function ConvertIds2Objects(ByVal t As Type, ByVal ids As ICollection(Of Object), ByVal check As Boolean) As ICollection
         Dim self_t As Type = Me.GetType
@@ -3829,7 +3845,7 @@ l1:
         Return arr
     End Function
 
-    Public Function LoadObjectsIds(Of T As {ICachedEntity, New})(ByVal tt As Type, ByVal ids As IList(Of Object), ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
+    Public Function LoadObjectsIds(Of T As {ICachedEntity})(ByVal tt As Type, ByVal ids As IList(Of Object), ByVal start As Integer, ByVal length As Integer) As ReadOnlyEntityList(Of T)
         Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
         Dim mi As Reflection.MethodInfo = Me.GetType.GetMethod("LoadObjectsIds", flags, Nothing, Reflection.CallingConventions.Any, New Type() {GetType(IList(Of Object)), GetType(Integer), GetType(Integer)}, Nothing)
         Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {tt})
@@ -4112,7 +4128,8 @@ l1:
 
     Protected Friend MustOverride Sub LoadObject(ByVal obj As _ICachedEntity)
 
-    Protected Friend MustOverride Function LoadObjectsInternal(Of T As {IOrmBase, New})(ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+    Protected Friend MustOverride Function LoadObjectsInternal(Of T As {IOrmBase, New}, T2 As {IOrmBase})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+    Protected Friend MustOverride Function LoadObjectsInternal(Of T2 As {IOrmBase})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
 
     'Protected MustOverride Overloads Sub FindObjects(ByVal t As Type, ByVal WithLoad As Boolean, ByVal arr As System.Collections.ArrayList, ByVal sort As String, ByVal sort_type As SortType)
 

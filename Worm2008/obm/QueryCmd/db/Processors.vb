@@ -9,7 +9,7 @@ Namespace Query.Database
 
     Partial Public Class DbQueryExecutor
 
-        Class Processor(Of ReturnType As {New, ICachedEntity})
+        Class Processor(Of ReturnType As {ICachedEntity})
             Inherits OrmManagerBase.CustDelegateBase(Of ReturnType)
             Implements OrmManagerBase.ICacheValidator
 
@@ -50,7 +50,7 @@ Namespace Query.Database
             End Function
 
             Public Overloads Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManagerBase.CachedItem
-                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(ReturnType)), IOrmSorting2)
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(Query.SelectedType), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_q.Sort)
@@ -115,7 +115,7 @@ Namespace Query.Database
             Protected Overridable Function _MakeStatement() As String
                 Dim almgr As AliasMgr = AliasMgr.Create
                 Dim fi As Object = Mgr.GetFilterInfo
-                Dim t As Type = GetType(ReturnType)
+                Dim t As Type = Query.SelectedType
                 Dim i As Integer = 0
                 Dim q As QueryCmdBase = Query
                 'Dim sb As New StringBuilder
@@ -139,8 +139,13 @@ Namespace Query.Database
 
             Protected Overridable Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyEntityList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
-                Return CType(OrmManagerBase.CreateReadonlyList(GetType(ReturnType), dbm.LoadMultipleObjects(Of ReturnType)( _
-                        cmd, Query.WithLoad, Nothing, GetFields(dbm.DbSchema, GetType(ReturnType), Query))), Global.Worm.ReadOnlyEntityList(Of ReturnType))
+                Dim rr As New List(Of ReturnType)
+                'If GetType(ReturnType) IsNot Query.SelectedType Then
+                dbm.LoadMultipleObjects(Query.SelectedType, cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
+                'Else
+                'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
+                'End If
+                Return CType(OrmManagerBase.CreateReadonlyList(GetType(ReturnType), rr), Global.Worm.ReadOnlyEntityList(Of ReturnType))
             End Function
 
             Protected ReadOnly Property Mgr() As OrmReadOnlyDBManager
@@ -206,6 +211,22 @@ Namespace Query.Database
 
             Public Overridable Function Validate(ByVal ce As OrmManagerBase.CachedItem) As Boolean Implements OrmManagerBase.ICacheValidator.Validate
                 Return True
+            End Function
+        End Class
+
+        Class ProcessorT(Of SelectType As {ICachedEntity, New}, ReturnType As {ICachedEntity})
+            Inherits Processor(Of ReturnType)
+
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+                ByVal f() As IFilter, ByVal q As QueryCmdBase)
+                MyBase.New(mgr, j, f, q)
+            End Sub
+
+            Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyEntityList(Of ReturnType)
+                Dim dbm As OrmReadOnlyDBManager = CType(Mgr, OrmReadOnlyDBManager)
+                Dim rr As New List(Of ReturnType)
+                dbm.LoadMultipleObjects(Of SelectType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
+                Return CType(OrmManagerBase.CreateReadonlyList(GetType(ReturnType), rr), Global.Worm.ReadOnlyEntityList(Of ReturnType))
             End Function
         End Class
 

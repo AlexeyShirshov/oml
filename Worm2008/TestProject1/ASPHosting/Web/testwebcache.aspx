@@ -8,15 +8,24 @@
 
 <script runat="server">
 #Const UseUserInstance = True
-
+    
+    Public Class webcache
+        Inherits Worm.Cache.WebCache
+        
+        Protected Overrides Function GetPolicy(ByVal t As System.Type) As Worm.Cache.DictionatyCachePolicy
+            Return DictionatyCachePolicy.CreateDefault
+        End Function
+    End Class
+    
+    Protected _wc As New webcache
+    
     Protected Function CreateDBManager() As OrmReadOnlyDBManager
-        Dim c As New OrmCache
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
         Dim conn As String = "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;"
-        Return New OrmReadOnlyDBManager(c, New SQLGenerator("1"), conn)
+        Return New OrmReadOnlyDBManager(_wc, New SQLGenerator("1"), conn)
 #Else
-        Return New OrmReadOnlyDBManager(c, New SQLGenerator("1"), "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=wormtest;")
+        Return New OrmReadOnlyDBManager(_wc, New SQLGenerator("1"), "Data Source=.\sqlexpress;Integrated Security=true;Initial Catalog=wormtest;")
 #End If
     End Function
     
