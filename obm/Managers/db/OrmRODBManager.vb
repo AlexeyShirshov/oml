@@ -958,11 +958,13 @@ Namespace Database
                     .CommandText = sb.ToString
                 End With
 
+                Dim values As IList = CType(GetType(List(Of )).MakeGenericType(New Type() {ct}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
                 If withLoad Then
-                    Return LoadMultipleObjects(ct, selectedType, cmd, Nothing, Nothing)
+                    LoadMultipleObjects(ct, selectedType, cmd, values, Nothing, Nothing)
                 Else
-                    Return LoadMultipleObjects(ct, cmd, True, arr)
+                    LoadMultipleObjects(ct, cmd, True, values, arr)
                 End If
+                Return values
             End Using
         End Function
 
@@ -1008,12 +1010,12 @@ Namespace Database
         '    End Using
         'End Function
 
-        Protected Function LoadMultipleObjects(ByVal firstType As Type, _
-            ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal first_cols As List(Of ColumnAttribute), ByVal sec_cols As List(Of ColumnAttribute)) As IList
+        Protected Sub LoadMultipleObjects(ByVal firstType As Type, _
+            ByVal secondType As Type, ByVal cmd As System.Data.Common.DbCommand, ByVal values As IList, _
+            ByVal first_cols As List(Of ColumnAttribute), ByVal sec_cols As List(Of ColumnAttribute))
 
-            Dim values As IList
-            values = CType(GetType(List(Of )).MakeGenericType(New Type() {firstType}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
+            'Dim values As IList
+            'values = CType(GetType(List(Of )).MakeGenericType(New Type() {firstType}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
             If first_cols Is Nothing Then
                 first_cols = DbSchema.GetSortedFieldList(firstType)
             End If
@@ -1093,7 +1095,6 @@ Namespace Database
                     Loop
                     _fetch = ft.GetTime
 
-                    Return values
                 End Using
             Finally
                 _cache.EndTrackDelete(secondType)
@@ -1101,19 +1102,19 @@ Namespace Database
                 CloseConn(b)
             End Try
 
-        End Function
+        End Sub
 
-        Protected Function LoadMultipleObjects(ByVal t As Type, _
+        Public Sub LoadMultipleObjects(ByVal t As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, _
-            ByVal arr As Generic.List(Of ColumnAttribute)) As IList
+            ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute))
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
 
             If _LoadMultipleObjectsMI Is Nothing Then
                 For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
-                    If mi2.Name = "LoadMultipleObjects" And mi2.IsGenericMethod Then
+                    If mi2.Name = "LoadMultipleObjects" AndAlso mi2.IsGenericMethod Then
                         _LoadMultipleObjectsMI = mi2
                         Exit For
                     End If
@@ -1126,10 +1127,10 @@ Namespace Database
 
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
 
-            Return CType(mi_real.Invoke(Me, flags, Nothing, _
-                New Object() {cmd, withLoad, Nothing, arr}, Nothing), IList)
+            mi_real.Invoke(Me, flags, Nothing, _
+                New Object() {cmd, withLoad, values, arr}, Nothing)
 
-        End Function
+        End Sub
 
         'Protected Overrides Function GetDataTableInternal(ByVal t As System.Type, ByVal obj As OrmBase, _
         '    ByVal filter As IOrmFilter, ByVal appendJoins As Boolean, Optional ByVal tag As String = Nothing) As System.Data.DataTable
@@ -1234,12 +1235,13 @@ Namespace Database
                 'Dim col2 As String = orig_type.Name & "ID"
                 'dt.Columns.Add(col1, GetType(Integer))
                 'dt.Columns.Add(col2, GetType(Integer))
+                Dim oschema As IOrmObjectSchema = DbSchema.GetObjectSchema(ct)
 
-                For Each o As OrmBase In GetObjects(ct, ids, f, withLoad, f1, idsSorted)
+                For Each o As IOrmBase In GetObjects(ct, ids, f, withLoad, f1, idsSorted)
                     'Dim o1 As OrmBase = CType(DbSchema.GetFieldValue(o, f1), OrmBase)
                     'Dim o2 As OrmBase = CType(DbSchema.GetFieldValue(o, f2), OrmBase)
-                    Dim o1 As OrmBase = CType(o.GetValue(f1), OrmBase)
-                    Dim o2 As OrmBase = CType(o.GetValue(f2), OrmBase)
+                    Dim o1 As IOrmBase = CType(o.GetValue(Nothing, New ColumnAttribute(f1), oschema), IOrmBase)
+                    Dim o2 As IOrmBase = CType(o.GetValue(Nothing, New ColumnAttribute(f2), oschema), IOrmBase)
 
                     Dim id1 As Object = o1.Identifier
                     Dim id2 As Object = o2.Identifier
@@ -1348,9 +1350,9 @@ Namespace Database
                 Throw New ArgumentNullException("ids")
             End If
 
-            Dim objs As New ArrayList
+            Dim values As IList = CType(GetType(List(Of )).MakeGenericType(New Type() {ct}).InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), System.Collections.IList)
             If ids.Count < 1 Then
-                Return objs
+                Return values
             End If
 
             Dim original_type As Type = ct
@@ -1391,7 +1393,7 @@ Namespace Database
                         params.AppendParams(.Parameters, nidx, cmd_str.Second - nidx)
                         nidx = cmd_str.Second
                     End With
-                    objs.AddRange(LoadMultipleObjects(original_type, cmd, withLoad, arr))
+                    LoadMultipleObjects(original_type, cmd, withLoad, values, arr)
                     'If msort Then
                     '    objs = Schema.GetObjectSchema(original_type).ExternalSort(sort, sortType, objs)
                     'End If
@@ -1399,7 +1401,7 @@ Namespace Database
 
                 'params.Clear(pcnt)
             Next
-            Return objs
+            Return values
         End Function
 
         Protected Overrides Function GetObjects(Of T As {IOrmBase, New})(ByVal ids As Generic.IList(Of Object), ByVal f As IFilter, ByVal objs As List(Of T), _
@@ -1633,10 +1635,16 @@ Namespace Database
             End Try
         End Function
 
-        Protected Friend Function LoadMultipleObjects(Of T As {_IEntity, New})( _
+        Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal withLoad As Boolean, ByVal values As Generic.List(Of T), _
-            ByVal arr As Generic.List(Of ColumnAttribute)) As Generic.List(Of T)
+            ByVal withLoad As Boolean, ByVal values As IList, _
+            ByVal arr As Generic.List(Of ColumnAttribute))
+
+            If values Is Nothing Then
+                'values = New Generic.List(Of T)
+                Throw New ArgumentNullException("values")
+            End If
+
             Invariant()
 
             'Dim idx As Integer = -1
@@ -1650,9 +1658,7 @@ Namespace Database
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
-                    If values Is Nothing Then
-                        values = New Generic.List(Of T)
-                    End If
+
                     'If idx = -1 Then
                     '    Dim pk_name As String = _schema.GetPrimaryKeysName(original_type, False)(0)
                     '    Try
@@ -1670,13 +1676,15 @@ Namespace Database
 
                     'Dim idx As Integer = GetPrimaryKeyIdx(cmd.CommandText, original_type, dr)
                     Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
+                    Dim il As IListEdit = TryCast(values, IListEdit)
+                    If il IsNot Nothing Then
+                        values = il.List
+                    End If
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadFromResultSet(Of T)(withLoad, CType(values, System.Collections.IList), arr, dr, dic, _loadedInLastFetch)
+                        LoadFromResultSet(Of T)(withLoad, values, arr, dr, dic, _loadedInLastFetch)
                     Loop
                     _fetch = ft.GetTime
-
-                    Return values
                 End Using
             Finally
                 If withLoad Then
@@ -1684,7 +1692,7 @@ Namespace Database
                 End If
                 CloseConn(b)
             End Try
-        End Function
+        End Sub
 
         Protected Function GetPrimaryKeyIdx(ByVal cmdtext As String, ByVal original_type As Type, ByVal dr As System.Data.IDataReader) As Integer
             Dim idx As Integer = -1
@@ -2185,10 +2193,10 @@ Namespace Database
         '    Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
         'End Function
 
-        Protected Friend Overrides Function LoadObjectsInternal(Of T As {IOrmBase, New})( _
-            ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+        Protected Friend Overrides Function LoadObjectsInternal(Of T As {IOrmBase, New}, T2 As {IOrmBase})( _
+            ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), _
-            ByVal withLoad As Boolean) As ReadOnlyList(Of T)
+            ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
             Invariant()
 
             If objs.Count < 1 Then
@@ -2201,7 +2209,7 @@ Namespace Database
 
             length = Math.Min(length, objs.Count - start)
 
-            Dim ids As Generic.List(Of Object) = FormPKValues(Of T)(Me, objs, start, length)
+            Dim ids As Generic.List(Of Object) = FormPKValues(Of T2)(Me, objs, start, length)
             If ids.Count < 1 Then
                 'Dim l As New List(Of T)
                 'For Each o As T In objs
@@ -2219,7 +2227,7 @@ Namespace Database
             If Not DbSchema.AppendWhere(original_type, Nothing, almgr, sb, GetFilterInfo, params) Then
                 sb.Append(" where 1=1 ")
             End If
-            Dim values As New Generic.List(Of T)
+            Dim values As New Generic.List(Of T2)
             Dim pcnt As Integer = params.Params.Count
             Dim nextp As Integer = pcnt
             For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, "ID", almgr, params, original_type, True)
@@ -2238,7 +2246,7 @@ Namespace Database
                 End Using
             Next
 
-            Dim result As New ReadOnlyList(Of T)
+            Dim result As New ReadOnlyList(Of T2)(original_type)
             Dim ar As IListEdit = result
             Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
             If remove_not_found Then
@@ -2270,7 +2278,7 @@ Namespace Database
                 '        End If
                 '    End If
                 'Next
-                For Each o As T In objs
+                For Each o As T2 In objs
                     Dim pos As Integer = values.IndexOf(o)
                     If pos >= 0 Then
                         If withLoad Then
@@ -2283,7 +2291,123 @@ Namespace Database
                     End If
                 Next
             Else
-                result = New ReadOnlyList(Of T)(values)
+                result = New ReadOnlyList(Of T2)(original_type, values)
+                'If ListConverter.IsWeak Then
+                '    For Each o As T In objs
+                '        Dim obj As T = Nothing
+                '        If dic.TryGetValue(o.Key, obj) Then
+                '            ar.Add(obj)
+                '        Else
+                '            ar.Add(o)
+                '        End If
+                '    Next
+                'Else
+                '    Return objs
+                'End If
+            End If
+            Return result
+            'Return New ReadOnlyList(Of T)(values)
+        End Function
+
+        Protected Friend Overrides Function LoadObjectsInternal(Of T2 As {IOrmBase})(ByVal realType As Type, _
+            ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
+            ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), _
+            ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+            Invariant()
+
+            If objs.Count < 1 Then
+                Return objs
+            End If
+
+            If start > objs.Count Then
+                Throw New ArgumentException(String.Format("The range {0},{1} is greater than array length: " & objs.Count, start, length))
+            End If
+
+            length = Math.Min(length, objs.Count - start)
+
+            Dim ids As Generic.List(Of Object) = FormPKValues(Of T2)(Me, objs, start, length)
+            If ids.Count < 1 Then
+                'Dim l As New List(Of T)
+                'For Each o As T In objs
+                '    l.Add(o)
+                'Next
+                'Return l
+                Return objs
+            End If
+
+            'Dim original_type As Type = realType
+            Dim almgr As AliasMgr = AliasMgr.Create
+            Dim params As New ParamMgr(DbSchema, "p")
+            Dim sb As New StringBuilder
+            sb.Append(DbSchema.Select(realType, almgr, params, columns, Nothing, GetFilterInfo))
+            If Not DbSchema.AppendWhere(realType, Nothing, almgr, sb, GetFilterInfo, params) Then
+                sb.Append(" where 1=1 ")
+            End If
+            Dim values As New Generic.List(Of T2)
+            Dim pcnt As Integer = params.Params.Count
+            Dim nextp As Integer = pcnt
+            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, "ID", almgr, params, realType, True)
+                Dim sb_cmd As New StringBuilder
+                sb_cmd.Append(sb.ToString).Append(cmd_str.First)
+
+                Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                    With cmd
+                        .CommandType = System.Data.CommandType.Text
+                        .CommandText = sb_cmd.ToString
+                        params.AppendParams(.Parameters, 0, pcnt)
+                        params.AppendParams(.Parameters, nextp, cmd_str.Second - nextp)
+                        nextp = cmd_str.Second
+                    End With
+                    LoadMultipleObjects(realType, cmd, True, values, columns)
+                End Using
+            Next
+
+            Dim result As New ReadOnlyList(Of T2)(realType)
+            Dim ar As IListEdit = result
+            'Dim dic As IDictionary(Of Integer, T) = GetDictionary(realtype)
+            If remove_not_found Then
+                'For Each o As T In objs
+                '    If Not withLoad Then
+                '        If values.Contains(o) OrElse Not ids.Contains(o.Identifier) Then
+                '            ar.Add(o)
+                '        Else
+                '            o.SetObjectState(ObjectState.NotFoundInSource)
+                '        End If
+                '    Else
+                '        If o.IsLoaded Then
+                '            ar.Add(o)
+                '        ElseIf ListConverter.IsWeak Then
+                '            Dim obj As T = Nothing
+                '            If dic.TryGetValue(o.Key, obj) AndAlso (o.IsLoaded OrElse values.Contains(o)) Then
+                '                ar.Add(obj)
+                '            Else
+                '                Dim idx As Integer = values.IndexOf(o)
+                '                If idx >= 0 Then
+                '                    Dim ro As T = values(idx)
+                '                    Debug.Assert(ro.IsLoaded)
+                '                    Add2Cache(ro)
+                '                    ar.Add(ro)
+                '                End If
+                '            End If
+                '        Else
+
+                '        End If
+                '    End If
+                'Next
+                For Each o As T2 In objs
+                    Dim pos As Integer = values.IndexOf(o)
+                    If pos >= 0 Then
+                        If withLoad Then
+                            If values(pos).IsLoaded Then
+                                ar.Add(values(pos))
+                            End If
+                        Else
+                            ar.Add(values(pos))
+                        End If
+                    End If
+                Next
+            Else
+                result = New ReadOnlyList(Of T2)(realType, values)
                 'If ListConverter.IsWeak Then
                 '    For Each o As T In objs
                 '        Dim obj As T = Nothing
@@ -2513,9 +2637,9 @@ Namespace Database
 
                 If Not String.IsNullOrEmpty(cmd.CommandText) Then
                     If type2search Is selectType OrElse searchCols.Count = 0 Then
-                        col = LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols)
+                        LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, col, selCols)
                     Else
-                        col = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), Global.System.Collections.Generic.List(Of T))
+                        LoadMultipleObjects(selectType, type2search, cmd, col, selCols, searchCols)
                     End If
                 End If
             End Using
@@ -2538,9 +2662,9 @@ Namespace Database
 
                     If Not String.IsNullOrEmpty(cmd.CommandText) Then
                         If type2search Is selectType OrElse searchCols.Count = 0 Then
-                            col2 = LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols)
+                            LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, col2, selCols)
                         Else
-                            col2 = CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T))
+                            LoadMultipleObjects(selectType, type2search, cmd, col2, selCols, searchCols)
                         End If
                     End If
                 End Using
@@ -2720,10 +2844,10 @@ l2:
             '        fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
             '    End If
             'End If
-            If selectType IsNot type2search Then
-                selCols.Insert(0, New ColumnAttribute("ID"))
-                fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
-            End If
+            'If selectType IsNot type2search Then
+            selCols.Insert(0, New ColumnAttribute("ID", Field2DbRelations.PK))
+            fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
+            'End If
 
             Dim types As New List(Of Type)
 
@@ -2850,8 +2974,11 @@ l2:
                 End If
 
                 If searchCols.Count > 0 Then
-                    searchCols.Insert(0, New ColumnAttribute("ID"))
-                    fields.Insert(0, New Pair(Of String, Type)("ID", type2search))
+                    For Each c As ColumnAttribute In searchCols
+                        selCols.Add(c)
+                    Next
+                    'searchCols.Insert(0, New ColumnAttribute("ID", Field2DbRelations.PK))
+                    'fields.Insert(0, New Pair(Of String, Type)("ID", type2search))
                 End If
 
                 If contextKey IsNot Nothing Then
@@ -2883,11 +3010,13 @@ l2:
                     params.AppendParams(.Parameters)
                 End With
 
+                Dim r As New List(Of T)
                 If type2search Is selectType OrElse searchCols.Count = 0 Then
-                    Return New ReadOnlyList(Of T)(LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, Nothing, selCols))
+                    LoadMultipleObjects(Of T)(cmd, fields IsNot Nothing, r, selCols)
                 Else
-                    Return New ReadOnlyList(Of T)(CType(LoadMultipleObjects(selectType, type2search, cmd, selCols, searchCols), List(Of T)))
+                    LoadMultipleObjects(selectType, type2search, cmd, r, selCols, searchCols)
                 End If
+                Return New ReadOnlyList(Of T)(r)
             End Using
 
         End Function

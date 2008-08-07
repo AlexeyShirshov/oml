@@ -143,6 +143,7 @@ Friend Interface IListEdit
     Overloads Sub Add(ByVal o As Orm.IEntity)
     Overloads Sub Remove(ByVal o As Orm.IEntity)
     Overloads Sub Insert(ByVal pos As Integer, ByVal o As Orm.IEntity)
+    ReadOnly Property List() As IList
 End Interface
 
 Friend Interface ILoadableList
@@ -150,22 +151,34 @@ Friend Interface ILoadableList
     Sub LoadObjects()
 End Interface
 
-Public Class ReadOnlyList(Of T As {Orm.IOrmBase, New})
+Public Class ReadOnlyList(Of T As {Orm.IOrmBase})
     Inherits ReadOnlyEntityList(Of T)
+
+    Private _rt As Type
+
+    Public Sub New(ByVal realType As Type)
+        MyBase.new()
+    End Sub
 
     Public Sub New()
         MyBase.new()
+        _rt = GetType(T)
+    End Sub
+
+    Public Sub New(ByVal realType As Type, ByVal col As IEnumerable(Of T))
+        MyBase.New(col)
     End Sub
 
     Public Sub New(ByVal col As IEnumerable(Of T))
         MyBase.New(col)
+        _rt = GetType(T)
     End Sub
 
-    Public Sub New(ByVal list As List(Of T))
+    Public Sub New(ByVal realType As Type, ByVal list As List(Of T))
         MyBase.New(list)
     End Sub
 
-    Public Sub New(ByVal list As ReadOnlyList(Of T))
+    Public Sub New(ByVal realType As Type, ByVal list As ReadOnlyList(Of T))
         MyBase.New(list)
     End Sub
 
@@ -173,7 +186,7 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase, New})
         If _l.Count > 0 Then
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
-                Return mc.Manager.LoadObjects(Of T)(Me)
+                Return mc.Manager.LoadObjects(_rt, Me)
             End Using
         Else
             Return Me
@@ -184,7 +197,7 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase, New})
         If _l.Count > 0 Then
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
-                Return mc.Manager.LoadObjects(Of T)(Me, start, length)
+                Return mc.Manager.LoadObjects(_rt, Me, start, length)
             End Using
         Else
             Return Me
@@ -213,7 +226,7 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase, New})
     End Function
 End Class
 
-Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity, New})
+Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity})
     Inherits ReadOnlyObjectList(Of T)
     Implements ILoadableList
 
@@ -270,7 +283,7 @@ Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity, New})
         If _l.Count > 0 Then
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
-                Return mc.Manager.LoadObjects(Me, fields, start, length)
+                Return mc.Manager.LoadObjects(Of T)(Me, fields, start, length)
             End Using
         Else
             Return Me
@@ -282,11 +295,18 @@ Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity, New})
     End Sub
 End Class
 
-Public Class ReadOnlyObjectList(Of T As {Orm._IEntity, New})
+Public Class ReadOnlyObjectList(Of T As {Orm._IEntity})
     Inherits ObjectModel.ReadOnlyCollection(Of T)
     Implements IListEdit
 
     Protected _l As List(Of T)
+
+    Private ReadOnly Property _List() As IList Implements IListEdit.List
+        Get
+            Return _l
+        End Get
+    End Property
+
     Protected Friend ReadOnly Property List() As IList(Of T)
         Get
             Return _l

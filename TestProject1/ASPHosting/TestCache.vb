@@ -145,6 +145,15 @@ Public Class TestCache
         End Using
     End Sub
 
+    <TestMethod()> _
+    Public Sub TestWebCache()
+        Dim h As ASPNETHosting.ASPNetHost = GetHost()
+        Using sw As New StringWriter()
+            h.ProcessRequest("ASPHosting/Web/testwebcache.aspx", String.Empty, sw)
+            Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
+        End Using
+    End Sub
+
     Protected Function GetHost() As ASPNETHosting.ASPNetHost
         Dim dir As String = Path.GetDirectoryName(_testContext.TestDir).Replace("TestResults", "TestProject1")
         Dim pr As New ASPNETHosting.ASPNetHost(dir, "/") '& "\ASPHosting\web"

@@ -574,8 +574,8 @@ Public MustInherit Class QueryGenerator
     '    End Get
     'End Property
 
-    Public Function ExternalSort(Of T As {_IEntity, New})(ByVal mgr As OrmManagerBase, ByVal sort As Sort, ByVal objs As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
-        Return sort.ExternalSort(Of T)(mgr, Me, objs)
+    Public Function ExternalSort(Of T As {_IEntity})(ByVal mgr As OrmManagerBase, ByVal sort As Sort, ByVal objs As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
+        Return Sort.ExternalSort(Of T)(mgr, Me, objs)
         'Dim schema As IOrmObjectSchemaBase = GetObjectSchema(GetType(T))
         'Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
         'If s Is Nothing Then

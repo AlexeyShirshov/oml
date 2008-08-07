@@ -9,9 +9,22 @@ Imports System.Reflection
 Namespace Query
 
     Public Interface IExecutor
-        Function ExecEntity(Of ReturnType As {_IEntity, New})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyObjectList(Of ReturnType)
-        Function Exec(Of ReturnType As {_ICachedEntity, New})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyEntityList(Of ReturnType)
-        Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As IList(Of ReturnType)
+
+        Function ExecEntity(Of ReturnType As {_IEntity, New})( _
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyObjectList(Of ReturnType)
+
+        Function Exec(Of ReturnType As _ICachedEntity)( _
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyEntityList(Of ReturnType)
+
+        Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)( _
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyEntityList(Of ReturnType)
+
+        Function ExecSimple(Of SelectType As {_ICachedEntity, New}, ReturnType)( _
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As IList(Of ReturnType)
+
+        Function ExecSimple(Of ReturnType)( _
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As IList(Of ReturnType)
+
     End Interface
 
     Public Class Top
@@ -80,13 +93,24 @@ Namespace Query
         Protected _hint As String
         Protected _mark As Integer = Environment.TickCount
         Protected _smark As Integer = Environment.TickCount
-        Protected _t As Type
+        'Protected _returnType As Type
+        Protected _realType As Type
         Protected _o As OrmBase
         Protected _m2mKey As String
         Protected _rn As Worm.Database.Criteria.Core.TableFilter
         Protected _outer As QueryCmdBase
+        Private _er As OrmManagerBase.ExecutionResult
 
         Private _appendMain As Boolean
+
+        Public Property LastExecitionResult() As OrmManagerBase.ExecutionResult
+            Get
+                Return _er
+            End Get
+            Protected Friend Set(ByVal value As OrmManagerBase.ExecutionResult)
+                _er = value
+            End Set
+        End Property
 
         Protected Friend ReadOnly Property Obj() As OrmBase
             Get
@@ -127,11 +151,15 @@ Namespace Query
             _smark = Environment.TickCount
         End Sub
 
-        Protected Sub New()
+        Public Sub New()
         End Sub
 
         Public Sub New(ByVal table As SourceFragment)
             _table = table
+        End Sub
+
+        Public Sub New(ByVal selectType As Type)
+            _realType = selectType
         End Sub
 
         Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal t As Type) As IFilter()
@@ -341,11 +369,17 @@ Namespace Query
 
         Public Overridable Property SelectedType() As Type
             Get
-                Return _t
+                Return _realType
             End Get
             Set(ByVal value As Type)
-                _t = value
+                _realType = value
             End Set
+        End Property
+
+        Public Overridable ReadOnly Property ReturnType() As Type
+            Get
+                Return _realType
+            End Get
         End Property
 
         Public ReadOnly Property Mark() As Integer
@@ -519,6 +553,18 @@ Namespace Query
             Return e
         End Function
 
+        Public Function ToEntityList(Of T As {_ICachedEntity})() As ReadOnlyEntityList(Of T)
+
+        End Function
+
+        Public Function ToList(Of T As {_IOrmBase})(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
+            Return CType(GetExecutor(mgr).Exec(Of T)(mgr, Me), Global.Worm.ReadOnlyList(Of T))
+        End Function
+
+        Public Function ToList(Of SelectType As {_IOrmBase, New}, ReturnType As {_IOrmBase})(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
+            Return CType(GetExecutor(mgr).Exec(Of SelectType, ReturnType)(mgr, Me), Global.Worm.ReadOnlyList(Of ReturnType))
+        End Function
+
         Public Function ExecTypeless(ByVal mgr As OrmManagerBase) As IEnumerator
             Return ToListTypeless(mgr).GetEnumerator
         End Function
@@ -555,7 +601,7 @@ Namespace Query
                 ._order = _order
                 ._page = _page
                 ._smark = _smark
-                ._t = _t
+                ._realType = _realType
                 ._table = _table
                 ._top = _top
                 ._rn = _rn
@@ -579,19 +625,19 @@ Namespace Query
             Return Create(Of ReturnType)(filter, Nothing, False)
         End Function
 
-        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal field As String) As QueryCmd(Of ReturnType)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal column As String, ByVal field As String) As QueryCmd(Of ReturnType)
             Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(table, Nothing, Nothing, False)
             Dim l As New List(Of OrmProperty)
-            l.Add(New OrmProperty(table, field))
+            l.Add(New OrmProperty(table, column, field))
             q._fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(l)
             Return q
         End Function
 
-        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal fields() As String) As QueryCmd(Of ReturnType)
+        Public Shared Function Create(Of ReturnType As {_ICachedEntity, New})(ByVal table As SourceFragment, ByVal columnAndField() As Pair(Of String, String)) As QueryCmd(Of ReturnType)
             Dim q As QueryCmd(Of ReturnType) = Create(Of ReturnType)(table, Nothing, Nothing, False)
             Dim l As New List(Of OrmProperty)
-            For Each f As String In fields
-                l.Add(New OrmProperty(table, f))
+            For Each f As Pair(Of String, String) In columnAndField
+                l.Add(New OrmProperty(table, f.First, f.Second))
             Next
             q._fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(l)
             Return q
@@ -697,7 +743,7 @@ Namespace Query
         End Function
 
         Public Function Exec(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
-            Return GetExecutor(mgr).Exec(Of ReturnType, T)(mgr, Me)
+            Return GetExecutor(mgr).ExecSimple(Of ReturnType, T)(mgr, Me)
         End Function
     End Class
 

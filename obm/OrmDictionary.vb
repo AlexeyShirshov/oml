@@ -219,7 +219,7 @@ Namespace Orm
         End Property
     End Class
 
-    Public Class DicIndex(Of T As {New, OrmBase})
+    Public Class DicIndex(Of T As {New, IOrmBase})
         Inherits DicIndexBase
 
         Private _firstField As String
@@ -270,7 +270,7 @@ Namespace Orm
             End If
 
             Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
-			con.AddFilter(cr.Filter(GetType(T))).AddFilter(Root.Filter)
+            con.AddFilter(cr.Filter(GetType(T))).AddFilter(Root.Filter)
             Return mgr.FindWithJoins(Of T)(Nothing, Root.Join, con.Condition, sort, False)
         End Function
 
@@ -283,7 +283,7 @@ Namespace Orm
             Dim col As ReadOnlyList(Of T)
             Dim s As QueryGenerator = mgr.ObjectSchema
             Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
-			con.AddFilter(Root.Filter)
+            con.AddFilter(Root.Filter)
 
             If strong Then
                 con.AddFilter(s.CreateCriteria(tt).Field(field).Eq(Name).Filter(GetType(T)))
@@ -335,7 +335,7 @@ Namespace Orm
                             Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, sname, oschema, Nothing))
                             Dim ar2 As T = CType(c(fv), T)
                             If ar2 IsNot Nothing Then
-                                If ar2 = ar Then
+                                If Object.Equals(ar2, ar) Then
                                     Throw New InvalidOperationException("Duplicate object " & fv)
                                 Else
                                     'Throw New MediaContentException("Artists with equal names " & ar.ObjName & ", " & ar2.ObjName)
@@ -355,7 +355,7 @@ Namespace Orm
                             Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname, oschema, Nothing))
                             Dim ar2 As T = CType(c(fv), T)
                             If ar2 IsNot Nothing Then
-                                If ar2 = ar Then
+                                If Object.Equals(ar2, ar) Then
                                     Continue For
                                 Else
                                     'Throw New MediaContentException("Artists with equal names " & ar.ObjName & ", " & ar2.ObjName)

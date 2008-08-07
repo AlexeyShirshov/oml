@@ -32,10 +32,11 @@ Namespace Query.Database
         Private Const RowNumberOrder As String = "qiervfnkasdjvn"
 
         Private _proc As Object
+        Private _procT As Object
         Private _m As Integer
         Private _sm As Integer
 
-        Protected Function GetProcessor(Of ReturnType As {New, ICachedEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As Processor(Of ReturnType)
+        Protected Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As Processor(Of ReturnType)
             If _proc Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                 'If query.Joins IsNot Nothing Then
@@ -77,13 +78,55 @@ Namespace Query.Database
             Return CType(_proc, Processor(Of ReturnType))
         End Function
 
-        Public Function Exec(Of SelectType As {New, _ICachedEntity}, ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.Exec
+        Protected Function GetProcessorT(Of SelectType As {ICachedEntity, New}, ReturnType As {ICachedEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ProcessorT(Of SelectType, ReturnType)
+            If _proc Is Nothing Then
+                Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
+                'If query.Joins IsNot Nothing Then
+                '    j.AddRange(query.Joins)
+                'End If
+
+                Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, GetType(ReturnType))
+                'If query.Filter IsNot Nothing Then
+                '    f = query.Filter.Filter(GetType(ReturnType))
+                'End If
+
+                'If query.AutoJoins Then
+                '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+                '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
+                '        j.AddRange(joins)
+                '    End If
+                'End If
+
+                'If query.Obj IsNot Nothing Then
+                '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                'Else
+                _proc = New ProcessorT(Of SelectType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                'End If
+
+                _m = query.Mark
+                _sm = query.SMark
+            Else
+                Dim p As Processor(Of ReturnType) = CType(_proc, Processor(Of ReturnType))
+                If _m <> query.Mark Then
+                    Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
+                    Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, GetType(ReturnType))
+                    p.Reset(j, f)
+                ElseIf _sm <> query.SMark Then
+                    p.ResetStmt()
+                End If
+                p.Created = False
+            End If
+
+            Return CType(_proc, ProcessorT(Of SelectType, ReturnType))
+        End Function
+
+        Public Function ExecSimple(Of SelectType As {New, _ICachedEntity}, ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
             Dim p As Processor(Of SelectType) = GetProcessor(Of SelectType)(mgr, query)
 
             Return p.GetSimpleValues(Of ReturnType)()
         End Function
 
-        Public Function Exec(Of ReturnType As {New, _ICachedEntity})(ByVal mgr As OrmManagerBase, _
+        Public Function Exec(Of ReturnType As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
             ByVal query As QueryCmdBase) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
 
             Dim dontcache As Boolean = query.DontCache
@@ -113,6 +156,51 @@ Namespace Query.Database
             End If
 
             Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.WithLoad, p)
+            query.LastExecitionResult = mgr.GetLastExecitionResult
+
+            mgr._dont_cache_lists = oldCache
+            mgr._start = oldStart
+            mgr._length = oldLength
+
+            mgr.RaiseOnDataAvailable()
+
+            Dim s As Cache.IListObjectConverter.ExtractListResult
+            'Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
+            'Return r
+            Return ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
+        End Function
+
+        Public Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
+            ByVal query As QueryCmdBase) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
+
+            Dim dontcache As Boolean = query.DontCache
+
+            Dim key As String = Nothing
+            Dim dic As IDictionary = Nothing
+            Dim id As String = Nothing
+            Dim sync As String = Nothing
+
+            Dim p As ProcessorT(Of SelectType, ReturnType) = GetProcessorT(Of SelectType, ReturnType)(mgr, query)
+
+            If Not dontcache Then
+                key = p.Key
+                id = p.Id
+                dic = p.Dic
+                sync = p.Sync
+            End If
+
+            Dim oldCache As Boolean = mgr._dont_cache_lists
+            Dim oldStart As Integer = mgr._start
+            Dim oldLength As Integer = mgr._length
+
+            mgr._dont_cache_lists = dontcache OrElse query.OuterQuery IsNot Nothing
+            If query.ClientPaging IsNot Nothing Then
+                mgr._start = query.ClientPaging.First
+                mgr._length = query.ClientPaging.Second
+            End If
+
+            Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.WithLoad, p)
+            query.LastExecitionResult = mgr.GetLastExecitionResult
 
             mgr._dont_cache_lists = oldCache
             mgr._start = oldStart
@@ -137,11 +225,14 @@ Namespace Query.Database
                     '    Throw New NotImplementedException
                     'End If
                     If p.Type Is Nothing Then
-                        Dim cl As New ColumnAttribute(p.Field)
+                        If String.IsNullOrEmpty(p.Field) Then
+                            Throw New InvalidOperationException(String.Format("Column {0} must have a field", p.Column))
+                        End If
+                        Dim cl As ColumnAttribute = gen.GetColumnByFieldName(type, p.Field)
                         cl.Column = p.Column
                         l.Add(cl)
                     Else
-                        l.Add(New ColumnAttribute(p.Field))
+                        l.Add(gen.GetColumnByFieldName(type, p.Field))
                     End If
                 Next
                 'l.Sort()
@@ -407,6 +498,10 @@ Namespace Query.Database
 
         Public Function ExecEntity(Of ReturnType As {New, Orm._IEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
             Throw New NotImplementedException
+        End Function
+
+        Public Function ExecSimple(Of ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
+
         End Function
     End Class
 

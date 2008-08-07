@@ -8,6 +8,7 @@ Imports Worm.Sorting
 Imports Worm.Criteria.Core
 
 Public Interface IEnt
+    Inherits _IOrmBase
 
 End Interface
 
@@ -395,7 +396,7 @@ Public Class EntitySchema4v1Implementation
         Return Nothing
     End Function
 
-    Public Function CreateSortComparer1(Of T As {New, _IEntity})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
+    Public Function CreateSortComparer1(Of T As {_IEntity})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
         If s.FieldName = "Title" Then
             Return CType(New Comparer(Entity4Sort.Name, s.Order), Global.System.Collections.Generic.IComparer(Of T))
         End If

@@ -768,7 +768,7 @@ Namespace Linq
 
         Sub New(ByVal schema As QueryGenerator)
             MyBase.new(schema)
-            _q = New Query.QueryCmdBase(Nothing)
+            _q = New Query.QueryCmdBase(CType(Nothing, Type))
         End Sub
 
         'Sub New(ByVal q As Query.QueryCmdBase)
@@ -1101,7 +1101,7 @@ Namespace Linq
                 Dim ag As New SimpleExpVis(_schema, Me)
                 ag.Visit(m.Arguments(1))
                 If IsSubQueryRequired() Then
-                    Dim aq As New Query.QueryCmdBase(Nothing)
+                    Dim aq As New Query.QueryCmdBase(CType(Nothing, Type))
                     'Dim al As String = Nothing
                     'Dim num As Integer
                     Dim a As New Aggregate(af, GetIndex(ag.Exp))
@@ -1151,7 +1151,7 @@ Namespace Linq
                     '    _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(GetProperties())
                     'End If
 
-                    Dim aq As New Query.QueryCmdBase(Nothing)
+                    Dim aq As New Query.QueryCmdBase(CType(Nothing, Type))
                     aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, 0)})
                     _q.OuterQuery = aq
                 Else

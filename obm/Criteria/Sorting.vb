@@ -576,7 +576,7 @@ Namespace Sorting
             End Get
         End Property
 
-        Public Overridable Function ExternalSort(Of T As {_IEntity, New})(ByVal mgr As OrmManagerBase, ByVal schema As QueryGenerator, ByVal objs As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
+        Public Overridable Function ExternalSort(Of T As {_IEntity})(ByVal mgr As OrmManagerBase, ByVal schema As QueryGenerator, ByVal objs As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
             If Not IsExternal Then
                 Throw New InvalidOperationException("Sort is not external")
             End If

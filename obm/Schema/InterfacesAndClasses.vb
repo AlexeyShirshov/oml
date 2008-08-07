@@ -60,7 +60,7 @@ Namespace Orm.Meta
         'ReadOnly Property IsExternalSort(ByVal s As Sort) As Boolean
         'Function ExternalSort(Of T As {OrmBase, New})(ByVal s As Sort, ByVal objs As ReadOnlyList(Of T)) As ReadOnlyList(Of T)
         Function CreateSortComparer(ByVal s As Sort) As IComparer
-        Function CreateSortComparer(Of T As {_IEntity, New})(ByVal s As Sort) As Generic.IComparer(Of T)
+        Function CreateSortComparer(Of T As {_IEntity})(ByVal s As Sort) As Generic.IComparer(Of T)
     End Interface
 
     Public Interface IOrmSorting2

@@ -648,7 +648,9 @@ Namespace Database.Storedprocs
             End If
             _donthit = True
             'Dim ce As New OrmManagerBase.CachedItem(Nothing, OrmManagerBase.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
-            Dim l As IListEdit = OrmManagerBase.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns))
+            Dim rr As New List(Of T)
+            mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, rr, GetColumns)
+            Dim l As IListEdit = OrmManagerBase.CreateReadonlyList(GetType(T), rr)
             _exec = mgr.Exec 'ce.ExecutionTime
             _fecth = mgr.Fecth 'ce.FetchTime
 
