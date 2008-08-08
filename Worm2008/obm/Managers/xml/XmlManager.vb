@@ -176,13 +176,13 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T As {New, IOrmBase}, T2 As IOrmBase)( _
+        Public Overloads Overrides Function LoadObjectsInternal(Of T As {New, IOrmBase}, T2 As IOrmBase)( _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
             Throw New NotImplementedException
         End Function
 
-        Protected Friend Overloads Overrides Function LoadObjectsInternal(Of T2 As IOrmBase)(ByVal realType As Type, _
+        Public Overloads Overrides Function LoadObjectsInternal(Of T2 As IOrmBase)(ByVal realType As Type, _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean, ByVal columns As System.Collections.Generic.List(Of Orm.Meta.ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
             Throw New NotImplementedException
@@ -219,7 +219,7 @@ Namespace Xml
                 values = New Generic.List(Of T)
             End If
 
-            Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
+            Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
             Dim oschema As IOrmObjectSchema = CType(_schema.GetObjectSchema(original_type), IOrmObjectSchema)
             Dim ft As New PerfCounter
             Do While nodes.MoveNext
@@ -240,7 +240,7 @@ Namespace Xml
             Return d.CreateNavigator
         End Function
 
-        Protected Sub LoadFromNodeIterator(Of T As {New, _ICachedEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Integer, T), _
+        Protected Sub LoadFromNodeIterator(Of T As {New, _ICachedEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Object, T), _
             ByVal values As IList(Of T), ByRef loaded As Integer, ByVal oschema As IOrmObjectSchema, ByVal withLoad As Boolean)
             'Dim id As Integer = CInt(dr.GetValue(idx))
             Dim obj As T = New T '= CType(CreateDBObject(Of T)(id, dic, False), T)

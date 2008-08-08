@@ -2426,7 +2426,7 @@ l1:
     End Function
 
     Protected Function LoadTypeInternal(Of T As {IOrmBase, New})(ByVal id As Object, _
-        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Integer, T), ByVal addOnCreate As Boolean) As T
+        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As T
 
         Dim o As T = CreateOrmBase(Of T)(id)
         Return CType(_LoadTypeInternal(o, load, checkOnCreate, CType(dic, System.Collections.IDictionary), addOnCreate), T)
@@ -2506,7 +2506,7 @@ l1:
     Protected Friend Function LoadType(Of T As {IOrmBase, New})(ByVal id As Object, _
         ByVal load As Boolean, ByVal checkOnCreate As Boolean) As T
 
-        Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
+        Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
 
 #If DEBUG Then
         If dic Is Nothing Then
@@ -2695,7 +2695,7 @@ l1:
         Return _cache.GetOrmDictionary(GetFilterInfo, t, _schema)
     End Function
 
-    Public Function GetDictionary(Of T)() As Generic.IDictionary(Of Integer, T)
+    Public Function GetDictionary(Of T)() As Generic.IDictionary(Of Object, T)
         Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema)
     End Function
 
@@ -3379,7 +3379,7 @@ l1:
 
     Public Function GetLoadedCount(Of T As {New, IOrmBase})(ByVal ids As IList(Of Object)) As Integer
         Dim r As Integer = 0
-        Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
+        Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
         For Each id As Object In ids
             If dic.ContainsKey(GetKeyFromPK(Of T)(id)) Then
                 r += 1
@@ -4128,8 +4128,8 @@ l1:
 
     Protected Friend MustOverride Sub LoadObject(ByVal obj As _ICachedEntity)
 
-    Protected Friend MustOverride Function LoadObjectsInternal(Of T As {IOrmBase, New}, T2 As {IOrmBase})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
-    Protected Friend MustOverride Function LoadObjectsInternal(Of T2 As {IOrmBase})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+    Public MustOverride Function LoadObjectsInternal(Of T As {IOrmBase, New}, T2 As {IOrmBase})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
+    Public MustOverride Function LoadObjectsInternal(Of T2 As {IOrmBase})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
 
     'Protected MustOverride Overloads Sub FindObjects(ByVal t As Type, ByVal WithLoad As Boolean, ByVal arr As System.Collections.ArrayList, ByVal sort As String, ByVal sort_type As SortType)
 

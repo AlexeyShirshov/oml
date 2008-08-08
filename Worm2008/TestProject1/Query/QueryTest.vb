@@ -269,7 +269,7 @@ Imports Worm.Criteria.Values
     <TestMethod()> Public Sub TestInterface()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim q As QueryCmdBase = New QueryCmdBase(GetType(Entity))
-            Dim r As ReadOnlyList(Of IEnt) = q.ToList(Of IEnt)(mgr)
+            Dim r As IList(Of IEnt) = q.ToList(Of IEnt)(mgr)
 
             Assert.IsNotNull(r)
             Assert.AreEqual(13, r.Count)
@@ -282,7 +282,7 @@ Imports Worm.Criteria.Values
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
             q = New QueryCmdBase(GetType(Entity))
-            Dim r2 As ReadOnlyList(Of Entity) = q.ToList(Of Entity)(mgr)
+            Dim r2 As IList(Of Entity) = q.ToList(Of Entity)(mgr)
             Assert.IsNotNull(r2)
             Assert.AreEqual(13, r2.Count)
             Assert.IsTrue(q.LastExecitionResult.CacheHit)

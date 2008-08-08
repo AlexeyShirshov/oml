@@ -1194,19 +1194,19 @@ Namespace Collections
     End Class
 
     Public Class HybridDictionary(Of T)
-        Implements System.Collections.Generic.IDictionary(Of Integer, T), IDictionary
+        Implements System.Collections.Generic.IDictionary(Of Object, T), IDictionary
 
         Protected Class Enumerator
-            Implements IEnumerator, IEnumerator(Of KeyValuePair(Of Integer, T))
+            Implements IEnumerator, IEnumerator(Of KeyValuePair(Of Object, T))
 
             'Private dic As Dictionary(Of Integer, T)
-            Private list As New List(Of KeyValuePair(Of Integer, T))
+            Private list As New List(Of KeyValuePair(Of Object, T))
             Private idx As Integer
 
-            Public Sub New(ByVal dic As Dictionary(Of Integer, T))
+            Public Sub New(ByVal dic As Dictionary(Of Object, T))
                 'Me.dic = dic
                 SyncLock dic
-                    list.AddRange(CType(dic, ICollection(Of KeyValuePair(Of Integer, T))))
+                    list.AddRange(CType(dic, ICollection(Of KeyValuePair(Of Object, T))))
                 End SyncLock
                 Reset()
             End Sub
@@ -1231,7 +1231,7 @@ Namespace Collections
                 idx = -1
             End Sub
 
-            Public ReadOnly Property Current() As System.Collections.Generic.KeyValuePair(Of Integer, T) Implements System.Collections.Generic.IEnumerator(Of System.Collections.Generic.KeyValuePair(Of Integer, T)).Current
+            Public ReadOnly Property Current() As System.Collections.Generic.KeyValuePair(Of Object, T) Implements System.Collections.Generic.IEnumerator(Of System.Collections.Generic.KeyValuePair(Of Object, T)).Current
                 Get
                     If idx = -1 Then Throw New InvalidOperationException("You should call MoveNext first.")
                     If idx = -2 Then Throw New InvalidOperationException("You are at the end of the collection.")
@@ -1272,11 +1272,11 @@ Namespace Collections
 
         End Class
 
-        Private dic As New Dictionary(Of Integer, T)
+        Private dic As New Dictionary(Of Object, T)
 
-        Private ReadOnly Property collection() As ICollection(Of KeyValuePair(Of Integer, T))
+        Private ReadOnly Property collection() As ICollection(Of KeyValuePair(Of Object, T))
             Get
-                Return CType(dic, ICollection(Of KeyValuePair(Of Integer, T)))
+                Return CType(dic, ICollection(Of KeyValuePair(Of Object, T)))
             End Get
         End Property
 
@@ -1288,33 +1288,33 @@ Namespace Collections
         End Property
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
-        Protected Sub Add1(ByVal item As System.Collections.Generic.KeyValuePair(Of Integer, T)) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, T)).Add
+        Protected Sub Add1(ByVal item As System.Collections.Generic.KeyValuePair(Of Object, T)) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, T)).Add
             collection.Add(item)
         End Sub
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
-        Public Sub Clear() Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, T)).Clear
+        Public Sub Clear() Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, T)).Clear
             collection.Clear()
         End Sub
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
-        Public Function Contains(ByVal item As System.Collections.Generic.KeyValuePair(Of Integer, T)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, T)).Contains
+        Public Function Contains(ByVal item As System.Collections.Generic.KeyValuePair(Of Object, T)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, T)).Contains
             Return collection.Contains(item)
         End Function
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
-        Public Sub CopyTo(ByVal array() As System.Collections.Generic.KeyValuePair(Of Integer, T), ByVal arrayIndex As Integer) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, T)).CopyTo
+        Public Sub CopyTo(ByVal array() As System.Collections.Generic.KeyValuePair(Of Object, T), ByVal arrayIndex As Integer) Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, T)).CopyTo
             collection.CopyTo(array, arrayIndex)
         End Sub
 
-        Public ReadOnly Property Count() As Integer Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, T)).Count
+        Public ReadOnly Property Count() As Integer Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, T)).Count
             <MethodImpl(MethodImplOptions.Synchronized)> _
             Get
                 Return collection.Count
             End Get
         End Property
 
-        Public ReadOnly Property IsReadOnly() As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, T)).IsReadOnly
+        Public ReadOnly Property IsReadOnly() As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, T)).IsReadOnly
             <MethodImpl(MethodImplOptions.Synchronized)> _
             Get
                 Return collection.IsReadOnly
@@ -1322,21 +1322,21 @@ Namespace Collections
         End Property
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
-        Protected Function Remove1(ByVal item As System.Collections.Generic.KeyValuePair(Of Integer, T)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Integer, T)).Remove
+        Protected Function Remove1(ByVal item As System.Collections.Generic.KeyValuePair(Of Object, T)) As Boolean Implements System.Collections.Generic.ICollection(Of System.Collections.Generic.KeyValuePair(Of Object, T)).Remove
             Return collection.Remove(item)
         End Function
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
-        Public Sub Add(ByVal key As Integer, ByVal value As T) Implements System.Collections.Generic.IDictionary(Of Integer, T).Add
+        Public Sub Add(ByVal key As Object, ByVal value As T) Implements System.Collections.Generic.IDictionary(Of Object, T).Add
             dic.Add(key, value)
         End Sub
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
-        Public Function ContainsKey(ByVal key As Integer) As Boolean Implements System.Collections.Generic.IDictionary(Of Integer, T).ContainsKey
+        Public Function ContainsKey(ByVal key As Object) As Boolean Implements System.Collections.Generic.IDictionary(Of Object, T).ContainsKey
             Return dic.ContainsKey(key)
         End Function
 
-        Default Public Property Item(ByVal key As Integer) As T Implements System.Collections.Generic.IDictionary(Of Integer, T).Item
+        Default Public Property Item(ByVal key As Object) As T Implements System.Collections.Generic.IDictionary(Of Object, T).Item
             <MethodImpl(MethodImplOptions.Synchronized)> _
             Get
                 Return dic(key)
@@ -1347,7 +1347,7 @@ Namespace Collections
             End Set
         End Property
 
-        Public ReadOnly Property Keys() As System.Collections.Generic.ICollection(Of Integer) Implements System.Collections.Generic.IDictionary(Of Integer, T).Keys
+        Public ReadOnly Property Keys() As System.Collections.Generic.ICollection(Of Object) Implements System.Collections.Generic.IDictionary(Of Object, T).Keys
             Get
                 'Dim arr As New List(Of Integer)
                 'SyncLock Me
@@ -1359,16 +1359,16 @@ Namespace Collections
         End Property
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
-        Public Function Remove(ByVal key As Integer) As Boolean Implements System.Collections.Generic.IDictionary(Of Integer, T).Remove
+        Public Function Remove(ByVal key As Object) As Boolean Implements System.Collections.Generic.IDictionary(Of Object, T).Remove
             Return dic.Remove(key)
         End Function
 
         <MethodImpl(MethodImplOptions.Synchronized)> _
-        Public Function TryGetValue(ByVal key As Integer, ByRef value As T) As Boolean Implements System.Collections.Generic.IDictionary(Of Integer, T).TryGetValue
+        Public Function TryGetValue(ByVal key As Object, ByRef value As T) As Boolean Implements System.Collections.Generic.IDictionary(Of Object, T).TryGetValue
             Return dic.TryGetValue(key, value)
         End Function
 
-        Public ReadOnly Property Values() As System.Collections.Generic.ICollection(Of T) Implements System.Collections.Generic.IDictionary(Of Integer, T).Values
+        Public ReadOnly Property Values() As System.Collections.Generic.ICollection(Of T) Implements System.Collections.Generic.IDictionary(Of Object, T).Values
             Get
                 'Dim arr As New List(Of T)
                 'SyncLock Me
@@ -1379,7 +1379,7 @@ Namespace Collections
             End Get
         End Property
 
-        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of System.Collections.Generic.KeyValuePair(Of Integer, T)) Implements System.Collections.Generic.IEnumerable(Of System.Collections.Generic.KeyValuePair(Of Integer, T)).GetEnumerator
+        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of System.Collections.Generic.KeyValuePair(Of Object, T)) Implements System.Collections.Generic.IEnumerable(Of System.Collections.Generic.KeyValuePair(Of Object, T)).GetEnumerator
             Return New Enumerator(dic)
         End Function
 
