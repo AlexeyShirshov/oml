@@ -358,8 +358,17 @@ Public MustInherit Class QueryGenerator
 
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal key As String) As M2MRelation
         If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
-        For Each r As M2MRelation In GetM2MRelations(maintype)
+        Dim mr() As M2MRelation = GetM2MRelations(maintype)
+        For Each r As M2MRelation In mr
             If r.Type Is subtype AndAlso String.Equals(r.Key, key) Then
+                Return r
+            End If
+        Next
+
+        Dim en As String = GetEntityNameByType(maintype)
+        For Each r As M2MRelation In mr
+            Dim n As String = GetEntityNameByType(r.Type)
+            If String.Equals(en, n) AndAlso String.Equals(r.Key, key) Then
                 Return r
             End If
         Next
@@ -368,8 +377,17 @@ Public MustInherit Class QueryGenerator
     End Function
 
     Public Function GetM2MRelation(ByVal maintype As Type, ByVal subtype As Type, ByVal direct As Boolean) As M2MRelation
-        For Each r As M2MRelation In GetM2MRelations(maintype)
+        Dim mr() As M2MRelation = GetM2MRelations(maintype)
+        For Each r As M2MRelation In mr
             If r.Type Is subtype AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
+                Return r
+            End If
+        Next
+
+        Dim en As String = GetEntityNameByType(maintype)
+        For Each r As M2MRelation In mr
+            Dim n As String = GetEntityNameByType(r.Type)
+            If String.Equals(en, n) AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
                 Return r
             End If
         Next
@@ -411,6 +429,16 @@ Public MustInherit Class QueryGenerator
         Else
             Return r.ConnectedType IsNot Nothing
         End If
+    End Function
+
+    Public Function GetEntityNameByType(ByVal t As Type) As String
+        Dim a() As Attribute = Attribute.GetCustomAttributes(t, GetType(EntityAttribute))
+        For Each ea As EntityAttribute In a
+            If ea.Version = _version Then
+                Return ea.EntityName
+            End If
+        Next
+        Return Nothing
     End Function
 
     Public Function GetConnectedType(ByVal maintype As Type, ByVal subtype As Type) As Type
@@ -1419,7 +1447,6 @@ Public MustInherit Class QueryGenerator
 
 #Region " Public members "
 
-
     Public Function GetTypeByEntityName(ByVal name As String) As Type
         If name Is Nothing Then Throw New ArgumentNullException("name")
         Dim idic As IDictionary = CType(map("ObjectSchemaNames"), System.Collections.IDictionary)
@@ -1435,7 +1462,12 @@ Public MustInherit Class QueryGenerator
                 End If
             End Using
         End If
-        Return CType(idic(name), Pair(Of Type, EntityAttribute)).First
+        Dim p As Pair(Of Type, EntityAttribute) = CType(idic(name), Pair(Of Type, EntityAttribute))
+        If p Is Nothing Then
+            Return Nothing
+        Else
+            Return p.First
+        End If
     End Function
 
     Public Function GetObjectSchema(ByVal t As Type) As IOrmObjectSchemaBase

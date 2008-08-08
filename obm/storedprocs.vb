@@ -912,7 +912,7 @@ Namespace Database.Storedprocs
                 If _l Is Nothing Then
                     _l = New List(Of T)
                 End If
-                Dim dic As Generic.IDictionary(Of Integer, T) = mgr.GetDictionary(Of T)()
+                Dim dic As Generic.IDictionary(Of Object, T) = mgr.GetDictionary(Of T)()
                 Dim loaded As Integer
                 mgr.LoadFromResultSet(Of T)(GetWithLoad, _l, GetColumns, dr, dic, loaded)
                 _loaded += loaded

@@ -257,7 +257,6 @@ Namespace Orm.Meta
     End Class
 
     Public Class M2MRelation
-        Public ReadOnly Type As Type
         Public ReadOnly Table As SourceFragment
         Public ReadOnly Column As String
         Public ReadOnly DeleteCascade As Boolean
@@ -269,14 +268,33 @@ Namespace Orm.Meta
         Public Const RevKey As String = "xxx%rev$"
         Public Const DirKey As String = "xxx%direct$"
 
+        Private _entityName As String
+        Private _type As Type
+
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
-            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
-            Me.Type = type
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
+            _type = type
             Me.Table = table
             Me.Column = column
             Me.DeleteCascade = delete
             Me.Mapping = mapping
-            Me.Key = DirKey
+            Me.Key = key
+        End Sub
+
+        Public Sub New(ByVal generator As QueryGenerator, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
+            _entityName = entityName
+            _type = generator.GetTypeByEntityName(entityName)
+            Me.Table = table
+            Me.Column = column
+            Me.DeleteCascade = delete
+            Me.Mapping = mapping
+            Me.Key = key
+        End Sub
+
+        Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
+            MyClass.New(type, table, column, delete, mapping, DirKey)
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
@@ -299,6 +317,18 @@ Namespace Orm.Meta
             MyClass.New(type, table, column, delete, mapping, direct)
             Me.ConnectedType = connectedType
         End Sub
+
+        Public ReadOnly Property EntityName() As String
+            Get
+                Return _entityName
+            End Get
+        End Property
+
+        Public ReadOnly Property Type() As Type
+            Get
+                Return _type
+            End Get
+        End Property
 
         Public ReadOnly Property non_direct() As Boolean
             Get

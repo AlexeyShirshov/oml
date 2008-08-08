@@ -34,6 +34,12 @@
         Using mgr As OrmReadOnlyDBManager = CreateDBManager()
             Dim o As New OrmDictionary(Of TestProject1.Table1)(mgr.Cache)
             
+            'mgr.FindTop(Of TestProject1.Table1)(100, Nothing, Nothing, True)
+            'Dim a As New ArrayList
+            'For i As Integer = 0 To 5500000
+            '    a.Add(New Data.DataSet)
+            'Next
+            'GC.Collect(3, GCCollectionMode.Forced)
             For Each t As TestProject1.Table1 In mgr.FindTop(Of TestProject1.Table1)(100, Nothing, Nothing, True)
                 o.Add(t.Identifier, t)
             Next
@@ -62,6 +68,6 @@
     <title>Test objects</title>
 </head>
 <body><pre runat="server" id="pre" />
-<%=GetTime() & "  test objects ok"%>
+<%=GetTime() & "  test is ok"%>
 </body>
 </html>

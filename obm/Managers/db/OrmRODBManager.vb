@@ -1675,7 +1675,7 @@ Namespace Database
                     'If arr Is Nothing Then arr = Schema.GetSortedFieldList(original_type)
 
                     'Dim idx As Integer = GetPrimaryKeyIdx(cmd.CommandText, original_type, dr)
-                    Dim dic As Generic.IDictionary(Of Integer, T) = GetDictionary(Of T)()
+                    Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
                     Dim il As IListEdit = TryCast(values, IListEdit)
                     If il IsNot Nothing Then
                         values = il.List
@@ -1713,7 +1713,7 @@ Namespace Database
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
             ByVal dr As System.Data.IDataReader, _
-            ByVal dic As IDictionary(Of Integer, T), ByRef loaded As Integer)
+            ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer)
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
@@ -2193,7 +2193,7 @@ Namespace Database
         '    Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
         'End Function
 
-        Protected Friend Overrides Function LoadObjectsInternal(Of T As {IOrmBase, New}, T2 As {IOrmBase})( _
+        Public Overrides Function LoadObjectsInternal(Of T As {IOrmBase, New}, T2 As {IOrmBase})( _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), _
             ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
@@ -2248,7 +2248,7 @@ Namespace Database
 
             Dim result As New ReadOnlyList(Of T2)(original_type)
             Dim ar As IListEdit = result
-            Dim dic As IDictionary(Of Integer, T) = GetDictionary(Of T)()
+            Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
             If remove_not_found Then
                 'For Each o As T In objs
                 '    If Not withLoad Then
@@ -2309,7 +2309,7 @@ Namespace Database
             'Return New ReadOnlyList(Of T)(values)
         End Function
 
-        Protected Friend Overrides Function LoadObjectsInternal(Of T2 As {IOrmBase})(ByVal realType As Type, _
+        Public Overrides Function LoadObjectsInternal(Of T2 As {IOrmBase})(ByVal realType As Type, _
             ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, _
             ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), _
             ByVal withLoad As Boolean) As ReadOnlyList(Of T2)

@@ -467,7 +467,7 @@ Namespace Cache
 
         Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As QueryGenerator) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Integer, T)
+        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Object, T)
 
 #If TraceCreation Then
         Private _added As ArrayList = arraylist.Synchronized( New ArrayList)
@@ -1381,8 +1381,8 @@ l1:
             Return dic
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Integer, T)
-            Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Integer, T))
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Object, T)
+            Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Object, T))
         End Function
 
         Public Sub New()

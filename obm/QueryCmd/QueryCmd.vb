@@ -557,12 +557,16 @@ Namespace Query
 
         End Function
 
-        Public Function ToList(Of T As {_IOrmBase})(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
-            Return CType(GetExecutor(mgr).Exec(Of T)(mgr, Me), Global.Worm.ReadOnlyList(Of T))
+        Public Function ToOrmList(Of T As {_IOrmBase})() As ReadOnlyList(Of T)
+
         End Function
 
-        Public Function ToList(Of SelectType As {_IOrmBase, New}, ReturnType As {_IOrmBase})(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
-            Return CType(GetExecutor(mgr).Exec(Of SelectType, ReturnType)(mgr, Me), Global.Worm.ReadOnlyList(Of ReturnType))
+        Public Function ToList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As IList(Of T)
+            Return GetExecutor(mgr).Exec(Of T)(mgr, Me)
+        End Function
+
+        Public Function ToList(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As IList(Of ReturnType)
+            Return GetExecutor(mgr).Exec(Of SelectType, ReturnType)(mgr, Me)
         End Function
 
         Public Function ExecTypeless(ByVal mgr As OrmManagerBase) As IEnumerator

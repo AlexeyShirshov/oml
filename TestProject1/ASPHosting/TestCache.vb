@@ -150,6 +150,9 @@ Public Class TestCache
         Dim h As ASPNETHosting.ASPNetHost = GetHost()
         Using sw As New StringWriter()
             h.ProcessRequest("ASPHosting/Web/testwebcache.aspx", String.Empty, sw)
+            If Write2Console Then
+                Debug.WriteLine(sw.GetStringBuilder.ToString)
+            End If
             Assert.IsTrue(sw.GetStringBuilder.ToString.Contains("test is ok"))
         End Using
     End Sub
