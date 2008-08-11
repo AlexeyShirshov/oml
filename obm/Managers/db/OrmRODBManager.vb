@@ -1889,6 +1889,9 @@ Namespace Database
 
                         If obj.ObjectState = ObjectState.Created Then
                             ce.CreateCopyForSaveNewEntry(oldpk)
+                            If _raiseCreated Then
+                                RaiseObjectCreated(ce)
+                            End If
                             'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                         ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
                             Return obj

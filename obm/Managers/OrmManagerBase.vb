@@ -928,8 +928,8 @@ Public MustInherit Class OrmManagerBase
         End Get
     End Property
 
-    'Protected Friend _raiseCreated As Boolean
-    Public Event ObjectCreated(ByVal sender As OrmBase, ByVal mgr As OrmManagerBase)
+    Protected _raiseCreated As Boolean
+    Public Event ObjectCreated(ByVal sender As ICachedEntity, ByVal mgr As OrmManagerBase)
 
     Public Event BeginUpdate(ByVal o As ICachedEntity)
     Public Event BeginDelete(ByVal o As ICachedEntity)
@@ -1020,6 +1020,15 @@ Public MustInherit Class OrmManagerBase
         End Get
     End Property
 
+    Public Property RaiseObjectCreation() As Boolean
+        Get
+            Return _raiseCreated
+        End Get
+        Set(ByVal value As Boolean)
+            _raiseCreated = value
+        End Set
+    End Property
+
     Public Sub ResetLocalStorage()
         If _prev IsNot Nothing Then
             Assert(Not _prev._disposed, "Previous MediaContent cannot be disposed. CallStack: " & _cs)
@@ -1104,7 +1113,7 @@ Public MustInherit Class OrmManagerBase
         RaiseEvent BeginDelete(o)
     End Sub
 
-    Protected Sub RaiseObjectCreated(ByVal obj As OrmBase)
+    Protected Sub RaiseObjectCreated(ByVal obj As ICachedEntity)
         RaiseEvent ObjectCreated(obj, Me)
     End Sub
 
@@ -2388,6 +2397,14 @@ l1:
                         Throw New NotSupportedException
                     Else
                         a = obj
+                        If a.ObjectState = ObjectState.Created AndAlso Not a.IsLoaded Then
+                            If GetType(IOrmBase).IsAssignableFrom(type) Then
+                                Dim orm As IOrmBase = CType(a, IOrmBase)
+                                orm.Init(orm.Identifier, _cache, _schema, IdentityString)
+                            Else
+                                a.Init(a.GetPKValues, _cache, _schema, IdentityString)
+                            End If
+                        End If
                     End If
 
                     If load Then

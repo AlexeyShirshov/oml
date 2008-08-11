@@ -336,6 +336,103 @@ Namespace Orm
         End Class
 
         <EditorBrowsable(EditorBrowsableState.Never)> _
+        Public Class M2MClassNew
+            Private _o As OrmBase
+
+            Friend Sub New(ByVal o As OrmBase)
+                _o = o
+            End Sub
+
+            Protected ReadOnly Property GetMgr() As IGetManager
+                Get
+                    Return _o.GetMgr
+                End Get
+            End Property
+
+            Public Sub Add(ByVal obj As _IOrmBase)
+                Using mc As IGetManager = GetMgr
+                    mc.Manager.M2MAdd(_o, obj, M2MRelation.DirKey)
+                End Using
+            End Sub
+
+            Public Sub Add(ByVal obj As _IOrmBase, ByVal key As String)
+                Using mc As IGetManager = GetMgr
+                    'mc.Manager.M2MAdd(_o, obj, M2MRelation.GetKey(direct))
+                End Using
+            End Sub
+
+            Public Sub Delete(ByVal t As Type)
+                Using mc As IGetManager = GetMgr
+                    mc.Manager.M2MDelete(_o, t, M2MRelation.DirKey)
+                End Using
+            End Sub
+
+            Public Sub Delete(ByVal t As Type, ByVal key As String)
+                Using mc As IGetManager = GetMgr
+                    'mc.Manager.M2MDelete(_o, t, M2MRelation.GetKey(direct))
+                End Using
+            End Sub
+
+            Public Sub Delete(ByVal obj As _IOrmBase)
+                Using mc As IGetManager = GetMgr
+                    mc.Manager.M2MDelete(_o, obj, M2MRelation.DirKey)
+                End Using
+            End Sub
+
+            Public Sub Delete(ByVal obj As _IOrmBase, ByVal key As String)
+                Using mc As IGetManager = GetMgr
+                    'mc.Manager.M2MDelete(_o, obj, M2MRelation.GetKey(direct))
+                End Using
+            End Sub
+
+            Public Sub Cancel(ByVal t As Type)
+                Using mc As IGetManager = GetMgr
+                    mc.Manager.M2MCancel(_o, t)
+                End Using
+            End Sub
+
+            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal sort As Sort) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+                Throw New NotImplementedException
+            End Function
+
+            Public Function GetTable(ByVal t As Type, ByVal key As String) As SourceFragment
+                Using mc As IGetManager = _o.GetMgr()
+                    Dim s As QueryGenerator = mc.Manager.ObjectSchema
+                    Dim m2m As M2MRelation = s.GetM2MRelation(_o.GetType, t, key)
+                    If m2m Is Nothing Then
+                        Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
+                    Else
+                        Return m2m.Table
+                    End If
+                End Using
+            End Function
+
+            Public Function GetTable(ByVal t As Type) As SourceFragment
+                Return GetTable(t, Nothing)
+            End Function
+        End Class
+
+        <EditorBrowsable(EditorBrowsableState.Never)> _
         Public Class InternalClass
             Private _o As OrmBase
 
@@ -2241,20 +2338,28 @@ Namespace Orm
         End Sub
 
         Public Function Find(ByVal t As System.Type) As Worm.Query.QueryCmdBase Implements IOrmBase.Find
-            Throw New NotImplementedException
+            Dim q As New Worm.Query.QueryCmdBase(Me)
+            q.SelectedType = t
+            Return q
         End Function
 
         Public Function Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmdBase Implements IOrmBase.Find
-            Throw New NotImplementedException
+            Dim q As New Worm.Query.QueryCmdBase(Me, key)
+            q.SelectedType = t
+            Return q
         End Function
 
-        Public Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmd(Of T) Implements IOrmBase.Find
-            Return Worm.Query.QueryCmdBase.Create(Of T)(Me)
-        End Function
+        'Public Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmdBase Implements IOrmBase.Find
+        '    'Return Worm.Query.QueryCmdBase.Create(Of T)(Me)
+        '    Dim q As New Worm.Query.QueryCmdBase(Me)
+        '    Return q
+        'End Function
 
-        Public Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmd(Of T) Implements IOrmBase.Find
-            Return Worm.Query.QueryCmdBase.Create(Of T)(Me, key)
-        End Function
+        'Public Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmdBase Implements IOrmBase.Find
+        '    'Return Worm.Query.QueryCmdBase.Create(Of T)(Me, key)
+        '    Dim q As New Worm.Query.QueryCmdBase(Me, key)
+        '    Return q
+        'End Function
     End Class
 
     Public Enum ObjectState

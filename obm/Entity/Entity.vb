@@ -26,6 +26,7 @@ Namespace Orm
         Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
         Function IsFieldLoaded(ByVal fieldName As String) As Boolean
         ReadOnly Property IsLoaded() As Boolean
+        Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
     End Interface
 
     Public Interface _ICachedEntity
@@ -62,8 +63,8 @@ Namespace Orm
         Property Identifier() As Object
         Function GetOldName(ByVal id As Object) As String
         Function GetName() As String
-        Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmd(Of T)
-        Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmd(Of T)
+        'Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmdBase
+        'Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmdBase
         Function Find(ByVal t As Type) As Worm.Query.QueryCmdBase
         Function Find(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmdBase
     End Interface
@@ -139,24 +140,24 @@ Namespace Orm
         Public Deleted As Boolean
     End Class
 
+    Public Class ManagerRequiredArgs
+        Inherits EventArgs
+
+        Private _mgr As OrmManagerBase
+        Public Property Manager() As OrmManagerBase
+            Get
+                Return _mgr
+            End Get
+            Set(ByVal value As OrmManagerBase)
+                _mgr = value
+            End Set
+        End Property
+
+    End Class
+
     <Serializable()> _
     Public Class Entity
         Implements _IEntity
-
-        Public Class ManagerRequiredArgs
-            Inherits EventArgs
-
-            Private _mgr As OrmManagerBase
-            Public Property Manager() As OrmManagerBase
-                Get
-                    Return _mgr
-                End Get
-                Set(ByVal value As OrmManagerBase)
-                    _mgr = value
-                End Set
-            End Property
-
-        End Class
 
         Private Class ChangedEventHelper
             Implements IDisposable
@@ -223,7 +224,7 @@ Namespace Orm
         <NonSerialized()> _
         Protected _readRaw As Boolean
 
-        Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
+        Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs) Implements IEntity.ManagerRequired
         Public Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
 
 #If DEBUG Then
@@ -467,15 +468,19 @@ Namespace Orm
             End Using
         End Function
 
+        Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, ByVal mgr As OrmManagerBase, ByVal oschema As IOrmObjectSchemaBase)
+            For Each kv As DictionaryEntry In mgr.ObjectSchema.GetProperties(Me.GetType)
+                Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
+                Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
+                [to].SetValue(pi, c, oschema, [from].GetValue(pi, c, oschema))
+            Next
+        End Sub
+
         Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
             Using mc As IGetManager = GetMgr()
                 Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
                 [to].BeginLoading()
-                For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
-                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
-                    Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                    [to].SetValue(pi, c, oschema, [from].GetValue(pi, c, oschema))
-                Next
+                CopyProperties([from], [to], mc.Manager, oschema)
                 [to].EndLoading()
             End Using
         End Sub
