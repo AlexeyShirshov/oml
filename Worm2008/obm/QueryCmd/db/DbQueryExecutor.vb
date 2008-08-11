@@ -43,7 +43,15 @@ Namespace Query.Database
                 '    j.AddRange(query.Joins)
                 'End If
 
-                Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, GetType(ReturnType))
+                If query.SelectedType Is Nothing Then
+                    If String.IsNullOrEmpty(query.EntityName) Then
+                        query.SelectedType = GetType(ReturnType)
+                    Else
+                        query.SelectedType = mgr.ObjectSchema.GetTypeByEntityName(query.EntityName)
+                    End If
+                End If
+
+                Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, query.SelectedType)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
                 'End If
@@ -67,7 +75,7 @@ Namespace Query.Database
                 Dim p As Processor(Of ReturnType) = CType(_proc, Processor(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-                    Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, GetType(ReturnType))
+                    Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, query.SelectedType)
                     p.Reset(j, f)
                 ElseIf _sm <> query.SMark Then
                     p.ResetStmt()
@@ -501,7 +509,14 @@ Namespace Query.Database
         End Function
 
         Public Function ExecSimple(Of ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
-
+            Dim ts() As Reflection.MemberInfo = Me.GetType.GetMember("ExecSimple")
+            For Each t As Reflection.MethodInfo In ts
+                If t.IsGenericMethod AndAlso t.GetGenericArguments.Length = 2 Then
+                    t = t.MakeGenericMethod(New Type() {query.SelectedType, GetType(ReturnType)})
+                    Return CType(t.Invoke(Me, New Object() {mgr, query}), System.Collections.Generic.IList(Of ReturnType))
+                End If
+            Next
+            Throw New InvalidOperationException
         End Function
     End Class
 

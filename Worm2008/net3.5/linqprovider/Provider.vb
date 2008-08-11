@@ -66,16 +66,17 @@ Namespace Linq
             End Using
         End Function
 
-        Protected Sub GetManager(ByVal o As IEntity, ByVal args As Entity.ManagerRequiredArgs)
+        Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
             args.Manager = _ctx.CreateReadonlyManager
         End Sub
 
-        Protected Sub ObjectCreated(ByVal o As OrmBase, ByVal mgr As OrmManagerBase)
+        Protected Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManagerBase)
             AddHandler o.ManagerRequired, AddressOf GetManager
         End Sub
 
         Public Function Execute(Of TResult)(ByVal expression As System.Linq.Expressions.Expression) As TResult Implements System.Linq.IQueryProvider.Execute
             Dim mgr = _ctx.CreateReadonlyManager
+            mgr.RaiseObjectCreation = True
             Try
                 AddHandler mgr.ObjectCreated, AddressOf ObjectCreated
                 Dim ev As New QueryVisitor(_ctx.Schema)
@@ -87,14 +88,14 @@ Namespace Linq
                     Dim t As Type = rt.GetGenericArguments(0)
                     If GetType(OrmBase).IsAssignableFrom(t) Then
                         q.SelectedType = t
-                        Dim e As IEnumerator = q.ExecTypeless(mgr)
+                        Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
                         Return CType(e, TResult)
                     Else
                         Dim lt As Type = GetType(List(Of ))
                         Dim glt As Type = lt.MakeGenericType(New Type() {t})
                         Dim l As IList = CType(Activator.CreateInstance(glt), System.Collections.IList)
                         q.SelectedType = ev.T
-                        Dim e As IEnumerator = q.ExecTypeless(mgr)
+                        Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
                         Do While e.MoveNext
                             Dim o As OrmBase = CType(e.Current, OrmBase)
                             l.Add(ev.GetNew(o))
@@ -107,13 +108,13 @@ Namespace Linq
 
                     'Else
                     If rt.IsValueType OrElse rt Is GetType(String) Then
-                        l = q.ExecSimple(Of TResult)(mgr)
+                        l = q.ToSimpleList(Of TResult)(mgr)
                     Else
                         If GetType(OrmBase).IsAssignableFrom(rt) Then
-                            l = CType(q.ToListTypeless(mgr), IList(Of TResult))
+                            l = CType(q.ToList(mgr), IList(Of TResult))
                         Else
                             l = New List(Of TResult)
-                            Dim e As IEnumerator = q.ExecTypeless(mgr)
+                            Dim e As IEnumerator = q.ToList(mgr).GetEnumerator
                             Do While e.MoveNext
                                 Dim o As OrmBase = CType(e.Current, OrmBase)
                                 l.Add(CType(ev.GetNew(o), TResult))

@@ -197,7 +197,7 @@ Namespace Cache
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManagerBase) As List(Of EditableListBase)
             Dim l As New List(Of EditableListBase)
-            For Each o As IOrmBase In Main.Find(SubType).ToListTypeless(mgr)
+            For Each o As IOrmBase In Main.Find(SubType).ToList(mgr)
                 Dim el As EditableListBase = mgr.Cache.GetM2M(o, MainType, _key)
                 If el IsNot Nothing Then
                     l.Add(el)
