@@ -349,48 +349,6 @@ Namespace Orm
                 End Get
             End Property
 
-            Public Sub Add(ByVal obj As _IOrmBase)
-                Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MAdd(_o, obj, M2MRelation.DirKey)
-                End Using
-            End Sub
-
-            Public Sub Add(ByVal obj As _IOrmBase, ByVal key As String)
-                Using mc As IGetManager = GetMgr
-                    'mc.Manager.M2MAdd(_o, obj, M2MRelation.GetKey(direct))
-                End Using
-            End Sub
-
-            Public Sub Delete(ByVal t As Type)
-                Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MDelete(_o, t, M2MRelation.DirKey)
-                End Using
-            End Sub
-
-            Public Sub Delete(ByVal t As Type, ByVal key As String)
-                Using mc As IGetManager = GetMgr
-                    'mc.Manager.M2MDelete(_o, t, M2MRelation.GetKey(direct))
-                End Using
-            End Sub
-
-            Public Sub Delete(ByVal obj As _IOrmBase)
-                Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MDelete(_o, obj, M2MRelation.DirKey)
-                End Using
-            End Sub
-
-            Public Sub Delete(ByVal obj As _IOrmBase, ByVal key As String)
-                Using mc As IGetManager = GetMgr
-                    'mc.Manager.M2MDelete(_o, obj, M2MRelation.GetKey(direct))
-                End Using
-            End Sub
-
-            Public Sub Cancel(ByVal t As Type)
-                Using mc As IGetManager = GetMgr
-                    mc.Manager.M2MCancel(_o, t)
-                End Using
-            End Sub
-
             Public Function Search(Of T As {IOrmBase, New})(ByVal text As String) As Worm.ReadOnlyList(Of T)
                 Throw New NotImplementedException
             End Function
@@ -754,6 +712,8 @@ Namespace Orm
         'Protected Friend _upd As IList(Of Worm.Criteria.Core.EntityFilterBase)
         '<NonSerialized()> _
         'Protected Friend _valProcs As Boolean
+        <NonSerialized()> _
+        Protected _m2m As New List(Of EditableListBase)
 
         '        Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
         '        Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
@@ -2337,18 +2297,110 @@ Namespace Orm
             MyBase.PKLoaded(pkCount)
         End Sub
 
-        Public Function Find(ByVal t As System.Type) As Worm.Query.QueryCmdBase Implements IOrmBase.Find
+        Protected Function _Find(ByVal t As System.Type) As Worm.Query.QueryCmdBase Implements IM2M.Find
             Dim q As New Worm.Query.QueryCmdBase(Me)
             q.SelectedType = t
             Return q
         End Function
 
-        Public Function Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmdBase Implements IOrmBase.Find
+        Protected Function _Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmdBase Implements IM2M.Find
             Dim q As New Worm.Query.QueryCmdBase(Me, key)
             q.SelectedType = t
             Return q
         End Function
 
+        Protected Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase Implements _IOrmBase.GetM2M
+            Dim el As EditableListBase = Nothing
+            Using GetSyncRoot()
+                For Each e As EditableListBase In _m2m
+                    If e.SubType Is t AndAlso String.Equals(e.Key, key) Then
+                        el = e
+                        Exit For
+                    End If
+                Next
+                If el Is Nothing Then
+                    el = New EditableListBase(Identifier, Me.GetType, t, key)
+                    _m2m.Add(el)
+                End If
+            End Using
+            Return el
+        End Function
+
+        Protected Sub _Add(ByVal obj As _IOrmBase) Implements IM2M.Add
+            _Add(obj, Nothing)
+        End Sub
+
+        Protected Sub _Add(ByVal obj As _IOrmBase, ByVal key As String) Implements IM2M.Add
+            Using mc As IGetManager = GetMgr()
+                Dim el As EditableListBase = GetM2M(obj.GetType, key)
+                Using el.SyncRoot
+                    If Not el.Added.Contains(obj.Identifier) Then
+                        Dim el2 As EditableListBase = obj.GetM2M(Me.GetType, key)
+                        SyncLock "1efb139gf8bh"
+                            If Not el2.Added.Contains(Identifier) Then
+                                If el.Deleted.Contains(obj.Identifier) Then
+                                    el.Deleted.Remove(obj.Identifier)
+                                    el2.Deleted.Remove(Identifier)
+                                Else
+                                    el.Add(obj.Identifier)
+                                    el2.Add(Identifier)
+                                End If
+                            End If
+                        End SyncLock
+                    End If
+                End Using
+            End Using
+        End Sub
+
+        'Protected Sub _Delete(ByVal t As Type) Implements IM2M.Delete
+        '    Using mc As IGetManager = GetMgr
+        '        mc.Manager.M2MDelete(_o, t, M2MRelation.DirKey)
+        '    End Using
+        'End Sub
+
+        'Protected Sub _Delete(ByVal t As Type, ByVal key As String) Implements IM2M.Delete
+        '    Using mc As IGetManager = GetMgr()
+        '        Dim el As EditableListBase = GetM2M(t, key)
+
+        '    End Using
+        'End Sub
+
+        Protected Sub _Delete(ByVal obj As _IOrmBase) Implements IM2M.Delete
+            _Delete(obj, Nothing)
+        End Sub
+
+        Protected Sub _Delete(ByVal obj As _IOrmBase, ByVal key As String) Implements IM2M.Delete
+            Using mc As IGetManager = GetMgr()
+                Dim el As EditableListBase = GetM2M(obj.GetType, key)
+                Using el.SyncRoot
+                    If Not el.Deleted.Contains(obj.Identifier) Then
+                        Dim el2 As EditableListBase = obj.GetM2M(Me.GetType, key)
+                        SyncLock "1efb139gf8bh"
+                            If Not el2.Deleted.Contains(Identifier) Then
+                                If el.Added.Contains(obj.Identifier) Then
+                                    el.Added.Remove(obj.Identifier)
+                                    el2.Added.Remove(Identifier)
+                                Else
+                                    el.Delete(obj.Identifier)
+                                    el2.Delete(Identifier)
+                                End If
+                            End If
+                        End SyncLock
+                    End If
+                End Using
+            End Using
+        End Sub
+
+        Protected Sub _Cancel(ByVal t As Type) Implements IM2M.Cancel
+            _Cancel(t, Nothing)
+        End Sub
+
+        Protected Sub _Cancel(ByVal t As Type, ByVal key As String) Implements IM2M.Cancel
+            Using mc As IGetManager = GetMgr()
+                Dim el As EditableListBase = GetM2M(t, key)
+                el.Reject(True)
+            End Using
+        End Sub
         'Public Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmdBase Implements IOrmBase.Find
         '    'Return Worm.Query.QueryCmdBase.Create(Of T)(Me)
         '    Dim q As New Worm.Query.QueryCmdBase(Me)

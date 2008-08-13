@@ -57,22 +57,34 @@ Namespace Orm
         Sub RejectRelationChanges()
     End Interface
 
+    Public Interface IM2M
+        Function Find(ByVal t As Type) As Worm.Query.QueryCmdBase
+        Function Find(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmdBase
+        Sub Add(ByVal o As _IOrmBase)
+        Sub Add(ByVal o As _IOrmBase, ByVal key As String)
+        Sub Delete(ByVal o As _IOrmBase)
+        Sub Delete(ByVal o As _IOrmBase, ByVal key As String)
+        'Sub Delete(ByVal t As Type)
+        'Sub Delete(ByVal t As Type, ByVal key As String)
+        Sub Cancel(ByVal t As Type)
+        Sub Cancel(ByVal t As Type, ByVal key As String)
+    End Interface
+
     Public Interface IOrmBase
-        Inherits _ICachedEntity
+        Inherits _ICachedEntity, IM2M
         Overloads Sub Init(ByVal id As Object, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
         Property Identifier() As Object
         Function GetOldName(ByVal id As Object) As String
         Function GetName() As String
         'Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmdBase
         'Function Find(Of T As {New, IOrmBase})(ByVal key As String) As Worm.Query.QueryCmdBase
-        Function Find(ByVal t As Type) As Worm.Query.QueryCmdBase
-        Function Find(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmdBase
     End Interface
 
     Public Interface _IOrmBase
         Inherits IOrmBase
         Function AddAccept(ByVal acs As AcceptState2) As Boolean
         Function GetAccept(ByVal m As OrmManagerBase.M2MCache) As AcceptState2
+        Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase
     End Interface
 
     <ComponentModel.EditorBrowsable(ComponentModel.EditorBrowsableState.Never)> _
