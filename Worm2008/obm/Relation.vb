@@ -188,11 +188,10 @@ Namespace Cache
             If l.Contains(_mainId) Then
                 l.Remove(_mainId)
             End If
-
         End Sub
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManagerBase, ByVal id As Object) As EditableListBase
-            Return mgr.Cache.GetM2M(mgr.GetOrmBaseFromCacheOrCreate(id, SubType), MainType, Key)
+            Return CType(mgr.GetOrmBaseFromCacheOrCreate(id, SubType), _IOrmBase).GetM2M(MainType, Key)
         End Function
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManagerBase) As List(Of EditableListBase)
@@ -247,7 +246,7 @@ Namespace Cache
             Return False
         End Function
 
-        Protected ReadOnly Property SyncRoot() As IDisposable
+        Public ReadOnly Property SyncRoot() As IDisposable
             Get
 #If DebugLocks Then
                 Return New CSScopeMgr_DebugWithStack(_syncRoot, "d:\temp\")
