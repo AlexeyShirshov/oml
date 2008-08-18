@@ -747,7 +747,7 @@ Namespace Orm
                 Return True
             End If
 
-            For Each el As EditableListBase In mgr.Cache.GetM2M(Me)
+            For Each el As EditableListBase In _m2m
                 If el.HasChanges Then
                     Return True
                 End If
@@ -1226,10 +1226,23 @@ Namespace Orm
                 mgr.Cache.ConnectedEntityEnum(t, AddressOf c.Accept)
             End If
 
-            For Each el As EditableListBase In OrmCache.GetM2M(Me)
-                If el.HasChanges Then
-                    el.Accept(mgr)
-                End If
+            For Each el As EditableListBase In _m2m
+                SyncLock "1efb139gf8bh"
+                    For Each id As Object In el.Added
+                        Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
+                        Dim m As EditableListBase = o.GetM2M(Me.GetType, el.Key)
+                        m.Added.Remove(Identifier)
+                        m._savedIds.Remove(Identifier)
+                    Next
+                    el.Added.Clear()
+
+                    For Each id As Object In el.Deleted
+                        Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
+                        o.GetM2M(Me.GetType, el.Key).Deleted.Remove(Identifier)
+                    Next
+                    el.Deleted.Clear()
+                    el.Reject2()
+                End SyncLock
             Next
         End Sub
 
@@ -1716,6 +1729,20 @@ Namespace Orm
 
         'Protected MustOverride Function GetNew() As OrmBase
 
+        Private Sub _RejectM2MIntermidiate() Implements _IOrmBase.RejectM2MIntermidiate
+            Using SyncHelper(False)
+                For Each acs As AcceptState2 In _needAccept
+                    If acs.el IsNot Nothing Then
+                        acs.el.Reject2()
+                    End If
+                Next
+
+                For Each el As EditableListBase In _m2m
+                    el.Reject2()
+                Next
+            End Using
+        End Sub
+
         Public Overrides Sub RejectRelationChanges()
             Using SyncHelper(False)
                 Dim t As Type = Me.GetType
@@ -1733,6 +1760,10 @@ Namespace Orm
                     End If
                 Next
                 _needAccept.Clear()
+
+                For Each el As EditableListBase In _m2m
+                    el.Reject(True)
+                Next
             End Using
         End Sub
 

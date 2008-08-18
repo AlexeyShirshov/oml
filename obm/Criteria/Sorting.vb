@@ -661,20 +661,20 @@ Namespace Sorting
                 Dim ss As IOrmObjectSchemaBase = Nothing
                 Dim xo As Object = GetValue(x, s, ss)
                 Dim yo As Object = GetValue(y, s, ss)
-                Dim pr2 As Pair(Of OrmBase, IOrmSorting) = TryCast(yo, Pair(Of OrmBase, IOrmSorting))
+                Dim pr2 As Pair(Of _IEntity, IOrmSorting) = TryCast(yo, Pair(Of _IEntity, IOrmSorting))
                 If pr2 IsNot Nothing Then
                     Dim c As IComparer = pr2.Second.CreateSortComparer(s)
                     If c IsNot Nothing Then
-                        p = c.Compare(CType(xo, Pair(Of OrmBase, IOrmSorting)).First, pr2.First)
+                        p = c.Compare(CType(xo, Pair(Of _IEntity, IOrmSorting)).First, pr2.First)
                         If p = 0 Then
                             Continue For
                         Else
                             Exit For
                         End If
                     Else
-                        Dim pr As Pair(Of OrmBase, IOrmSorting) = TryCast(xo, Pair(Of OrmBase, IOrmSorting))
-                        xo = pr.First.GetValue(s.FieldName)
-                        yo = pr2.First.GetValue(s.FieldName)
+                        Dim pr As Pair(Of _IEntity, IOrmSorting) = TryCast(xo, Pair(Of _IEntity, IOrmSorting))
+                        xo = pr.First.GetValue(Nothing, New ColumnAttribute(s.FieldName), ss)
+                        yo = pr2.First.GetValue(Nothing, New ColumnAttribute(s.FieldName), ss)
                     End If
                 End If
                 Dim k As Integer = 1

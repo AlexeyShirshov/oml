@@ -101,11 +101,12 @@ Namespace Database
             Public Event CannotSave(ByVal sender As BatchSaver, ByVal args As CannotSaveEventArgs)
             Public Event EndSave()
             Public Event ObjectSaving(ByVal sender As BatchSaver, ByVal args As CancelEventArgs)
+            Public Event ObjectPostponed(ByVal o As ICachedEntity)
             Public Event ObjectSaved(ByVal o As ICachedEntity)
             Public Event ObjectAccepting(ByVal o As ICachedEntity)
             Public Event ObjectAccepted(ByVal o As ICachedEntity)
             Public Event ObjectRejecting(ByVal o As ICachedEntity)
-            Public Event ObjectRejected(ByVal o As ICachedEntity)
+            Public Event ObjectRejected(ByVal o As ICachedEntity, ByVal inLockList As Boolean)
             Public Event ObjectRestored(ByVal o As ICachedEntity)
             Public Event SaveSuccessed()
             Public Event SaveFailed()
@@ -233,10 +234,12 @@ Namespace Database
                 _lockList.Remove(o)
             End Sub
 
-            Protected Sub ObjectRejectedHandler(ByVal obj As ICachedEntity) Handles Me.ObjectRejected
-                Dim o As ObjectWrap(Of ICachedEntity) = GetObjWrap(obj)
-                _lockList(o).Dispose()
-                _lockList.Remove(o)
+            Protected Sub ObjectRejectedHandler(ByVal obj As ICachedEntity, ByVal inLockList As Boolean) Handles Me.ObjectRejected
+                If inLockList Then
+                    Dim o As ObjectWrap(Of ICachedEntity) = GetObjWrap(obj)
+                    _lockList(o).Dispose()
+                    _lockList.Remove(o)
+                End If
             End Sub
 
             Protected Sub SaveObj(ByVal o As ICachedEntity, ByVal need2save As List(Of ICachedEntity), ByVal saved As List(Of Pair(Of ObjectState, ICachedEntity)))
@@ -251,6 +254,7 @@ Namespace Database
                             _lockList(owr).Dispose()
                             _lockList.Remove(owr)
                             need2save.Add(o)
+                            RaiseEvent ObjectPostponed(o)
                         Else
                             saved.Add(New Pair(Of ObjectState, ICachedEntity)(os, o))
                             RaiseEvent ObjectSaved(o)
@@ -329,7 +333,7 @@ Namespace Database
                                 End If
 
                                 RaiseEvent BeginRejecting()
-                                Rollback(saved, rejectList, copies)
+                                Rollback(saved, rejectList, copies, need2save)
                                 RaiseEvent SaveFailed()
                             Else
                                 If Not hasTransaction Then
@@ -400,25 +404,33 @@ Namespace Database
                 End Using
             End Sub
 
-            Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, ICachedEntity)), ByVal rejectList As List(Of ICachedEntity), ByVal copies As List(Of Pair(Of ICachedEntity)))
+            Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, ICachedEntity)), _
+                ByVal rejectList As List(Of ICachedEntity), ByVal copies As List(Of Pair(Of ICachedEntity)), ByVal need2save As List(Of ICachedEntity))
                 For Each o As ICachedEntity In rejectList
                     RaiseEvent ObjectRejecting(o)
                     _dontTrackRemoved = True
                     o.RejectChanges()
                     _dontTrackRemoved = False
-                    RaiseEvent ObjectRejected(o)
+                    RaiseEvent ObjectRejected(o, Not need2save.Contains(o))
                 Next
                 For Each o As Pair(Of ICachedEntity) In copies
                     o.First.CopyBody(o.Second, o.First)
                     o.First.SetObjectState(o.Second.GetOldState)
+                    Dim orm As _IOrmBase = TryCast(o.First, _IOrmBase)
+                    If orm IsNot Nothing Then
+                        orm.RejectM2MIntermidiate()
+                    End If
                     RaiseEvent ObjectRestored(o.First)
                 Next
                 For Each p As Pair(Of ObjectState, ICachedEntity) In saved
                     Dim o As ICachedEntity = p.Second
                     If Not rejectList.Contains(o) Then
                         RaiseEvent ObjectRejecting(o)
-                        o.RejectRelationChanges()
-                        RaiseEvent ObjectRejected(o)
+                        Dim orm As _IOrmBase = TryCast(o, _IOrmBase)
+                        If orm IsNot Nothing Then
+                            orm.RejectM2MIntermidiate()
+                        End If
+                        RaiseEvent ObjectRejected(o, True)
                     End If
                 Next
             End Sub
@@ -595,12 +607,12 @@ Namespace Database
                 Return CreateNewObject(t, _mgr.NewObjectManager.GetIdentity(t))
             End Function
 
-            Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As OrmBase
+            Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As IOrmBase
                 For Each mi As Reflection.MethodInfo In Me.GetType.GetMember("CreateNewObject", Reflection.MemberTypes.Method, _
                     Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public)
                     If mi.IsGenericMethod AndAlso mi.GetParameters.Length = 1 Then
                         mi = mi.MakeGenericMethod(New Type() {t})
-                        Return CType(mi.Invoke(Me, New Object() {id}), OrmBase)
+                        Return CType(mi.Invoke(Me, New Object() {id}), IOrmBase)
                     End If
                 Next
                 Throw New InvalidOperationException("Cannot find method CreateNewObject")
@@ -610,28 +622,28 @@ Namespace Database
                 If _rollbackChanges Then
                     RaiseEvent BeginRollback(_saver.AffectedObjects.Count)
                     'Debug.WriteLine("_rollback: " & _saver.AffectedObjects.Count)
-                    For Each o As OrmBase In _saver.AffectedObjects
+                    For Each o As _ICachedEntity In _saver.AffectedObjects
                         'Debug.WriteLine("_rollback: " & o.ObjName)
                         If o.ObjectState = ObjectState.Created Then
                             If _mgr.NewObjectManager IsNot Nothing Then
                                 _mgr.NewObjectManager.RemoveNew(o)
                             End If
                         Else
-                            'If o.ObjectState <> ObjectState.None Then
 #If DEBUG Then
-                            Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
-                            If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
-                                Debug.Assert(_saver._deleted.Contains(o))
-                                Debug.Assert(Not _saver._updated.Contains(o))
-                            ElseIf _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Edit Then
-                                'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
-                                Debug.Assert(Not _saver._deleted.Contains(o))
-                                Debug.Assert(_saver._updated.Contains(o))
-                                'End If
+                            If o.ObjectState <> ObjectState.None Then
+                                Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
+                                If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
+                                    Debug.Assert(_saver._deleted.Contains(o))
+                                    Debug.Assert(Not _saver._updated.Contains(o))
+                                ElseIf _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Edit Then
+                                    'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
+                                    Debug.Assert(Not _saver._deleted.Contains(o))
+                                    Debug.Assert(_saver._updated.Contains(o))
+                                    'End If
+                                End If
                             End If
 #End If
                             o.RejectChanges()
-                            'End If
                         End If
                     Next
                 End If
@@ -3041,7 +3053,7 @@ l2:
             Return cnt < _length
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As OrmJoin) As DicIndex(Of T)
+        Protected Overrides Function BuildDictionary(Of T As {New, IOrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As OrmJoin) As DicIndex(Of T)
             Invariant()
             Dim params As New ParamMgr(DbSchema, "p")
             Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
@@ -3060,7 +3072,7 @@ l2:
             End Using
         End Function
 
-        Protected Overrides Function BuildDictionary(Of T As {New, OrmBase})(ByVal level As Integer, _
+        Protected Overrides Function BuildDictionary(Of T As {New, IOrmBase})(ByVal level As Integer, _
             ByVal filter As IFilter, ByVal joins() As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
             Invariant()
             Dim params As New ParamMgr(DbSchema, "p")
@@ -3080,7 +3092,7 @@ l2:
             End Using
         End Function
 
-        Protected Shared Function BuildDictionaryInternal(Of T As {New, OrmBase})(ByVal cmd As System.Data.Common.DbCommand, ByVal level As Integer, ByVal mgr As OrmReadOnlyDBManager, _
+        Protected Shared Function BuildDictionaryInternal(Of T As {New, IOrmBase})(ByVal cmd As System.Data.Common.DbCommand, ByVal level As Integer, ByVal mgr As OrmReadOnlyDBManager, _
             ByVal firstField As String, ByVal secField As String) As DicIndex(Of T)
             Dim last As DicIndex(Of T) = New DicIndex(Of T)("ROOT", Nothing, 0, firstField, secField)
             Dim root As DicIndex(Of T) = last

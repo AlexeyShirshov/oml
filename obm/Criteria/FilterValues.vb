@@ -502,7 +502,7 @@ Namespace Criteria.Values
 
         Protected Overrides Function GetValue(ByVal v As Object, ByVal template As OrmFilterTemplateBase, ByRef r As IEvaluableValue.EvalResult) As Object
             r = IEvaluableValue.EvalResult.Unknown
-            Dim orm As OrmBase = TryCast(v, OrmBase)
+            Dim orm As IOrmBase = TryCast(v, IOrmBase)
             If orm IsNot Nothing Then
                 Dim ov As EntityValue = TryCast(Me, EntityValue)
                 If ov Is Nothing Then

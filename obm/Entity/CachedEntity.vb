@@ -55,7 +55,7 @@ Namespace Orm
             Private _dst As CachedEntity
             Private _props() As String
 
-            Public Sub New(ByVal src As OrmBase, ByVal dst As OrmBase, ByVal properties() As String)
+            Public Sub New(ByVal src As CachedEntity, ByVal dst As CachedEntity, ByVal properties() As String)
                 _dst = dst
                 _props = properties
                 AddHandler src.Saved, AddressOf Added
@@ -308,7 +308,7 @@ Namespace Orm
                         ElseIf _upd.Added Then
                             '_valProcs = False
                             Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
-                            Dim o As OrmBase = CType(dic(Key), OrmBase)
+                            Dim o As CachedEntity = CType(dic(Key), CachedEntity)
                             If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
                                 dic(Key) = Me
                             End If

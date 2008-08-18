@@ -13,7 +13,7 @@ Namespace Cache
         Private _new As List(Of Object)
         Private _key As String
         Protected _cantgetCurrent As Boolean
-
+        Protected Friend _savedIds As New List(Of Object)
         Private _syncRoot As New Object
 
         Sub New(ByVal mainId As Object, ByVal mainType As Type, ByVal subType As Type)
@@ -30,6 +30,12 @@ Namespace Cache
             MyClass.New(mainId, mainType, subType)
             _key = key
         End Sub
+
+        Public ReadOnly Property SavedObjsCount() As Integer
+            Get
+                Return _savedIds.Count
+            End Get
+        End Property
 
         Public ReadOnly Property Key() As String
             Get
@@ -106,6 +112,12 @@ Namespace Cache
             End Get
         End Property
 
+        Protected Friend Sub Reject2()
+            Using SyncRoot
+                _savedIds.clear()
+            End Using
+        End Sub
+
         Public Sub Reject(ByVal rejectDual As Boolean)
             Using SyncRoot
                 If rejectDual Then
@@ -121,6 +133,7 @@ Namespace Cache
                 End If
                 _deletedList.Clear()
                 RemoveNew()
+                Reject2()
             End Using
         End Sub
 
@@ -195,14 +208,15 @@ Namespace Cache
         End Function
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManagerBase) As List(Of EditableListBase)
-            Dim l As New List(Of EditableListBase)
-            For Each o As IOrmBase In Main.Find(SubType).ToList(mgr)
-                Dim el As EditableListBase = mgr.Cache.GetM2M(o, MainType, _key)
-                If el IsNot Nothing Then
-                    l.Add(el)
-                End If
-            Next
-            Return l
+            Throw New NotSupportedException
+            'Dim l As New List(Of EditableListBase)
+            'For Each o As IOrmBase In Main.Find(SubType).ToList(mgr)
+            '    Dim el As EditableListBase = mgr.Cache.GetM2M(o, MainType, _key)
+            '    If el IsNot Nothing Then
+            '        l.Add(el)
+            '    End If
+            'Next
+            'Return l
         End Function
 
         Protected Sub AcceptDual()
@@ -276,6 +290,7 @@ Namespace Cache
                 Dim needaccept As Boolean = _addedList.Count > 0 OrElse _deletedList.Count > 0
                 _addedList.Clear()
                 _deletedList.Clear()
+                _savedIds.Clear()
                 RemoveNew()
 
                 If needaccept Then
@@ -347,7 +362,7 @@ Namespace Cache
                             _new = New List(Of Object)
                         End If
                         _new.Add(id)
-                    ElseIf CheckDual(mgr, id) Then
+                    ElseIf Not _savedIds.Contains(id) AndAlso CheckDual(mgr, id) Then
                         ad.Add(id)
                     End If
                 Next

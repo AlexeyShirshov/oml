@@ -76,7 +76,7 @@ Namespace Criteria
             End If
         End Function
 
-        Public Function Eq(ByVal value As OrmBase) As CriteriaLink
+        Public Function Eq(ByVal value As IOrmBase) As CriteriaLink
             If value Is Nothing Then
                 Return IsNull()
             Else
@@ -84,7 +84,7 @@ Namespace Criteria
             End If
         End Function
 
-        Public Function NotEq(ByVal value As OrmBase) As CriteriaLink
+        Public Function NotEq(ByVal value As IOrmBase) As CriteriaLink
             If value Is Nothing Then
                 Return IsNotNull()
             Else

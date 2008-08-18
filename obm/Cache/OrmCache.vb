@@ -359,7 +359,7 @@ Namespace Cache
             End Using
         End Function
 
-        Public Function GetModifiedObject(Of T As {OrmBase, New})() As ICollection(Of T)
+        Public Function GetModifiedObject(Of T As {ICachedEntity})() As ICollection(Of T)
             Dim al As New Generic.List(Of T)
             Dim tt As Type = GetType(T)
             For Each s As String In New ArrayList(_modifiedobjects.Keys)
@@ -379,26 +379,26 @@ Namespace Cache
             If Not condition Then Throw New OrmCacheException(message)
         End Sub
 
-        Protected Friend Function RegisterModification(ByVal obj As OrmBase, ByVal id As Integer, ByVal reason As ModifiedObject.ReasonEnum) As ModifiedObject
-            Using SyncRoot
-                If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj")
-                End If
+        'Protected Friend Function RegisterModification(ByVal obj As ICachedEntity, ByVal id As Integer, ByVal reason As ModifiedObject.ReasonEnum) As ModifiedObject
+        '    Using SyncRoot
+        '        If obj Is Nothing Then
+        '            Throw New ArgumentNullException("obj")
+        '        End If
 
-                Dim mo As ModifiedObject = Nothing
-                Dim name As String = obj.GetType().Name & ":" & id
-                'Using SyncHelper.AcquireDynamicLock(name)
-                Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
-                Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
-                mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser, reason)
-                _modifiedobjects.Add(name, mo)
-                'End Using
-                If _modifiedobjects.Count = 1 Then
-                    RaiseEvent CacheHasModification(Me, EventArgs.Empty)
-                End If
-                Return mo
-            End Using
-        End Function
+        '        Dim mo As ModifiedObject = Nothing
+        '        Dim name As String = obj.GetType().Name & ":" & id
+        '        'Using SyncHelper.AcquireDynamicLock(name)
+        '        Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
+        '        Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
+        '        mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser, reason)
+        '        _modifiedobjects.Add(name, mo)
+        '        'End Using
+        '        If _modifiedobjects.Count = 1 Then
+        '            RaiseEvent CacheHasModification(Me, EventArgs.Empty)
+        '        End If
+        '        Return mo
+        '    End Using
+        'End Function
 
         Protected Friend Sub RegisterExistingModification(ByVal obj As ICachedEntity, ByVal key As Integer)
             Using SyncRoot
@@ -415,8 +415,8 @@ Namespace Cache
         End Sub
 
 #If TraceCreation Then
-        Private _s As New List(Of Pair(Of String, OrmBase))
-        Public Function IndexOfUnreg(ByVal o As OrmBase) As Integer
+        Private _s As New List(Of Pair(Of String, _ICachedEntity))
+        Public Function IndexOfUnreg(ByVal o As _ICachedEntity) As Integer
             For i As Integer = 0 To _s.Count - 1
                 If _s(i).Second = o Then
                     Return i
@@ -435,7 +435,7 @@ Namespace Cache
                     _modifiedobjects.Remove(name)
                     obj.RaiseCopyRemoved()
 #If TraceCreation Then
-                    _s.Add(New Pair(Of String, OrmBase)(Environment.StackTrace, obj))
+                    _s.Add(New Pair(Of String, _ICachedEntity)(Environment.StackTrace, obj))
 #End If
                     If _modifiedobjects.Count = 0 Then 'AndAlso obj.old_state <> ObjectState.Created Then
                         RaiseEvent CacheHasnotModification(Me, EventArgs.Empty)
@@ -473,18 +473,18 @@ Namespace Cache
         Private _added As ArrayList = arraylist.Synchronized( New ArrayList)
         Private _removed As ArrayList = ArrayList.Synchronized(New ArrayList)
 
-        Private Function IndexOfRemoved(ByVal obj As OrmBase) As Integer
+        Private Function IndexOfRemoved(ByVal obj As _ICachedEntity) As Integer
             For i As Integer = 0 To _removed.Count - 1
-                Dim r As Pair(Of Date, OrmBase) = CType(_removed(i), Global.CoreFramework.Structures.Pair(Of Date, Global.Worm.Orm.OrmBase))
+                Dim r As Pair(Of Date, _ICachedEntity) = CType(_removed(i), Pair(Of Date, _ICachedEntity))
                 If r.Second = obj Then
                     Return i
                 End If
             Next
         End Function
 
-        Private Function IndexOfAdded(ByVal obj As OrmBase) As Integer
+        Private Function IndexOfAdded(ByVal obj As _ICachedEntity) As Integer
             For i As Integer = 0 To _added.Count - 1
-                Dim r As Pair(Of Date, Pair(Of Type, Integer)) = CType(_added(i), Global.CoreFramework.Structures.Pair(Of Date, Global.CoreFramework.Structures.Pair(Of Global.System.Type, Integer)))
+                Dim r As Pair(Of Date, Pair(Of Type, Integer)) = CType(_added(i), Pair(Of Date, Pair(Of Global.System.Type, Integer)))
                 If r.Second.First.Equals(obj.GetType) AndAlso r.Second.Second = obj.Identifier Then
                     Return i
                 End If
@@ -925,7 +925,7 @@ Namespace Cache
             ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks, Optional ByVal forseEval As Boolean = False)
 
             Dim tt As Type = Nothing
-            For Each obj As OrmBase In objs
+            For Each obj As ICachedEntity In objs
                 If obj Is Nothing Then
                     Throw New ArgumentException("At least one element in objs is nothing")
                 End If
@@ -1063,7 +1063,7 @@ l1:
                 Dim ts As List(Of Type) = Nothing
                 If _jt.TryGetValue(tt, ts) Then
                     For Each t As Type In ts
-                        For Each obj As OrmBase In objs
+                        For Each obj As ICachedEntity In objs
                             If obj Is Nothing Then
                                 Throw New ArgumentException("At least one element in objs is nothing")
                             End If
