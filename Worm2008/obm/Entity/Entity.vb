@@ -85,6 +85,7 @@ Namespace Orm
         Function AddAccept(ByVal acs As AcceptState2) As Boolean
         Function GetAccept(ByVal m As OrmManagerBase.M2MCache) As AcceptState2
         Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase
+        Sub RejectM2MIntermidiate()
     End Interface
 
     <ComponentModel.EditorBrowsable(ComponentModel.EditorBrowsableState.Never)> _
@@ -121,7 +122,7 @@ Namespace Orm
             _id = id
         End Sub
 
-        Public Function Accept(ByVal obj As OrmBase, ByVal mgr As OrmManagerBase) As Boolean
+        Public Function Accept(ByVal obj As IEntity, ByVal mgr As OrmManagerBase) As Boolean
             If _e IsNot Nothing Then
                 Dim leave As Boolean = _e.Filter Is Nothing AndAlso _e.Entry.Accept(mgr)
                 If Not leave Then

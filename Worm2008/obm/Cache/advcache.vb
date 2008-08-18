@@ -121,7 +121,9 @@ Namespace Cache
                 If st IsNot Nothing Then
                     c = st.CreateSortComparer(sort)
                 Else
-                    c = New OrmComparer(Of OrmBase)(obj.GetType, sort)
+                    c = New OrmComparer(Of _IEntity)(obj.GetType, sort)
+                    'Dim ct As Type = GetType(OrmComparer(Of ))
+                    'ct = ct.MakeGenericType(New Type() {})
                 End If
                 If c IsNot Nothing Then
                     Dim pos As Integer = ArrayList.Adapter(l).BinarySearch(obj, c)
@@ -301,7 +303,7 @@ Namespace Cache
             If objects Is Nothing Then Return Nothing
             Dim l As New Generic.List(Of ListObjectEntry)
             Dim t As Type = Nothing
-            For Each o As OrmBase In objects
+            For Each o As ICachedEntity In objects
                 If t Is Nothing Then t = o.GetType
                 l.Add(New ListObjectEntry(o))
             Next
@@ -327,7 +329,7 @@ Namespace Cache
                     If st IsNot Nothing Then
                         c = st.CreateSortComparer(sort)
                     Else
-                        c = New OrmComparer(Of OrmBase)(obj.GetType, sort)
+                        c = New OrmComparer(Of _IEntity)(obj.GetType, sort)
                     End If
                     If c IsNot Nothing Then
                         Dim pos As Integer = ArrayList.Adapter(arr).BinarySearch(obj, c)
