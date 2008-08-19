@@ -25,6 +25,9 @@ Namespace Query
         Function ExecSimple(Of ReturnType)( _
             ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As IList(Of ReturnType)
 
+        Sub Reset(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase)
+        Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase)
+
     End Interface
 
     Public Class Top
@@ -104,6 +107,15 @@ Namespace Query
 
         Private _appendMain As Boolean
 
+        Public Property Renew() As Boolean
+            Get
+
+            End Get
+            Set(ByVal value As Boolean)
+
+            End Set
+        End Property
+
         Public Property LastExecitionResult() As OrmManagerBase.ExecutionResult
             Get
                 Return _er
@@ -131,7 +143,7 @@ Namespace Query
 
         Private _exec As IExecutor
 
-        Protected Function GetExecutor(ByVal mgr As OrmManagerBase) As IExecutor
+        Public Function GetExecutor(ByVal mgr As OrmManagerBase) As IExecutor
             'If _dontcache Then
             If _exec Is Nothing Then
                 _exec = mgr.ObjectSchema.CreateExecutor()

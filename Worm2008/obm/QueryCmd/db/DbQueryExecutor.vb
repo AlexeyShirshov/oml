@@ -518,6 +518,14 @@ Namespace Query.Database
             Next
             Throw New InvalidOperationException
         End Function
+
+        Public Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) Implements IExecutor.Reset
+            GetProcessor(Of ReturnType)(mgr, query).Renew = True
+        End Sub
+
+        Public Sub Reset(Of SelectType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) Implements IExecutor.Reset
+            GetProcessorT(Of SelectType, ReturnType)(mgr, query).Renew = True
+        End Sub
     End Class
 
 End Namespace

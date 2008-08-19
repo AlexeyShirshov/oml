@@ -361,7 +361,9 @@ Namespace Cache
                         If _new Is Nothing Then
                             _new = New List(Of Object)
                         End If
-                        _new.Add(id)
+                        If Not _new.Contains(id) Then
+                            _new.Add(id)
+                        End If
                     ElseIf Not _savedIds.Contains(id) AndAlso CheckDual(mgr, id) Then
                         ad.Add(id)
                     End If
