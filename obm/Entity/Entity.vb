@@ -287,8 +287,8 @@ Namespace Orm
                 End If
 
                 _PrepareUpdate()
-            ElseIf ObjectState = Orm.ObjectState.Created Then
-                _PrepareLoadingUpdate()
+                'ElseIf ObjectState = Orm.ObjectState.Created Then
+                '    _PrepareLoadingUpdate()
             End If
         End Sub
 
@@ -523,15 +523,15 @@ Namespace Orm
 
         Protected Overridable Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean) Implements _IEntity.CorrectStateAfterLoading
             If objectWasCreated Then
-                If ObjectState = Orm.ObjectState.Modified Then
+                If ObjectState = Orm.ObjectState.Modified OrElse ObjectState = Orm.ObjectState.Created Then
                     If IsLoaded Then
                         SetObjectState(ObjectState.None)
                     Else
                         SetObjectState(ObjectState.NotLoaded)
                     End If
-                ElseIf ObjectState = Orm.ObjectState.Created Then
-                    Debug.Assert(Not IsLoaded)
-                    SetObjectState(ObjectState.NotLoaded)
+                    'ElseIf ObjectState = Orm.ObjectState.Created Then
+                    '    Debug.Assert(Not IsLoaded)
+                    '    SetObjectState(ObjectState.NotLoaded)
                 ElseIf ObjectState = ObjectState.NotLoaded Then
                     If IsLoaded Then SetObjectState(ObjectState.None)
                 ElseIf ObjectState = Orm.ObjectState.None Then

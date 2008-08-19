@@ -985,7 +985,11 @@ Namespace Cache
 
                                 Dim h As String = EntityFilterBase.EmptyHash
                                 If p.Value.Second IsNot Nothing Then
-                                    h = p.Value.Second.MakeHash(schema, oschema, obj)
+                                    Try
+                                        h = p.Value.Second.MakeHash(schema, oschema, obj)
+                                    Catch ex As ArgumentException When ex.Message.StartsWith("Template type")
+                                        Return
+                                    End Try
                                 End If
                                 Dim ids As List(Of String) = p.Value.First.GetIds(h)
                                 Dim rm As New List(Of String)

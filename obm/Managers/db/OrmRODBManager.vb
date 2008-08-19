@@ -36,6 +36,7 @@ Namespace Database
             Private _removed As New List(Of ICachedEntity)
             Private _dontTrackRemoved As Boolean
             Private _startSave As Boolean
+            Private _error As Boolean = True
 
 #If DEBUG Then
             Friend _deleted As New List(Of ICachedEntity)
@@ -125,6 +126,12 @@ Namespace Database
             'Public Sub New()
             '    _mgr = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
             'End Sub
+
+            Public ReadOnly Property [Error]() As Boolean
+                Get
+                    Return _error
+                End Get
+            End Property
 
             Public ReadOnly Property AffectedObjects() As ICollection(Of ICachedEntity)
                 Get
@@ -267,7 +274,6 @@ Namespace Database
 
             Protected Sub Save()
                 Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
-                Dim [error] As Boolean = True
                 Dim saved As New List(Of Pair(Of ObjectState, ICachedEntity)), copies As New List(Of Pair(Of ICachedEntity))
                 Dim rejectList As New List(Of ICachedEntity), need2save As New List(Of ICachedEntity)
                 _startSave = True
@@ -324,10 +330,10 @@ Namespace Database
                         End If
 
                         RaiseEvent EndSave()
-                        [error] = False
+                        _error = False
                     Finally
                         Try
-                            If [error] Then
+                            If _error Then
                                 If Not hasTransaction Then
                                     _mgr.Rollback()
                                 End If
@@ -653,26 +659,26 @@ Namespace Database
             ' IDisposable
             Protected Overridable Sub Dispose(ByVal disposing As Boolean)
                 If Not Me.disposedValue AndAlso _created Then
-                    Dim err As Boolean = True
+                    Dim rlb As Boolean = True
                     Try
                         _disposing = True
                         _saver.Dispose()
-                        err = False
+                        'rlb = False
                     Finally
                         _disposing = False
-                        If err Then
+                        If _saver.Error Then
                             _Rollback()
                         End If
-                    End Try
-                    If Not err AndAlso Not _saver.IsCommit Then _Rollback()
 
-                    RemoveHandler _mgr.BeginDelete, AddressOf Delete
-                    RemoveHandler _mgr.BeginUpdate, AddressOf Add
+                        RemoveHandler _mgr.BeginDelete, AddressOf Delete
+                        RemoveHandler _mgr.BeginUpdate, AddressOf Add
+
+                        Me.disposedValue = True
+                    End Try
+                    If Not rlb AndAlso Not _saver.IsCommit Then _Rollback()
 
                     RaiseEvent SaveComplete(_saver.IsCommit, _saver.Commited)
-
                 End If
-                Me.disposedValue = True
             End Sub
 
             ' This code added by Visual Basic to correctly implement the disposable pattern.
@@ -1085,9 +1091,16 @@ Namespace Database
                         If Not _cache.IsDeleted(obj1) AndAlso obj1.ObjectState <> ObjectState.Modified Then
                             Using obj1.GetSyncRoot()
                                 'If obj1.IsLoaded Then obj1.IsLoaded = False
-                                Dim ro As _IEntity = LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1)
-                                ro.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj1))
-                                values.Add(ro)
+                                Dim lock As Boolean = False
+                                Try
+                                    Dim ro As _IEntity = LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1, True, lock)
+                                    AfterLoadingProcess(dic1, obj1, lock, ro)
+                                    values.Add(ro)
+                                Finally
+                                    If lock Then
+                                        Threading.Monitor.Exit(dic1)
+                                    End If
+                                End Try
                             End Using
                         Else
                             values.Add(obj1)
@@ -1099,8 +1112,15 @@ Namespace Database
                             If obj2.ObjectState <> ObjectState.Modified Then
                                 Using obj2.GetSyncRoot()
                                     'If obj2.IsLoaded Then obj2.IsLoaded = False
-                                    Dim ro2 As _IEntity = LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2)
-                                    ro2.CorrectStateAfterLoading(Object.ReferenceEquals(ro2, obj2))
+                                    Dim lock As Boolean = False
+                                    Try
+                                        Dim ro2 As _IEntity = LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2, True, lock)
+                                        AfterLoadingProcess(dic2, obj2, lock, ro2)
+                                    Finally
+                                        If lock Then
+                                            Threading.Monitor.Exit(dic2)
+                                        End If
+                                    End Try
                                 End Using
                             End If
                         End If
@@ -1336,8 +1356,15 @@ Namespace Database
                                         If obj.ObjectState <> ObjectState.Modified Then
                                             Using obj.GetSyncRoot()
                                                 'If obj.IsLoaded Then obj.IsLoaded = False
-                                                Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 2, dic)
-                                                ro.CorrectStateAfterLoading(Object.ReferenceEquals(ro, obj))
+                                                Dim lock As Boolean = False
+                                                Try
+                                                    Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 2, dic, True, lock)
+                                                    AfterLoadingProcess(dic, obj, lock, ro)
+                                                Finally
+                                                    If lock Then
+                                                        Threading.Monitor.Exit(dic)
+                                                    End If
+                                                End Try
                                             End Using
                                         End If
                                     End If
@@ -1572,8 +1599,20 @@ Namespace Database
                                 Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
                             End If
                             If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse Not _cache.IsDeleted(obj)) Then
-                                LoadFromDataReader(obj, dr, arr, check_pk, 0, dic)
+                                Dim lock As Boolean = False
+                                LoadFromDataReader(obj, dr, arr, check_pk, 0, dic, False, lock)
                                 obj.CorrectStateAfterLoading(False)
+                                'If lock Then
+                                '    Dim co As _ICachedEntity = TryCast(obj, _ICachedEntity)
+                                '    If co IsNot Nothing Then
+                                '        _cache.UnregisterModification(co)
+
+                                '        If lock Then
+                                '            Threading.Monitor.Exit(dic)
+                                '            lock = False
+                                '        End If
+                                '    End If
+                                'End If
                                 'obj = o
                             End If
                             loaded = True
@@ -1721,6 +1760,26 @@ Namespace Database
             Return idx
         End Function
 
+        Private Sub AfterLoadingProcess(ByVal dic As IDictionary, ByVal obj As _IEntity, ByRef lock As Boolean, ByRef ro As _IEntity)
+            Dim notFromCache As Boolean = Object.ReferenceEquals(ro, obj)
+            ro.CorrectStateAfterLoading(notFromCache)
+            'If notFromCache Then
+            '    If ro.ObjectState = ObjectState.None OrElse ro.ObjectState = ObjectState.NotLoaded Then
+            '        Dim co As _ICachedEntity = TryCast(ro, _ICachedEntity)
+            '        If co IsNot Nothing Then
+            '            _cache.UnregisterModification(co)
+            '            If co.IsPKLoaded Then
+            '                ro = NormalizeObject(co, dic)
+            '            End If
+            '            If lock Then
+            '                Threading.Monitor.Exit(dic)
+            '                lock = False
+            '            End If
+            '        End If
+            '    End If
+            'End If
+        End Sub
+
         Protected Friend Sub LoadFromResultSet(Of T As {_IEntity, New})( _
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
@@ -1737,26 +1796,20 @@ Namespace Database
             'If _raiseCreated Then
             'RaiseObjectCreated(obj)
             'End If
-            Dim obj As New T
-            Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 0, CType(dic, System.Collections.IDictionary))
-            Dim notFromCache As Boolean = Object.ReferenceEquals(ro, obj)
-            ro.CorrectStateAfterLoading(notFromCache)
-            If notFromCache Then
-                If ro.ObjectState = ObjectState.None OrElse ro.ObjectState = ObjectState.NotLoaded Then
-                    Dim co As _ICachedEntity = TryCast(ro, _ICachedEntity)
-                    If co IsNot Nothing Then
-                        _cache.UnregisterModification(co)
-                        If co.IsPKLoaded Then
-                            ro = NormalizeObject(co, CType(dic, System.Collections.IDictionary))
-                        End If
-                    End If
+            Dim lock As Boolean = False
+            Try
+                Dim obj As New T
+                Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 0, CType(dic, System.Collections.IDictionary), True, lock)
+                AfterLoadingProcess(CType(dic, System.Collections.IDictionary), obj, lock, ro)
+                values.Add(ro)
+                If ro.IsLoaded Then
+                    loaded += 1
                 End If
-            End If
-            values.Add(ro)
-            If ro.IsLoaded Then
-                loaded += 1
-            End If
-
+            Finally
+                If lock Then
+                    Threading.Monitor.Exit(dic)
+                End If
+            End Try
             '            If withLoad AndAlso Not _cache.IsDeleted(TryCast(obj, ICachedEntity)) Then
             '                Using obj.GetSyncRoot()
             '                    If obj.ObjectState <> ObjectState.Modified AndAlso obj.ObjectState <> ObjectState.Deleted Then
@@ -1790,7 +1843,7 @@ Namespace Database
 
         Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.IDataReader, _
             ByVal arr As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer, _
-            ByVal dic As IDictionary) As _IEntity
+            ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As Boolean) As _IEntity
 
             Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
 
@@ -1811,7 +1864,7 @@ Namespace Database
                 Dim idic As IDictionary = _schema.GetProperties(original_type)
                 'Dim bl As Boolean
                 Dim oldpk() As Pair(Of String, Object) = Nothing
-                If ce IsNot Nothing Then oldpk = ce.GetPKValues()
+                If ce IsNot Nothing AndAlso Not fromRS Then oldpk = ce.GetPKValues()
                 For idx As Integer = 0 To arr.Count - 1
                     Dim c As ColumnAttribute = arr(idx)
                     Dim pi As Reflection.PropertyInfo = CType(idic(c), Reflection.PropertyInfo)
@@ -1896,21 +1949,39 @@ Namespace Database
                             Return obj
                         End If
 
-                        obj = NormalizeObject(ce, dic, False)
+                        'Threading.Monitor.Enter(dic)
+                        'lock = True
+
+                        Dim robj As ICachedEntity = NormalizeObject(ce, dic, fromRS)
+                        Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
+
+                        obj = robj
                         ce = CType(obj, _ICachedEntity)
 
-                        If obj.ObjectState = ObjectState.Created Then
-                            ce.CreateCopyForSaveNewEntry(oldpk)
+                        If fromCache Then
+                            If obj.ObjectState = ObjectState.Created Then
+                                Throw New OrmManagerException
+                            ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                                Return obj
+                            Else
+                                obj.BeginLoading()
+                            End If
+                        Else
                             If _raiseCreated Then
                                 RaiseObjectCreated(ce)
                             End If
-                            'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
-                        ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
-                            Return obj
-                        Else
-                            obj.BeginLoading()
+
+                            If fromRS Then
+                            Else
+                                If obj.ObjectState = ObjectState.Created Then
+                                    ce.CreateCopyForSaveNewEntry(oldpk)
+                                    'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                                End If
+                            End If
                         End If
                     End If
+                ElseIf ce IsNot Nothing AndAlso Not fromRS AndAlso obj.ObjectState = ObjectState.Created Then
+                    ce.CreateCopyForSaveNewEntry(Nothing)
                 End If
 
                 If pk_count < arr.Count Then
@@ -3193,8 +3264,16 @@ l2:
                             If o.ObjectState <> ObjectState.Modified Then
                                 Using o.GetSyncRoot()
                                     'If obj.IsLoaded Then obj.IsLoaded = False
-                                    Dim ro As _IEntity = LoadFromDataReader(o, dr, columns, False, 2, dic)
-                                    ro.CorrectStateAfterLoading(Object.ReferenceEquals(ro, o))
+                                    Dim lock As Boolean = False
+                                    Try
+                                        Dim ro As _IEntity = LoadFromDataReader(o, dr, columns, False, 2, dic, True, lock)
+                                        AfterLoadingProcess(dic, o, lock, ro)
+                                    Finally
+                                        If lock Then
+                                            Threading.Monitor.Exit(dic)
+                                        End If
+                                    End Try
+                                    'ro.CorrectStateAfterLoading(Object.ReferenceEquals(ro, o))
                                     _loadedInLastFetch += 1
                                 End Using
                             End If
