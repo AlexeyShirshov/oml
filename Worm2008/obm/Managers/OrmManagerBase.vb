@@ -2582,7 +2582,7 @@ l1:
         End If
     End Sub
 
-    Protected Friend Sub EnsureInCache(ByVal obj As ICachedEntity)
+    Protected Friend Function EnsureInCache(ByVal obj As ICachedEntity) As ICachedEntity
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -2602,11 +2602,14 @@ l1:
 
         Dim id As Integer = obj.Key
         SyncLock dic.SyncRoot
-            If Not dic.Contains(id) Then
+            Dim o As ICachedEntity = CType(dic(id), ICachedEntity)
+            If o Is Nothing Then
                 dic.Add(id, obj)
+                o = obj
             End If
+            Return o
         End SyncLock
-    End Sub
+    End Function
 
     Public Function RemoveObjectFromCache(ByVal obj As ICachedEntity) As Boolean
 

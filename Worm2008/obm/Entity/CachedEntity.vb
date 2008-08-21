@@ -855,11 +855,11 @@ l1:
             End If
         End Sub
 
-        Protected Sub EnsureInCache()
+        Protected Function EnsureInCache() As CachedEntity
             Using mc As IGetManager = GetMgr()
-                mc.Manager.EnsureInCache(Me)
+                Return CType(mc.Manager.EnsureInCache(Me), CachedEntity)
             End Using
-        End Sub
+        End Function
 
         Protected Sub CreateClone4Edit()
             Dim clone As Entity = CreateClone()
@@ -1071,49 +1071,53 @@ l1:
             Return r
         End Function
 
-        Public Overridable Function Delete() As Boolean
-            Using SyncHelper(False)
-                If ObjectState = Orm.ObjectState.Deleted Then Return False
+        Protected Shared Function _Delete(ByVal obj As CachedEntity) As Boolean
+            Using obj.SyncHelper(False)
+                If obj.ObjectState = Orm.ObjectState.Deleted Then Return False
 
-                If ObjectState = Orm.ObjectState.Clone Then
-                    Throw New OrmObjectException(ObjName & "Deleting clone is not allowed")
+                If obj.ObjectState = Orm.ObjectState.Clone Then
+                    Throw New OrmObjectException(obj.ObjName & "Deleting clone is not allowed")
                 End If
-                If ObjectState <> Orm.ObjectState.Modified AndAlso ObjectState <> Orm.ObjectState.None AndAlso ObjectState <> Orm.ObjectState.NotLoaded Then
-                    Throw New OrmObjectException(ObjName & "Deleting is not allowed for this object")
+                If obj.ObjectState <> Orm.ObjectState.Modified AndAlso obj.ObjectState <> Orm.ObjectState.None AndAlso obj.ObjectState <> Orm.ObjectState.NotLoaded Then
+                    Throw New OrmObjectException(obj.ObjName & "Deleting is not allowed for this object")
                 End If
-                Dim mo As ModifiedObject = OrmCache.Modified(Me)
+                Dim mo As ModifiedObject = obj.OrmCache.Modified(obj)
                 'If mo Is Nothing Then mo = _mo
                 If mo IsNot Nothing Then
-                    Using mc As IGetManager = GetMgr()
+                    Using mc As IGetManager = obj.GetMgr()
                         If mo.User IsNot Nothing AndAlso Not mo.User.Equals(mc.Manager.CurrentUser) Then
-                            Throw New OrmObjectException(ObjName & "Object has already altered by user " & mo.User.ToString)
+                            Throw New OrmObjectException(obj.ObjName & "Object has already altered by user " & mo.User.ToString)
                         End If
                     End Using
                     Debug.Assert(mo.Reason <> ModifiedObject.ReasonEnum.Delete)
                 Else
-                    If ObjectState = Orm.ObjectState.NotLoaded Then
-                        Load()
-                        If ObjectState = Orm.ObjectState.NotFoundInSource Then
+                    If obj.ObjectState = Orm.ObjectState.NotLoaded Then
+                        obj.Load()
+                        If obj.ObjectState = Orm.ObjectState.NotFoundInSource Then
                             Return False
                         End If
                     End If
 
-                    Debug.Assert(ObjectState <> Orm.ObjectState.Modified)
-                    CreateClone4Delete()
+                    Debug.Assert(obj.ObjectState <> Orm.ObjectState.Modified)
+                    obj.CreateClone4Delete()
                     'OrmCache.Modified(Me).Reason = ModifiedObject.ReasonEnum.Delete
                     'Dim modified As OrmBase = CloneMe()
                     'modified._old_state = modified.ObjectState
                     'modified.ObjectState = ObjectState.Clone
                     'OrmCache.RegisterModification(modified)
                 End If
-                SetObjectState(ObjectState.Deleted)
-                EnsureInCache()
-                Using mc As IGetManager = GetMgr()
-                    mc.Manager.RaiseBeginDelete(Me)
+                obj.SetObjectState(ObjectState.Deleted)
+
+                Using mc As IGetManager = obj.GetMgr()
+                    mc.Manager.RaiseBeginDelete(obj)
                 End Using
             End Using
 
             Return True
+        End Function
+
+        Public Overridable Function Delete() As Boolean
+            Return _Delete(EnsureInCache())
         End Function
 
         Public Function EnsureLoaded() As CachedEntity
