@@ -271,7 +271,9 @@ Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity})
                 If Not obj.IsLoaded Then
                     obj.Load()
                 End If
-                l.Add(obj)
+                If obj.IsLoaded Then
+                    l.Add(obj)
+                End If
             Next
             Return New ReadOnlyEntityList(Of T)(l)
         Else
