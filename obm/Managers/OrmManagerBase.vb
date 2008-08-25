@@ -2434,9 +2434,6 @@ l1:
             If Not created AndAlso load AndAlso Not a.IsLoaded Then
                 a.Load()
             End If
-#If DEBUG Then
-            CType(a, CachedEntity).Invariant()
-#End If
         End If
 
         Return a
