@@ -349,7 +349,9 @@ Public Class Table1Implementation
 
     Public Overridable Function GetJoinField(ByVal t As System.Type) As String Implements IJoinBehavior.GetJoinField
         If t Is GetType(Table2) Then
-            Return "ID"
+            'Return "ID"
+            'Return "Table1"
+            'Throw New NotImplementedException
         End If
         Return Nothing
     End Function

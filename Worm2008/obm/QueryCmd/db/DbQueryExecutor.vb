@@ -375,7 +375,13 @@ Namespace Query.Database
                 Dim join As OrmJoin = CType(j(i), OrmJoin)
 
                 If Not OrmJoin.IsEmpty(join) Then
-                    almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
+                    'Dim tbl As SourceFragment = join.Table
+                    'If tbl Is Nothing Then
+                    '    If join.Type IsNot Nothing Then
+                    '    Else
+                    '    End If
+                    'End If
+                    'almgr.AddTable(tbl, CType(Nothing, ParamMgr))
                     sb.Append(join.MakeSQLStmt(s, filterInfo, almgr, params))
                 End If
             Next

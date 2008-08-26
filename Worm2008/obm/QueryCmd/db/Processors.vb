@@ -35,7 +35,19 @@ Namespace Query.Database
             End Sub
 
             Public Overrides Sub CreateDepends()
+                If _f IsNot Nothing AndAlso _f.Length = 1 Then
+                    _mgr.Cache.AddDependType(_mgr.GetFilterInfo, _q.SelectedType, _key, _id, _f(0), _mgr.ObjectSchema)
+                End If
 
+                If _j IsNot Nothing AndAlso _j.Count = 1 Then
+                    For Each j As OrmJoin In _j(0)
+                        If j.Type IsNot Nothing Then
+                            _mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.ObjectSchema)
+                        ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
+                            _mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, _mgr.ObjectSchema.GetTypeByEntityName(j.EntityName), _key, _id, _mgr.ObjectSchema)
+                        End If
+                    Next
+                End If
             End Sub
 
             Public Overrides ReadOnly Property Filter() As Criteria.Core.IFilter

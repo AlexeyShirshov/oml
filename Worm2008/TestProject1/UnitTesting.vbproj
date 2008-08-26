@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{9D39DD33-0A52-460D-A5E2-8576E46B334F}</ProjectGuid>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{F184B08F-C81C-45F6-A57F-5ABD9991F28F}</ProjectTypeGuids>
@@ -75,6 +75,7 @@
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=9.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Web.Services" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Web" />
   </ItemGroup>
@@ -100,6 +101,7 @@
     </Compile>
     <Compile Include="NewM2M\Test.vb" />
     <Compile Include="Query\Agreegates.vb" />
+    <Compile Include="Query\Cache.vb" />
     <Compile Include="Query\QueryTest.vb" />
     <Compile Include="TestCriteria.vb" />
     <Compile Include="TestRealSchema\Composite.vb" />
@@ -124,7 +126,8 @@
     <Compile Include="TestRealSchema\Tables1to3.vb" />
     <Compile Include="TestRealSchema\TestDic.vb" />
     <Compile Include="TestRealSchema\TestDistinct.vb" />
-    <Compile Include="TestRealSchema\TestJoins.vb" />
+    <Compile Include="TestRealSchema\TestJoins.vb">
+    </Compile>
     <Compile Include="TestRealSchema\TestManager.vb" />
     <Compile Include="TestRealSchema\TestProcs.vb" />
     <Compile Include="TestRealSchema\TestReject.vb" />

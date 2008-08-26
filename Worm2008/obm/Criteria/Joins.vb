@@ -167,9 +167,23 @@ Namespace Criteria.Joins
         Protected _table As SourceFragment
         Protected _joinType As Worm.Criteria.Joins.JoinType
         Protected _condition As Core.IFilter
+        Protected _type As Type
+        Protected _en As String
 
         Public Sub New(ByVal Table As SourceFragment, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
             _table = Table
+            _joinType = joinType
+            _condition = condition
+        End Sub
+
+        Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
+            _type = type
+            _joinType = joinType
+            _condition = condition
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
+            _en = entityName
             _joinType = joinType
             _condition = condition
         End Sub
@@ -216,8 +230,32 @@ Namespace Criteria.Joins
         'End Function
 
         Public Overrides Function ToString() As String
-            Return _table.RawName & JoinTypeString() & _condition.ToString
+            If _table IsNot Nothing Then
+                Return _table.RawName & JoinTypeString() & _condition.ToString
+            ElseIf _type IsNot Nothing Then
+                Return _type.ToString & JoinTypeString() & _condition.ToString
+            Else
+                Return _en & JoinTypeString() & _condition.ToString
+            End If
         End Function
+
+        Public Property Type() As Type
+            Get
+                Return _type
+            End Get
+            Friend Set(ByVal value As Type)
+                _type = value
+            End Set
+        End Property
+
+        Public Property EntityName() As String
+            Get
+                Return _en
+            End Get
+            Friend Set(ByVal value As String)
+                _en = value
+            End Set
+        End Property
 
         Public Property Table() As SourceFragment
             Get
@@ -417,6 +455,14 @@ Namespace Database
                 MyBase.New(table, joinType, condition)
             End Sub
 
+            Public Sub New(ByVal t As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As IFilter)
+                MyBase.New(t, joinType, condition)
+            End Sub
+
+            Public Sub New(ByVal entityName As String, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As IFilter)
+                MyBase.New(entityName, joinType, condition)
+            End Sub
+
             Public Function MakeSQLStmt(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String
                 'If IsEmpty Then
                 '    Throw New InvalidOperationException("Object must be created")
@@ -430,10 +476,22 @@ Namespace Database
                     Throw New ArgumentNullException("almgr")
                 End If
 
+                Dim tbl As SourceFragment = _table
+                If tbl Is Nothing Then
+                    If _type IsNot Nothing Then
+                        tbl = schema.GetTables(_type)(0)
+                    Else
+                        tbl = schema.GetTables(schema.GetTypeByEntityName(_en))(0)
+                    End If
+                End If
+
                 Dim tableAliases As IDictionary(Of SourceFragment, String) = almgr.Aliases
+                If Not tableAliases.ContainsKey(tbl) Then
+                    almgr.AddTable(tbl, pname)
+                End If
                 'Dim table As String = _table
                 'Dim sch as IOrmObjectSchema = schema.GetObjectSchema(
-                Return JoinTypeString() & schema.GetTableName(_table) & " " & tableAliases(_table) & " on " & Condition.MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
+                Return JoinTypeString() & schema.GetTableName(tbl) & " " & tableAliases(tbl) & " on " & Condition.MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
             End Function
 
             Protected Overrides Function CreateOrmFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase
