@@ -1107,7 +1107,7 @@ l1:
                         Dim join As OrmJoin = CType(joins(i), OrmJoin)
 
                         If Not OrmJoin.IsEmpty(join) Then
-                            almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
+                            'almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
                             selectcmd.Append(join.MakeSQLStmt(Me, filterInfo, almgr, params))
                         End If
                     Next
@@ -1967,8 +1967,16 @@ l1:
                     join.InjectJoinFilter(searchType, "ID", ct, "[key]")
                     'Dim al As String = almgr.AddTable(join.Table)
                     'columns = columns.Replace(join.Table.TableName & ".", al & ".")
-                    almgr.AddTable(join.Table)
-                    almgr.Replace(Me, join.Table, columns)
+                    Dim tbl As SourceFragment = join.Table
+                    If tbl Is Nothing Then
+                        If join.Type IsNot Nothing Then
+                            tbl = GetTables(join.Type)(0)
+                        Else
+                            tbl = GetTables(GetTypeByEntityName(join.EntityName))(0)
+                        End If
+                    End If
+                    almgr.AddTable(tbl)
+                    almgr.Replace(Me, tbl, columns)
                     sb.Append(join.MakeSQLStmt(Me, filter_info, almgr, params))
                     'Else
                     '    sb = sb.Replace("{XXXXXX}", selSchema.GetFieldColumnMap("ID")._columnName)
@@ -2318,14 +2326,19 @@ l1:
         Protected Friend Overrides Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
            ByVal oper As Worm.Criteria.FilterOperation, ByVal joinType As Joins.JoinType, Optional ByVal switchTable As Boolean = False) As Worm.Criteria.Joins.OrmJoin
 
-            Dim tbl As SourceFragment = GetTables(type2join)(0)
-            If switchTable Then
-                tbl = GetTables(selectType)(0)
-            End If
+            'Dim tbl As SourceFragment = GetTables(type2join)(0)
+            'If switchTable Then
+            '    tbl = GetTables(selectType)(0)
+            'End If
 
             Dim jf As New Database.Criteria.Joins.JoinFilter(type2join, "ID", selectType, field, oper)
 
-            Return New Database.Criteria.Joins.OrmJoin(tbl, joinType, jf)
+            Dim t As Type = type2join
+            If switchTable Then
+                t = selectType
+            End If
+
+            Return New Database.Criteria.Joins.OrmJoin(t, joinType, jf)
         End Function
 
         Protected Friend Overrides Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As Worm.Criteria.Joins.OrmJoin()

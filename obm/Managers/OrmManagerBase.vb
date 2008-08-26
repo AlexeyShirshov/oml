@@ -2108,7 +2108,7 @@ l1:
         End If
 
         If del.Created Then
-            del.CreateDepends()
+            If Not _dont_cache_lists Then del.CreateDepends()
         Else
             If ce.Expires Then
                 ce.Expire()
@@ -4404,11 +4404,18 @@ l1:
                         Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, oschema)
 
                         If String.IsNullOrEmpty(field) Then
-                            Dim m2m As M2MRelation = schema.GetM2MRelation(type2join, selectType, True)
-                            If m2m IsNot Nothing Then
-                                l.AddRange(schema.MakeM2MJoin(m2m, type2join))
+
+                            field = schema.GetJoinFieldNameByType(type2join, selectType, schema.GetObjectSchema(type2join))
+
+                            If String.IsNullOrEmpty(field) Then
+                                Dim m2m As M2MRelation = schema.GetM2MRelation(type2join, selectType, True)
+                                If m2m IsNot Nothing Then
+                                    l.AddRange(schema.MakeM2MJoin(m2m, type2join))
+                                Else
+                                    Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+                                End If
                             Else
-                                Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2join))
+                                l.Add(schema.MakeJoin(selectType, type2join, field, FilterOperation.Equal, JoinType.Join, True))
                             End If
                         Else
                             l.Add(schema.MakeJoin(type2join, selectType, field, FilterOperation.Equal, JoinType.Join))

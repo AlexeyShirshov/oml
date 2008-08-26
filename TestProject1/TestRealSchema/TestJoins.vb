@@ -175,6 +175,7 @@ Public Class TestJoinsRS
             mgr.BeginTransaction()
             Try
                 t1.SaveChanges(True)
+                t2.SaveChanges(True)
                 c = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first"), Nothing, False)
                 Assert.AreEqual(2, c.Count)
             Finally
@@ -205,4 +206,31 @@ Public Class TestJoinsRS
             End Try
         End Using
     End Sub
+
+    '<TestMethod()> Public Sub TestXml()
+    '    Dim params() As Object = New Object() {"skladjfn", 10, 14D, 19.4}
+    '    Dim xs As New Xml.Serialization.XmlSerializer(params.GetType)
+    '    Using sw As New IO.StringWriter
+    '        xs.Serialize(sw, params)
+    '        Debug.WriteLine(sw.GetStringBuilder.ToString)
+    '    End Using
+    'End Sub
+
+    'Sub foo(ByVal serviceName As String, ByVal serviceMethod As String, ByVal params() As Object)
+    '    Dim s As New mysoap
+    '    s.Url = serviceName
+    '    s.Call(serviceMethod, params)
+
+
+
+    'End Sub
+
+    'Class mysoap
+    '    Inherits System.Web.Services.Protocols.SoapHttpClientProtocol
+
+    '    Public Function [Call](ByVal methodName As String, ByVal parameters As Object()) As Object()
+    '        Return Me.Invoke(methodName, parameters)
+    '    End Function
+
+    'End Class
 End Class

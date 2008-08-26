@@ -1593,7 +1593,11 @@ Namespace Database
                 End If
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
-                    Dim sync_key As String = "LoadSngObj" & obj.Key & obj.GetType.ToString
+                    Dim k As String = String.Empty
+                    If obj.IsPKLoaded Then
+                        k = obj.Key.ToString
+                    End If
+                    Dim sync_key As String = "LoadSngObj" & k & obj.GetType.ToString
                     'Using obj.GetSyncRoot()
                     Using SyncHelper.AcquireDynamicLock(sync_key)
                         'Dim old As Boolean = obj.IsLoaded
@@ -2010,7 +2014,7 @@ Namespace Database
 
                 If pk_count < arr.Count Then
                     lock = obj.GetSyncRoot
-                    If obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted OrElse obj.ObjectState = ObjectState.NotFoundInSource Then
+                    If obj.ObjectState = ObjectState.Deleted OrElse obj.ObjectState = ObjectState.NotFoundInSource Then
                         Return obj
                     End If
                     'Try
