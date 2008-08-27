@@ -218,6 +218,27 @@ Namespace Query.Database
             End Sub
 
             Public Overridable Function Validate() As Boolean Implements OrmManagerBase.ICacheValidator.Validate
+                If _f IsNot Nothing Then
+                    For Each f_ As IFilter In _f
+                        For Each fl As IFilter In f_.GetAllFilters
+                            Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
+                            If f IsNot Nothing Then
+                                Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+
+                                Dim fields As List(Of String) = Nothing
+                                If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
+                                    Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
+                                    If idx >= 0 Then
+                                        Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                        _mgr.Cache.ResetFieldDepends(p)
+                                        _mgr.Cache.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                                        Return False
+                                    End If
+                                End If
+                            End If
+                        Next
+                    Next
+                End If
                 Return True
             End Function
 
