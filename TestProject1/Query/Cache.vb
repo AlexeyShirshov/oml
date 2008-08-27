@@ -98,4 +98,28 @@ Imports Worm.Criteria.Values
             End Try
         End Using
     End Sub
+
+    <TestMethod()> Public Sub TestUpdate()
+        Dim m As New TestManagerRS
+        Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+            Dim q As New QueryCmdBase(GetType(Table2))
+            q.Filter = Ctor.AutoTypeField("Money").GreaterThan(1)
+            Dim l As ReadOnlyEntityList(Of Table2) = q.ToEntityList(Of Table2)(mgr)
+            Assert.AreEqual(1, l.Count)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                    Dim t1 As Table2 = l(0)
+                    t1.Money = 1
+                    s.Commit()
+                End Using
+
+                Assert.AreEqual(0, q.ToEntityList(Of Table2)(mgr).Count)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
 End Class
