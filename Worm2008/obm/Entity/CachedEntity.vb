@@ -292,7 +292,7 @@ Namespace Orm
                     Dim mc As OrmManagerBase = gmc.Manager
                     '_valProcs = HasM2MChanges(mc)
 
-                    AcceptRelationalChanges(mc)
+                    AcceptRelationalChanges(updateCache, mc)
 
                     If ObjectState <> Orm.ObjectState.None Then
                         mo = RemoveVersionData(setState)
@@ -383,7 +383,7 @@ Namespace Orm
             RaiseEvent OriginalCopyRemoved(Me)
         End Sub
 
-        Protected Overridable Sub AcceptRelationalChanges(ByVal mc As OrmManagerBase)
+        Protected Overridable Sub AcceptRelationalChanges(ByVal updateCache As Boolean, ByVal mc As OrmManagerBase)
             '_needAccept.Clear()
 
             'Dim rel As IRelation = mc.ObjectSchema.GetConnectedTypeRelation(t)
@@ -894,6 +894,10 @@ l1:
                 If _upd.Deleted OrElse _upd.Added Then
                     mc.Cache.UpdateCache(mc.ObjectSchema, New ICachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
                 End If
+                For Each el As EditableListBase In New List(Of EditableListBase)(_upd.Relations)
+                    mc.Manager.Cache.UpdateM2MQueries(el)
+                    _upd.Relations.Remove(el)
+                Next
             End Using
         End Sub
 
@@ -1162,8 +1166,10 @@ l1:
                     l.Add(f.Template.FieldName)
                 Next
             End If
-            OrmCache.AddUpdatedFields(Me, l)
-            _upd.UpdatedFields = Nothing
+            Using mc As IGetManager = GetMgr()
+                mc.Manager.Cache.AddUpdatedFields(Me, l)
+                _upd.UpdatedFields = Nothing
+            End Using
         End Sub
 
         Protected Overridable Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean Implements _ICachedEntity.ForseUpdate

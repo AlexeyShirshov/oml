@@ -98,7 +98,7 @@ Namespace Query
         Protected _smark As Integer = Environment.TickCount
         'Protected _returnType As Type
         Protected _realType As Type
-        Protected _o As IOrmBase
+        Protected _o As _IOrmBase
         Protected _m2mKey As String
         Protected _rn As Worm.Database.Criteria.Core.TableFilter
         Protected _outer As QueryCmdBase
@@ -125,7 +125,7 @@ Namespace Query
             End Set
         End Property
 
-        Protected Friend ReadOnly Property Obj() As IOrmBase
+        Protected Friend ReadOnly Property Obj() As _IOrmBase
             Get
                 Return _o
             End Get
@@ -179,11 +179,11 @@ Namespace Query
             _en = entityName
         End Sub
 
-        Public Sub New(ByVal obj As IOrmBase)
+        Public Sub New(ByVal obj As _IOrmBase)
             _o = obj
         End Sub
 
-        Public Sub New(ByVal obj As IOrmBase, ByVal key As String)
+        Public Sub New(ByVal obj As _IOrmBase, ByVal key As String)
             _o = obj
             _m2mKey = key
         End Sub

@@ -713,7 +713,7 @@ Namespace Orm
         '<NonSerialized()> _
         'Protected Friend _valProcs As Boolean
         <NonSerialized()> _
-        Protected _m2m As New List(Of EditableListBase)
+        Protected Friend _m2m As New List(Of EditableListBase)
 
         '        Public Event Saved(ByVal sender As OrmBase, ByVal args As ObjectSavedArgs)
         '        Public Event Added(ByVal sender As OrmBase, ByVal args As EventArgs)
@@ -1213,7 +1213,7 @@ Namespace Orm
         '    Return mo
         'End Function
 
-        Protected Overrides Sub AcceptRelationalChanges(ByVal mgr As OrmManagerBase)
+        Protected Overrides Sub AcceptRelationalChanges(ByVal updateCache As Boolean, ByVal mgr As OrmManagerBase)
             Dim t As Type = Me.GetType
             For Each acs As AcceptState2 In _needAccept
                 acs.Accept(Me, mgr)
@@ -1233,15 +1233,41 @@ Namespace Orm
                         Dim m As EditableListBase = o.GetM2M(Me.GetType, el.Key)
                         m.Added.Remove(Identifier)
                         m._savedIds.Remove(Identifier)
+                        If updateCache Then
+                            mgr.Cache.UpdateM2MQueries(m)
+                        Else
+                            Dim l As List(Of EditableListBase) = CType(Me, _ICachedEntity).UpdateCtx.Relations
+                            If Not l.Contains(m) Then
+                                l.Add(m)
+                            End If
+                        End If
                     Next
                     el.Added.Clear()
 
                     For Each id As Object In el.Deleted
                         Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
-                        o.GetM2M(Me.GetType, el.Key).Deleted.Remove(Identifier)
+                        Dim m As EditableListBase = o.GetM2M(Me.GetType, el.Key)
+                        m.Deleted.Remove(Identifier)
+                        If updateCache Then
+                            mgr.Cache.UpdateM2MQueries(el)
+                        Else
+                            Dim l As List(Of EditableListBase) = CType(Me, _ICachedEntity).UpdateCtx.Relations
+                            If Not l.Contains(m) Then
+                                l.Add(m)
+                            End If
+                        End If
                     Next
                     el.Deleted.Clear()
                     el.Reject2()
+
+                    If updateCache Then
+                        mgr.Cache.UpdateM2MQueries(el)
+                    Else
+                        Dim l As List(Of EditableListBase) = CType(Me, _ICachedEntity).UpdateCtx.Relations
+                        If Not l.Contains(el) Then
+                            l.Add(el)
+                        End If
+                    End If
                 End SyncLock
             Next
         End Sub
@@ -2396,11 +2422,11 @@ Namespace Orm
         '    End Using
         'End Sub
 
-        Protected Sub _Delete(ByVal obj As _IOrmBase) Implements IM2M.Delete
-            _Delete(obj, Nothing)
+        Protected Sub _DeleteM2M(ByVal obj As _IOrmBase) Implements IM2M.Delete
+            _DeleteM2M(obj, Nothing)
         End Sub
 
-        Protected Sub _Delete(ByVal obj As _IOrmBase, ByVal key As String) Implements IM2M.Delete
+        Protected Sub _DeleteM2M(ByVal obj As _IOrmBase, ByVal key As String) Implements IM2M.Delete
             Using mc As IGetManager = GetMgr()
                 Dim el As EditableListBase = GetM2M(obj.GetType, key)
                 Using el.SyncRoot
