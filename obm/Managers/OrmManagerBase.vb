@@ -4041,6 +4041,18 @@ l1:
                                     End If
                                 End If
                             Next
+
+                            If orm._m2m.Count > 0 Then
+                                For Each elb As EditableListBase In orm._m2m
+                                    Dim el As EditableListBase = elb.PrepareSave(Me)
+                                    If el IsNot Nothing Then
+                                        M2MSave(orm, el)
+                                        'elb.Saved = True
+                                        elb._savedIds.AddRange(el.Added)
+                                        hasNew = hasNew OrElse elb.HasNew
+                                    End If
+                                Next
+                            End If
                         End If
                     End If
 
@@ -4092,6 +4104,10 @@ l1:
 
         Return obj
     End Function
+
+    Protected Friend Sub M2MSave(ByVal obj As IOrmBase, ByVal el As EditableListBase)
+        M2MSave(obj, el.SubType, el.Key, el)
+    End Sub
 
 #Region " Abstract members "
 

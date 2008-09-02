@@ -263,6 +263,7 @@ Namespace Cache
         Private _ct_depends As New Dictionary(Of Type, Dictionary(Of String, Dictionary(Of String, Object)))
 
         Private _m2m_dep As New Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Object)))
+        Private _m2mQueries As New Dictionary(Of EditableListBase, Pair(Of String))
 
         Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
         Private _jt As New Dictionary(Of Type, List(Of Type))
@@ -789,6 +790,42 @@ Namespace Cache
             End Using
         End Sub
 
+        Protected Friend Sub UpdateM2MQueries(ByVal el As EditableListBase)
+            If el Is Nothing Then
+                Throw New ArgumentNullException("el")
+            End If
+
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("hadfgadfgasdfopgh","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("hadfgadfgasdfopgh")
+#End If
+                Dim p As Pair(Of String) = Nothing
+                If _m2mQueries.TryGetValue(el, p) Then
+                    Dim dic As IDictionary = CType(_filters(p.First), System.Collections.IDictionary)
+                    dic.Remove(p.Second)
+                    _m2mQueries.Remove(el)
+                End If
+            End Using
+        End Sub
+
+        Protected Friend Sub AddM2MQuery(ByVal el As EditableListBase, ByVal key As String, ByVal id As String)
+            If el Is Nothing Then
+                Throw New ArgumentNullException("el")
+            End If
+
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("hadfgadfgasdfopgh","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("hadfgadfgasdfopgh")
+#End If
+                If Not _m2mQueries.ContainsKey(el) Then
+                    _m2mQueries.Add(el, New Pair(Of String)(key, id))
+                End If
+            End Using
+
+        End Sub
+
         Protected Friend Sub AddM2MObjDependent(ByVal obj As _IOrmBase, ByVal key As String, ByVal id As String)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
@@ -947,15 +984,21 @@ Namespace Cache
 #End If
                 Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
                 If _qt.TryGetValue(k, l) Then
-                    Dim rm As Boolean
+                    Dim rm As New List(Of String)
                     For Each kv As KeyValuePair(Of String, Pair(Of String)) In l
                         Dim dic As IDictionary = CType(_filters(kv.Value.First), IDictionary)
                         If dic IsNot Nothing Then
                             dic.Remove(kv.Value.Second)
-                            rm = True
+                            rm.Add(kv.Key)
                         End If
                     Next
-                    If rm Then
+                    If rm.Count > 0 Then
+                        For Each s As String In rm
+                            l.Remove(s)
+                        Next
+                        If l.Count = 0 Then
+                            _qt.Remove(k)
+                        End If
                         GoTo l1
                     End If
                 End If

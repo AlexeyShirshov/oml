@@ -278,11 +278,11 @@ Namespace Cache
             If obj Is Nothing Then
                 Return False
             End If
-            Return _mainType Is obj._mainType AndAlso _subType Is obj._subType AndAlso _mainId.Equals(obj._mainId) AndAlso _key = obj._key
+            Return _mainType Is obj._mainType AndAlso _subType Is obj._subType AndAlso _mainId.Equals(obj._mainId) AndAlso String.Equals(_key, obj._key)
         End Function
 
         Public Overrides Function GetHashCode() As Integer
-            Return _mainType.GetHashCode Xor _subType.GetHashCode Xor _mainId.GetHashCode Xor _key.GetHashCode
+            Return _mainType.GetHashCode Xor _subType.GetHashCode Xor _mainId.GetHashCode Xor If(String.IsNullOrEmpty(_key), 0, _key.GetHashCode)
         End Function
 
         Public Overridable Overloads Function Accept(ByVal mgr As OrmManagerBase) As Boolean

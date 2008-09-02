@@ -148,7 +148,7 @@ Namespace Orm
 
     Public Class UpdateCtx
         Public UpdatedFields As Generic.IList(Of Worm.Criteria.Core.EntityFilterBase)
-        Public Relation As M2MRelation
+        Public Relations As New Generic.List(Of EditableListBase)
         Public Added As Boolean
         Public Deleted As Boolean
     End Class

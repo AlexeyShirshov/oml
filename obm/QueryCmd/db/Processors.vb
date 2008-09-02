@@ -48,6 +48,10 @@ Namespace Query.Database
                         End If
                     Next
                 End If
+
+                If _q.Obj IsNot Nothing Then
+                    _mgr.Cache.AddM2MQuery(_q.Obj.GetM2M(_q.SelectedType, _q.M2MKey), _key, _id)
+                End If
             End Sub
 
             Public Overrides ReadOnly Property Filter() As Criteria.Core.IFilter
