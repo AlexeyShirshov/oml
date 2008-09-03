@@ -143,8 +143,17 @@ Namespace Orm.Meta
             _pk = primaryKeyColumn
         End Sub
 
+        'Public Sub New(ByVal tableName As String, ByVal version As String)
+        '    _table = tableName
+        '    _v = version
+        'End Sub
+
         Public Sub New(ByVal type As Type, ByVal version As String)
             _t = type
+            _v = version
+        End Sub
+
+        Public Sub New(ByVal version As String)
             _v = version
         End Sub
 

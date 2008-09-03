@@ -329,7 +329,7 @@ Namespace Query.Database
                     Throw New NotSupportedException("RowNumber statement is not supported by " & s.Name)
                 End If
                 sb.Append(",row_number() over (")
-                If query.Sort IsNot Nothing AndAlso Not query.Sort.IsExternal Then
+                If query.propSort IsNot Nothing AndAlso Not query.propSort.IsExternal Then
                     sb.Append(RowNumberOrder)
                     'FormOrderBy(query, t, almgr, sb, s, filterInfo, params)
                 Else
@@ -414,12 +414,12 @@ Namespace Query.Database
         End Sub
 
         Protected Shared Sub FormOrderBy(ByVal query As QueryCmdBase, ByVal t As Type, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, ByVal params As ICreateParam, ByVal columnAliases As List(Of String))
-            If query.Sort IsNot Nothing AndAlso Not query.Sort.IsExternal Then
-                Dim adv As Sorting.SortAdv = TryCast(query.Sort, Sorting.SortAdv)
+            If query.propSort IsNot Nothing AndAlso Not query.propSort.IsExternal Then
+                Dim adv As Sorting.SortAdv = TryCast(query.propSort, Sorting.SortAdv)
                 If adv IsNot Nothing Then
                     adv.MakeStmt(s, almgr, columnAliases, sb, t, filterInfo, params)
                 Else
-                    s.AppendOrder(t, query.Sort, almgr, sb)
+                    s.AppendOrder(t, query.propSort, almgr, sb)
                 End If
             End If
         End Sub
@@ -446,12 +446,12 @@ Namespace Query.Database
 
             sb.Append("select ")
 
-            If query.Distinct Then
+            If query.propDistinct Then
                 sb.Append("distinct ")
             End If
 
-            If query.Top IsNot Nothing Then
-                sb.Append(s.TopStatement(query.Top.Count, query.Top.Percent, query.Top.Ties)).Append(" ")
+            If query.propTop IsNot Nothing Then
+                sb.Append(s.TopStatement(query.propTop.Count, query.propTop.Percent, query.propTop.Ties)).Append(" ")
             End If
 
             FormSelectList(query, t, sb, s, os, almgr, filterInfo, params, columnAliases, innerColumns)

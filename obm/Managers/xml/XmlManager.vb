@@ -315,11 +315,11 @@ Namespace Xml
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
                         obj.SetValue(pi, c, oschema, nodes.Current.Value)
-                        obj.SetLoaded(c, True, True)
+                        obj.SetLoaded(c, True, True, _schema)
                         sn = True
                     Loop
                 Else
-                    obj.SetLoaded(c, True, True)
+                    obj.SetLoaded(c, True, True, _schema)
                 End If
             Next
             obj.CheckIsAllLoaded(ObjectSchema, columns.Count)

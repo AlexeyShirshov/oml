@@ -95,7 +95,7 @@ Imports Worm.Database.Criteria.Core
             })
 
             Dim q As New QueryCmdBase(GetType(Entity4))
-            q.Sort = New Worm.Sorting.SortAdv(inner, SortType.Desc)
+            q.propSort = New Worm.Sorting.SortAdv(inner, SortType.Desc)
 
             Dim l As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
 
@@ -139,14 +139,14 @@ Imports Worm.Database.Criteria.Core
 
             Assert.AreEqual(11, l.Count)
 
-            q.Sort = Sorting.Custom("cnt desc")
+            q.propSort = Sorting.Custom("cnt desc")
             l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
             Assert.AreEqual(11, l(0))
             Assert.AreEqual(4, l(1))
 
-            q.Sort = New Worm.Sorting.SortAdv(q.Aggregates(0), SortType.Desc)
+            q.propSort = New Worm.Sorting.SortAdv(q.Aggregates(0), SortType.Desc)
             l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)

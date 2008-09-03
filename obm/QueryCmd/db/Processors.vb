@@ -69,12 +69,12 @@ Namespace Query.Database
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(Query.SelectedType), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
-                    Dim ts As TimeSpan = sortex.SortExpiration(_q.Sort)
+                    Dim ts As TimeSpan = sortex.SortExpiration(_q.propSort)
                     If ts <> TimeSpan.MaxValue AndAlso ts <> TimeSpan.MinValue Then
                         s = Now.Add(ts)
                     End If
                 End If
-                Return New OrmManagerBase.CachedItem(_q.Sort, s, _f(0), col, _mgr)
+                Return New OrmManagerBase.CachedItem(_q.propSort, s, _f(0), col, _mgr)
             End Function
 
             Public Overrides Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of ReturnType)
@@ -88,8 +88,8 @@ Namespace Query.Database
                     r = ExecStmt(cmd)
                 End Using
 
-                If Query.Sort IsNot Nothing AndAlso Query.Sort.IsExternal Then
-                    r = CType(dbm.DbSchema.ExternalSort(Of ReturnType)(dbm, Query.Sort, r), Global.Worm.ReadOnlyEntityList(Of ReturnType))
+                If Query.propSort IsNot Nothing AndAlso Query.propSort.IsExternal Then
+                    r = CType(dbm.DbSchema.ExternalSort(Of ReturnType)(dbm, Query.propSort, r), Global.Worm.ReadOnlyEntityList(Of ReturnType))
                 End If
 
                 Return r
@@ -172,7 +172,7 @@ Namespace Query.Database
 
             Public Overrides ReadOnly Property Sort() As Sorting.Sort
                 Get
-                    Return _q.Sort
+                    Return _q.propSort
                 End Get
             End Property
 
@@ -224,23 +224,25 @@ Namespace Query.Database
             Public Overridable Function Validate() As Boolean Implements OrmManagerBase.ICacheValidator.Validate
                 If _f IsNot Nothing Then
                     For Each f_ As IFilter In _f
-                        For Each fl As IFilter In f_.GetAllFilters
-                            Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
-                            If f IsNot Nothing Then
-                                Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                        If f_ IsNot Nothing Then
+                            For Each fl As IFilter In f_.GetAllFilters
+                                Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
+                                If f IsNot Nothing Then
+                                    Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
 
-                                Dim fields As List(Of String) = Nothing
-                                If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
-                                    Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
-                                    If idx >= 0 Then
-                                        Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
-                                        _mgr.Cache.ResetFieldDepends(p)
-                                        _mgr.Cache.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
-                                        Return False
+                                    Dim fields As List(Of String) = Nothing
+                                    If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
+                                        Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
+                                        If idx >= 0 Then
+                                            Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                            _mgr.Cache.ResetFieldDepends(p)
+                                            _mgr.Cache.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                                            Return False
+                                        End If
                                     End If
                                 End If
-                            End If
-                        Next
+                            Next
+                        End If
                     Next
                 End If
                 Return True

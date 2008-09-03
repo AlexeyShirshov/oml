@@ -363,9 +363,9 @@ Namespace Orm.Meta
         Private _cols As New OrmObjectIndex
 
         Friend Sub New(ByVal t As Type, ByVal table As String, ByVal cols As ICollection(Of ColumnAttribute), ByVal pk As String)
-            If String.IsNullOrEmpty(pk) Then
-                Throw New QueryGeneratorException(String.Format("Primary key required for {0}", t))
-            End If
+            'If String.IsNullOrEmpty(pk) Then
+            '    Throw New QueryGeneratorException(String.Format("Primary key required for {0}", t))
+            'End If
 
             'If tables IsNot Nothing Then
             '    _tables = New SourceFragment(tables.Length - 1) {}
