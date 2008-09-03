@@ -215,7 +215,7 @@ Namespace Query
 
             If AutoJoins OrElse _o IsNot Nothing Then
                 Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                If OrmManagerBase.HasJoins(schema, t, f, Sort, filterInfo, joins, _appendMain) Then
+                If OrmManagerBase.HasJoins(schema, t, f, propSort, filterInfo, joins, _appendMain) Then
                     j.AddRange(joins)
                 End If
             End If
@@ -513,7 +513,7 @@ Namespace Query
             End Set
         End Property
 
-        Public Property Sort() As Sort
+        Public Property propSort() As Sort
             Get
                 Return _order
             End Get
@@ -524,7 +524,7 @@ Namespace Query
             End Set
         End Property
 
-        Public Property Top() As Top
+        Public Property propTop() As Top
             Get
                 Return _top
             End Get
@@ -534,7 +534,7 @@ Namespace Query
             End Set
         End Property
 
-        Public Property Distinct() As Boolean
+        Public Property propDistinct() As Boolean
             Get
                 Return _distinct
             End Get
@@ -568,6 +568,21 @@ Namespace Query
             End Set
         End Property
 #End Region
+
+        Public Function Distinct(ByVal value As Boolean) As QueryCmdBase
+            propDistinct = value
+            Return Me
+        End Function
+
+        Public Function Top(ByVal value As Integer) As QueryCmdBase
+            propTop = New Query.Top(value)
+            Return Me
+        End Function
+
+        Public Function Sort(ByVal value As Sort) As QueryCmdBase
+            propSort = value
+            Return Me
+        End Function
 
         'Protected Function CreateTypedCmd(ByVal qt As Type) As QueryCmdBase
         '    Dim qgt As Type = GetType(QueryCmd(Of ))

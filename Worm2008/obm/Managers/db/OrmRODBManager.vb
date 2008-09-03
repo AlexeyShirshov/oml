@@ -1926,7 +1926,7 @@ Namespace Database
                                     If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
                                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                         obj.SetValue(pi, c, oschema, v)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                     ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                                         Dim dt As DateTime = CDate(value)
                                         Dim l As Long = dt.ToBinary
@@ -1935,7 +1935,7 @@ Namespace Database
                                             sw.Write(l)
                                             sw.Flush()
                                             obj.SetValue(pi, c, oschema, ms.ToArray)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                         End Using
                                     Else
                                         'If c.FieldName = "ID" Then
@@ -1943,7 +1943,7 @@ Namespace Database
                                         'Else
                                         obj.SetValue(pi, c, oschema, value)
                                         'End If
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                     End If
                                 Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
                                     Dim dt As DateTime = CDate(value)
@@ -1953,12 +1953,12 @@ Namespace Database
                                         sw.Write(l)
                                         sw.Flush()
                                         obj.SetValue(pi, c, oschema, ms.ToArray)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                     End Using
                                 Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
                                     Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                     obj.SetValue(pi, c, oschema, v)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                 End Try
                                 pk_count += 1
                             End If
@@ -2030,12 +2030,12 @@ Namespace Database
 
                         If pi Is Nothing Then
                             obj.SetValue(pi, c, oschema, value)
-                            If ce IsNot Nothing Then ce.SetLoaded(c, True, False)
+                            If ce IsNot Nothing Then ce.SetLoaded(c, True, False, _schema)
                         Else
                             Dim att As Field2DbRelations = fields_idx(c.FieldName).GetAttributes(c)
                             If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                 Dim v As Object = pi.GetValue(obj, Nothing)
-                                If Not value.GetType Is pi.PropertyType Then
+                                If Not value.GetType Is pi.PropertyType AndAlso pi.PropertyType IsNot GetType(Object) Then
                                     value = Convert.ChangeType(value, pi.PropertyType)
                                 End If
                                 If Not v.Equals(value) Then
@@ -2044,7 +2044,7 @@ Namespace Database
                             ElseIf Not dr.IsDBNull(idx + displacement) AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                                 If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
                                     fac.Add(New Pair(Of String, Object)(c.FieldName, value))
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                     '    'obj.CreateObject(c.FieldName, value)
                                     '    obj.SetValue(pi, c, )
                                     '    obj.SetLoaded(c, True, True)
@@ -2061,20 +2061,20 @@ Namespace Database
                                     Dim type_created As Type = pi.PropertyType
                                     Dim o As IOrmBase = GetOrmBaseFromCacheOrCreate(value, type_created)
                                     obj.SetValue(pi, c, oschema, o)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                 ElseIf GetType(System.Xml.XmlDocument) Is pi.PropertyType AndAlso TypeOf (value) Is String Then
                                     Dim o As New System.Xml.XmlDocument
                                     o.LoadXml(CStr(value))
                                     obj.SetValue(pi, c, oschema, o)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                 ElseIf pi.PropertyType.IsEnum AndAlso TypeOf (value) Is String Then
                                     Dim svalue As String = CStr(value).Trim
                                     If svalue = String.Empty Then
                                         obj.SetValue(pi, c, oschema, 0)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                     Else
                                         obj.SetValue(pi, c, oschema, [Enum].Parse(pi.PropertyType, svalue, True))
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                     End If
                                 ElseIf pi.PropertyType.IsGenericType AndAlso GetType(Nullable(Of )).Name = pi.PropertyType.Name Then
                                     Dim t As Type = pi.PropertyType.GetGenericArguments()(0)
@@ -2106,13 +2106,13 @@ Namespace Database
                                     Dim v2 As Object = pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
                                         Nothing, Nothing, New Object() {v})
                                     obj.SetValue(pi, c, oschema, v2)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                 Else
                                     Try
                                         If (pi.PropertyType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (pi.PropertyType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
                                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                             obj.SetValue(pi, c, oschema, v)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                         ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                                             Dim dt As DateTime = CDate(value)
                                             Dim l As Long = dt.ToBinary
@@ -2122,7 +2122,7 @@ Namespace Database
                                                 sw.Flush()
                                                 'pi.SetValue(obj, ms.ToArray, Nothing)
                                                 obj.SetValue(pi, c, oschema, ms.ToArray)
-                                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                             End Using
                                             'ElseIf pi.PropertyType Is GetType(ReleaseDate) AndAlso value.GetType Is GetType(Integer) Then
                                             '    obj.SetValue(pi, c, pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, _
@@ -2130,7 +2130,7 @@ Namespace Database
                                             '    obj.SetLoaded(c, True)
                                         Else
                                             obj.SetValue(pi, c, oschema, value)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                         End If
                                         'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
                                         '    Dim dt As DateTime = CDate(value)
@@ -2145,12 +2145,12 @@ Namespace Database
                                     Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
                                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                         obj.SetValue(pi, c, oschema, v)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                     End Try
                                 End If
                             ElseIf dr.IsDBNull(idx + displacement) Then
                                 obj.SetValue(pi, c, oschema, Nothing)
-                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True)
+                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                             End If
                         End If
                     Next

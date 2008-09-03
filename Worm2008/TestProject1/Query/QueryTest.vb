@@ -116,13 +116,13 @@ Imports Worm.Criteria.Values
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim q As New QueryCmdBase(GetType(Entity4))
             q.Filter = Ctor.AutoTypeField("Title").Like("b%")
-            q.Sort = Worm.Orm.Sorting.Field("ID")
+            q.propSort = Worm.Orm.Sorting.Field("ID")
             Assert.IsNotNull(q)
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
             Assert.AreEqual(3, r(0).ID)
 
-            q.Sort = Orm.Sorting.Field("ID").Desc
+            q.propSort = Orm.Sorting.Field("ID").Desc
             r = q.ToEntityList(Of Entity4)(mgr)
 
             Assert.AreEqual(12, r(0).ID)
@@ -133,13 +133,13 @@ Imports Worm.Criteria.Values
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim q As New QueryCmdBase(GetType(Entity4))
             q.Filter = Ctor.AutoTypeField("Title").Like("b%")
-            q.Sort = Worm.Orm.Sorting.Field("ID")
+            q.propSort = Worm.Orm.Sorting.Field("ID")
             Assert.IsNotNull(q)
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
             Assert.AreEqual(3, r(0).ID)
 
-            q.Sort.Order = Orm.SortType.Desc
+            q.propSort.Order = Orm.SortType.Desc
             r = q.ToEntityList(Of Entity4)(mgr)
 
             Assert.AreEqual(12, r(0).ID)
@@ -174,7 +174,7 @@ Imports Worm.Criteria.Values
             Assert.AreEqual(3, r.Count)
             Dim m As Integer = q.Mark
 
-            q.Top = New Top(2)
+            q.propTop = New Top(2)
             Assert.AreNotEqual(m, q.Mark)
 
             r = q.ToEntityList(Of Entity4)(mgr)
@@ -262,7 +262,7 @@ Imports Worm.Criteria.Values
             Assert.IsNotNull(e)
 
             Dim q2 As New QueryCmdBase(e)
-            q2.Sort = Orm.Sorting.Field("Title")
+            q2.propSort = Orm.Sorting.Field("Title")
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
 

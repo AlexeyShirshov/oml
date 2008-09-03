@@ -993,6 +993,7 @@ Namespace Orm
             MyBase._Init(cache, schema, mgrIdentityString)
             Identifier = id
             PKLoaded(1)
+            CType(Me, _ICachedEntity).SetLoaded(New ColumnAttribute(GetPKValues(0).First), True, True, schema)
         End Sub
 
         Protected Overridable Overloads Sub Init()
@@ -2458,6 +2459,17 @@ Namespace Orm
                 el.Reject(True)
             End Using
         End Sub
+
+        Protected Function _GetAll() As IList(Of EditableListBase) Implements _IOrmBase.GetAllEditable
+            Return _m2m
+        End Function
+
+        Public ReadOnly Property M2MNew() As IM2M
+            Get
+                Return Me
+            End Get
+        End Property
+
         'Public Function Find(Of T As {New, IOrmBase})() As Worm.Query.QueryCmdBase Implements IOrmBase.Find
         '    'Return Worm.Query.QueryCmdBase.Create(Of T)(Me)
         '    Dim q As New Worm.Query.QueryCmdBase(Me)
@@ -2543,7 +2555,6 @@ Namespace Orm
 
         Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
             MyBase.Init(id, cache, schema, mgrIdentityString)
-            CType(Me, _ICachedEntity).SetLoaded(New ColumnAttribute("ID"), True, True)
         End Sub
 
         'Protected Overridable Function GetNew() As T

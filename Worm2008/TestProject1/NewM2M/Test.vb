@@ -113,6 +113,8 @@ Imports Worm.Database.Criteria
 
                     CType(e, Worm.Orm.IM2M).Add(e2)
 
+                    Assert.IsFalse(CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToEntityList(Of Entity)(mgr).Contains(e))
+
                     s.Commit()
                 End Using
 

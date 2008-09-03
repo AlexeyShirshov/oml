@@ -790,6 +790,22 @@ Namespace Cache
             End Using
         End Sub
 
+        Protected Friend Function RemoveM2MQuery(ByVal el As EditableListBase) As Pair(Of String)
+            If el Is Nothing Then
+                Throw New ArgumentNullException("el")
+            End If
+
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("hadfgadfgasdfopgh","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("hadfgadfgasdfopgh")
+#End If
+                Dim p As Pair(Of String) = _m2mQueries(el)
+                _m2mQueries.Remove(el)
+                Return p
+            End Using
+        End Function
+
         Protected Friend Sub UpdateM2MQueries(ByVal el As EditableListBase)
             If el Is Nothing Then
                 Throw New ArgumentNullException("el")

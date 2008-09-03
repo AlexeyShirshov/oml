@@ -740,7 +740,7 @@ Namespace Linq
         End Function
 
         Public Function IsSubQueryRequired() As Boolean
-            Return IsSubQueryRequiredBySelect() OrElse _q.Top IsNot Nothing OrElse _q.RowNumberFilter IsNot Nothing
+            Return IsSubQueryRequiredBySelect() OrElse _q.propTop IsNot Nothing OrElse _q.RowNumberFilter IsNot Nothing
         End Function
 
         Public Function IsLoadRequired() As Boolean
@@ -791,7 +791,7 @@ Namespace Linq
         Public ReadOnly Property Query() As Query.QueryCmdBase
             Get
                 If _so IsNot Nothing Then
-                    _q.Sort = _so
+                    _q.propSort = _so
                     _so = Nothing
                 End If
                 Return _q
@@ -986,7 +986,7 @@ Namespace Linq
                         Dim f As Integer = CInt(CType(Query.RowNumberFilter.Value, ScalarValue).Value)
                         _q.RowNumberFilter = New TableFilter(QueryCmdBase.RowNumerColumn, New BetweenValue(f + 1, f + CInt(Eval(c))), Worm.Criteria.FilterOperation.Between)
                     Else
-                        _q.Top = New Top(CInt(Eval(c)))
+                        _q.propTop = New Top(CInt(Eval(c)))
                     End If
                 End If
             End If
@@ -1044,7 +1044,7 @@ Namespace Linq
                     _q.WithLoad = IsLoadRequired()
                 Case "Distinct"
                     Me.Visit(m.Arguments(0))
-                    _q.Distinct = True
+                    _q.propDistinct = True
                 Case "Count"
                     Visit2ParamOverride(m)
                     _q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(AggregateFunction.Count)})
@@ -1054,11 +1054,11 @@ Namespace Linq
                 Case "First"
                     Visit2ParamOverride(m)
                     _ct = Linq.Constr.First
-                    _q.Top = New Worm.Query.Top(1)
+                    _q.propTop = New Worm.Query.Top(1)
                 Case "FirstOrDefault"
                     Visit2ParamOverride(m)
                     _ct = Linq.Constr.FirstOrDef
-                    _q.Top = New Worm.Query.Top(1)
+                    _q.propTop = New Worm.Query.Top(1)
                 Case "Single"
                     Visit2ParamOverride(m)
                     _ct = Linq.Constr.Single

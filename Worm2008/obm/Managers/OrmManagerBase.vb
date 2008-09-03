@@ -3127,6 +3127,24 @@ l1:
                     Next
                 End If
             Next
+
+            For Each el As EditableListBase In obj.GetAllEditable
+                Dim p As Pair(Of String) = _cache.RemoveM2MQuery(el)
+
+                For Each id As Object In el.Added
+                    Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
+                    Dim oel As EditableListBase = o.GetM2M(tt1, el.Key)
+                    oel.Added.Remove(oldId)
+                    oel.Added.Add(obj.Identifier)
+                Next
+
+                el.MainId = obj.Identifier
+                '_cache.AddM2MQuery(el, p.First, p.Second)
+                Dim dic As IDictionary = CType(_cache.Filters(p.First), System.Collections.IDictionary)
+                If dic IsNot Nothing Then
+                    dic.Remove(p.Second)
+                End If
+            Next
         End If
     End Sub
 
@@ -4014,6 +4032,18 @@ l1:
                                     End If
                                 End If
                             Next
+
+                            If orm._m2m.Count > 0 Then
+                                For Each elb As EditableListBase In orm._m2m
+                                    Dim el As EditableListBase = elb.PrepareSave(Me)
+                                    If el IsNot Nothing Then
+                                        M2MSave(orm, el)
+                                        'elb.Saved = True
+                                        elb._savedIds.AddRange(el.Added)
+                                        hasNew = hasNew OrElse elb.HasNew
+                                    End If
+                                Next
+                            End If
                         End If
                     ElseIf sa = SaveAction.Update Then
                         If orm IsNot Nothing Then

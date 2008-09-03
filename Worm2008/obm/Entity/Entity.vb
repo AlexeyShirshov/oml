@@ -34,7 +34,7 @@ Namespace Orm
         Overloads Sub Init(ByVal pk() As Pair(Of String, Object), ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
         Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
-        Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean) As Boolean
+        Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As QueryGenerator) As Boolean
         Function CheckIsAllLoaded(ByVal schema As QueryGenerator, ByVal loadedColumns As Integer) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
         ReadOnly Property UpdateCtx() As UpdateCtx
@@ -85,6 +85,7 @@ Namespace Orm
         Function AddAccept(ByVal acs As AcceptState2) As Boolean
         Function GetAccept(ByVal m As OrmManagerBase.M2MCache) As AcceptState2
         Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase
+        Function GetAllEditable() As Generic.IList(Of EditableListBase)
         Sub RejectM2MIntermidiate()
     End Interface
 

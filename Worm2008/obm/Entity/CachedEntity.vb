@@ -159,14 +159,12 @@ Namespace Orm
             End Set
         End Property
 
-        Private Function SetLoaded(ByVal c As Meta.ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean) As Boolean Implements _ICachedEntity.SetLoaded
+        Private Function SetLoaded(ByVal c As Meta.ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As QueryGenerator) As Boolean Implements _ICachedEntity.SetLoaded
 
             Dim idx As Integer = c.Index
             If idx = -1 Then
-                Using mc As IGetManager = GetMgr()
-                    Dim arr As Generic.List(Of ColumnAttribute) = mc.Manager.ObjectSchema.GetSortedFieldList(Me.GetType)
-                    idx = arr.BinarySearch(c)
-                End Using
+                Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
+                idx = arr.BinarySearch(c)
                 c.Index = idx
             End If
 
@@ -432,7 +430,7 @@ Namespace Orm
                 For Each p As Pair(Of String, Object) In pk
                     Dim c As New ColumnAttribute(p.First)
                     SetValue(Nothing, c, oschema, p.Second)
-                    SetLoaded(c, True, True)
+                    SetLoaded(c, True, True, m.Manager.ObjectSchema)
                 Next
             End Using
         End Sub
@@ -459,36 +457,37 @@ Namespace Orm
 
             CType(Me, _IEntity).BeginLoading()
 
-            With reader
-l1:
-                If .NodeType = XmlNodeType.Element AndAlso .Name = t.Name Then
-                    ReadValues(reader)
-
-                    Do While .Read
-                        Select Case .NodeType
-                            Case XmlNodeType.Element
-                                ReadValue(.Name, reader)
-                            Case XmlNodeType.EndElement
-                                If .Name = t.Name Then Exit Do
-                        End Select
-                    Loop
-                Else
-                    Do While .Read
-                        Select Case .NodeType
-                            Case XmlNodeType.Element
-                                If .Name = t.Name Then
-                                    GoTo l1
-                                End If
-                        End Select
-                    Loop
-                End If
-            End With
-
-            CType(Me, _IEntity).EndLoading()
-
             Using mc As IGetManager = GetMgr()
                 Dim schema As QueryGenerator = mc.Manager.ObjectSchema
-                If schema IsNot Nothing Then CheckIsAllLoaded(schema, Integer.MaxValue)
+
+                With reader
+l1:
+                    If .NodeType = XmlNodeType.Element AndAlso .Name = t.Name Then
+                        ReadValues(reader, schema)
+
+                        Do While .Read
+                            Select Case .NodeType
+                                Case XmlNodeType.Element
+                                    ReadValue(.Name, reader, schema)
+                                Case XmlNodeType.EndElement
+                                    If .Name = t.Name Then Exit Do
+                            End Select
+                        Loop
+                    Else
+                        Do While .Read
+                            Select Case .NodeType
+                                Case XmlNodeType.Element
+                                    If .Name = t.Name Then
+                                        GoTo l1
+                                    End If
+                            End Select
+                        Loop
+                    End If
+                End With
+
+                CType(Me, _IEntity).EndLoading()
+
+                If Schema IsNot Nothing Then CheckIsAllLoaded(Schema, Integer.MaxValue)
             End Using
         End Sub
 
@@ -562,7 +561,7 @@ l1:
             End With
         End Sub
 
-        Protected Sub ReadValue(ByVal fieldName As String, ByVal reader As XmlReader)
+        Protected Sub ReadValue(ByVal fieldName As String, ByVal reader As XmlReader, ByVal schema As QueryGenerator)
             reader.Read()
             'Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
             Select Case reader.NodeType
@@ -572,13 +571,13 @@ l1:
                     Dim x As New XmlDocument
                     x.LoadXml(reader.Value)
                     pi.SetValue(Me, x, Nothing)
-                    SetLoaded(c, True, True)
+                    SetLoaded(c, True, True, schema)
                 Case XmlNodeType.Text
                     Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
                     Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
                     Dim v As String = reader.Value
                     pi.SetValue(Me, Convert.FromBase64String(CStr(v)), Nothing)
-                    SetLoaded(c, True, True)
+                    SetLoaded(c, True, True, schema)
                     'Using ms As New IO.MemoryStream(Convert.FromBase64String(CStr(v)))
                     '    Dim f As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
                     '    pi.SetValue(Me, f.Deserialize(ms), Nothing)
@@ -588,7 +587,7 @@ l1:
                     Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
                     Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
                     pi.SetValue(Me, Nothing, Nothing)
-                    SetLoaded(c, True, True)
+                    SetLoaded(c, True, True, schema)
                 Case XmlNodeType.Element
                     Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
                     Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
@@ -598,7 +597,7 @@ l1:
                         o = mc.Manager.CreateObject(pk, pi.PropertyType)
                     End Using
                     pi.SetValue(Me, o, Nothing)
-                    SetLoaded(c, True, True)
+                    SetLoaded(c, True, True, schema)
             End Select
         End Sub
 
@@ -617,7 +616,7 @@ l1:
             Return l.ToArray
         End Function
 
-        Protected Sub ReadValues(ByVal reader As XmlReader)
+        Protected Sub ReadValues(ByVal reader As XmlReader, ByVal schema As QueryGenerator)
             With reader
                 .MoveToFirstAttribute()
                 Dim t As Type = Me.GetType
@@ -646,7 +645,7 @@ l1:
                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                         If pi IsNot Nothing Then
                             pi.SetValue(Me, v, Nothing)
-                            SetLoaded(c, True, True)
+                            SetLoaded(c, True, True, schema)
                             pk_count += 1
                         End If
                     End If
@@ -702,7 +701,7 @@ l1:
                                 Dim v As IOrmBase = mc.Manager.GetOrmBaseFromCacheOrCreate(value, pi.PropertyType)
                                 If pi IsNot Nothing Then
                                     pi.SetValue(obj, v, Nothing)
-                                    SetLoaded(c, True, True)
+                                    SetLoaded(c, True, True, schema)
                                 End If
                             End Using
                             'End If
@@ -710,7 +709,7 @@ l1:
                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
-                                SetLoaded(c, True, True)
+                                SetLoaded(c, True, True, schema)
                             End If
                         End If
 
@@ -754,7 +753,9 @@ l1:
                 For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                    l.Add(New Pair(Of String, Object)(c.FieldName, GetValue(pi, c, oschema)))
+                    If (c._behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        l.Add(New Pair(Of String, Object)(c.FieldName, GetValue(pi, c, oschema)))
+                    End If
                 Next
             End Using
             Return l.ToArray
