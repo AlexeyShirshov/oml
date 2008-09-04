@@ -629,25 +629,34 @@ Public MustInherit Class QueryGenerator
 
         Dim schema As IOrmObjectSchemaBase = GetObjectSchema(type)
 
+        Return GetAttributes(schema, c)
+    End Function
+
+    Public Function GetAttributes(ByVal schema As IOrmObjectSchemaBase, ByVal c As ColumnAttribute) As Field2DbRelations
+        If schema Is Nothing Then
+            Throw New ArgumentNullException("schema")
+        End If
+
         Return schema.GetFieldColumnMap()(c.FieldName).GetAttributes(c)
     End Function
 #End Region
 
 #Region " Helpers "
-    Protected Friend Sub GetPKList(ByVal schema As IOrmObjectSchemaBase, ByVal ids As StringBuilder, Optional ByVal columnAliases As List(Of String) = Nothing)
-        'If ids Is Nothing Then
-        '    Throw New ArgumentNullException("ids")
-        'End If
-
-        'For Each pk As String In GetPrimaryKeysName(type)
-        '    ids.Append(pk).Append(",")
-        'Next
-        'ids.Length -= 1            
-        Dim p As MapField2Column = schema.GetFieldColumnMap("ID")
-        ids.Append(GetTableName(p._tableName)).Append(Selector).Append(p._columnName)
-        If columnAliases IsNot Nothing Then
-            columnAliases.Add(p._columnName)
+    Protected Friend Sub GetPKList(ByVal type As Type, ByVal schema As IOrmObjectSchemaBase, ByVal ids As StringBuilder, Optional ByVal columnAliases As List(Of String) = Nothing)
+        If ids Is Nothing Then
+            Throw New ArgumentNullException("ids")
         End If
+
+        For Each pk As String In GetPrimaryKeysName(type, columnAliases:=columnAliases, schema:=schema)
+            ids.Append(pk).Append(",")
+        Next
+        ids.Length -= 1
+
+        'Dim p As MapField2Column = schema.GetFieldColumnMap("ID")
+        'ids.Append(GetTableName(p._tableName)).Append(Selector).Append(p._columnName)
+        'If columnAliases IsNot Nothing Then
+        '    columnAliases.Add(p._columnName)
+        'End If
     End Sub
 
     Public Function HasField(ByVal t As Type, ByVal field As String) As Boolean
@@ -715,7 +724,7 @@ Public MustInherit Class QueryGenerator
     End Function
 
 
-    Public Function GetSortedFieldList(ByVal original_type As Type) As Generic.List(Of ColumnAttribute)
+    Public Function GetSortedFieldList(ByVal original_type As Type, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As Generic.List(Of ColumnAttribute)
         'Dim cl_type As String = New StringBuilder().Append("columnlist").Append(type.ToString).ToString
         Dim cl_type As String = "columnlist" & original_type.ToString
 
@@ -726,7 +735,7 @@ Public MustInherit Class QueryGenerator
                 If arr Is Nothing Then
                     arr = New Generic.List(Of ColumnAttribute)
 
-                    For Each c As ColumnAttribute In GetProperties(original_type).Keys
+                    For Each c As ColumnAttribute In GetProperties(original_type, schema).Keys
                         arr.Add(c)
                     Next
 
@@ -740,7 +749,12 @@ Public MustInherit Class QueryGenerator
     End Function
 
     '<MethodImpl(MethodImplOptions.Synchronized)> _
-    Public Function GetPrimaryKeysName(ByVal original_type As Type, Optional ByVal add_alias As Boolean = True) As String()
+    Public Function GetPrimaryKeysName(ByVal original_type As Type, Optional ByVal add_alias As Boolean = True, _
+        Optional ByVal columnAliases As List(Of String) = Nothing, Optional ByVal schema As IOrmObjectSchemaBase = Nothing) As String()
+        If original_type Is Nothing Then
+            Throw New ArgumentNullException("original_type")
+        End If
+
         Dim cl_type As String = "pklist" & original_type.ToString & add_alias
 
         Dim arr As Generic.List(Of String) = CType(map(cl_type), Generic.List(Of String))
@@ -750,10 +764,13 @@ Public MustInherit Class QueryGenerator
                 arr = CType(map(cl_type), Generic.List(Of String))
                 If arr Is Nothing Then
                     arr = New Generic.List(Of String)
+                    If schema Is Nothing Then
+                        schema = GetObjectSchema(original_type)
+                    End If
 
-                    For Each c As ColumnAttribute In GetSortedFieldList(original_type)
-                        If (GetAttributes(original_type, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            arr.Add(GetColumnNameByFieldNameInternal(original_type, c.FieldName, add_alias, Nothing))
+                    For Each c As ColumnAttribute In GetSortedFieldList(original_type, schema)
+                        If (GetAttributes(schema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                            arr.Add(GetColumnNameByFieldNameInternal(schema, c.FieldName, add_alias, columnAliases))
                         End If
                     Next
 
@@ -1202,7 +1219,7 @@ Public MustInherit Class QueryGenerator
 #End Region
 
     Protected Function CreateObjectSchema(ByRef names As IDictionary) As IDictionary
-        Dim t As Type = GetType(OrmBase)
+        Dim t As Type = GetType(_IEntity)
         Dim idic As New Specialized.HybridDictionary
         names = New Specialized.HybridDictionary
         For Each assembly As Reflection.Assembly In AppDomain.CurrentDomain.GetAssemblies

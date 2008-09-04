@@ -79,6 +79,8 @@ Namespace Query
     Public Class QueryCmdBase
         Implements ICloneable
 
+        Public Delegate Function GetManagerDelegate() As OrmManagerBase
+
         Protected _fields As ObjectModel.ReadOnlyCollection(Of OrmProperty)
         Protected _filter As IGetFilter
         Protected _group As ObjectModel.ReadOnlyCollection(Of OrmProperty)
@@ -106,15 +108,6 @@ Namespace Query
         Private _en As String
 
         Private _appendMain As Boolean
-
-        Public Property Renew() As Boolean
-            Get
-
-            End Get
-            Set(ByVal value As Boolean)
-
-            End Set
-        End Property
 
         Public Property LastExecitionResult() As OrmManagerBase.ExecutionResult
             Get
@@ -251,14 +244,14 @@ Namespace Query
 
                 'Dim table As OrmTable = _o.M2M.GetTable(t, _key)
 
-                If _appendMain OrElse WithLoad Then
+                If _appendMain OrElse propWithLoad Then
                     Dim jf As New Worm.Database.Criteria.Joins.JoinFilter(table, selected_r.Column, t, "ID", Criteria.FilterOperation.Equal)
                     Dim jn As New Worm.Database.Criteria.Joins.OrmJoin(table, JoinType.Join, jf)
                     j.Add(jn)
                     If table.Equals(_table) Then
                         _table = Nothing
                     End If
-                    If WithLoad AndAlso _fields.Count = 1 Then
+                    If propWithLoad AndAlso _fields.Count = 1 Then
                         _fields = Nothing
                     End If
                 Else
@@ -554,7 +547,7 @@ Namespace Query
             End Set
         End Property
 
-        Public Property WithLoad() As Boolean
+        Public Property propWithLoad() As Boolean
             Get
                 Return _load
             End Get
@@ -584,6 +577,16 @@ Namespace Query
             Return Me
         End Function
 
+        Public Function WithLoad(ByVal value As Boolean) As QueryCmdBase
+            propWithLoad = value
+            Return Me
+        End Function
+
+        Public Function Where(ByVal filter As IGetFilter) As QueryCmdBase
+            Me.Filter = filter
+            Return Me
+        End Function
+
         'Protected Function CreateTypedCmd(ByVal qt As Type) As QueryCmdBase
         '    Dim qgt As Type = GetType(QueryCmd(Of ))
         '    Dim t As Type = qgt.MakeGenericType(New Type() {qt})
@@ -603,10 +606,40 @@ Namespace Query
         '    Return e
         'End Function
 
+        Private Class cls
+            Private _m As GetManagerDelegate
+
+            Public Sub New(ByVal getMgr As GetManagerDelegate)
+                _m = getMgr
+            End Sub
+
+            Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
+                args.Manager = _m()
+            End Sub
+
+            Public Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManagerBase)
+                AddHandler o.ManagerRequired, AddressOf GetManager
+            End Sub
+        End Class
+
         Public Function ToList(ByVal mgr As OrmManagerBase) As IList
             Dim t As MethodInfo = Me.GetType.GetMethod("ToEntityList")
             t = t.MakeGenericMethod(New Type() {SelectedType})
             Return CType(t.Invoke(Me, New Object() {mgr}), System.Collections.IList)
+        End Function
+
+        Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As GetManagerDelegate) As ReadOnlyEntityList(Of T)
+            Dim mgr As OrmManagerBase = getMgr()
+            Try
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManagerBase) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
+                Return ToEntityList(Of T)(mgr)
+            Finally
+                If mgr IsNot Nothing Then
+                    mgr.Dispose()
+                End If
+            End Try
         End Function
 
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
@@ -640,6 +673,14 @@ Namespace Query
             'Dim rmi As MethodInfo = mi.MakeGenericMethod(New Type() {GetType(T)})
             'Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
         End Function
+
+        Public Sub Renew(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase)
+            GetExecutor(mgr).Reset(Of ReturnType)(mgr, Me)
+        End Sub
+
+        Public Sub Renew(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase)
+            GetExecutor(mgr).Reset(Of SelectType, ReturnType)(mgr, Me)
+        End Sub
 
         Public Sub CopyTo(ByVal o As QueryCmdBase)
             With o

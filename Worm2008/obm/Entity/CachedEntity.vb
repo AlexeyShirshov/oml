@@ -337,9 +337,17 @@ Namespace Orm
             End Get
         End Property
 
-        Public Overridable Function HasM2MChanges(ByVal mgr As OrmManagerBase) As Boolean
+        Public Overridable Function HasM2MChanges() As Boolean
             Return False
         End Function
+
+        Public Overridable ReadOnly Property HasChanges() As Boolean Implements ICachedEntity.HasChanges
+            Get
+                Using mc As IGetManager = GetMgr()
+                    Return HasBodyChanges OrElse HasM2MChanges()
+                End Using
+            End Get
+        End Property
 
         Protected Friend Shared Sub ClearCacheFlags(ByVal obj As _ICachedEntity, ByVal mc As OrmManagerBase, _
             ByVal contextKey As Object)
@@ -749,11 +757,12 @@ l1:
         Public Overridable Function GetPKValues() As Pair(Of String, Object)() Implements ICachedEntity.GetPKValues
             Dim l As New List(Of Pair(Of String, Object))
             Using mc As IGetManager = GetMgr()
-                Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
-                For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
+                Dim schema As Worm.QueryGenerator = mc.Manager.ObjectSchema
+                Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(Me.GetType)
+                For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                    If (c._behavior And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    If (schema.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                         l.Add(New Pair(Of String, Object)(c.FieldName, GetValue(pi, c, oschema)))
                     End If
                 Next

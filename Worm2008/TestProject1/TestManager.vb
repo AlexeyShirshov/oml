@@ -19,11 +19,15 @@ Imports Worm.Orm
     End Function
 
     Public Shared Function CreateManager(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
+        Return CreateManager(New OrmCache, schema)
+    End Function
+
+    Public Shared Function CreateManager(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-        Return New OrmReadOnlyDBManager(New OrmCache, schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Return New OrmReadOnlyDBManager(cache, schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Return New OrmReadOnlyDBManager(New OrmCache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
+        Return New OrmReadOnlyDBManager(cache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
 #End If
     End Function
 

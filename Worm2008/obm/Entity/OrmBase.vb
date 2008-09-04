@@ -573,9 +573,9 @@ Namespace Orm
 
             Public ReadOnly Property HasM2MChanges() As Boolean
                 Get
-                    Using mc As IGetManager = GetMgr
-                        Return _o.HasM2MChanges(mc.Manager)
-                    End Using
+                    'Using mc As IGetManager = GetMgr
+                    Return _o.HasM2MChanges()
+                    'End Using
                 End Get
             End Property
 
@@ -742,7 +742,7 @@ Namespace Orm
         'End Property
 
 
-        Public Overrides Function HasM2MChanges(ByVal mgr As OrmManagerBase) As Boolean
+        Public Overrides Function HasM2MChanges() As Boolean
             If _needAccept IsNot Nothing AndAlso _needAccept.Count > 0 Then
                 Return True
             End If
@@ -752,7 +752,7 @@ Namespace Orm
                     Return True
                 End If
             Next
-            Return MyBase.HasM2MChanges(mgr)
+            Return MyBase.HasM2MChanges()
         End Function
 
         'Protected Friend ReadOnly Property HasM2MChanges() As Boolean
@@ -760,14 +760,6 @@ Namespace Orm
         '        Return _needAccept IsNot Nothing AndAlso _needAccept.Count > 0
         '    End Get
         'End Property
-
-        Protected Friend ReadOnly Property HasChanges() As Boolean
-            Get
-                Using mc As IGetManager = GetMgr()
-                    Return HasBodyChanges OrElse HasM2MChanges(mc.Manager)
-                End Using
-            End Get
-        End Property
 
         Protected Friend Function GetM2MRelatedChangedObjects() As List(Of OrmBase)
             Dim l As New List(Of OrmBase)
@@ -1600,14 +1592,6 @@ Namespace Orm
         '#End If
         '        End Function
 
-        Protected Function Read(ByVal fieldName As String) As IDisposable
-            Return SyncHelper(True, fieldName)
-        End Function
-
-        Protected Function Write(ByVal fieldName As String) As IDisposable
-            Return SyncHelper(False, fieldName)
-        End Function
-
         'Protected Friend Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable
         '    Dim err As Boolean = True
         '    Dim d As IDisposable = New BlankSyncHelper(Nothing)
@@ -2402,6 +2386,8 @@ Namespace Orm
                                 Else
                                     el.Add(obj.Identifier)
                                     el2.Add(Identifier)
+                                    mc.Manager.RaiseBeginUpdate(Me)
+                                    mc.Manager.RaiseBeginUpdate(obj)
                                 End If
                             End If
                         End SyncLock
@@ -2441,6 +2427,8 @@ Namespace Orm
                                 Else
                                     el.Delete(obj.Identifier)
                                     el2.Delete(Identifier)
+                                    mc.Manager.RaiseBeginUpdate(Me)
+                                    mc.Manager.RaiseBeginUpdate(obj)
                                 End If
                             End If
                         End SyncLock
