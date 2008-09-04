@@ -132,7 +132,7 @@ Namespace Cache
         Private Shared Sub AddKey(ByRef keys As Generic.List(Of String), ByVal key As String)
             Dim idx As Integer = keys.BinarySearch(key)
             If idx >= 0 Then
-                Throw New ArgumentOutOfRangeException("Key already presents in list.")
+                Throw New ArgumentOutOfRangeException(String.Format("Key {0} already presents in list.", key))
             Else
                 keys.Insert(Not idx, key)
             End If
@@ -274,9 +274,16 @@ Namespace Cache
                 Throw New ArgumentNullException("key")
             End If
 
-            Dim r As Boolean = Cache(GetKey(key)) IsNot Nothing
-            System.Diagnostics.Debug.Assert(r OrElse Not _keys.Contains(key))
-            Return r
+            Dim realKey As String = GetKey(key)
+            Dim exists As Boolean = Cache(realKey) IsNot Nothing
+            'System.Diagnostics.Debug.Assert(r OrElse Not _keys.Contains(key))
+            If Not exists Then
+                Dim pos As Integer = _keys.BinarySearch(realKey)
+                If pos >= 0 Then
+                    _keys.RemoveAt(pos)
+                End If
+            End If
+            Return exists
         End Function
 
         Default Public Property Item(ByVal key As String) As TValue Implements System.Collections.Generic.IDictionary(Of String, TValue).Item

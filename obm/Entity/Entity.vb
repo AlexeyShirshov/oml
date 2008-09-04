@@ -55,6 +55,7 @@ Namespace Orm
         Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity
         Sub RejectChanges()
         Sub RejectRelationChanges()
+        ReadOnly Property HasChanges() As Boolean
     End Interface
 
     Public Interface IM2M
@@ -322,6 +323,14 @@ Namespace Orm
             End Try
 
             Return d
+        End Function
+
+        Protected Function Read(ByVal fieldName As String) As IDisposable
+            Return SyncHelper(True, fieldName)
+        End Function
+
+        Protected Function Write(ByVal fieldName As String) As IDisposable
+            Return SyncHelper(False, fieldName)
         End Function
 
         Protected Function GetMgr() As IGetManager Implements _IEntity.GetMgr

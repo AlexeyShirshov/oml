@@ -157,7 +157,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
                 'If GetType(ReturnType) IsNot Query.SelectedType Then
-                dbm.LoadMultipleObjects(Query.SelectedType, cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
+                dbm.LoadMultipleObjects(Query.SelectedType, cmd, Query.propWithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
                 'End If
@@ -264,7 +264,7 @@ Namespace Query.Database
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyEntityList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(Mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
-                dbm.LoadMultipleObjects(Of SelectType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
+                dbm.LoadMultipleObjects(Of SelectType)(cmd, Query.propWithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
                 Return CType(OrmManagerBase.CreateReadonlyList(GetType(ReturnType), rr), Global.Worm.ReadOnlyEntityList(Of ReturnType))
             End Function
         End Class

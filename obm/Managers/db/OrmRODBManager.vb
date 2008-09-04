@@ -636,16 +636,18 @@ Namespace Database
                             End If
                         Else
 #If DEBUG Then
-                            If o.ObjectState <> ObjectState.None Then
-                                Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
-                                If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
-                                    Debug.Assert(_saver._deleted.Contains(o))
-                                    Debug.Assert(Not _saver._updated.Contains(o))
-                                ElseIf _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Edit Then
-                                    'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
-                                    Debug.Assert(Not _saver._deleted.Contains(o))
-                                    Debug.Assert(_saver._updated.Contains(o))
-                                    'End If
+                            If o.HasChanges Then
+                                'Debug.Assert(_mgr.Cache.Modified(o) IsNot Nothing)
+                                If _mgr.Cache.Modified(o) IsNot Nothing Then
+                                    If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
+                                        Debug.Assert(_saver._deleted.Contains(o))
+                                        Debug.Assert(Not _saver._updated.Contains(o))
+                                    ElseIf _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Edit Then
+                                        'If _mgr.Cache.Modified(o).Reason = ModifiedObject.ReasonEnum.Delete Then
+                                        Debug.Assert(Not _saver._deleted.Contains(o))
+                                        Debug.Assert(_saver._updated.Contains(o))
+                                        'End If
+                                    End If
                                 End If
                             End If
 #End If

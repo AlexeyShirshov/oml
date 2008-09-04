@@ -1087,7 +1087,7 @@ l1:
                         selectcmd.Append(",").Append(additionalColumns)
                     End If
                 Else
-                    GetPKList(schema, selectcmd)
+                    GetPKList(original_type, schema, selectcmd)
                 End If
             Else
                 selectcmd.Append("*")
@@ -1160,7 +1160,7 @@ l1:
                 Dim columns As String = GetSelectColumnList(original_type, arr)
                 selectcmd.Append(columns)
             Else
-                GetPKList(schema, selectcmd)
+                GetPKList(original_type, schema, selectcmd)
             End If
             selectcmd.Append(" from ")
             Dim unions() As String = GetUnions(original_type)

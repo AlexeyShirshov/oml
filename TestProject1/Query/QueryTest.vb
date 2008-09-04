@@ -219,7 +219,7 @@ Imports Worm.Criteria.Values
                 Assert.IsFalse(o.InternalProperties.IsLoaded)
             Next
 
-            q2.WithLoad = True
+            q2.propWithLoad = True
             r = q2.ToEntityList(Of Entity4)(mgr)
 
             Assert.AreEqual(4, r.Count)
@@ -310,6 +310,33 @@ Imports Worm.Criteria.Values
             'Dim r As List(Of Entity)
             'Dim r2 As List(Of IEnt) = r
             'r2(0) = r(0)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestAutoMgr()
+        Dim q As QueryCmdBase = New QueryCmdBase(GetType(Entity4)).Sort(Orm.Sorting.Field("Title"))
+
+        Dim l As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(Function() TestManager.CreateManager(New SQLGenerator("1")))
+
+        Assert.AreEqual(12, l.Count)
+
+        Assert.IsFalse(l(0).IsLoaded)
+        Assert.AreEqual("245g0nj", l(0).Title)
+        Assert.IsTrue(l(0).IsLoaded)
+    End Sub
+
+    <TestMethod()> Public Sub TestRenew()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim q As QueryCmdBase = New QueryCmdBase(GetType(Entity4))
+            q.ToEntityList(Of Entity4)(mgr)
+            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+            q.ToEntityList(Of Entity4)(mgr)
+            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+            q.Renew(Of Entity4)(mgr)
+            q.ToEntityList(Of Entity4)(mgr)
+            Assert.IsFalse(q.LastExecitionResult.CacheHit)
         End Using
     End Sub
 End Class

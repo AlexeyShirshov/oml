@@ -163,7 +163,7 @@ Namespace Query.Database
                 mgr._length = query.ClientPaging.Second
             End If
 
-            Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.WithLoad, p)
+            Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.propWithLoad, p)
             query.LastExecitionResult = mgr.GetLastExecitionResult
 
             mgr._dont_cache_lists = oldCache
@@ -175,7 +175,7 @@ Namespace Query.Database
             Dim s As Cache.IListObjectConverter.ExtractListResult
             'Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
             'Return r
-            Return ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
+            Return ce.GetObjectList(Of ReturnType)(mgr, query.propWithLoad, p.Created, s)
         End Function
 
         Public Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
@@ -207,7 +207,7 @@ Namespace Query.Database
                 mgr._length = query.ClientPaging.Second
             End If
 
-            Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.WithLoad, p)
+            Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.propWithLoad, p)
             query.LastExecitionResult = mgr.GetLastExecitionResult
 
             mgr._dont_cache_lists = oldCache
@@ -219,7 +219,7 @@ Namespace Query.Database
             Dim s As Cache.IListObjectConverter.ExtractListResult
             'Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
             'Return r
-            Return ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
+            Return ce.GetObjectList(Of ReturnType)(mgr, query.propWithLoad, p.Created, s)
         End Function
 
 #Region " Shared helpers "
@@ -246,7 +246,7 @@ Namespace Query.Database
                 'l.Sort()
                 Return l
             Else
-                If q.WithLoad Then
+                If q.propWithLoad Then
                     Return gen.GetSortedFieldList(type)
                 Else
                     Return gen.GetPrimaryKeys(type)
@@ -254,7 +254,7 @@ Namespace Query.Database
             End If
         End Function
 
-        Protected Shared Sub FormSelectList(ByVal query As QueryCmdBase, ByVal t As Type, _
+        Protected Shared Sub FormSelectList(ByVal query As QueryCmdBase, ByVal queryType As Type, _
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema, _
             ByVal almgr As AliasMgr, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal columnAliases As List(Of String), ByVal innerColumns As List(Of String))
@@ -283,13 +283,13 @@ Namespace Query.Database
                     b = True
                 End If
             Else
-                If query.WithLoad Then
+                If query.propWithLoad Then
                     If query.SelectList Is Nothing AndAlso query.Aggregates Is Nothing Then
-                        cols.Append(s.GetSelectColumnList(t, Nothing, columnAliases))
+                        cols.Append(s.GetSelectColumnList(queryType, Nothing, columnAliases))
                         sb.Append(cols.ToString)
                         b = True
                     ElseIf query.SelectList IsNot Nothing Then
-                        cols.Append(s.GetSelectColumnList(t, GetFields(s, t, query), columnAliases))
+                        cols.Append(s.GetSelectColumnList(queryType, GetFields(s, queryType, query), columnAliases))
                         sb.Append(cols.ToString)
                         b = True
                     End If
@@ -304,7 +304,7 @@ Namespace Query.Database
                     sb.Append(cols.ToString)
                     b = True
                 ElseIf query.Aggregates Is Nothing Then
-                    s.GetPKList(os, cols, columnAliases)
+                    s.GetPKList(queryType, os, cols, columnAliases)
                     sb.Append(cols.ToString)
                     b = True
                 End If
@@ -432,7 +432,7 @@ Namespace Query.Database
         End Function
 
         Public Shared Function MakeQueryStatement(ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
-            ByVal query As QueryCmdBase, ByVal params As ICreateParam, ByVal t As Type, _
+            ByVal query As QueryCmdBase, ByVal params As ICreateParam, ByVal queryType As Type, _
             ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As AliasMgr, _
             ByVal columnAliases As List(Of String), ByVal inner As String, ByVal innerColumns As List(Of String), ByVal i As Integer) As String
 
@@ -441,7 +441,7 @@ Namespace Query.Database
             Dim os As IOrmObjectSchema = Nothing
 
             If query.Table Is Nothing Then
-                os = s.GetObjectSchema(t)
+                os = s.GetObjectSchema(queryType)
             End If
 
             sb.Append("select ")
@@ -454,7 +454,7 @@ Namespace Query.Database
                 sb.Append(s.TopStatement(query.propTop.Count, query.propTop.Percent, query.propTop.Ties)).Append(" ")
             End If
 
-            FormSelectList(query, t, sb, s, os, almgr, filterInfo, params, columnAliases, innerColumns)
+            FormSelectList(query, queryType, sb, s, os, almgr, filterInfo, params, columnAliases, innerColumns)
 
             sb.Append(" from ")
 
@@ -476,13 +476,13 @@ Namespace Query.Database
 
             s.AppendWhere(os, f, almgr, sb, filterInfo, params, innerColumns)
 
-            FormGroupBy(query, almgr, sb, s, t)
+            FormGroupBy(query, almgr, sb, s, queryType)
 
             If query.RowNumberFilter Is Nothing Then
-                FormOrderBy(query, t, almgr, sb, s, filterInfo, params, columnAliases)
+                FormOrderBy(query, queryType, almgr, sb, s, filterInfo, params, columnAliases)
             Else
                 Dim r As New StringBuilder
-                FormOrderBy(query, t, almgr, r, s, filterInfo, params, columnAliases)
+                FormOrderBy(query, queryType, almgr, r, s, filterInfo, params, columnAliases)
                 sb.Replace(RowNumberOrder, r.ToString)
             End If
 

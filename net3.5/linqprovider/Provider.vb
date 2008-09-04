@@ -799,7 +799,7 @@ Namespace Linq
         End Property
 
         Protected Overrides Function VisitWithLoad(ByVal w As WithLoadExpression) As System.Linq.Expressions.Expression
-            _q.WithLoad = True
+            _q.propWithLoad = True
             Return MyBase.VisitWithLoad(w)
         End Function
 
@@ -1041,7 +1041,7 @@ Namespace Linq
                 Case "Select"
                     Me.Visit(m.Arguments(0))
                     Me.Visit(m.Arguments(1))
-                    _q.WithLoad = IsLoadRequired()
+                    _q.propWithLoad = IsLoadRequired()
                 Case "Distinct"
                     Me.Visit(m.Arguments(0))
                     _q.propDistinct = True
@@ -1097,7 +1097,7 @@ Namespace Linq
 
         Protected Sub VisitAgg(ByVal m As MethodCallExpression, ByVal af As AggregateFunction)
             Me.Visit(m.Arguments(0))
-            _q.WithLoad = False
+            _q.propWithLoad = False
             If m.Arguments.Count > 1 Then
                 Dim ag As New SimpleExpVis(_schema, Me)
                 ag.Visit(m.Arguments(1))
