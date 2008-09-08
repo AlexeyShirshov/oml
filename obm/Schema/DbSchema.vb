@@ -956,7 +956,7 @@ l1:
         End Sub
 
         Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of SourceFragment, IFilter), ByVal filterInfo As Object, _
-            ByVal type As Type, ByVal obj As ICachedEntity, ByVal oschema As IOrmObjectSchema, ByVal relSchema As IOrmRelationalSchema)
+            ByVal type As Type, ByVal obj As ICachedEntity, ByVal oschema As IObjectSchemaBase, ByVal relSchema As IOrmRelationalSchema)
             'Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
             Dim tables() As SourceFragment = GetTables(oschema)
             Dim pk_table As SourceFragment = tables(0)
@@ -1032,7 +1032,7 @@ l1:
                         del_cmd.Append("set @id_").Append(p.First).Append(" = ").Append(params.CreateParam(p.Second)).Append(EndLine)
                     Next
 
-                    GetDeletedConditions(deleted_tables, filterInfo, type, obj, oschema, TryCast(relSchema, IOrmRelationalSchema))
+                    GetDeletedConditions(deleted_tables, filterInfo, type, obj, relSchema, TryCast(relSchema, IOrmRelationalSchema))
 
                     For Each de As KeyValuePair(Of SourceFragment, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(GetTableName(de.Key))
@@ -1583,7 +1583,7 @@ l1:
         End Function
 
         Public Sub AppendOrder(ByVal defaultType As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, _
-            ByVal sb As StringBuilder, Optional ByVal appendOrder As Boolean = True)
+            ByVal sb As StringBuilder, ByVal appendOrder As Boolean, ByVal selList As ObjectModel.ReadOnlyCollection(Of OrmProperty), ByVal defaultTable As SourceFragment)
             If sort IsNot Nothing AndAlso Not sort.IsExternal Then 'AndAlso Not sort.IsAny
                 Dim ns As Sort = sort
                 If appendOrder Then
@@ -1629,7 +1629,9 @@ l1:
                         End If
 
                         If st IsNot Nothing Then
-                            Dim schema As IOrmObjectSchema = GetObjectSchema(st)
+                            Dim schema As IOrmObjectSchema = CType(GetObjectSchema(st, False), IOrmObjectSchema)
+
+                            If schema Is Nothing Then GoTo l1
 
                             Dim map As MapField2Column = Nothing
                             Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
@@ -1643,7 +1645,29 @@ l1:
                                 Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", ns.FieldName, st))
                             End If
                         Else
-                            sb2.Append(almgr.Aliases(ns.Table)).Append(".").Append(ns.FieldName)
+l1:
+                            Dim clm As String = ns.FieldName
+                            Dim tbl As SourceFragment = ns.Table
+                            If selList IsNot Nothing Then
+                                For Each p As OrmProperty In selList
+                                    If p.Field = clm AndAlso Not String.IsNullOrEmpty(p.Column) Then
+                                        If p.Table Is Nothing AndAlso tbl Is Nothing Then
+                                            clm = p.Column
+                                            tbl = defaultTable
+                                            Exit For
+                                        ElseIf tbl Is Nothing AndAlso defaultTable.RawName = p.Table.RawName Then
+                                            clm = p.Column
+                                            tbl = defaultTable
+                                            Exit For
+                                        ElseIf tbl IsNot Nothing AndAlso p.Table.RawName = tbl.RawName Then
+                                            clm = p.Column
+                                            Exit For
+                                        End If
+                                    End If
+                                Next
+                            End If
+
+                            sb2.Append(almgr.Aliases(tbl)).Append(".").Append(clm)
                             If ns.Order = Orm.SortType.Desc Then
                                 sb2.Append(" desc")
                             End If
@@ -1990,7 +2014,7 @@ l1:
             'sb.Append(" order by rank ").Append(sort_type.ToString)
             If sort IsNot Nothing Then
                 'sb.Append(",")
-                AppendOrder(selectType, sort, almgr, sb)
+                AppendOrder(selectType, sort, almgr, sb, True, Nothing, Nothing)
             Else
                 sb.Append(" order by rank ").Append(sort_type.ToString)
             End If

@@ -9,6 +9,7 @@ Imports Worm
 Imports Worm.Orm.Meta
 Imports Worm.Database.Criteria.Core
 Imports Worm.Criteria.Values
+Imports Worm.Orm
 
 <TestClass()> Public Class BasicQueryTest
 
@@ -23,7 +24,7 @@ Imports Worm.Criteria.Values
             Return testContextInstance
         End Get
         Set(ByVal value As TestContext)
-            testContextInstance = Value
+            testContextInstance = value
         End Set
     End Property
 
@@ -337,6 +338,26 @@ Imports Worm.Criteria.Values
             q.Renew(Of Entity4)(mgr)
             q.ToEntityList(Of Entity4)(mgr)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestAnonym()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim t As SourceFragment = New SourceFragment("dbo", "ent2")
+
+            'GetType(Worm.Orm.AnonymousEntity)
+            Dim q As QueryCmdBase = New QueryCmdBase(t)
+
+            'q.From(t). _
+            q.Select(New OrmProperty() {New OrmProperty(t, "id", "pk"), New OrmProperty(t, "name", "Title")}). _
+            Where(Ctor.Column(t, "id").GreaterThan(5)). _
+            Sort(Sorting.Field("Title"))
+
+            Dim l As IList(Of Worm.Orm.AnonymousEntity) = q.ToAnonymList(Of Worm.Orm.AnonymousEntity)(mgr)
+
+            Assert.AreEqual(7, l.Count)
+
+            Assert.AreEqual("2gwrbwrb", l(0)("Title"))
         End Using
     End Sub
 End Class

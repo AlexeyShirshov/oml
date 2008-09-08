@@ -470,6 +470,10 @@ Namespace Cache
 
         Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Object, T)
 
+        Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.IDictionary
+
+        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
+
 #If TraceCreation Then
         Private _added As ArrayList = arraylist.Synchronized( New ArrayList)
         Private _removed As ArrayList = ArrayList.Synchronized(New ArrayList)
@@ -1444,8 +1448,32 @@ l1:
             Return dic
         End Function
 
+        Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, _
+            ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.IDictionary
+            Dim k As Object = t
+            If schema IsNot Nothing Then
+                k = schema.GetEntityTypeKey(filterInfo, t, oschema)
+            End If
+
+            Dim dic As IDictionary = CType(_dics(k), IDictionary)
+            If dic Is Nothing Then
+                Using SyncRoot
+                    dic = CType(_dics(k), IDictionary)
+                    If dic Is Nothing Then
+                        dic = CreateDictionary(t)
+                        _dics(k) = dic
+                    End If
+                End Using
+            End If
+            Return dic
+        End Function
+
         Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Object, T)
             Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Object, T))
+        End Function
+
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
+            Return CType(GetOrmDictionary(filterInfo, GetType(T), schema, oschema), IDictionary(Of Object, T))
         End Function
 
         Public Sub New()

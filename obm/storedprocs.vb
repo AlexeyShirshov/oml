@@ -903,6 +903,7 @@ Namespace Database.Storedprocs
             Private _o As Object
             Private _count As Integer
             Private _loaded As Integer
+            Private _oschema As IOrmObjectSchema
 
             Public Overridable Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
                 'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
@@ -911,10 +912,11 @@ Namespace Database.Storedprocs
                 End If
                 If _l Is Nothing Then
                     _l = New List(Of T)
+                    _oschema = mgr.DbSchema.GetObjectSchema(GetType(T))
                 End If
                 Dim dic As Generic.IDictionary(Of Object, T) = mgr.GetDictionary(Of T)()
                 Dim loaded As Integer
-                mgr.LoadFromResultSet(Of T)(GetWithLoad, _l, GetColumns, dr, dic, loaded)
+                mgr.LoadFromResultSet(Of T)(GetWithLoad, _l, GetColumns, dr, dic, loaded, _oschema, _oschema.GetFieldColumnMap)
                 _loaded += loaded
             End Sub
 

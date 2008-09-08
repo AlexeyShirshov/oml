@@ -2716,6 +2716,14 @@ l1:
         Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema)
     End Function
 
+    Public Function GetDictionary(Of T)(ByVal oschema As IOrmObjectSchemaBase) As Generic.IDictionary(Of Object, T)
+        If oschema Is Nothing Then
+            Return Nothing
+        Else
+            Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema, oschema)
+        End If
+    End Function
+
     <Conditional("DEBUG")> _
     Protected Overridable Sub Invariant()
         Debug.Assert(Not _disposed)
@@ -2910,7 +2918,7 @@ l1:
     End Function
 
     Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As String) As String
-        Return tt1.Name & Const_JoinStaticString & direct & " - new version - " & tt2.Name & "$" & GetStaticKey()
+        Return _schema.GetEntityKey(GetFilterInfo, tt1) & Const_JoinStaticString & direct & " - new version - " & tt2.Name & "$" & GetStaticKey()
     End Function
 
     Protected Friend Function FindMany2Many2(Of T As {IOrmBase, New})(ByVal obj As _IOrmBase, ByVal criteria As IGetFilter, _
@@ -3230,12 +3238,12 @@ l1:
         Dim m As M2MCache = p.First
 
 #If DEBUG Then
-        Dim cnt As Integer = m.Entry.Added.Count
+        Dim cnt As Integer = m.Entry.Added.Count + m.Entry.Deleted.Count
         Dim check As Boolean = m.Entry.Original.Contains(subobj.Identifier)
 #End If
         m.Entry.Add(subobj.Identifier)
 #If DEBUG Then
-        Debug.Assert(Not check OrElse m.Entry.Added.Count = cnt + 1)
+        Debug.Assert(Not check OrElse (m.Entry.Added.Count + m.Entry.Deleted.Count) <> cnt)
 #End If
         mainobj.AddAccept(New AcceptState2(m, p.Second.First, p.Second.Second))
     End Sub

@@ -705,6 +705,7 @@ Namespace Database
         Private Shared _tsStmt As New TraceSource("Worm.Diagnostics.DB.Stmt", SourceLevels.Information)
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
+        Protected Shared _LoadMultipleObjectsMI4 As Reflection.MethodInfo = Nothing
 
         Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, schema)
@@ -971,7 +972,7 @@ Namespace Database
                     DbSchema.AppendWhere(ct, con.Condition, almgr, sb, cfi, params)
 
                     If sort IsNot Nothing AndAlso Not sort.IsExternal Then
-                        DbSchema.AppendOrder(selectedType, sort, almgr, sb)
+                        DbSchema.AppendOrder(selectedType, sort, almgr, sb, True, Nothing, Nothing)
                     End If
 
                     params.AppendParams(.Parameters)
@@ -1086,6 +1087,8 @@ Namespace Database
 
                     Dim dic1 As IDictionary = GetDictionary(firstType)
                     Dim dic2 As IDictionary = GetDictionary(secondType)
+                    Dim oschema As IOrmObjectSchema = DbSchema.GetObjectSchema(firstType)
+                    Dim oschema2 As IOrmObjectSchema = DbSchema.GetObjectSchema(secondType)
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         Dim id1 As Object = dr.GetValue(firstidx)
@@ -1095,7 +1098,7 @@ Namespace Database
                                 'If obj1.IsLoaded Then obj1.IsLoaded = False
                                 Dim lock As IDisposable = Nothing
                                 Try
-                                    Dim ro As _IEntity = LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1, True, lock)
+                                    Dim ro As _IEntity = LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1, True, lock, oschema, oschema.GetFieldColumnMap)
                                     AfterLoadingProcess(dic1, obj1, lock, ro)
                                     values.Add(ro)
                                 Finally
@@ -1116,7 +1119,7 @@ Namespace Database
                                     'If obj2.IsLoaded Then obj2.IsLoaded = False
                                     Dim lock As IDisposable = Nothing
                                     Try
-                                        Dim ro2 As _IEntity = LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2, True, lock)
+                                        Dim ro2 As _IEntity = LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2, True, lock, oschema2, oschema2.GetFieldColumnMap)
                                         AfterLoadingProcess(dic2, obj2, lock, ro2)
                                     Finally
                                         If lock IsNot Nothing Then
@@ -1143,13 +1146,41 @@ Namespace Database
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute))
+
+            Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
+
+            If _LoadMultipleObjectsMI4 Is Nothing Then
+                For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
+                    If mi2.Name = "LoadMultipleObjects" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 4 Then
+                        _LoadMultipleObjectsMI4 = mi2
+                        Exit For
+                    End If
+                Next
+
+                If _LoadMultipleObjectsMI4 Is Nothing Then
+                    Throw New OrmManagerException("Cannot find method LoadMultipleObjects")
+                End If
+            End If
+
+            Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI4.MakeGenericMethod(New Type() {t})
+
+            mi_real.Invoke(Me, flags, Nothing, _
+                New Object() {cmd, withLoad, values, arr}, Nothing)
+
+        End Sub
+
+        Public Sub LoadMultipleObjects(ByVal t As Type, _
+            ByVal cmd As System.Data.Common.DbCommand, _
+            ByVal withLoad As Boolean, _
+            ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
+            ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
 
             If _LoadMultipleObjectsMI Is Nothing Then
                 For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
-                    If mi2.Name = "LoadMultipleObjects" AndAlso mi2.IsGenericMethod Then
+                    If mi2.Name = "LoadMultipleObjects" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 6 Then
                         _LoadMultipleObjectsMI = mi2
                         Exit For
                     End If
@@ -1163,7 +1194,7 @@ Namespace Database
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
 
             mi_real.Invoke(Me, flags, Nothing, _
-                New Object() {cmd, withLoad, values, arr}, Nothing)
+                New Object() {cmd, withLoad, values, arr, Nothing, fields_idx}, Nothing)
 
         End Sub
 
@@ -1361,7 +1392,7 @@ Namespace Database
                                                 'If obj.IsLoaded Then obj.IsLoaded = False
                                                 Dim lock As IDisposable = Nothing
                                                 Try
-                                                    Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 2, dic, True, lock)
+                                                    Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 2, dic, True, lock, oschema2, oschema2.GetFieldColumnMap)
                                                     AfterLoadingProcess(dic, obj, lock, ro)
                                                 Finally
                                                     If lock IsNot Nothing Then
@@ -1606,6 +1637,7 @@ Namespace Database
                         'If Not modifiedloaded Then obj.IsLoaded = False
                         'obj.IsLoaded = False
                         Dim loaded As Boolean = False
+                        Dim oschema As IOrmObjectSchema = DbSchema.GetObjectSchema(obj.GetType)
                         'obj = NormalizeObject(obj, dic)
                         Do While dr.Read
                             If loaded Then
@@ -1614,7 +1646,7 @@ Namespace Database
                             If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse Not _cache.IsDeleted(obj)) Then
                                 Dim lock As IDisposable = Nothing
                                 Try
-                                    LoadFromDataReader(obj, dr, arr, check_pk, 0, dic, False, lock)
+                                    LoadFromDataReader(obj, dr, arr, check_pk, 0, dic, False, lock, oschema, oschema.GetFieldColumnMap)
                                     obj.CorrectStateAfterLoading(False)
                                 Finally
                                     If lock IsNot Nothing Then
@@ -1712,6 +1744,17 @@ Namespace Database
             ByVal withLoad As Boolean, ByVal values As IList, _
             ByVal arr As Generic.List(Of ColumnAttribute))
 
+            Dim oschema As IOrmObjectSchema = CType(_schema.GetObjectSchema(GetType(T), False), IOrmObjectSchema)
+            Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+
+            LoadMultipleObjects(Of T)(cmd, withLoad, values, arr, oschema, fields_idx)
+        End Sub
+
+        Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
+            ByVal cmd As System.Data.Common.DbCommand, _
+            ByVal withLoad As Boolean, ByVal values As IList, _
+            ByVal arr As Generic.List(Of ColumnAttribute), ByVal oschema As IOrmObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
+
             If values Is Nothing Then
                 'values = New Generic.List(Of T)
                 Throw New ArgumentNullException("values")
@@ -1727,6 +1770,7 @@ Namespace Database
                 If withLoad Then
                     _cache.BeginTrackDelete(original_type)
                 End If
+
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
@@ -1747,14 +1791,14 @@ Namespace Database
                     'If arr Is Nothing Then arr = Schema.GetSortedFieldList(original_type)
 
                     'Dim idx As Integer = GetPrimaryKeyIdx(cmd.CommandText, original_type, dr)
-                    Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
+                    Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)(oschema)
                     Dim il As IListEdit = TryCast(values, IListEdit)
                     If il IsNot Nothing Then
                         values = il.List
                     End If
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadFromResultSet(Of T)(withLoad, values, arr, dr, dic, _loadedInLastFetch)
+                        LoadFromResultSet(Of T)(withLoad, values, arr, dr, dic, _loadedInLastFetch, oschema, fields_idx)
                     Loop
                     _fetch = ft.GetTime
                 End Using
@@ -1805,7 +1849,8 @@ Namespace Database
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
             ByVal dr As System.Data.IDataReader, _
-            ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer)
+            ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer, _
+            ByVal oschema As IOrmObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
@@ -1820,7 +1865,7 @@ Namespace Database
             Dim lock As IDisposable = Nothing
             Try
                 Dim obj As New T
-                Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 0, CType(dic, System.Collections.IDictionary), True, lock)
+                Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 0, CType(dic, System.Collections.IDictionary), True, lock, oschema, fields_idx)
                 AfterLoadingProcess(CType(dic, System.Collections.IDictionary), obj, lock, ro)
 #If DEBUG Then
                 Dim ce As CachedEntity = TryCast(ro, CachedEntity)
@@ -1869,14 +1914,14 @@ Namespace Database
 
         Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.IDataReader, _
             ByVal arr As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer, _
-            ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable) As _IEntity
+            ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IOrmObjectSchemaBase, _
+            ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column)) As _IEntity
 
             Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
 
             Dim original_type As Type = obj.GetType
-            Dim oschema As IOrmObjectSchema = DbSchema.GetObjectSchema(original_type)
             Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
-            Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+            'Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
             Dim fac As New List(Of Pair(Of String, Object))
             Dim ce As _ICachedEntity = TryCast(obj, _ICachedEntity)
             'Dim load As Boolean = a
@@ -1888,43 +1933,51 @@ Namespace Database
                 Dim pk_count As Integer = 0
                 Dim has_pk As Boolean = False
                 Dim pi_cache(arr.Count - 1) As Reflection.PropertyInfo
-                Dim idic As IDictionary = _schema.GetProperties(original_type)
+                Dim idic As IDictionary = Nothing
+                If oschema IsNot Nothing Then
+                    dic = _schema.GetProperties(original_type, oschema)
+                End If
                 'Dim bl As Boolean
                 Dim oldpk() As Pair(Of String, Object) = Nothing
                 If ce IsNot Nothing AndAlso Not fromRS Then oldpk = ce.GetPKValues()
                 For idx As Integer = 0 To arr.Count - 1
                     Dim c As ColumnAttribute = arr(idx)
-                    Dim pi As Reflection.PropertyInfo = CType(idic(c), Reflection.PropertyInfo)
+                    Dim pi As Reflection.PropertyInfo = If(idic IsNot Nothing, CType(idic(c), Reflection.PropertyInfo), Nothing)
                     pi_cache(idx) = pi
-                    If pi IsNot Nothing Then
-                        If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            Assert(idx + displacement < dr.FieldCount, c.FieldName)
-                            'If dr.FieldCount <= idx + displacement Then
-                            '    If _mcSwitch.TraceError Then
-                            '        Dim dt As System.Data.DataTable = dr.GetSchemaTable
-                            '        Dim sb As New StringBuilder
-                            '        For Each drow As System.Data.DataRow In dt.Rows
-                            '            If sb.Length > 0 Then
-                            '                sb.Append(", ")
-                            '            End If
-                            '            sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
-                            '        Next
-                            '        WriteLine(sb.ToString)
-                            '    End If
+
+                    'If pi IsNot Nothing Then
+                    If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        Assert(idx + displacement < dr.FieldCount, c.FieldName)
+                        'If dr.FieldCount <= idx + displacement Then
+                        '    If _mcSwitch.TraceError Then
+                        '        Dim dt As System.Data.DataTable = dr.GetSchemaTable
+                        '        Dim sb As New StringBuilder
+                        '        For Each drow As System.Data.DataRow In dt.Rows
+                        '            If sb.Length > 0 Then
+                        '                sb.Append(", ")
+                        '            End If
+                        '            sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
+                        '        Next
+                        '        WriteLine(sb.ToString)
+                        '    End If
+                        'End If
+                        has_pk = True
+                        Dim value As Object = dr.GetValue(idx + displacement)
+                        If fv IsNot Nothing Then
+                            value = fv.CreateValue(c, obj, value)
+                        End If
+
+                        If Not dr.IsDBNull(idx + displacement) Then
+                            'If ce IsNot Nothing AndAlso obj.ObjectState = ObjectState.Created Then
+                            '    ce.CreateCopyForSaveNewEntry()
+                            '    'bl = True
                             'End If
-                            has_pk = True
-                            Dim value As Object = dr.GetValue(idx + displacement)
-                            If fv IsNot Nothing Then
-                                value = fv.CreateValue(c, obj, value)
-                            End If
 
-                            If Not dr.IsDBNull(idx + displacement) Then
-                                'If ce IsNot Nothing AndAlso obj.ObjectState = ObjectState.Created Then
-                                '    ce.CreateCopyForSaveNewEntry()
-                                '    'bl = True
-                                'End If
-
-                                Try
+                            Try
+                                If pi Is Nothing Then
+                                    obj.SetValue(pi, c, oschema, value)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                Else
                                     If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
                                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                         obj.SetValue(pi, c, oschema, v)
@@ -1947,25 +2000,26 @@ Namespace Database
                                         'End If
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
                                     End If
-                                Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-                                    Dim dt As DateTime = CDate(value)
-                                    Dim l As Long = dt.ToBinary
-                                    Using ms As New IO.MemoryStream
-                                        Dim sw As New IO.StreamWriter(ms)
-                                        sw.Write(l)
-                                        sw.Flush()
-                                        obj.SetValue(pi, c, oschema, ms.ToArray)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
-                                    End Using
-                                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-                                    Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                    obj.SetValue(pi, c, oschema, v)
+                                End If
+                            Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
+                                Dim dt As DateTime = CDate(value)
+                                Dim l As Long = dt.ToBinary
+                                Using ms As New IO.MemoryStream
+                                    Dim sw As New IO.StreamWriter(ms)
+                                    sw.Write(l)
+                                    sw.Flush()
+                                    obj.SetValue(pi, c, oschema, ms.ToArray)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
-                                End Try
-                                pk_count += 1
-                            End If
+                                End Using
+                            Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
+                                Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                obj.SetValue(pi, c, oschema, v)
+                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                            End Try
+                            pk_count += 1
                         End If
                     End If
+                    'End If
                 Next
 
                 If has_pk Then
@@ -3289,6 +3343,7 @@ l2:
                 Dim l As New List(Of Object)
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
+                    Dim oschema As IOrmObjectSchema = DbSchema.GetObjectSchema(tt)
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         Dim id1 As Object = dr.GetValue(0)
@@ -3304,7 +3359,7 @@ l2:
                                     'If obj.IsLoaded Then obj.IsLoaded = False
                                     Dim lock As IDisposable = Nothing
                                     Try
-                                        Dim ro As _IEntity = LoadFromDataReader(o, dr, columns, False, 2, dic, True, lock)
+                                        Dim ro As _IEntity = LoadFromDataReader(o, dr, columns, False, 2, dic, True, lock, oschema, oschema.GetFieldColumnMap)
                                         AfterLoadingProcess(dic, o, lock, ro)
                                     Finally
                                         If lock IsNot Nothing Then
