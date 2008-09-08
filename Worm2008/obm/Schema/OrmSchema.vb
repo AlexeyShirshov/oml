@@ -151,6 +151,9 @@ Public MustInherit Class QueryGenerator
             sup = schema.GetSuppressedColumns()
         End If
 
+        Dim idx As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
+        If schema IsNot Nothing Then idx = schema.GetFieldColumnMap()
+
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
             Dim column As ColumnAttribute = Nothing
             Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(ColumnAttribute)), Attribute())
@@ -160,7 +163,7 @@ Public MustInherit Class QueryGenerator
                     column.FieldName = pi.Name
                 End If
 
-                If sup Is Nothing OrElse Array.IndexOf(sup, column) < 0 Then
+                If (sup Is Nothing OrElse Array.IndexOf(sup, column) < 0) AndAlso (idx Is Nothing OrElse idx.ContainsKey(column.FieldName)) Then
                     result.Add(column, pi)
                 End If
             End If
@@ -174,7 +177,7 @@ Public MustInherit Class QueryGenerator
                 If String.IsNullOrEmpty(column.FieldName) Then
                     column.FieldName = pi.Name
                 End If
-                If Not result.Contains(column) AndAlso (sup Is Nothing OrElse Array.IndexOf(sup, column) < 0) Then
+                If Not result.Contains(column) AndAlso (sup Is Nothing OrElse Array.IndexOf(sup, column) < 0) AndAlso (idx Is Nothing OrElse idx.ContainsKey(column.FieldName)) Then
                     result.Add(column, pi)
                 End If
             End If
@@ -237,6 +240,16 @@ Public MustInherit Class QueryGenerator
     Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type) As Object
         Dim schema As IOrmObjectSchemaBase = GetObjectSchema(t)
 
+        Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
+
+        If c IsNot Nothing Then
+            Return c.GetEntityTypeKey(filterInfo)
+        Else
+            Return t
+        End If
+    End Function
+
+    Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As IOrmObjectSchemaBase) As Object
         Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
 
         If c IsNot Nothing Then
@@ -1491,7 +1504,7 @@ Public MustInherit Class QueryGenerator
         Return GetObjectSchema(t, True)
     End Function
 
-    Protected Function GetObjectSchema(ByVal t As Type, ByVal check As Boolean) As IOrmObjectSchemaBase
+    Protected Friend Function GetObjectSchema(ByVal t As Type, ByVal check As Boolean) As IOrmObjectSchemaBase
         If t Is Nothing Then Throw New ArgumentNullException("t")
 
         Dim idic As IDictionary = CType(map("GetObjectSchema"), System.Collections.IDictionary)

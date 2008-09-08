@@ -10,7 +10,7 @@ Namespace Query
 
     Public Interface IExecutor
 
-        Function ExecEntity(Of ReturnType As {_IEntity, New})( _
+        Function ExecEntity(Of ReturnType As {_IEntity})( _
             ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyObjectList(Of ReturnType)
 
         Function Exec(Of ReturnType As _ICachedEntity)( _
@@ -587,6 +587,17 @@ Namespace Query
             Return Me
         End Function
 
+        Public Function From(ByVal t As SourceFragment) As QueryCmdBase
+            _table = t
+            _mark = Environment.TickCount
+            Return Me
+        End Function
+
+        Public Function [Select](ByVal fields() As OrmProperty) As QueryCmdBase
+            SelectList = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(fields)
+            Return Me
+        End Function
+
         'Protected Function CreateTypedCmd(ByVal qt As Type) As QueryCmdBase
         '    Dim qgt As Type = GetType(QueryCmd(Of ))
         '    Dim t As Type = qgt.MakeGenericType(New Type() {qt})
@@ -640,6 +651,10 @@ Namespace Query
                     mgr.Dispose()
                 End If
             End Try
+        End Function
+
+        Public Function ToAnonymList(Of T As _IEntity)(ByVal mgr As OrmManagerBase) As ReadOnlyObjectList(Of T)
+            Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
         End Function
 
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)

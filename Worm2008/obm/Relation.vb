@@ -378,7 +378,7 @@ Namespace Cache
         End Function
 
         Protected Overridable Function CheckDual(ByVal mgr As OrmManagerBase, ByVal id As Object) As Boolean
-            Return True
+            Return Not GetRevert(mgr, id)._savedIds.Contains(_mainId)
         End Function
 
         Protected Overridable Function GetCopy() As EditableListBase

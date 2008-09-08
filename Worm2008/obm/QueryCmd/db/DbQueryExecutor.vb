@@ -36,6 +36,55 @@ Namespace Query.Database
         Private _m As Integer
         Private _sm As Integer
 
+        Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ProcessorEntity(Of ReturnType)
+            If _proc Is Nothing Then
+                Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
+                'If query.Joins IsNot Nothing Then
+                '    j.AddRange(query.Joins)
+                'End If
+
+                If query.SelectedType Is Nothing Then
+                    If String.IsNullOrEmpty(query.EntityName) Then
+                        query.SelectedType = GetType(ReturnType)
+                    Else
+                        query.SelectedType = mgr.ObjectSchema.GetTypeByEntityName(query.EntityName)
+                    End If
+                End If
+
+                Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, query.SelectedType)
+                'If query.Filter IsNot Nothing Then
+                '    f = query.Filter.Filter(GetType(ReturnType))
+                'End If
+
+                'If query.AutoJoins Then
+                '    Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
+                '    If mgr.HasJoins(GetType(ReturnType), f, query.Sort, joins) Then
+                '        j.AddRange(joins)
+                '    End If
+                'End If
+
+                'If query.Obj IsNot Nothing Then
+                '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                'Else
+                _proc = New ProcessorEntity(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                'End If
+
+                _m = query.Mark
+                _sm = query.SMark
+            Else
+                Dim p As ProcessorEntity(Of ReturnType) = CType(_proc, ProcessorEntity(Of ReturnType))
+                If _m <> query.Mark Then
+                    Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
+                    Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, query.SelectedType)
+                    p.Reset(j, f)
+                ElseIf _sm <> query.SMark Then
+                    p.ResetStmt()
+                End If
+            End If
+
+            Return CType(_proc, ProcessorEntity(Of ReturnType))
+        End Function
+
         Protected Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As Processor(Of ReturnType)
             If _proc Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
@@ -237,6 +286,10 @@ Namespace Query.Database
                             Throw New InvalidOperationException(String.Format("Column {0} must have a field", p.Column))
                         End If
                         Dim cl As ColumnAttribute = gen.GetColumnByFieldName(type, p.Field)
+                        If cl Is Nothing Then
+                            cl = New ColumnAttribute
+                            cl.FieldName = p.Field
+                        End If
                         cl.Column = p.Column
                         l.Add(cl)
                     Else
@@ -413,13 +466,15 @@ Namespace Query.Database
             End If
         End Sub
 
-        Protected Shared Sub FormOrderBy(ByVal query As QueryCmdBase, ByVal t As Type, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, ByVal params As ICreateParam, ByVal columnAliases As List(Of String))
+        Protected Shared Sub FormOrderBy(ByVal query As QueryCmdBase, ByVal t As Type, _
+            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
+            ByVal params As ICreateParam, ByVal columnAliases As List(Of String))
             If query.propSort IsNot Nothing AndAlso Not query.propSort.IsExternal Then
                 Dim adv As Sorting.SortAdv = TryCast(query.propSort, Sorting.SortAdv)
                 If adv IsNot Nothing Then
                     adv.MakeStmt(s, almgr, columnAliases, sb, t, filterInfo, params)
                 Else
-                    s.AppendOrder(t, query.propSort, almgr, sb)
+                    s.AppendOrder(t, query.propSort, almgr, sb, True, query.SelectList, query.Table)
                 End If
             End If
         End Sub
@@ -510,8 +565,8 @@ Namespace Query.Database
 
 #End Region
 
-        Public Function ExecEntity(Of ReturnType As {New, Orm._IEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
-            Throw New NotImplementedException
+        Public Function ExecEntity(Of ReturnType As {Orm._IEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
+            Return GetProcessorAnonym(Of ReturnType)(mgr, query).GetEntities()
         End Function
 
         Public Function ExecSimple(Of ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple

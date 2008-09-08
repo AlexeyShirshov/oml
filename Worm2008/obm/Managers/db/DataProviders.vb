@@ -186,7 +186,7 @@ Namespace Database
                         c.AddFilter(AppendWhere)
                         _mgr.DbSchema.AppendWhere(original_type, c.Condition, almgr, sb, _mgr.GetFilterInfo, params)
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                            _mgr.DbSchema.AppendOrder(original_type, _sort, almgr, sb)
+                            _mgr.DbSchema.AppendOrder(original_type, _sort, almgr, sb, True, Nothing, Nothing)
                         End If
 
                         params.AppendParams(.Parameters)
@@ -388,7 +388,7 @@ Namespace Database
                         sb.Append(_mgr.DbSchema.SelectM2M(almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, _sort IsNot Nothing, params, _direct, _qa))
 
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                            _mgr.DbSchema.AppendOrder(t, _sort, almgr, sb)
+                            _mgr.DbSchema.AppendOrder(t, _sort, almgr, sb, True, Nothing, Nothing)
                         End If
 
                         .CommandText = sb.ToString

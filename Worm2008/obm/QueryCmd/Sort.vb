@@ -52,7 +52,7 @@ Namespace Sorting
                     sb.Append(" desc")
                 End If
             Else
-                s.AppendOrder(t, Me, almgr, sb)
+                s.AppendOrder(t, Me, almgr, sb, True, Nothing, Nothing)
             End If
         End Sub
     End Class

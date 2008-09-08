@@ -9,6 +9,114 @@ Namespace Query.Database
 
     Partial Public Class DbQueryExecutor
 
+        Class ProcessorEntity(Of ReturnType As {_IEntity})
+            Private _stmt As String
+            Private _params As ParamMgr
+            Private _cmdType As System.Data.CommandType
+
+            Private _mgr As OrmReadOnlyDBManager
+            Private _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
+            Private _f() As IFilter
+            Private _q As QueryCmdBase
+
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+                ByVal f() As IFilter, ByVal q As QueryCmdBase)
+                _mgr = mgr
+                _q = q
+
+                Reset(j, f)
+            End Sub
+
+            Public Sub ResetStmt()
+                _stmt = Nothing
+            End Sub
+
+            Public Sub Reset(ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal f() As IFilter)
+                _j = j
+                _f = f
+
+                ResetStmt()
+            End Sub
+
+            Public Function GetEntities() As ReadOnlyObjectList(Of ReturnType)
+                Dim r As ReadOnlyObjectList(Of ReturnType)
+                Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
+
+                Using cmd As System.Data.Common.DbCommand = dbm.DbSchema.CreateDBCommand
+                    ', dbm, Query, GetType(ReturnType), _j, _f
+                    MakeStatement(cmd)
+
+                    r = ExecStmt(cmd)
+                End Using
+
+                If _q.propSort IsNot Nothing AndAlso _q.propSort.IsExternal Then
+                    r = CType(dbm.DbSchema.ExternalSort(Of ReturnType)(dbm, _q.propSort, r), ReadOnlyObjectList(Of ReturnType))
+                End If
+
+                Return r
+            End Function
+
+            Protected Overridable Sub MakeStatement(ByVal cmd As System.Data.Common.DbCommand)
+                'Dim mgr As OrmReadOnlyDBManager = _mgr
+                'Dim t As Type = GetType(ReturnType)
+                'Dim joins As List(Of Worm.Criteria.Joins.OrmJoin) = _j
+                'Dim f As IFilter = _f
+
+                If String.IsNullOrEmpty(_stmt) Then
+                    _cmdType = Data.CommandType.Text
+
+                    _params = New ParamMgr(_mgr.DbSchema, "p")
+                    _stmt = _MakeStatement()
+                End If
+
+                cmd.CommandText = _stmt
+                cmd.CommandType = _cmdType
+                _params.AppendParams(cmd.Parameters)
+            End Sub
+
+            Protected Overridable Function _MakeStatement() As String
+                Dim almgr As AliasMgr = AliasMgr.Create
+                Dim fi As Object = _mgr.GetFilterInfo
+                Dim t As Type = _q.SelectedType
+                Dim i As Integer = 0
+                Dim q As QueryCmdBase = _q
+                'Dim sb As New StringBuilder
+                Dim inner As String = Nothing
+                Dim innerColumns As List(Of String) = Nothing
+                Do While q IsNot Nothing
+                    Dim columnAliases As New List(Of String)
+                    Dim j As List(Of Worm.Criteria.Joins.OrmJoin) = _j(i)
+                    Dim f As IFilter = _f(i)
+                    inner = MakeQueryStatement(fi, _mgr.DbSchema, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i)
+                    innerColumns = New List(Of String)(columnAliases)
+                    q = q.OuterQuery
+                    i += 1
+                Loop
+                Return inner
+            End Function
+
+            Protected Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
+                Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
+                Dim rr As New List(Of ReturnType)
+                'If GetType(ReturnType) IsNot Query.SelectedType Then
+                dbm.LoadMultipleObjects(GetType(ReturnType), cmd, True, rr, GetFields(dbm.DbSchema, GetType(ReturnType), _q), GetFieldsIdx(_q))
+                'Else
+                'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
+                'End If
+                Return New ReadOnlyObjectList(Of ReturnType)(rr)
+            End Function
+
+            Protected Function GetFieldsIdx(ByVal q As QueryCmdBase) As Collections.IndexedCollection(Of String, MapField2Column)
+                Dim c As New Cache.OrmObjectIndex
+
+                For Each p As OrmProperty In q.SelectList
+                    c.Add(New MapField2Column(p.Field, p.Column, p.Table))
+                Next
+
+                Return c
+            End Function
+        End Class
+
         Class Processor(Of ReturnType As {ICachedEntity})
             Inherits OrmManagerBase.CustDelegateBase(Of ReturnType)
             Implements OrmManagerBase.ICacheValidator
