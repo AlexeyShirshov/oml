@@ -10,6 +10,7 @@ Imports Worm.Orm.Meta
 Imports Worm.Database.Criteria.Core
 Imports Worm.Criteria.Values
 Imports Worm.Orm
+Imports System.Collections
 
 <TestClass()> Public Class BasicQueryTest
 
@@ -273,6 +274,22 @@ Imports Worm.Orm
 
     <TestMethod()> Public Sub TestTypeless()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim t As SourceFragment = New SourceFragment("dbo", "guid_table")
+            Dim q As New QueryCmdBase(t)
+            q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
+                New Aggregate(AggregateFunction.Count) _
+            })
+
+            q.Aggregates(0).Alias = "cnt"
+            q.GroupBy(New OrmProperty() {New OrmProperty(t, "code")}). _
+            Select(New OrmProperty() {New OrmProperty(t, "code", "Code")}).Sort(Sorting.Custom("cnt desc"))
+
+            Dim l As IList(Of Worm.Orm.AnonymousEntity) = q.ToAnonymList(Of Worm.Orm.AnonymousEntity)(mgr)
+
+            Assert.AreEqual(5, l.Count)
+
+            Assert.AreEqual(5, l(0)("Code"))
+            Assert.AreEqual(2, l(0)("cnt"))
 
         End Using
     End Sub
@@ -358,6 +375,12 @@ Imports Worm.Orm
             Assert.AreEqual(7, l.Count)
 
             Assert.AreEqual("2gwrbwrb", l(0)("Title"))
+
+            q.Where(Ctor.AutoTypeField("pk").GreaterThan(5))
+
+            'l = q.ToAnonymList(Of Worm.Orm.AnonymousEntity)(mgr)
+
+            'Assert.AreEqual(7, l.Count)
         End Using
     End Sub
 End Class

@@ -17,7 +17,7 @@ Namespace Orm
             _props(c.FieldName) = value
         End Sub
 
-        Public ReadOnly Property Item(ByVal field As String) As Object
+        Default Public ReadOnly Property Item(ByVal field As String) As Object
             Get
                 Return GetValue(field)
             End Get

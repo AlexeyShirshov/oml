@@ -275,8 +275,9 @@ Namespace Query.Database
 
         Protected Shared Function GetFields(ByVal gen As QueryGenerator, ByVal type As Type, ByVal q As QueryCmdBase) As List(Of ColumnAttribute)
             Dim c As IList(Of OrmProperty) = q.SelectList
+            Dim l As List(Of ColumnAttribute) = Nothing
             If c IsNot Nothing Then
-                Dim l As New List(Of ColumnAttribute)
+                l = New List(Of ColumnAttribute)
                 For Each p As OrmProperty In c
                     'If Not type.Equals(p.Type) Then
                     '    Throw New NotImplementedException
@@ -297,14 +298,23 @@ Namespace Query.Database
                     End If
                 Next
                 'l.Sort()
-                Return l
             Else
                 If q.propWithLoad Then
-                    Return gen.GetSortedFieldList(type)
+                    l = gen.GetSortedFieldList(type)
                 Else
-                    Return gen.GetPrimaryKeys(type)
+                    l = gen.GetPrimaryKeys(type)
                 End If
             End If
+
+            If q.Aggregates IsNot Nothing Then
+                For Each p As AggregateBase In q.Aggregates
+                    Dim cl As New ColumnAttribute
+                    cl.FieldName = p.Alias
+                    cl.Column = p.Alias
+                    l.Add(cl)
+                Next
+            End If
+            Return l
         End Function
 
         Protected Shared Sub FormSelectList(ByVal query As QueryCmdBase, ByVal queryType As Type, _

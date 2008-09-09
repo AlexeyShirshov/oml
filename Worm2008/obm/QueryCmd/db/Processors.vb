@@ -113,6 +113,12 @@ Namespace Query.Database
                     c.Add(New MapField2Column(p.Field, p.Column, p.Table))
                 Next
 
+                If q.Aggregates IsNot Nothing Then
+                    For Each p As AggregateBase In q.Aggregates
+                        c.Add(New MapField2Column(p.Alias, p.Alias, Nothing))
+                    Next
+                End If
+
                 Return c
             End Function
         End Class

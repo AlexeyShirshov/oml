@@ -78,7 +78,7 @@ Public Class Table1
             Case "Title"
                 Name = CStr(value)
             Case "Enum"
-                [Enum] = CType(value, Global.System.Nullable(Of Global.TestProject1.Enum1))
+                _e = CType(value, Global.System.Nullable(Of Global.TestProject1.Enum1))
             Case "EnumStr"
                 EnumStr = CType(value, Global.System.Nullable(Of Global.TestProject1.Enum1))
             Case "Code"

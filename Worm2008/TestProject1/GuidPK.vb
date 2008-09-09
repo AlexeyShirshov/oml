@@ -97,3 +97,9 @@ Public Class ComplexPK
         Return _code.GetHashCode Xor _i
     End Function
 End Class
+
+<Entity("1", Tablename:="dbo.complex_pk")> _
+Public Class NonCache
+    Inherits Worm.Orm.Entity
+
+End Class

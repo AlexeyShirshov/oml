@@ -977,7 +977,7 @@ Namespace Orm
         '    ObjectState = Orm.ObjectState.NotLoaded
         'End Sub
 
-        Protected Overrides Sub Init(ByVal pk() As CoreFramework.Structures.Pair(Of String, Object), ByVal cache As Cache.OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
+        Protected Overrides Sub Init(ByVal pk() As Pair(Of String, Object), ByVal cache As Cache.OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
             Throw New NotSupportedException
         End Sub
 
