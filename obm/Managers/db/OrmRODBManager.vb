@@ -1935,7 +1935,7 @@ Namespace Database
                 Dim pi_cache(arr.Count - 1) As Reflection.PropertyInfo
                 Dim idic As IDictionary = Nothing
                 If oschema IsNot Nothing Then
-                    dic = _schema.GetProperties(original_type, oschema)
+                    idic = _schema.GetProperties(original_type, oschema)
                 End If
                 'Dim bl As Boolean
                 Dim oldpk() As Pair(Of String, Object) = Nothing
@@ -1945,81 +1945,81 @@ Namespace Database
                     Dim pi As Reflection.PropertyInfo = If(idic IsNot Nothing, CType(idic(c), Reflection.PropertyInfo), Nothing)
                     pi_cache(idx) = pi
 
-                    'If pi IsNot Nothing Then
-                    If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                        Assert(idx + displacement < dr.FieldCount, c.FieldName)
-                        'If dr.FieldCount <= idx + displacement Then
-                        '    If _mcSwitch.TraceError Then
-                        '        Dim dt As System.Data.DataTable = dr.GetSchemaTable
-                        '        Dim sb As New StringBuilder
-                        '        For Each drow As System.Data.DataRow In dt.Rows
-                        '            If sb.Length > 0 Then
-                        '                sb.Append(", ")
-                        '            End If
-                        '            sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
-                        '        Next
-                        '        WriteLine(sb.ToString)
-                        '    End If
-                        'End If
-                        has_pk = True
-                        Dim value As Object = dr.GetValue(idx + displacement)
-                        If fv IsNot Nothing Then
-                            value = fv.CreateValue(c, obj, value)
-                        End If
-
-                        If Not dr.IsDBNull(idx + displacement) Then
-                            'If ce IsNot Nothing AndAlso obj.ObjectState = ObjectState.Created Then
-                            '    ce.CreateCopyForSaveNewEntry()
-                            '    'bl = True
+                    If fields_idx.ContainsKey(c.FieldName) Then
+                        If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                            Assert(idx + displacement < dr.FieldCount, c.FieldName)
+                            'If dr.FieldCount <= idx + displacement Then
+                            '    If _mcSwitch.TraceError Then
+                            '        Dim dt As System.Data.DataTable = dr.GetSchemaTable
+                            '        Dim sb As New StringBuilder
+                            '        For Each drow As System.Data.DataRow In dt.Rows
+                            '            If sb.Length > 0 Then
+                            '                sb.Append(", ")
+                            '            End If
+                            '            sb.Append(drow("ColumnName")).Append("(").Append(drow("ColumnOrdinal")).Append(")")
+                            '        Next
+                            '        WriteLine(sb.ToString)
+                            '    End If
                             'End If
+                            has_pk = True
+                            Dim value As Object = dr.GetValue(idx + displacement)
+                            If fv IsNot Nothing Then
+                                value = fv.CreateValue(c, obj, value)
+                            End If
 
-                            Try
-                                If pi Is Nothing Then
-                                    obj.SetValue(pi, c, oschema, value)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
-                                Else
-                                    If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
-                                        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                        obj.SetValue(pi, c, oschema, v)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
-                                    ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
-                                        Dim dt As DateTime = CDate(value)
-                                        Dim l As Long = dt.ToBinary
-                                        Using ms As New IO.MemoryStream
-                                            Dim sw As New IO.StreamWriter(ms)
-                                            sw.Write(l)
-                                            sw.Flush()
-                                            obj.SetValue(pi, c, oschema, ms.ToArray)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
-                                        End Using
-                                    Else
-                                        'If c.FieldName = "ID" Then
-                                        '    obj.Identifier = CInt(value)
-                                        'Else
+                            If Not dr.IsDBNull(idx + displacement) Then
+                                'If ce IsNot Nothing AndAlso obj.ObjectState = ObjectState.Created Then
+                                '    ce.CreateCopyForSaveNewEntry()
+                                '    'bl = True
+                                'End If
+
+                                Try
+                                    If pi Is Nothing Then
                                         obj.SetValue(pi, c, oschema, value)
-                                        'End If
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                    Else
+                                        If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
+                                            Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                            obj.SetValue(pi, c, oschema, v)
+                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                        ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                                            Dim dt As DateTime = CDate(value)
+                                            Dim l As Long = dt.ToBinary
+                                            Using ms As New IO.MemoryStream
+                                                Dim sw As New IO.StreamWriter(ms)
+                                                sw.Write(l)
+                                                sw.Flush()
+                                                obj.SetValue(pi, c, oschema, ms.ToArray)
+                                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                            End Using
+                                        Else
+                                            'If c.FieldName = "ID" Then
+                                            '    obj.Identifier = CInt(value)
+                                            'Else
+                                            obj.SetValue(pi, c, oschema, value)
+                                            'End If
+                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                        End If
                                     End If
-                                End If
-                            Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
-                                Dim dt As DateTime = CDate(value)
-                                Dim l As Long = dt.ToBinary
-                                Using ms As New IO.MemoryStream
-                                    Dim sw As New IO.StreamWriter(ms)
-                                    sw.Write(l)
-                                    sw.Flush()
-                                    obj.SetValue(pi, c, oschema, ms.ToArray)
+                                Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
+                                    Dim dt As DateTime = CDate(value)
+                                    Dim l As Long = dt.ToBinary
+                                    Using ms As New IO.MemoryStream
+                                        Dim sw As New IO.StreamWriter(ms)
+                                        sw.Write(l)
+                                        sw.Flush()
+                                        obj.SetValue(pi, c, oschema, ms.ToArray)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                    End Using
+                                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
+                                    Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                    obj.SetValue(pi, c, oschema, v)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
-                                End Using
-                            Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-                                Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                obj.SetValue(pi, c, oschema, v)
-                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
-                            End Try
-                            pk_count += 1
+                                End Try
+                                pk_count += 1
+                            End If
                         End If
                     End If
-                    'End If
                 Next
 
                 If has_pk Then
@@ -2082,7 +2082,6 @@ Namespace Database
                         If fv IsNot Nothing Then
                             value = fv.CreateValue(c, obj, value)
                         End If
-
 
                         If pi Is Nothing Then
                             obj.SetValue(pi, c, oschema, value)
@@ -2294,7 +2293,7 @@ Namespace Database
                                 val = "'" & val & "'"
                             End If
                             tp = DbTypeConvertor.ToSqlDbType(p.DbType).ToString
-                            If p.DbType = Data.DbType.String Then
+                            If p.DbType = System.Data.DbType.String Then
                                 tp &= "(" & p.Size.ToString & ")"
                             End If
                         End If

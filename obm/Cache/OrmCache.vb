@@ -1420,6 +1420,7 @@ l1:
         Private _dics As IDictionary = Hashtable.Synchronized(New Hashtable)
 
         Public Overrides Sub Reset()
+            _filters = Hashtable.Synchronized(New Hashtable)
             _dics = Hashtable.Synchronized(New Hashtable)
         End Sub
 

@@ -598,6 +598,11 @@ Namespace Query
             Return Me
         End Function
 
+        Public Function GroupBy(ByVal fields() As OrmProperty) As QueryCmdBase
+            Group = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(fields)
+            Return Me
+        End Function
+
         'Protected Function CreateTypedCmd(ByVal qt As Type) As QueryCmdBase
         '    Dim qgt As Type = GetType(QueryCmd(Of ))
         '    Dim t As Type = qgt.MakeGenericType(New Type() {qt})
