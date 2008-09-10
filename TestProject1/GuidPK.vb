@@ -98,8 +98,38 @@ Public Class ComplexPK
     End Function
 End Class
 
-<Entity("1", Tablename:="dbo.complex_pk")> _
+<Entity("1", Tablename:="dbo.guid_table")> _
 Public Class NonCache
     Inherits Worm.Orm.Entity
 
+    Private _code As Integer
+    Private _id As Guid
+
+    <Column(column:="code")> _
+    Public Property Code() As Integer
+        Get
+            Using Read("Code")
+                Return _code
+            End Using
+        End Get
+        Set(ByVal value As Integer)
+            Using Write("Code")
+                _code = value
+            End Using
+        End Set
+    End Property
+
+    <Column("ID", Field2DbRelations.PrimaryKey, column:="pk")> _
+    Public Property Identifier() As Object
+        Get
+            Using Read("ID")
+                Return _id
+            End Using
+        End Get
+        Set(ByVal value As Object)
+            Using Write("ID")
+                _id = CType(value, Guid)
+            End Using
+        End Set
+    End Property
 End Class

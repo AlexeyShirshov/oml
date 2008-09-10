@@ -284,7 +284,7 @@ Imports System.Collections
             q.GroupBy(New OrmProperty() {New OrmProperty(t, "code")}). _
             Select(New OrmProperty() {New OrmProperty(t, "code", "Code")}).Sort(Sorting.Custom("cnt desc"))
 
-            Dim l As IList(Of Worm.Orm.AnonymousEntity) = q.ToAnonymList(Of Worm.Orm.AnonymousEntity)(mgr)
+            Dim l As IList(Of Worm.Orm.AnonymousEntity) = q.ToObjectList(Of Worm.Orm.AnonymousEntity)(mgr)
 
             Assert.AreEqual(5, l.Count)
 
@@ -311,6 +311,8 @@ Imports System.Collections
             Assert.IsNotNull(r)
             Assert.AreEqual(13, r.Count)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+            Assert.IsTrue(r(0).IsPKLoaded)
 
             q = New QueryCmdBase()
             r = q.ToList(Of Entity, IEnt)(mgr)
@@ -370,7 +372,7 @@ Imports System.Collections
             Where(Ctor.Column(t, "id").GreaterThan(5)). _
             Sort(Sorting.Field("Title"))
 
-            Dim l As IList(Of Worm.Orm.AnonymousEntity) = q.ToAnonymList(Of Worm.Orm.AnonymousEntity)(mgr)
+            Dim l As IList(Of Worm.Orm.AnonymousEntity) = q.ToObjectList(Of Worm.Orm.AnonymousEntity)(mgr)
 
             Assert.AreEqual(7, l.Count)
 
@@ -383,4 +385,35 @@ Imports System.Collections
             'Assert.AreEqual(7, l.Count)
         End Using
     End Sub
+
+    <TestMethod()> Public Sub TestEntity()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim q As QueryCmdBase = New QueryCmdBase(GetType(NonCache)). _
+            Where(Ctor.AutoTypeField("Code").Eq(5))
+
+            Dim l As ReadOnlyObjectList(Of NonCache) = q.ToObjectList(Of NonCache)(mgr)
+
+            Assert.AreEqual(2, l.Count)
+
+            Assert.IsTrue(l(0).IsLoaded)
+
+            Assert.IsTrue(l(0).IsFieldLoaded("Code"))
+            Assert.IsTrue(l(0).IsFieldLoaded("ID"))
+
+            Assert.AreEqual(5, l(0).Code)
+            Assert.AreEqual(5, l(1).Code)
+
+            l = q.ToObjectList(Of NonCache)(mgr)
+
+            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+            q.Reset(Of NonCache)(mgr)
+
+            l = q.ToObjectList(Of NonCache)(mgr)
+
+            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        End Using
+    End Sub
+
 End Class

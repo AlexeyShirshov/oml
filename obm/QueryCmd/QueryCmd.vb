@@ -27,6 +27,7 @@ Namespace Query
 
         Sub Reset(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase)
         Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase)
+        Sub ResetEntity(Of ReturnType As _IEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase)
 
     End Interface
 
@@ -639,7 +640,7 @@ Namespace Query
         End Class
 
         Public Function ToList(ByVal mgr As OrmManagerBase) As IList
-            Dim t As MethodInfo = Me.GetType.GetMethod("ToEntityList")
+            Dim t As MethodInfo = Me.GetType.GetMethod("ToEntityList", New Type() {GetType(OrmManagerBase)})
             t = t.MakeGenericMethod(New Type() {SelectedType})
             Return CType(t.Invoke(Me, New Object() {mgr}), System.Collections.IList)
         End Function
@@ -658,7 +659,7 @@ Namespace Query
             End Try
         End Function
 
-        Public Function ToAnonymList(Of T As _IEntity)(ByVal mgr As OrmManagerBase) As ReadOnlyObjectList(Of T)
+        Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManagerBase) As ReadOnlyObjectList(Of T)
             Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
         End Function
 
@@ -693,6 +694,10 @@ Namespace Query
             'Dim rmi As MethodInfo = mi.MakeGenericMethod(New Type() {GetType(T)})
             'Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
         End Function
+
+        Public Sub Reset(Of ReturnType As _IEntity)(ByVal mgr As OrmManagerBase)
+            GetExecutor(mgr).ResetEntity(Of ReturnType)(mgr, Me)
+        End Sub
 
         Public Sub Renew(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase)
             GetExecutor(mgr).Reset(Of ReturnType)(mgr, Me)

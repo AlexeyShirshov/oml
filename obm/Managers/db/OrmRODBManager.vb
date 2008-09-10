@@ -1173,6 +1173,7 @@ Namespace Database
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
+            ByVal oschema As IOrmObjectSchemaBase, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
@@ -1194,7 +1195,7 @@ Namespace Database
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
 
             mi_real.Invoke(Me, flags, Nothing, _
-                New Object() {cmd, withLoad, values, arr, Nothing, fields_idx}, Nothing)
+                New Object() {cmd, withLoad, values, arr, oschema, fields_idx}, Nothing)
 
         End Sub
 

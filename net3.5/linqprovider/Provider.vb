@@ -868,7 +868,7 @@ Namespace Linq
 
             For Each e As UnaryExp In _sel
                 Dim ev As EntityPropValue = CType(e.Value, EntityPropValue)
-                If e.Alias = name Then
+                If ev IsNot Nothing AndAlso e.Alias = name Then
                     Return ev.OrmProp
                 End If
             Next
@@ -1113,7 +1113,12 @@ Namespace Linq
                     If ev IsNot Nothing Then
                         pr = ev.OrmProp
                     Else
-                        pr = GetProperty(ag.Exp.Alias)
+                        Dim cv As ComputedValue = TryCast(ag.Exp.Value, ComputedValue)
+                        If cv IsNot Nothing Then
+                            pr = GetProperty(cv.Alias)
+                        Else
+                            pr = GetProperty(ag.Exp.Alias)
+                        End If
                     End If
                     _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {pr})
                     'If _mem Is Nothing AndAlso _new Is Nothing Then
@@ -1155,6 +1160,7 @@ Namespace Linq
                     Dim aq As New Query.QueryCmdBase(CType(Nothing, Type))
                     aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, 0)})
                     _q.OuterQuery = aq
+                    _q.Select(New OrmProperty() {CType(_sel(0).Value, EntityPropValue).OrmProp})
                 Else
                     'Dim tt As Type = _mem.Member.DeclaringType
                     'If tt.FullName.StartsWith("Worm.Orm.OrmBaseT") Then
