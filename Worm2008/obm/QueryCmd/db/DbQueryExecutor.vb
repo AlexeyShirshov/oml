@@ -273,7 +273,7 @@ Namespace Query.Database
 
 #Region " Shared helpers "
 
-        Protected Shared Function GetFields(ByVal gen As QueryGenerator, ByVal type As Type, ByVal q As QueryCmdBase) As List(Of ColumnAttribute)
+        Protected Shared Function GetFields(ByVal gen As QueryGenerator, ByVal type As Type, ByVal q As QueryCmdBase, ByVal withLoad As Boolean) As List(Of ColumnAttribute)
             Dim c As IList(Of OrmProperty) = q.SelectList
             Dim l As List(Of ColumnAttribute) = Nothing
             If c IsNot Nothing Then
@@ -299,7 +299,7 @@ Namespace Query.Database
                 Next
                 'l.Sort()
             Else
-                If q.propWithLoad Then
+                If withLoad Then
                     l = gen.GetSortedFieldList(type)
                 Else
                     l = gen.GetPrimaryKeys(type)
@@ -320,7 +320,7 @@ Namespace Query.Database
         Protected Shared Sub FormSelectList(ByVal query As QueryCmdBase, ByVal queryType As Type, _
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema, _
             ByVal almgr As AliasMgr, ByVal filterInfo As Object, ByVal params As ICreateParam, _
-            ByVal columnAliases As List(Of String), ByVal innerColumns As List(Of String))
+            ByVal columnAliases As List(Of String), ByVal innerColumns As List(Of String), ByVal withLoad As Boolean)
 
             Dim b As Boolean
             Dim cols As New StringBuilder
@@ -346,13 +346,13 @@ Namespace Query.Database
                     b = True
                 End If
             Else
-                If query.propWithLoad Then
+                If withLoad Then
                     If query.SelectList Is Nothing AndAlso query.Aggregates Is Nothing Then
                         cols.Append(s.GetSelectColumnList(queryType, Nothing, columnAliases))
                         sb.Append(cols.ToString)
                         b = True
                     ElseIf query.SelectList IsNot Nothing Then
-                        cols.Append(s.GetSelectColumnList(queryType, GetFields(s, queryType, query), columnAliases))
+                        cols.Append(s.GetSelectColumnList(queryType, GetFields(s, queryType, query, withLoad), columnAliases))
                         sb.Append(cols.ToString)
                         b = True
                     End If
@@ -493,13 +493,14 @@ Namespace Query.Database
             ByVal query As QueryCmdBase, ByVal params As ICreateParam, ByVal t As Type, _
             ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As AliasMgr) As String
 
-            Return MakeQueryStatement(filterInfo, schema, query, params, t, joins, f, almgr, Nothing, Nothing, Nothing, 0)
+            Return MakeQueryStatement(filterInfo, schema, query, params, t, joins, f, almgr, Nothing, Nothing, Nothing, 0, query.propWithLoad)
         End Function
 
         Public Shared Function MakeQueryStatement(ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
             ByVal query As QueryCmdBase, ByVal params As ICreateParam, ByVal queryType As Type, _
             ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As AliasMgr, _
-            ByVal columnAliases As List(Of String), ByVal inner As String, ByVal innerColumns As List(Of String), ByVal i As Integer) As String
+            ByVal columnAliases As List(Of String), ByVal inner As String, ByVal innerColumns As List(Of String), _
+            ByVal i As Integer, ByVal withLoad As Boolean) As String
 
             Dim sb As New StringBuilder
             Dim s As SQLGenerator = schema
@@ -519,7 +520,7 @@ Namespace Query.Database
                 sb.Append(s.TopStatement(query.propTop.Count, query.propTop.Percent, query.propTop.Ties)).Append(" ")
             End If
 
-            FormSelectList(query, queryType, sb, s, os, almgr, filterInfo, params, columnAliases, innerColumns)
+            FormSelectList(query, queryType, sb, s, os, almgr, filterInfo, params, columnAliases, innerColumns, withLoad)
 
             sb.Append(" from ")
 
@@ -576,7 +577,54 @@ Namespace Query.Database
 #End Region
 
         Public Function ExecEntity(Of ReturnType As {Orm._IEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
-            Return GetProcessorAnonym(Of ReturnType)(mgr, query).GetEntities()
+            Dim dontcache As Boolean = query.DontCache
+
+            Dim key As String = Nothing
+            Dim dic As IDictionary = Nothing
+            Dim id As String = Nothing
+            Dim sync As String = Nothing
+
+            Dim p As ProcessorEntity(Of ReturnType) = GetProcessorAnonym(Of ReturnType)(mgr, query)
+
+            If Not dontcache Then
+                key = p.Key
+                id = p.Id
+                dic = p.Dic
+                sync = p.Sync
+            End If
+
+            Dim oldCache As Boolean = mgr._dont_cache_lists
+            Dim oldStart As Integer = mgr._start
+            Dim oldLength As Integer = mgr._length
+
+            mgr._dont_cache_lists = dontcache OrElse query.OuterQuery IsNot Nothing
+            If query.ClientPaging IsNot Nothing Then
+                mgr._start = query.ClientPaging.First
+                mgr._length = query.ClientPaging.Second
+            End If
+
+            Dim r As ReadOnlyObjectList(Of ReturnType) = CType(dic(id), Global.Worm.ReadOnlyObjectList(Of ReturnType))
+            Dim _hit As Boolean = True
+            Dim e, f As TimeSpan
+            If r Is Nothing Then
+                r = p.GetEntities()
+                _hit = False
+                e = p.Exec
+                f = p.Fetch
+                If Not mgr._dont_cache_lists Then
+                    dic(id) = r
+                End If
+            End If
+
+            query.LastExecitionResult = New OrmManagerBase.ExecutionResult(r.Count, e, f, _hit, mgr._loadedInLastFetch)
+
+            mgr._dont_cache_lists = oldCache
+            mgr._start = oldStart
+            mgr._length = oldLength
+
+            mgr.RaiseOnDataAvailable()
+
+            Return r
         End Function
 
         Public Function ExecSimple(Of ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
@@ -596,6 +644,10 @@ Namespace Query.Database
 
         Public Sub Reset(Of SelectType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) Implements IExecutor.Reset
             GetProcessorT(Of SelectType, ReturnType)(mgr, query).Renew = True
+        End Sub
+
+        Public Sub ResetEntity(Of ReturnType As Orm._IEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) Implements IExecutor.ResetEntity
+            GetProcessorAnonym(Of ReturnType)(mgr, query).ResetCache()
         End Sub
     End Class
 
