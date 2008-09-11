@@ -1666,6 +1666,8 @@ Namespace Database
                                 '    End If
                                 'End If
                                 'obj = o
+                            Else
+                                Exit Do
                             End If
                             loaded = True
                         Loop
