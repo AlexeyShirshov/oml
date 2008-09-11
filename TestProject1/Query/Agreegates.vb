@@ -154,4 +154,8 @@ Imports Worm.Database.Criteria.Core
             Assert.AreEqual(4, l(1))
         End Using
     End Sub
+
+    <TestMethod()> Public Sub TestDic()
+
+    End Sub
 End Class
