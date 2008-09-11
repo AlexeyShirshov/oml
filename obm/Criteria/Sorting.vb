@@ -69,6 +69,8 @@ Namespace Orm
         Private _type As Type
         Private _table As SourceFragment
         Private _column As String
+        Private _custom As String
+        Private _values() As Pair(Of Object, String)
 
         Public Sub New(ByVal t As Type, ByVal field As String)
             _field = field
@@ -84,6 +86,12 @@ Namespace Orm
             _column = column
             _table = t
             _field = field
+        End Sub
+
+        Public Sub New(ByVal computed As String, ByVal values() As Pair(Of Object, String), ByVal [alias] As String)
+            _custom = computed
+            _values = values
+            _column = [alias]
         End Sub
 
         Public Property Column() As String
@@ -116,11 +124,28 @@ Namespace Orm
             End Get
         End Property
 
+        Public ReadOnly Property Computed() As String
+            Get
+                Return _custom
+            End Get
+        End Property
+
+
+        Public ReadOnly Property Values() As Pair(Of Object, String)()
+            Get
+                Return _values
+            End Get
+        End Property
+
         Public Overrides Function ToString() As String
             If _type IsNot Nothing Then
                 Return _type.ToString & "$" & _field
             Else
-                Return _table.RawName & "$" & _column
+                If _table IsNot Nothing Then
+                    Return _table.RawName & "$" & _column
+                Else
+                    Return _custom
+                End If
             End If
         End Function
 

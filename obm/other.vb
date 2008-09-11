@@ -351,11 +351,11 @@ Public Class ReadOnlyObjectList(Of T As {Orm._IEntity})
         CType(_l, IList).Add(o)
     End Sub
 
-    Public Overloads Sub Insert(ByVal pos As Integer, ByVal o As Orm.IEntity) Implements IListEdit.Insert
+    Private Overloads Sub Insert(ByVal pos As Integer, ByVal o As Orm.IEntity) Implements IListEdit.Insert
         CType(_l, IList).Insert(pos, o)
     End Sub
 
-    Public Overloads Sub Remove(ByVal o As Orm.IEntity) Implements IListEdit.Remove
+    Private Overloads Sub Remove(ByVal o As Orm.IEntity) Implements IListEdit.Remove
         CType(_l, IList).Remove(o)
     End Sub
 

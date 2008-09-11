@@ -86,7 +86,7 @@ Namespace Criteria.Values
         End Function
 
         Public Function GetParam(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable) As String
-            Dim values As List(Of String) = schema.ExtractValues(schema, almgr.Aliases, _v)
+            Dim values As List(Of String) = QueryGenerator.ExtractValues(schema, almgr.Aliases, _v)
 
             Return String.Format(_f, values.ToArray)
         End Function

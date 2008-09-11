@@ -110,6 +110,16 @@ Namespace Query
 
         Private _appendMain As Boolean
 
+        Private _createType As Type
+        Public Property CreateType() As Type
+            Get
+                Return _createType
+            End Get
+            Set(ByVal value As Type)
+                _createType = value
+            End Set
+        End Property
+
         Public Property LastExecitionResult() As OrmManagerBase.ExecutionResult
             Get
                 Return _er

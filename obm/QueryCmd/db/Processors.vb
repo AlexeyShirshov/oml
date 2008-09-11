@@ -116,7 +116,14 @@ Namespace Query.Database
                     fields = GetFieldsIdx(_q)
                 End If
 
-                dbm.LoadMultipleObjects(_q.SelectedType, cmd, True, rr, GetFields(dbm.DbSchema, _q.SelectedType, _q, True), oschema, fields)
+                Dim t As Type = _q.CreateType
+                If t Is Nothing Then
+                    t = _q.SelectedType
+                Else
+                    oschema = dbm.DbSchema.GetObjectSchema(t, False)
+                End If
+
+                dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.DbSchema, _q.SelectedType, _q, True), oschema, fields)
 
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
