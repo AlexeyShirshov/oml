@@ -191,7 +191,7 @@ Public MustInherit Class QueryGenerator
         If schema Is Nothing Then
             s = t.ToString
         Else
-            s = schema.GetType().ToString
+            s = t.ToString & schema.GetType().ToString
         End If
         Dim key As String = "properties" & s
         Dim h As IDictionary = CType(map(key), IDictionary)
@@ -982,7 +982,26 @@ Public MustInherit Class QueryGenerator
     '    Return GetColumnValue(obj, pk_name)
     'End Function
 
-    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal arr As Generic.ICollection(Of ColumnAttribute), Optional ByVal columnAliases As List(Of String) = Nothing) As String
+    Protected Friend Function GetSelectColumns(ByVal props As IEnumerable(Of OrmProperty), ByVal columnAliases As List(Of String)) As String
+        Dim sb As New StringBuilder
+        For Each pr As OrmProperty In props
+            If pr.Type Is Nothing Then
+                If pr.Table Is Nothing Then
+                    sb.Append(String.Format(pr.Computed, ExtractValues(Me, Nothing, pr.Values).ToArray)).Append(", ")
+                Else
+                    sb.Append(GetTableName(pr.Table)).Append(Selector).Append(pr.Column).Append(", ")
+                End If
+            Else
+                sb.Append(GetColumnNameByFieldNameInternal(GetObjectSchema(pr.Type), pr.Field, True, columnAliases)).Append(", ")
+            End If
+        Next
+
+        sb.Length -= 2
+
+        Return sb.ToString
+    End Function
+
+    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal arr As Generic.ICollection(Of ColumnAttribute), ByVal columnAliases As List(Of String), ByVal schema As IOrmObjectSchemaBase) As String
         'Dim add_c As Boolean = False
         'If arr Is Nothing Then
         '    Dim s As String = CStr(sel(original_type))
@@ -992,9 +1011,9 @@ Public MustInherit Class QueryGenerator
         '    add_c = True
         'End If
         Dim sb As New StringBuilder
-        If arr Is Nothing Then arr = GetSortedFieldList(original_type)
+        If arr Is Nothing Then arr = GetSortedFieldList(original_type, schema)
         For Each c As ColumnAttribute In arr
-            sb.Append(GetColumns4Select(original_type, c.FieldName, columnAliases)).Append(", ")
+            sb.Append(GetColumnNameByFieldNameInternal(schema, c.FieldName, True, columnAliases)).Append(", ")
         Next
 
         sb.Length -= 2
@@ -1558,7 +1577,7 @@ Public MustInherit Class QueryGenerator
         End If
     End Function
 
-    <Obsolete()> _
+    <Obsolete("Use GetSharedSourceFragment method")> _
     Public Function GetSharedTable(ByVal tableName As String) As SourceFragment 'Implements IDbSchema.GetSharedTable
         Dim t As SourceFragment = CType(_sharedTables(tableName), SourceFragment)
         If t Is Nothing Then
@@ -1637,9 +1656,8 @@ Public MustInherit Class QueryGenerator
         End If
     End Function
 
-    Public Function ExtractValues(ByVal schema As QueryGenerator, ByVal tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String), _
+    Public Shared Function ExtractValues(ByVal schema As QueryGenerator, ByVal tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String), _
         ByVal _values() As Pair(Of Object, String)) As List(Of String)
-        Dim [alias] As String = String.Empty
         Dim values As New List(Of String)
         Dim lastt As Type = Nothing
         For Each p As Pair(Of Object, String) In _values
@@ -1669,18 +1687,16 @@ Public MustInherit Class QueryGenerator
                 If tableAliases IsNot Nothing Then
                     Debug.Assert(tableAliases.ContainsKey(tbl), "There is not alias for table " & tbl.RawName)
                     Try
-                        [alias] = tableAliases(tbl)
+                        values.Add(tableAliases(tbl) & schema.Selector & fld)
                     Catch ex As KeyNotFoundException
                         Throw New QueryGeneratorException("There is not alias for table " & tbl.RawName, ex)
                     End Try
-                End If
-                If Not String.IsNullOrEmpty([alias]) Then
-                    values.Add([alias] & Selector & fld)
                 Else
-                    values.Add(fld)
+                    values.Add(schema.GetTableName(tbl) & schema.Selector & fld)
                 End If
             ElseIf TypeOf o Is SourceFragment Then
                 Dim tbl As SourceFragment = CType(o, SourceFragment)
+                Dim [alias] As String = Nothing
                 If tableAliases IsNot Nothing Then
                     Debug.Assert(tableAliases.ContainsKey(tbl), "There is not alias for table " & tbl.RawName)
                     Try
@@ -1690,7 +1706,7 @@ Public MustInherit Class QueryGenerator
                     End Try
                 End If
                 If Not String.IsNullOrEmpty([alias]) Then
-                    values.Add([alias] & Selector & p.Second)
+                    values.Add([alias] & schema.Selector & p.Second)
                 Else
                     values.Add(p.Second)
                 End If

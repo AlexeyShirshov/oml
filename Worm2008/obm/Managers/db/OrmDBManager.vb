@@ -19,6 +19,12 @@ Namespace Database
             MyBase.New(schema, connectionString)
         End Sub
 
+        Protected Friend Overrides ReadOnly Property IdentityString() As String
+            Get
+                Return GetType(OrmReadOnlyDBManager).ToString
+            End Get
+        End Property
+
         Protected Friend Overrides Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
             Invariant()
 

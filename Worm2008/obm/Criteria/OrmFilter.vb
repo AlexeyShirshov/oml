@@ -574,7 +574,7 @@ Namespace Criteria.Core
             End If
 
             If ParamValue.ShouldUse Then
-                Dim values As List(Of String) = schema.ExtractValues(schema, tableAliases, _values)
+                Dim values As List(Of String) = QueryGenerator.ExtractValues(schema, tableAliases, _values)
 
                 Return String.Format(_format, values.ToArray) & OperationString & GetParam(schema, pname)
             Else

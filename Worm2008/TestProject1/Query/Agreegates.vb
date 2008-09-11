@@ -156,6 +156,27 @@ Imports Worm.Database.Criteria.Core
     End Sub
 
     <TestMethod()> Public Sub TestDic()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim t As Type = GetType(Entity4)
+            Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
+            Dim q As New QueryCmdBase(t)
+            q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
+                New Aggregate(AggregateFunction.Count, "Count") _
+            })
+            Dim o As New OrmProperty("left({0},1)", New Pair(Of Object, String)() {New Pair(Of Object, String)(t, "Title")}, "Pref")
+            q.GroupBy(New OrmProperty() {o}).Select(New OrmProperty() {o}).Sort(Sorting.Custom("Count desc"))
 
+            q.CreateType = GetType(AnonymousEntity)
+            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
+
+            Assert.AreEqual(5, l.Count)
+
+            Assert.AreEqual("2", l(0)("Pref"))
+            Assert.AreEqual(3, l(0)("Count"))
+
+            Assert.AreEqual("b", l(1)("Pref"))
+            Assert.AreEqual(3, l(1)("Count"))
+
+        End Using
     End Sub
 End Class

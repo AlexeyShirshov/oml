@@ -249,7 +249,7 @@ Namespace Database
                 End If
             End Sub
 
-            Protected Sub SaveObj(ByVal o As ICachedEntity, ByVal need2save As List(Of ICachedEntity), ByVal saved As List(Of Pair(Of ObjectState, ICachedEntity)))
+            Protected Function SaveObj(ByVal o As ICachedEntity, ByVal need2save As List(Of ICachedEntity), ByVal saved As List(Of Pair(Of ObjectState, ICachedEntity))) As Boolean
                 Try
                     Dim args As New CancelEventArgs(o)
                     RaiseEvent ObjectSaving(Me, args)
@@ -267,10 +267,11 @@ Namespace Database
                             RaiseEvent ObjectSaved(o)
                         End If
                     End If
+                    Return args.Cancel
                 Catch ex As Exception
                     Throw New OrmManagerException("Error during save " & o.ObjName, ex)
                 End Try
-            End Sub
+            End Function
 
             Protected Sub Save()
                 Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
@@ -286,12 +287,19 @@ Namespace Database
                     Try
                         RaiseEvent BeginSave(_objects.Count)
                         For Each o As ICachedEntity In _objects
+                            Dim pp As Pair(Of ICachedEntity) = Nothing
                             If o.ObjectState = ObjectState.Created Then
                                 rejectList.Add(o)
                             ElseIf o.ObjectState = ObjectState.Modified Then
-                                copies.Add(New Pair(Of ICachedEntity)(o, CType(o.CreateClone, ICachedEntity)))
+                                pp = New Pair(Of ICachedEntity)(o, CType(o.CreateClone, ICachedEntity))
+                                copies.Add(pp)
                             End If
-                            SaveObj(o, need2save, saved)
+                            If SaveObj(o, need2save, saved) Then
+                                rejectList.Remove(o)
+                                If pp IsNot Nothing Then
+                                    copies.Remove(pp)
+                                End If
+                            End If
                             'Try
                             '    Dim args As New CancelEventArgs(o)
                             '    RaiseEvent ObjectSaving(Me, args)
@@ -940,7 +948,7 @@ Namespace Database
                         'Dim js As New List(Of OrmJoin)
                         'js.Add(j)
                         'js.AddRange(Schema.GetAllJoins(selectedType))
-                        Dim columns As String = DbSchema.GetSelectColumnList(selectedType, Nothing)
+                        Dim columns As String = DbSchema.GetSelectColumnList(selectedType, Nothing, Nothing, schema2)
                         sb.Append(DbSchema.Select(ct, almgr, params, q, arr, columns, cfi))
                     Else
                         sb.Append(DbSchema.Select(ct, almgr, params, q, arr, Nothing, cfi))

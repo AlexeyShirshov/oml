@@ -11,6 +11,7 @@ Imports Worm.Database.Criteria.Core
 Imports Worm.Criteria.Values
 Imports Worm.Orm
 Imports System.Collections
+Imports Worm.Database.Criteria.Joins
 
 <TestClass()> Public Class BasicQueryTest
 
@@ -149,7 +150,28 @@ Imports System.Collections
     End Sub
 
     <TestMethod()> Public Sub TestJoin()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim t_entity4 As Type = GetType(Entity4)
+            Dim t_entity5 As Type = GetType(Entity)
+            Dim q As New QueryCmdBase(t_entity4)
+            Dim jf As New JoinFilter(t_entity4, "ID", t_entity5, "ID", Worm.Criteria.FilterOperation.Equal)
+            q.Joins = New OrmJoin() {New OrmJoin(t_entity5, Worm.Criteria.Joins.JoinType.Join, jf)}
+            q.Select(New OrmProperty() {New OrmProperty(t_entity5, "ID"), New OrmProperty(t_entity4, "Title")})
 
+            q.Sort(Sorting.Field(t_entity4, "Title").Desc)
+
+            q.CreateType = GetType(AnonymousEntity)
+            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
+
+            Assert.AreEqual(12, l.Count)
+
+            Assert.AreEqual("wrtbg", l(0)("Title"))
+            Assert.AreEqual("wrbwrb", l(1)("Title"))
+
+            Assert.AreEqual(2, l(0)("ID"))
+            Assert.AreEqual(7, l(1)("ID"))
+
+        End Using
     End Sub
 
     <TestMethod()> Public Sub TestAutoJoin()

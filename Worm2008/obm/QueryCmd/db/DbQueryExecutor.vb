@@ -283,18 +283,33 @@ Namespace Query.Database
                     '    Throw New NotImplementedException
                     'End If
                     If p.Type Is Nothing Then
-                        If String.IsNullOrEmpty(p.Field) Then
+                        Dim f As String = p.Field
+                        If Not String.IsNullOrEmpty(p.Computed) Then
+                            f = p.Column
+                        End If
+
+                        If String.IsNullOrEmpty(f) Then
                             Throw New InvalidOperationException(String.Format("Column {0} must have a field", p.Column))
                         End If
-                        Dim cl As ColumnAttribute = gen.GetColumnByFieldName(type, p.Field)
+
+                        Dim cl As ColumnAttribute = gen.GetColumnByFieldName(type, f)
                         If cl Is Nothing Then
                             cl = New ColumnAttribute
-                            cl.FieldName = p.Field
+                            cl.FieldName = f
                         End If
                         cl.Column = p.Column
                         l.Add(cl)
                     Else
-                        l.Add(gen.GetColumnByFieldName(type, p.Field))
+                        Dim cl As ColumnAttribute = gen.GetColumnByFieldName(p.Type, p.Field)
+                        If cl Is Nothing Then
+                            cl = gen.GetColumnByFieldName(type, p.Field)
+                        End If
+
+                        If cl Is Nothing Then
+                            Throw New InvalidOperationException(String.Format("Column {0} must have a field", p.Column))
+                        End If
+
+                        l.Add(cl)
                     End If
                 Next
                 'l.Sort()
@@ -348,11 +363,12 @@ Namespace Query.Database
             Else
                 If withLoad Then
                     If query.SelectList Is Nothing AndAlso query.Aggregates Is Nothing Then
-                        cols.Append(s.GetSelectColumnList(queryType, Nothing, columnAliases))
+                        cols.Append(s.GetSelectColumnList(queryType, Nothing, columnAliases, os))
                         sb.Append(cols.ToString)
                         b = True
                     ElseIf query.SelectList IsNot Nothing Then
-                        cols.Append(s.GetSelectColumnList(queryType, GetFields(s, queryType, query, withLoad), columnAliases))
+                        'cols.Append(s.GetSelectColumnList(queryType, GetFields(s, queryType, query, withLoad), columnAliases, os))
+                        cols.Append(s.GetSelectColumns(query.SelectList, columnAliases))
                         sb.Append(cols.ToString)
                         b = True
                     End If
@@ -446,6 +462,12 @@ Namespace Query.Database
                     'End If
                     'almgr.AddTable(tbl, CType(Nothing, ParamMgr))
                     sb.Append(join.MakeSQLStmt(s, filterInfo, almgr, params))
+
+                    Dim tbl As SourceFragment = join.Table
+                    If tbl Is Nothing Then
+                        tbl = s.GetTables(join.Type)(0)
+                    End If
+                    almgr.Replace(s, tbl, sb)
                 End If
             Next
         End Sub
@@ -457,17 +479,21 @@ Namespace Query.Database
                     If g.Table IsNot Nothing Then
                         sb.Append(almgr.Aliases(g.Table)).Append(".").Append(g.Column)
                     Else
-                        Dim t As Type = g.Type
-                        If t Is Nothing Then
-                            t = selectType
-                        End If
-                        Dim schema As IOrmObjectSchema = s.GetObjectSchema(t)
-                        Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
-                        Dim map As MapField2Column = Nothing
-                        If cm.TryGetValue(g.Field, map) Then
-                            sb.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
+                        If Not String.IsNullOrEmpty(g.Computed) Then
+                            sb.Append(String.Format(g.Computed, QueryGenerator.ExtractValues(s, almgr.Aliases, g.Values).ToArray))
                         Else
-                            Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", g.Field, g.Type))
+                            Dim t As Type = g.Type
+                            If t Is Nothing Then
+                                t = selectType
+                            End If
+                            Dim schema As IOrmObjectSchema = s.GetObjectSchema(t)
+                            Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
+                            Dim map As MapField2Column = Nothing
+                            If cm.TryGetValue(g.Field, map) Then
+                                sb.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
+                            Else
+                                Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", g.Field, g.Type))
+                            End If
                         End If
                     End If
                     sb.Append(",")

@@ -1081,7 +1081,7 @@ l1:
 
             If original_type IsNot Nothing Then
                 If wideLoad Then
-                    Dim columns As String = GetSelectColumnList(original_type, arr)
+                    Dim columns As String = GetSelectColumnList(original_type, arr, Nothing, schema)
                     selectcmd.Append(columns)
                     If Not String.IsNullOrEmpty(additionalColumns) Then
                         selectcmd.Append(",").Append(additionalColumns)
@@ -1157,7 +1157,7 @@ l1:
             'Dim maintable As String = tables(0)
             selectcmd.Append("select distinct ")
             If wideLoad Then
-                Dim columns As String = GetSelectColumnList(original_type, arr)
+                Dim columns As String = GetSelectColumnList(original_type, arr, Nothing, schema)
                 selectcmd.Append(columns)
             Else
                 GetPKList(original_type, schema, selectcmd)
@@ -1753,7 +1753,7 @@ l1:
             sb.Append(",").Append([alias]).Append(".").Append(id_clm)
             sb.Append(" ").Append(selectedType.Name).Append("ID")
             If withLoad Then
-                sb.Append(",").Append(GetSelectColumnList(selectedType, Nothing))
+                sb.Append(",").Append(GetSelectColumnList(selectedType, Nothing, Nothing, schema))
                 appendMainTable = True
             End If
             sb.Append(" from ")
