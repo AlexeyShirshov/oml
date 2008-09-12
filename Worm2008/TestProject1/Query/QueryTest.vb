@@ -54,7 +54,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestFilter()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Entity))
+            Dim q As New QueryCmd(GetType(Entity))
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
             Assert.IsNotNull(q)
 
@@ -73,7 +73,7 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
             Dim t As SourceFragment = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
-            Dim q As New QueryCmdBase(t)
+            Dim q As New QueryCmd(t)
             q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of Orm.OrmProperty)( _
                 New Orm.OrmProperty() { _
                     New Orm.OrmProperty(t, "id", "ID") _
@@ -92,7 +92,7 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
             Dim t As SourceFragment = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
-            Dim q As New QueryCmdBase(t)
+            Dim q As New QueryCmd(t)
             q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of Orm.OrmProperty)( _
                 New Orm.OrmProperty() { _
                     New Orm.OrmProperty(t, "id", "ID") _
@@ -117,7 +117,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestSort()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Entity4))
+            Dim q As New QueryCmd(GetType(Entity4))
             q.Filter = Ctor.AutoTypeField("Title").Like("b%")
             q.propSort = Worm.Orm.Sorting.Field("ID")
             Assert.IsNotNull(q)
@@ -134,7 +134,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestSort2()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Entity4))
+            Dim q As New QueryCmd(GetType(Entity4))
             q.Filter = Ctor.AutoTypeField("Title").Like("b%")
             q.propSort = Worm.Orm.Sorting.Field("ID")
             Assert.IsNotNull(q)
@@ -153,7 +153,7 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim t_entity4 As Type = GetType(Entity4)
             Dim t_entity5 As Type = GetType(Entity)
-            Dim q As New QueryCmdBase(t_entity4)
+            Dim q As New QueryCmd(t_entity4)
             Dim jf As New JoinFilter(t_entity4, "ID", t_entity5, "ID", Worm.Criteria.FilterOperation.Equal)
             q.Joins = New OrmJoin() {New OrmJoin(t_entity5, Worm.Criteria.Joins.JoinType.Join, jf)}
             q.Select(New OrmProperty() {New OrmProperty(t_entity5, "ID"), New OrmProperty(t_entity4, "Title")})
@@ -174,22 +174,51 @@ Imports Worm.Database.Criteria.Joins
         End Using
     End Sub
 
-    <TestMethod()> Public Sub TestAutoJoin()
+    <TestMethod()> Public Sub TestJoin2()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim t_entity4 As Type = GetType(Entity4)
+            Dim t_entity As Type = GetType(Entity)
+            Dim t_entity5 As Type = GetType(Entity5)
+            Dim q As New QueryCmd(t_entity4)
+            q.Joins = JCtor.Join(t_entity).On(t_entity4, "ID").Eq(t_entity, "ID")
+            q.CreateType = GetType(AnonymousEntity)
 
+            Assert.AreEqual(12, q.ToObjectList(Of AnonymousEntity)(mgr).Count)
+
+            q.Joins = JCtor.Join(t_entity).On(t_entity4, "ID").Eq(t_entity, "ID").Join(t_entity5).On(t_entity, "ID").Eq(t_entity5, "ID")
+
+            Assert.AreEqual(3, q.ToObjectList(Of AnonymousEntity)(mgr).Count)
+
+            q.Joins = JCtor.Join(t_entity).On(t_entity4, "ID").Eq(t_entity, "ID").LeftJoin(t_entity5).On(t_entity, "ID").Eq(t_entity5, "ID")
+
+            Assert.AreEqual(12, q.ToObjectList(Of AnonymousEntity)(mgr).Count)
+        End Using
     End Sub
 
     <TestMethod()> Public Sub TestDistinct()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+            Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
 
+            Dim q As QueryCmd = t1.M2MNew.Find(GetType(Table33))
+
+            Assert.AreEqual(3, q.ToOrmList(Of Table3)(mgr).Count)
+
+            Assert.AreEqual(2, q.Distinct(True).ToOrmList(Of Table3)(mgr).Count)
+        End Using
     End Sub
 
     <TestMethod()> Public Sub TestInner()
+        Assert.Inconclusive()
+    End Sub
 
+    <TestMethod()> Public Sub TestHaving()
+        Assert.Inconclusive()
     End Sub
 
     <TestMethod()> Public Sub TestTop()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
-            Dim q As New QueryCmdBase(GetType(Entity4))
+            Dim q As New QueryCmd(GetType(Entity4))
             q.Filter = Ctor.AutoTypeField("Title").Like("b%")
             Assert.IsNotNull(q)
 
@@ -210,7 +239,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestHint()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
-            Dim q As New QueryCmdBase(GetType(Entity))
+            Dim q As New QueryCmd(GetType(Entity))
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
             Assert.IsNotNull(q)
 
@@ -226,7 +255,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestM2M()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
-            Dim q As New QueryCmdBase(GetType(Entity))
+            Dim q As New QueryCmd(GetType(Entity))
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
             Assert.IsNotNull(q)
 
@@ -234,7 +263,7 @@ Imports Worm.Database.Criteria.Joins
 
             Assert.IsNotNull(e)
 
-            Dim q2 As New QueryCmdBase(e)
+            Dim q2 As New QueryCmd(e)
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
 
@@ -257,7 +286,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestM2MFilter()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
-            Dim q As New QueryCmdBase(GetType(Entity))
+            Dim q As New QueryCmd(GetType(Entity))
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
             Assert.IsNotNull(q)
 
@@ -265,7 +294,7 @@ Imports Worm.Database.Criteria.Joins
 
             Assert.IsNotNull(e)
 
-            Dim q2 As New QueryCmdBase(e)
+            Dim q2 As New QueryCmd(e)
             q2.Filter = Ctor.AutoTypeField("Title").Like("b%")
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
@@ -277,7 +306,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestM2MSort()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
-            Dim q As New QueryCmdBase(GetType(Entity))
+            Dim q As New QueryCmd(GetType(Entity))
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
             Assert.IsNotNull(q)
 
@@ -285,7 +314,7 @@ Imports Worm.Database.Criteria.Joins
 
             Assert.IsNotNull(e)
 
-            Dim q2 As New QueryCmdBase(e)
+            Dim q2 As New QueryCmd(e)
             q2.propSort = Orm.Sorting.Field("Title")
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
@@ -297,7 +326,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestTypeless()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim t As SourceFragment = New SourceFragment("dbo", "guid_table")
-            Dim q As New QueryCmdBase(t)
+            Dim q As New QueryCmd(t)
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
             })
@@ -318,8 +347,8 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestRowNumber()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New MSSQL2005Generator("1"))
-            Dim q As New QueryCmdBase(GetType(Entity))
-            q.RowNumberFilter = New TableFilter(QueryCmdBase.RowNumerColumn, New ScalarValue(2), Worm.Criteria.FilterOperation.LessEqualThan)
+            Dim q As New QueryCmd(GetType(Entity))
+            q.RowNumberFilter = New TableFilter(QueryCmd.RowNumerColumn, New ScalarValue(2), Worm.Criteria.FilterOperation.LessEqualThan)
             Dim l As ReadOnlyEntityList(Of Entity) = q.ToEntityList(Of Entity)(mgr)
             Assert.AreEqual(2, l.Count)
         End Using
@@ -327,7 +356,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestInterface()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As QueryCmdBase = New QueryCmdBase(GetType(Entity))
+            Dim q As QueryCmd = New QueryCmd(GetType(Entity))
             Dim r As IList(Of IEnt) = q.ToList(Of IEnt)(mgr)
 
             Assert.IsNotNull(r)
@@ -336,13 +365,13 @@ Imports Worm.Database.Criteria.Joins
 
             Assert.IsTrue(r(0).IsPKLoaded)
 
-            q = New QueryCmdBase()
+            q = New QueryCmd()
             r = q.ToList(Of Entity, IEnt)(mgr)
             Assert.IsNotNull(r)
             Assert.AreEqual(13, r.Count)
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
-            q = New QueryCmdBase(GetType(Entity))
+            q = New QueryCmd(GetType(Entity))
             Dim r2 As IList(Of Entity) = q.ToList(Of Entity)(mgr)
             Assert.IsNotNull(r2)
             Assert.AreEqual(13, r2.Count)
@@ -356,7 +385,7 @@ Imports Worm.Database.Criteria.Joins
     End Sub
 
     <TestMethod()> Public Sub TestAutoMgr()
-        Dim q As QueryCmdBase = New QueryCmdBase(GetType(Entity4)).Sort(Orm.Sorting.Field("Title"))
+        Dim q As QueryCmd = New QueryCmd(GetType(Entity4)).Sort(Orm.Sorting.Field("Title"))
 
         Dim l As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(Function() TestManager.CreateManager(New SQLGenerator("1")))
 
@@ -369,7 +398,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestRenew()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As QueryCmdBase = New QueryCmdBase(GetType(Entity4))
+            Dim q As QueryCmd = New QueryCmd(GetType(Entity4))
             q.ToEntityList(Of Entity4)(mgr)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
@@ -387,7 +416,7 @@ Imports Worm.Database.Criteria.Joins
             Dim t As SourceFragment = New SourceFragment("dbo", "ent2")
 
             'GetType(Worm.Orm.AnonymousEntity)
-            Dim q As QueryCmdBase = New QueryCmdBase(t)
+            Dim q As QueryCmd = New QueryCmd(t)
 
             'q.From(t). _
             q.Select(New OrmProperty() {New OrmProperty(t, "id", "pk"), New OrmProperty(t, "name", "Title")}). _
@@ -410,7 +439,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestEntity()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As QueryCmdBase = New QueryCmdBase(GetType(NonCache)). _
+            Dim q As QueryCmd = New QueryCmd(GetType(NonCache)). _
             Where(Ctor.AutoTypeField("Code").Eq(5))
 
             Dim l As ReadOnlyObjectList(Of NonCache) = q.ToObjectList(Of NonCache)(mgr)
@@ -438,4 +467,77 @@ Imports Worm.Database.Criteria.Joins
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestCache()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim q As New QueryCmd(GetType(Entity))
+
+            Assert.AreEqual(13, q.ToEntityList(Of Entity)(mgr).Count)
+            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+            Dim q2 As New QueryCmd(GetType(Entity4))
+
+            Assert.AreEqual(12, q2.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+
+            Assert.AreEqual(13, q.ToEntityList(Of Entity)(mgr).Count)
+            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+            Assert.AreEqual(12, q2.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.IsTrue(q2.LastExecitionResult.CacheHit)
+
+            q.DontCache = True
+            Assert.AreEqual(13, q.ToEntityList(Of Entity)(mgr).Count)
+            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            q.DontCache = False
+
+            q2.DontCache = True
+            Assert.AreEqual(12, q2.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+            q2.DontCache = False
+
+            q.LiveTime = TimeSpan.FromSeconds(5)
+            Assert.AreEqual(13, q.ToEntityList(Of Entity)(mgr).Count)
+            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+            Threading.Thread.Sleep(5000)
+            Assert.AreEqual(13, q.ToEntityList(Of Entity)(mgr).Count)
+            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+            q2.LiveTime = TimeSpan.FromSeconds(5)
+            Assert.AreEqual(12, q2.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.IsTrue(q2.LastExecitionResult.CacheHit)
+            Threading.Thread.Sleep(5000)
+            Assert.AreEqual(12, q2.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+
+        End Using
+    End Sub
+
+    Protected Function createdic(ByVal dic As IDictionary, ByVal mark As String) As IDictionary
+        Dim k As IDictionary = New Hashtable
+        dic(mark) = k
+        Return k
+    End Function
+
+    <TestMethod()> Public Sub TestCacheMark()
+        Dim dic As New Hashtable
+
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Cache.OrmCache(Function(mark As String) If(dic.Contains(mark), CType(dic(mark), IDictionary), createdic(dic, mark))), _
+            New SQLGenerator("1"))
+            Dim q As New QueryCmd(GetType(Entity))
+            q.ExternalCacheMark = "ldgn"
+
+            q.ToEntityList(Of Entity)(mgr)
+            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.AreEqual(1, dic.Count)
+
+            q.ToEntityList(Of Entity)(mgr)
+            Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+            'q.ToEntityList(Of Entity)(mgr)
+            'Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+            'Assert.AreEqual(2, dic.Count)
+
+        End Using
+    End Sub
 End Class

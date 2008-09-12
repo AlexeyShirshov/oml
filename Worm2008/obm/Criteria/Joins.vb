@@ -215,10 +215,13 @@ Namespace Criteria.Joins
             End Select
         End Function
 
-        Public ReadOnly Property Condition() As Core.IFilter
+        Public Property Condition() As Core.IFilter
             Get
                 Return _condition
             End Get
+            Protected Friend Set(ByVal value As Core.IFilter)
+                _condition = value
+            End Set
         End Property
 
         Public Sub ReplaceFilter(ByVal replacement As Core.IFilter, ByVal replacer As Core.IFilter)
@@ -502,11 +505,11 @@ Namespace Database
                 Return New Core.TableFilterTemplate(table, fieldName, oper)
             End Function
 
-            Public Overloads ReadOnly Property Condition() As IFilter
-                Get
-                    Return CType(_condition, IFilter)
-                End Get
-            End Property
+            'Public Overloads ReadOnly Property Condition() As IFilter
+            '    Get
+            '        Return CType(_condition, IFilter)
+            '    End Get
+            'End Property
 
             Protected Overloads Overrides Function CreateJoin(ByVal table As Orm.Meta.SourceFragment, ByVal column As String, ByVal t As System.Type, ByVal fieldName As String, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Joins.JoinFilter
                 Return New JoinFilter(table, column, t, fieldName, oper)
@@ -517,5 +520,249 @@ Namespace Database
             End Function
         End Class
 
+        Public Class JCtor
+            Friend _j As New List(Of OrmJoin)
+
+            Public Shared Function Join(ByVal t As Type) As JoinCondition
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, Nothing)
+                Dim jc As New JCtor
+                jc._j.Add(j)
+                Return New JoinCondition(jc)
+            End Function
+
+            Public Shared Function LeftJoin(ByVal t As Type) As JoinCondition
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+                Dim jc As New JCtor
+                jc._j.Add(j)
+                Return New JoinCondition(jc)
+            End Function
+
+            Public Shared Function RightJoin(ByVal t As Type) As JoinCondition
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
+                Dim jc As New JCtor
+                jc._j.Add(j)
+                Return New JoinCondition(jc)
+            End Function
+
+            Public Shared Function Join(ByVal table As SourceFragment) As JoinCondition
+                Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.Join, Nothing)
+                Dim jc As New JCtor
+                jc._j.Add(j)
+                Return New JoinCondition(jc)
+            End Function
+
+            Public Shared Function LeftJoin(ByVal table As SourceFragment) As JoinCondition
+                Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+                Dim jc As New JCtor
+                jc._j.Add(j)
+                Return New JoinCondition(jc)
+            End Function
+
+            Public Shared Function RightJoin(ByVal table As SourceFragment) As JoinCondition
+                Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
+                Dim jc As New JCtor
+                jc._j.Add(j)
+                Return New JoinCondition(jc)
+            End Function
+
+            'Public Function AddJoin(ByVal t As Type) As JoinCondition
+            '    Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, Nothing)
+            '    _j.Add(j)
+            '    Return New JoinCondition(Me)
+            'End Function
+
+            'Public Function AddLeftJoin(ByVal t As Type) As JoinCondition
+            '    Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+            '    _j.Add(j)
+            '    Return New JoinCondition(Me)
+            'End Function
+
+            'Public Function AddRightJoin(ByVal t As Type) As JoinCondition
+            '    Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
+            '    Dim jc As New JCtor
+            '    _j.Add(j)
+            '    Return New JoinCondition(Me)
+            'End Function
+
+            'Public Function AddJoin(ByVal table As SourceFragment) As JoinCondition
+            '    Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.Join, Nothing)
+            '    Dim jc As New JCtor
+            '    _j.Add(j)
+            '    Return New JoinCondition(Me)
+            'End Function
+
+            'Public Function AddLeftJoin(ByVal table As SourceFragment) As JoinCondition
+            '    Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+            '    Dim jc As New JCtor
+            '    _j.Add(j)
+            '    Return New JoinCondition(Me)
+            'End Function
+
+            'Public Function AddRightJoin(ByVal table As SourceFragment) As JoinCondition
+            '    Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
+            '    Dim jc As New JCtor
+            '    _j.Add(j)
+            '    Return New JoinCondition(Me)
+            'End Function
+
+            Protected Friend Function AddFilter(ByVal jf As IFilter) As JCtor
+                _j(_j.Count - 1).Condition = jf
+                Return Me
+            End Function
+
+            Public Function Joins() As IEnumerable(Of OrmJoin)
+                Return _j
+            End Function
+
+            Public Function ToJoinArray() As OrmJoin()
+                Return _j.ToArray
+            End Function
+        End Class
+
+        Public Class JoinLink
+            Private _c As Conditions.Condition.ConditionConstructor
+            Private _jc As JCtor
+
+            Protected Friend Sub New(ByVal jf As JoinFilter, ByVal jc As JCtor)
+                _c = New Conditions.Condition.ConditionConstructor
+                _c.AddFilter(jf)
+                _jc = jc
+            End Sub
+
+            Protected Friend Sub New(ByVal c As Conditions.Condition.ConditionConstructor, ByVal jc As JCtor)
+                _c = c
+                _jc = jc
+            End Sub
+
+            Public Function [And](ByVal jf As JoinFilter) As JoinLink
+                _c.AddFilter(jf, Worm.Criteria.Conditions.ConditionOperator.And)
+                Return Me
+            End Function
+
+            Public Function [And](ByVal t As Type, ByVal field As String) As CriteriaJoin
+                Dim jf As New JoinFilter(t, field, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+                Dim c As New CriteriaJoin(jf, _c, _jc)
+                Return c
+            End Function
+
+            Public Function [And](ByVal table As SourceFragment, ByVal column As String) As CriteriaJoin
+                Dim jf As New JoinFilter(table, column, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+                Dim c As New CriteriaJoin(jf, _c, _jc)
+                Return c
+            End Function
+
+            Protected ReadOnly Property JC() As JCtor
+                Get
+                    Return _jc
+                End Get
+            End Property
+
+            Public Function Join(ByVal t As Type) As JoinCondition
+                JC.AddFilter(_c.Condition)
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, Nothing)
+                JC._j.Add(j)
+                Return New JoinCondition(JC)
+            End Function
+
+            Public Function LeftJoin(ByVal t As Type) As JoinCondition
+                JC.AddFilter(_c.Condition)
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+                JC._j.Add(j)
+                Return New JoinCondition(JC)
+            End Function
+
+            Public Function RightJoin(ByVal t As Type) As JoinCondition
+                JC.AddFilter(_c.Condition)
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
+                JC._j.Add(j)
+                Return New JoinCondition(JC)
+            End Function
+
+            Public Function Join(ByVal table As SourceFragment) As JoinCondition
+                JC.AddFilter(_c.Condition)
+                Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.Join, Nothing)
+                JC._j.Add(j)
+                Return New JoinCondition(JC)
+            End Function
+
+            Public Function LeftJoin(ByVal table As SourceFragment) As JoinCondition
+                JC.AddFilter(_c.Condition)
+                Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+                JC._j.Add(j)
+                Return New JoinCondition(JC)
+            End Function
+
+            Public Function RightJoin(ByVal table As SourceFragment) As JoinCondition
+                JC.AddFilter(_c.Condition)
+                Dim j As New OrmJoin(table, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
+                JC._j.Add(j)
+                Return New JoinCondition(JC)
+            End Function
+
+            Public Shared Widening Operator CType(ByVal jl As JoinLink) As OrmJoin()
+                Return jl.JC.AddFilter(jl._c.Condition).ToJoinArray
+            End Operator
+        End Class
+
+        Public Class CriteriaJoin
+            Private _jf As JoinFilter
+            Private _c As Conditions.Condition.ConditionConstructor
+            Private _jc As JCtor
+
+            Protected Friend Sub New(ByVal jf As JoinFilter, ByVal jc As JCtor)
+                _jf = jf
+                _jc = jc
+            End Sub
+
+            Protected Friend Sub New(ByVal jf As JoinFilter, ByVal c As Conditions.Condition.ConditionConstructor, ByVal jc As JCtor)
+                _jf = jf
+                _c = c
+                _jc = jc
+            End Sub
+
+            Public Function Eq(ByVal t As Type, ByVal field As String) As JoinLink
+                _jf._e2 = New Pair(Of Type, String)(t, field)
+                _jf._oper = FilterOperation.Equal
+                Return GetLink()
+            End Function
+
+            Public Function Eq(ByVal table As SourceFragment, ByVal column As String) As JoinLink
+                _jf._t2 = New Pair(Of SourceFragment, String)(table, column)
+                _jf._oper = FilterOperation.Equal
+                Return GetLink()
+            End Function
+
+            Protected Function GetLink() As JoinLink
+                If _c Is Nothing Then
+                    _c = New Conditions.Condition.ConditionConstructor
+                End If
+                _c.AddFilter(_jf)
+                Return New JoinLink(_c, _jc)
+            End Function
+        End Class
+
+        Public Class JoinCondition
+            Private _j As JCtor
+
+            Public Sub New(ByVal jc As JCtor)
+                _j = jc
+            End Sub
+
+            Public Function [On](ByVal jf As JoinFilter) As JoinLink
+                Return New JoinLink(jf, _j)
+            End Function
+
+            Public Function [On](ByVal t As Type, ByVal field As String) As CriteriaJoin
+                Dim jf As New JoinFilter(t, field, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+                Dim c As New CriteriaJoin(jf, _j)
+                Return c
+            End Function
+
+            Public Function [On](ByVal table As SourceFragment, ByVal column As String) As CriteriaJoin
+                Dim jf As New JoinFilter(table, column, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+                Dim c As New CriteriaJoin(jf, _j)
+                Return c
+            End Function
+        End Class
     End Namespace
 End Namespace

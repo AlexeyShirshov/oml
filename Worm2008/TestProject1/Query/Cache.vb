@@ -52,7 +52,7 @@ Imports Worm.Criteria.Values
     <TestMethod()> Public Sub TestFilter()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Table1))
+            Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.AutoTypeField("ID").GreaterThan(2)
             Assert.IsNotNull(q)
 
@@ -76,7 +76,7 @@ Imports Worm.Criteria.Values
     <TestMethod()> Public Sub TestJoin()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Table1))
+            Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.Field(GetType(Table2), "Money").Eq(1)
             q.AutoJoins = True
             Assert.IsNotNull(q)
@@ -102,7 +102,7 @@ Imports Worm.Criteria.Values
     <TestMethod()> Public Sub TestUpdate()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Table2))
+            Dim q As New QueryCmd(GetType(Table2))
             q.Filter = Ctor.AutoTypeField("Money").GreaterThan(1)
             Dim l As ReadOnlyEntityList(Of Table2) = q.ToEntityList(Of Table2)(mgr)
             Assert.AreEqual(1, l.Count)

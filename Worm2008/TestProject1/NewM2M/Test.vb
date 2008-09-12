@@ -47,7 +47,7 @@ Imports Worm.Database.Criteria
 
     <TestMethod()> Public Sub TestAdd()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Entity))
+            Dim q As New QueryCmd(GetType(Entity))
             Assert.IsNotNull(q)
 
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
@@ -58,7 +58,7 @@ Imports Worm.Database.Criteria
             Assert.IsNotNull(l)
             Assert.AreEqual(4, l.Count)
 
-            Dim q2 As New QueryCmdBase(GetType(Entity4))
+            Dim q2 As New QueryCmd(GetType(Entity4))
             q2.Filter = Ctor.AutoTypeField("ID").Eq(2)
 
             Dim e2 As Entity4 = q2.ToEntityList(Of Entity4)(mgr)(0)
@@ -98,7 +98,7 @@ Imports Worm.Database.Criteria
 
     <TestMethod()> Public Sub TestAddScope()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Entity))
+            Dim q As New QueryCmd(GetType(Entity))
             Assert.IsNotNull(q)
 
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
@@ -109,7 +109,7 @@ Imports Worm.Database.Criteria
             Assert.IsNotNull(l)
             Assert.AreEqual(4, l.Count)
 
-            Dim q2 As New QueryCmdBase(GetType(Entity4))
+            Dim q2 As New QueryCmd(GetType(Entity4))
             q2.Filter = Ctor.AutoTypeField("ID").Eq(2)
 
             Dim e2 As Entity4 = q2.ToEntityList(Of Entity4)(mgr)(0)
@@ -144,7 +144,7 @@ Imports Worm.Database.Criteria
         Dim t As New TestManager
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
             mgr.NewObjectManager = t
-            Dim q As New QueryCmdBase(GetType(Entity))
+            Dim q As New QueryCmd(GetType(Entity))
             Assert.IsNotNull(q)
 
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
@@ -188,7 +188,7 @@ Imports Worm.Database.Criteria
     <TestMethod()> _
     Public Sub TestDelete()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
-            Dim q As QueryCmdBase = New QueryCmdBase(GetType(Entity)).Where(Ctor.AutoTypeField("ID").Eq(1))
+            Dim q As QueryCmd = New QueryCmd(GetType(Entity)).Where(Ctor.AutoTypeField("ID").Eq(1))
 
             Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
 
@@ -202,7 +202,7 @@ Imports Worm.Database.Criteria
                     s.Commit()
                 End Using
 
-                Dim q2 As QueryCmdBase = e.M2MNew.Find(GetType(Entity4))
+                Dim q2 As QueryCmd = e.M2MNew.Find(GetType(Entity4))
                 l = q2.ToEntityList(Of Entity4)(mgr)
                 Assert.AreEqual(c - 1, l.Count)
                 Assert.IsFalse(q2.LastExecitionResult.CacheHit)

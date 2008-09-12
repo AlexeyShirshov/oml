@@ -59,8 +59,8 @@ Namespace Orm
     End Interface
 
     Public Interface IM2M
-        Function Find(ByVal t As Type) As Worm.Query.QueryCmdBase
-        Function Find(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmdBase
+        Function Find(ByVal t As Type) As Worm.Query.QueryCmd
+        Function Find(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
         Sub Add(ByVal o As _IOrmBase)
         Sub Add(ByVal o As _IOrmBase, ByVal key As String)
         Sub Delete(ByVal o As _IOrmBase)

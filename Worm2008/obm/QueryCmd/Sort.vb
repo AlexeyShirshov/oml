@@ -11,7 +11,7 @@ Namespace Sorting
         Inherits Sort
 
         Private _agr As AggregateBase
-        Private _q As QueryCmdBase
+        Private _q As QueryCmd
 
         Public Sub New(ByVal agr As AggregateBase)
             _agr = agr
@@ -22,11 +22,11 @@ Namespace Sorting
             Me.Order = order
         End Sub
 
-        Public Sub New(ByVal q As QueryCmdBase)
+        Public Sub New(ByVal q As QueryCmd)
             _q = q
         End Sub
 
-        Public Sub New(ByVal q As QueryCmdBase, ByVal order As Orm.SortType)
+        Public Sub New(ByVal q As QueryCmd, ByVal order As Orm.SortType)
             _q = q
             Me.Order = order
         End Sub

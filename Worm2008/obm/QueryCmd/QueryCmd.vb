@@ -11,23 +11,23 @@ Namespace Query
     Public Interface IExecutor
 
         Function ExecEntity(Of ReturnType As {_IEntity})( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyObjectList(Of ReturnType)
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)
 
         Function Exec(Of ReturnType As _ICachedEntity)( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyEntityList(Of ReturnType)
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
 
         Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As ReadOnlyEntityList(Of ReturnType)
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
 
         Function ExecSimple(Of SelectType As {_ICachedEntity, New}, ReturnType)( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As IList(Of ReturnType)
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As IList(Of ReturnType)
 
         Function ExecSimple(Of ReturnType)( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase) As IList(Of ReturnType)
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As IList(Of ReturnType)
 
-        Sub Reset(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase)
-        Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase)
-        Sub ResetEntity(Of ReturnType As _IEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmdBase)
+        Sub Reset(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd)
+        Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd)
+        Sub ResetEntity(Of ReturnType As _IEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd)
 
     End Interface
 
@@ -77,7 +77,7 @@ Namespace Query
         End Function
     End Class
 
-    Public Class QueryCmdBase
+    Public Class QueryCmd
         Implements ICloneable
 
         Public Delegate Function GetManagerDelegate() As OrmManagerBase
@@ -92,6 +92,8 @@ Namespace Query
         Protected _page As Nullable(Of Integer)
         Protected _distinct As Boolean
         Protected _dontcache As Boolean
+        Private _liveTime As TimeSpan
+        Private _mgrMark As String
         Protected _clientPage As Pair(Of Integer)
         Protected _joins() As OrmJoin
         Protected _autoJoins As Boolean
@@ -104,9 +106,10 @@ Namespace Query
         Protected _o As _IOrmBase
         Protected _m2mKey As String
         Protected _rn As Worm.Database.Criteria.Core.TableFilter
-        Protected _outer As QueryCmdBase
+        Protected _outer As QueryCmd
         Private _er As OrmManagerBase.ExecutionResult
         Private _en As String
+        Friend _resDic As Boolean
 
         Private _appendMain As Boolean
 
@@ -194,7 +197,7 @@ Namespace Query
 
         Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal t As Type) As IFilter()
             Dim i As Integer = 0
-            Dim q As QueryCmdBase = Me
+            Dim q As QueryCmd = Me
             Dim fs As New List(Of IFilter)
             Do While q IsNot Nothing
                 Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
@@ -287,7 +290,7 @@ Namespace Query
         Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of OrmJoin)), ByVal fs() As IFilter) As String
             Dim key As New StringBuilder
             Dim i As Integer = 0
-            Dim q As QueryCmdBase = Me
+            Dim q As QueryCmd = Me
             Do While q IsNot Nothing
                 q.GetStaticKey(key, js(i), fs(i))
                 i += 1
@@ -304,32 +307,49 @@ Namespace Query
         End Function
 
         Protected Friend Sub GetStaticKey(ByVal sb As StringBuilder, ByVal j As List(Of OrmJoin), ByVal f As IFilter)
-            If f IsNot Nothing Then
-                sb.Append(f.ToStaticString).Append("$")
-            End If
+            Dim sb2 As New StringBuilder
 
-            If _rn IsNot Nothing Then
-                sb.Append(_rn.ToStaticString)
+            If f IsNot Nothing Then
+                sb2.Append(f.ToStaticString).Append("$")
             End If
 
             If j IsNot Nothing Then
                 For Each join As OrmJoin In j
                     If Not OrmJoin.IsEmpty(join) Then
-                        sb.Append(join.ToString)
+                        sb2.Append(join.ToString)
                     End If
                 Next
+            End If
+
+            If sb2.Length = 0 Then
+                If _realType IsNot Nothing Then
+                    sb2.Append(_realType.ToString)
+                ElseIf _table IsNot Nothing Then
+                    sb2.Append(_table.ToString)
+                Else
+                    Throw New NotSupportedException
+                End If
+                sb2.Append("$")
+            End If
+
+            sb.Append(sb2.ToString)
+
+            If _rn IsNot Nothing Then
+                sb.Append(_rn.ToStaticString)
             End If
 
             If _top IsNot Nothing Then
                 sb.Append(_top.GetStaticKey).Append("$")
             End If
+
+            sb.Append(_distinct.ToString).Append("$")
         End Sub
 
         Public Function GetDynamicKey(ByVal js As List(Of List(Of OrmJoin)), ByVal fs() As IFilter) As String
             Dim id As New StringBuilder
 
             Dim i As Integer = 0
-            Dim q As QueryCmdBase = Me
+            Dim q As QueryCmd = Me
             Do While q IsNot Nothing
                 q.GetDynamicKey(id, js(i), fs(i))
                 i += 1
@@ -384,11 +404,11 @@ Namespace Query
             End Set
         End Property
 
-        Public Property OuterQuery() As QueryCmdBase
+        Public Property OuterQuery() As QueryCmd
             Get
                 Return _outer
             End Get
-            Set(ByVal value As QueryCmdBase)
+            Set(ByVal value As QueryCmd)
                 _outer = value
                 _mark = Environment.TickCount
             End Set
@@ -455,6 +475,28 @@ Namespace Query
             End Get
             Set(ByVal value As Pair(Of Integer))
                 _clientPage = value
+            End Set
+        End Property
+
+        Public Property LiveTime() As TimeSpan
+            Get
+                Return _liveTime
+            End Get
+            Set(ByVal value As TimeSpan)
+                _liveTime = value
+            End Set
+        End Property
+
+        Public Property ExternalCacheMark() As String
+            Get
+                Return _mgrMark
+            End Get
+            Set(ByVal value As String)
+                If Not String.IsNullOrEmpty(_mgrMark) Then
+                    Throw New InvalidOperationException
+                End If
+                _mgrMark = value
+                _resDic = True
             End Set
         End Property
 
@@ -573,43 +615,43 @@ Namespace Query
         End Property
 #End Region
 
-        Public Function Distinct(ByVal value As Boolean) As QueryCmdBase
+        Public Function Distinct(ByVal value As Boolean) As QueryCmd
             propDistinct = value
             Return Me
         End Function
 
-        Public Function Top(ByVal value As Integer) As QueryCmdBase
+        Public Function Top(ByVal value As Integer) As QueryCmd
             propTop = New Query.Top(value)
             Return Me
         End Function
 
-        Public Function Sort(ByVal value As Sort) As QueryCmdBase
+        Public Function Sort(ByVal value As Sort) As QueryCmd
             propSort = value
             Return Me
         End Function
 
-        Public Function WithLoad(ByVal value As Boolean) As QueryCmdBase
+        Public Function WithLoad(ByVal value As Boolean) As QueryCmd
             propWithLoad = value
             Return Me
         End Function
 
-        Public Function Where(ByVal filter As IGetFilter) As QueryCmdBase
+        Public Function Where(ByVal filter As IGetFilter) As QueryCmd
             Me.Filter = filter
             Return Me
         End Function
 
-        Public Function From(ByVal t As SourceFragment) As QueryCmdBase
+        Public Function From(ByVal t As SourceFragment) As QueryCmd
             _table = t
             _mark = Environment.TickCount
             Return Me
         End Function
 
-        Public Function [Select](ByVal fields() As OrmProperty) As QueryCmdBase
+        Public Function [Select](ByVal fields() As OrmProperty) As QueryCmd
             SelectList = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(fields)
             Return Me
         End Function
 
-        Public Function GroupBy(ByVal fields() As OrmProperty) As QueryCmdBase
+        Public Function GroupBy(ByVal fields() As OrmProperty) As QueryCmd
             Group = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(fields)
             Return Me
         End Function
@@ -717,7 +759,7 @@ Namespace Query
             GetExecutor(mgr).Reset(Of SelectType, ReturnType)(mgr, Me)
         End Sub
 
-        Public Sub CopyTo(ByVal o As QueryCmdBase)
+        Public Sub CopyTo(ByVal o As QueryCmd)
             With o
                 ._aggregates = _aggregates
                 ._appendMain = _appendMain
@@ -747,7 +789,7 @@ Namespace Query
         End Sub
 
         Public Function Clone() As Object Implements System.ICloneable.Clone
-            Dim q As New QueryCmdBase
+            Dim q As New QueryCmd
             CopyTo(q)
             Return q
         End Function

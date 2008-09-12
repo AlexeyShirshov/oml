@@ -82,7 +82,7 @@ Namespace Linq
                 Dim ev As New QueryVisitor(_ctx.Schema)
                 ev.Visit(expression)
                 'Dim q As New Worm.Query.QueryCmd(Of TResult)(ev.Query)
-                Dim q As Worm.Query.QueryCmdBase = ev.Query
+                Dim q As Worm.Query.QueryCmd = ev.Query
                 Dim rt As Type = GetType(TResult)
                 If GetType(IEnumerator).IsAssignableFrom(rt) Then
                     Dim t As Type = rt.GetGenericArguments(0)
@@ -711,7 +711,7 @@ Namespace Linq
     Public Class QueryVisitor
         Inherits MyExpressionVisitor
 
-        Private _q As Query.QueryCmdBase
+        Private _q As Query.QueryCmd
         Private _so As SortOrder
         Private _new As NewExpression
         'Private _mem As MemberExpression
@@ -769,7 +769,7 @@ Namespace Linq
 
         Sub New(ByVal schema As QueryGenerator)
             MyBase.new(schema)
-            _q = New Query.QueryCmdBase(CType(Nothing, Type))
+            _q = New Query.QueryCmd(CType(Nothing, Type))
         End Sub
 
         'Sub New(ByVal q As Query.QueryCmdBase)
@@ -788,7 +788,7 @@ Namespace Linq
             End Get
         End Property
 
-        Public ReadOnly Property Query() As Query.QueryCmdBase
+        Public ReadOnly Property Query() As Query.QueryCmd
             Get
                 If _so IsNot Nothing Then
                     _q.propSort = _so
@@ -980,11 +980,11 @@ Namespace Linq
                 _t = c.Type.GetGenericArguments(0)
             Else
                 If _skip Then
-                    _q.RowNumberFilter = New TableFilter(QueryCmdBase.RowNumerColumn, New ScalarValue(CInt(Eval(c))), Worm.Criteria.FilterOperation.GreaterThan)
+                    _q.RowNumberFilter = New TableFilter(QueryCmd.RowNumerColumn, New ScalarValue(CInt(Eval(c))), Worm.Criteria.FilterOperation.GreaterThan)
                 Else
                     If _q.RowNumberFilter IsNot Nothing Then
                         Dim f As Integer = CInt(CType(Query.RowNumberFilter.Value, ScalarValue).Value)
-                        _q.RowNumberFilter = New TableFilter(QueryCmdBase.RowNumerColumn, New BetweenValue(f + 1, f + CInt(Eval(c))), Worm.Criteria.FilterOperation.Between)
+                        _q.RowNumberFilter = New TableFilter(QueryCmd.RowNumerColumn, New BetweenValue(f + 1, f + CInt(Eval(c))), Worm.Criteria.FilterOperation.Between)
                     Else
                         _q.propTop = New Top(CInt(Eval(c)))
                     End If
@@ -1102,7 +1102,7 @@ Namespace Linq
                 Dim ag As New SimpleExpVis(_schema, Me)
                 ag.Visit(m.Arguments(1))
                 If IsSubQueryRequired() Then
-                    Dim aq As New Query.QueryCmdBase(CType(Nothing, Type))
+                    Dim aq As New Query.QueryCmd(CType(Nothing, Type))
                     'Dim al As String = Nothing
                     'Dim num As Integer
                     Dim a As New Aggregate(af, GetIndex(ag.Exp))
@@ -1157,7 +1157,7 @@ Namespace Linq
                     '    _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(GetProperties())
                     'End If
 
-                    Dim aq As New Query.QueryCmdBase(CType(Nothing, Type))
+                    Dim aq As New Query.QueryCmd(CType(Nothing, Type))
                     aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, 0)})
                     _q.OuterQuery = aq
                     _q.Select(New OrmProperty() {CType(_sel(0).Value, EntityPropValue).OrmProp})

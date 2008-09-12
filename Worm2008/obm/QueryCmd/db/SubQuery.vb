@@ -9,11 +9,11 @@ Namespace Query.Database.Filters
     Public Class SubQuery
         Implements IDatabaseFilterValue, Worm.Criteria.Values.INonTemplateValue
 
-        Private _q As QueryCmdBase
+        Private _q As QueryCmd
         Private _j As List(Of Worm.Criteria.Joins.OrmJoin)
         Private _f As IFilter
 
-        Public Sub New(ByVal query As QueryCmdBase)
+        Public Sub New(ByVal query As QueryCmd)
             _q = query
         End Sub
 

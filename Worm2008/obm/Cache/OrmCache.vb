@@ -1417,7 +1417,10 @@ l1:
         Inherits OrmCacheBase
         Implements IExploreCache
 
+        Public Delegate Function CreateCacheListDelegate(ByVal mark As String) As IDictionary
+
         Private _dics As IDictionary = Hashtable.Synchronized(New Hashtable)
+        Private _md As CreateCacheListDelegate
 
         Public Overrides Sub Reset()
             _filters = Hashtable.Synchronized(New Hashtable)
@@ -1426,6 +1429,14 @@ l1:
 
         Public Overrides Function CreateResultsetsDictionary() As System.Collections.IDictionary
             Return Hashtable.Synchronized(New Hashtable)
+        End Function
+
+        Public Overrides Function CreateResultsetsDictionary(ByVal mark As String) As System.Collections.IDictionary
+            If _md IsNot Nothing AndAlso Not String.IsNullOrEmpty(mark) Then
+                Return _md(mark)
+            Else
+                Return MyBase.CreateResultsetsDictionary(mark)
+            End If
         End Function
 
         'Public Overrides ReadOnly Property OrmDictionaryT(of T)() As System.Collections.Generic.IDictionary(Of Integer, T)
@@ -1479,6 +1490,11 @@ l1:
 
         Public Sub New()
             Reset()
+        End Sub
+
+        Public Sub New(ByVal cacheListDelegate As CreateCacheListDelegate)
+            Reset()
+            _md = cacheListDelegate
         End Sub
 
         Protected Overridable Function CreateDictionary(ByVal t As Type) As IDictionary
