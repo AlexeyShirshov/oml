@@ -266,7 +266,7 @@ Public MustInherit Class OrmManagerBase
         'Protected _mark As Object
         Protected _cache As OrmCacheBase
         Protected _f As IFilter
-        Protected _expires As Date
+        Protected Friend _expires As Date
         Protected _sortExpires As Date
         Protected _execTime As TimeSpan
         Protected _fetchTime As TimeSpan
@@ -896,13 +896,13 @@ Public MustInherit Class OrmManagerBase
     'Private _list_converter As IListObjectConverter
     Protected Friend _dont_cache_lists As Boolean
     Private _newMgr As INewObjects
-    Private _expiresPattern As Date
+    Friend _expiresPattern As Date
     Protected Friend _start As Integer
     Protected Friend _length As Integer = Integer.MaxValue
     Protected _er As ExecutionResult
     Friend _externalFilter As IFilter
     Protected Friend _loadedInLastFetch As Integer
-    Private _list As String
+    Friend _list As String
     Private _listeners As New List(Of TraceListener)
 
 #If TraceManagerCreation Then
@@ -1580,6 +1580,11 @@ Public MustInherit Class OrmManagerBase
         Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
+    Public Function GetOrmBaseFromCacheOrDB(Of T As {IOrmBase, New})(ByVal id As Object) As T
+        Dim o As T = CreateOrmBase(Of T)(id)
+        o.SetObjectState(ObjectState.NotLoaded)
+        Return CType(GetFromCacheOrLoadFromDB(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
+    End Function
     '        Public Function Find(Of T As {OrmBase, New}, T1)(ByVal value As T1, ByVal fieldName As String, ByVal sort As String, ByVal sortType As SortType, ByVal withLoad As Boolean) As ICollection(Of T)
     '#If DEBUG Then
     '            Dim pi As Reflection.PropertyInfo = _schema.GetProperty(GetType(T), fieldName)
@@ -2110,6 +2115,10 @@ l1:
         If del.Created Then
             If Not _dont_cache_lists Then del.CreateDepends()
         Else
+            If ce._expires = Date.MinValue Then
+                ce._expires = _expiresPattern
+            End If
+
             If ce.Expires Then
                 ce.Expire()
                 del.Renew = True
@@ -3919,13 +3928,20 @@ l1:
     End Function
 
     Protected Friend Function GetDic(ByVal cache As OrmCacheBase, ByVal key As String) As IDictionary
+        Dim b As Boolean
+        Return GetDic(cache, key, b)
+    End Function
+
+    Protected Friend Function GetDic(ByVal cache As OrmCacheBase, ByVal key As String, ByRef created As Boolean) As IDictionary
         Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
+        created = False
         If dic Is Nothing Then
             Using SyncHelper.AcquireDynamicLock(key)
                 dic = CType(cache.Filters(key), IDictionary)
                 If dic Is Nothing Then
                     dic = cache.CreateResultsetsDictionary(_list) 'Hashtable.Synchronized(New Hashtable)
                     cache.Filters.Add(key, dic)
+                    created = True
                 End If
             End Using
         End If

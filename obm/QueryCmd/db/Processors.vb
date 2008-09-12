@@ -17,14 +17,14 @@ Namespace Query.Database
             Private _mgr As OrmReadOnlyDBManager
             Private _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
             Private _f() As IFilter
-            Private _q As QueryCmdBase
+            Private _q As QueryCmd
             Private _key As String
             Private _id As String
             Private _sync As String
             Private _dic As IDictionary
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmdBase)
+                ByVal f() As IFilter, ByVal q As QueryCmd)
                 _mgr = mgr
                 _q = q
 
@@ -40,11 +40,15 @@ Namespace Query.Database
                 _f = f
 
                 _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f)
-                _dic = _mgr.GetDic(_mgr.Cache, _key)
                 _id = _q.GetDynamicKey(_j, _f)
                 _sync = _id & _mgr.GetStaticKey()
 
                 ResetStmt()
+                ResetDic()
+            End Sub
+
+            Public Sub ResetDic()
+                _dic = _mgr.GetDic(_mgr.Cache, _key)
             End Sub
 
             Public Function GetEntities() As ReadOnlyObjectList(Of ReturnType)
@@ -72,7 +76,7 @@ Namespace Query.Database
                 'Dim f As IFilter = _f
 
                 If String.IsNullOrEmpty(_stmt) Then
-                    _cmdType = Data.CommandType.Text
+                    _cmdType = System.Data.CommandType.Text
 
                     _params = New ParamMgr(_mgr.DbSchema, "p")
                     _stmt = _MakeStatement()
@@ -88,7 +92,7 @@ Namespace Query.Database
                 Dim fi As Object = _mgr.GetFilterInfo
                 Dim t As Type = _q.SelectedType
                 Dim i As Integer = 0
-                Dim q As QueryCmdBase = _q
+                Dim q As QueryCmd = _q
                 'Dim sb As New StringBuilder
                 Dim inner As String = Nothing
                 Dim innerColumns As List(Of String) = Nothing
@@ -128,7 +132,7 @@ Namespace Query.Database
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
 
-            Protected Function GetFieldsIdx(ByVal q As QueryCmdBase) As Collections.IndexedCollection(Of String, MapField2Column)
+            Protected Function GetFieldsIdx(ByVal q As QueryCmd) As Collections.IndexedCollection(Of String, MapField2Column)
                 Dim c As New Cache.OrmObjectIndex
 
                 For Each p As OrmProperty In q.SelectList
@@ -196,18 +200,27 @@ Namespace Query.Database
             Private _mgr As OrmReadOnlyDBManager
             Private _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
             Private _f() As IFilter
-            Private _q As QueryCmdBase
+            Private _q As QueryCmd
             Private _key As String
             Private _id As String
             Private _sync As String
             Private _dic As IDictionary
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmdBase)
+                ByVal f() As IFilter, ByVal q As QueryCmd)
                 _mgr = mgr
                 _q = q
 
                 Reset(j, f)
+            End Sub
+
+            Public Sub ResetDic()
+                Dim c As Boolean
+                _dic = _mgr.GetDic(_mgr.Cache, _key, c)
+                'If Not c Then
+                '    _mgr.Cache.Filters.Remove(_key)
+                '    _dic = _mgr.GetDic(_mgr.Cache, _key, c)
+                'End If
             End Sub
 
             Public Overrides Sub CreateDepends()
@@ -293,7 +306,7 @@ Namespace Query.Database
                 'Dim f As IFilter = _f
 
                 If String.IsNullOrEmpty(_stmt) Then
-                    _cmdType = Data.CommandType.Text
+                    _cmdType = System.Data.CommandType.Text
 
                     _params = New ParamMgr(Mgr.DbSchema, "p")
                     _stmt = _MakeStatement()
@@ -309,7 +322,7 @@ Namespace Query.Database
                 Dim fi As Object = Mgr.GetFilterInfo
                 Dim t As Type = Query.SelectedType
                 Dim i As Integer = 0
-                Dim q As QueryCmdBase = Query
+                Dim q As QueryCmd = Query
                 'Dim sb As New StringBuilder
                 Dim inner As String = Nothing
                 Dim innerColumns As List(Of String) = Nothing
@@ -352,7 +365,7 @@ Namespace Query.Database
                 End Get
             End Property
 
-            Protected ReadOnly Property Query() As QueryCmdBase
+            Protected ReadOnly Property Query() As QueryCmd
                 Get
                     Return _q
                 End Get
@@ -390,11 +403,12 @@ Namespace Query.Database
                 _j = j
                 _f = f
                 _key = Query.GetStaticKey(_mgr.GetStaticKey(), _j, _f)
-                _dic = _mgr.GetDic(_mgr.Cache, _key)
+                '_dic = _mgr.GetDic(_mgr.Cache, _key)
                 _id = Query.GetDynamicKey(_j, _f)
                 _sync = _id & _mgr.GetStaticKey()
 
                 ResetStmt()
+                ResetDic()
             End Sub
 
             Public Overridable Function Validate() As Boolean Implements OrmManagerBase.ICacheValidator.Validate
@@ -433,7 +447,7 @@ Namespace Query.Database
             Inherits Processor(Of ReturnType)
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmdBase)
+                ByVal f() As IFilter, ByVal q As QueryCmd)
                 MyBase.New(mgr, j, f, q)
             End Sub
 

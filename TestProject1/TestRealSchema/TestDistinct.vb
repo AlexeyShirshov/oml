@@ -23,7 +23,7 @@ Public Class TestDistinct
 
             Dim c As ICollection(Of Table1) = mgr.FindWithJoins(Of Table1)(Nothing, joins, Nothing, Nothing, True)
 
-            Assert.AreEqual(2, c.Count)
+            Assert.AreEqual(3, c.Count)
             Assert.IsTrue(CType(c, IList(Of Table1))(0).InternalProperties.IsLoaded)
         End Using
     End Sub

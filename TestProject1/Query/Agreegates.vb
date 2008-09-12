@@ -53,7 +53,7 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> Public Sub TestMax()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Entity4))
+            Dim q As New QueryCmd(GetType(Entity4))
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Max, GetType(Entity4), "ID") _
             })
@@ -67,7 +67,7 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> Public Sub TestCount()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Entity4))
+            Dim q As New QueryCmd(GetType(Entity4))
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
             })
@@ -88,13 +88,13 @@ Imports Worm.Database.Criteria.Core
 
             Dim table As SourceFragment = r.Table
 
-            Dim inner As QueryCmdBase = New QueryCmdBase(table)
+            Dim inner As QueryCmd = New QueryCmd(table)
             inner.Filter = New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
             inner.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
             })
 
-            Dim q As New QueryCmdBase(GetType(Entity4))
+            Dim q As New QueryCmd(GetType(Entity4))
             q.propSort = New Worm.Sorting.SortAdv(inner, SortType.Desc)
 
             Dim l As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
@@ -115,7 +115,7 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> Public Sub TestGroup()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmdBase(GetType(Entity4))
+            Dim q As New QueryCmd(GetType(Entity4))
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count) _
             })
@@ -159,7 +159,7 @@ Imports Worm.Database.Criteria.Core
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim t As Type = GetType(Entity4)
             Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
-            Dim q As New QueryCmdBase(t)
+            Dim q As New QueryCmd(t)
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count, "Count") _
             })

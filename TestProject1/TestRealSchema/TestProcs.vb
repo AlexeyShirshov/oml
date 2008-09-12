@@ -19,7 +19,7 @@ Public Class TestProcs
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Assert.AreEqual(1, l.Count)
             Assert.AreEqual(t1, l(0).First)
-            Assert.AreEqual(2, l(0).Second)
+            Assert.AreEqual(3, l(0).Second)
 
             l = p.GetResult(mgr)
 
@@ -35,7 +35,7 @@ Public Class TestProcs
 
                 Assert.AreEqual(1, l.Count)
                 Assert.AreEqual(t1, l(0).First)
-                Assert.AreEqual(3, l(0).Second)
+                Assert.AreEqual(4, l(0).Second)
 
             Finally
                 mgr.Rollback()
@@ -52,7 +52,7 @@ Public Class TestProcs
             Dim t2 As Table1 = mgr.Find(Of Table1)(2)
             Assert.AreEqual(1, l.Count)
             Assert.AreEqual(t1, l(0).First)
-            Assert.AreEqual(2, l(0).Second)
+            Assert.AreEqual(3, l(0).Second)
 
             l = p.GetResult(mgr)
 
@@ -66,7 +66,7 @@ Public Class TestProcs
 
                 Assert.AreEqual(2, l.Count)
                 Assert.AreEqual(t1, l(0).First)
-                Assert.AreEqual(1, l(0).Second)
+                Assert.AreEqual(2, l(0).Second)
 
             Finally
                 mgr.Rollback()

@@ -2339,14 +2339,14 @@ Namespace Orm
             MyBase.PKLoaded(pkCount)
         End Sub
 
-        Protected Function _Find(ByVal t As System.Type) As Worm.Query.QueryCmdBase Implements IM2M.Find
-            Dim q As New Worm.Query.QueryCmdBase(Me)
+        Protected Function _Find(ByVal t As System.Type) As Worm.Query.QueryCmd Implements IM2M.Find
+            Dim q As New Worm.Query.QueryCmd(Me)
             q.SelectedType = t
             Return q
         End Function
 
-        Protected Function _Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmdBase Implements IM2M.Find
-            Dim q As New Worm.Query.QueryCmdBase(Me, key)
+        Protected Function _Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Find
+            Dim q As New Worm.Query.QueryCmd(Me, key)
             q.SelectedType = t
             Return q
         End Function
