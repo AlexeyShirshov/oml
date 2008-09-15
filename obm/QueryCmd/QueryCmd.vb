@@ -287,12 +287,12 @@ Namespace Query
             Return f
         End Function
 
-        Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of OrmJoin)), ByVal fs() As IFilter) As String
+        Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of OrmJoin)), ByVal fs() As IFilter, ByVal realType As Type) As String
             Dim key As New StringBuilder
             Dim i As Integer = 0
             Dim q As QueryCmd = Me
             Do While q IsNot Nothing
-                q.GetStaticKey(key, js(i), fs(i))
+                q.GetStaticKey(key, js(i), fs(i), If(q._realType Is Nothing, realType, q._realType))
                 i += 1
                 q = q._outer
                 If q IsNot Nothing Then
@@ -306,7 +306,7 @@ Namespace Query
             Return key.ToString
         End Function
 
-        Protected Friend Sub GetStaticKey(ByVal sb As StringBuilder, ByVal j As List(Of OrmJoin), ByVal f As IFilter)
+        Protected Friend Sub GetStaticKey(ByVal sb As StringBuilder, ByVal j As IEnumerable(Of OrmJoin), ByVal f As IFilter, ByVal realType As Type)
             Dim sb2 As New StringBuilder
 
             If f IsNot Nothing Then
@@ -322,8 +322,8 @@ Namespace Query
             End If
 
             If sb2.Length = 0 Then
-                If _realType IsNot Nothing Then
-                    sb2.Append(_realType.ToString)
+                If realType IsNot Nothing Then
+                    sb2.Append(realType.ToString)
                 ElseIf _table IsNot Nothing Then
                     sb2.Append(_table.ToString)
                 Else
@@ -362,7 +362,7 @@ Namespace Query
             Return id.ToString '& GetType(T).ToString
         End Function
 
-        Protected Friend Sub GetDynamicKey(ByVal sb As StringBuilder, ByVal j As List(Of OrmJoin), ByVal f As IFilter)
+        Protected Friend Sub GetDynamicKey(ByVal sb As StringBuilder, ByVal j As IEnumerable(Of OrmJoin), ByVal f As IFilter)
             If f IsNot Nothing Then
                 sb.Append(f.ToString).Append("$")
             End If
@@ -393,6 +393,19 @@ Namespace Query
                 sb.Append(_rn.ToString)
             End If
         End Sub
+
+        Public Overrides Function ToString() As String
+            Dim sb As New StringBuilder
+            GetDynamicKey(sb, _joins, _filter.Filter)
+            Return sb.ToString
+        End Function
+
+        Public Function ToStaticString() As String
+            Dim sb As New StringBuilder
+            GetStaticKey(sb, _joins, _filter.Filter, _realType)
+            Return sb.ToString
+        End Function
+
 
 #Region " Properties "
         Public Property EntityName() As String
@@ -677,13 +690,22 @@ Namespace Query
 
         Private Class cls
             Private _m As GetManagerDelegate
+            Private _gm As IGetManager
 
             Public Sub New(ByVal getMgr As GetManagerDelegate)
                 _m = getMgr
             End Sub
 
+            Public Sub New(ByVal getMgr As IGetManager)
+                _gm = getMgr
+            End Sub
+
             Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
-                args.Manager = _m()
+                If _m Is Nothing Then
+                    args.Manager = _gm.Manager
+                Else
+                    args.Manager = _m()
+                End If
             End Sub
 
             Public Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManagerBase)
@@ -699,6 +721,20 @@ Namespace Query
 
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As GetManagerDelegate) As ReadOnlyEntityList(Of T)
             Dim mgr As OrmManagerBase = getMgr()
+            Try
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManagerBase) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
+                Return ToEntityList(Of T)(mgr)
+            Finally
+                If mgr IsNot Nothing Then
+                    mgr.Dispose()
+                End If
+            End Try
+        End Function
+
+        Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As IGetManager) As ReadOnlyEntityList(Of T)
+            Dim mgr As OrmManagerBase = getMgr.Manager
             Try
                 mgr.RaiseObjectCreation = True
                 AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated

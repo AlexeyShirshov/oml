@@ -76,7 +76,7 @@ Namespace Query.Database
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                     Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, query.SelectedType)
-                    p.Reset(j, f)
+                    p.Reset(j, f, query.SelectedType)
                 Else
                     If _sm <> query.SMark Then
                         p.ResetStmt()
@@ -130,7 +130,7 @@ Namespace Query.Database
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                     Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, query.SelectedType)
-                    p.Reset(j, f)
+                    p.Reset(j, f, query.SelectedType)
                 Else
                     If _sm <> query.SMark Then
                         p.ResetStmt()
@@ -177,7 +177,7 @@ Namespace Query.Database
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                     Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, GetType(ReturnType))
-                    p.Reset(j, f)
+                    p.Reset(j, f, GetType(SelectType))
                 Else
                     If _sm <> query.SMark Then
                         p.ResetStmt()
@@ -559,10 +559,10 @@ Namespace Query.Database
         End Sub
 
         Public Shared Function MakeQueryStatement(ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
-            ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal t As Type, _
+            ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal queryType As Type, _
             ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As AliasMgr) As String
 
-            Return MakeQueryStatement(filterInfo, schema, query, params, t, joins, f, almgr, Nothing, Nothing, Nothing, 0, query.propWithLoad)
+            Return MakeQueryStatement(filterInfo, schema, query, params, queryType, joins, f, almgr, Nothing, Nothing, Nothing, 0, query.propWithLoad)
         End Function
 
         Public Shared Function MakeQueryStatement(ByVal filterInfo As Object, ByVal schema As SQLGenerator, _

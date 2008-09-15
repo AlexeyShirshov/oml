@@ -225,6 +225,12 @@ Namespace Query
             End Select
             Return s
         End Function
+
+        Public Overrides Function ToString() As String
+            Dim s As String = FormatFunc(AggFunc, String.Empty)
+            s = String.Format(s, _oper.ToString)
+            Return s
+        End Function
     End Class
 
     Public Class CustomFuncAggregate

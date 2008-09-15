@@ -117,9 +117,10 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestSort()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmd(GetType(Entity4))
-            q.Filter = Ctor.AutoTypeField("Title").Like("b%")
-            q.propSort = Worm.Orm.Sorting.Field("ID")
+            Dim q As QueryCmd = New QueryCmd(GetType(Entity4)). _
+                Where(Ctor.AutoTypeField("Title").Like("b%")). _
+                Sort(Worm.Orm.Sorting.Field("ID"))
+
             Assert.IsNotNull(q)
 
             Dim r As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
@@ -328,10 +329,9 @@ Imports Worm.Database.Criteria.Joins
             Dim t As SourceFragment = New SourceFragment("dbo", "guid_table")
             Dim q As New QueryCmd(t)
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
-                New Aggregate(AggregateFunction.Count) _
+                New Aggregate(AggregateFunction.Count, "cnt") _
             })
 
-            q.Aggregates(0).Alias = "cnt"
             q.GroupBy(New OrmProperty() {New OrmProperty(t, "code")}). _
             Select(New OrmProperty() {New OrmProperty(t, "code", "Code")}).Sort(Sorting.Custom("cnt desc"))
 
@@ -540,4 +540,46 @@ Imports Worm.Database.Criteria.Joins
 
         End Using
     End Sub
+
+    <TestMethod()> Public Sub TestCorrelatedSubquery()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+            Dim tt2 As Type = GetType(Table2)
+
+            Dim q As QueryCmd = New QueryCmd(tt2). _
+                Where(New Ctor(tt2).Field("Table1").Exists(GetType(Table1)))
+
+            Assert.AreEqual(2, q.ToEntityList(Of Table2)(mgr).Count)
+
+            q.Where(New Ctor(tt2).Field("Table1").NotExists(GetType(Table1)))
+
+            Assert.AreEqual(0, q.ToEntityList(Of Table2)(mgr).Count)
+
+            q.Where(Ctor.Field(tt2, "Table1").NotExists(GetType(Table1), _
+                Ctor.Field(GetType(Table1), "Code").Eq(45). _
+                And( _
+                    JoinCondition.Create(tt2, "Table1").Eq(GetType(Table1), "Enum") _
+                )))
+
+            Assert.AreEqual(2, q.ToEntityList(Of Table2)(mgr).Count)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestCorrelatedSubqueryCmd()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+            Dim tt1 As Type = GetType(Table1)
+            Dim tt2 As Type = GetType(Table2)
+
+            Dim q As QueryCmd = New QueryCmd(tt2). _
+                Where(New Ctor(tt2).Field("Table1").Exists(GetType(Table1)))
+
+            Dim cq As QueryCmd = New QueryCmd(tt1). _
+                Where(JoinCondition.Create(tt2, "Table1").Eq(tt1, "Enum").And( _
+                      Ctor.Field(tt1, "Code").Eq(45)))
+
+            q.Where(New NonTemplateFilter(New Values.SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))
+
+            Assert.AreEqual(2, q.ToEntityList(Of Table2)(mgr).Count)
+        End Using
+    End Sub
+
 End Class

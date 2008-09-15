@@ -488,7 +488,7 @@ Namespace Sorting
         End Property
 
         Public Function GetCustomExpressionValues(ByVal schema As QueryGenerator, ByVal aliases As IDictionary(Of SourceFragment, String)) As String()
-            Return schema.ExtractValues(schema, aliases, _values).ToArray
+            Return QueryGenerator.ExtractValues(schema, aliases, _values).ToArray
         End Function
 
         Public ReadOnly Property Table() As SourceFragment

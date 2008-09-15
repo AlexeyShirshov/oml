@@ -620,12 +620,14 @@ Namespace Database
         End Class
 
         Public Class JoinLink
+            Implements IGetFilter
+
             Private _c As Conditions.Condition.ConditionConstructor
             Private _jc As JCtor
 
-            Protected Friend Sub New(ByVal jf As JoinFilter, ByVal jc As JCtor)
+            Protected Friend Sub New(ByVal f As IFilter, ByVal jc As JCtor)
                 _c = New Conditions.Condition.ConditionConstructor
-                _c.AddFilter(jf)
+                _c.AddFilter(f)
                 _jc = jc
             End Sub
 
@@ -634,8 +636,8 @@ Namespace Database
                 _jc = jc
             End Sub
 
-            Public Function [And](ByVal jf As JoinFilter) As JoinLink
-                _c.AddFilter(jf, Worm.Criteria.Conditions.ConditionOperator.And)
+            Public Function [And](ByVal f As IGetFilter) As JoinLink
+                _c.AddFilter(f.Filter, Worm.Criteria.Conditions.ConditionOperator.And)
                 Return Me
             End Function
 
@@ -650,6 +652,12 @@ Namespace Database
                 Dim c As New CriteriaJoin(jf, _c, _jc)
                 Return c
             End Function
+
+            Public ReadOnly Property Condition() As IFilter
+                Get
+                    Return _c.Condition
+                End Get
+            End Property
 
             Protected ReadOnly Property JC() As JCtor
                 Get
@@ -702,6 +710,18 @@ Namespace Database
             Public Shared Widening Operator CType(ByVal jl As JoinLink) As OrmJoin()
                 Return jl.JC.AddFilter(jl._c.Condition).ToJoinArray
             End Operator
+
+            Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter
+                Get
+                    Return Condition
+                End Get
+            End Property
+
+            Public ReadOnly Property Filter(ByVal t As System.Type) As IFilter Implements IGetFilter.Filter
+                Get
+                    Return Condition
+                End Get
+            End Property
         End Class
 
         Public Class CriteriaJoin
@@ -748,8 +768,8 @@ Namespace Database
                 _j = jc
             End Sub
 
-            Public Function [On](ByVal jf As JoinFilter) As JoinLink
-                Return New JoinLink(jf, _j)
+            Public Function [On](ByVal f As IFilter) As JoinLink
+                Return New JoinLink(f, _j)
             End Function
 
             Public Function [On](ByVal t As Type, ByVal field As String) As CriteriaJoin
@@ -761,6 +781,18 @@ Namespace Database
             Public Function [On](ByVal table As SourceFragment, ByVal column As String) As CriteriaJoin
                 Dim jf As New JoinFilter(table, column, CType(Nothing, Type), Nothing, FilterOperation.Equal)
                 Dim c As New CriteriaJoin(jf, _j)
+                Return c
+            End Function
+
+            Public Shared Function Create(ByVal t As Type, ByVal field As String) As CriteriaJoin
+                Dim jf As New JoinFilter(t, field, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+                Dim c As New CriteriaJoin(jf, Nothing)
+                Return c
+            End Function
+
+            Public Shared Function Create(ByVal table As SourceFragment, ByVal column As String) As CriteriaJoin
+                Dim jf As New JoinFilter(table, column, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+                Dim c As New CriteriaJoin(jf, Nothing)
                 Return c
             End Function
         End Class

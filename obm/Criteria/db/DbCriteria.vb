@@ -192,12 +192,12 @@ Namespace Database
                 Return NotExists(t, "ID")
             End Function
 
-            Public Function Exists(ByVal t As Type, ByVal f As cc.IFilter) As CriteriaLink
-                Return GetLink2(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.Exists))
+            Public Function Exists(ByVal t As Type, ByVal f As cc.IGetFilter) As CriteriaLink
+                Return GetLink2(New NonTemplateFilter(New SubQuery(t, f.Filter), FilterOperation.Exists))
             End Function
 
-            Public Function NotExists(ByVal t As Type, ByVal f As cc.IFilter) As CriteriaLink
-                Return GetLink2(New NonTemplateFilter(New SubQuery(t, f), FilterOperation.NotExists))
+            Public Function NotExists(ByVal t As Type, ByVal f As cc.IGetFilter) As CriteriaLink
+                Return GetLink2(New NonTemplateFilter(New SubQuery(t, f.Filter), FilterOperation.NotExists))
             End Function
         End Class
 
