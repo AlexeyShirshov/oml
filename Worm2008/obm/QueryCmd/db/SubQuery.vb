@@ -27,7 +27,7 @@ Namespace Query.Database.Filters
         Public Function GetStaticString() As String Implements Criteria.Values.INonTemplateValue.GetStaticString
             Prepare(Nothing, Nothing)
             Dim sb As New StringBuilder
-            _q.GetStaticKey(sb, _j, _f)
+            _q.GetStaticKey(sb, _j, _f, _q.SelectedType)
             Return sb.ToString
         End Function
 

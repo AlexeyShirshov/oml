@@ -55,5 +55,15 @@ Namespace Sorting
                 s.AppendOrder(t, Me, almgr, sb, True, Nothing, Nothing)
             End If
         End Sub
+
+        Public Overrides Function ToString() As String
+            If _agr IsNot Nothing Then
+                Return _agr.ToString
+            ElseIf _q IsNot Nothing Then
+                Return _q.ToString
+            Else
+                Return MyBase.ToString
+            End If
+        End Function
     End Class
 End Namespace

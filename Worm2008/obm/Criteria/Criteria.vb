@@ -336,6 +336,11 @@ Namespace Criteria
             Return Me
         End Function
 
+        Public Function [And](ByVal f As IGetFilter) As CriteriaLink
+            _con.AddFilter(f.Filter, ConditionOperator.And)
+            Return Me
+        End Function
+
         Public Function [Or](ByVal link As CriteriaLink) As CriteriaLink
             If link IsNot Nothing Then
                 _con.AddFilter(link._con.Condition, ConditionOperator.Or)

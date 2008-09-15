@@ -346,6 +346,7 @@ Namespace Orm
                 mgr = a.Manager
                 Return mgr
             Else
+                'don't dispose
                 Return New ManagerWrapper(mgr)
             End If
         End Function

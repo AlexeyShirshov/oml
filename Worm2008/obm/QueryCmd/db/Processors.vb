@@ -28,18 +28,18 @@ Namespace Query.Database
                 _mgr = mgr
                 _q = q
 
-                Reset(j, f)
+                Reset(j, f, q.SelectedType)
             End Sub
 
             Public Sub ResetStmt()
                 _stmt = Nothing
             End Sub
 
-            Public Sub Reset(ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal f() As IFilter)
+            Public Sub Reset(ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal f() As IFilter, ByVal t As Type)
                 _j = j
                 _f = f
 
-                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f)
+                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t)
                 _id = _q.GetDynamicKey(_j, _f)
                 _sync = _id & _mgr.GetStaticKey()
 
@@ -211,7 +211,15 @@ Namespace Query.Database
                 _mgr = mgr
                 _q = q
 
-                Reset(j, f)
+                Reset(j, f, q.SelectedType)
+            End Sub
+
+            Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type)
+                _mgr = mgr
+                _q = q
+
+                Reset(j, f, t)
             End Sub
 
             Public Sub ResetDic()
@@ -399,10 +407,10 @@ Namespace Query.Database
                 _stmt = Nothing
             End Sub
 
-            Public Sub Reset(ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal f() As IFilter)
+            Public Sub Reset(ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal f() As IFilter, ByVal t As Type)
                 _j = j
                 _f = f
-                _key = Query.GetStaticKey(_mgr.GetStaticKey(), _j, _f)
+                _key = Query.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t)
                 '_dic = _mgr.GetDic(_mgr.Cache, _key)
                 _id = Query.GetDynamicKey(_j, _f)
                 _sync = _id & _mgr.GetStaticKey()
@@ -448,7 +456,7 @@ Namespace Query.Database
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd)
-                MyBase.New(mgr, j, f, q)
+                MyBase.New(mgr, j, f, q, GetType(SelectType))
             End Sub
 
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyEntityList(Of ReturnType)

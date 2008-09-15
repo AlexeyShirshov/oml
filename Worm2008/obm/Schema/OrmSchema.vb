@@ -747,6 +747,9 @@ Public MustInherit Class QueryGenerator
                 arr = CType(map(cl_type), Generic.List(Of ColumnAttribute))
                 If arr Is Nothing Then
                     arr = New Generic.List(Of ColumnAttribute)
+                    If schema Is Nothing Then
+                        schema = GetObjectSchema(original_type)
+                    End If
 
                     For Each c As ColumnAttribute In GetProperties(original_type, schema).Keys
                         arr.Add(c)
