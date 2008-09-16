@@ -404,7 +404,7 @@ Namespace Database
                                 End If
 
                                 Dim f As EntityFilterBase = Nothing
-                                Dim v As Object = ChangeValueType(real_t, c, current)
+								Dim v As Object = ChangeValueType(es, c, current)
                                 If (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault AndAlso v Is DBNull.Value Then
                                     If Not String.IsNullOrEmpty(DefaultValue) Then
                                         f = New dc.EntityFilter(real_t, c.FieldName, New LiteralValue(DefaultValue), FilterOperation.Equal)

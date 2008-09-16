@@ -148,6 +148,7 @@
     <Compile Include="Entity\Anonym.vb" />
     <Compile Include="Entity\CachedEntity.vb" />
     <Compile Include="Entity\Entity.vb" />
+    <Compile Include="Entity\Prop.vb" />
     <Compile Include="Managers\db\DataProviders.vb" />
     <Compile Include="Managers\xml\DataProviders.vb" />
     <Compile Include="Managers\xml\XmlManager.vb" />

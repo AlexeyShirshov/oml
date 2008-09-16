@@ -198,15 +198,17 @@ Namespace Database
                     _objects.Add(o)
                     AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
 #If DEBUG Then
-                    Dim mo As ModifiedObject = _mgr.Cache.Modified(o)
-                    If o.ObjectState = ObjectState.Deleted Then
-                        _deleted.Add(o)
-                        Debug.Assert(mo IsNot Nothing)
-                        Debug.Assert(mo.Reason = ModifiedObject.ReasonEnum.Delete OrElse mo.Reason = ModifiedObject.ReasonEnum.Edit)
-                    ElseIf o.ObjectState = ObjectState.Modified Then
-                        _updated.Add(o)
-                        Debug.Assert(mo IsNot Nothing)
-                        Debug.Assert(mo.Reason = ModifiedObject.ReasonEnum.Edit)
+                    If o.HasChanges Then
+                        Dim mo As ModifiedObject = _mgr.Cache.Modified(o)
+                        If o.ObjectState = ObjectState.Deleted Then
+                            _deleted.Add(o)
+                            Debug.Assert(mo IsNot Nothing)
+                            Debug.Assert(mo.Reason = ModifiedObject.ReasonEnum.Delete OrElse mo.Reason = ModifiedObject.ReasonEnum.Edit)
+                        ElseIf o.ObjectState = ObjectState.Modified Then
+                            _updated.Add(o)
+                            Debug.Assert(mo IsNot Nothing)
+                            Debug.Assert(mo.Reason = ModifiedObject.ReasonEnum.Edit)
+                        End If
                     End If
 #End If
                 End If
@@ -249,7 +251,7 @@ Namespace Database
                 End If
             End Sub
 
-            Protected Function SaveObj(ByVal o As ICachedEntity, ByVal need2save As List(Of ICachedEntity), ByVal saved As List(Of Pair(Of ObjectState, ICachedEntity))) As Boolean
+            Protected Function SaveObj(ByVal o As _ICachedEntity, ByVal need2save As List(Of ICachedEntity), ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity))) As Boolean
                 Try
                     Dim args As New CancelEventArgs(o)
                     RaiseEvent ObjectSaving(Me, args)
@@ -263,7 +265,7 @@ Namespace Database
                             need2save.Add(o)
                             RaiseEvent ObjectPostponed(o)
                         Else
-                            saved.Add(New Pair(Of ObjectState, ICachedEntity)(os, o))
+                            saved.Add(New Pair(Of ObjectState, _ICachedEntity)(os, o))
                             RaiseEvent ObjectSaved(o)
                         End If
                     End If
@@ -275,7 +277,7 @@ Namespace Database
 
             Protected Sub Save()
                 Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
-                Dim saved As New List(Of Pair(Of ObjectState, ICachedEntity)), copies As New List(Of Pair(Of ICachedEntity))
+                Dim saved As New List(Of Pair(Of ObjectState, _ICachedEntity)), copies As New List(Of Pair(Of ICachedEntity))
                 Dim rejectList As New List(Of ICachedEntity), need2save As New List(Of ICachedEntity)
                 _startSave = True
 #If DebugLocks Then
@@ -286,7 +288,7 @@ Namespace Database
                     _mgr.BeginTransaction()
                     Try
                         RaiseEvent BeginSave(_objects.Count)
-                        For Each o As ICachedEntity In _objects
+                        For Each o As _ICachedEntity In _objects
                             Dim pp As Pair(Of ICachedEntity) = Nothing
                             If o.ObjectState = ObjectState.Created Then
                                 rejectList.Add(o)
@@ -322,7 +324,7 @@ Namespace Database
                         For i As Integer = 0 To 4
                             Dim ns As New List(Of ICachedEntity)(need2save)
                             need2save.Clear()
-                            For Each o As ICachedEntity In ns
+                            For Each o As _ICachedEntity In ns
                                 SaveObj(o, need2save, saved)
                             Next
                             If need2save.Count = 0 Then
@@ -358,19 +360,19 @@ Namespace Database
                                 RaiseEvent BeginAccepting()
                                 If _acceptInBatch Then
                                     'Dim l As New Dictionary(Of OrmBase, OrmBase)
-                                    Dim l2 As New Dictionary(Of Type, List(Of ICachedEntity))
+                                    Dim l2 As New Dictionary(Of Type, List(Of _ICachedEntity))
                                     Dim val As New List(Of ICachedEntity)
-                                    For Each p As Pair(Of ObjectState, ICachedEntity) In saved
-                                        Dim o As ICachedEntity = p.Second
+                                    For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
+                                        Dim o As _ICachedEntity = p.Second
                                         RaiseEvent ObjectAccepting(o)
                                         Dim mo As ICachedEntity = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
                                         Debug.Assert(_mgr.Cache.Modified(o) Is Nothing)
                                         'l.Add(o, mo)
                                         RaiseEvent ObjectAccepted(o)
                                         If CType(o, _ICachedEntity).UpdateCtx.Added OrElse CType(o, _ICachedEntity).UpdateCtx.Deleted Then
-                                            Dim ls As List(Of ICachedEntity) = Nothing
+                                            Dim ls As List(Of _ICachedEntity) = Nothing
                                             If Not l2.TryGetValue(o.GetType, ls) Then
-                                                ls = New List(Of ICachedEntity)
+                                                ls = New List(Of _ICachedEntity)
                                                 l2.Add(o.GetType, ls)
                                             End If
                                             ls.Add(o)
@@ -382,21 +384,21 @@ Namespace Database
                                         o.UpdateCacheAfterUpdate()
                                     Next
                                     For Each t As Type In l2.Keys
-                                        Dim ls As List(Of ICachedEntity) = l2(t)
+                                        Dim ls As List(Of _ICachedEntity) = l2(t)
                                         '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                         '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
                                         _mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                             AddressOf CachedEntity.ClearCacheFlags, Nothing, _callbacks)
                                     Next
                                 Else
-                                    For Each p As Pair(Of ObjectState, ICachedEntity) In saved
-                                        Dim o As ICachedEntity = p.Second
+                                    For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
+                                        Dim o As _ICachedEntity = p.Second
                                         RaiseEvent ObjectAccepting(o)
                                         o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
                                         Debug.Assert(_mgr.Cache.Modified(o) Is Nothing)
                                         RaiseEvent ObjectAccepted(o)
                                     Next
-                                    For Each p As Pair(Of ObjectState, ICachedEntity) In saved
+                                    For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                         Dim o As ICachedEntity = p.Second
                                         o.UpdateCache()
                                     Next
@@ -418,7 +420,7 @@ Namespace Database
                 End Using
             End Sub
 
-            Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, ICachedEntity)), _
+            Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)), _
                 ByVal rejectList As List(Of ICachedEntity), ByVal copies As List(Of Pair(Of ICachedEntity)), ByVal need2save As List(Of ICachedEntity))
                 For Each o As ICachedEntity In rejectList
                     RaiseEvent ObjectRejecting(o)
@@ -436,7 +438,7 @@ Namespace Database
                     End If
                     RaiseEvent ObjectRestored(o.First)
                 Next
-                For Each p As Pair(Of ObjectState, ICachedEntity) In saved
+                For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                     Dim o As ICachedEntity = p.Second
                     If Not rejectList.Contains(o) Then
                         RaiseEvent ObjectRejecting(o)
@@ -2221,7 +2223,7 @@ Namespace Database
                         End If
                     Next
 
-                    Dim f As IFactory = TryCast(oschema, IFactory)
+					Dim f As IFactory = TryCast(obj, IFactory)
                     If f IsNot Nothing Then
                         For Each p As Pair(Of String, Object) In fac
                             f.CreateObject(p.First, p.Second)

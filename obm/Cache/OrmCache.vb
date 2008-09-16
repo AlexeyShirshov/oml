@@ -318,14 +318,18 @@ Namespace Cache
             End Using
         End Function
 
-        Public Function Modified(ByVal obj As ICachedEntity) As ModifiedObject
+        Public Function Modified(ByVal obj As _ICachedEntity) As ModifiedObject
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
-                Dim name As String = obj.GetType().Name & ":" & obj.Key
-                Return CType(_modifiedobjects(name), ModifiedObject)
+                If obj.IsPKLoaded Then
+                    Dim name As String = obj.GetType().Name & ":" & obj.Key
+                    Return CType(_modifiedobjects(name), ModifiedObject)
+                Else
+                    Return Nothing
+                End If
             End Using
         End Function
 
@@ -497,7 +501,7 @@ Namespace Cache
         End Function
 #End If
 
-        Public Overridable Sub RegisterRemoval(ByVal obj As ICachedEntity)
+        Public Overridable Sub RegisterRemoval(ByVal obj As _ICachedEntity)
             Debug.Assert(Modified(obj) Is Nothing)
             RaiseEvent RegisterObjectRemoval(obj)
             obj.RemoveFromCache(Me)

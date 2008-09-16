@@ -2544,7 +2544,9 @@ Namespace Orm
         Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
             MyBase.Init(id, cache, schema, mgrIdentityString)
         End Sub
-
+        Protected Overrides Sub Init()
+			MyBase.Init()
+		End Sub
         'Protected Overridable Function GetNew() As T
         '    Return New T()
         'End Function
@@ -2629,6 +2631,13 @@ Namespace Orm
                 '    CreateModified(value, ModifiedObject.ReasonEnum.Unknown)
                 'End If
                 _id = value
+                If Not CType(Me, _ICachedEntity).IsPKLoaded Then
+                    PKLoaded(1)
+                    Dim schema As QueryGenerator = OrmSchema
+                    If schema IsNot Nothing Then
+                        CType(Me, _ICachedEntity).SetLoaded(New ColumnAttribute(GetPKValues()(0).First), True, True, schema)
+                    End If
+                End If
                 'Debug.Assert(_id.Equals(value))
                 'End If
                 'End Using
@@ -2652,9 +2661,9 @@ Namespace Orm
             End If
         End Sub
 
-        Public Overridable Overloads Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
-            MyBase.SetValue(pi, c, Nothing, value)
-        End Sub
+		'Public Overridable Overloads Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
+		'    MyBase.SetValue(pi, c, Nothing, value)
+		'End Sub
 
         Public Overridable Overloads Sub CreateObject(ByVal field As String, ByVal value As Object) Implements Meta.IFactory.CreateObject
 

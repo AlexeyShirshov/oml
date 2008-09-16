@@ -669,6 +669,11 @@ Namespace Query
             Return Me
         End Function
 
+        Public Function [SelectAgg](ByVal aggrs() As AggregateBase) As QueryCmd
+            Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(aggrs)
+            Return Me
+        End Function
+
         'Protected Function CreateTypedCmd(ByVal qt As Type) As QueryCmdBase
         '    Dim qgt As Type = GetType(QueryCmd(Of ))
         '    Dim t As Type = qgt.MakeGenericType(New Type() {qt})

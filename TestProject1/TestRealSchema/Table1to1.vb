@@ -43,7 +43,7 @@ Public Class Tables1to1
     '    Return New Tables1to3(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
+    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IOrmObjectSchemaBase, ByVal value As Object)
         Select Case c.FieldName
             Case "K"
                 K = CStr(value)
@@ -52,7 +52,7 @@ Public Class Tables1to1
             Case "Table1Back"
                 Table1Back = CType(value, TestProject1.Table1)
             Case Else
-                MyBase.SetValue(pi, c, value)
+                MyBase.SetValue(pi, c, oschema, value)
         End Select
     End Sub
 
