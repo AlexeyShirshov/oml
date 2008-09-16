@@ -554,7 +554,13 @@ Public MustInherit Class QueryGenerator
 
         If ot Is GetType(Guid) AndAlso CType(o, Guid) = Guid.Empty Then
             Return DBNull.Value
-        End If
+		End If
+
+		' дл€ вс€ческих addDate'ов, которые автоматом проставл€ютс€, 
+		' ибо лишн€€ работа писать на каждый такой слушчай ChangeValueType
+		If ot Is GetType(DateTime) AndAlso CType(o, DateTime) = DateTime.MinValue Then
+			Return DBNull.Value
+		End If
 
         Dim v As Object = o
 

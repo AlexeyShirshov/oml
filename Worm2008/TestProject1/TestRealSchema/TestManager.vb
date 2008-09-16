@@ -1180,6 +1180,31 @@ Public Class TestManagerRS
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestRawObject()
+        Dim t As Table1 = CType(Activator.CreateInstance(GetType(Table1)), Table1)
+
+        t.Name = "kasdfn"
+        t.CreatedAt = Now
+        t.Identifier = -100
+
+        Assert.AreEqual(ObjectState.Created, t.ObjectState)
+
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            mgr.BeginTransaction()
+            Try
+                Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                    st.Add(t)
+
+                    st.Commit()
+                End Using
+
+                Assert.AreEqual(ObjectState.None, t.ObjectState)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
     '<TestMethod()> _
     'Public Sub TestSortAny()
     '    Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))

@@ -158,7 +158,7 @@ Imports Worm.Database.Criteria.Core
     <TestMethod()> Public Sub TestDic()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim t As Type = GetType(Entity4)
-            Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
+            'Dim tbl As SourceFragment = mgr.ObjectSchema.GetTables(t)(0)
             Dim q As New QueryCmd(t)
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count, "Count") _
@@ -177,6 +177,27 @@ Imports Worm.Database.Criteria.Core
             Assert.AreEqual("b", l(1)("Pref"))
             Assert.AreEqual(3, l(1)("Count"))
 
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestOrder2()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim typeE As Type = GetType(Entity)
+            Dim typeE4 As Type = GetType(Entity4)
+
+            Dim r As M2MRelation = mgr.DbSchema.GetM2MRelation(typeE4, typeE, True)
+            Dim r2 As M2MRelation = mgr.DbSchema.GetM2MRelation(typeE, typeE4, True)
+            Assert.IsNotNull(r)
+
+            Dim table As SourceFragment = r.Table
+
+            Dim q As New QueryCmd(typeE4)
+            q.propSort = New Worm.Sorting.SortAdv( _
+                New QueryCmd(table). _
+                    SelectAgg(AggCtor.Count). _
+                    Where(JoinCondition.Create(table, r2.Column).Eq(typeE4, "ID")), SortType.Desc)
+
+            Assert.AreEqual(12, q.ToEntityList(Of Entity4)(mgr).Count)
         End Using
     End Sub
 End Class

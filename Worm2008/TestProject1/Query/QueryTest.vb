@@ -328,12 +328,17 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim t As SourceFragment = New SourceFragment("dbo", "guid_table")
             Dim q As New QueryCmd(t)
-            q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
-                New Aggregate(AggregateFunction.Count, "cnt") _
-            })
+            'q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
+            '    New Aggregate(AggregateFunction.Count, "cnt") _
+            '})
 
-            q.GroupBy(New OrmProperty() {New OrmProperty(t, "code")}). _
-            Select(New OrmProperty() {New OrmProperty(t, "code", "Code")}).Sort(Sorting.Custom("cnt desc"))
+            'q.GroupBy(New OrmProperty() {New OrmProperty(t, "code")}). _
+            'Select(New OrmProperty() {New OrmProperty(t, "code", "Code")}).Sort(Sorting.Custom("cnt desc"))
+
+            q.GroupBy(FCtor.Column(t, "code")). _
+                Select(FCtor.Column(t, "code", "Code")). _
+                Sort(Sorting.Custom("cnt desc")). _
+                SelectAgg(AggCtor.Count("cnt"))
 
             Dim l As IList(Of Worm.Orm.AnonymousEntity) = q.ToObjectList(Of Worm.Orm.AnonymousEntity)(mgr)
 

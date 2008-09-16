@@ -11,7 +11,6 @@ Namespace Orm.Meta
 
 #Region " Interfaces "
 
-    <Obsolete()> _
     Public Interface IRelation
         Structure RelationDesc
             Public PropertyName As String
@@ -261,7 +260,6 @@ Namespace Orm.Meta
         Public ReadOnly Column As String
         Public ReadOnly DeleteCascade As Boolean
         Public ReadOnly Mapping As System.Data.Common.DataTableMapping
-        <Obsolete()> _
         Public ReadOnly ConnectedType As Type
         Public ReadOnly Key As String
 
@@ -303,14 +301,14 @@ Namespace Orm.Meta
             Key = GetKey(direct)
         End Sub
 
-        <Obsolete()> _
+        <Obsolete("Connected type is obsolete")> _
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
             MyClass.New(type, table, column, delete, mapping)
             Me.ConnectedType = connectedType
         End Sub
 
-        <Obsolete()> _
+        <Obsolete("Connected type is obsolete")> _
         Public Sub New(ByVal type As Type, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, _
             ByVal connectedType As Type, ByVal direct As Boolean)

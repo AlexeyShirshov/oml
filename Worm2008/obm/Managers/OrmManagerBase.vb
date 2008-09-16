@@ -2617,7 +2617,7 @@ l1:
         End SyncLock
     End Function
 
-    Public Function RemoveObjectFromCache(ByVal obj As ICachedEntity) As Boolean
+    Public Function RemoveObjectFromCache(ByVal obj As _ICachedEntity) As Boolean
 
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj parameter cannot be nothing")
@@ -2632,7 +2632,7 @@ l1:
         End Using
     End Function
 
-    Protected Friend Function _RemoveObjectFromCache(ByVal obj As ICachedEntity) As Boolean
+    Protected Friend Function _RemoveObjectFromCache(ByVal obj As _ICachedEntity) As Boolean
         'Debug.Assert(Not obj.IsLoaded)
         Dim t As System.Type = obj.GetType
 

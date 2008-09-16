@@ -4,31 +4,19 @@ Imports Worm.Orm.Meta
 Imports System.Collections.Generic
 Imports Worm.Criteria.Core
 
-Namespace Query.Database.Filters
+Namespace Database.Criteria.Values
 
-    Public Class SubQuery
+    Public Class SubQueryCmd
         Implements IDatabaseFilterValue, Worm.Criteria.Values.INonTemplateValue
 
-        Private _q As QueryCmd
-        Private _j As List(Of Worm.Criteria.Joins.OrmJoin)
-        Private _f As IFilter
+        Private _q As Query.QueryCmd
 
-        Public Sub New(ByVal query As QueryCmd)
-            _q = query
+        Public Sub New(ByVal q As Query.QueryCmd)
+            _q = q
         End Sub
 
-        Public Function _ToString() As String Implements Criteria.Values.IFilterValue._ToString
-            Prepare(Nothing, Nothing)
-            Dim sb As New StringBuilder
-            _q.GetDynamicKey(sb,_j, _f)
-            Return sb.ToString
-        End Function
-
-        Public Function GetStaticString() As String Implements Criteria.Values.INonTemplateValue.GetStaticString
-            Prepare(Nothing, Nothing)
-            Dim sb As New StringBuilder
-            _q.GetStaticKey(sb, _j, _f, _q.SelectedType)
-            Return sb.ToString
+        Public Function _ToString() As String Implements Worm.Criteria.Values.IFilterValue._ToString
+            Return _q.ToString()
         End Function
 
         Public Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As Orm.Meta.ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
@@ -36,27 +24,21 @@ Namespace Query.Database.Filters
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
 
-            FormStmt(schema, filterInfo, paramMgr, almgr, sb)
+            Dim t As Type = If(_q.CreateType Is Nothing, _q.SelectedType, _q.CreateType)
+
+            Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
+            Dim f As IFilter = _q.Prepare(j, schema, filterInfo, t)
+
+            sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(filterInfo, schema, _q, paramMgr, _
+                 t, j, f, almgr))
 
             sb.Append(")")
 
             Return sb.ToString
         End Function
 
-        Private Sub Prepare(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object)
-            If _j Is Nothing Then
-                Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
-
-                _f = _q.Prepare(j, dbschema, filterInfo, _q.SelectedType)
-
-                _j = j
-            End If
-        End Sub
-
-        Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
-            Prepare(dbschema, filterInfo)
-
-            sb.Append(DbQueryExecutor.MakeQueryStatement(filterInfo, dbschema, _q, paramMgr, _q.SelectedType, _j, _f, almgr))
-        End Sub
+        Public Function GetStaticString() As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+            Return _q.ToStaticString
+        End Function
     End Class
 End Namespace
