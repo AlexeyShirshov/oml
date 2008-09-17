@@ -159,10 +159,11 @@ Imports Worm.Linq
 
         Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
 
-        Dim q = From k In e Where TestProject1.Enum1.first < k.Enum Order By k.ID Select k.Code, k.CreatedAt
+        Dim q = From k In e Where TestProject1.Enum1.first < k.Enum Order By k.ID Select k.Code, k.CreatedAt, k.Enum
 
         Dim l = q.ToList
         Dim f = l(0)
+        Assert.IsTrue(f.Enum.Value >= TestProject1.Enum1.sec)
 
         Dim q2 = From k In e Where TestProject1.Enum1.first < k.Enum Order By k.ID Select New With {k.Code, k.CreatedAt, .G = 3}
 
