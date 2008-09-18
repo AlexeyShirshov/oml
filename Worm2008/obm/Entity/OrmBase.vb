@@ -977,7 +977,7 @@ Namespace Orm
         '    ObjectState = Orm.ObjectState.NotLoaded
         'End Sub
 
-        Protected Overrides Sub Init(ByVal pk() As Pair(Of String, Object), ByVal cache As Cache.OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
+        Protected Overrides Sub Init(ByVal pk() As PKDesc, ByVal cache As Cache.OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
             Throw New NotSupportedException
         End Sub
 
@@ -985,7 +985,7 @@ Namespace Orm
             MyBase._Init(cache, schema, mgrIdentityString)
             Identifier = id
             PKLoaded(1)
-            CType(Me, _ICachedEntity).SetLoaded(New ColumnAttribute(GetPKValues(0).First), True, True, schema)
+            CType(Me, _ICachedEntity).SetLoaded(New ColumnAttribute(GetPKValues(0).PropertyAlias), True, True, schema)
         End Sub
 
         Protected Overridable Overloads Sub Init()
@@ -2635,7 +2635,7 @@ Namespace Orm
                     PKLoaded(1)
                     Dim schema As QueryGenerator = OrmSchema
                     If schema IsNot Nothing Then
-                        CType(Me, _ICachedEntity).SetLoaded(New ColumnAttribute(GetPKValues()(0).First), True, True, schema)
+                        CType(Me, _ICachedEntity).SetLoaded(New ColumnAttribute(GetPKValues()(0).PropertyAlias), True, True, schema)
                     End If
                 End If
                 'Debug.Assert(_id.Equals(value))
@@ -2644,12 +2644,12 @@ Namespace Orm
             End Set
         End Property
 
-        Public Overrides Function GetPKValues() As Pair(Of String, Object)()
-            Return New Pair(Of String, Object)() {New Pair(Of String, Object)("ID", _id)}
+        Public Overrides Function GetPKValues() As PKDesc()
+            Return New PKDesc() {New PKDesc("ID", _id)}
         End Function
 
-        Protected Overrides Sub SetPK(ByVal pk() As Pair(Of String, Object))
-            _id = pk(0).Second
+        Protected Overrides Sub SetPK(ByVal pk() As PKDesc)
+            _id = pk(0).Value
         End Sub
 
         Protected Overrides Sub CopyBody(ByVal from As _IEntity, ByVal [to] As _IEntity)

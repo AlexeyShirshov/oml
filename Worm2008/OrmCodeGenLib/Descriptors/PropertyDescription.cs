@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Worm.Orm.Meta;
 
 namespace Worm.CodeGen.Core.Descriptors
 {
@@ -188,6 +189,20 @@ namespace Worm.CodeGen.Core.Descriptors
         }
 
         #endregion
+
+    	public bool HasAttribute(Field2DbRelations attribute)
+    	{
+    		bool hasIt = false;
+    		foreach (string s in _attributes)
+    		{
+				if (((Field2DbRelations)Enum.Parse(typeof(Field2DbRelations), s, true) & attribute) == attribute)
+				{
+					hasIt = true;
+					break;
+				}
+    		}
+    		return hasIt;
+    	}
     }
 
 	public enum ObsoleteType

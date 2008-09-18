@@ -70,7 +70,12 @@ namespace Worm.CodeGen.XmlGenerator
 				using (DbCommand cmd = conn.CreateCommand())
 				{
 					cmd.CommandType = CommandType.Text;
-					cmd.CommandText = @"select t.table_schema,t.table_name,c.column_name,c.is_nullable,c.data_type,cc.constraint_type,cc.constraint_name, " + AppendIdentity() + @" from INFORMATION_SCHEMA.tables t
+                    cmd.CommandText = @"select t.table_schema,t.table_name,c.column_name,c.is_nullable,c.data_type,cc.constraint_type,cc.constraint_name, " + AppendIdentity() + @",(select count(*) from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc 
+                        join INFORMATION_SCHEMA.constraint_column_usage cc on 
+                        tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name
+                        where t.table_name = tc.table_name and t.table_schema = tc.table_schema
+                        and tc.constraint_type = 'PRIMARY KEY'
+                        ) pk_cnt from INFORMATION_SCHEMA.tables t
 						join INFORMATION_SCHEMA.columns c on t.table_name = c.table_name and t.table_schema = c.table_schema
                         left join (
 	                        select cc.table_name,cc.table_schema,cc.column_name,tc.constraint_type,cc.constraint_name from INFORMATION_SCHEMA.constraint_column_usage cc 
@@ -83,15 +88,15 @@ namespace Worm.CodeGen.XmlGenerator
 						tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name
 						where t.table_name = tc.table_name and t.table_schema = tc.table_schema
 						and tc.constraint_type = 'PRIMARY KEY'
-						) = 1) or 
+						) > 0) or 
 						((select count(*) from INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc 
 						join INFORMATION_SCHEMA.constraint_column_usage cc on 
 						tc.table_name = cc.table_name and tc.table_schema = cc.table_schema and cc.constraint_name = tc.constraint_name
 						where t.table_name = tc.table_name and t.table_schema = tc.table_schema
 						and tc.constraint_type = 'UNIQUE'
-						) = 1))
-						and (select count(*) from INFORMATION_SCHEMA.constraint_column_usage ccu 
-							where ccu.table_name = t.table_name and ccu.table_schema = t.table_schema and ccu.constraint_name = cc.constraint_name) < 2
+						) > 0))
+						--and (select count(*) from INFORMATION_SCHEMA.constraint_column_usage ccu 
+						--	where ccu.table_name = t.table_name and ccu.table_schema = t.table_schema and ccu.constraint_name = cc.constraint_name) < 2
 						--and (tc.constraint_type <> 'CHECK' or tc.constraint_type is null)
 						YYYYY
 						and (t.table_name XXXXX like @tn or @tn is null)
@@ -228,7 +233,7 @@ namespace Worm.CodeGen.XmlGenerator
 				odef.SchemaVersion="1";
                 if (!Path.IsPathRooted(file))
                     file = Path.Combine(Directory.GetCurrentDirectory(), file);
-                File.Create(file);
+                //File.Create(file);
 			}
 
 			foreach (Column c in columns.Keys)
@@ -265,7 +270,7 @@ namespace Worm.CodeGen.XmlGenerator
 					{
 						string[] ss = ed.Tables[0].Name.Split('.');
 						Column c = new Column(ss[0].Trim(new char[] { '[', ']' }), ss[1].Trim(new char[] { '[', ']' }),
-                            pd.FieldName.Trim(new char[] { '[', ']' }), false, null, null, null, false);
+                            pd.FieldName.Trim(new char[] { '[', ']' }), false, null, null, null, false, 1);
 						if (!columns.ContainsKey(c))
 						{
 							col2remove.Add(pd);
@@ -407,7 +412,7 @@ namespace Worm.CodeGen.XmlGenerator
 				string[] attrs = null;
 				bool pk = GetAttributes(c, out attrs);
 				string name = Trim(Capitalize(c.ColumnName));
-				if (pk)
+				if (pk && c.PKCount == 1)
 					name = "ID";
 
 				pe = new PropertyDescription(name,
@@ -596,7 +601,7 @@ namespace Worm.CodeGen.XmlGenerator
 						{
 							Column c = new Column(reader.GetString(reader.GetOrdinal("table_schema")),
 								reader.GetString(reader.GetOrdinal("table_name")),
-								reader.GetString(reader.GetOrdinal("column_name")), false, null, null, null, false);
+								reader.GetString(reader.GetOrdinal("column_name")), false, null, null, null, false, 1);
 							if (columns.ContainsKey(c))
 							{
 								string id = "t" + Capitalize(c.Table);
@@ -650,7 +655,7 @@ namespace Worm.CodeGen.XmlGenerator
 						{
 							Column c = new Column(reader.GetString(reader.GetOrdinal("table_schema")),
 								reader.GetString(reader.GetOrdinal("table_name")),
-								reader.GetString(reader.GetOrdinal("column_name")), false, null, null, null, false);
+								reader.GetString(reader.GetOrdinal("column_name")), false, null, null, null, false, 1);
 							if (columns.ContainsKey(c))
 							{
 								string id = "t" + Capitalize(c.Table);
@@ -730,6 +735,8 @@ namespace Worm.CodeGen.XmlGenerator
             {
                 if (!c.IsAutoIncrement)
                     attrs = new string[] { "PK" };
+                else
+                    attrs = new string[] { "PrimaryKey" };
                 return true;
             }
 			return false;

@@ -16,13 +16,14 @@ namespace Worm.CodeGen.XmlGenerator
 		private string _constraintType;
 		private string _constraintName;
         private bool _identity;
+        private int _pkCnt;
 
 		protected Column()
 		{
 		}
 
 		public Column(string schema, string table, string column,
-			bool isNullable, string type, string constraintType, string constraintName, bool identity)
+			bool isNullable, string type, string constraintType, string constraintName, bool identity, int pkCnt)
 		{
 			_schema = schema;
 			_table = table;
@@ -33,6 +34,8 @@ namespace Worm.CodeGen.XmlGenerator
 			_constraintType = constraintType;
 			_constraintName = constraintName;
             _identity = identity;
+
+            _pkCnt = pkCnt;
 		}
 
 		public override bool Equals(object obj)
@@ -105,6 +108,11 @@ namespace Worm.CodeGen.XmlGenerator
 			get { return _schema + "." + _table; }
 		}
 
+        public int PKCount
+        {
+            get { return _pkCnt; }
+        }
+
 		public static Column Create(DbDataReader reader)
 		{
 			Column c = new Column();
@@ -134,6 +142,8 @@ namespace Worm.CodeGen.XmlGenerator
 			}
             
             c._identity = Convert.ToBoolean(reader.GetInt32(reader.GetOrdinal("identity")));
+
+            c._pkCnt = reader.GetInt32(reader.GetOrdinal("pk_cnt"));
 
 			return c;
 		}

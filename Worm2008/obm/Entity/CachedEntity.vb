@@ -98,7 +98,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public Overridable Sub CreateCopyForSaveNewEntry(ByVal pk() As Pair(Of String, Object)) Implements ICachedEntity.CreateCopyForSaveNewEntry
+        Public Overridable Sub CreateCopyForSaveNewEntry(ByVal pk() As PKDesc) Implements ICachedEntity.CreateCopyForSaveNewEntry
             Dim clone As CachedEntity = CType(CreateClone(), CachedEntity)
             SetObjectState(Orm.ObjectState.Modified)
             Using mc As IGetManager = GetMgr()
@@ -431,19 +431,19 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Overridable Sub SetPK(ByVal pk As Pair(Of String, Object)())
+        Protected Overridable Sub SetPK(ByVal pk As PKDesc())
             Using m As IGetManager = GetMgr()
                 Dim tt As Type = Me.GetType
                 Dim oschema As IOrmObjectSchemaBase = m.Manager.ObjectSchema.GetObjectSchema(tt)
-                For Each p As Pair(Of String, Object) In pk
-                    Dim c As New ColumnAttribute(p.First)
-                    SetValue(Nothing, c, oschema, p.Second)
+                For Each p As PKDesc In pk
+                    Dim c As New ColumnAttribute(p.PropertyAlias)
+                    SetValue(Nothing, c, oschema, p.Value)
                     SetLoaded(c, True, True, m.Manager.ObjectSchema)
                 Next
             End Using
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal pk() As Pair(Of String, Object), ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String) Implements _ICachedEntity.Init
+        Protected Overridable Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String) Implements _ICachedEntity.Init
             _Init(cache, schema, mgrIdentityString)
             SetPK(pk)
             PKLoaded(pk.Length)
@@ -505,7 +505,7 @@ l1:
 
                 Dim elems As New Generic.List(Of Pair(Of String, Object))
                 Dim xmls As New Generic.List(Of Pair(Of String, String))
-                Dim objs As New List(Of Pair(Of String, Pair(Of String, Object)()))
+                Dim objs As New List(Of Pair(Of String, PKDesc()))
 
                 For Each de As DictionaryEntry In OrmSchema.GetProperties(t)
                     Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
@@ -517,9 +517,9 @@ l1:
                             If GetType(ICachedEntity).IsAssignableFrom(tt) Then
                                 '.WriteAttributeString(c.FieldName, CType(v, ICachedEntity).Identifier.ToString)
                                 If v IsNot Nothing Then
-                                    objs.Add(New Pair(Of String, Pair(Of String, Object)())(c.FieldName, CType(v, ICachedEntity).GetPKValues))
+                                    objs.Add(New Pair(Of String, PKDesc())(c.FieldName, CType(v, ICachedEntity).GetPKValues))
                                 Else
-                                    objs.Add(New Pair(Of String, Pair(Of String, Object)())(c.FieldName, Nothing))
+                                    objs.Add(New Pair(Of String, PKDesc())(c.FieldName, Nothing))
                                 End If
                             ElseIf tt.IsArray Then
                                 elems.Add(New Pair(Of String, Object)(c.FieldName, pi.GetValue(Me, Nothing)))
@@ -550,16 +550,16 @@ l1:
                     .WriteEndElement()
                 Next
 
-                For Each p As Pair(Of String, Pair(Of String, Object)()) In objs
+                For Each p As Pair(Of String, PKDesc()) In objs
                     .WriteStartElement(p.First)
                     If p.Second IsNot Nothing Then
-                        For Each pk As Pair(Of String, Object) In p.Second
+                        For Each pk As PKDesc In p.Second
                             .WriteStartElement("pk")
                             'Dim v As String = "xxx:nil"
                             'If pk.Second IsNot Nothing Then
                             '    v = pk.Second.ToString
                             'End If
-                            .WriteAttributeString(pk.First, pk.Second.ToString)
+                            .WriteAttributeString(pk.PropertyAlias, pk.Value.ToString)
                             .WriteEndElement()
                         Next
                     End If
@@ -600,7 +600,7 @@ l1:
                     Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
                     Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
                     Dim o As ICachedEntity = Nothing
-                    Dim pk() As Pair(Of String, Object) = GetPKs(reader)
+                    Dim pk() As PKDesc = GetPKs(reader)
                     Using mc As IGetManager = GetMgr()
                         o = mc.Manager.CreateObject(pk, pi.PropertyType)
                     End Using
@@ -609,15 +609,15 @@ l1:
             End Select
         End Sub
 
-        Private Function GetPKs(ByVal reader As XmlReader) As Pair(Of String, Object)()
-            Dim l As New List(Of Pair(Of String, Object))
+        Private Function GetPKs(ByVal reader As XmlReader) As PKDesc()
+            Dim l As New List(Of PKDesc)
             Do While reader.Read
                 If reader.NodeType = XmlNodeType.Element AndAlso reader.Name = "pk" Then
                     reader.MoveToFirstAttribute()
                     Do
                         'Dim v As String = reader.Value
                         'If v = "xxx:nil" Then v = Nothing
-                        l.Add(New Pair(Of String, Object)(reader.Name, reader.Value))
+                        l.Add(New PKDesc(reader.Name, reader.Value))
                     Loop While reader.MoveToNextAttribute
                 End If
             Loop
@@ -754,8 +754,8 @@ l1:
             End Get
         End Property
 
-        Public Overridable Function GetPKValues() As Pair(Of String, Object)() Implements ICachedEntity.GetPKValues
-            Dim l As New List(Of Pair(Of String, Object))
+        Public Overridable Function GetPKValues() As PKDesc() Implements ICachedEntity.GetPKValues
+            Dim l As New List(Of PKDesc)
             Using mc As IGetManager = GetMgr()
                 Dim schema As Worm.QueryGenerator = mc.Manager.ObjectSchema
                 Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(Me.GetType)
@@ -763,7 +763,7 @@ l1:
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
                     If (schema.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                        l.Add(New Pair(Of String, Object)(c.FieldName, GetValue(pi, c, oschema)))
+                        l.Add(New PKDesc(c.FieldName, GetValue(pi, c, oschema)))
                     End If
                 Next
             End Using
@@ -975,7 +975,7 @@ l1:
                     Dim olds As ObjectState = OriginalCopy.GetOldState
 
                     Dim oldkey As Integer = Key
-                    Dim newid() As Pair(Of String, Object) = OriginalCopy.GetPKValues
+                    Dim newid() As PKDesc = OriginalCopy.GetPKValues
                     If olds <> Orm.ObjectState.Created Then
                         '_loaded_members = 
                         RevertToOriginalVersion()
@@ -1025,23 +1025,23 @@ l1:
             End If
         End Sub
 
-        Protected Friend Overridable Function ValidateNewObject(ByVal mgr As OrmManagerBase) As Boolean
+        Protected Overridable Function ValidateNewObject(ByVal mgr As OrmManagerBase) As Boolean Implements ICachedEntity.ValidateNewObject
             Return True
         End Function
 
-        Protected Friend Overridable Function ValidateUpdate(ByVal mgr As OrmManagerBase) As Boolean
+        Protected Overridable Function ValidateUpdate(ByVal mgr As OrmManagerBase) As Boolean Implements ICachedEntity.ValidateUpdate
             Return True
         End Function
 
-        Protected Friend Overridable Function ValidateDelete(ByVal mgr As OrmManagerBase) As Boolean
+        Protected Overridable Function ValidateDelete(ByVal mgr As OrmManagerBase) As Boolean Implements ICachedEntity.ValidateDelete
             Return True
         End Function
 
-        Protected Friend Sub RaiseSaved(ByVal sa As OrmManagerBase.SaveAction)
+        Protected Sub RaiseSaved(ByVal sa As OrmManagerBase.SaveAction) Implements _ICachedEntity.RaiseSaved
             RaiseEvent Saved(Me, New ObjectSavedArgs(sa))
         End Sub
 
-        Protected Friend Function Save(ByVal mc As OrmManagerBase) As Boolean
+        Protected Function Save(ByVal mc As OrmManagerBase) As Boolean Implements _ICachedEntity.Save
             If IsReadOnly Then
                 Throw New OrmObjectException(ObjName & "Object in readonly state")
             End If

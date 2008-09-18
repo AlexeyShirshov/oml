@@ -587,7 +587,7 @@ Namespace Database
                 Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetIdentity(GetType(T)))
             End Function
 
-            Public Overridable Function CreateNewObject(Of T As {_ICachedEntity, New})(ByVal pk() As Pair(Of String, Object)) As T
+            Public Overridable Function CreateNewObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
                 If _mgr.NewObjectManager Is Nothing Then
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
@@ -1574,8 +1574,8 @@ Namespace Database
             'Dim filter As New Database.Criteria.Core.EntityFilter(original_type, "ID", _
             '    New EntityValue(obj), Worm.Criteria.FilterOperation.Equal)
             Dim c As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
-            For Each p As Pair(Of String, Object) In obj.GetPKValues
-                c.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, p.First, New ScalarValue(p.Second), Worm.Criteria.FilterOperation.Equal))
+            For Each p As PKDesc In obj.GetPKValues
+                c.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
             Next
             Dim filter As IFilter = c.Condition
 
@@ -1951,7 +1951,7 @@ Namespace Database
                     idic = _schema.GetProperties(original_type, oschema)
                 End If
                 'Dim bl As Boolean
-                Dim oldpk() As Pair(Of String, Object) = Nothing
+                Dim oldpk() As PKDesc = Nothing
                 If ce IsNot Nothing AndAlso Not fromRS Then oldpk = ce.GetPKValues()
                 For idx As Integer = 0 To arr.Count - 1
                     Dim c As ColumnAttribute = arr(idx)

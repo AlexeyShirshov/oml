@@ -10,6 +10,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 	{
 		private EntityDescription m_entity;
 		private CodeEntityInterfaceDeclaration m_entityInterface;
+		private CodeEntityInterfaceDeclaration m_entityPropertiesInterface;
 		private readonly CodeTypeReference m_typeReference;
 
 		public CodeEntityTypeDeclaration()
@@ -75,6 +76,18 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 					BaseTypes.Add(m_entityInterface.TypeReference);
 					m_entityInterface.EnsureData();
 				}
+			}
+		}
+
+		public CodeEntityInterfaceDeclaration EntityPropertiesInterfaceDeclaration
+		{
+			get
+			{
+				return m_entityPropertiesInterface;
+			}
+			set
+			{
+				m_entityPropertiesInterface = value;
 			}
 		}
 

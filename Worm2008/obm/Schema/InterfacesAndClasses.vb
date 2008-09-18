@@ -171,6 +171,16 @@ Namespace Orm.Meta
 
 #Region " Classes "
 
+    Public Class PKDesc
+        Public ReadOnly PropertyAlias As String
+        Public ReadOnly Value As Object
+
+        Public Sub New(ByVal propAlias As String, ByVal value As Object)
+            Me.PropertyAlias = propAlias
+            Me.Value = value
+        End Sub
+    End Class
+
     Public Class SourceFragment
 
         Private _table As String

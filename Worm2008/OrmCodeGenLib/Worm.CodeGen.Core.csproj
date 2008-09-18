@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{4D2F19CA-42F7-4DEC-8AA4-7D33E9EC2605}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -75,6 +75,9 @@
     <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeCSUsingStatement.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeUsingStatement.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\Using\CodeVBUsingStatement.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\XorExpression\CodeXorExpressionBase.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\XorExpression\CodeCsXorExpression.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\XorExpression\CodeVbXorExpression.cs" />
     <Compile Include="CodeGenHelper.cs" />
     <Compile Include="Descriptors\SelfRelationDescription.cs" />
     <Compile Include="Descriptors\SelfRelationTarget.cs" />

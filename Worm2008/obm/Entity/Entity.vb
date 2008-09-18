@@ -31,7 +31,7 @@ Namespace Orm
 
     Public Interface _ICachedEntity
         Inherits ICachedEntity
-        Overloads Sub Init(ByVal pk() As Pair(Of String, Object), ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
+        Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
         Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
         Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As QueryGenerator) As Boolean
@@ -40,22 +40,27 @@ Namespace Orm
         ReadOnly Property UpdateCtx() As UpdateCtx
         Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean
         Sub RaiseCopyRemoved()
+        Function Save(ByVal mc As OrmManagerBase) As Boolean
+        Sub RaiseSaved(ByVal sa As OrmManagerBase.SaveAction)
     End Interface
 
     Public Interface ICachedEntity
         Inherits _IEntity, IComparable, System.Xml.Serialization.IXmlSerializable
         ReadOnly Property Key() As Integer
         ReadOnly Property OriginalCopy() As ICachedEntity
-        Sub CreateCopyForSaveNewEntry(ByVal pk() As Pair(Of String, Object))
+        Sub CreateCopyForSaveNewEntry(ByVal pk() As PKDesc)
         Sub Load()
         Sub RemoveFromCache(ByVal cache As OrmCacheBase)
         Sub UpdateCache()
-        Function GetPKValues() As Pair(Of String, Object)()
+        Function GetPKValues() As PKDesc()
         Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean
         Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity
         Sub RejectChanges()
         Sub RejectRelationChanges()
         ReadOnly Property HasChanges() As Boolean
+        Function ValidateNewObject(ByVal mgr As OrmManagerBase) As Boolean
+        Function ValidateUpdate(ByVal mgr As OrmManagerBase) As Boolean
+        Function ValidateDelete(ByVal mgr As OrmManagerBase) As Boolean
     End Interface
 
     Public Interface IM2M

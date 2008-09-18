@@ -8,6 +8,33 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 		private CodeEntityTypeDeclaration m_entityTypeDeclaration;
 		private readonly CodeTypeReference m_typeReference;
 
+		private string m_namePrefix;
+		private string m_nameSuffix;
+
+		public string NamePrefix
+		{
+			get
+			{
+				return m_namePrefix;
+			}
+			set
+			{
+				m_namePrefix = value;
+			}
+		}
+
+		public string NameSuffix
+		{
+			get
+			{
+				return m_nameSuffix;
+			}
+			set
+			{
+				m_nameSuffix = value;
+			}
+		}
+
 		public CodeEntityInterfaceDeclaration()
 		{
 			m_typeReference = new CodeTypeReference();
@@ -16,18 +43,28 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			IsInterface = true;
 		}
 
-		public CodeEntityInterfaceDeclaration(CodeEntityTypeDeclaration entityTypeDeclaration) : this()
+		public CodeEntityInterfaceDeclaration(CodeEntityTypeDeclaration entityTypeDeclaration) : this(entityTypeDeclaration, null, null)
+		{			
+		}
+
+		public CodeEntityInterfaceDeclaration(CodeEntityTypeDeclaration entityTypeDeclaration, string prefix, string suffix)
+			: this()
 		{
+			NamePrefix = prefix;
+			NameSuffix = suffix;
+
 			EntityTypeDeclaration = entityTypeDeclaration;
 
 			m_typeReference.BaseType = FullName;
+
+			
 		}
 
 		public string FullName
 		{
 			get
 			{
-				return OrmCodeGenNameHelper.GetEntityInterfaceName(Entity, true);
+				return OrmCodeGenNameHelper.GetEntityInterfaceName(Entity, NamePrefix, NameSuffix, true);
 			}
 		}
 
@@ -36,7 +73,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			get
 			{
 				if (Entity != null)
-					return OrmCodeGenNameHelper.GetEntityInterfaceName(Entity, false);
+					return OrmCodeGenNameHelper.GetEntityInterfaceName(Entity, NamePrefix, NameSuffix, false);
 				return null;
 			}
 		}
@@ -67,13 +104,20 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
 			}
 		}
 
+		private CodeTypeReference m_baseInterfaceTypeReference;
+
 		protected internal void EnsureData()
 		{
 			base.Name = Name;
-			BaseTypes.Clear();
 			if(Entity != null && Entity.BaseEntity != null && Entity.BaseEntity.MakeInterface)
 			{
-				BaseTypes.Add(new CodeTypeReference(OrmCodeGenNameHelper.GetEntityInterfaceName(Entity.BaseEntity, true)));
+				if(m_baseInterfaceTypeReference != null)
+				{
+					BaseTypes.Remove(m_baseInterfaceTypeReference);
+				}
+				m_baseInterfaceTypeReference =
+					new CodeTypeReference(OrmCodeGenNameHelper.GetEntityInterfaceName(Entity.BaseEntity, NamePrefix, NameSuffix, true));
+				BaseTypes.Add(m_baseInterfaceTypeReference);
 			}
 		}
 	}

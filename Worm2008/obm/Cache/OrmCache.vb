@@ -13,10 +13,10 @@ Namespace Cache
 
     <Serializable()> _
     Public Class EntityProxy
-        Private _id() As Pair(Of String, Object)
+        Private _id() As PKDesc
         Private _t As Type
 
-        Public Sub New(ByVal id() As Pair(Of String, Object), ByVal type As Type)
+        Public Sub New(ByVal id() As PKDesc, ByVal type As Type)
             _id = id
             _t = type
         End Sub
@@ -36,7 +36,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public ReadOnly Property PK() As Pair(Of String, Object)()
+        Public ReadOnly Property PK() As PKDesc()
             Get
                 Return _id
             End Get
@@ -53,12 +53,12 @@ Namespace Cache
             Return _t Is obj._t AndAlso IdEquals(obj.PK)
         End Function
 
-        Protected Function IdEquals(ByVal ids() As Pair(Of String, Object)) As Boolean
+        Protected Function IdEquals(ByVal ids() As PKDesc) As Boolean
             If _id.Length <> ids.Length Then Return False
             For i As Integer = 0 To _id.Length - 1
-                Dim p As Pair(Of String, Object) = _id(i)
-                Dim p2 As Pair(Of String, Object) = ids(i)
-                If p.First <> p2.First OrElse Not p.Second.Equals(p.Second) Then
+                Dim p As PKDesc = _id(i)
+                Dim p2 As PKDesc = ids(i)
+                If p.PropertyAlias <> p2.PropertyAlias OrElse Not p.Value.Equals(p.Value) Then
                     Return False
                 End If
             Next
@@ -75,8 +75,8 @@ Namespace Cache
 
         Protected Function GetIdsString() As String
             Dim sb As New StringBuilder
-            For Each p As Pair(Of String, Object) In _id
-                sb.Append(p.First).Append(":").Append(p.Second).Append(",")
+            For Each p As PKDesc In _id
+                sb.Append(p.PropertyAlias).Append(":").Append(p.Value).Append(",")
             Next
             Return sb.ToString
         End Function

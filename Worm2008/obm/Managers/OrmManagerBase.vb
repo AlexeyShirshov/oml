@@ -1520,19 +1520,19 @@ Public MustInherit Class OrmManagerBase
     '    Return o
     'End Function
 
-    Public Function GetEntityFromCacheOrDB(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As ICachedEntity
+    Public Function GetEntityFromCacheOrDB(ByVal pk() As PKDesc, ByVal type As Type) As ICachedEntity
         Dim o As _ICachedEntity = CreateObject(pk, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return GetFromCacheOrLoadFromDB(o, GetDictionary(type))
     End Function
 
-    Public Function GetEntityFromCacheOrCreate(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As ICachedEntity
+    Public Function GetEntityFromCacheOrCreate(ByVal pk() As PKDesc, ByVal type As Type) As ICachedEntity
         Dim o As _ICachedEntity = CreateObject(pk, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return NormalizeObject(o, GetDictionary(type))
     End Function
 
-    Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk() As Pair(Of String, Object)) As T
+    Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk() As PKDesc) As T
         Dim o As T = CreateEntity(Of T)(pk)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
@@ -2321,29 +2321,29 @@ l1:
         Return o
     End Function
 
-    Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As Pair(Of String, Object)) As T
+    Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
         If GetType(IOrmBase).IsAssignableFrom(GetType(T)) Then
-            Return CType(CreateOrmBase(pk(0).Second, GetType(T)), T)
+            Return CType(CreateOrmBase(pk(0).Value, GetType(T)), T)
         Else
             Return CreateEntity(Of T)(pk)
         End If
     End Function
 
-    Public Function CreateObject(ByVal pk() As Pair(Of String, Object), ByVal type As Type) As _ICachedEntity
+    Public Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type) As _ICachedEntity
         If GetType(IOrmBase).IsAssignableFrom(type) Then
-            Return CreateOrmBase(pk(0).Second, type)
+            Return CreateOrmBase(pk(0).Value, type)
         Else
             Return CreateEntity(pk, type)
         End If
     End Function
 
-    Public Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk() As Pair(Of String, Object)) As T
+    Public Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
         Dim o As New T
         o.Init(pk, _cache, _schema, IdentityString)
         Return o
     End Function
 
-    Public Function CreateEntity(ByVal pk() As Pair(Of String, Object), ByVal t As Type) As _ICachedEntity
+    Public Function CreateEntity(ByVal pk() As PKDesc, ByVal t As Type) As _ICachedEntity
         Dim o As _ICachedEntity = CType(Activator.CreateInstance(t), _ICachedEntity)
         o.Init(pk, _cache, _schema, IdentityString)
         Return o
@@ -3970,7 +3970,7 @@ l1:
         Return Nothing
     End Function
 
-    Public Function SaveChanges(ByVal obj As CachedEntity, ByVal AcceptChanges As Boolean) As Boolean
+    Public Function SaveChanges(ByVal obj As _ICachedEntity, ByVal AcceptChanges As Boolean) As Boolean
         Try
             Dim b As Boolean = True
             Select Case obj.ObjectState

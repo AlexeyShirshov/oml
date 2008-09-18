@@ -77,6 +77,20 @@ namespace Worm.CodeGen.Core.Descriptors
 			get { return _ormObjectsDef; }
 		}
 
+        public bool HasCompositePK
+        {
+            get
+            {
+                int s = 0;
+                foreach (PropertyDescription pd in _properties)
+                {
+                    if (pd.HasAttribute(Worm.Orm.Meta.Field2DbRelations.PK))
+                        s++;
+                }
+                return s > 1 || (BaseEntity == null?false:BaseEntity.HasCompositePK);
+            }
+        }
+
 		public PropertyDescription GetProperty(string propertyId)
 		{
 			return GetProperty(propertyId, false);
