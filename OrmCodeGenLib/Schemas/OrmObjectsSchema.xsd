@@ -625,5 +625,10 @@
 			  </xs:documentation>
 		  </xs:annotation>
 	  </xs:attribute>
+	  <xs:attribute name="enableReadOnlyPropertiesSetter" type="xs:boolean" use="optional">
+		  <xs:annotation>
+			  <xs:documentation>Enables generation of setters for properties marked readonly.</xs:documentation>
+		  </xs:annotation>
+	  </xs:attribute>
   </xs:complexType>
 </xs:schema>

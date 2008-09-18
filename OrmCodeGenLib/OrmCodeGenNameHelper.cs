@@ -103,12 +103,12 @@ namespace Worm.CodeGen.Core
 
     	public static string GetEntityInterfaceName(EntityDescription entity)
     	{
-    		return GetEntityInterfaceName(entity, false);
+    		return GetEntityInterfaceName(entity, null, null, false);
     	}
 
-    	public static string GetEntityInterfaceName(EntityDescription entity, bool qualified)
+    	public static string GetEntityInterfaceName(EntityDescription entity, string prefix, string suffix, bool qualified)
     	{
-    		string interfaceName = "I" + GetEntityClassName(entity, false);
+    		string interfaceName = "I" + (prefix ?? string.Empty) + GetEntityClassName(entity, false) + (suffix ?? string.Empty);
 
     		string ns = string.Empty;
     		if (qualified && !string.IsNullOrEmpty(entity.Namespace))

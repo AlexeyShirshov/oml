@@ -22,6 +22,7 @@ namespace Worm.CodeGen.Core
         private readonly List<TypeDescription> _types;
         private readonly IncludesCollection _includes;
         private OrmObjectsDef _base;
+		private bool _enableReadOnlyPropertiesSetter;
 
         private string _namespace;
         private string _schemaVersion;
@@ -58,6 +59,7 @@ namespace Worm.CodeGen.Core
             }
             _appName = ass.GetName().Name;
             _appVersion = ass.GetName().Version.ToString(4);
+        	_enableReadOnlyPropertiesSetter = false;
         }
 
         #region Properties
@@ -176,6 +178,12 @@ namespace Worm.CodeGen.Core
 		{
 			get { return _enableCommonPropertyChangedFire; }
 			set { _enableCommonPropertyChangedFire = value; }
+		}
+
+		public bool EnableReadOnlyPropertiesSetter
+		{
+			get { return _enableReadOnlyPropertiesSetter; }
+			set { _enableReadOnlyPropertiesSetter = value; }
 		}
 
 		//[XmlIgnore]

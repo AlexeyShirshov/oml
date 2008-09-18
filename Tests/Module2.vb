@@ -100,7 +100,11 @@ Module Module2
         Protected Overrides Sub Init()
             _stack = Environment.StackTrace
             _dt = Now
+
+#If DEBUG Then
             AddHandler ObjectStateChanged, AddressOf ChangeState
+#End If
+
             'AddHandler ObjectRejected, AddressOf Rejected
         End Sub
 

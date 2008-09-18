@@ -247,7 +247,7 @@ Namespace Xml
             Dim oo As T = obj
             Using obj.GetSyncRoot()
                 obj.BeginLoading()
-                Dim pk() As Pair(Of String, Object) = obj.GetPKValues
+                Dim pk() As PKDesc = obj.GetPKValues
                 If LoadPK(oschema, node, obj) Then
                     obj = CType(NormalizeObject(obj, CType(dic, System.Collections.IDictionary)), T)
                     If obj.ObjectState = ObjectState.Created Then

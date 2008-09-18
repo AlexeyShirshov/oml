@@ -917,9 +917,9 @@ l1:
                                 sel_sb.Append(" from ").Append(GetTableName(pk_table)).Append(" ").Append([alias]).Append(" where ")
                                 'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
                                 Dim cn As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
-                                For Each p As Pair(Of String, Object) In obj.GetPKValues
-                                    Dim clm As String = GetColumnNameByFieldNameInternal(esch, p.First, False, Nothing)
-                                    cn.AddFilter(New dc.TableFilter(esch.GetTables(0), clm, New ScalarValue(p.Second), FilterOperation.Equal))
+                                For Each p As PKDesc In obj.GetPKValues
+                                    Dim clm As String = GetColumnNameByFieldNameInternal(esch, p.PropertyAlias, False, Nothing)
+                                    cn.AddFilter(New dc.TableFilter(esch.GetTables(0), clm, New ScalarValue(p.Value), FilterOperation.Equal))
                                 Next
                                 Dim f As IFilter = cn.Condition
                                 sel_sb.Append(f.MakeQueryStmt(Me, filterInfo, amgr, params, Nothing))
@@ -1027,9 +1027,9 @@ l1:
                     Dim params As New ParamMgr(Me, "p")
                     Dim deleted_tables As New Generic.Dictionary(Of SourceFragment, IFilter)
 
-                    For Each p As Pair(Of String, Object) In obj.GetPKValues
-                        del_cmd.Append(DeclareVariable("@id_" & p.First, "int")).Append(EndLine)
-                        del_cmd.Append("set @id_").Append(p.First).Append(" = ").Append(params.CreateParam(p.Second)).Append(EndLine)
+                    For Each p As PKDesc In obj.GetPKValues
+                        del_cmd.Append(DeclareVariable("@id_" & p.PropertyAlias, "int")).Append(EndLine)
+                        del_cmd.Append("set @id_").Append(p.PropertyAlias).Append(" = ").Append(params.CreateParam(p.Value)).Append(EndLine)
                     Next
 
                     GetDeletedConditions(deleted_tables, filterInfo, type, obj, relSchema, TryCast(relSchema, IOrmRelationalSchema))

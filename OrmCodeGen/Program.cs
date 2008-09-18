@@ -319,7 +319,7 @@ namespace Worm.CodeGen.CodeGenerator
                         opts.ElseOnClosing = false;
                         opts.IndentString = "\t";
                         opts.VerbatimOrder = false;
-
+                        
                         provider.GenerateCodeFromCompileUnit(compileUnit, tw, opts);
                         tw.Close();
                     }
