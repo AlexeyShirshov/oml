@@ -1393,7 +1393,7 @@ l1:
                     Dim join As OrmJoin = CType(GetJoins(sch, pk_table, tables(j), filterInfo), OrmJoin)
 
                     If Not OrmJoin.IsEmpty(join) Then
-                        almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
+                        almgr.AddTable(tables(j), pname)
 
                         join.InjectJoinFilter(selectedType, "ID", table, id)
                         'OrmFilter.ChangeValueToLiteral(join, selectedType, "ID", table, id)
@@ -1438,7 +1438,7 @@ l1:
                     Dim join As OrmJoin = CType(GetJoins(sch, pk_table, tables(i), filterInfo), OrmJoin)
 
                     If Not OrmJoin.IsEmpty(join) Then
-                        almgr.AddTable(tables(i), CType(Nothing, ParamMgr))
+                        almgr.AddTable(tables(i), pname)
                         selectcmd.Append(join.MakeSQLStmt(Me, filterInfo, almgr, pname))
                     End If
                 Next
@@ -1530,7 +1530,7 @@ l1:
 
                         If Not OrmJoin.IsEmpty(join) Then
                             If Not almgr.Aliases.ContainsKey(tables(j)) Then
-                                almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
+                                almgr.AddTable(tables(j), pname)
                             End If
                             selectcmd.Append(join.MakeSQLStmt(Me, filterInfo, almgr, pname))
                         End If
@@ -1733,7 +1733,7 @@ l1:
                 Throw New ArgumentException("Invalid relation", filteredType.ToString)
             End If
 
-            Dim [alias] As String = almgr.AddTable(table, CType(Nothing, ParamMgr))
+            Dim [alias] As String = almgr.AddTable(table, pmgr)
 
             Dim sb As New StringBuilder
             Dim id_clm As String = selected_r.Column
@@ -2166,7 +2166,7 @@ l1:
                     Dim join As OrmJoin = CType(joins(i), OrmJoin)
 
                     If Not OrmJoin.IsEmpty(join) Then
-                        almgr.AddTable(join.Table, CType(Nothing, ParamMgr))
+                        almgr.AddTable(join.Table, params)
                         sb.Append(join.MakeSQLStmt(Me, filter_info, almgr, params))
                     End If
                 Next

@@ -118,9 +118,11 @@ namespace Worm.CodeGen.Core
 		GenerateVbSyncLockStatement = 0x4000,
         GenerateCsXorStatement = 0x8000,
         GenerateVbXorStatement = 0x10000,
+        GenerateCsForeachStatement = 0x20000,
+        GenerateVbForeachStatement = 0x40000,
 
-        CSharp = MethodsInsteadParametrizedProperties | GenerateCSUsingStatement | SafeUnboxToEnum | GenerateCsAsStatement | GenerateCsIsStatement | GenerateCsLockStatement | GenerateCsXorStatement,
-        VisualBasic = DerivedGenericMembersRequireConstraits | AddOptionsExplicit | AddOptionsStrict | OptionsExplicitOn | OptionsStrictOn | GenerateVBUsingStatement | GenerateVbTryCastStatement | GenerateVbTypeOfIsStatement | GenerateVbSyncLockStatement | GenerateVbXorStatement,
+        CSharp = MethodsInsteadParametrizedProperties | GenerateCSUsingStatement | SafeUnboxToEnum | GenerateCsAsStatement | GenerateCsIsStatement | GenerateCsLockStatement | GenerateCsXorStatement | GenerateCsForeachStatement,
+        VisualBasic = DerivedGenericMembersRequireConstraits | AddOptionsExplicit | AddOptionsStrict | OptionsExplicitOn | OptionsStrictOn | GenerateVBUsingStatement | GenerateVbTryCastStatement | GenerateVbTypeOfIsStatement | GenerateVbSyncLockStatement | GenerateVbXorStatement | GenerateVbForeachStatement,
     }
 
 }

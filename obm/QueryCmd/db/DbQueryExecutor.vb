@@ -484,7 +484,7 @@ Namespace Query.Database
 
                 If Not OrmJoin.IsEmpty(join) Then
                     If Not almgr.Aliases.ContainsKey(tables(j)) Then
-                        almgr.AddTable(tables(j), CType(Nothing, ParamMgr))
+                        almgr.AddTable(tables(j), params)
                     End If
                     sb.Append(join.MakeSQLStmt(s, filterInfo, almgr, params))
                 End If

@@ -415,20 +415,22 @@ namespace Worm.CodeGen.Core
 					RaiseEntityCtorCreated(entityClass, ctr);
 
 					//if(
-
-					// параметризированный конструктор
-					ctr = new CodeConstructor();
-					ctr.Attributes = MemberAttributes.Public;
-					// параметры конструктора
-					ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(int), "id"));
-					ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmCacheBase), "cache"));
-					ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Worm.QueryGenerator), "schema"));
-					// передача параметров базовому конструктору
-					ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("id"));
-					ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("cache"));
-					ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("schema"));
-					entityClass.Members.Add(ctr);
-					RaiseEntityCtorCreated(entityClass, ctr);
+                    if (!entity.HasCompositePK)
+                    {
+                        // параметризированный конструктор
+                        ctr = new CodeConstructor();
+                        ctr.Attributes = MemberAttributes.Public;
+                        // параметры конструктора
+                        ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(int), "id"));
+                        ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmCacheBase), "cache"));
+                        ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Worm.QueryGenerator), "schema"));
+                        // передача параметров базовому конструктору
+                        ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("id"));
+                        ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("cache"));
+                        ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("schema"));
+                        entityClass.Members.Add(ctr);
+                        RaiseEntityCtorCreated(entityClass, ctr);
+                    }
 
 					#endregion конструкторы
 
@@ -1386,6 +1388,39 @@ namespace Worm.CodeGen.Core
             EntityDescription entity = entityClass.Entity;
             CodeMemberMethod meth = new CodeMemberMethod();
             meth.Name = "SetPK";
+
+            // модификаторы доступа
+            meth.Attributes = MemberAttributes.Family | MemberAttributes.Override;
+
+            entityClass.Members.Add(meth);
+
+            meth.Parameters.Add(
+                new CodeParameterDeclarationExpression(
+                    new CodeTypeReference(new CodeTypeReference(typeof(PKDesc)),(int)1),"pks")
+                );
+
+            meth.Statements.Add(
+                Delegates.CodePatternForeachStatement(
+                    new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(PKDesc)), "pk"),
+                    new CodeArgumentReferenceExpression("pks"),
+                    entity.Properties.FindAll(
+                        delegate(PropertyDescription pd_){return pd_.HasAttribute(Field2DbRelations.PK);}).
+                    ConvertAll<CodeStatement>(
+                        delegate(PropertyDescription pd_) {
+                            return new CodeConditionStatement(
+                                new CodeBinaryOperatorExpression(
+                                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(),
+                                        "PropertyAlias"),
+                                    CodeBinaryOperatorType.ValueEquality,
+                                    new CodePrimitiveExpression(pd_.PropertyAlias)),
+                                new CodeAssignStatement(
+                                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), CodeGen.Core.OrmCodeGenNameHelper.GetPrivateMemberName(pd_.Name)),
+                                    new CodePropertyReferenceExpression(new CodeVariableReferenceExpression("pk"),"Value")
+                                )
+                            );}
+                     ).ToArray()
+                )
+            );
         }
 
         private void CreateGetPKValuesMethod(CodeEntityTypeDeclaration entityClass)
@@ -2542,7 +2577,8 @@ namespace Worm.CodeGen.Core
                         new CodePropertyReferenceExpression(new CodeArgumentReferenceExpression("c"), "FieldName")
                     ),
                     new CodeMethodReturnStatement(
-                        new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), property.Name)
+                        //new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), property.Name)
+                        new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), OrmCodeGenNameHelper.GetPrivateMemberName(propertyDesc.Name))
                     )
                 )
             );
@@ -2971,6 +3007,7 @@ namespace Worm.CodeGen.Core
 			public delegate CodeExpression CodePatternAsExpressionDelegate(CodeTypeReference typeReference, CodeExpression expression);
 			public delegate CodeStatement CodePatternLockStatementDelegate(CodeExpression lockExpression, params CodeStatement[] statements);
             public delegate CodeExpression CodePatternXorExpressionDelegate(CodeExpression left, CodeExpression right);
+            public delegate CodeStatement CodePatternForeachStatementDelegate(CodeExpression init, CodeExpression iter, params CodeStatement[] statements);
 
 			public static UpdateSetValueMethodDelegate UpdateSetValueMethodMethod
 			{
@@ -2982,6 +3019,7 @@ namespace Worm.CodeGen.Core
 					return UpdateSetValueMethodDelegates.DefaultUpdateSetValueMethod;
 				}
 			}
+
 			public static CodePatternUsingStatementsDelegate CodePatternUsingStatements
 			{
 				get
@@ -2994,6 +3032,7 @@ namespace Worm.CodeGen.Core
 					return CodePatternUsingStatementDelegates.CommonUsing;
 				}
 			}
+
 			public static CodePatternIsExpressionDelegate CodePatternIsExpression
 			{
 				get
@@ -3007,6 +3046,7 @@ namespace Worm.CodeGen.Core
 					return CodePatternIsExpressionDelegates.CommonExpression;
 				}
 			}
+
 			public static CodePatternAsExpressionDelegate CodePatternAsExpression
 			{
 				get
@@ -3020,6 +3060,7 @@ namespace Worm.CodeGen.Core
 					return CodePatternAsExpressionDelegates.CommonExpression;
 				}
 			}
+
         	public static CodePatternLockStatementDelegate CodePatternLockStatement
         	{
         		get
@@ -3043,6 +3084,19 @@ namespace Worm.CodeGen.Core
                     if ((settings.LanguageSpecificHacks & LanguageSpecificHacks.GenerateVbXorStatement) == LanguageSpecificHacks.GenerateVbXorStatement)
                         return CodePatternXorExpressionDelegates.VbExpression;
                     return CodePatternXorExpressionDelegates.CommonExpression;
+                }
+            }
+
+            public static CodePatternForeachStatementDelegate CodePatternForeachStatement
+            {
+                get
+                {
+                    OrmCodeDomGeneratorSettings settings = SettingsManager.CurrentManager.OrmCodeDomGeneratorSettings;
+                    if ((settings.LanguageSpecificHacks & LanguageSpecificHacks.GenerateCsForeachStatement) == LanguageSpecificHacks.GenerateCsForeachStatement)
+                        return CodePatternForeachStatementDelegates.CsStatement;
+                    if ((settings.LanguageSpecificHacks & LanguageSpecificHacks.GenerateVbForeachStatement) == LanguageSpecificHacks.GenerateVbForeachStatement)
+                        return CodePatternForeachStatementDelegates.VbStatement;
+                    return CodePatternForeachStatementDelegates.CommonStatement;
                 }
             }
 			/// <summary>
@@ -3322,6 +3376,23 @@ namespace Worm.CodeGen.Core
                 }
             }
 
+            public static class CodePatternForeachStatementDelegates
+            {
+                public static CodeStatement CsStatement(CodeExpression init, CodeExpression iter, params CodeStatement[] stmts)
+                {
+                    return new CodeDomPatterns.CodeCsForeachStatement(init, iter, stmts);
+                }
+
+                public static CodeStatement VbStatement(CodeExpression init, CodeExpression iter, params CodeStatement[] stmts)
+                {
+                    return new CodeDomPatterns.CodeVbForeachStatement(init, iter, stmts);
+                }
+
+                public static CodeStatement CommonStatement(CodeExpression init, CodeExpression iter, params CodeStatement[] stmts)
+                {
+                    throw new NotImplementedException();
+                }
+            }
         }
     }
 }

@@ -40,7 +40,7 @@ namespace Worm.CodeGen.Core.CodeDomPatterns
                             provider.GenerateCodeFromStatement(statement, tw, opts);
                         }
                     tw.Indent--;
-                    tw.Write("}");
+                    tw.WriteLine("}");
                     Value = tw.InnerWriter.ToString();
                 }
             }
