@@ -38,7 +38,7 @@ namespace Worm.CodeGen.Core.CodeDomPatterns
                             provider.GenerateCodeFromStatement(statement, tw, opts);
                         }
                     tw.Indent--;
-					tw.Write("End SyncLock");
+					tw.WriteLine("End SyncLock");
                     Value = tw.InnerWriter.ToString();
                 }
             }

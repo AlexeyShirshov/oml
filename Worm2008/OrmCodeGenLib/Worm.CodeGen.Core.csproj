@@ -66,6 +66,9 @@
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeAsExpressionBase.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeCsAsExpression.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeVbAsExpression.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\ForeachStatement\CodeCsForeachStatement.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\ForeachStatement\CodeForeachStatement.cs" />
+    <Compile Include="CodeDomPatterns\LanguageDependent\ForeachStatement\CodeVbForeachStatement.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeIsExpressionBase.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeCsIsExpression.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\IsExpression\CodeVbIsExpression.cs" />

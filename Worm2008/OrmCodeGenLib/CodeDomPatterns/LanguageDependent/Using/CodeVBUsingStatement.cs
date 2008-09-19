@@ -38,7 +38,7 @@ namespace Worm.CodeGen.Core.CodeDomPatterns
                             provider.GenerateCodeFromStatement(statement, tw, opts);
                         }
                     tw.Indent--;
-                    tw.Write("End Using");
+                    tw.WriteLine("End Using");
                     Value = tw.InnerWriter.ToString();
                 }
             }

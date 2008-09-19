@@ -364,7 +364,7 @@ Namespace Cache
             End Using
         End Function
 
-        Public Function GetModifiedObject(Of T As {ICachedEntity})() As ICollection(Of T)
+        Public Function GetModifiedObjects(Of T As {ICachedEntity})() As ICollection(Of T)
             Dim al As New Generic.List(Of T)
             Dim tt As Type = GetType(T)
             For Each s As String In New ArrayList(_modifiedobjects.Keys)
