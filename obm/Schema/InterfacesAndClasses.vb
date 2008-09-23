@@ -289,6 +289,31 @@ Namespace Orm.Meta
             Me.Key = key
         End Sub
 
+        <Obsolete("Connected type is obsolete")> _
+        Public Sub New(ByVal generator As QueryGenerator, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type)
+            MyClass.New(generator, entityName, table, column, delete, mapping, DirKey)
+            Me.ConnectedType = connectedType
+        End Sub
+
+        <Obsolete("Connected type is obsolete")> _
+        Public Sub New(ByVal generator As QueryGenerator, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal connectedType As Type, ByVal direct As Boolean)
+            MyClass.New(generator, entityName, table, column, delete, mapping, GetKey(direct))
+            Me.ConnectedType = connectedType
+        End Sub
+
+        Public Sub New(ByVal generator As QueryGenerator, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping)
+            MyClass.New(generator, entityName, table, column, delete, mapping, DirKey)
+        End Sub
+
+        <Obsolete("Connected type is obsolete")> _
+        Public Sub New(ByVal generator As QueryGenerator, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
+            ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal direct As Boolean)
+            MyClass.New(generator, entityName, table, column, delete, mapping, GetKey(direct))
+        End Sub
+
         Public Sub New(ByVal generator As QueryGenerator, ByVal entityName As String, ByVal table As SourceFragment, ByVal column As String, _
             ByVal delete As Boolean, ByVal mapping As System.Data.Common.DataTableMapping, ByVal key As String)
             _entityName = entityName

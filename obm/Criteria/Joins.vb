@@ -228,9 +228,15 @@ Namespace Criteria.Joins
             _condition = _condition.ReplaceFilter(replacement, replacer)
         End Sub
 
-        'Public Function GetStaticString() As String
-        '    Return _table.TableName & JoinTypeString() & _condition.GetStaticString
-        'End Function
+        Public Function GetStaticString() As String
+            If _table IsNot Nothing Then
+                Return _table.RawName & JoinTypeString() & _condition.ToStaticString
+            ElseIf _type IsNot Nothing Then
+                Return _type.ToString & JoinTypeString() & _condition.ToStaticString
+            Else
+                Return _en & JoinTypeString() & _condition.ToStaticString
+            End If
+        End Function
 
         Public Overrides Function ToString() As String
             If _table IsNot Nothing Then

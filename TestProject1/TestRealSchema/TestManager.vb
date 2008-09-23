@@ -106,6 +106,9 @@ Public Class TestManagerRS
             Assert.IsNotNull(t)
             t.Code = t.Code + CByte(10)
 
+            Assert.IsTrue(t.IsLoaded)
+            Assert.IsTrue(t.IsFieldLoaded("Ref"))
+
             Dim t2 As Table3 = Nothing
             Dim prev As Byte = 0
             Try

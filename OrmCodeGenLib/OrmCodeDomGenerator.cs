@@ -330,6 +330,8 @@ namespace Worm.CodeGen.Core
 					entitySchemaDefClass.IsClass = true;
 					entitySchemaDefClass.IsPartial = entityClass.IsPartial;
 					entitySchemaDefClass.Attributes = entityClass.Attributes;
+					if (entity.BaseEntity != null)
+						entitySchemaDefClass.Attributes |= MemberAttributes.New;
 					entitySchemaDefClass.TypeAttributes = TypeAttributes.Class | TypeAttributes.NestedPublic;
 
 					#endregion определение схемы
@@ -665,7 +667,7 @@ namespace Worm.CodeGen.Core
                         CreateSetPKMethod(entityClass);
                     }
                     else
-    					CreateCreateObjectMethod(entity, entityClass);
+    				    createobjectMethod = CreateCreateObjectMethod(entity, entityClass);
                     #endregion
 
                     #region // метод OrmBase GetNew()
@@ -1648,14 +1650,17 @@ namespace Worm.CodeGen.Core
     		CodeEntityInterfaceDeclaration entityInterface, entityPropertiesInterface;
     		entityInterface = new CodeEntityInterfaceDeclaration(entityClass);
     		entityPropertiesInterface = new CodeEntityInterfaceDeclaration(entityClass, null, "Properties");
+
 			entityInterface.Attributes = entityPropertiesInterface.Attributes = MemberAttributes.Public;
 			entityInterface.TypeAttributes = entityPropertiesInterface.TypeAttributes = TypeAttributes.Public | TypeAttributes.Interface;
-    		entityInterface.BaseTypes.Add(new CodeTypeReference(typeof (_IOrmBase)));
-    		entityInterface.BaseTypes.Add(entityPropertiesInterface.TypeReference);
+    		
+            entityInterface.BaseTypes.Add(entityPropertiesInterface.TypeReference);
+            entityInterface.BaseTypes.Add(new CodeTypeReference(typeof(_IOrmBase)));
 
     		entityClass.EntityInterfaceDeclaration = entityInterface;
     		entityClass.EntityPropertiesInterfaceDeclaration = entityPropertiesInterface;
-    		entityNamespace.Types.Add(entityInterface);
+    		
+            entityNamespace.Types.Add(entityInterface);
     		entityNamespace.Types.Add(entityPropertiesInterface);
     	}
 
@@ -2212,6 +2217,7 @@ namespace Worm.CodeGen.Core
     		CodeObjectCreateExpression result =
     			new CodeObjectCreateExpression(
     				new CodeTypeReference(typeof (M2MRelation)),
+                    new CodeFieldReferenceExpression(new CodeThisReferenceExpression(), "_schema"),
 					entityTypeExpression,
 					tableExpression,
 					fieldExpression,
@@ -2825,12 +2831,12 @@ namespace Worm.CodeGen.Core
             method.Name = "GetTypeMainTable";
             // тип возвращаемого значения
             method.ReturnType = new CodeTypeReference(typeof(SourceFragment));
+			// модификаторы доступа
+			method.Attributes = MemberAttributes.Family;
             if (entity.BaseEntity != null)
             {
                 method.Attributes |= MemberAttributes.Override;
-            }
-            // модификаторы доступа
-            method.Attributes = MemberAttributes.Family;
+            }            
             method.Parameters.Add(
                 new CodeParameterDeclarationExpression(
                     new CodeTypeReference(typeof(Type)),

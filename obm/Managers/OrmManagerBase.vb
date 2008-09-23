@@ -47,8 +47,52 @@ Public Interface IGetManager
     ReadOnly Property Manager() As OrmManagerBase
 End Interface
 
-Public MustInherit Class OrmManagerBase
+Public Interface ICreateManager
+    Function CreateManager() As OrmManagerBase
+End Interface
+
+Class MgrWrapper
     Implements IDisposable, IGetManager
+
+    Private _mgr As OrmManagerBase
+
+    Public Sub New(ByVal mgr As OrmManagerBase)
+        _mgr = mgr
+    End Sub
+
+    Private ReadOnly Property Manager() As OrmManagerBase Implements IGetManager.Manager
+        Get
+            Return _mgr
+        End Get
+    End Property
+
+    Private disposedValue As Boolean = False        ' To detect redundant calls
+
+    ' IDisposable
+    Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+        If Not Me.disposedValue Then
+            If disposing Then
+                ' TODO: free other state (managed objects).
+            End If
+
+            _mgr.Dispose()
+        End If
+        Me.disposedValue = True
+    End Sub
+
+#Region " IDisposable Support "
+    ' This code added by Visual Basic to correctly implement the disposable pattern.
+    Public Sub Dispose() Implements IDisposable.Dispose
+        ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+        Dispose(True)
+        GC.SuppressFinalize(Me)
+    End Sub
+#End Region
+
+End Class
+
+Public MustInherit Class OrmManagerBase
+    Implements IDisposable
 
 #Region " Interfaces and classes "
 
@@ -471,6 +515,12 @@ Public MustInherit Class OrmManagerBase
                 Return _f
             End Get
         End Property
+
+        Friend ReadOnly Property Obj() As Object
+            Get
+                Return _obj
+            End Get
+        End Property
     End Class
 
     Public Class M2MCache
@@ -652,7 +702,7 @@ Public MustInherit Class OrmManagerBase
         End Function
     End Structure
 
-    Public Interface ICustDelegate(Of T As {ICachedEntity})
+    Public Interface ICustDelegateBase(Of T As {_IEntity})
         'Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
         Property Created() As Boolean
         Property Renew() As Boolean
@@ -662,7 +712,11 @@ Public MustInherit Class OrmManagerBase
         ReadOnly Property Filter() As IFilter
         Sub CreateDepends()
         Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
-        Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem
+    End Interface
+
+    Public Interface ICustDelegate(Of T As {ICachedEntity})
+        Inherits ICustDelegateBase(Of T)
+        Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem
     End Interface
 
     Public Class PagerSwitcher
@@ -798,7 +852,7 @@ Public MustInherit Class OrmManagerBase
 
         End Sub
 
-        Public Overridable Property Renew() As Boolean Implements ICustDelegate(Of T).Renew
+        Public Overridable Property Renew() As Boolean Implements ICustDelegateBase(Of T).Renew
             Get
                 Return _renew
             End Get
@@ -807,7 +861,7 @@ Public MustInherit Class OrmManagerBase
             End Set
         End Property
 
-        Public Overridable Property Created() As Boolean Implements ICustDelegate(Of T).Created
+        Public Overridable Property Created() As Boolean Implements ICustDelegateBase(Of T).Created
             Get
                 Return _created
             End Get
@@ -816,18 +870,18 @@ Public MustInherit Class OrmManagerBase
             End Set
         End Property
 
-        Public Overridable ReadOnly Property SmartSort() As Boolean Implements ICustDelegate(Of T).SmartSort
+        Public Overridable ReadOnly Property SmartSort() As Boolean Implements ICustDelegateBase(Of T).SmartSort
             Get
                 Return True
             End Get
         End Property
 
         Public MustOverride Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of T) 'Implements ICustDelegate(Of T).GetValues
-        Public MustOverride Sub CreateDepends() Implements ICustDelegate(Of T).CreateDepends
-        Public MustOverride ReadOnly Property Filter() As IFilter Implements ICustDelegate(Of T).Filter
-        Public MustOverride ReadOnly Property Sort() As Sort Implements ICustDelegate(Of T).Sort
+        Public MustOverride Sub CreateDepends() Implements ICustDelegateBase(Of T).CreateDepends
+        Public MustOverride ReadOnly Property Filter() As IFilter Implements ICustDelegateBase(Of T).Filter
+        Public MustOverride ReadOnly Property Sort() As Sort Implements ICustDelegateBase(Of T).Sort
         'Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
-        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem Implements ICustDelegate(Of T).GetCacheItem
+        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem Implements ICustDelegateBase(Of T).GetCacheItem
         Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem Implements ICustDelegate(Of T).GetCacheItem
     End Class
 
@@ -862,7 +916,7 @@ Public MustInherit Class OrmManagerBase
     Friend _prev As OrmManagerBase = Nothing
     'Protected hide_deleted As Boolean = True
     'Protected _check_status As Boolean = True
-    Protected _schema As QueryGenerator
+    Protected Friend _schema As QueryGenerator
     'Private _findnew As FindNew
     'Private _remnew As RemoveNew
     Protected Friend _disposed As Boolean = False
@@ -2068,12 +2122,28 @@ l1:
 
 #Region " Cache "
 
-    Protected Friend Function GetFromCache(Of T As {_ICachedEntity})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICustDelegate(Of T)) As CachedItem
+    Protected Friend Function GetFromCache2(Of T As {_IEntity})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+        ByVal withLoad As Boolean, ByVal del As ICustDelegateBase(Of T)) As CachedItem
+
+        Return GetFromCacheBase(Of T, _ICachedEntity)(dic, sync, id, withLoad, del, Nothing)
+    End Function
+
+    Protected Friend Function GetFromCache(Of T As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+        ByVal withLoad As Boolean, ByVal del As ICustDelegateBase(Of T)) As CachedItem
+
+        Return GetFromCacheBase(Of T, _ICachedEntity)(dic, sync, id, withLoad, del, AddressOf _ValCE(Of T))
+    End Function
+
+    Protected Friend Function GetFromCacheBase(Of T As {_IEntity}, T2 As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+        ByVal withLoad As Boolean, ByVal del As ICustDelegateBase(Of T), ByVal vdel As ValDelegate(Of T2)) As CachedItem
 
         Invariant()
 
-        Dim v As ICacheValidator = TryCast(del, ICacheValidator)
+        Dim v As ICacheValidator = Nothing
+
+        If Not _dont_cache_lists Then
+            v = TryCast(del, ICacheValidator)
+        End If
 
         Dim renew As Boolean = v IsNot Nothing AndAlso Not v.Validate()
 
@@ -2115,65 +2185,8 @@ l1:
         If del.Created Then
             If Not _dont_cache_lists Then del.CreateDepends()
         Else
-            If ce._expires = Date.MinValue Then
-                ce._expires = _expiresPattern
-            End If
-
-            If ce.Expires Then
-                ce.Expire()
-                del.Renew = True
+            If Not vdel(ce, CType(del, ICustDelegateBase(Of _IEntity)), dic, id, sync, v) Then
                 GoTo l1
-            End If
-
-            If _externalFilter Is Nothing Then
-                Dim psort As Sort = del.Sort
-
-                If ce.SortEquals(psort) OrElse psort Is Nothing Then
-                    If v IsNot Nothing AndAlso Not v.Validate(ce) Then
-                        del.Renew = True
-                        GoTo l1
-                    End If
-                    If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
-                        Dim objs As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me)
-                        ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
-                        dic(id) = ce
-                    End If
-                Else
-                    'Dim loaded As Integer = 0
-                    Dim objs As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me)
-                    If objs IsNot Nothing AndAlso objs.Count > 0 Then
-                        Dim srt As IOrmSorting = Nothing
-                        If psort.IsExternal Then
-                            ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
-                            dic(id) = ce
-                        ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
-                            Using SyncHelper.AcquireDynamicLock(sync)
-                                Dim sc As IComparer(Of T) = Nothing
-                                If srt IsNot Nothing Then
-                                    sc = srt.CreateSortComparer(Of T)(psort)
-                                Else
-                                    sc = New OrmComparer(Of T)(psort)
-                                End If
-                                If sc IsNot Nothing Then
-                                    Dim os As ReadOnlyEntityList(Of T) = CType(CreateReadonlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
-                                    os.Sort(sc)
-                                    ce = del.GetCacheItem(os)
-                                    dic(id) = ce
-                                Else
-                                    del.Renew = True
-                                    GoTo l1
-                                End If
-                            End Using
-                        Else
-                            del.Renew = True
-                            GoTo l1
-                        End If
-                    Else
-                        'dic.Remove(id)
-                        del.Renew = True
-                        GoTo l1
-                    End If
-                End If
             End If
         End If
 
@@ -2183,6 +2196,80 @@ l1:
         End If
         _er = New ExecutionResult(ce.GetCount(Me), ce.ExecutionTime, ce.FetchTime, Not del.Created, l)
         Return ce
+    End Function
+
+    Protected Friend Delegate Function ValDelegate(Of T As _ICachedEntity)(ByVal ce As CachedItem, _
+        ByVal del As ICustDelegateBase(Of _IEntity), ByVal dic As IDictionary, ByVal id As Object, _
+        ByVal sync As String, ByVal v As ICacheValidator) As Boolean
+
+    Private Function _ValCE(Of T As _ICachedEntity)(ByVal ce As CachedItem, _
+        ByVal del_ As ICustDelegateBase(Of _IEntity), ByVal dic As IDictionary, ByVal id As Object, _
+        ByVal sync As String, ByVal v As ICacheValidator) As Boolean
+
+        Dim del As ICustDelegate(Of T) = CType(del_, Global.Worm.OrmManagerBase.ICustDelegate(Of T))
+
+        If ce._expires = Date.MinValue Then
+            ce._expires = _expiresPattern
+        End If
+
+        If ce.Expires Then
+            ce.Expire()
+            del.Renew = True
+            Return False
+        End If
+
+        If _externalFilter Is Nothing Then
+            Dim psort As Sort = del.Sort
+
+            If ce.SortEquals(psort) OrElse psort Is Nothing Then
+                If v IsNot Nothing AndAlso Not v.Validate(ce) Then
+                    del.Renew = True
+                    Return False
+                End If
+                If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
+                    Dim objs As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me)
+                    ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
+                    dic(id) = ce
+                End If
+            Else
+                'Dim loaded As Integer = 0
+                Dim objs As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me)
+                If objs IsNot Nothing AndAlso objs.Count > 0 Then
+                    Dim srt As IOrmSorting = Nothing
+                    If psort.IsExternal Then
+                        ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
+                        dic(id) = ce
+                    ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
+                        Using SyncHelper.AcquireDynamicLock(sync)
+                            Dim sc As IComparer(Of T) = Nothing
+                            If srt IsNot Nothing Then
+                                sc = srt.CreateSortComparer(Of T)(psort)
+                            Else
+                                sc = New OrmComparer(Of T)(psort)
+                            End If
+                            If sc IsNot Nothing Then
+                                Dim os As ReadOnlyEntityList(Of T) = CType(CreateReadonlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
+                                os.Sort(sc)
+                                ce = del.GetCacheItem(os)
+                                dic(id) = ce
+                            Else
+                                del.Renew = True
+                                Return False
+                            End If
+                        End Using
+                    Else
+                        del.Renew = True
+                        Return False
+                    End If
+                Else
+                    'dic.Remove(id)
+                    del.Renew = True
+                    Return False
+                End If
+            End If
+        End If
+
+        Return True
     End Function
 
     Public Function CanSortOnClient(ByVal t As Type, ByVal col As ICollection, ByVal sort As Sort, ByRef sorting As IOrmSorting) As Boolean
@@ -4558,12 +4645,6 @@ l1:
         joins = l.ToArray
         Return joins.Length > 0
     End Function
-
-    Public ReadOnly Property Manager() As OrmManagerBase Implements IGetManager.Manager
-        Get
-            Return Me
-        End Get
-    End Property
 End Class
 
 Class ManagerWrapper

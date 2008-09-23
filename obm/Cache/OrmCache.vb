@@ -11,6 +11,12 @@ Imports Worm.Orm.Query
 
 Namespace Cache
 
+    Public Enum CacheListBehavior
+        CacheAll
+        CacheOrThrowException
+        CacheWhatCan
+    End Enum
+
     <Serializable()> _
     Public Class EntityProxy
         Private _id() As PKDesc
@@ -257,6 +263,7 @@ Namespace Cache
         Private _field_depends As New Dictionary(Of EntityField, Dictionary(Of String, List(Of String)))
 
         Private _lock As New Object
+        Private _beh As CacheListBehavior
 
         Private _tp As New TypeDepends
         Private _qt As New Dictionary(Of Object, Dictionary(Of String, Pair(Of String)))
@@ -467,6 +474,15 @@ Namespace Cache
         End Property
 
 #End Region
+
+        Public Property CacheListBehavior() As CacheListBehavior
+            Get
+                Return _beh
+            End Get
+            Set(ByVal value As CacheListBehavior)
+                _beh = value
+            End Set
+        End Property
 
         Public MustOverride Function CreateResultsetsDictionary() As IDictionary
 
