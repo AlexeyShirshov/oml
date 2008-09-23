@@ -36,7 +36,7 @@ Namespace Query.Database
         Private _m As Integer
         Private _sm As Integer
 
-        Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As ProcessorEntity(Of ReturnType)
+        Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As ProcessorBase(Of ReturnType)
             If _proc Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                 'If query.Joins IsNot Nothing Then
@@ -66,13 +66,13 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _proc = New ProcessorEntity(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                _proc = New ProcessorBase(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'End If
 
                 _m = query.Mark
                 _sm = query.SMark
             Else
-                Dim p As ProcessorEntity(Of ReturnType) = CType(_proc, ProcessorEntity(Of ReturnType))
+                Dim p As ProcessorBase(Of ReturnType) = CType(_proc, ProcessorBase(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                     Dim f() As IFilter = query.Prepare(j, mgr.ObjectSchema, mgr.GetFilterInfo, query.SelectedType)
@@ -87,7 +87,7 @@ Namespace Query.Database
                 End If
             End If
 
-            Return CType(_proc, ProcessorEntity(Of ReturnType))
+            Return CType(_proc, ProcessorBase(Of ReturnType))
         End Function
 
         Protected Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As Processor(Of ReturnType)
@@ -198,10 +198,24 @@ Namespace Query.Database
             Return p.GetSimpleValues(Of ReturnType)()
         End Function
 
-        Public Function Exec(Of ReturnType As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
-            ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
+        'Private Shared Function _GetCe(Of ReturnType As _ICachedEntity)( _
+        '    ByVal mgr As OrmManagerBase, ByVal query As QueryCmd, ByVal p As ProcessorBase(Of ReturnType), ByVal dic As IDictionary, ByVal id As String, ByVal sync As String) As Worm.OrmManagerBase.CachedItem
+        '    Return mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.propWithLoad, p)
+        'End Function
 
-            Dim dontcache As Boolean = query.DontCache
+        'Private Shared Function d2(Of ReturnType As _IEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd, ByVal p As ProcessorBase(Of ReturnType), ByVal ce As OrmManagerBase.CachedItem, ByVal s As Cache.IListObjectConverter.ExtractListResult) As Worm.ReadOnlyObjectList(Of ReturnType)
+        '    Return ce.GetObjectList(Of ReturnType)(mgr, query.propWithLoad, p.Created, s)
+        'End Function
+
+        Private Delegate Function GetCeDelegate( _
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String) As Worm.OrmManagerBase.CachedItem
+
+        Private Delegate Function GetListFromCEDelegate(Of ReturnType As _IEntity)( _
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd, ByVal p As OrmManagerBase.ICustDelegateBase(Of ReturnType), ByVal ce As OrmManagerBase.CachedItem, ByVal s As Cache.IListObjectConverter.ExtractListResult) As Worm.ReadOnlyObjectList(Of ReturnType)
+
+        Private Function _Exec(Of ReturnType As _IEntity)(ByVal mgr As OrmManagerBase, _
+            ByVal query As QueryCmd, ByVal p As ProcessorBase(Of ReturnType), _
+            ByVal d As GetCeDelegate, ByVal d2 As GetListFromCEDelegate(Of ReturnType)) As ReadOnlyObjectList(Of ReturnType)
 
             Dim key As String = Nothing
             Dim dic As IDictionary = Nothing
@@ -213,8 +227,8 @@ Namespace Query.Database
             Dim oldCache As Boolean = mgr._dont_cache_lists
             Dim oldStart As Integer = mgr._start
             Dim oldLength As Integer = mgr._length
+            Dim oldSchema As QueryGenerator = mgr._schema
 
-            mgr._dont_cache_lists = dontcache OrElse query.OuterQuery IsNot Nothing
             If query.ClientPaging IsNot Nothing Then
                 mgr._start = query.ClientPaging.First
                 mgr._length = query.ClientPaging.Second
@@ -230,16 +244,21 @@ Namespace Query.Database
                 mgr._list = query.ExternalCacheMark
             End If
 
-            Dim p As Processor(Of ReturnType) = GetProcessor(Of ReturnType)(mgr, query)
+            If query.Schema IsNot Nothing Then
+                mgr._schema = query.Schema
+            End If
 
-            If Not dontcache Then
+            mgr._dont_cache_lists = query.DontCache OrElse query.OuterQuery IsNot Nothing OrElse p.Dic Is Nothing
+
+            If Not mgr._dont_cache_lists Then
                 key = p.Key
                 id = p.Id
                 dic = p.Dic
                 sync = p.Sync
             End If
 
-            Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.propWithLoad, p)
+            Dim ce As OrmManagerBase.CachedItem = d(mgr, query, dic, id, sync)
+
             query.LastExecitionResult = mgr.GetLastExecitionResult
 
             mgr._dont_cache_lists = oldCache
@@ -247,71 +266,178 @@ Namespace Query.Database
             mgr._length = oldLength
             mgr._list = oldList
             mgr._expiresPattern = oldExp
+            mgr._schema = oldSchema
 
             mgr.RaiseOnDataAvailable()
 
             Dim s As Cache.IListObjectConverter.ExtractListResult
             'Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
             'Return r
-            Return ce.GetObjectList(Of ReturnType)(mgr, query.propWithLoad, p.Created, s)
+            Return d2(mgr, query, p, ce, s)
+        End Function
+
+        Public Function Exec(Of ReturnType As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
+            ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
+
+            'Dim key As String = Nothing
+            'Dim dic As IDictionary = Nothing
+            'Dim id As String = Nothing
+            'Dim sync As String = Nothing
+            'Dim oldExp As Date
+            'Dim oldList As String = Nothing
+
+            'Dim oldCache As Boolean = mgr._dont_cache_lists
+            'Dim oldStart As Integer = mgr._start
+            'Dim oldLength As Integer = mgr._length
+            'Dim oldSchema As QueryGenerator = mgr._schema
+
+            'If query.ClientPaging IsNot Nothing Then
+            '    mgr._start = query.ClientPaging.First
+            '    mgr._length = query.ClientPaging.Second
+            'End If
+
+            'If query.LiveTime <> New TimeSpan Then
+            '    oldExp = mgr._expiresPattern
+            '    mgr._expiresPattern = Date.Now.Add(query.LiveTime)
+            'End If
+
+            'If Not String.IsNullOrEmpty(query.ExternalCacheMark) Then
+            '    oldList = mgr._list
+            '    mgr._list = query.ExternalCacheMark
+            'End If
+
+            'If query.Schema IsNot Nothing Then
+            '    mgr._schema = query.Schema
+            'End If
+
+            'Dim p As Processor(Of ReturnType) = GetProcessor(Of ReturnType)(mgr, query)
+
+            'mgr._dont_cache_lists = query.DontCache OrElse query.OuterQuery IsNot Nothing OrElse p.Dic Is Nothing
+
+            'If Not mgr._dont_cache_lists Then
+            '    key = p.Key
+            '    id = p.Id
+            '    dic = p.Dic
+            '    sync = p.Sync
+            'End If
+
+            'Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.propWithLoad, p)
+            'query.LastExecitionResult = mgr.GetLastExecitionResult
+
+            'mgr._dont_cache_lists = oldCache
+            'mgr._start = oldStart
+            'mgr._length = oldLength
+            'mgr._list = oldList
+            'mgr._expiresPattern = oldExp
+            'mgr._schema = oldSchema
+
+            'mgr.RaiseOnDataAvailable()
+
+            'Dim s As Cache.IListObjectConverter.ExtractListResult
+            ''Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
+            ''Return r
+            'Return ce.GetObjectList(Of ReturnType)(mgr, query.propWithLoad, p.Created, s)
+
+            Dim p As Processor(Of ReturnType) = GetProcessor(Of ReturnType)(mgr, query)
+
+            Return CType(_Exec(Of ReturnType)(mgr, query, p, _
+                Function(m As OrmManagerBase, q As QueryCmd, dic As IDictionary, id As String, sync As String) _
+                    m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p), _
+                Function(m As OrmManagerBase, q As QueryCmd, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType), ce As OrmManagerBase.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
+                    ce.GetObjectList(Of ReturnType)(m, q.propWithLoad, p2.Created, s) _
+                ), ReadOnlyEntityList(Of ReturnType))
         End Function
 
         Public Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
             ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
 
-            Dim dontcache As Boolean = query.DontCache
-
-            Dim key As String = Nothing
-            Dim dic As IDictionary = Nothing
-            Dim id As String = Nothing
-            Dim sync As String = Nothing
-            Dim oldExp As Date
-            Dim oldList As String = Nothing
-
-            Dim oldCache As Boolean = mgr._dont_cache_lists
-            Dim oldStart As Integer = mgr._start
-            Dim oldLength As Integer = mgr._length
-
-            mgr._dont_cache_lists = dontcache OrElse query.OuterQuery IsNot Nothing
-            If query.ClientPaging IsNot Nothing Then
-                mgr._start = query.ClientPaging.First
-                mgr._length = query.ClientPaging.Second
-            End If
-
-            If query.LiveTime <> New TimeSpan Then
-                oldExp = mgr._expiresPattern
-                mgr._expiresPattern = Date.Now.Add(query.LiveTime)
-            End If
-
-            If Not String.IsNullOrEmpty(query.ExternalCacheMark) Then
-                oldList = mgr._list
-                mgr._list = query.ExternalCacheMark
-            End If
-
             Dim p As ProcessorT(Of SelectType, ReturnType) = GetProcessorT(Of SelectType, ReturnType)(mgr, query)
 
-            If Not dontcache Then
-                key = p.Key
-                id = p.Id
-                dic = p.Dic
-                sync = p.Sync
-            End If
+            Return CType(_Exec(Of ReturnType)(mgr, query, p, _
+                Function(m As OrmManagerBase, q As QueryCmd, dic As IDictionary, id As String, sync As String) _
+                    m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p), _
+                Function(m As OrmManagerBase, q As QueryCmd, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType), ce As OrmManagerBase.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
+                    ce.GetObjectList(Of ReturnType)(m, q.propWithLoad, p2.Created, s) _
+                ), ReadOnlyEntityList(Of ReturnType))
+        End Function
 
-            Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.propWithLoad, p)
-            query.LastExecitionResult = mgr.GetLastExecitionResult
+        Public Function ExecEntity(Of ReturnType As {Orm._IEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
+            'Dim dontcache As Boolean = query.DontCache
 
-            mgr._dont_cache_lists = oldCache
-            mgr._start = oldStart
-            mgr._length = oldLength
-            mgr._list = oldList
-            mgr._expiresPattern = oldExp
+            'Dim key As String = Nothing
+            'Dim dic As IDictionary = Nothing
+            'Dim id As String = Nothing
+            'Dim sync As String = Nothing
+            'Dim oldExp As Date
+            'Dim oldList As String = Nothing
 
-            mgr.RaiseOnDataAvailable()
+            'Dim oldCache As Boolean = mgr._dont_cache_lists
+            'Dim oldStart As Integer = mgr._start
+            'Dim oldLength As Integer = mgr._length
+            'Dim oldSchema As QueryGenerator = mgr._schema
 
-            Dim s As Cache.IListObjectConverter.ExtractListResult
-            'Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
+            'mgr._dont_cache_lists = dontcache OrElse query.OuterQuery IsNot Nothing
+            'If query.ClientPaging IsNot Nothing Then
+            '    mgr._start = query.ClientPaging.First
+            '    mgr._length = query.ClientPaging.Second
+            'End If
+
+            'If query.LiveTime <> New TimeSpan Then
+            '    oldExp = mgr._expiresPattern
+            '    mgr._expiresPattern = Date.Now.Add(query.LiveTime)
+            'End If
+
+            'If Not String.IsNullOrEmpty(query.ExternalCacheMark) Then
+            '    oldList = mgr._list
+            '    mgr._list = query.ExternalCacheMark
+            'End If
+
+            'If query.Schema IsNot Nothing Then
+            '    mgr._schema = query.Schema
+            'End If
+
+            'Dim p As ProcessorEntity(Of ReturnType) = GetProcessorAnonym(Of ReturnType)(mgr, query)
+
+            'If Not dontcache Then
+            '    key = p.Key
+            '    id = p.Id
+            '    dic = p.Dic
+            '    sync = p.Sync
+            'End If
+
+            'Dim r As ReadOnlyObjectList(Of ReturnType) = CType(dic(id), Global.Worm.ReadOnlyObjectList(Of ReturnType))
+            'Dim _hit As Boolean = True
+            'Dim e, f As TimeSpan
+            'If r Is Nothing Then
+            '    r = p.GetEntities()
+            '    _hit = False
+            '    e = p.Exec
+            '    f = p.Fetch
+            '    If Not mgr._dont_cache_lists Then
+            '        dic(id) = r
+            '    End If
+            'End If
+
+            'query.LastExecitionResult = New OrmManagerBase.ExecutionResult(r.Count, e, f, _hit, mgr._loadedInLastFetch)
+
+            'mgr._dont_cache_lists = oldCache
+            'mgr._start = oldStart
+            'mgr._length = oldLength
+            'mgr._list = oldList
+            'mgr._expiresPattern = oldExp
+            'mgr._schema = oldSchema
+
+            'mgr.RaiseOnDataAvailable()
+
             'Return r
-            Return ce.GetObjectList(Of ReturnType)(mgr, query.propWithLoad, p.Created, s)
+
+            Dim p As ProcessorBase(Of ReturnType) = GetProcessorAnonym(Of ReturnType)(mgr, query)
+
+            Return _Exec(Of ReturnType)(mgr, query, p, _
+                Function(m As OrmManagerBase, q As QueryCmd, dic As IDictionary, id As String, sync As String) _
+                    m.GetFromCache2(Of ReturnType)(dic, sync, id, q.propWithLoad, p), _
+                Function(m As OrmManagerBase, q As QueryCmd, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType), ce As OrmManagerBase.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
+                    CType(ce.Obj, Global.Worm.ReadOnlyObjectList(Of ReturnType)))
         End Function
 
 #Region " Shared helpers "
@@ -644,72 +770,6 @@ Namespace Query.Database
         End Function
 
 #End Region
-
-        Public Function ExecEntity(Of ReturnType As {Orm._IEntity})(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType) Implements IExecutor.ExecEntity
-            Dim dontcache As Boolean = query.DontCache
-
-            Dim key As String = Nothing
-            Dim dic As IDictionary = Nothing
-            Dim id As String = Nothing
-            Dim sync As String = Nothing
-            Dim oldExp As Date
-            Dim oldList As String = Nothing
-
-            Dim oldCache As Boolean = mgr._dont_cache_lists
-            Dim oldStart As Integer = mgr._start
-            Dim oldLength As Integer = mgr._length
-
-            mgr._dont_cache_lists = dontcache OrElse query.OuterQuery IsNot Nothing
-            If query.ClientPaging IsNot Nothing Then
-                mgr._start = query.ClientPaging.First
-                mgr._length = query.ClientPaging.Second
-            End If
-
-            If query.LiveTime <> New TimeSpan Then
-                oldExp = mgr._expiresPattern
-                mgr._expiresPattern = Date.Now.Add(query.LiveTime)
-            End If
-
-            If Not String.IsNullOrEmpty(query.ExternalCacheMark) Then
-                oldList = mgr._list
-                mgr._list = query.ExternalCacheMark
-            End If
-
-            Dim p As ProcessorEntity(Of ReturnType) = GetProcessorAnonym(Of ReturnType)(mgr, query)
-
-            If Not dontcache Then
-                key = p.Key
-                id = p.Id
-                dic = p.Dic
-                sync = p.Sync
-            End If
-
-
-            Dim r As ReadOnlyObjectList(Of ReturnType) = CType(dic(id), Global.Worm.ReadOnlyObjectList(Of ReturnType))
-            Dim _hit As Boolean = True
-            Dim e, f As TimeSpan
-            If r Is Nothing Then
-                r = p.GetEntities()
-                _hit = False
-                e = p.Exec
-                f = p.Fetch
-                If Not mgr._dont_cache_lists Then
-                    dic(id) = r
-                End If
-            End If
-
-            query.LastExecitionResult = New OrmManagerBase.ExecutionResult(r.Count, e, f, _hit, mgr._loadedInLastFetch)
-
-            mgr._dont_cache_lists = oldCache
-            mgr._start = oldStart
-            mgr._length = oldLength
-            mgr._list = oldList
-            mgr._expiresPattern = oldExp
-
-            mgr.RaiseOnDataAvailable()
-
-            Return r
-        End Function
 
         Public Function ExecSimple(Of ReturnType)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
             Dim ts() As Reflection.MemberInfo = Me.GetType.GetMember("ExecSimple")

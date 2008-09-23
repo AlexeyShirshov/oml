@@ -574,15 +574,15 @@ l1:
             'Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
             Select Case reader.NodeType
                 Case XmlNodeType.CDATA
-                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
-                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
+                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, fieldName)
+                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
                     Dim x As New XmlDocument
                     x.LoadXml(reader.Value)
                     pi.SetValue(Me, x, Nothing)
                     SetLoaded(c, True, True, schema)
                 Case XmlNodeType.Text
-                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
-                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
+                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, fieldName)
+                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
                     Dim v As String = reader.Value
                     pi.SetValue(Me, Convert.FromBase64String(CStr(v)), Nothing)
                     SetLoaded(c, True, True, schema)
@@ -592,26 +592,35 @@ l1:
                     '    SetLoaded(c, True)
                     'End Using
                 Case XmlNodeType.EndElement
-                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
-                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
+                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, fieldName)
+                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
                     pi.SetValue(Me, Nothing, Nothing)
                     SetLoaded(c, True, True, schema)
                 Case XmlNodeType.Element
-                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(Me.GetType, fieldName)
-                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
+                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, fieldName)
+                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
                     Dim o As ICachedEntity = Nothing
                     Dim pk() As PKDesc = GetPKs(reader)
                     Using mc As IGetManager = GetMgr()
-                        o = mc.Manager.CreateObject(pk, pi.PropertyType)
+                        If (schema.GetAttributes(Me.GetType, c) And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
+                            Dim f As IFactory = TryCast(Me, IFactory)
+                            If f IsNot Nothing Then
+                                f.CreateObject(pk(0).PropertyAlias, pk(0).Value)
+                            Else
+                                Throw New OrmObjectException(String.Format("Preperty {0} is factory property. Implementation of IFactory is required.", fieldName))
+                            End If
+                        Else
+                            o = mc.Manager.CreateObject(pk, pi.PropertyType)
+                            pi.SetValue(Me, o, Nothing)
+                        End If
                     End Using
-                    pi.SetValue(Me, o, Nothing)
                     SetLoaded(c, True, True, schema)
             End Select
         End Sub
 
         Private Function GetPKs(ByVal reader As XmlReader) As PKDesc()
             Dim l As New List(Of PKDesc)
-            Do While reader.Read
+            Do
                 If reader.NodeType = XmlNodeType.Element AndAlso reader.Name = "pk" Then
                     reader.MoveToFirstAttribute()
                     Do
@@ -620,7 +629,8 @@ l1:
                         l.Add(New PKDesc(reader.Name, reader.Value))
                     Loop While reader.MoveToNextAttribute
                 End If
-            Loop
+                reader.Read()
+            Loop Until reader.NodeType = XmlNodeType.EndElement
             Return l.ToArray
         End Function
 
@@ -629,8 +639,8 @@ l1:
                 .MoveToFirstAttribute()
                 Dim t As Type = Me.GetType
                 Dim oschema As IOrmObjectSchemaBase = Nothing
-                If OrmSchema IsNot Nothing Then
-                    oschema = OrmSchema.GetObjectSchema(t)
+                If schema IsNot Nothing Then
+                    oschema = schema.GetObjectSchema(t)
                 End If
 
                 Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
@@ -638,10 +648,10 @@ l1:
 
                 Do
 
-                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(t, oschema, .Name)
-                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(t, .Name)
+                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(t, oschema, .Name)
+                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(t, .Name)
 
-                    Dim att As Field2DbRelations = OrmSchema.GetAttributes(t, c)
+                    Dim att As Field2DbRelations = schema.GetAttributes(t, c)
 
                     If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                         Dim value As String = .Value
@@ -686,10 +696,10 @@ l1:
                 .MoveToFirstAttribute()
                 Do
 
-                    Dim pi As Reflection.PropertyInfo = OrmSchema.GetProperty(t, oschema, .Name)
-                    Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(t, .Name)
+                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(t, oschema, .Name)
+                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(t, .Name)
 
-                    Dim att As Field2DbRelations = OrmSchema.GetAttributes(t, c)
+                    Dim att As Field2DbRelations = schema.GetAttributes(t, c)
                     'Dim not_pk As Boolean = (att And Field2DbRelations.PK) = 0
 
                     'Me.IsLoaded = not_pk
@@ -777,10 +787,10 @@ l1:
             End Get
         End Property
 
-        Public Overridable ReadOnly Property ChangeDescription() As String
+        Public Overridable ReadOnly Property ChangeDescription() As String Implements ICachedEntity.ChangeDescription
             Get
                 Dim sb As New StringBuilder
-                sb.Append("Аттрибуты:").Append(vbCrLf)
+                sb.Append("Attributes:").Append(vbCrLf)
                 If ObjectState = Orm.ObjectState.Modified Then
                     For Each c As ColumnAttribute In Changes(OriginalCopy)
                         sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
@@ -905,7 +915,7 @@ l1:
                     mc.Cache.UpdateCache(mc.ObjectSchema, New ICachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
                 End If
                 For Each el As EditableListBase In New List(Of EditableListBase)(_upd.Relations)
-                    mc.Manager.Cache.UpdateM2MQueries(el)
+                    mc.Cache.UpdateM2MQueries(el)
                     _upd.Relations.Remove(el)
                 Next
             End Using

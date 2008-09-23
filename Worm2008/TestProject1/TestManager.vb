@@ -5,7 +5,7 @@ Imports Worm.Cache
 Imports Worm.Orm
 
 <TestClass()> Public Class TestManager
-    Implements Worm.OrmManagerBase.INewObjects
+    Implements Worm.OrmManagerBase.INewObjects, Worm.ICreateManager
 
     Private _schemas As New System.Collections.Hashtable
 
@@ -22,12 +22,26 @@ Imports Worm.Orm
         Return CreateManager(New OrmCache, schema)
     End Function
 
+    Public Class CustomMgr
+        Inherits OrmReadOnlyDBManager
+        Implements Worm.ICreateManager
+
+        Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator, ByVal connectionString As String)
+            MyBase.New(cache, schema, connectionString)
+        End Sub
+
+        Public Function CreateMgr() As Worm.OrmManagerBase Implements Worm.ICreateManager.CreateManager
+            Return CreateManager(New SQLGenerator("1"))
+        End Function
+
+    End Class
+
     Public Shared Function CreateManager(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
-        Return New OrmReadOnlyDBManager(cache, schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Return New CustomMgr(cache, schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Return New OrmReadOnlyDBManager(cache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
+        Return New CustomMgr(cache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=test")
 #End If
     End Function
 
@@ -1308,4 +1322,33 @@ Imports Worm.Orm
     Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
 
     End Sub
+
+    '    Private disposedValue As Boolean = False        ' To detect redundant calls
+
+    '    ' IDisposable
+    '    Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+    '        If Not Me.disposedValue Then
+    '            If disposing Then
+    '                ' TODO: free other state (managed objects).
+    '            End If
+
+    '            ' TODO: free your own state (unmanaged objects).
+    '            ' TODO: set large fields to null.
+    '        End If
+    '        Me.disposedValue = True
+    '    End Sub
+
+    '#Region " IDisposable Support "
+    '    ' This code added by Visual Basic to correctly implement the disposable pattern.
+    '    Public Sub Dispose() Implements IDisposable.Dispose
+    '        ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+    '        Dispose(True)
+    '        GC.SuppressFinalize(Me)
+    '    End Sub
+    '#End Region
+
+    Public Function CreateMgr() As Worm.OrmManagerBase Implements Worm.ICreateManager.CreateManager
+        Return CreateManager(New SQLGenerator("1"))
+    End Function
+
 End Class

@@ -61,6 +61,7 @@ Namespace Orm
         Function ValidateNewObject(ByVal mgr As OrmManagerBase) As Boolean
         Function ValidateUpdate(ByVal mgr As OrmManagerBase) As Boolean
         Function ValidateDelete(ByVal mgr As OrmManagerBase) As Boolean
+        ReadOnly Property ChangeDescription() As String
     End Interface
 
     Public Interface IM2M
@@ -170,6 +171,16 @@ Namespace Orm
             End Get
             Set(ByVal value As OrmManagerBase)
                 _mgr = value
+            End Set
+        End Property
+
+        Private _notCreated As Boolean
+        Public Property DisposeMgr() As Boolean
+            Get
+                Return Not _notCreated
+            End Get
+            Set(ByVal value As Boolean)
+                _notCreated = Not value
             End Set
         End Property
 
@@ -349,7 +360,15 @@ Namespace Orm
                 Dim a As New ManagerRequiredArgs
                 RaiseEvent ManagerRequired(Me, a)
                 mgr = a.Manager
-                Return mgr
+                If mgr Is Nothing Then
+                    Return Nothing
+                Else
+                    If a.DisposeMgr Then
+                        Return New MgrWrapper(mgr)
+                    Else
+                        Return New ManagerWrapper(mgr)
+                    End If
+                End If
             Else
                 'don't dispose
                 Return New ManagerWrapper(mgr)

@@ -585,10 +585,10 @@
       <xs:selector xpath="NS:Tables/NS:Table | ./NS:Includes/NS:OrmObjects/NS:Tables/NS:Table" />
       <xs:field xpath="@id" />
     </xs:key>
-    <xs:key name="TableName">
+    <!--<xs:key name="TableName">
       <xs:selector xpath="NS:Tables/NS:Table" />
       <xs:field xpath="." />
-    </xs:key>
+    </xs:key>-->
     <xs:key name="TypeId">
       <xs:selector xpath="NS:Types/NS:Type | ./NS:Includes/NS:OrmObjects/NS:Types/NS:Type" />
       <xs:field xpath="@id" />
