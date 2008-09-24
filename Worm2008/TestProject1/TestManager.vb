@@ -102,7 +102,7 @@ Imports Worm.Orm
             For Each e4 As Entity4 In c
                 Assert.IsTrue(e4.InternalProperties.IsLoaded)
             Next
-            Dim l As IList(Of Entity4) = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
+            Dim l As IList(Of Entity4) = CType(c, IList(Of TestProject1.Entity4))
             Assert.AreEqual(10, l(0).Identifier)
             Assert.AreEqual("2gwrbwrb", l(0).Title)
             Assert.AreEqual(1, l(3).Identifier)

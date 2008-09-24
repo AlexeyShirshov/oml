@@ -526,7 +526,8 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestCacheMark()
         Dim dic As New Hashtable
 
-        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Cache.OrmCache(Function(mark As String) If(dic.Contains(mark), CType(dic(mark), IDictionary), createdic(dic, mark))), _
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New Cache.OrmCache( _
+            Function(mark As String) If(dic.Contains(mark), CType(dic(mark), IDictionary), createdic(dic, mark))), _
             New SQLGenerator("1"))
             Dim q As New QueryCmd(GetType(Entity))
             q.ExternalCacheMark = "ldgn"
@@ -588,7 +589,7 @@ Imports Worm.Database.Criteria.Joins
 
             q.ToEntityList(Of Table2)(mgr)
 
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Assert.IsTrue(q.LastExecitionResult.CacheHit)
         End Using
     End Sub
 
