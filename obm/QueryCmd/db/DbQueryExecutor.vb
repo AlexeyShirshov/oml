@@ -213,9 +213,11 @@ Namespace Query.Database
         Private Delegate Function GetListFromCEDelegate(Of ReturnType As _IEntity)( _
             ByVal mgr As OrmManagerBase, ByVal query As QueryCmd, ByVal p As OrmManagerBase.ICustDelegateBase(Of ReturnType), ByVal ce As OrmManagerBase.CachedItem, ByVal s As Cache.IListObjectConverter.ExtractListResult) As Worm.ReadOnlyObjectList(Of ReturnType)
 
+        Private Delegate Function GetProcessorDelegate(Of ReturnType As _IEntity)() As ProcessorBase(Of ReturnType)
+
         Private Function _Exec(Of ReturnType As _IEntity)(ByVal mgr As OrmManagerBase, _
-            ByVal query As QueryCmd, ByVal p As ProcessorBase(Of ReturnType), _
-            ByVal d As GetCeDelegate, ByVal d2 As GetListFromCEDelegate(Of ReturnType)) As ReadOnlyObjectList(Of ReturnType)
+            ByVal query As QueryCmd, ByVal gp As GetProcessorDelegate(Of ReturnType), _
+            ByVal d As GetCeDelegate(Of ReturnType), ByVal d2 As GetListFromCEDelegate(Of ReturnType)) As ReadOnlyObjectList(Of ReturnType)
 
             Dim key As String = Nothing
             Dim dic As IDictionary = Nothing
@@ -248,6 +250,8 @@ Namespace Query.Database
                 mgr._schema = query.Schema
             End If
 
+            Dim p As ProcessorBase(Of ReturnType) = gp()
+
             mgr._dont_cache_lists = query.DontCache OrElse query.OuterQuery IsNot Nothing OrElse p.Dic Is Nothing
 
             If Not mgr._dont_cache_lists Then
@@ -257,7 +261,7 @@ Namespace Query.Database
                 sync = p.Sync
             End If
 
-            Dim ce As OrmManagerBase.CachedItem = d(mgr, query, dic, id, sync)
+            Dim ce As OrmManagerBase.CachedItem = d(mgr, query, dic, id, sync, p)
 
             query.LastExecitionResult = mgr.GetLastExecitionResult
 
@@ -338,9 +342,10 @@ Namespace Query.Database
             ''Return r
             'Return ce.GetObjectList(Of ReturnType)(mgr, query.propWithLoad, p.Created, s)
 
-            Dim p As Processor(Of ReturnType) = GetProcessor(Of ReturnType)(mgr, query)
+            'Dim p As Processor(Of ReturnType) = GetProcessor(Of ReturnType)(mgr, query)
 
-            Return CType(_Exec(Of ReturnType)(mgr, query, p, _
+            Return CType(_Exec(Of ReturnType)(mgr, query, _
+                Function() GetProcessor(Of ReturnType)(mgr, query), _
                 Function(m As OrmManagerBase, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType)) _
                     m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
                 Function(m As OrmManagerBase, q As QueryCmd, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType), ce As OrmManagerBase.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
@@ -351,11 +356,12 @@ Namespace Query.Database
         Public Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
             ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType) Implements IExecutor.Exec
 
-            Dim p As ProcessorT(Of SelectType, ReturnType) = GetProcessorT(Of SelectType, ReturnType)(mgr, query)
+            'Dim p As ProcessorT(Of SelectType, ReturnType) = GetProcessorT(Of SelectType, ReturnType)(mgr, query)
 
-            Return CType(_Exec(Of ReturnType)(mgr, query, p, _
-                Function(m As OrmManagerBase, q As QueryCmd, dic As IDictionary, id As String, sync As String) _
-                    m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p), _
+            Return CType(_Exec(Of ReturnType)(mgr, query, _
+                Function() GetProcessorT(Of SelectType, ReturnType)(mgr, query), _
+                Function(m As OrmManagerBase, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType)) _
+                    m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
                 Function(m As OrmManagerBase, q As QueryCmd, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType), ce As OrmManagerBase.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
                     ce.GetObjectList(Of ReturnType)(m, q.propWithLoad, p2.Created, s) _
                 ), ReadOnlyEntityList(Of ReturnType))
@@ -431,11 +437,12 @@ Namespace Query.Database
 
             'Return r
 
-            Dim p As ProcessorBase(Of ReturnType) = GetProcessorAnonym(Of ReturnType)(mgr, query)
+            'Dim p As ProcessorBase(Of ReturnType) = GetProcessorAnonym(Of ReturnType)(mgr, query)
 
-            Return _Exec(Of ReturnType)(mgr, query, p, _
-                Function(m As OrmManagerBase, q As QueryCmd, dic As IDictionary, id As String, sync As String) _
-                    m.GetFromCache2(Of ReturnType)(dic, sync, id, q.propWithLoad, p), _
+            Return _Exec(Of ReturnType)(mgr, query, _
+                Function() GetProcessorAnonym(Of ReturnType)(mgr, query), _
+                Function(m As OrmManagerBase, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType)) _
+                    m.GetFromCache2(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
                 Function(m As OrmManagerBase, q As QueryCmd, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType), ce As OrmManagerBase.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
                     CType(ce.Obj, Global.Worm.ReadOnlyObjectList(Of ReturnType)))
         End Function
