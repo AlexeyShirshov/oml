@@ -351,6 +351,12 @@ Public MustInherit Class OrmManagerBase
             _fetchTime = mgr.Fecth
         End Sub
 
+        Friend Sub New(ByVal obj As IEnumerable, ByVal cache As OrmCacheBase)
+            _obj = obj
+            _cache = cache
+            If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
+        End Sub
+
         Public Sub New(ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
             _sort = Nothing
             '_st = sortType
@@ -2122,6 +2128,10 @@ l1:
 
 #Region " Cache "
 
+    Protected Friend Delegate Function ValDelegate(Of T As _ICachedEntity)(ByRef ce As CachedItem, _
+        ByVal del As ICustDelegateBase(Of T), ByVal dic As IDictionary, ByVal id As Object, _
+        ByVal sync As String, ByVal v As ICacheValidator) As Boolean
+
     Protected Friend Function GetFromCache2(Of T As {_IEntity})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICustDelegateBase(Of T)) As CachedItem
 
@@ -2131,10 +2141,10 @@ l1:
     Protected Friend Function GetFromCache(Of T As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICustDelegateBase(Of T)) As CachedItem
 
-        Return GetFromCacheBase(Of T, _ICachedEntity)(dic, sync, id, withLoad, del, AddressOf _ValCE(Of T))
+        Return GetFromCacheBase(Of T, T)(dic, sync, id, withLoad, del, AddressOf _ValCE(Of T))
     End Function
 
-    Protected Friend Function GetFromCacheBase(Of T As {_IEntity}, T2 As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+    Protected Friend Function GetFromCacheBase(Of T As _IEntity, T2 As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
         ByVal withLoad As Boolean, ByVal del As ICustDelegateBase(Of T), ByVal vdel As ValDelegate(Of T2)) As CachedItem
 
         Invariant()
@@ -2185,7 +2195,7 @@ l1:
         If del.Created Then
             If Not _dont_cache_lists Then del.CreateDepends()
         Else
-            If Not vdel(ce, CType(del, ICustDelegateBase(Of _IEntity)), dic, id, sync, v) Then
+            If Not vdel(ce, CType(del, ICustDelegateBase(Of T2)), dic, id, sync, v) Then
                 GoTo l1
             End If
         End If
@@ -2198,12 +2208,8 @@ l1:
         Return ce
     End Function
 
-    Protected Friend Delegate Function ValDelegate(Of T As _ICachedEntity)(ByVal ce As CachedItem, _
-        ByVal del As ICustDelegateBase(Of _IEntity), ByVal dic As IDictionary, ByVal id As Object, _
-        ByVal sync As String, ByVal v As ICacheValidator) As Boolean
-
-    Private Function _ValCE(Of T As _ICachedEntity)(ByVal ce As CachedItem, _
-        ByVal del_ As ICustDelegateBase(Of _IEntity), ByVal dic As IDictionary, ByVal id As Object, _
+    Private Function _ValCE(Of T As _ICachedEntity)(ByRef ce As CachedItem, _
+        ByVal del_ As ICustDelegateBase(Of T), ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
         Dim del As ICustDelegate(Of T) = CType(del_, Global.Worm.OrmManagerBase.ICustDelegate(Of T))

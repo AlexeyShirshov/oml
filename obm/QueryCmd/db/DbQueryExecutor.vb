@@ -207,8 +207,8 @@ Namespace Query.Database
         '    Return ce.GetObjectList(Of ReturnType)(mgr, query.propWithLoad, p.Created, s)
         'End Function
 
-        Private Delegate Function GetCeDelegate( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String) As Worm.OrmManagerBase.CachedItem
+        Private Delegate Function GetCeDelegate(Of ReturnType As _IEntity)( _
+            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String, ByVal p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType)) As Worm.OrmManagerBase.CachedItem
 
         Private Delegate Function GetListFromCEDelegate(Of ReturnType As _IEntity)( _
             ByVal mgr As OrmManagerBase, ByVal query As QueryCmd, ByVal p As OrmManagerBase.ICustDelegateBase(Of ReturnType), ByVal ce As OrmManagerBase.CachedItem, ByVal s As Cache.IListObjectConverter.ExtractListResult) As Worm.ReadOnlyObjectList(Of ReturnType)
@@ -341,8 +341,8 @@ Namespace Query.Database
             Dim p As Processor(Of ReturnType) = GetProcessor(Of ReturnType)(mgr, query)
 
             Return CType(_Exec(Of ReturnType)(mgr, query, p, _
-                Function(m As OrmManagerBase, q As QueryCmd, dic As IDictionary, id As String, sync As String) _
-                    m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p), _
+                Function(m As OrmManagerBase, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType)) _
+                    m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
                 Function(m As OrmManagerBase, q As QueryCmd, p2 As OrmManagerBase.ICustDelegateBase(Of ReturnType), ce As OrmManagerBase.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
                     ce.GetObjectList(Of ReturnType)(m, q.propWithLoad, p2.Created, s) _
                 ), ReadOnlyEntityList(Of ReturnType))
