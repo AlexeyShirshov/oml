@@ -1533,7 +1533,13 @@ Public MustInherit Class QueryGenerator
     End Function
 
     Protected Friend Function GetObjectSchema(ByVal t As Type, ByVal check As Boolean) As IOrmObjectSchemaBase
-        If t Is Nothing Then Throw New ArgumentNullException("t")
+        If t Is Nothing Then
+            If check Then
+                Throw New ArgumentNullException("t")
+            Else
+                Return Nothing
+            End If
+        End If
 
         Dim idic As IDictionary = CType(map("GetObjectSchema"), System.Collections.IDictionary)
         If idic Is Nothing Then

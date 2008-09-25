@@ -45,7 +45,8 @@ Namespace Query.Database
 
                 If query.SelectedType Is Nothing Then
                     If String.IsNullOrEmpty(query.EntityName) Then
-                        query.SelectedType = GetType(ReturnType)
+                        'query.SelectedType = GetType(ReturnType)
+                        query.CreateType = GetType(ReturnType)
                     Else
                         query.SelectedType = mgr.ObjectSchema.GetTypeByEntityName(query.EntityName)
                     End If
@@ -468,7 +469,8 @@ Namespace Query.Database
                             Throw New InvalidOperationException(String.Format("Column {0} must have a field", p.Column))
                         End If
 
-                        Dim cl As ColumnAttribute = gen.GetColumnByFieldName(type, f)
+                        Dim cl As ColumnAttribute = If(type IsNot Nothing, gen.GetColumnByFieldName(type, f), Nothing)
+
                         If cl Is Nothing Then
                             cl = New ColumnAttribute
                             cl.FieldName = f

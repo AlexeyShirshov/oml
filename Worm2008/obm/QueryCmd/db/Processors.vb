@@ -114,21 +114,29 @@ Namespace Query.Database
                 Dim fi As Object = _mgr.GetFilterInfo
                 Dim t As Type = _q.SelectedType
                 Dim i As Integer = 0
-                Dim q As QueryCmd = _q
+                'Dim q As QueryCmd = _q
                 'Dim sb As New StringBuilder
                 Dim inner As String = Nothing
                 Dim innerColumns As List(Of String) = Nothing
-                Do While q IsNot Nothing
+                'Do While q IsNot Nothing
+                For Each q As QueryCmd In New QueryIterator(_q)
                     Dim columnAliases As New List(Of String)
                     Dim j As List(Of Worm.Criteria.Joins.OrmJoin) = _j(i)
                     Dim f As IFilter = _f(i)
-                    inner = MakeQueryStatement(fi, _mgr.DbSchema, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, True)
+                    inner = MakeQueryStatement(fi, _mgr.DbSchema, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, WithLoad)
                     innerColumns = New List(Of String)(columnAliases)
                     q = q.OuterQuery
                     i += 1
-                Loop
+                Next
+                'Loop
                 Return inner
             End Function
+
+            Protected Overridable ReadOnly Property WithLoad() As Boolean
+                Get
+                    Return True
+                End Get
+            End Property
 
             Protected Overridable Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
@@ -252,22 +260,36 @@ Namespace Query.Database
             End Property
 
             Public Sub CreateDepends() Implements OrmManagerBase.ICustDelegateBase(Of ReturnType).CreateDepends
-                If _f IsNot Nothing AndAlso _f.Length = 1 Then
-                    _mgr.Cache.AddDependType(_mgr.GetFilterInfo, _q.SelectedType, _key, _id, _f(0), _mgr.ObjectSchema)
-                End If
-
-                If _j IsNot Nothing AndAlso _j.Count = 1 Then
-                    For Each j As OrmJoin In _j(0)
-                        If j.Type IsNot Nothing Then
-                            _mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.ObjectSchema)
-                        ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
-                            _mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, _mgr.ObjectSchema.GetTypeByEntityName(j.EntityName), _key, _id, _mgr.ObjectSchema)
-                        End If
+                If _j IsNot Nothing Then
+                    For Each js As List(Of Worm.Criteria.Joins.OrmJoin) In _j
+                        For Each j As OrmJoin In js
+                            If j.Type IsNot Nothing Then
+                                _mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.ObjectSchema)
+                            ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
+                                _mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, _mgr.ObjectSchema.GetTypeByEntityName(j.EntityName), _key, _id, _mgr.ObjectSchema)
+                            End If
+                        Next
                     Next
                 End If
 
-                If _q.Obj IsNot Nothing Then
-                    _mgr.Cache.AddM2MQuery(_q.Obj.GetM2M(_q.SelectedType, _q.M2MKey), _key, _id)
+                Dim i As Integer = 0
+                For Each q As QueryCmd In New QueryIterator(_q)
+                    CreateDepends(q, i)
+                    i += 1
+                Next
+            End Sub
+
+            Protected Sub CreateDepends(ByVal q As QueryCmd, ByVal i As Integer)
+                If q.SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(q.SelectedType) Then
+
+                    If _f IsNot Nothing AndAlso _f.Length > i Then
+                        _mgr.Cache.AddDependType(_mgr.GetFilterInfo, q.SelectedType, _key, _id, _f(i), _mgr.ObjectSchema)
+                    End If
+
+                    If q.Obj IsNot Nothing Then
+                        _mgr.Cache.AddM2MQuery(q.Obj.GetM2M(q.SelectedType, q.M2MKey), _key, _id)
+                    End If
+
                 End If
             End Sub
 
@@ -431,32 +453,38 @@ Namespace Query.Database
             '    _params.AppendParams(cmd.Parameters)
             'End Sub
 
-            Protected Overrides Function _MakeStatement() As String
-                Dim almgr As AliasMgr = AliasMgr.Create
-                Dim fi As Object = _mgr.GetFilterInfo
-                Dim t As Type = _q.SelectedType
-                Dim i As Integer = 0
-                Dim q As QueryCmd = _q
-                'Dim sb As New StringBuilder
-                Dim inner As String = Nothing
-                Dim innerColumns As List(Of String) = Nothing
-                Do While q IsNot Nothing
-                    Dim columnAliases As New List(Of String)
-                    Dim j As List(Of Worm.Criteria.Joins.OrmJoin) = _j(i)
-                    Dim f As IFilter = _f(i)
-                    inner = MakeQueryStatement(fi, _mgr.DbSchema, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, q.propWithLoad)
-                    innerColumns = New List(Of String)(columnAliases)
-                    q = q.OuterQuery
-                    i += 1
-                Loop
-                Return inner
-            End Function
+            'Protected Overrides Function _MakeStatement() As String
+            '    Dim almgr As AliasMgr = AliasMgr.Create
+            '    Dim fi As Object = _mgr.GetFilterInfo
+            '    Dim t As Type = _q.SelectedType
+            '    Dim i As Integer = 0
+            '    Dim q As QueryCmd = _q
+            '    'Dim sb As New StringBuilder
+            '    Dim inner As String = Nothing
+            '    Dim innerColumns As List(Of String) = Nothing
+            '    Do While q IsNot Nothing
+            '        Dim columnAliases As New List(Of String)
+            '        Dim j As List(Of Worm.Criteria.Joins.OrmJoin) = _j(i)
+            '        Dim f As IFilter = _f(i)
+            '        inner = MakeQueryStatement(fi, _mgr.DbSchema, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, q.propWithLoad)
+            '        innerColumns = New List(Of String)(columnAliases)
+            '        q = q.OuterQuery
+            '        i += 1
+            '    Loop
+            '    Return inner
+            'End Function
 
             'Protected Overridable Function ExecStmt(Of T)(ByVal cmd As System.Data.Common.DbCommand) As IList(Of T)
             '    Dim l As IList(Of T) = _mgr.GetSimpleValues(Of T)(cmd)
             '    _q.ExecCount += 1
             '    Return l
             'End Function
+
+            Protected Overrides ReadOnly Property WithLoad() As Boolean
+                Get
+                    Return _q.propWithLoad
+                End Get
+            End Property
 
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)

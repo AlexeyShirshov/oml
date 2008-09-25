@@ -593,36 +593,6 @@ Imports Worm.Database.Criteria.Joins
         End Using
     End Sub
 
-    <TestMethod()> Public Sub TestCorrelatedSubqueryCache()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
-            Dim tt1 As Type = GetType(Table1)
-            Dim tt2 As Type = GetType(Table2)
-
-            Dim cq As QueryCmd = New QueryCmd(tt1). _
-                Where(JoinCondition.Create(tt2, "Table1").Eq(tt1, "Enum").And( _
-                      Ctor.Field(tt1, "Code").Eq(45)))
-
-            Dim q As QueryCmd = New QueryCmd(tt2). _
-                Where(New NonTemplateFilter(New Values.SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))
-
-            Dim r As ReadOnlyList(Of Table2) = q.ToOrmList(Of Table2)(mgr)
-            Assert.AreEqual(2, r.Count)
-            Assert.IsFalse(q.LastExecitionResult.CacheHit)
-
-            mgr.BeginTransaction()
-            Try
-                r(0).Tbl.Enum = CType(r(0).ID + 1, TestProject1.Enum1)
-                r(0).Tbl.SaveChanges(True)
-
-                r = q.ToOrmList(Of Table2)(mgr)
-                Assert.AreEqual(0, r.Count)
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
-            Finally
-                mgr.Rollback()
-            End Try
-        End Using
-    End Sub
-
     <TestMethod()> Public Sub TestWrapper()
         Dim t As New TestManager
 
