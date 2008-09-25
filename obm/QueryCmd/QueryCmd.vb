@@ -99,10 +99,76 @@ Namespace Query
         End Function
     End Class
 
+    Public Class QueryIterator
+        Implements IEnumerator(Of QueryCmd), IEnumerable(Of QueryCmd)
+
+        Private _q As QueryCmd
+        Private _c As QueryCmd
+
+        Public Sub New(ByVal query As QueryCmd)
+            _q = query
+        End Sub
+
+        Public ReadOnly Property Current() As QueryCmd Implements System.Collections.Generic.IEnumerator(Of QueryCmd).Current
+            Get
+                Return _c
+            End Get
+        End Property
+
+        Private ReadOnly Property _Current() As Object Implements System.Collections.IEnumerator.Current
+            Get
+                Return Current
+            End Get
+        End Property
+
+        Public Function MoveNext() As Boolean Implements System.Collections.IEnumerator.MoveNext
+            If _c Is Nothing Then
+                _c = _q
+            Else
+                _c = _c.OuterQuery
+            End If
+            Return _c IsNot Nothing
+        End Function
+
+        Public Sub Reset() Implements System.Collections.IEnumerator.Reset
+            _c = Nothing
+        End Sub
+
+#Region " IDisposable Support "
+        Private disposedValue As Boolean = False        ' To detect redundant calls
+
+        ' IDisposable
+        Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+            If Not Me.disposedValue Then
+                If disposing Then
+                    ' TODO: free other state (managed objects).
+                End If
+
+                ' TODO: free your own state (unmanaged objects).
+                ' TODO: set large fields to null.
+            End If
+            Me.disposedValue = True
+        End Sub
+
+        ' This code added by Visual Basic to correctly implement the disposable pattern.
+        Public Sub Dispose() Implements IDisposable.Dispose
+            ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+            Dispose(True)
+            GC.SuppressFinalize(Me)
+        End Sub
+#End Region
+
+        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of QueryCmd) Implements System.Collections.Generic.IEnumerable(Of QueryCmd).GetEnumerator
+            Return Me
+        End Function
+
+        Private Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator
+            Return GetEnumerator()
+        End Function
+    End Class
+
     Public Class QueryCmd
         Implements ICloneable
-
-        Public Delegate Function CreateManagerDelegate() As OrmManagerBase
 
         Protected _fields As ObjectModel.ReadOnlyCollection(Of OrmProperty)
         Protected _filter As IGetFilter
@@ -372,18 +438,18 @@ Namespace Query
         Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of OrmJoin)), _
             ByVal fs() As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior) As String
             Dim key As New StringBuilder
+
             Dim i As Integer = 0
-            Dim q As QueryCmd = Me
-            Do While q IsNot Nothing
+            For Each q As QueryCmd In New QueryIterator(Me)
+                If i > 0 Then
+                    key.Append("$inner:")
+                End If
+
                 If Not q.GetStaticKey(key, js(i), fs(i), If(q._realType Is Nothing, realType, q._realType), cb) Then
                     Return Nothing
                 End If
                 i += 1
-                q = q._outer
-                If q IsNot Nothing Then
-                    key.Append("$inner:")
-                End If
-            Loop
+            Next
 
             'key &= mgr.ObjectSchema.GetEntityKey(mgr.GetFilterInfo, GetType(T))
 
@@ -439,7 +505,7 @@ Namespace Query
                 If realType IsNot Nothing Then
                     sb2.Append(realType.ToString)
                 ElseIf _table IsNot Nothing Then
-                    sb2.Append(_table.ToString)
+                    sb2.Append(_table.RawName)
                 Else
                     Throw New NotSupportedException
                 End If
@@ -465,15 +531,14 @@ Namespace Query
             Dim id As New StringBuilder
 
             Dim i As Integer = 0
-            Dim q As QueryCmd = Me
-            Do While q IsNot Nothing
-                q.GetDynamicKey(id, js(i), fs(i))
-                i += 1
-                q = q._outer
-                If q IsNot Nothing Then
+            For Each q As QueryCmd In New QueryIterator(Me)
+                If i > 0 Then
                     id.Append("$inner:")
                 End If
-            Loop
+
+                q.GetDynamicKey(id, js(i), fs(i))
+                i += 1
+            Next
 
             Return id.ToString '& GetType(T).ToString
         End Function
@@ -821,16 +886,21 @@ Namespace Query
                 _gm = getMgr
             End Sub
 
-            Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
-                If _m Is Nothing Then
-                    args.Manager = _gm.CreateManager
-                Else
-                    args.Manager = _m()
-                End If
-            End Sub
+            'Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
+            '    If _m Is Nothing Then
+            '        args.Manager = _gm.CreateManager
+            '    Else
+            '        args.Manager = _m()
+            '    End If
+            'End Sub
 
             Public Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManagerBase)
-                AddHandler o.ManagerRequired, AddressOf GetManager
+                'AddHandler o.ManagerRequired, AddressOf GetManager
+                If _m Is Nothing Then
+                    o.SetCreateManager(_gm)
+                Else
+                    o.SetCreateManager(New CreateManager(_m))
+                End If
             End Sub
         End Class
 

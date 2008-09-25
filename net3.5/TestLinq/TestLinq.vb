@@ -213,24 +213,24 @@ Imports Worm.Linq
         Dim l = q.ToList
 
         Assert.AreEqual(2, l.Count)
-        Assert.AreEqual("first", l(0))
-        Assert.AreEqual("sec", l(1))
+        Assert.AreEqual(TestProject1.Enum1.first, l(0))
+        Assert.AreEqual(TestProject1.Enum1.sec, l(1))
 
         Dim q2 = From k In e Select k.EnumStr Distinct
 
         Dim l2 = q2.ToList
 
         Assert.AreEqual(2, l2.Count)
-        Assert.AreEqual("first", l2(0))
-        Assert.AreEqual("second", l2(1))
+        Assert.AreEqual(TestProject1.Enum1.first, l2(0))
+        Assert.AreEqual(TestProject1.Enum1.sec, l2(1))
 
         Dim q3 = From k In e Where k.ID > 0 Distinct Distinct Select k.EnumStr Distinct
 
         Dim l3 = q3.ToList
 
         Assert.AreEqual(2, l3.Count)
-        Assert.AreEqual("first", l3(0))
-        Assert.AreEqual("second", l3(1))
+        Assert.AreEqual(TestProject1.Enum1.first, l3(0))
+        Assert.AreEqual(TestProject1.Enum1.sec, l3(1))
     End Sub
 
     <TestMethod()> _

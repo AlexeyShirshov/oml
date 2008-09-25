@@ -1042,6 +1042,7 @@ Namespace Linq
                     Me.Visit(m.Arguments(0))
                     Me.Visit(m.Arguments(1))
                     _q.propWithLoad = IsLoadRequired()
+                    _q.SelectList = GetSelectList()
                 Case "Distinct"
                     Me.Visit(m.Arguments(0))
                     _q.propDistinct = True
