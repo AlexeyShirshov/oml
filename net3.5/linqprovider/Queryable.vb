@@ -5,15 +5,15 @@ Imports System.Runtime.CompilerServices
 Namespace Linq
     Public MustInherit Class WormContext
 
-        Public MustOverride Function CreateReadonlyManager() As OrmManagerBase
-        Public MustOverride Function CreateManager() As OrmManagerBase
+        Public MustOverride Function CreateReadonlyManager() As OrmManager
+        Public MustOverride Function CreateManager() As OrmManager
 
-        Private _schema As QueryGenerator
-        Public Property Schema() As QueryGenerator
+        Private _schema As ObjectMappingEngine
+        Public Property Schema() As ObjectMappingEngine
             Get
                 Return _schema
             End Get
-            Set(ByVal value As QueryGenerator)
+            Set(ByVal value As ObjectMappingEngine)
                 _schema = value
             End Set
         End Property
@@ -54,17 +54,17 @@ Namespace Linq
             MyClass.New(New Cache.OrmCache, New SQLGenerator("1"), conn)
         End Sub
 
-        Public Sub New(ByVal cache As Cache.OrmCacheBase, ByVal schema As QueryGenerator, ByVal conn As String)
+        Public Sub New(ByVal cache As Cache.OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal conn As String)
             _conn = conn
             Me.Cache = cache
             Me.Schema = schema
         End Sub
 
-        Public Overrides Function CreateManager() As OrmManagerBase
+        Public Overrides Function CreateManager() As OrmManager
             Return New OrmDBManager(Cache, CType(Schema, SQLGenerator), _conn)
         End Function
 
-        Public Overrides Function CreateReadonlyManager() As OrmManagerBase
+        Public Overrides Function CreateReadonlyManager() As OrmManager
             Return New OrmReadOnlyDBManager(Cache, CType(Schema, SQLGenerator), _conn)
         End Function
     End Class

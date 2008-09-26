@@ -425,7 +425,7 @@ namespace Worm.CodeGen.Core
                         // параметры конструктора
                         ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(int), "id"));
                         ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(OrmCacheBase), "cache"));
-                        ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Worm.QueryGenerator), "schema"));
+                        ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Worm.ObjectMappingEngine), "schema"));
                         // передача параметров базовому конструктору
                         ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("id"));
                         ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("cache"));
@@ -1125,7 +1125,7 @@ namespace Worm.CodeGen.Core
 							(entity.BaseEntity == null)
 								?
 									(CodeExpression)new CodeObjectCreateExpression(
-														new CodeTypeReference(typeof(Worm.Cache.OrmObjectIndex))
+														new CodeTypeReference(typeof(Worm.Orm.Meta.OrmObjectIndex))
 														)
 								:
 									new CodeMethodInvokeExpression(
@@ -1262,7 +1262,7 @@ namespace Worm.CodeGen.Core
 					if (entity.BaseEntity == null)
 					{
 						CodeMemberField schemaField = new CodeMemberField(
-							new CodeTypeReference(typeof(Worm.QueryGenerator)),
+							new CodeTypeReference(typeof(Worm.ObjectMappingEngine)),
 							"_schema"
 							);
 						CodeMemberField typeField = new CodeMemberField(
@@ -1286,7 +1286,7 @@ namespace Worm.CodeGen.Core
 						}
 						method.Parameters.Add(
 							new CodeParameterDeclarationExpression(
-								new CodeTypeReference(typeof(Worm.QueryGenerator)),
+                                new CodeTypeReference(typeof(Worm.ObjectMappingEngine)),
 								"schema"
 								)
 							);

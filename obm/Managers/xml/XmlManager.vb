@@ -7,7 +7,7 @@ Imports Worm.Criteria.Joins
 
 Namespace Xml
     Partial Public Class QueryManager
-        Inherits OrmManagerBase
+        Inherits OrmManager
 
         Private _fileName As String
         Private _stream As IO.Stream
@@ -85,20 +85,20 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
+            ByVal key As String, ByVal id As String) As OrmManager.ICustDelegate(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManagerBase.ICustDelegate(Of T)
+            ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManager.ICustDelegate(Of T)
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
             End If
             Dim l As New List(Of ColumnAttribute)
             Dim has_id As Boolean = False
             For Each c As String In cols
-                Dim col As ColumnAttribute = ObjectSchema.GetColumnByFieldName(GetType(T), c)
+                Dim col As ColumnAttribute = MappingEngine.GetColumnByFieldName(GetType(T), c)
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
@@ -108,28 +108,28 @@ Namespace Xml
                 l.Add(col)
             Next
             If Not has_id Then
-                l.Add(ObjectSchema.GetColumnByFieldName(GetType(T), "ID"))
+                l.Add(MappingEngine.GetColumnByFieldName(GetType(T), "ID"))
             End If
             Return New FilterCustDelegate(Of T)(Me, filter, l, sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal relation As Orm.Meta.M2MRelation, ByVal filter As Worm.Criteria.Core.IFilter, _
-            ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
+            ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String) As OrmManager.ICustDelegate(Of T)
 
             Throw New NotImplementedException
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
             ByVal obj As _IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManagerBase.ICustDelegate(Of T2)
+            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICustDelegate(Of T2)
 
             Throw New NotImplementedException
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
             ByVal obj As _IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal queryAspect() As Orm.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManagerBase.ICustDelegate(Of T2)
+            ByVal queryAspect() As Orm.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICustDelegate(Of T2)
 
             Throw New NotImplementedException
         End Function
@@ -137,7 +137,7 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal aspect As Orm.Query.QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, _
-            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManagerBase.ICustDelegate(Of T)
+            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManager.ICustDelegate(Of T)
 
             Throw New NotImplementedException
         End Function
@@ -280,7 +280,7 @@ Namespace Xml
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
             For Each c As ColumnAttribute In _schema.GetSortedFieldList(original_type)
-                If (_schema.GetAttributes(original_type, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                If (_schema.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     Dim attr As String = _schema.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
@@ -302,10 +302,10 @@ Namespace Xml
         Protected Function LoadData(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim columns As List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
-            For Each de As DictionaryEntry In ObjectSchema.GetProperties(original_type)
+            For Each de As DictionaryEntry In MappingEngine.GetProperties(original_type)
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                If (_schema.GetAttributes(original_type, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                If (_schema.GetAttributes(oschema, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                     Dim attr As String = _schema.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
@@ -322,7 +322,7 @@ Namespace Xml
                     obj.SetLoaded(c, True, True, _schema)
                 End If
             Next
-            obj.CheckIsAllLoaded(ObjectSchema, columns.Count)
+            obj.CheckIsAllLoaded(MappingEngine, columns.Count)
         End Function
     End Class
 End Namespace

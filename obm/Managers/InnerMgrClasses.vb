@@ -5,7 +5,7 @@ Imports Worm.Sorting
 Imports Worm.Criteria.Core
 Imports System.Collections.Generic
 
-Partial Public Class OrmManagerBase
+Partial Public Class OrmManager
 
     Friend Class M2MEnum
         Public ReadOnly o As IRelation
@@ -15,7 +15,7 @@ Partial Public Class OrmManagerBase
         Dim o1 As IOrmBase
         Dim o2 As IOrmBase
 
-        Public Sub New(ByVal r As IRelation, ByVal obj As IOrmBase, ByVal schema As QueryGenerator)
+        Public Sub New(ByVal r As IRelation, ByVal obj As IOrmBase, ByVal schema As ObjectMappingEngine)
             Me.o = r
             'Me.obj = obj
             p1 = o.GetFirstType
@@ -32,7 +32,7 @@ Partial Public Class OrmManagerBase
                 Throw New ArgumentNullException("e")
             End If
 
-            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+            Dim mgr As OrmManager = OrmManager.CurrentManager
             Dim el As EditableList = e.Entry
             Dim obj As IOrmBase = Nothing, subobj As IOrmBase = Nothing
             If el.Main.Equals(o1) Then
@@ -91,7 +91,7 @@ Partial Public Class OrmManagerBase
 
             Dim el As EditableList = e.Entry
             If el.Main.Equals(o1) OrElse el.Main.Equals(o2) Then
-                Return el.Accept(OrmManagerBase.CurrentManager)
+                Return el.Accept(OrmManager.CurrentManager)
             End If
             Return True
         End Function
@@ -119,18 +119,18 @@ Partial Public Class OrmManagerBase
         Implements IDisposable
 
         Private _disposedValue As Boolean = False        ' To detect redundant calls
-        Private _oldSchema As QueryGenerator
+        Private _oldSchema As ObjectMappingEngine
 
-        Public Sub New(ByVal schema As QueryGenerator)
-            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
-            _oldSchema = mgr.ObjectSchema
+        Public Sub New(ByVal schema As ObjectMappingEngine)
+            Dim mgr As OrmManager = OrmManager.CurrentManager
+            _oldSchema = mgr.MappingEngine
             mgr._schema = schema
         End Sub
 
         ' IDisposable
         Protected Overridable Sub Dispose(ByVal disposing As Boolean)
             If Not Me._disposedValue Then
-                OrmManagerBase.CurrentManager._schema = _oldSchema
+                OrmManager.CurrentManager._schema = _oldSchema
             End If
             Me._disposedValue = True
         End Sub
@@ -146,25 +146,25 @@ Partial Public Class OrmManagerBase
         Implements IDisposable
 
         Private _disposedValue As Boolean
-        Private _mgr As OrmManagerBase
+        Private _mgr As OrmManager
         Private _oldvalue As Boolean
         Private _oldExp As Date
         Private _oldMark As String
 
-        Public Sub New(ByVal mgr As OrmManagerBase, ByVal cache_lists As Boolean)
+        Public Sub New(ByVal mgr As OrmManager, ByVal cache_lists As Boolean)
             _mgr = mgr
             _oldvalue = mgr._dont_cache_lists
             mgr._dont_cache_lists = Not cache_lists
         End Sub
 
-        Public Sub New(ByVal mgr As OrmManagerBase, ByVal liveTime As TimeSpan)
+        Public Sub New(ByVal mgr As OrmManager, ByVal liveTime As TimeSpan)
             _mgr = mgr
             _oldvalue = mgr._dont_cache_lists
             _oldExp = mgr._expiresPattern
             mgr._expiresPattern = Date.Now.Add(liveTime)
         End Sub
 
-        Public Sub New(ByVal mgr As OrmManagerBase, ByVal cache_lists As Boolean, ByVal liveTime As TimeSpan)
+        Public Sub New(ByVal mgr As OrmManager, ByVal cache_lists As Boolean, ByVal liveTime As TimeSpan)
             _mgr = mgr
             _oldvalue = mgr._dont_cache_lists
             mgr._dont_cache_lists = Not cache_lists
@@ -172,7 +172,7 @@ Partial Public Class OrmManagerBase
             mgr._expiresPattern = Date.Now.Add(liveTime)
         End Sub
 
-        Public Sub New(ByVal mgr As OrmManagerBase, ByVal cache_lists As Boolean, ByVal mark As String)
+        Public Sub New(ByVal mgr As OrmManager, ByVal cache_lists As Boolean, ByVal mark As String)
             _mgr = mgr
             _oldvalue = mgr._dont_cache_lists
             mgr._dont_cache_lists = Not cache_lists
@@ -180,7 +180,7 @@ Partial Public Class OrmManagerBase
             mgr._list = mark
         End Sub
 
-        Public Sub New(ByVal mgr As OrmManagerBase, ByVal liveTime As TimeSpan, ByVal mark As String)
+        Public Sub New(ByVal mgr As OrmManager, ByVal liveTime As TimeSpan, ByVal mark As String)
             _mgr = mgr
             _oldvalue = mgr._dont_cache_lists
             _oldExp = mgr._expiresPattern
@@ -189,7 +189,7 @@ Partial Public Class OrmManagerBase
             mgr._list = mark
         End Sub
 
-        Public Sub New(ByVal mgr As OrmManagerBase, ByVal cache_lists As Boolean, ByVal liveTime As TimeSpan, ByVal mark As String)
+        Public Sub New(ByVal mgr As OrmManager, ByVal cache_lists As Boolean, ByVal liveTime As TimeSpan, ByVal mark As String)
             _mgr = mgr
             _oldvalue = mgr._dont_cache_lists
             mgr._dont_cache_lists = Not cache_lists
@@ -245,7 +245,7 @@ Partial Public Class OrmManagerBase
         End Sub
 
         Public Sub New(ByVal sort As Sort, ByVal sortExpire As Date, ByVal filter As IFilter, _
-            ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
+            ByVal obj As IEnumerable, ByVal mgr As OrmManager)
             If sort IsNot Nothing Then
                 _sort = CType(sort.Clone, Sorting.Sort)
             End If
@@ -268,7 +268,7 @@ Partial Public Class OrmManagerBase
             If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
         End Sub
 
-        Public Sub New(ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManagerBase)
+        Public Sub New(ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
             _sort = Nothing
             '_st = sortType
             'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
@@ -329,7 +329,7 @@ Partial Public Class OrmManagerBase
         '    Return False
         'End Function
 
-        Public Overridable Function GetCount(ByVal mgr As OrmManagerBase) As Integer
+        Public Overridable Function GetCount(ByVal mgr As OrmManager) As Integer
             Return _cache.ListConverter.GetCount(_obj)
         End Function
 
@@ -372,14 +372,14 @@ Partial Public Class OrmManagerBase
             End If
         End Function
 
-        Public Overridable Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
+        Public Overridable Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, _
             ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
             'Using p As New CoreFramework.Debuging.OutputTimer("From week list")
             Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr, mgr.GetStart, mgr.GetLength, withLoad, created, successed)
             'End Using
         End Function
 
-        Public Overridable Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
+        Public Overridable Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
             Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr)
         End Function
 
@@ -419,11 +419,11 @@ Partial Public Class OrmManagerBase
             If _obj IsNot Nothing Then _cache.RegisterRemovalCacheItem(Me)
         End Sub
 
-        Public Overridable Function Add(ByVal mgr As OrmManagerBase, ByVal obj As ICachedEntity) As Boolean
+        Public Overridable Function Add(ByVal mgr As OrmManager, ByVal obj As ICachedEntity) As Boolean
             Return mgr.ListConverter.Add(_obj, mgr, obj, _sort)
         End Function
 
-        Public Overridable Sub Delete(ByVal mgr As OrmManagerBase, ByVal obj As ICachedEntity)
+        Public Overridable Sub Delete(ByVal mgr As OrmManager, ByVal obj As ICachedEntity)
             mgr.ListConverter.Delete(_obj, obj)
         End Sub
 
@@ -444,13 +444,13 @@ Partial Public Class OrmManagerBase
         Inherits CachedItem
 
         Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
-            ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManagerBase, _
+            ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManager, _
             ByVal mainType As Type, ByVal subType As Type, ByVal direct As Boolean)
             MyClass.new(sort, filter, mainId, obj, mgr, mainType, subType, M2MRelation.GetKey(direct))
         End Sub
 
         Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
-            ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManagerBase, _
+            ByVal mainId As Object, ByVal obj As IList(Of Object), ByVal mgr As OrmManager, _
             ByVal mainType As Type, ByVal subType As Type, ByVal key As String)
             If sort IsNot Nothing Then
                 _sort = CType(sort.Clone, Sorting.Sort)
@@ -469,7 +469,7 @@ Partial Public Class OrmManagerBase
         End Sub
 
         Public Sub New(ByVal sort As Sort, ByVal filter As IFilter, _
-            ByVal el As EditableList, ByVal mgr As OrmManagerBase)
+            ByVal el As EditableList, ByVal mgr As OrmManager)
             If sort IsNot Nothing Then
                 _sort = CType(sort.Clone, Sorting.Sort)
             End If
@@ -492,24 +492,24 @@ Partial Public Class OrmManagerBase
         '    End Get
         'End Property
 
-        Public Function GetObjectListNonGeneric(ByVal mgr As OrmManagerBase, _
+        Public Function GetObjectListNonGeneric(ByVal mgr As OrmManager, _
             ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ICollection
 
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public
 
-            Dim types As Type() = New Type() {GetType(OrmManagerBase), GetType(Boolean), GetType(Boolean), GetType(IListObjectConverter.ExtractListResult)}
+            Dim types As Type() = New Type() {GetType(OrmManager), GetType(Boolean), GetType(Boolean), GetType(IListObjectConverter.ExtractListResult)}
 
-            Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("GetObjectList", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
+            Dim mi As Reflection.MethodInfo = GetType(OrmManager).GetMethod("GetObjectList", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
             Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {Entry.SubType})
 
             Return CType(mi_real.Invoke(Me, flags, Nothing, New Object() {mgr, withLoad, created, New IListObjectConverter.ExtractListResult}, Nothing), System.Collections.ICollection)
         End Function
 
-        Public Overrides Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase, _
+        Public Overrides Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager, _
             ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T)
             successed = IListObjectConverter.ExtractListResult.Successed
             Dim tt As Type = GetType(T)
-            Dim r As ReadOnlyEntityList(Of T) = CType(OrmManagerBase.CreateReadonlyList(tt), Global.Worm.ReadOnlyEntityList(Of T))
+            Dim r As ReadOnlyEntityList(Of T) = CType(OrmManager.CreateReadonlyList(tt), Global.Worm.ReadOnlyEntityList(Of T))
             If withLoad OrElse mgr._externalFilter IsNot Nothing Then
                 Dim c As Integer = mgr.GetLoadedCount(tt, Entry.Current)
                 Dim cnt As Integer = Entry.CurrentCount
@@ -518,7 +518,7 @@ Partial Public Class OrmManagerBase
                 Debug.WriteLine(cnt)
 #End If
                 If c < cnt Then
-                    If mgr._externalFilter IsNot Nothing AndAlso Not OrmManagerBase.IsGoodTime4Load(_fetchTime, _execTime, cnt, c) Then
+                    If mgr._externalFilter IsNot Nothing AndAlso Not OrmManager.IsGoodTime4Load(_fetchTime, _execTime, cnt, c) Then
                         successed = IListObjectConverter.ExtractListResult.NeedLoad
                         Return r
                     Else
@@ -545,7 +545,7 @@ Partial Public Class OrmManagerBase
             Return r
         End Function
 
-        Public Overrides Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
+        Public Overrides Function GetObjectList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
             Try
 #If TraceM2M Then
                 Debug.WriteLine(Entry.Current.Count)
@@ -556,7 +556,7 @@ Partial Public Class OrmManagerBase
             End Try
         End Function
 
-        Public Overrides Function Add(ByVal mgr As OrmManagerBase, ByVal obj As ICachedEntity) As Boolean
+        Public Overrides Function Add(ByVal mgr As OrmManager, ByVal obj As ICachedEntity) As Boolean
             'If obj Is Nothing Then
             '    Throw New ArgumentNullException("obj")
             'End If
@@ -567,7 +567,7 @@ Partial Public Class OrmManagerBase
             Throw New NotSupportedException
         End Function
 
-        Public Overrides Sub Delete(ByVal mgr As OrmManagerBase, ByVal obj As ICachedEntity)
+        Public Overrides Sub Delete(ByVal mgr As OrmManager, ByVal obj As ICachedEntity)
             'If obj Is Nothing Then
             '    Throw New ArgumentNullException("obj")
             'End If
@@ -584,7 +584,7 @@ Partial Public Class OrmManagerBase
             End Get
         End Property
 
-        Public Overrides Function GetCount(ByVal mgr As OrmManagerBase) As Integer
+        Public Overrides Function GetCount(ByVal mgr As OrmManager) As Integer
             Return Entry.CurrentCount
         End Function
     End Class
@@ -642,10 +642,10 @@ Partial Public Class OrmManagerBase
         Private _disposedValue As Boolean = False        ' To detect redundant calls
         Private _oldStart As Integer
         Private _oldLength As Integer
-        Private _mgr As OrmManagerBase
+        Private _mgr As OrmManager
         Private _p As Web.IPager
 
-        Public Sub New(ByVal mgr As OrmManagerBase, ByVal start As Integer, ByVal length As Integer)
+        Public Sub New(ByVal mgr As OrmManager, ByVal start As Integer, ByVal length As Integer)
             _mgr = mgr
             _oldStart = mgr._start
             mgr._start = start
@@ -653,17 +653,17 @@ Partial Public Class OrmManagerBase
             mgr._length = length
         End Sub
 
-        Public Sub New(ByVal mgr As OrmManagerBase, ByVal pager As Web.IPager)
+        Public Sub New(ByVal mgr As OrmManager, ByVal pager As Web.IPager)
             _mgr = mgr
             _p = pager
             AddHandler mgr.DataAvailable, AddressOf OnDataAvailable
         End Sub
 
         Public Sub New(ByVal start As Integer, ByVal length As Integer)
-            MyClass.new(OrmManagerBase.CurrentManager, start, length)
+            MyClass.new(OrmManager.CurrentManager, start, length)
         End Sub
 
-        Protected Sub OnDataAvailable(ByVal mgr As OrmManagerBase, ByVal er As ExecutionResult)
+        Protected Sub OnDataAvailable(ByVal mgr As OrmManager, ByVal er As ExecutionResult)
             _p.SetTotalCount(er.Count)
             _oldStart = mgr._start
             mgr._start = _p.GetCurrentPageOffset
@@ -694,10 +694,10 @@ Partial Public Class OrmManagerBase
 
         Private _disposedValue As Boolean = False        ' To detect redundant calls
         Private _f As IFilter
-        Private _mgr As OrmManagerBase
+        Private _mgr As OrmManager
 
         Public Sub New(ByVal f As IFilter)
-            _mgr = OrmManagerBase.CurrentManager
+            _mgr = OrmManager.CurrentManager
             _f = _mgr._externalFilter
             _mgr._externalFilter = f
         End Sub
@@ -713,7 +713,7 @@ Partial Public Class OrmManagerBase
             Return Nothing
         End Function
 
-        Public Sub New(ByVal mgr As OrmManagerBase, ByVal f As IFilter)
+        Public Sub New(ByVal mgr As OrmManager, ByVal f As IFilter)
             _mgr = mgr
             _f = mgr._externalFilter
             mgr._externalFilter = f

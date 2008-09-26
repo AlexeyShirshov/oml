@@ -236,26 +236,26 @@ Namespace Orm
             _secField = secField
         End Sub
 
-        Public Overloads Function FindElements(ByVal mgr As OrmManagerBase, ByVal sort As Worm.Sorting.Sort) As ReadOnlyList(Of T)
+        Public Overloads Function FindElements(ByVal mgr As OrmManager, ByVal sort As Worm.Sorting.Sort) As ReadOnlyList(Of T)
             Return FindElementsInternal(mgr, False, sort)
         End Function
 
-        Public Overloads Function FindElements(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
+        Public Overloads Function FindElements(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
             Return FindElementsInternal(mgr, False, Nothing)
         End Function
 
-        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
+        Public Function FindElementsLoadOnlyNames(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
             Return FindElementsInternal(mgr, True, Nothing)
         End Function
 
-        Private Function FindObjects(ByVal mgr As OrmManagerBase, _
+        Private Function FindObjects(ByVal mgr As OrmManager, _
             ByVal strong As Boolean, ByVal tt As Type, ByVal field As String, ByVal sec As String, ByVal sort As Worm.Sorting.Sort) As ReadOnlyList(Of T)
 
             If String.IsNullOrEmpty(field) Then
                 Throw New ArgumentNullException("field")
             End If
 
-            Dim s As QueryGenerator = mgr.ObjectSchema
+            Dim s As ObjectMappingEngine = mgr.MappingEngine
             Dim cr As Criteria.CriteriaLink = Nothing
             If strong Then
                 cr = s.CreateCriteria(tt).Field(field).Eq(Name)
@@ -274,14 +274,14 @@ Namespace Orm
             Return mgr.FindWithJoins(Of T)(Nothing, Root.Join, con.Condition, sort, False)
         End Function
 
-        Private Function FindObjects(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, _
+        Private Function FindObjects(ByVal mgr As OrmManager, ByVal loadName As Boolean, _
             ByVal strong As Boolean, ByVal tt As Type, ByVal field As String) As ReadOnlyList(Of T)
             If String.IsNullOrEmpty(field) Then
                 Throw New ArgumentNullException("field")
             End If
 
             Dim col As ReadOnlyList(Of T)
-            Dim s As QueryGenerator = mgr.ObjectSchema
+            Dim s As ObjectMappingEngine = mgr.MappingEngine
             Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
             con.AddFilter(Root.Filter)
 
@@ -300,12 +300,12 @@ Namespace Orm
             Return col
         End Function
 
-        Protected Function FindElementsInternal(ByVal mgr As OrmManagerBase, ByVal loadName As Boolean, ByVal sort As Worm.Sorting.Sort) As ReadOnlyList(Of T)
+        Protected Function FindElementsInternal(ByVal mgr As OrmManager, ByVal loadName As Boolean, ByVal sort As Worm.Sorting.Sort) As ReadOnlyList(Of T)
 
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False
             Dim tt As Type = GetType(T)
-            Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(tt)
+            Dim oschema As IOrmObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(tt)
             Dim odic As IOrmDictionary = TryCast(oschema, IOrmDictionary)
             Dim firstField As String = _firstField
             Dim secField As String = _secField
@@ -332,7 +332,7 @@ Namespace Orm
                         Dim add As New Hashtable
                         For Each ar As T In col2
                             If col.Contains(ar) Then Continue For
-                            Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, sname, oschema, Nothing))
+                            Dim fv As String = CStr(mgr.MappingEngine.GetFieldValue(ar, sname, oschema, Nothing))
                             Dim ar2 As T = CType(c(fv), T)
                             If ar2 IsNot Nothing Then
                                 If Object.Equals(ar2, ar) Then
@@ -352,7 +352,7 @@ Namespace Orm
                         Next
                         For Each ar As T In col
                             'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                            Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname, oschema, Nothing))
+                            Dim fv As String = CStr(mgr.MappingEngine.GetFieldValue(ar, fname, oschema, Nothing))
                             Dim ar2 As T = CType(c(fv), T)
                             If ar2 IsNot Nothing Then
                                 If Object.Equals(ar2, ar) Then
@@ -374,7 +374,7 @@ Namespace Orm
                         For Each ar As T In c.Values
                             CType(result, IListEdit).Add(ar)
                             'Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname))
-                            Dim fv As String = CStr(mgr.ObjectSchema.GetFieldValue(ar, fname, oschema, Nothing))
+                            Dim fv As String = CStr(mgr.MappingEngine.GetFieldValue(ar, fname, oschema, Nothing))
                             Dim addt As Generic.List(Of T) = CType(add(fv), Generic.List(Of T))
                             If addt IsNot Nothing Then
                                 For Each kl As T In addt

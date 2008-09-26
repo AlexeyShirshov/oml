@@ -168,13 +168,13 @@ Namespace Database
             End Get
         End Property
 
-        Public Sub Replace(ByVal schema As QueryGenerator, ByVal table As Orm.Meta.SourceFragment, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
+        Public Sub Replace(ByVal schema As ObjectMappingEngine, ByVal table As Orm.Meta.SourceFragment, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
             sb.Replace(schema.GetTableName(table) & ".", _aliases(table) & ".")
         End Sub
     End Structure
 
     Public Class SQLGenerator
-        Inherits QueryGenerator
+        Inherits ObjectMappingEngine
 
         Public Const QueryLength As Integer = 490
         'Public Const MainRelationTag As String = "main"
@@ -394,7 +394,7 @@ Namespace Database
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         If c IsNot Nothing Then
                             Dim current As Object = pi.GetValue(obj, Nothing)
-                            Dim att As Field2DbRelations = GetAttributes(real_t, c)
+                            Dim att As Field2DbRelations = GetAttributes(es, c)
                             If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse _
                              (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
                                 Dim tb As SourceFragment = GetFieldTable(es, c.FieldName)
@@ -404,12 +404,12 @@ Namespace Database
                                 End If
 
                                 Dim f As EntityFilterBase = Nothing
-								Dim v As Object = ChangeValueType(es, c, current)
+                                Dim v As Object = ChangeValueType(es, c, current)
                                 If (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault AndAlso v Is DBNull.Value Then
                                     If Not String.IsNullOrEmpty(DefaultValue) Then
                                         f = New dc.EntityFilter(real_t, c.FieldName, New LiteralValue(DefaultValue), FilterOperation.Equal)
                                     Else
-                                        Throw New QueryGeneratorException("DefaultValue required for operation")
+                                        Throw New ObjectMappingException("DefaultValue required for operation")
                                     End If
                                 ElseIf v Is DBNull.Value AndAlso pkt IsNot tb AndAlso js IsNot Nothing Then
                                     Dim j As OrmJoin = CType(GetJoins(js, pkt, tb, filterInfo), OrmJoin)
@@ -418,9 +418,9 @@ Namespace Database
                                     End If
                                 Else
 l1:
-                                    If current IsNot Nothing AndAlso GetType(OrmBase).IsAssignableFrom(current.GetType) Then
-                                        If CType(current, OrmBase).ObjectState = ObjectState.Created Then
-                                            Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, _IEntity).ObjName)
+                                    If current IsNot Nothing AndAlso GetType(ICachedEntity).IsAssignableFrom(current.GetType) Then
+                                        If CType(current, ICachedEntity).ObjectState = ObjectState.Created Then
+                                            Throw New ObjectMappingException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, _IEntity).ObjName)
                                         End If
                                     End If
                                     f = New dc.EntityFilter(real_t, c.FieldName, New ScalarValue(v), FilterOperation.Equal)
@@ -461,7 +461,7 @@ l1:
                             Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(jn.Condition, real_t, prim_key.FieldName, "@id")
 
                             If f Is Nothing Then
-                                Throw New QueryGeneratorException("Cannot change join")
+                                Throw New ObjectMappingException("Cannot change join")
                             End If
 
                             'For Each fl As OrmFilter In f.GetAllFilters
@@ -649,7 +649,7 @@ l1:
 
                                 If current IsNot Nothing AndAlso GetType(ICachedEntity).IsAssignableFrom(current.GetType) Then
                                     If CType(current, ICachedEntity).ObjectState = ObjectState.Created Then
-                                        Throw New QueryGeneratorException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, ICachedEntity).ObjName)
+                                        Throw New ObjectMappingException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, ICachedEntity).ObjName)
                                     End If
                                 End If
 
@@ -731,7 +731,7 @@ l1:
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If c IsNot Nothing Then
-                    Dim att As Field2DbRelations = GetAttributes(rt, c)
+                    Dim att As Field2DbRelations = GetAttributes(oschema, c)
                     If (att And Field2DbRelations.PK) = Field2DbRelations.PK OrElse _
                      (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
 
@@ -771,7 +771,7 @@ l1:
                                         Dim f As IFilter = JoinFilter.ChangeEntityJoinToParam(join.Condition, rt, c.FieldName, New TypeWrap(Of Object)(original))
 
                                         If f Is Nothing Then
-                                            Throw New QueryGeneratorException("Cannot replace join")
+                                            Throw New ObjectMappingException("Cannot replace join")
                                         End If
 
                                         'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(f))
@@ -873,59 +873,45 @@ l1:
                             End If
                         Next
 
-                        If sel_columns.Count > 0 Then
-                            'If unions Is Nothing Then
-                            '    Dim rem_list As New ArrayList
-                            '    For Each c As ColumnAttribute In sel_columns
-                            '        If Not tables.Contains(GetFieldTable(Type, c.FieldName)) Then rem_list.Add(c)
-                            '    Next
-
-                            '    For Each c As ColumnAttribute In rem_list
-                            '        sel_columns.Remove(c)
-                            '    Next
-                            'End If
-
-                            sel_columns.Sort()
-                            If sel_columns.Count > 0 Then
-                                upd_cmd.Append(EndLine)
-                                If SupportIf() Then
-                                    upd_cmd.Append("if ").Append(RowCount).Append(" > 0 ")
-                                End If
-                                Dim sel_sb As New StringBuilder
-                                sel_sb.Append("select ")
-                                Dim com As Boolean = False
-                                For Each c As ColumnAttribute In sel_columns
-                                    If com Then
-                                        sel_sb.Append(", ")
-                                    Else
-                                        com = True
-                                    End If
-                                    If unions IsNot Nothing Then
-                                        Throw New NotImplementedException
-                                        'upd_cmd.Append(GetColumnNameByFieldName(Type, c.FieldName, pk_table))
-                                        'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) = Field2DbRelations.PrimaryKey Then
-                                        '    upd_cmd.Append("+").Append(GetUnionScope(Type, pk_table).First)
-                                        'End If
-                                    Else
-                                        sel_sb.Append(GetColumnNameByFieldName(esch, c.FieldName))
-                                    End If
-                                Next
-
-                                Dim [alias] As String = amgr.Aliases(pk_table)
-                                'sel_sb = sel_sb.Replace(pk_table.TableName, [alias])
-                                amgr.Replace(Me, pk_table, sel_sb)
-                                sel_sb.Append(" from ").Append(GetTableName(pk_table)).Append(" ").Append([alias]).Append(" where ")
-                                'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
-                                Dim cn As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
-                                For Each p As PKDesc In obj.GetPKValues
-                                    Dim clm As String = GetColumnNameByFieldNameInternal(esch, p.PropertyAlias, False, Nothing)
-                                    cn.AddFilter(New dc.TableFilter(esch.GetTables(0), clm, New ScalarValue(p.Value), FilterOperation.Equal))
-                                Next
-                                Dim f As IFilter = cn.Condition
-                                sel_sb.Append(f.MakeQueryStmt(Me, filterInfo, amgr, params, Nothing))
-
-                                upd_cmd.Append(sel_sb)
+                        If CheckColumns(sel_columns, updated_tables, esch) Then
+                            upd_cmd.Append(EndLine)
+                            If SupportIf() Then
+                                upd_cmd.Append("if ").Append(RowCount).Append(" > 0 ")
                             End If
+                            Dim sel_sb As New StringBuilder
+                            sel_sb.Append("select ")
+                            Dim com As Boolean = False
+                            For Each c As ColumnAttribute In sel_columns
+                                If com Then
+                                    sel_sb.Append(", ")
+                                Else
+                                    com = True
+                                End If
+                                If unions IsNot Nothing Then
+                                    Throw New NotImplementedException
+                                    'upd_cmd.Append(GetColumnNameByFieldName(Type, c.FieldName, pk_table))
+                                    'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) = Field2DbRelations.PrimaryKey Then
+                                    '    upd_cmd.Append("+").Append(GetUnionScope(Type, pk_table).First)
+                                    'End If
+                                Else
+                                    sel_sb.Append(GetColumnNameByFieldName(esch, c.FieldName))
+                                End If
+                            Next
+
+                            Dim [alias] As String = amgr.Aliases(pk_table)
+                            'sel_sb = sel_sb.Replace(pk_table.TableName, [alias])
+                            amgr.Replace(Me, pk_table, sel_sb)
+                            sel_sb.Append(" from ").Append(GetTableName(pk_table)).Append(" ").Append([alias]).Append(" where ")
+                            'sel_sb.Append(updated_tables(pk_table)._where4update.Condition.MakeSQLStmt(Me, amgr.Aliases, params))
+                            Dim cn As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
+                            For Each p As PKDesc In obj.GetPKValues
+                                Dim clm As String = GetColumnNameByFieldNameInternal(esch, p.PropertyAlias, False, Nothing)
+                                cn.AddFilter(New dc.TableFilter(esch.GetTables(0), clm, New ScalarValue(p.Value), FilterOperation.Equal))
+                            Next
+                            Dim f As IFilter = cn.Condition
+                            sel_sb.Append(f.MakeQueryStmt(Me, filterInfo, amgr, params, Nothing))
+
+                            upd_cmd.Append(sel_sb)
                             select_columns = sel_columns
                         End If
 
@@ -935,6 +921,22 @@ l1:
                 End If
                 Return upd_cmd.ToString
             End Using
+        End Function
+
+        Protected Function CheckColumns(ByVal sel_columns As Generic.IList(Of ColumnAttribute), _
+            ByVal tables As IDictionary(Of SourceFragment, TableUpdate), ByVal esch As IObjectSchemaBase) As Boolean
+
+            If sel_columns.Count > 0 Then
+                For Each c As ColumnAttribute In sel_columns
+                    If Not tables.ContainsKey(esch.GetFieldColumnMap()(c.FieldName)._tableName) Then
+                        Return False
+                    End If
+                Next
+
+                Return True
+            End If
+
+            Return False
         End Function
 
         Protected Overridable Sub CorrectUpdateWithInsert(ByVal oschema As IOrmObjectSchema, ByVal table As SourceFragment, ByVal tableinfo As TableUpdate, _
@@ -995,7 +997,7 @@ l1:
                         Next
 
                         If f Is Nothing Then
-                            Throw New QueryGeneratorException("Cannot replace join")
+                            Throw New ObjectMappingException("Cannot replace join")
                         End If
 
                         o.AddFilter(f)
@@ -1592,7 +1594,7 @@ l1:
                 Dim pos As Integer = sb.Length
                 Do
                     If ns.IsExternal Then
-                        Throw New QueryGeneratorException("External sort must be alone")
+                        Throw New ObjectMappingException("External sort must be alone")
                     End If
 
                     'If ns.IsAny Then
@@ -1720,11 +1722,11 @@ l1:
             selected_r = GetRevM2MRelation(selectedType, filteredType, key)
 
             If selected_r Is Nothing Then
-                Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
+                Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
             End If
 
             If filtered_r Is Nothing Then
-                Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
+                Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
             End If
 
             Dim table As SourceFragment = selected_r.Table
@@ -1819,11 +1821,11 @@ l1:
             selected_r = GetRevM2MRelation(type, t, key)
 
             If selected_r Is Nothing Then
-                Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", t.Name, type.Name))
+                Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", t.Name, type.Name))
             End If
 
             If filtered_r Is Nothing Then
-                Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", type.Name, t.Name))
+                Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", type.Name, t.Name))
             End If
 
             Dim id_clm As String = filtered_r.Column

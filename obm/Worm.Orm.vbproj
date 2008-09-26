@@ -107,11 +107,9 @@
     <Import Include="System.Web" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Diagrams\cache.cd" />
+    <None Include="Diagrams\Mapping.cd" />
     <None Include="Diagrams\OrmBase.cd" />
     <None Include="Diagrams\OrmManager.cd" />
-    <None Include="Diagrams\schema.cd" />
-    <None Include="Diagrams\support.cd" />
     <None Include="My Project\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
@@ -131,8 +129,12 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Cache\Abstract.vb" />
     <Compile Include="Cache\advcache.vb" />
     <Compile Include="Cache\ReadonlyCache.vb" />
+    <Compile Include="Collections\CollectionWithIndex.vb" />
+    <Compile Include="Collections\CopyEnumerators.vb" />
+    <Compile Include="Collections\SyncGenericDictionary.vb" />
     <Compile Include="Criteria\Criteria.vb" />
     <Compile Include="Criteria\db\DbConditions.vb" />
     <Compile Include="Criteria\db\DbCriteria.vb" />
@@ -152,14 +154,19 @@
     <Compile Include="Entity\Prop.vb" />
     <Compile Include="Managers\Classes.vb" />
     <Compile Include="Managers\db\DataProviders.vb" />
-    <Compile Include="Managers\MgrClasses.vb" />
+    <Compile Include="Managers\InnerMgrClasses.vb" />
+    <Compile Include="Managers\ReadonlyList.vb" />
     <Compile Include="Managers\xml\DataProviders.vb" />
     <Compile Include="Managers\xml\XmlManager.vb" />
+    <Compile Include="Mapping\Classes.vb" />
+    <Compile Include="Mapping\Interfaces.vb" />
+    <Compile Include="Mapping\ObjectSchema\Classes.vb" />
+    <Compile Include="Mapping\ObjectSchema\PredefinedSchemas.vb" />
     <Compile Include="OrmDictionary.vb" />
-    <Compile Include="MetaAttributes.vb" />
+    <Compile Include="Mapping\ObjectSchema\MetaAttributes.vb" />
     <Compile Include="Managers\db\OrmDBManager.vb" />
     <Compile Include="Managers\db\OrmRODBManager.vb" />
-    <Compile Include="Managers\OrmManagerBase.vb">
+    <Compile Include="Managers\OrmManager.vb">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="QueryCmd\Aggregates.vb" />
@@ -167,13 +174,13 @@
     <Compile Include="QueryCmd\db\Processors.vb" />
     <Compile Include="QueryCmd\QueryCmd.vb" />
     <Compile Include="QueryCmd\db\SubQuery.vb" />
-    <Compile Include="QueryCmd\Sort.vb" />
-    <Compile Include="Relation.vb" />
-    <Compile Include="Schema\DbSchema.vb" />
-    <Compile Include="Schema\InterfacesAndClasses.vb" />
+    <Compile Include="QueryCmd\db\Sort.vb" />
+    <Compile Include="Entity\Relation.vb" />
+    <Compile Include="StmtGenerators\db\DbSchema.vb" />
+    <Compile Include="Mapping\ObjectSchema\Interfaces.vb" />
     <Compile Include="Criteria\OrmFilter.vb" />
-    <Compile Include="Schema\OrmSchema.vb" />
-    <Compile Include="Schema\XmlSchema.vb" />
+    <Compile Include="Mapping\MappingEngine.vb" />
+    <Compile Include="StmtGenerators\xml\XmlSchema.vb" />
     <Compile Include="Web\HttpCacheDic.vb" />
     <Compile Include="Cache\OrmCache.vb" />
     <Compile Include="My Project\Application.Designer.vb">
@@ -193,9 +200,9 @@
     </Compile>
     <Compile Include="Entity\OrmBase.vb" />
     <Compile Include="other.vb" />
-    <Compile Include="search.vb" />
-    <Compile Include="Schema\SQL2005Schema.vb" />
-    <Compile Include="storedprocs.vb" />
+    <Compile Include="SearchConfiguration.vb" />
+    <Compile Include="StmtGenerators\db\SQL2005Schema.vb" />
+    <Compile Include="Managers\db\storedprocs.vb" />
     <Compile Include="Web\IPager.vb" />
     <Compile Include="Web\Listener.vb" />
     <Compile Include="Web\Management.vb" />

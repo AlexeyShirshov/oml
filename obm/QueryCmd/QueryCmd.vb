@@ -11,35 +11,35 @@ Namespace Query
     Public Interface IExecutor
 
         Function ExecEntity(Of ReturnType As {_IEntity})( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)
+            ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)
 
         Function Exec(Of ReturnType As _ICachedEntity)( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
+            ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
 
         Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
+            ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
 
         Function ExecSimple(Of SelectType As {_ICachedEntity, New}, ReturnType)( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As IList(Of ReturnType)
+            ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
 
         Function ExecSimple(Of ReturnType)( _
-            ByVal mgr As OrmManagerBase, ByVal query As QueryCmd) As IList(Of ReturnType)
+            ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
 
-        Sub Reset(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd)
-        Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd)
-        Sub ResetEntity(Of ReturnType As _IEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd)
+        Sub Reset(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+        Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+        Sub ResetEntity(Of ReturnType As _IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
 
     End Interface
 
     Public Interface ICreateQueryCmd
         Function Create(ByVal table As SourceFragment) As QueryCmd
-            
+
         Function Create(ByVal selectType As Type) As QueryCmd
 
         Function CreateByEntityName(ByVal entityName As String) As QueryCmd
-            
+
         Function Create(ByVal obj As _IOrmBase) As QueryCmd
-            
+
         Function Create(ByVal obj As _IOrmBase, ByVal key As String) As QueryCmd
 
         Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
@@ -195,14 +195,14 @@ Namespace Query
         Protected _m2mKey As String
         Protected _rn As Worm.Database.Criteria.Core.TableFilter
         Protected _outer As QueryCmd
-        Private _er As OrmManagerBase.ExecutionResult
+        Private _er As OrmManager.ExecutionResult
         Private _en As String
         Friend _resDic As Boolean
         Private _appendMain As Boolean
         Protected _getMgr As ICreateManager
         Private _name As String
         Private _execCnt As Integer
-        Private _schema As QueryGenerator
+        Private _schema As ObjectMappingEngine
 
         Private _createType As Type
         Public Property CreateType() As Type
@@ -214,11 +214,11 @@ Namespace Query
             End Set
         End Property
 
-        Public Property Schema() As QueryGenerator
+        Public Property Schema() As ObjectMappingEngine
             Get
                 Return _schema
             End Get
-            Set(ByVal value As QueryGenerator)
+            Set(ByVal value As ObjectMappingEngine)
                 _schema = value
                 _mark = Environment.TickCount
             End Set
@@ -242,11 +242,11 @@ Namespace Query
             End Set
         End Property
 
-        Public Property LastExecitionResult() As OrmManagerBase.ExecutionResult
+        Public Property LastExecitionResult() As OrmManager.ExecutionResult
             Get
                 Return _er
             End Get
-            Protected Friend Set(ByVal value As OrmManagerBase.ExecutionResult)
+            Protected Friend Set(ByVal value As OrmManager.ExecutionResult)
                 _er = value
             End Set
         End Property
@@ -269,10 +269,10 @@ Namespace Query
 
         Private _exec As IExecutor
 
-        Public Function GetExecutor(ByVal mgr As OrmManagerBase) As IExecutor
+        Public Function GetExecutor(ByVal mgr As OrmManager) As IExecutor
             'If _dontcache Then
             If _exec Is Nothing Then
-                _exec = mgr.ObjectSchema.CreateExecutor()
+                _exec = mgr.MappingEngine.CreateExecutor()
             End If
             Return _exec
             'Else
@@ -343,7 +343,7 @@ Namespace Query
 
 #End Region
 
-        Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal t As Type) As IFilter()
+        Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type) As IFilter()
             Dim i As Integer = 0
             Dim q As QueryCmd = Me
             Dim fs As New List(Of IFilter)
@@ -358,7 +358,7 @@ Namespace Query
             Return fs.ToArray
         End Function
 
-        Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal t As Type) As IFilter
+        Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type) As IFilter
             If Joins IsNot Nothing Then
                 j.AddRange(Joins)
             End If
@@ -370,7 +370,7 @@ Namespace Query
 
             If AutoJoins OrElse _o IsNot Nothing Then
                 Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                If OrmManagerBase.HasJoins(schema, t, f, propSort, filterInfo, joins, _appendMain) Then
+                If OrmManager.HasJoins(schema, t, f, propSort, filterInfo, joins, _appendMain) Then
                     j.AddRange(joins)
                 End If
             End If
@@ -390,11 +390,11 @@ Namespace Query
                 selected_r = schema.GetM2MRelation(filteredType, selectedType, M2MRelation.GetRevKey(_m2mKey))
 
                 If selected_r Is Nothing Then
-                    Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
+                    Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", selectedType.Name, filteredType.Name))
                 End If
 
                 If filtered_r Is Nothing Then
-                    Throw New QueryGeneratorException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
+                    Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
                 End If
 
                 'Dim table As SourceFragment = selected_r.Table
@@ -894,7 +894,7 @@ Namespace Query
             '    End If
             'End Sub
 
-            Public Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManagerBase)
+            Public Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManager)
                 'AddHandler o.ManagerRequired, AddressOf GetManager
                 If _m Is Nothing Then
                     o.SetCreateManager(_gm)
@@ -904,14 +904,14 @@ Namespace Query
             End Sub
         End Class
 
-        Public Function ToList(ByVal mgr As OrmManagerBase) As IList
-            Dim t As MethodInfo = Me.GetType.GetMethod("ToEntityList", New Type() {GetType(OrmManagerBase)})
+        Public Function ToList(ByVal mgr As OrmManager) As IList
+            Dim t As MethodInfo = Me.GetType.GetMethod("ToEntityList", New Type() {GetType(OrmManager)})
             t = t.MakeGenericMethod(New Type() {SelectedType})
             Return CType(t.Invoke(Me, New Object() {mgr}), System.Collections.IList)
         End Function
 
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyEntityList(Of T)
-            Dim mgr As OrmManagerBase = getMgr()
+            Dim mgr As OrmManager = getMgr()
             Try
                 mgr.RaiseObjectCreation = True
                 AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
@@ -925,7 +925,7 @@ Namespace Query
         End Function
 
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of T)
-            Using mgr As OrmManagerBase = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager
                 mgr.RaiseObjectCreation = True
                 AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
                 'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManagerBase) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
@@ -933,20 +933,32 @@ Namespace Query
             End Using
         End Function
 
-        Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManagerBase) As ReadOnlyObjectList(Of T)
-            Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
-        End Function
-
-        Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
+        Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
             Return GetExecutor(mgr).Exec(Of T)(mgr, Me)
         End Function
 
-        Public Function ToOrmList(Of T As {_IOrmBase})(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of T)
+        Public Function ToEntityList(Of T As _ICachedEntity)() As ReadOnlyEntityList(Of T)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Using mgr As OrmManager = _getMgr.CreateManager
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf New cls(_getMgr).ObjectCreated
+                Return ToEntityList(Of T)(mgr)
+            End Using
+        End Function
+
+        Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
+            Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
+        End Function
+
+        Public Function ToOrmList(Of T As {_IOrmBase})(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
             Return CType(ToEntityList(Of T)(mgr), ReadOnlyList(Of T))
         End Function
 
         Public Function ToOrmList(Of T As {_IOrmBase})(ByVal getMgr As ICreateManager) As ReadOnlyList(Of T)
-            Using mgr As OrmManagerBase = getMgr.CreateManager
+            Using mgr As OrmManager = getMgr.CreateManager
                 mgr.RaiseObjectCreation = True
                 AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
                 Return ToOrmList(Of T)(mgr)
@@ -954,18 +966,18 @@ Namespace Query
         End Function
 
         Public Function ToOrmList(Of T As {_IOrmBase})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
-            Using mgr As OrmManagerBase = getMgr()
+            Using mgr As OrmManager = getMgr()
                 mgr.RaiseObjectCreation = True
                 AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
                 Return ToOrmList(Of T)(mgr)
             End Using
         End Function
 
-        Public Function ToList(Of T As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As IList(Of T)
+        Public Function ToList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As IList(Of T)
             Return ToEntityList(Of T)(mgr)
         End Function
 
-        Public Function ToList(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManagerBase) As IList(Of ReturnType)
+        Public Function ToList(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManager) As IList(Of ReturnType)
             Return GetExecutor(mgr).Exec(Of SelectType, ReturnType)(mgr, Me)
         End Function
 
@@ -973,7 +985,7 @@ Namespace Query
         '    Return ToListTypeless(mgr).GetEnumerator
         'End Function
 
-        Public Function ToSimpleList(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
+        Public Function ToSimpleList(Of T)(ByVal mgr As OrmManager) As IList(Of T)
             Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
             'Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
             'Dim qt As Type = q.GetType
@@ -985,15 +997,15 @@ Namespace Query
             'Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
         End Function
 
-        Public Sub Reset(Of ReturnType As _IEntity)(ByVal mgr As OrmManagerBase)
+        Public Sub Reset(Of ReturnType As _IEntity)(ByVal mgr As OrmManager)
             GetExecutor(mgr).ResetEntity(Of ReturnType)(mgr, Me)
         End Sub
 
-        Public Sub Renew(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase)
+        Public Sub Renew(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManager)
             GetExecutor(mgr).Reset(Of ReturnType)(mgr, Me)
         End Sub
 
-        Public Sub Renew(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManagerBase)
+        Public Sub Renew(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager)
             GetExecutor(mgr).Reset(Of SelectType, ReturnType)(mgr, Me)
         End Sub
 
@@ -1150,7 +1162,7 @@ Namespace Query
 
         Private _preCmp As ReadOnlyList(Of T)
 
-        Public Sub Compute(ByVal mgr As OrmManagerBase)
+        Public Sub Compute(ByVal mgr As OrmManager)
             _preCmp = ToOrmList(Of T)(mgr)
         End Sub
 
@@ -1210,7 +1222,7 @@ Namespace Query
 
 #End Region
 
-        Public Shared Function Create(ByVal table As SourceFragment, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function Create(ByVal table As SourceFragment, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             If f Is Nothing Then
                 Dim q As New OrmQueryCmd(Of T)(table)
@@ -1223,12 +1235,12 @@ Namespace Query
             End If
         End Function
 
-        Public Shared Function Create(ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function Create(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim selectType As Type = GetType(T)
             Return Create(selectType, mgr)
         End Function
 
-        Public Shared Function Create(ByVal selectType As Type, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function Create(ByVal selectType As Type, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             If f Is Nothing Then
                 Dim q As New OrmQueryCmd(Of T)(selectType)
@@ -1241,7 +1253,7 @@ Namespace Query
             End If
         End Function
 
-        Public Shared Function CreateByEntityName(ByVal entityName As String, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function CreateByEntityName(ByVal entityName As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             If f Is Nothing Then
                 Dim q As New OrmQueryCmd(Of T)(entityName)
@@ -1254,7 +1266,7 @@ Namespace Query
             End If
         End Function
 
-        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             If f Is Nothing Then
                 Dim q As New OrmQueryCmd(Of T)(obj)
@@ -1267,7 +1279,7 @@ Namespace Query
             End If
         End Function
 
-        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             If f Is Nothing Then
                 Dim q As New OrmQueryCmd(Of T)(obj, key)
@@ -1280,7 +1292,7 @@ Namespace Query
             End If
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             If f Is Nothing Then
                 Dim q As New OrmQueryCmd(Of T)(table)
@@ -1294,12 +1306,12 @@ Namespace Query
             End If
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function Create(ByVal name As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim selectType As Type = GetType(T)
             Return Create(name, selectType, mgr)
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal selectType As Type, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function Create(ByVal name As String, ByVal selectType As Type, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             If f Is Nothing Then
                 Dim q As New OrmQueryCmd(Of T)(selectType)
@@ -1313,7 +1325,7 @@ Namespace Query
             End If
         End Function
 
-        Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             If f Is Nothing Then
                 Dim q As New OrmQueryCmd(Of T)(entityName)
@@ -1327,7 +1339,7 @@ Namespace Query
             End If
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             If f Is Nothing Then
                 Dim q As New OrmQueryCmd(Of T)(obj)
@@ -1341,7 +1353,7 @@ Namespace Query
             End If
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManagerBase) As OrmQueryCmd(Of T)
+        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             If f Is Nothing Then
                 Dim q As New OrmQueryCmd(Of T)(obj, key)

@@ -55,7 +55,7 @@ Namespace Xml
             '    Throw New NotSupportedException("Use MakeQueryStmt with columns parameter")
             'End Function
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal colums As System.Collections.Generic.List(Of String)) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal colums As System.Collections.Generic.List(Of String)) As String
                 If _right Is Nothing Then
                     Return _left.MakeQueryStmt(schema, filterInfo, almgr, pname, colums)
                 End If
@@ -106,7 +106,7 @@ Namespace Xml
             '    Throw New NotSupportedException("Use MakeQueryStmt with columns parameter")
             'End Function
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal colums As System.Collections.Generic.List(Of String)) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal colums As System.Collections.Generic.List(Of String)) As String
                 If _right Is Nothing Then
                     Return CType(_left, IEntityFilter).MakeQueryStmt(schema, filterInfo, almgr, pname, colums)
                 End If

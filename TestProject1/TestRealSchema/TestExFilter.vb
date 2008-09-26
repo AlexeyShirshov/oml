@@ -16,7 +16,7 @@ Public Class TestExternalFilter
 
             Assert.AreEqual(3, c.Count)
 
-            Using New Worm.OrmManagerBase.ApplyCriteria(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec))
+            Using New Worm.OrmManager.ApplyCriteria(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec))
                 c = mgr.Find(Of Table1)(Criteria.Ctor.AutoTypeField("ID").NotEq(100), Nothing, False)
                 Assert.AreEqual(2, c.Count)
             End Using

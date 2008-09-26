@@ -378,9 +378,9 @@ Namespace Linq
     Public MustInherit Class MyExpressionVisitor
         Inherits ExpressionVisitor
 
-        Protected _schema As QueryGenerator
+        Protected _schema As ObjectMappingEngine
 
-        Public Sub New(ByVal schema As QueryGenerator)
+        Public Sub New(ByVal schema As ObjectMappingEngine)
             _schema = schema
         End Sub
 

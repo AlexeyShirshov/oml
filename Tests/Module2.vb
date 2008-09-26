@@ -301,9 +301,9 @@ Module Module2
                                             Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
                                             If Not done Then
                                                 Debug.Assert(st.Saver.AffectedObjects.Count = 0)
-                                                Dim oc As ModifiedObject = mgr.Cache.Modified(t)
+                                                Dim oc As ObjectModification = mgr.Cache.ShadowCopy(t)
                                                 Debug.Assert(oc IsNot Nothing OrElse t.InternalProperties.ObjectState = Orm.ObjectState.NotFoundInSource)
-                                                Debug.Assert(oc Is Nothing OrElse oc.Reason = ModifiedObject.ReasonEnum.Delete)
+                                                Debug.Assert(oc Is Nothing OrElse oc.Reason = ObjectModification.ReasonEnum.Delete)
                                             End If
                                             'End If
                                         End Using
@@ -403,7 +403,7 @@ Module Module2
                                 Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
                                 If t IsNot Nothing Then
                                     Using t.BeginAlter
-                                        If t.CanEdit Then
+                                        If t.InternalProperties.CanEdit Then
                                             If r.NextDouble > 0.5 Then
                                                 t.Name = Guid.NewGuid.ToString
                                                 If r.NextDouble > 0.5 Then
@@ -450,7 +450,7 @@ Module Module2
         'e.Set()
         For i As Integer = 0 To iterCount * 2
             Using mgr As OrmReadOnlyDBManager = CreateManager()
-                Using New OrmManagerBase.CacheListBehavior(mgr, False)
+                Using New OrmManager.CacheListBehavior(mgr, False)
                     Dim r As New Random
                     Dim done As Boolean
                     Do
@@ -484,7 +484,7 @@ Module Module2
         'e.Set()
         For i As Integer = 0 To iterCount * 2
             Using mgr As OrmReadOnlyDBManager = CreateManager()
-                Using New OrmManagerBase.CacheListBehavior(mgr, False)
+                Using New OrmManager.CacheListBehavior(mgr, False)
                     Dim r As New Random
                     Dim done As Boolean
                     Do

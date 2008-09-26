@@ -11,12 +11,6 @@ Imports Worm.Orm.Query
 
 Namespace Cache
 
-    Public Enum CacheListBehavior
-        CacheAll
-        CacheOrThrowException
-        CacheWhatCan
-    End Enum
-
     <Serializable()> _
     Public Class EntityProxy
         Private _id() As PKDesc
@@ -33,7 +27,7 @@ Namespace Cache
         End Sub
 
         Public Function GetEntity() As ICachedEntity
-            Return OrmManagerBase.CurrentManager.GetEntityFromCacheOrDB(_id, _t)
+            Return OrmManager.CurrentManager.GetEntityFromCacheOrDB(_id, _t)
         End Function
 
         Public ReadOnly Property EntityType() As Type
@@ -153,31 +147,6 @@ Namespace Cache
         End Sub
     End Class
 
-    ''' <summary>
-    ''' Индексированая по полю <see cref="MapField2Column._fieldName"/> колекция объектов типа <see cref="MapField2Column"/>
-    ''' </summary>
-    ''' <remarks>
-    ''' Наследник абстрактного класс <see cref="Collections.IndexedCollection(Of string, MapField2Column)"/>, реализующий метод <see cref="Collections.IndexedCollection(Of string, MapField2Column).GetKeyForItem" />
-    ''' </remarks>
-    Public Class OrmObjectIndex
-        Inherits Collections.IndexedCollection(Of String, MapField2Column)
-
-        ''' <summary>
-        ''' Возвращает ключ коллекции MapField2Column
-        ''' </summary>
-        ''' <param name="item">Элемент коллекции</param>
-        ''' <returns>Возвращает <see cref="MapField2Column._fieldName"/></returns>
-        ''' <remarks>Используется при индексации коллекции</remarks>
-        Protected Overrides Function GetKeyForItem(ByVal item As MapField2Column) As String
-            Return item._fieldName
-        End Function
-    End Class
-
-    Public Interface IExploreCache
-        Function GetAllKeys() As ArrayList
-        Function GetDictionary(ByVal key As Object) As IDictionary
-    End Interface
-
     Public MustInherit Class OrmCacheBase
         Inherits ReadonlyCache
 
@@ -275,39 +244,25 @@ Namespace Cache
         Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
         Private _jt As New Dictionary(Of Type, List(Of Type))
 
-        Private _list_converter As IListObjectConverter
         Private _trackDelete As New Dictionary(Of Type, Pair(Of Integer, List(Of Integer)))
 
         Public Event CacheHasModification As EventHandler
 
         Public Event CacheHasnotModification As EventHandler
 
-        Public Delegate Function EnumM2MCache(ByVal entity As OrmManagerBase.M2MCache) As Boolean
+        Public Delegate Function EnumM2MCache(ByVal entity As OrmManager.M2MCache) As Boolean
 
         Public Event RegisterObjectRemoval(ByVal obj As ICachedEntity)
-        Public Event RegisterCollectionCreation(ByVal t As Type)
-        Public Event RegisterCollectionRemoval(ByVal ce As OrmManagerBase.CachedItem)
-
-        Public Interface IUpdateCacheCallbacks
-            Sub BeginUpdate(ByVal count As Integer)
-            Sub EndUpdate()
-            Sub BeginUpdateProcs()
-            Sub EndUpdateProcs()
-            Sub BeginUpdateList(ByVal key As String, ByVal id As String)
-            Sub EndUpdateList(ByVal key As String, ByVal id As String)
-            Sub ObjectDependsUpdated(ByVal o As ICachedEntity)
-        End Interface
 
         'Public Delegate Sub OnUpdateAfterDeleteEnd(ByVal o As OrmBase, ByVal mgr As OrmManagerBase)
         'Public Delegate Sub OnUpdateAfterAddEnd(ByVal o As OrmBase, ByVal mgr As OrmManagerBase, ByVal contextKey As Object)
-        Public Delegate Sub OnUpdated(ByVal o As _ICachedEntity, ByVal mgr As OrmManagerBase, ByVal contextKey As Object)
+        Public Delegate Sub OnUpdated(ByVal o As _ICachedEntity, ByVal mgr As OrmManager, ByVal contextKey As Object)
 
         Sub New()
             MyBase.new()
             '_filters = Hashtable.Synchronized(New Hashtable)
             'DateTimeCreated = Now
             _modifiedobjects = Hashtable.Synchronized(New Hashtable)
-            _list_converter = CreateListConverter()
         End Sub
 
 #Region " general routines "
@@ -318,14 +273,14 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function Modified(ByVal t As Type, ByVal id As Integer) As ModifiedObject
+        Public Function ShadowCopy(ByVal t As Type, ByVal id As Integer) As ObjectModification
             Using SyncRoot
                 Dim name As String = t.Name & ":" & id
-                Return CType(_modifiedobjects(name), ModifiedObject)
+                Return CType(_modifiedobjects(name), ObjectModification)
             End Using
         End Function
 
-        Public Function Modified(ByVal obj As _ICachedEntity) As ModifiedObject
+        Public Function ShadowCopy(ByVal obj As _ICachedEntity) As ObjectModification
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
@@ -333,7 +288,7 @@ Namespace Cache
 
                 If obj.IsPKLoaded Then
                     Dim name As String = obj.GetType().Name & ":" & obj.Key
-                    Return CType(_modifiedobjects(name), ModifiedObject)
+                    Return CType(_modifiedobjects(name), ObjectModification)
                 Else
                     Return Nothing
                 End If
@@ -350,18 +305,18 @@ Namespace Cache
             End Get
         End Property
 
-        Protected Friend Function RegisterModification(ByVal obj As _ICachedEntity, ByVal reason As ModifiedObject.ReasonEnum) As ModifiedObject
+        Protected Friend Function RegisterModification(ByVal obj As _ICachedEntity, ByVal reason As ObjectModification.ReasonEnum) As ObjectModification
             Using SyncRoot
                 If obj Is Nothing Then
                     Throw New ArgumentNullException("obj")
                 End If
 
-                Dim mo As ModifiedObject = Nothing
+                Dim mo As ObjectModification = Nothing
                 Dim name As String = obj.GetType().Name & ":" & obj.Key
                 'Using SyncHelper.AcquireDynamicLock(name)
-                Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
+                Assert(OrmManager.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
                 Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
-                mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser, reason)
+                mo = New ObjectModification(obj, OrmManager.CurrentManager.CurrentUser, reason)
                 _modifiedobjects.Add(name, mo)
                 'End Using
                 If _modifiedobjects.Count = 1 Then
@@ -376,7 +331,7 @@ Namespace Cache
             Dim tt As Type = GetType(T)
             For Each s As String In New ArrayList(_modifiedobjects.Keys)
                 If s.IndexOf(tt.Name & ":") >= 0 Then
-                    Dim mo As ModifiedObject = CType(_modifiedobjects(s), ModifiedObject)
+                    Dim mo As ObjectModification = CType(_modifiedobjects(s), ObjectModification)
                     If mo IsNot Nothing Then
                         al.Add(CType(mo.Obj, T))
                     End If
@@ -459,7 +414,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Public ReadOnly Property IsReadonly() As Boolean
+        Public Overrides ReadOnly Property IsReadonly() As Boolean
             Get
                 Return False
             End Get
@@ -475,7 +430,7 @@ Namespace Cache
 
 #End Region
 
-        Public Property CacheListBehavior() As CacheListBehavior
+        Public Overrides Property CacheListBehavior() As CacheListBehavior
             Get
                 Return _beh
             End Get
@@ -484,15 +439,15 @@ Namespace Cache
             End Set
         End Property
 
-        Public MustOverride Function CreateResultsetsDictionary() As IDictionary
+        'Public MustOverride Function CreateResultsetsDictionary() As IDictionary
 
-        Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As QueryGenerator) As System.Collections.IDictionary
+        'Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As ObjectMappingEngine) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Object, T)
+        'Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of Object, T)
 
-        Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.IDictionary
+        'Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
+        'Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
 
 #If TraceCreation Then
         Private _added As ArrayList = arraylist.Synchronized( New ArrayList)
@@ -518,7 +473,7 @@ Namespace Cache
 #End If
 
         Public Overridable Sub RegisterRemoval(ByVal obj As _ICachedEntity)
-            Debug.Assert(Modified(obj) Is Nothing)
+            Debug.Assert(ShadowCopy(obj) Is Nothing)
             RaiseEvent RegisterObjectRemoval(obj)
             obj.RemoveFromCache(Me)
             RemoveDepends(obj)
@@ -551,7 +506,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Friend Sub RegisterDelete(ByVal obj As CachedEntity)
+        Friend Sub RegisterDelete(ByVal obj As ICachedEntity)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -596,26 +551,6 @@ Namespace Cache
                 End If
             End Using
         End Function
-
-        Public MustOverride Sub Reset()
-
-        Protected Overridable Function CreateListConverter() As IListObjectConverter
-            Return New FakeListConverter
-        End Function
-
-        Public ReadOnly Property ListConverter() As IListObjectConverter
-            Get
-                Return _list_converter
-            End Get
-        End Property
-
-        Public Overridable Sub RegisterCreationCacheItem(ByVal t As Type)
-            RaiseEvent RegisterCollectionCreation(t)
-        End Sub
-
-        Public Overridable Sub RegisterRemovalCacheItem(ByVal ce As OrmManagerBase.CachedItem)
-            RaiseEvent RegisterCollectionRemoval(ce)
-        End Sub
 
         Public Function GetLoadTime(ByVal t As Type) As Pair(Of Integer, TimeSpan)
             Dim p As Pair(Of Integer, TimeSpan) = Nothing
@@ -899,7 +834,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function GetM2MEntries(ByVal obj As _IOrmBase, ByVal name As String) As ICollection(Of Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)))
+        Protected Friend Function GetM2MEntries(ByVal obj As _IOrmBase, ByVal name As String) As ICollection(Of Pair(Of OrmManager.M2MCache, Pair(Of String, String)))
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -913,18 +848,18 @@ Namespace Cache
 #Else
             Using SyncHelper.AcquireDynamicLock("bhiasdbvgklbg135t")
 #End If
-                Dim etrs As New List(Of Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)))
+                Dim etrs As New List(Of Pair(Of OrmManager.M2MCache, Pair(Of String, String)))
                 Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
 
                 If _m2m_dep.TryGetValue(name, l) Then
                     For Each p As KeyValuePair(Of String, Dictionary(Of String, Object)) In l
                         Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
                         For Each id As String In p.Value.Keys
-                            Dim ce As OrmManagerBase.M2MCache = TryCast(dic(id), OrmManagerBase.M2MCache)
+                            Dim ce As OrmManager.M2MCache = TryCast(dic(id), OrmManager.M2MCache)
                             If ce Is Nothing Then
                                 dic.Remove(id)
                             Else
-                                etrs.Add(New Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String))(ce, New Pair(Of String, String)(p.Key, id)))
+                                etrs.Add(New Pair(Of OrmManager.M2MCache, Pair(Of String, String))(ce, New Pair(Of String, String)(p.Key, id)))
                             End If
                         Next
                     Next
@@ -979,7 +914,7 @@ Namespace Cache
                         'Dim b As Boolean = False
                         Dim remove As New List(Of String)
                         For Each id As String In p.Value.Keys
-                            Dim ce As OrmManagerBase.M2MCache = TryCast(dic(id), OrmManagerBase.M2MCache)
+                            Dim ce As OrmManager.M2MCache = TryCast(dic(id), OrmManager.M2MCache)
                             If ce IsNot Nothing Then
                                 If Not f(ce) Then
                                     remove.Add(id)
@@ -997,8 +932,8 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Sub UpdateCache(ByVal schema As QueryGenerator, _
-            ByVal objs As IList, ByVal mgr As OrmManagerBase, ByVal afterDelegate As OnUpdated, _
+        Protected Friend Sub UpdateCache(ByVal schema As ObjectMappingEngine, _
+            ByVal objs As IList, ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated, _
             ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks, Optional ByVal forseEval As Boolean = False)
 
             Dim tt As Type = Nothing
@@ -1077,7 +1012,7 @@ Namespace Cache
                                 Dim ids As List(Of String) = p.Value.First.GetIds(h)
                                 Dim rm As New List(Of String)
                                 For Each id As String In ids
-                                    Dim ce As OrmManagerBase.CachedItem = TryCast(dic(id), OrmManagerBase.CachedItem)
+                                    Dim ce As OrmManager.CachedItem = TryCast(dic(id), OrmManager.CachedItem)
                                     Dim f As IEntityFilter = Nothing
                                     If ce IsNot Nothing Then
                                         f = TryCast(ce.Filter, IEntityFilter)
@@ -1172,7 +1107,7 @@ l1:
         End Sub
 
         Public Sub ValidateProcs(ByVal objs As IList, _
-            ByVal mgr As OrmManagerBase, ByVal callbacks As IUpdateCacheCallbacks, _
+            ByVal mgr As OrmManager, ByVal callbacks As IUpdateCacheCallbacks, _
             ByVal afterDelegate As OnUpdated, ByVal contextKey As Object)
             If callbacks IsNot Nothing Then
                 callbacks.BeginUpdateProcs()
@@ -1207,7 +1142,7 @@ l1:
         ''' <param name="key"></param>
         ''' <param name="id"></param>
         ''' <remarks></remarks>
-        Protected Friend Sub AddDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter, ByVal schema As QueryGenerator)
+        Protected Friend Sub AddDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter, ByVal schema As ObjectMappingEngine)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("j13rvnopqefv9-n24bth","d:\temp\")
@@ -1223,7 +1158,7 @@ l1:
         End Sub
 
         Protected Friend Sub AddFilterlessDependType(ByVal filterInfo As Object, ByVal t As Type, ByVal key As String, ByVal id As String, _
-            ByVal schema As QueryGenerator)
+            ByVal schema As ObjectMappingEngine)
             Dim l As Dictionary(Of String, Pair(Of String)) = Nothing
             Dim o As Object = schema.GetEntityTypeKey(filterInfo, t)
 #If DebugLocks Then
@@ -1424,13 +1359,6 @@ l1:
             End Using
         End Sub
 
-        Public Overridable Function CreateResultsetsDictionary(ByVal mark As String) As IDictionary
-            If String.IsNullOrEmpty(mark) Then
-                Return CreateResultsetsDictionary()
-            End If
-            Throw New NotImplementedException(String.Format("Mark {0} is not supported", mark))
-        End Function
-
     End Class
 
     Public Class OrmCache
@@ -1461,7 +1389,7 @@ l1:
 
         'Public Overrides ReadOnly Property OrmDictionaryT(of T)() As System.Collections.Generic.IDictionary(Of Integer, T)
 
-        Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, ByVal schema As QueryGenerator) As System.Collections.IDictionary
+        Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, ByVal schema As ObjectMappingEngine) As System.Collections.IDictionary
             Dim k As Object = t
             If schema IsNot Nothing Then
                 k = schema.GetEntityTypeKey(filterInfo, t)
@@ -1481,7 +1409,7 @@ l1:
         End Function
 
         Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, _
-            ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.IDictionary
+            ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.IDictionary
             Dim k As Object = t
             If schema IsNot Nothing Then
                 k = schema.GetEntityTypeKey(filterInfo, t, oschema)
@@ -1500,11 +1428,11 @@ l1:
             Return dic
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator) As System.Collections.Generic.IDictionary(Of Object, T)
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of Object, T)
             Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Object, T))
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
             Return CType(GetOrmDictionary(filterInfo, GetType(T), schema, oschema), IDictionary(Of Object, T))
         End Function
 
@@ -1518,7 +1446,7 @@ l1:
         End Sub
 
         Protected Overridable Function CreateDictionary(ByVal t As Type) As IDictionary
-            Dim gt As Type = GetType(Collections.HybridDictionary(Of ))
+            Dim gt As Type = GetType(Collections.SynchronizedDictionary(Of ))
             gt = gt.MakeGenericType(New Type() {t})
             Return CType(gt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IDictionary)
         End Function
@@ -1533,7 +1461,7 @@ l1:
     End Class
 
     <Serializable()> _
-    Public Class ModifiedObject
+    Public Class ObjectModification
         Public Enum ReasonEnum
             Unknown
             Delete
@@ -1602,7 +1530,7 @@ l1:
             Dim args() As Object = Nothing
             Dim dt As Type = Nothing
             If pol Is Nothing Then
-                dt = GetType(Collections.HybridDictionary(Of ))
+                dt = GetType(Collections.SynchronizedDictionary(Of ))
             Else
                 dt = GetType(OrmDictionary(Of ))
                 args = GetArgs(t, pol)

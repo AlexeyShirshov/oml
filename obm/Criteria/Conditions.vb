@@ -145,7 +145,7 @@ Namespace Criteria.Conditions
         'End Function
 
         'Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String Implements IFilter.MakeQueryStmt
-        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal colums As List(Of String)) As String Implements IFilter.MakeQueryStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal colums As List(Of String)) As String Implements IFilter.MakeQueryStmt
         Protected MustOverride Function CreateMe(ByVal left As IFilter, ByVal right As IFilter, ByVal [operator] As ConditionOperator) As Condition
         Public MustOverride ReadOnly Property Template() As Core.ITemplate Implements Core.ITemplateFilterBase.Template
 
@@ -235,7 +235,7 @@ Namespace Criteria.Conditions
             Return Nothing
         End Function
 
-        Public Function MakeSingleStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
+        Public Function MakeSingleStmt(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
             Throw New NotSupportedException
         End Function
 
@@ -322,7 +322,7 @@ Namespace Criteria.Conditions
             '    Return s.ToString
             'End Function
 
-            Public Function MakeHash(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
+            Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
                 Dim l As String = Con.Left.GetFilterTemplate.MakeHash(schema, oschema, obj)
                 If Con._right IsNot Nothing Then
                     Dim r As String = Con.Right.GetFilterTemplate.MakeHash(schema, oschema, obj)
@@ -358,7 +358,7 @@ Namespace Criteria.Conditions
 
         'Protected MustOverride Function CreateMeE(ByVal left As IEntityFilter, ByVal right As IEntityFilter, ByVal [operator] As ConditionOperator) As Condition
 
-        Public Function Eval(ByVal schema As QueryGenerator, ByVal obj As _IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -393,7 +393,7 @@ Namespace Criteria.Conditions
             Return CType(Template, IOrmFilterTemplate)
         End Function
 
-        Public Function PrepareValue(ByVal schema As QueryGenerator, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue
+        Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue
             Throw New NotSupportedException
         End Function
 

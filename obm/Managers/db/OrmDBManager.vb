@@ -42,13 +42,13 @@ Namespace Database
             Using obj.GetSyncRoot()
                 Dim cmdtext As String = Nothing
                 Try
-                    cmdtext = DbSchema.Update(obj, GetFilterInfo, params, cols, upd)
-                Catch ex As QueryGeneratorException When ex.Message.Contains("Cannot save object while it has reference to new object")
+                    cmdtext = SQLGenerator.Update(obj, GetFilterInfo, params, cols, upd)
+                Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
                     Return False
                 End Try
                 If cmdtext.Length > 0 Then
-                    If DbSchema.SupportMultiline Then
-                        Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                    If SQLGenerator.SupportMultiline Then
+                        Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
                             With cmd
                                 .CommandType = System.Data.CommandType.Text
                                 .CommandText = cmdtext
@@ -72,9 +72,9 @@ Namespace Database
                         BeginTransaction()
                         Try
                             Dim prev_error As Boolean = False
-                            For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, DbSchema.EndLine)
+                            For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
                                 If stmt = String.Empty Then Continue For
-                                Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
                                     Dim sel As Boolean = stmt.IndexOf("select") >= 0
                                     With cmd
                                         .CommandType = System.Data.CommandType.Text
@@ -93,7 +93,7 @@ Namespace Database
                                             Continue For
                                         End If
                                     ElseIf prev_error Then
-                                        Throw DbSchema.PrepareConcurrencyException(obj)
+                                        Throw SQLGenerator.PrepareConcurrencyException(obj)
                                     End If
 
                                     prev_error = False
@@ -156,16 +156,16 @@ Namespace Database
                 Using obj.GetSyncRoot()
                     Dim cmdtext As String = Nothing
                     Try
-                        cmdtext = DbSchema.Insert(obj, GetFilterInfo, params, cols)
-                    Catch ex As QueryGeneratorException When ex.Message.Contains("Cannot save object while it has reference to new object")
+                        cmdtext = SQLGenerator.Insert(obj, GetFilterInfo, params, cols)
+                    Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
                         Return False
                     End Try
                     If cmdtext.Length > 0 Then
                         Dim tran As System.Data.IDbTransaction = Transaction
                         BeginTransaction()
                         Try
-                            If DbSchema.SupportMultiline Then
-                                Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                            If SQLGenerator.SupportMultiline Then
+                                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
                                     With cmd
                                         .CommandType = System.Data.CommandType.Text
                                         .CommandText = cmdtext
@@ -183,9 +183,9 @@ Namespace Database
                                     'obj.AcceptChanges(cash)
                                 End Using
                             Else
-                                For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, DbSchema.EndLine)
+                                For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
                                     If stmt = "" Then Continue For
-                                    Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                                    Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
                                         Dim sel As Boolean = stmt.IndexOf("select") >= 0
                                         With cmd
                                             .CommandType = System.Data.CommandType.Text
@@ -240,8 +240,8 @@ Namespace Database
             End If
 
             Dim tt As Type = obj.GetType
-            Dim p As New ParamMgr(DbSchema, "p")
-            Dim cmd_text As String = DbSchema.SaveM2M(obj, DbSchema.GetM2MRelationForEdit(tt, t, direct), el, p)
+            Dim p As New ParamMgr(SQLGenerator, "p")
+            Dim cmd_text As String = SQLGenerator.SaveM2M(obj, SQLGenerator.GetM2MRelationForEdit(tt, t, direct), el, p)
 
             If Not String.IsNullOrEmpty(cmd_text) Then
                 Dim [error] As Boolean = True
@@ -347,14 +347,14 @@ Namespace Database
 
             Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
             Using obj.GetSyncRoot()
-                Dim cmdtext As String = DbSchema.Delete(obj, params, GetFilterInfo)
+                Dim cmdtext As String = SQLGenerator.Delete(obj, params, GetFilterInfo)
                 If cmdtext.Length > 0 Then
                     Dim [error] As Boolean = True
                     Dim tran As System.Data.Common.DbTransaction = Transaction
                     BeginTransaction()
                     Try
-                        If DbSchema.SupportMultiline Then
-                            Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                        If SQLGenerator.SupportMultiline Then
+                            Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
                                 With cmd
                                     .CommandType = System.Data.CommandType.Text
                                     .CommandText = cmdtext
@@ -373,9 +373,9 @@ Namespace Database
                                 End Try
                             End Using
                         Else
-                            For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, DbSchema.EndLine)
+                            For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
                                 If stmt = "" Then Continue For
-                                Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
+                                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
                                     With cmd
                                         .CommandType = System.Data.CommandType.Text
                                         .CommandText = stmt
@@ -408,7 +408,7 @@ Namespace Database
 
                     If [error] Then
                         Debug.Assert(False)
-                        Throw DbSchema.PrepareConcurrencyException(obj)
+                        Throw SQLGenerator.PrepareConcurrencyException(obj)
                     End If
                 End If
             End Using
@@ -627,10 +627,10 @@ Namespace Database
                 End If
             Next
 #End If
-            Using cmd As System.Data.Common.DbCommand = DbSchema.CreateDBCommand
-                Dim params As New ParamMgr(DbSchema, "p")
+            Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                Dim params As New ParamMgr(SQLGenerator, "p")
                 With cmd
-                    .CommandText = DbSchema.Delete(t, f, params)
+                    .CommandText = SQLGenerator.Delete(t, f, params)
                     .CommandType = System.Data.CommandType.Text
                     params.AppendParams(.Parameters)
                 End With

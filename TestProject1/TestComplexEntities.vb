@@ -12,12 +12,12 @@ Imports Worm.Database.Criteria
 
     <TestMethod()> _
     Public Sub TestGuid()
-        Using mgr As OrmManagerBase = TestManager.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim o As GuidPK = mgr.Find(Of GuidPK)(New Guid("127ed64d-c7b9-448b-ab67-390808e636ee"))
 
             Assert.IsNotNull(o)
 
-            Assert.IsTrue(o.IsLoaded)
+            Assert.IsTrue(o.InternalProperties.IsLoaded)
 
             Assert.AreEqual(New Guid("127ed64d-c7b9-448b-ab67-390808e636ee"), o.Guid)
 
@@ -45,15 +45,15 @@ Imports Worm.Database.Criteria
         Assert.AreEqual("dglm", f.Code)
         Assert.AreEqual("oqnervg", l(1).Code)
 
-        Assert.IsFalse(f.IsLoaded)
+        Assert.IsFalse(f.InternalProperties.IsLoaded)
         Assert.AreEqual("wf0pvmdb", f.Name)
-        Assert.IsTrue(f.IsLoaded)
+        Assert.IsTrue(f.InternalProperties.IsLoaded)
 
         l = New QueryCmd(GetType(ComplexPK)).Where _
             (Ctor.AutoTypeField("Int").Eq(345).And("Code").Eq("dglm")).ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
 
         Assert.AreEqual(1, l.Count)
-        Assert.IsTrue(l(0).IsLoaded)
+        Assert.IsTrue(l(0).InternalProperties.IsLoaded)
         Assert.AreSame(f, l(0))
     End Sub
 

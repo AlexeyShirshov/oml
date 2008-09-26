@@ -39,7 +39,7 @@ Namespace Database
                 _id = id
             End Sub
 
-            Public Overridable Function Validate() As Boolean Implements OrmManagerBase.ICacheValidator.Validate
+            Public Overridable Function Validate() As Boolean Implements OrmManager.ICacheValidator.Validate
                 If _f IsNot Nothing Then
                     For Each fl As IFilter In _f.GetAllFilters
                         Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
@@ -62,7 +62,7 @@ Namespace Database
                 Return True
             End Function
 
-            Public Overridable Function Validate(ByVal ce As OrmManagerBase.CachedItem) As Boolean Implements OrmManagerBase.ICacheValidator.Validate
+            Public Overridable Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean Implements OrmManager.ICacheValidator.Validate
                 Return True
             End Function
 
@@ -71,7 +71,7 @@ Namespace Database
                     If _f IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
                         Dim cache As OrmCacheBase = _mgr.Cache
-                        cache.AddDependType(_mgr.GetFilterInfo, tt, _key, _id, _f, _mgr.ObjectSchema)
+                        cache.AddDependType(_mgr.GetFilterInfo, tt, _key, _id, _f, _mgr.MappingEngine)
 
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
@@ -117,8 +117,8 @@ Namespace Database
             '    End Get
             'End Property
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
-                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSorting2)
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_sort)
@@ -129,8 +129,8 @@ Namespace Database
                 Return New CachedItem(_sort, s, _f, GetValues(withLoad), _mgr)
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManagerBase.CachedItem
-                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSorting2)
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManager.CachedItem
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_sort)
@@ -161,18 +161,18 @@ Namespace Database
             Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Dim original_type As Type = GetType(T)
 
-                Using cmd As System.Data.Common.DbCommand = _mgr.DbSchema.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = _mgr.SQLGenerator.CreateDBCommand
                     Dim arr As Generic.List(Of ColumnAttribute) = _cols
 
                     With cmd
                         .CommandType = System.Data.CommandType.Text
 
                         Dim almgr As AliasMgr = AliasMgr.Create
-                        Dim params As New ParamMgr(_mgr.DbSchema, "p")
+                        Dim params As New ParamMgr(_mgr.SQLGenerator, "p")
                         Dim sb As New StringBuilder
                         If withLoad Then
                             If arr Is Nothing Then
-                                arr = _mgr.ObjectSchema.GetSortedFieldList(original_type)
+                                arr = _mgr.MappingEngine.GetSortedFieldList(original_type)
                             End If
                             AppendSelect(sb, original_type, almgr, params, arr)
                         Else
@@ -184,9 +184,9 @@ Namespace Database
                         Dim c As New Criteria.Conditions.Condition.ConditionConstructor
                         c.AddFilter(_f)
                         c.AddFilter(AppendWhere)
-                        _mgr.DbSchema.AppendWhere(original_type, c.Condition, almgr, sb, _mgr.GetFilterInfo, params)
+                        _mgr.SQLGenerator.AppendWhere(original_type, c.Condition, almgr, sb, _mgr.GetFilterInfo, params)
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                            _mgr.DbSchema.AppendOrder(original_type, _sort, almgr, sb, True, Nothing, Nothing)
+                            _mgr.SQLGenerator.AppendOrder(original_type, _sort, almgr, sb, True, Nothing, Nothing)
                         End If
 
                         params.AppendParams(.Parameters)
@@ -197,7 +197,7 @@ Namespace Database
                     _mgr.LoadMultipleObjects(Of T)(cmd, withLoad, r, arr)
 
                     If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-                        r = CType(_mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, r), ReadOnlyList(Of T))
+                        r = CType(_mgr.SQLGenerator.ExternalSort(Of T)(_mgr, _sort, r), ReadOnlyList(Of T))
                     End If
                     Return r
                 End Using
@@ -205,7 +205,7 @@ Namespace Database
 
             Protected ReadOnly Property Schema() As SQLGenerator
                 Get
-                    Return _mgr.DbSchema
+                    Return _mgr.SQLGenerator
                 End Get
             End Property
 
@@ -220,11 +220,11 @@ Namespace Database
             End Function
 
             Protected Overridable Sub AppendSelect(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of ColumnAttribute))
-                sb.Append(_mgr.DbSchema.Select(t, almgr, pmgr, arr, Nothing, _mgr.GetFilterInfo))
+                sb.Append(_mgr.SQLGenerator.Select(t, almgr, pmgr, arr, Nothing, _mgr.GetFilterInfo))
             End Sub
 
             Protected Overridable Sub AppendSelectID(ByVal sb As StringBuilder, ByVal t As Type, ByVal almgr As AliasMgr, ByVal pmgr As ParamMgr, ByVal arr As IList(Of ColumnAttribute))
-                sb.Append(_mgr.DbSchema.SelectID(t, almgr, pmgr, _mgr.GetFilterInfo))
+                sb.Append(_mgr.SQLGenerator.SelectID(t, almgr, pmgr, _mgr.GetFilterInfo))
             End Sub
         End Class
 
@@ -299,7 +299,7 @@ Namespace Database
                 If _asc IsNot Nothing AndAlso _asc.Length > 0 AndAlso _f Is Nothing Then
                     Dim tt As System.Type = GetType(T)
                     Dim cache As OrmCacheBase = _mgr.Cache
-                    cache.AddFilterlessDependType(_mgr.GetFilterInfo, tt, _key, _id, _mgr.ObjectSchema)
+                    cache.AddFilterlessDependType(_mgr.GetFilterInfo, tt, _key, _id, _mgr.MappingEngine)
                 End If
             End Sub
         End Class
@@ -320,7 +320,7 @@ Namespace Database
 
                 _rel = relation
 
-                If mgr.ObjectSchema.GetObjectSchema(relation.Type).GetFilter(mgr.GetFilterInfo) IsNot Nothing Then
+                If mgr.MappingEngine.GetObjectSchema(relation.Type).GetFilter(mgr.GetFilterInfo) IsNot Nothing Then
                     _appendSecong = True
                 Else
                     If f IsNot Nothing Then
@@ -346,7 +346,7 @@ Namespace Database
             End Sub
 
             Protected Overrides Function AppendWhere() As IFilter
-                Return CType(Mgr.ObjectSchema.GetObjectSchema(_rel.Type).GetFilter(Mgr.GetFilterInfo), IFilter)
+                Return CType(Mgr.MappingEngine.GetObjectSchema(_rel.Type).GetFilter(Mgr.GetFilterInfo), IFilter)
             End Function
 
         End Class
@@ -379,16 +379,16 @@ Namespace Database
             Protected Function GetValuesInternal(ByVal withLoad As Boolean) As System.Collections.Generic.IList(Of Object)
                 Dim t As Type = GetType(T)
 
-                Using cmd As System.Data.Common.DbCommand = _mgr.DbSchema.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = _mgr.SQLGenerator.CreateDBCommand
                     With cmd
                         Dim params As IList(Of System.Data.Common.DbParameter) = Nothing
                         Dim almgr As AliasMgr = AliasMgr.Create
 
                         Dim sb As New StringBuilder
-                        sb.Append(_mgr.DbSchema.SelectM2M(almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, _sort IsNot Nothing, params, _direct, _qa))
+                        sb.Append(_mgr.SQLGenerator.SelectM2M(almgr, _obj, t, _f, _mgr.GetFilterInfo, True, withLoad, _sort IsNot Nothing, params, _direct, _qa))
 
                         If _sort IsNot Nothing AndAlso Not _sort.IsExternal Then
-                            _mgr.DbSchema.AppendOrder(t, _sort, almgr, sb, True, Nothing, Nothing)
+                            _mgr.SQLGenerator.AppendOrder(t, _sort, almgr, sb, True, Nothing, Nothing)
                         End If
 
                         .CommandText = sb.ToString
@@ -398,7 +398,7 @@ Namespace Database
                     End With
                     Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
                     If withLoad Then
-                        arr = _mgr.DbSchema.GetSortedFieldList(t)
+                        arr = _mgr.SQLGenerator.GetSortedFieldList(t)
                     End If
                     Return _mgr.LoadM2M(Of T)(cmd, withLoad, _obj, _sort, arr)
                     '              Dim b As ConnAction = _mgr.TestConn(cmd)
@@ -451,16 +451,16 @@ Namespace Database
                 End Using
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
                 Dim mt As Type = _obj.GetType
                 Dim t As Type = GetType(T)
-                Dim ct As Type = _mgr.DbSchema.GetConnectedType(mt, t)
+                Dim ct As Type = _mgr.SQLGenerator.GetConnectedType(mt, t)
                 If ct IsNot Nothing Then
                     'If Not _direct Then
                     '    Throw New NotSupportedException("Tag is not supported with connected type")
                     'End If
-                    Dim f1 As String = _mgr.DbSchema.GetConnectedTypeField(ct, mt, M2MRelation.GetRevKey(_direct))
-                    Dim f2 As String = _mgr.DbSchema.GetConnectedTypeField(ct, t, _direct)
+                    Dim f1 As String = _mgr.SQLGenerator.GetConnectedTypeField(ct, mt, M2MRelation.GetRevKey(_direct))
+                    Dim f2 As String = _mgr.SQLGenerator.GetConnectedTypeField(ct, t, _direct)
                     Dim fl As New Worm.Database.Criteria.Core.EntityFilter(ct, f1, New EntityValue(_obj), Worm.Criteria.FilterOperation.Equal)
                     Dim l As New List(Of Object)
                     'Dim external_sort As Boolean = False
@@ -468,7 +468,7 @@ Namespace Database
                     'If Not String.IsNullOrEmpty(_sort) AndAlso _mgr.DbSchema.GetObjectSchema(t).IsExternalSort(_sort) Then
                     '    external_sort = True
                     'End If
-                    Dim oschema As IOrmObjectSchemaBase = _mgr.ObjectSchema.GetObjectSchema(ct)
+                    Dim oschema As IOrmObjectSchemaBase = _mgr.MappingEngine.GetObjectSchema(ct)
                     For Each o As IOrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
                         'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
@@ -484,7 +484,7 @@ Namespace Database
 
                     If _sort IsNot Nothing AndAlso Sort.IsExternal Then
                         Dim l2 As New List(Of Object)
-                        For Each o As T In _mgr.DbSchema.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False))
+                        For Each o As T In _mgr.SQLGenerator.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False))
                             l2.Add(o.Identifier)
                         Next
                         l = l2
@@ -500,7 +500,7 @@ Namespace Database
                 End If
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManagerBase.CachedItem
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManager.CachedItem
                 Dim ids As New List(Of Object)
                 For Each o As T In col
                     ids.Add(o.Identifier)
@@ -540,7 +540,7 @@ Namespace Database
                     End If
 
                     Dim mt As Type = _obj.GetType
-                    Dim ct As Type = _mgr.DbSchema.GetConnectedType(mt, tt)
+                    Dim ct As Type = _mgr.SQLGenerator.GetConnectedType(mt, tt)
                     If ct Is Nothing Then
                         _mgr.Cache.AddM2MObjDependent(_obj, _key, _id)
                     End If

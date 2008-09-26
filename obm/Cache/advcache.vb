@@ -16,10 +16,10 @@ Namespace Cache
         End Enum
 
         Function ToWeakList(ByVal objects As IEnumerable) As Object
-        Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T)
-        Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase, _
+        Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
+        Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, ByRef successed As ExtractListResult) As ReadOnlyEntityList(Of T)
-        Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As ICachedEntity, ByVal sort As Sort) As Boolean
+        Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, ByVal sort As Sort) As Boolean
         Function GetCount(ByVal weak_list As Object) As Integer
         Sub Delete(ByVal weak_list As Object, ByVal obj As ICachedEntity)
         ReadOnly Property IsWeak() As Boolean
@@ -28,7 +28,7 @@ Namespace Cache
     Public Class FakeListConverter
         Implements IListObjectConverter
 
-        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
+        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mc As OrmManager, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             Dim c As ReadOnlyEntityList(Of T) = Nothing
@@ -39,7 +39,7 @@ Namespace Cache
                 For Each o As T In CType(weak_list, IList)
                     l.Add(o)
                 Next
-                c = CType(OrmManagerBase.CreateReadonlyList(GetType(T), l), ReadOnlyEntityList(Of T))
+                c = CType(OrmManager.CreateReadonlyList(GetType(T), l), ReadOnlyEntityList(Of T))
             End Try
             successed = IListObjectConverter.ExtractListResult.Successed
             If withLoad AndAlso Not created Then
@@ -50,7 +50,7 @@ Namespace Cache
                     successed = IListObjectConverter.ExtractListResult.CantApplyFilter
                 End If
             ElseIf mc._externalFilter IsNot Nothing Then
-                Dim er As OrmManagerBase.ExecutionResult = mc.GetLastExecitionResult
+                Dim er As OrmManager.ExecutionResult = mc.GetLastExecitionResult
                 Dim l As Integer = 0
                 If er.LoadedInResultset.HasValue Then
                     l = er.LoadedInResultset.Value
@@ -62,7 +62,7 @@ Namespace Cache
                     ''Dim p As Pair(Of Integer, TimeSpan) = mc.Cache.GetLoadTime(GetType(T))
                     'Dim slt As Double = (er.FetchTime.TotalMilliseconds / er.Count)
                     'Dim ttl As TimeSpan = TimeSpan.FromMilliseconds(slt * (er.Count - l) * 1.1)
-                    If OrmManagerBase.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, l) Then
+                    If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, l) Then
                         c.LoadObjects()
                     Else
                         successed = IListObjectConverter.ExtractListResult.NeedLoad
@@ -99,7 +99,7 @@ Namespace Cache
                             End If
                         Next
                     End If
-                    c = CType(OrmManagerBase.CreateReadonlyList(GetType(T), l), Global.Worm.ReadOnlyEntityList(Of T))
+                    c = CType(OrmManager.CreateReadonlyList(GetType(T), l), Global.Worm.ReadOnlyEntityList(Of T))
                 End If
             End If
             Return c
@@ -109,7 +109,7 @@ Namespace Cache
             Return objects
         End Function
 
-        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As ICachedEntity, _
+        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, _
             ByVal sort As Sort) As Boolean Implements IListObjectConverter.Add
             Dim l As IListEdit = CType(weak_list, IListEdit)
             Dim st As IOrmSorting = Nothing
@@ -153,7 +153,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             Dim c As ReadOnlyEntityList(Of T) = CType(weak_list, ReadOnlyEntityList(Of T))
             Return c
         End Function
@@ -171,7 +171,7 @@ Namespace Cache
                 ref = New WeakReference(o)
             End Sub
 
-            Public Function GetObject(Of T As {_ICachedEntity})(ByVal mc As OrmManagerBase) As T
+            Public Function GetObject(Of T As {_ICachedEntity})(ByVal mc As OrmManager) As T
                 Dim o As T = CType(ref.Target, T)
                 If o Is Nothing Then
                     o = CType(mc.GetEntityFromCacheOrCreate(_e.PK, GetType(T)), T) 'mc.FindObject(id, t)
@@ -182,7 +182,7 @@ Namespace Cache
                 Return o
             End Function
 
-            Public Function GetObject(ByVal mc As OrmManagerBase) As ICachedEntity
+            Public Function GetObject(ByVal mc As OrmManager) As ICachedEntity
                 Dim o As ICachedEntity = CType(ref.Target, ICachedEntity)
                 If o Is Nothing Then
                     o = mc.GetEntityFromCacheOrCreate(_e.PK, _e.EntityType) 'mc.FindObject(id, t)
@@ -216,7 +216,7 @@ Namespace Cache
             Public l As Generic.List(Of ListObjectEntry)
             Public t As Type
 
-            Public Function CanSort(ByVal mc As OrmManagerBase, ByRef arr As ArrayList, ByVal sort As Sort) As Boolean
+            Public Function CanSort(ByVal mc As OrmManager, ByRef arr As ArrayList, ByVal sort As Sort) As Boolean
                 If sort.Previous IsNot Nothing Then
                     Return False
                 End If
@@ -243,14 +243,14 @@ Namespace Cache
             End Sub
         End Class
 
-        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mc As OrmManagerBase, _
+        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mc As OrmManager, _
             ByVal start As Integer, ByVal length As Integer, ByVal withLoad As Boolean, ByVal created As Boolean, _
             ByRef successed As IListObjectConverter.ExtractListResult) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             successed = IListObjectConverter.ExtractListResult.Successed
             If weak_list Is Nothing Then Return Nothing
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
-            Dim c As ReadOnlyEntityList(Of T) = CType(OrmManagerBase.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
+            Dim c As ReadOnlyEntityList(Of T) = CType(OrmManager.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
             If mc._externalFilter Is Nothing Then
                 If start < l.Count Then
                     length = Math.Min(start + length, l.Count)
@@ -260,7 +260,7 @@ Namespace Cache
                         If o IsNot Nothing Then
                             c.List.Add(o)
                         Else
-                            OrmManagerBase.WriteWarning("Unable to create " & loe.ObjName)
+                            OrmManager.WriteWarning("Unable to create " & loe.ObjName)
                         End If
                     Next
                     If withLoad AndAlso Not created Then
@@ -277,17 +277,17 @@ Namespace Cache
                     If o IsNot Nothing Then
                         c.List.Add(o)
                     Else
-                        OrmManagerBase.WriteWarning("Unable to create " & loe.ObjName)
+                        OrmManager.WriteWarning("Unable to create " & loe.ObjName)
                     End If
                 Next
                 If loaded < l.Count Then
-                    Dim er As OrmManagerBase.ExecutionResult = mc.GetLastExecitionResult
-                    If OrmManagerBase.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, loaded) Then
+                    Dim er As OrmManager.ExecutionResult = mc.GetLastExecitionResult
+                    If OrmManager.IsGoodTime4Load(er.FetchTime, er.ExecutionTime, er.Count, loaded) Then
                         'c = FromWeakList(Of T)(weak_list, mc)
                         c.LoadObjects()
                     Else
                         successed = IListObjectConverter.ExtractListResult.NeedLoad
-                        Return CType(OrmManagerBase.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
+                        Return CType(OrmManager.CreateReadonlyList(GetType(T)), Global.Worm.ReadOnlyEntityList(Of T))
                     End If
                 End If
                 Dim s As Boolean = True
@@ -313,7 +313,7 @@ Namespace Cache
             Return lo
         End Function
 
-        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManagerBase, ByVal obj As ICachedEntity, _
+        Public Function Add(ByVal weak_list As Object, ByVal mc As OrmManager, ByVal obj As ICachedEntity, _
             ByVal sort As Sort) As Boolean Implements IListObjectConverter.Add
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
@@ -323,7 +323,7 @@ Namespace Cache
             Else
                 Dim arr As ArrayList = Nothing
                 If lo.CanSort(mc, arr, sort) Then
-                    Dim schema As IOrmObjectSchemaBase = mc.ObjectSchema.GetObjectSchema(obj.GetType)
+                    Dim schema As IOrmObjectSchemaBase = mc.MappingEngine.GetObjectSchema(obj.GetType)
                     Dim st As IOrmSorting = TryCast(schema, IOrmSorting)
                     Dim c As IComparer = Nothing
                     If st IsNot Nothing Then
@@ -361,7 +361,7 @@ Namespace Cache
             End Get
         End Property
 
-        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
+        Public Function FromWeakList(Of T As {_ICachedEntity})(ByVal weak_list As Object, ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T) Implements IListObjectConverter.FromWeakList
             If weak_list Is Nothing Then Return Nothing
             Dim lo As ListObject = CType(weak_list, ListObject)
             Dim l As Generic.List(Of ListObjectEntry) = lo.l
@@ -371,10 +371,10 @@ Namespace Cache
                 If o IsNot Nothing Then
                     objects.Add(o)
                 Else
-                    OrmManagerBase.WriteWarning("Unable to create " & loe.ObjName)
+                    OrmManager.WriteWarning("Unable to create " & loe.ObjName)
                 End If
             Next
-            Return CType(OrmManagerBase.CreateReadonlyList(GetType(T), objects), Global.Worm.ReadOnlyEntityList(Of T))
+            Return CType(OrmManager.CreateReadonlyList(GetType(T), objects), Global.Worm.ReadOnlyEntityList(Of T))
         End Function
     End Class
 

@@ -6,7 +6,7 @@ Imports Worm
 
 Namespace Xml
     Public Class XPathGenerator
-        Inherits QueryGenerator
+        Inherits ObjectMappingEngine
 
         Public Sub New(ByVal version As String)
             MyBase.New(version)

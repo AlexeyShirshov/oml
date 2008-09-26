@@ -2,11 +2,28 @@
 Imports Worm.Cache
 
 Namespace Orm
+    Public Class ObjectSavedArgs
+        Inherits EventArgs
+
+        Private _sa As OrmManager.SaveAction
+
+        Public Sub New(ByVal saveAction As OrmManager.SaveAction)
+            _sa = saveAction
+        End Sub
+
+        Public ReadOnly Property SaveAction() As OrmManager.SaveAction
+            Get
+                Return _sa
+            End Get
+        End Property
+    End Class
+
+
     Public Interface _IEntity
         Inherits IEntity
         Sub BeginLoading()
         Sub EndLoading()
-        Sub Init(ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
+        Sub Init(ByVal cache As OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
         Function GetMgr() As IGetManager
         ReadOnly Property ObjName() As String
         Function GetOldState() As ObjectState
@@ -32,17 +49,17 @@ Namespace Orm
 
     Public Interface _ICachedEntity
         Inherits ICachedEntity
-        Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
+        Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
         Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
-        Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As QueryGenerator) As Boolean
-        Function CheckIsAllLoaded(ByVal schema As QueryGenerator, ByVal loadedColumns As Integer) As Boolean
+        Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
+        Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
         ReadOnly Property UpdateCtx() As UpdateCtx
         Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean
         Sub RaiseCopyRemoved()
-        Function Save(ByVal mc As OrmManagerBase) As Boolean
-        Sub RaiseSaved(ByVal sa As OrmManagerBase.SaveAction)
+        Function Save(ByVal mc As OrmManager) As Boolean
+        Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
     End Interface
 
     Public Interface ICachedEntity
@@ -59,10 +76,16 @@ Namespace Orm
         Sub RejectChanges()
         Sub RejectRelationChanges()
         ReadOnly Property HasChanges() As Boolean
-        Function ValidateNewObject(ByVal mgr As OrmManagerBase) As Boolean
-        Function ValidateUpdate(ByVal mgr As OrmManagerBase) As Boolean
-        Function ValidateDelete(ByVal mgr As OrmManagerBase) As Boolean
+        Function ValidateNewObject(ByVal mgr As OrmManager) As Boolean
+        Function ValidateUpdate(ByVal mgr As OrmManager) As Boolean
+        Function ValidateDelete(ByVal mgr As OrmManager) As Boolean
         ReadOnly Property ChangeDescription() As String
+        Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs)
+        Event Added(ByVal sender As ICachedEntity, ByVal args As EventArgs)
+        Event Deleted(ByVal sender As ICachedEntity, ByVal args As EventArgs)
+        Event Updated(ByVal sender As ICachedEntity, ByVal args As EventArgs)
+        Event OriginalCopyRemoved(ByVal sender As ICachedEntity)
+
     End Interface
 
     Public Interface IM2M
@@ -80,7 +103,7 @@ Namespace Orm
 
     Public Interface IOrmBase
         Inherits _ICachedEntity, IM2M
-        Overloads Sub Init(ByVal id As Object, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String)
+        Overloads Sub Init(ByVal id As Object, ByVal cache As OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
         Property Identifier() As Object
         Function GetOldName(ByVal id As Object) As String
         Function GetName() As String
@@ -91,7 +114,7 @@ Namespace Orm
     Public Interface _IOrmBase
         Inherits IOrmBase
         Function AddAccept(ByVal acs As AcceptState2) As Boolean
-        Function GetAccept(ByVal m As OrmManagerBase.M2MCache) As AcceptState2
+        Function GetAccept(ByVal m As OrmManager.M2MCache) As AcceptState2
         Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase
         Function GetAllEditable() As Generic.IList(Of EditableListBase)
         Sub RejectM2MIntermidiate()
@@ -105,7 +128,7 @@ Namespace Orm
 
         Private _key As String
         Private _id As String
-        Private _e As OrmManagerBase.M2MCache
+        Private _e As OrmManager.M2MCache
         'Public Sub New(ByVal el As EditableList, ByVal sort As Sort, ByVal key As String, ByVal id As String)
         '    Me.el = el
         '    Me.sort = sort
@@ -113,7 +136,7 @@ Namespace Orm
         '    _id = id
         'End Sub
 
-        Public ReadOnly Property CacheItem() As OrmManagerBase.M2MCache
+        Public ReadOnly Property CacheItem() As OrmManager.M2MCache
             Get
                 Return _e
             End Get
@@ -125,13 +148,13 @@ Namespace Orm
             End Get
         End Property
 
-        Public Sub New(ByVal e As OrmManagerBase.M2MCache, ByVal key As String, ByVal id As String)
+        Public Sub New(ByVal e As OrmManager.M2MCache, ByVal key As String, ByVal id As String)
             _e = e
             _key = key
             _id = id
         End Sub
 
-        Public Function Accept(ByVal obj As IEntity, ByVal mgr As OrmManagerBase) As Boolean
+        Public Function Accept(ByVal obj As IEntity, ByVal mgr As OrmManager) As Boolean
             If _e IsNot Nothing Then
                 Dim leave As Boolean = _e.Filter Is Nothing AndAlso _e.Entry.Accept(mgr)
                 If Not leave Then
@@ -165,12 +188,12 @@ Namespace Orm
     Public Class ManagerRequiredArgs
         Inherits EventArgs
 
-        Private _mgr As OrmManagerBase
-        Public Property Manager() As OrmManagerBase
+        Private _mgr As OrmManager
+        Public Property Manager() As OrmManager
             Get
                 Return _mgr
             End Get
-            Set(ByVal value As OrmManagerBase)
+            Set(ByVal value As OrmManager)
                 _mgr = value
             End Set
         End Property

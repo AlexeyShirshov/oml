@@ -15,7 +15,7 @@ Namespace Criteria.Values
 
     Public Interface IParamFilterValue
         Inherits IFilterValue
-        Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
+        Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
         ReadOnly Property ShouldUse() As Boolean
     End Interface
 
@@ -85,8 +85,8 @@ Namespace Criteria.Values
             Return String.Format(_f, l.ToArray)
         End Function
 
-        Public Function GetParam(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable) As String
-            Dim values As List(Of String) = QueryGenerator.ExtractValues(schema, almgr.Aliases, _v)
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable) As String
+            Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, almgr.Aliases, _v)
 
             Return String.Format(_f, values.ToArray)
         End Function
@@ -139,7 +139,7 @@ Namespace Criteria.Values
             Return _p.ToString
         End Function
 
-        Public Function GetParam(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable) As String
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable) As String
             Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
             If almgr IsNot Nothing Then
@@ -158,7 +158,7 @@ Namespace Criteria.Values
                 Try
                     map = oschema.GetFieldColumnMap()(_p.Field)
                 Catch ex As KeyNotFoundException
-                    Throw New QueryGeneratorException(String.Format("There is not column for property {0} ", _p.Type.ToString & schema.Selector & _p.Field, ex))
+                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.Type.ToString & schema.Selector & _p.Field, ex))
                 End Try
 
                 Dim [alias] As String = String.Empty
@@ -186,7 +186,7 @@ Namespace Criteria.Values
                     Try
                         [alias] = tableAliases(_p.Table) & schema.Selector
                     Catch ex As KeyNotFoundException
-                        Throw New QueryGeneratorException("There is not alias for table " & _p.Table.RawName, ex)
+                        Throw New ObjectMappingException("There is not alias for table " & _p.Table.RawName, ex)
                     End Try
                 End If
 
@@ -219,7 +219,7 @@ Namespace Criteria.Values
             _case = caseSensitive
         End Sub
 
-        Public Overridable Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IEvaluableValue.GetParam
+        Public Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IEvaluableValue.GetParam
             Dim v As Object = _v
             If f IsNot Nothing Then
                 v = f.PrepareValue(schema, v)
@@ -422,7 +422,7 @@ Namespace Criteria.Values
             _pname = literal
         End Sub
 
-        Public Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IParamFilterValue.GetParam
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String Implements IParamFilterValue.GetParam
             Return _pname
         End Function
 
@@ -490,7 +490,7 @@ Namespace Criteria.Values
             Me.CaseSensitive = caseSensitive
         End Sub
 
-        Public Function GetOrmValue(ByVal mgr As OrmManagerBase) As IOrmBase
+        Public Function GetOrmValue(ByVal mgr As OrmManager) As IOrmBase
             Return mgr.GetOrmBaseFromCacheOrCreate(Value, _t)
         End Function
 
@@ -517,7 +517,7 @@ Namespace Criteria.Values
                         Throw New InvalidOperationException(String.Format("Field {0} is type of {1} but param is type of {2}", template.FieldName, tt.ToString, ov.OrmType.ToString))
                     End If
                 End If
-                Return ov.GetOrmValue(OrmManagerBase.CurrentManager)
+                Return ov.GetOrmValue(OrmManager.CurrentManager)
             End If
             Return Value
         End Function
@@ -597,7 +597,7 @@ Namespace Criteria.Values
             End Get
         End Property
 
-        Public Overrides Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
+        Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, ByVal f As IEntityFilter) As String
             Dim sb As New StringBuilder
             Dim idx As Integer
             For Each o As Object In Value
@@ -682,7 +682,7 @@ Namespace Criteria.Values
             Return r
         End Function
 
-        Public Overrides Function GetParam(ByVal schema As QueryGenerator, ByVal paramMgr As ICreateParam, _
+        Public Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
             ByVal f As IEntityFilter) As String
 
             If paramMgr Is Nothing Then

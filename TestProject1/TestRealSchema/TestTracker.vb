@@ -8,12 +8,12 @@ Imports Worm.Database
 
 <TestClass()> _
 Public Class TestTracker
-    Implements Worm.OrmManagerBase.INewObjects
+    Implements Worm.OrmManager.INewObjects
 
     Private _id As Integer = -100
     Private _new_objects As New Dictionary(Of Integer, OrmBase)
 
-    Public Sub AddNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.AddNew
+    Public Sub AddNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManager.INewObjects.AddNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -25,24 +25,24 @@ Public Class TestTracker
         Return CInt(GetIdentity(Nothing))
     End Function
 
-    Public Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManagerBase.INewObjects.GetIdentity
+    Public Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManager.INewObjects.GetIdentity
         Dim i As Integer = _id
         _id += -1
         Return i
     End Function
 
-    Public Function GetNew(ByVal t As System.Type, ByVal id As Object) As _ICachedEntity Implements Worm.OrmManagerBase.INewObjects.GetNew
+    Public Function GetNew(ByVal t As System.Type, ByVal id As Object) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew
         Dim o As OrmBase = Nothing
         _new_objects.TryGetValue(CInt(id), o)
         Return o
     End Function
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Object) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Object) Implements Worm.OrmManager.INewObjects.RemoveNew
         _new_objects.Remove(CInt(id))
         Debug.WriteLine("removed: " & id.ToString)
     End Sub
 
-    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManager.INewObjects.RemoveNew
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If

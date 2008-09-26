@@ -15,7 +15,7 @@ Imports System.Collections.Generic
 
 'Namespace Managers
 
-Partial Public MustInherit Class OrmManagerBase
+Partial Public MustInherit Class OrmManager
     Implements IDisposable
 
     Protected Friend Const Const_KeyStaticString As String = " - key -"
@@ -27,10 +27,10 @@ Partial Public MustInherit Class OrmManagerBase
 
     Protected _cache As OrmCacheBase
     'Private _dispose_cash As Boolean
-    Friend _prev As OrmManagerBase = Nothing
+    Friend _prev As OrmManager = Nothing
     'Protected hide_deleted As Boolean = True
     'Protected _check_status As Boolean = True
-    Protected Friend _schema As QueryGenerator
+    Protected Friend _schema As ObjectMappingEngine
     'Private _findnew As FindNew
     'Private _remnew As RemoveNew
     Protected Friend _disposed As Boolean = False
@@ -52,7 +52,7 @@ Partial Public MustInherit Class OrmManagerBase
     'Protected _prevs As String
 
     <ThreadStatic()> _
-    Private Shared _cur As OrmManagerBase
+    Private Shared _cur As OrmManager
     'Public Delegate Function GetLocalStorageDelegate(ByVal str As String) As Object
     'Protected _get_cur As GetLocalStorageDelegate
 
@@ -97,12 +97,12 @@ Partial Public MustInherit Class OrmManagerBase
     End Property
 
     Protected _raiseCreated As Boolean
-    Public Event ObjectCreated(ByVal sender As ICachedEntity, ByVal mgr As OrmManagerBase)
+    Public Event ObjectCreated(ByVal sender As ICachedEntity, ByVal mgr As OrmManager)
 
     Public Event BeginUpdate(ByVal o As ICachedEntity)
     Public Event BeginDelete(ByVal o As ICachedEntity)
     'Public Event ObjectRejected(ByVal o As OrmBase)
-    Public Event DataAvailable(ByVal mgr As OrmManagerBase, ByVal r As ExecutionResult)
+    Public Event DataAvailable(ByVal mgr As OrmManager, ByVal r As ExecutionResult)
 
     Public Delegate Function ValueForSearchDelegate(ByVal tokens() As String, ByVal sectionName As String, ByVal fs As IOrmFullTextSupport, ByVal contextKey As Object) As String
 
@@ -113,7 +113,7 @@ Partial Public MustInherit Class OrmManagerBase
     End Property
 
     <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")> _
-    Protected Sub New(ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
+    Protected Sub New(ByVal cache As OrmCacheBase, ByVal schema As ObjectMappingEngine)
 
         If cache Is Nothing Then
             Throw New ArgumentNullException("cache")
@@ -132,7 +132,7 @@ Partial Public MustInherit Class OrmManagerBase
     End Sub
 
     <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")> _
-    Protected Sub New(ByVal schema As QueryGenerator)
+    Protected Sub New(ByVal schema As ObjectMappingEngine)
         '_dispose_cash = True
         _cache = New OrmCache
         _schema = schema
@@ -146,13 +146,13 @@ Partial Public MustInherit Class OrmManagerBase
         End Get
     End Property
 
-    Protected Function IsIdentical(ByVal mgr As OrmManagerBase) As Boolean
+    Protected Function IsIdentical(ByVal mgr As OrmManager) As Boolean
         Return IdentityString = mgr.IdentityString
     End Function
 
     Protected Sub CreateInternal()
         _prev = CurrentManager
-        Dim p As OrmManagerBase = _prev
+        Dim p As OrmManager = _prev
 #If DEBUG Then
         Do While p IsNot Nothing
             If p._schema.Version <> _schema.Version AndAlso IsIdentical(p) Then
@@ -182,7 +182,7 @@ Partial Public MustInherit Class OrmManagerBase
     '    End Set
     'End Property
 
-    Public ReadOnly Property ObjectSchema() As QueryGenerator
+    Public ReadOnly Property MappingEngine() As ObjectMappingEngine
         Get
             Return _schema
         End Get
@@ -225,7 +225,7 @@ Partial Public MustInherit Class OrmManagerBase
         'End Set
     End Property
 
-    Public Shared Property CurrentManager() As OrmManagerBase
+    Public Shared Property CurrentManager() As OrmManager
         Get
             'If System.Web.HttpContext.Current IsNot Nothing Then
             '    Return CType(System.Web.HttpContext.Current.Items(myConstLocalStorageString), OrmManagerBase)
@@ -235,7 +235,7 @@ Partial Public MustInherit Class OrmManagerBase
             'Return CType(Thread.GetData(LocalStorage), OrmManagerBase)
             Return _cur
         End Get
-        Protected Set(ByVal value As OrmManagerBase)
+        Protected Set(ByVal value As OrmManager)
             'If System.Web.HttpContext.Current IsNot Nothing Then
             '    System.Web.HttpContext.Current.Items(myConstLocalStorageString) = value
             'Else
@@ -422,7 +422,7 @@ Partial Public MustInherit Class OrmManagerBase
                     'Dim con As New OrmCondition.OrmConditionConstructor
                     'con.AddFilter(New OrmFilter(tt, fieldName, o, FilterOperation.Equal))
                     'con.AddFilter(criteria.Filter)
-                    Dim cl As CriteriaLink = ObjectSchema.CreateCriteria(tt, fieldName).Eq(o).And(criteria)
+                    Dim cl As CriteriaLink = MappingEngine.CreateCriteria(tt, fieldName).Eq(o).And(criteria)
                     Dim f As IFilter = cl.Filter
                     Dim key As String = FindGetKey(f, tt) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                     Dim dic As IDictionary = GetDic(_cache, key)
@@ -490,7 +490,7 @@ Partial Public MustInherit Class OrmManagerBase
                     'con.AddFilter(New OrmFilter(tt, fieldName, k, FilterOperation.Equal))
                     'con.AddFilter(filter)
                     'Dim f As IOrmFilter = con.Condition
-                    Dim cl As CriteriaLink = ObjectSchema.CreateCriteria(tt, fieldName).Eq(obj).And(criteria)
+                    Dim cl As CriteriaLink = MappingEngine.CreateCriteria(tt, fieldName).Eq(obj).And(criteria)
                     Dim f As IFilter = cl.Filter
                     Dim key As String = FindGetKey(f, tt) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                     Dim dic As IDictionary = GetDic(_cache, key)
@@ -991,9 +991,9 @@ l1:
         If Not s Then
             Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
             Using ac As New ApplyCriteria(Me, Nothing)
-                Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
+                Dim c As Conditions.Condition.ConditionConstructorBase = MappingEngine.CreateConditionCtor
                 c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
-                r = FindWithJoins(Of T)(aspect, joins, ObjectSchema.CreateCriteriaLink(c), sort, withLoad, cols)
+                r = FindWithJoins(Of T)(aspect, joins, MappingEngine.CreateCriteriaLink(c), sort, withLoad, cols)
             End Using
         End If
         Return CType(r, Global.Worm.ReadOnlyList(Of T))
@@ -1066,7 +1066,7 @@ l1:
         ByVal joinOperation As FilterOperation, ByVal joinType As JoinType, ByVal criteria As IGetFilter, _
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
 
-        Return FindWithJoins(Of T)(ObjectSchema.CreateTopAspect(top), New OrmJoin() {MakeJoin(type2join, GetType(T), joinField, joinOperation, joinType)}, _
+        Return FindWithJoins(Of T)(MappingEngine.CreateTopAspect(top), New OrmJoin() {MakeJoin(type2join, GetType(T), joinField, joinOperation, joinType)}, _
             criteria, sort, withLoad)
     End Function
 
@@ -1102,9 +1102,9 @@ l1:
         Dim joins() As OrmJoin = Nothing
         Dim appendMain As Boolean
         If HasJoins(_schema, GetType(T), filter, sort, GetFilterInfo, joins, appendMain) Then
-            Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
+            Dim c As Conditions.Condition.ConditionConstructorBase = MappingEngine.CreateConditionCtor
             c.AddFilter(filter)
-            Return FindWithJoins(Of T)(Nothing, joins, ObjectSchema.CreateCriteriaLink(c), sort, withLoad)
+            Return FindWithJoins(Of T)(Nothing, joins, MappingEngine.CreateCriteriaLink(c), sort, withLoad)
         Else
             Dim key As String = FindGetKey(filter, GetType(T))
 
@@ -1122,9 +1122,9 @@ l1:
             If Not s Then
                 Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
                 Using ac As New ApplyCriteria(Me, Nothing)
-                    Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
+                    Dim c As Conditions.Condition.ConditionConstructorBase = MappingEngine.CreateConditionCtor
                     c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
-                    r = Find(Of T)(ObjectSchema.CreateCriteriaLink(c), sort, withLoad)
+                    r = Find(Of T)(MappingEngine.CreateCriteriaLink(c), sort, withLoad)
                 End Using
             End If
             Return r
@@ -1155,9 +1155,9 @@ l1:
         If Not s Then
             Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
             Using ac As New ApplyCriteria(Me, Nothing)
-                Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
+                Dim c As Conditions.Condition.ConditionConstructorBase = MappingEngine.CreateConditionCtor
                 c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
-                r = Find(Of T)(ObjectSchema.CreateCriteriaLink(c), sort, cols)
+                r = Find(Of T)(MappingEngine.CreateCriteriaLink(c), sort, cols)
             End Using
         End If
         Return r
@@ -1183,7 +1183,7 @@ l1:
         Dim joins() As OrmJoin = Nothing
         Dim appendMain As Boolean
         HasJoins(_schema, GetType(T), filter, sort, GetFilterInfo, joins, appendMain)
-        Return FindWithJoins(Of T)(ObjectSchema.CreateTopAspect(top, sort), joins, filter, sort, withLoad, cols)
+        Return FindWithJoins(Of T)(MappingEngine.CreateTopAspect(top, sort), joins, filter, sort, withLoad, cols)
     End Function
 
     '<Obsolete("Use OrmBase Find method")> _
@@ -1332,7 +1332,7 @@ l1:
         ByVal del_ As ICustDelegateBase(Of T), ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
-        Dim del As ICustDelegate(Of T) = CType(del_, Global.Worm.OrmManagerBase.ICustDelegate(Of T))
+        Dim del As ICustDelegate(Of T) = CType(del_, Global.Worm.OrmManager.ICustDelegate(Of T))
 
         If ce._expires = Date.MinValue Then
             ce._expires = _expiresPattern
@@ -1413,7 +1413,7 @@ l1:
         '    Return False
         'End If
         Dim loaded As Integer = 0
-        For Each o As OrmBase In col
+        For Each o As IEntity In col
             If o.IsLoaded Then loaded += 1
             If col.Count - loaded > 10 Then
                 Return False
@@ -1615,7 +1615,7 @@ l1:
             Using SyncHelper.AcquireDynamicLock(sync_key)
                 a = CType(dic(id), _ICachedEntity)
                 If a Is Nothing Then
-                    If QueryGenerator.GetUnions(type) IsNot Nothing Then
+                    If ObjectMappingEngine.GetUnions(type) IsNot Nothing Then
                         Throw New NotSupportedException
                     Else
                         a = obj
@@ -1700,7 +1700,7 @@ l1:
         If a Is Nothing Then
             Using SyncHelper.AcquireDynamicLock(sync_key)
                 If Not dic.TryGetValue(id, a) Then
-                    If QueryGenerator.GetUnions(type) IsNot Nothing Then
+                    If ObjectMappingEngine.GetUnions(type) IsNot Nothing Then
                         Throw New NotSupportedException
                     Else
                         a = obj
@@ -1861,7 +1861,7 @@ l1:
         Dim sync_key As String = "LoadType" & id & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
-            If Cache.Modified(t, id) IsNot Nothing Then
+            If Cache.ShadowCopy(t, id) IsNot Nothing Then
                 Return False
             End If
 
@@ -1871,7 +1871,7 @@ l1:
 
             Dim orm As _IOrmBase = TryCast(obj, _IOrmBase)
             If orm IsNot Nothing Then
-                For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(orm, Nothing)
+                For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(orm, Nothing)
                     Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
                     mdic.Remove(o.Second.Second)
                 Next
@@ -1880,7 +1880,7 @@ l1:
             _cache.RegisterRemoval(obj)
 
             Debug.Assert(Not IsInCachePrecise(obj))
-            Debug.Assert(Cache.Modified(t, id) Is Nothing)
+            Debug.Assert(Cache.ShadowCopy(t, id) Is Nothing)
         End Using
         Return True
     End Function
@@ -1968,7 +1968,7 @@ l1:
 
 #Region " shared helpers "
 
-    Private Shared Sub InsertObject(Of T As {IOrmBase})(ByVal mgr As OrmManagerBase, ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IOrmBase)
+    Private Shared Sub InsertObject(Of T As {IOrmBase})(ByVal mgr As OrmManager, ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IOrmBase)
         If o IsNot Nothing Then
             If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
                 If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
@@ -1981,14 +1981,14 @@ l1:
         End If
     End Sub
 
-    Private Shared Sub InsertObject(Of T As {IOrmBase})(ByVal mgr As OrmManagerBase, _
+    Private Shared Sub InsertObject(Of T As {IOrmBase})(ByVal mgr As OrmManager, _
         ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IOrmBase, _
         ByVal columns As List(Of ColumnAttribute))
 
         Throw New NotImplementedException
     End Sub
 
-    Protected Shared Function FormPKValues(Of T As {IOrmBase})(ByVal mgr As OrmManagerBase, ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+    Protected Shared Function FormPKValues(Of T As {IOrmBase})(ByVal mgr As OrmManager, ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
         Optional ByVal check_loaded As Boolean = True) As List(Of Object)
 
         Dim l As New Generic.List(Of Object)
@@ -2023,7 +2023,7 @@ l1:
         Return l
     End Function
 
-    Protected Shared Function FormPKValues(Of T As {IOrmBase, New})(ByVal mgr As OrmManagerBase, _
+    Protected Shared Function FormPKValues(Of T As {IOrmBase, New})(ByVal mgr As OrmManager, _
         ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
         ByVal check_loaded As Boolean, ByVal columns As Generic.List(Of ColumnAttribute)) As List(Of Object)
 
@@ -2131,9 +2131,9 @@ l1:
         If Not s Then
             Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
             Using ac As New ApplyCriteria(Me, Nothing)
-                Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
+                Dim c As Conditions.Condition.ConditionConstructorBase = MappingEngine.CreateConditionCtor
                 c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
-                r = FindDistinct(Of T)(relation, ObjectSchema.CreateCriteriaLink(c), sort, withLoad)
+                r = FindDistinct(Of T)(relation, MappingEngine.CreateCriteriaLink(c), sort, withLoad)
             End Using
         End If
         Return r
@@ -2178,9 +2178,9 @@ l1:
         If Not s Then
             Assert(_externalFilter IsNot Nothing, "GetResultset should fail only when external filter specified")
             Using ac As New ApplyCriteria(Me, Nothing)
-                Dim c As Conditions.Condition.ConditionConstructorBase = ObjectSchema.CreateConditionCtor
+                Dim c As Conditions.Condition.ConditionConstructorBase = MappingEngine.CreateConditionCtor
                 c.AddFilter(del.Filter).AddFilter(ac.oldfilter)
-                r = FindMany2Many2(Of T)(obj, ObjectSchema.CreateCriteriaLink(c), sort, direct, withLoad)
+                r = FindMany2Many2(Of T)(obj, MappingEngine.CreateCriteriaLink(c), sort, direct, withLoad)
             End Using
         End If
         Return r
@@ -2221,7 +2221,7 @@ l1:
         Dim o() As Object = New Object() {mainobj, direct}
         'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
         '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
-        Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("FindM2MReturnKeys", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
+        Dim mi As Reflection.MethodInfo = GetType(OrmManager).GetMethod("FindM2MReturnKeys", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
         Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
         Dim p As Pair(Of M2MCache, Pair(Of String)) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Pair(Of M2MCache, Pair(Of String)))
         Return p
@@ -2248,7 +2248,7 @@ l1:
     End Function
 
     Protected Friend Sub M2MCancel(ByVal mainobj As _IOrmBase, ByVal t As Type)
-        For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
+        For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
             If o.First.Entry.SubType Is t Then
                 o.First.Entry.Reject(True)
             End If
@@ -2295,7 +2295,7 @@ l1:
         'Dim tt1 As Type = mainobj.GetType
         'Dim tt2 As Type = t
 
-        For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
+        For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
             Dim m2me As M2MCache = o.First
             If m2me Is Nothing Then
                 Throw New OrmManagerException(String.Format("M2MCache entry is nothing for key:[{0}] and id:[{1}]. Quering type {2} for {3}; direct={4}", o.Second.First, o.Second.Second, t, mainobj.ObjName, direct))
@@ -2418,7 +2418,7 @@ l1:
         Dim o() As Object = New Object() {mainobj, direct, Nothing, Nothing, False}
         'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
         '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
-        Dim mi As Reflection.MethodInfo = GetType(OrmManagerBase).GetMethod("FindM2M", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
+        Dim mi As Reflection.MethodInfo = GetType(OrmManager).GetMethod("FindM2M", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
         Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {tt2})
         Dim p As Pair(Of M2MCache, Boolean) = CType(mi_real.Invoke(Me, flags, Nothing, o, Nothing), Pair(Of M2MCache, Boolean))
         Return p
@@ -2558,10 +2558,10 @@ l1:
             Dim ns As Sort = s
             Do
                 If ns.IsExternal Then
-                    Throw New QueryGeneratorException("External sort must be alone")
+                    Throw New ObjectMappingException("External sort must be alone")
                 End If
                 If ns.IsCustom Then
-                    Throw New QueryGeneratorException("Custom sort is not supported")
+                    Throw New ObjectMappingException("Custom sort is not supported")
                 End If
                 q.Push(ns)
                 ns = ns.Previous
@@ -2584,10 +2584,10 @@ l1:
             Dim ns As Sort = s
             Do
                 If ns.IsExternal Then
-                    Throw New QueryGeneratorException("External sort must be alone")
+                    Throw New ObjectMappingException("External sort must be alone")
                 End If
                 If ns.IsCustom Then
-                    Throw New QueryGeneratorException("Custom sort is not supported")
+                    Throw New ObjectMappingException("Custom sort is not supported")
                 End If
                 q.Push(ns)
                 ns = ns.Previous
@@ -3222,7 +3222,7 @@ l1:
 
                     If sa = SaveAction.Delete Then
                         If orm IsNot Nothing Then
-                            For Each r As M2MRelation In ObjectSchema.GetM2MRelations(t)
+                            For Each r As M2MRelation In MappingEngine.GetM2MRelations(t)
                                 Dim acs As AcceptState2 = Nothing
                                 If r.ConnectedType Is Nothing Then
                                     If r.DeleteCascade Then
@@ -3234,9 +3234,9 @@ l1:
                                 If acs IsNot Nothing Then CType(orm, _IOrmBase).AddAccept(acs)
                             Next
 
-                            Dim oo As IRelation = TryCast(ObjectSchema.GetObjectSchema(t), IRelation)
+                            Dim oo As IRelation = TryCast(MappingEngine.GetObjectSchema(t), IRelation)
                             If oo IsNot Nothing Then
-                                Dim o As New M2MEnum(oo, orm, ObjectSchema)
+                                Dim o As New M2MEnum(oo, orm, MappingEngine)
                                 Cache.ConnectedEntityEnum(t, AddressOf o.Remove)
                             End If
                         End If
@@ -3251,17 +3251,17 @@ l1:
 
                     If sa = SaveAction.Insert Then
                         If orm IsNot Nothing Then
-                            Dim oo As IRelation = TryCast(ObjectSchema.GetObjectSchema(t), IRelation)
+                            Dim oo As IRelation = TryCast(MappingEngine.GetObjectSchema(t), IRelation)
                             If oo IsNot Nothing Then
-                                Dim o As New M2MEnum(oo, orm, ObjectSchema)
+                                Dim o As New M2MEnum(oo, orm, MappingEngine)
                                 Cache.ConnectedEntityEnum(t, AddressOf o.Add)
                             End If
 
                             M2MUpdate(orm, old_id)
 
-                            For Each r As M2MRelation In ObjectSchema.GetM2MRelations(t)
+                            For Each r As M2MRelation In MappingEngine.GetM2MRelations(t)
                                 Dim tt As Type = r.Type
-                                If Not ObjectSchema.IsMany2ManyReadonly(t, tt) Then
+                                If Not MappingEngine.IsMany2ManyReadonly(t, tt) Then
                                     Dim acs As AcceptState2 = M2MSave(orm, tt, r.Key)
                                     If acs IsNot Nothing Then
                                         hasNew = hasNew OrElse acs.el.HasNew
@@ -3297,7 +3297,7 @@ l1:
                                     processedType.Add(acp.el.SubType)
                                 Next
                             End If
-                            For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(orm, Nothing)
+                            For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(orm, Nothing)
                                 Dim m2me As M2MCache = o.First
                                 If m2me.Filter IsNot Nothing Then
                                     Dim dic As IDictionary = GetDic(_cache, o.Second.First)
@@ -3496,7 +3496,7 @@ l1:
         Return BuildObjDic(Of T)(level, criteria, join, AddressOf (New clsDic(Of T)(firstField, secondField)).f)
     End Function
 
-    Protected Delegate Function GetRootsDelegate(Of T As {New, IOrmBase})(ByVal mgr As OrmManagerBase, ByVal level As Integer, ByVal filter As IFilter, ByVal join() As OrmJoin) As DicIndex(Of T)
+    Protected Delegate Function GetRootsDelegate(Of T As {New, IOrmBase})(ByVal mgr As OrmManager, ByVal level As Integer, ByVal filter As IFilter, ByVal join() As OrmJoin) As DicIndex(Of T)
 
     Private Class clsDic(Of T As {New, IOrmBase})
         Private _f As String
@@ -3514,7 +3514,7 @@ l1:
             _f = f
             _s = s
         End Sub
-        Public Function f(ByVal mgr As OrmManagerBase, ByVal level As Integer, ByVal filter As IFilter, ByVal join() As OrmJoin) As DicIndex(Of T)
+        Public Function f(ByVal mgr As OrmManager, ByVal level As Integer, ByVal filter As IFilter, ByVal join() As OrmJoin) As DicIndex(Of T)
             If String.IsNullOrEmpty(_f) Then
                 Return mgr.BuildDictionary(Of T)(level, filter, join)
             Else
@@ -3669,7 +3669,7 @@ l1:
         Return l.Length + 1
     End Function
 
-    Protected Friend Shared Function HasJoins(ByVal schema As QueryGenerator, ByVal selectType As Type, _
+    Protected Friend Shared Function HasJoins(ByVal schema As ObjectMappingEngine, ByVal selectType As Type, _
         ByRef filter As IFilter, ByVal s As Sort, ByVal filterInfo As Object, ByRef joins() As OrmJoin, _
         ByRef appendMain As Boolean) As Boolean
         Dim l As New List(Of OrmJoin)

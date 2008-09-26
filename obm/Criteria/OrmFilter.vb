@@ -14,7 +14,7 @@ Namespace Criteria.Core
     Public Interface IFilter
         Inherits IGetFilter, ICloneable
         'Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
-        Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As List(Of String)) As String
+        Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As List(Of String)) As String
         Function GetAllFilters() As ICollection(Of IFilter)
         Function Equals(ByVal f As IFilter) As Boolean
         Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter
@@ -26,7 +26,7 @@ Namespace Criteria.Core
     Public Interface ITemplateFilterBase
         'Function ReplaceByTemplate(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As ITemplateFilter
         ReadOnly Property Template() As ITemplate
-        Function MakeSingleQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
+        Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
     End Interface
 
     Public Interface ITemplateFilter
@@ -39,9 +39,9 @@ Namespace Criteria.Core
     End Interface
 
     Public Interface IEntityFilterBase
-        Function Eval(ByVal schema As QueryGenerator, ByVal obj As _IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult
+        Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult
         Function GetFilterTemplate() As IOrmFilterTemplate
-        Function PrepareValue(ByVal schema As QueryGenerator, ByVal v As Object) As Object
+        Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object
         Function MakeHash() As String
     End Interface
 
@@ -59,7 +59,7 @@ Namespace Criteria.Core
 
     Public Interface IOrmFilterTemplate
         Inherits ITemplate
-        Function MakeHash(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String
+        Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String
         'Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter
         Sub SetType(ByVal t As Type)
     End Interface
@@ -78,7 +78,7 @@ Namespace Criteria.Core
 
         Protected MustOverride Function _ToString() As String Implements IFilter.ToString
         Protected MustOverride Function _Clone() As Object Implements ICloneable.Clone
-        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements IFilter.MakeQueryStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements IFilter.MakeQueryStmt
         Public MustOverride Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
         Public MustOverride Function ToStaticString() As String Implements IFilter.ToStaticString
 
@@ -122,7 +122,7 @@ Namespace Criteria.Core
         '    _v = v
         'End Sub
 
-        Protected Overridable Function GetParam(ByVal schema As QueryGenerator, ByVal pmgr As ICreateParam) As String
+        Protected Overridable Function GetParam(ByVal schema As ObjectMappingEngine, ByVal pmgr As ICreateParam) As String
             If _v Is Nothing Then
                 'Return pmgr.CreateParam(Nothing)
                 Throw New InvalidOperationException("Param is null")
@@ -191,7 +191,7 @@ Namespace Criteria.Core
         '    Return replacer
         'End Function
 
-        Public MustOverride Function MakeSingleQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
+        Public MustOverride Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
 
         Public Overrides Function ToStaticString() As String
             Return _templ.GetStaticString
@@ -235,7 +235,7 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public Function Eval(ByVal schema As QueryGenerator, ByVal obj As _IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             Dim evval As IEvaluableValue = TryCast(val, IEvaluableValue)
             If evval IsNot Nothing Then
                 If schema Is Nothing Then
@@ -282,7 +282,7 @@ Namespace Criteria.Core
             'Return Nothing
         End Function
 
-        Public Function PrepareValue(ByVal schema As QueryGenerator, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue
+        Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue
             Return schema.ChangeValueType(_oschema, New ColumnAttribute(Template.FieldName), v)
         End Function
 
@@ -301,13 +301,13 @@ Namespace Criteria.Core
         '    Return _str.GetHashCode
         'End Function
 
-        Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+        Public MustOverride Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
 
-        Public Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+        Public Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
             Return MakeQueryStmt(oschema, filterInfo, schema, almgr, pname, Nothing)
         End Function
 
-        Public Overridable Overloads Function MakeSingleQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
+        Public Overridable Overloads Function MakeSingleQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
             If _oschema Is Nothing Then
                 _oschema = oschema
             End If
@@ -336,7 +336,7 @@ Namespace Criteria.Core
             Return New Pair(Of String)(map._columnName, prname)
         End Function
 
-        Public Overrides Function MakeSingleQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
+        Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
             End If
@@ -407,7 +407,7 @@ Namespace Criteria.Core
                 Case FilterOperation.Between
                     Return "Between"
                 Case Else
-                    Throw New QueryGeneratorException("Operation " & oper & " not supported")
+                    Throw New ObjectMappingException("Operation " & oper & " not supported")
             End Select
         End Function
 
@@ -437,7 +437,7 @@ Namespace Criteria.Core
             '_appl = appl
         End Sub
 
-        Public Overridable Function MakeFilter(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
+        Public Overridable Function MakeFilter(ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -492,7 +492,7 @@ Namespace Criteria.Core
             Return _t.ToString & _fieldname & OperToString()
         End Function
 
-        Public Function MakeHash(ByVal schema As QueryGenerator, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
+        Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
             If Operation = FilterOperation.Equal Then
                 Return MakeFilter(schema, oschema, obj).ToString
             Else
@@ -566,7 +566,7 @@ Namespace Criteria.Core
             Return New CustomFilterBase() {Me}
         End Function
 
-        Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+        Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
             Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
             If schema Is Nothing Then
@@ -574,7 +574,7 @@ Namespace Criteria.Core
             End If
 
             If ParamValue.ShouldUse Then
-                Dim values As List(Of String) = QueryGenerator.ExtractValues(schema, tableAliases, _values)
+                Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, tableAliases, _values)
 
                 Return String.Format(_format, values.ToArray) & OperationString & GetParam(schema, pname)
             Else
@@ -660,7 +660,7 @@ Namespace Criteria.Core
         End Property
 
         Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
-        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements IFilter.MakeQueryStmt
+        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements IFilter.MakeQueryStmt
 
         Public Function Clone() As IFilter Implements IFilter.Clone
             Return CType(_Clone(), IFilter)

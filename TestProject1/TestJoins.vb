@@ -51,7 +51,7 @@ Imports Worm.Criteria.Core
         j.MakeSQLStmt(schema, Nothing, almgr, Nothing)
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Worm.QueryGeneratorException))> _
+    <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> _
     Public Sub TestMakeSQLStmt4()
         Dim t As New SourceFragment("table1")
         Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, New EntityFilter(GetType(Entity), "ID", New ScalarValue(1), Worm.Criteria.FilterOperation.Equal))

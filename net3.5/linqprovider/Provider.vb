@@ -70,7 +70,7 @@ Namespace Linq
             args.Manager = _ctx.CreateReadonlyManager
         End Sub
 
-        Protected Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManagerBase)
+        Protected Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManager)
             AddHandler o.ManagerRequired, AddressOf GetManager
         End Sub
 
@@ -336,7 +336,7 @@ Namespace Linq
     Public Class FilterVisitorBase
         Inherits MyExpressionVisitor
 
-        Sub New(ByVal schema As QueryGenerator)
+        Sub New(ByVal schema As ObjectMappingEngine)
             MyBase.new(schema)
         End Sub
 
@@ -387,12 +387,12 @@ Namespace Linq
         Private _q As QueryVisitor
         Private _mem As String
 
-        Public Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
+        Public Sub New(ByVal schema As ObjectMappingEngine, ByVal q As QueryVisitor)
             MyBase.new(schema)
             _q = q
         End Sub
 
-        Protected Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor, ByVal mem As String)
+        Protected Sub New(ByVal schema As ObjectMappingEngine, ByVal q As QueryVisitor, ByVal mem As String)
             MyBase.new(schema)
             _q = q
             _mem = mem
@@ -573,7 +573,7 @@ Namespace Linq
         '    Return Me
         'End Function
 
-        Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
+        Sub New(ByVal schema As ObjectMappingEngine, ByVal q As QueryVisitor)
             MyBase.new(schema)
             _q = q
         End Sub
@@ -621,7 +621,7 @@ Namespace Linq
         Private _c As New Condition.ConditionConstructor
         Private _q As QueryVisitor
 
-        Sub New(ByVal schema As QueryGenerator, ByVal q As QueryVisitor)
+        Sub New(ByVal schema As ObjectMappingEngine, ByVal q As QueryVisitor)
             MyBase.new(schema)
             _q = q
         End Sub
@@ -767,7 +767,7 @@ Namespace Linq
             End If
         End Function
 
-        Sub New(ByVal schema As QueryGenerator)
+        Sub New(ByVal schema As ObjectMappingEngine)
             MyBase.new(schema)
             _q = New Query.QueryCmd(CType(Nothing, Type))
         End Sub

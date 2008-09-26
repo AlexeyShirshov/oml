@@ -88,7 +88,7 @@ Public Class TestSearch
     <TestMethod()> _
     Public Sub TestPageSearch()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))
-            Using New Worm.OrmManagerBase.PagerSwitcher(mgr, 0, 1)
+            Using New Worm.OrmManager.PagerSwitcher(mgr, 0, 1)
                 Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec", _
                     Sorting.Field("DT"), Nothing)
 
@@ -111,7 +111,7 @@ Public Class TestSearch
 
             Assert.AreEqual(1, c.Count)
 
-            Dim os As IOrmObjectSchema = CType(mgr.ObjectSchema.GetObjectSchema(GetType(Table1)), IOrmObjectSchema)
+            Dim os As IOrmObjectSchema = CType(mgr.MappingEngine.GetObjectSchema(GetType(Table1)), IOrmObjectSchema)
             Dim cn As New Criteria.Conditions.Condition.ConditionConstructor
             cn.AddFilter(New TableFilter(os.GetTables(0), "code", New ScalarValue(8923), Worm.Criteria.FilterOperation.Equal))
 
@@ -124,13 +124,13 @@ Public Class TestSearch
     <TestMethod()> _
     Public Sub TestSearchPaging()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("Search"))
-            Using New Worm.OrmManagerBase.PagerSwitcher(mgr, 0, 1)
+            Using New Worm.OrmManager.PagerSwitcher(mgr, 0, 1)
                 Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec")
 
                 Assert.AreEqual(1, c.Count)
             End Using
 
-            Using New Worm.OrmManagerBase.PagerSwitcher(mgr, 1, 1)
+            Using New Worm.OrmManager.PagerSwitcher(mgr, 1, 1)
                 Dim c As ICollection(Of Table1) = mgr.Search(Of Table1)("sec")
 
                 Assert.AreEqual(1, c.Count)

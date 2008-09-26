@@ -67,7 +67,7 @@ End Namespace
 
 Namespace Sorting
 
-    Public Delegate Function ExternalSortDelegate(ByVal mgr As OrmManagerBase, ByVal generator As QueryGenerator, ByVal sort As Sort, ByVal objs As ICollection) As ICollection
+    Public Delegate Function ExternalSortDelegate(ByVal mgr As OrmManager, ByVal generator As ObjectMappingEngine, ByVal sort As Sort, ByVal objs As ICollection) As ICollection
 
     Public Class SortOrder
         Private _f As String
@@ -400,8 +400,8 @@ Namespace Sorting
             End Set
         End Property
 
-        Public Function GetCustomExpressionValues(ByVal schema As QueryGenerator, ByVal aliases As IDictionary(Of SourceFragment, String)) As String()
-            Return QueryGenerator.ExtractValues(schema, aliases, _values).ToArray
+        Public Function GetCustomExpressionValues(ByVal schema As ObjectMappingEngine, ByVal aliases As IDictionary(Of SourceFragment, String)) As String()
+            Return ObjectMappingEngine.ExtractValues(schema, aliases, _values).ToArray
         End Function
 
         Public ReadOnly Property Table() As SourceFragment
@@ -514,7 +514,7 @@ Namespace Sorting
             End Get
         End Property
 
-        Public Overridable Function ExternalSort(Of T As {_IEntity})(ByVal mgr As OrmManagerBase, ByVal schema As QueryGenerator, ByVal objs As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
+        Public Overridable Function ExternalSort(Of T As {_IEntity})(ByVal mgr As OrmManager, ByVal schema As ObjectMappingEngine, ByVal objs As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
             If Not IsExternal Then
                 Throw New InvalidOperationException("Sort is not external")
             End If
@@ -546,14 +546,14 @@ Namespace Sorting
         Public Delegate Function GetObjectDelegate(ByVal x As T, ByVal t As Type) As _IEntity
 
         'Private _q As Generic.List(Of Sort)
-        Private _mgr As OrmManagerBase
+        Private _mgr As OrmManager
         Private _s As Generic.Stack(Of Sort)
         Private _t As Type
         Private _getobj As GetObjectDelegate
 
         Public Sub New(ByVal t As Type, ByVal q As Generic.Stack(Of Sort))
             _s = q
-            _mgr = OrmManagerBase.CurrentManager
+            _mgr = OrmManager.CurrentManager
             _t = t
         End Sub
 
@@ -561,19 +561,19 @@ Namespace Sorting
             _t = t
             _s = New Generic.Stack(Of Sort)
             _s.Push(s)
-            _mgr = OrmManagerBase.CurrentManager
+            _mgr = OrmManager.CurrentManager
         End Sub
 
         Public Sub New(ByVal s As Sort)
             _t = GetType(T)
             _s = New Generic.Stack(Of Sort)
             _s.Push(s)
-            _mgr = OrmManagerBase.CurrentManager
+            _mgr = OrmManager.CurrentManager
         End Sub
 
         Public Sub New(ByVal q As Generic.Stack(Of Sort))
             _s = q
-            _mgr = OrmManagerBase.CurrentManager
+            _mgr = OrmManager.CurrentManager
             _t = GetType(T)
         End Sub
 
@@ -586,7 +586,7 @@ Namespace Sorting
             '_q = New Generic.List(Of Sort)
             _s = New Generic.Stack(Of Sort)
             _s.Push(New Sort(GetType(T), fieldName, st, False))
-            _mgr = OrmManagerBase.CurrentManager
+            _mgr = OrmManager.CurrentManager
             _t = GetType(T)
         End Sub
 
@@ -649,7 +649,7 @@ Namespace Sorting
         Private Function GetValue(ByVal x As T, ByVal s As Sort, ByRef oschema As IOrmObjectSchemaBase) As Object
             Dim xo As _IEntity = x
             If s.Type IsNot Nothing AndAlso _t IsNot s.Type Then
-                Dim schema As QueryGenerator = _mgr.ObjectSchema
+                Dim schema As ObjectMappingEngine = _mgr.MappingEngine
                 If _getobj IsNot Nothing Then
                     xo = _getobj(x, s.Type)
                 Else

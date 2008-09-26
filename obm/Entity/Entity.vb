@@ -64,7 +64,7 @@ Namespace Orm
         <NonSerialized()> _
         Private _loading As Boolean
         <NonSerialized()> _
-        Public _mgrStr As String
+        Private _mgrStr As String
         <NonSerialized()> _
         Protected _dontRaisePropertyChange As Boolean
         <NonSerialized()> _
@@ -169,7 +169,7 @@ Namespace Orm
         End Function
 
         Protected Function GetMgr() As IGetManager Implements _IEntity.GetMgr
-            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+            Dim mgr As OrmManager = OrmManager.CurrentManager
             If Not String.IsNullOrEmpty(_mgrStr) Then
                 Do While mgr IsNot Nothing AndAlso mgr.IdentityString <> _mgrStr
                     mgr = mgr._prev
@@ -198,19 +198,19 @@ Namespace Orm
             End If
         End Function
 
-        Protected ReadOnly Property OrmSchema() As QueryGenerator
+        Protected ReadOnly Property OrmSchema() As ObjectMappingEngine
             Get
                 Using mc As IGetManager = GetMgr()
                     If mc Is Nothing Then
                         Return Nothing
                     Else
-                        Return mc.Manager.ObjectSchema
+                        Return mc.Manager.MappingEngine
                     End If
                 End Using
             End Get
         End Property
 
-        Friend ReadOnly Property OrmCache() As OrmCacheBase
+        Protected ReadOnly Property OrmCache() As OrmCacheBase
             Get
                 Using mc As IGetManager = GetMgr()
                     If mc IsNot Nothing Then
@@ -238,14 +238,14 @@ Namespace Orm
                 If mc Is Nothing Then
                     sb.Append("Cannot get object dump")
                 Else
-                    Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
+                    Dim oschema As IOrmObjectSchemaBase = mc.Manager.MappingEngine.GetObjectSchema(Me.GetType)
                     Dim olr As Boolean = _readRaw
                     _readRaw = True
                     Try
-                        For Each kv As DictionaryEntry In mc.Manager.ObjectSchema.GetProperties(Me.GetType)
+                        For Each kv As DictionaryEntry In mc.Manager.MappingEngine.GetProperties(Me.GetType)
                             Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                             Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                            sb.Append(c.FieldName).Append("=").Append(QueryGenerator.GetFieldValue(Me, c.FieldName, pi, oschema)).Append(";")
+                            sb.Append(c.FieldName).Append("=").Append(ObjectMappingEngine.GetFieldValue(Me, c.FieldName, pi, oschema)).Append(";")
                         Next
                     Finally
                         _readRaw = olr
@@ -265,9 +265,9 @@ Namespace Orm
 
         Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IOrmObjectSchemaBase) As Object Implements IEntity.GetValue
             If pi Is Nothing Then
-                Dim s As QueryGenerator = OrmSchema
+                Dim s As ObjectMappingEngine = OrmSchema
                 If s Is Nothing Then
-                    Return QueryGenerator.GetFieldValueSchemaless(Me, c.FieldName, oschema, pi)
+                    Return ObjectMappingEngine.GetFieldValueSchemaless(Me, c.FieldName, oschema, pi)
                 Else
                     Return s.GetFieldValue(Me, c.FieldName, oschema, pi)
                 End If
@@ -275,7 +275,7 @@ Namespace Orm
             Return pi.GetValue(Me, Nothing)
         End Function
 
-        Public ReadOnly Property ObjectState() As ObjectState Implements _IEntity.ObjectState
+        Protected ReadOnly Property ObjectState() As ObjectState Implements _IEntity.ObjectState
             Get
                 Return _state
             End Get
@@ -305,14 +305,14 @@ Namespace Orm
         Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As IOrmObjectSchemaBase, ByVal value As Object) Implements IEntity.SetValue
             If pi Is Nothing Then
                 Using m As IGetManager = GetMgr()
-                    pi = m.Manager.ObjectSchema.GetProperty(Me.GetType, schema, c)
+                    pi = m.Manager.MappingEngine.GetProperty(Me.GetType, schema, c)
                 End Using
             End If
 
             pi.SetValue(Me, value, Nothing)
         End Sub
 
-        Protected Overridable Sub Init(ByVal cache As Cache.OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrIdentityString As String) Implements _IEntity.Init
+        Protected Overridable Sub Init(ByVal cache As Cache.OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _IEntity.Init
             _mgrStr = mgrIdentityString
 
             If cache IsNot Nothing Then cache.RegisterCreation(Me)
@@ -339,8 +339,8 @@ Namespace Orm
             End Using
         End Function
 
-        Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, ByVal mgr As OrmManagerBase, ByVal oschema As IOrmObjectSchemaBase)
-            For Each kv As DictionaryEntry In mgr.ObjectSchema.GetProperties(Me.GetType)
+        Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, ByVal mgr As OrmManager, ByVal oschema As IOrmObjectSchemaBase)
+            For Each kv As DictionaryEntry In mgr.MappingEngine.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
                 [to].SetValue(pi, c, oschema, [from].GetValue(pi, c, oschema))
@@ -349,7 +349,7 @@ Namespace Orm
 
         Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
             Using mc As IGetManager = GetMgr()
-                Dim oschema As IOrmObjectSchemaBase = mc.Manager.ObjectSchema.GetObjectSchema(Me.GetType)
+                Dim oschema As IOrmObjectSchemaBase = mc.Manager.MappingEngine.GetObjectSchema(Me.GetType)
                 [to].BeginLoading()
                 CopyProperties([from], [to], mc.Manager, oschema)
                 [to].EndLoading()
@@ -369,11 +369,11 @@ Namespace Orm
             Return _old_state
         End Function
 
-        Public Overridable Function IsFieldLoaded(ByVal fieldName As String) As Boolean Implements IEntity.IsFieldLoaded
+        Protected Overridable Function IsFieldLoaded(ByVal fieldName As String) As Boolean Implements IEntity.IsFieldLoaded
             Return True
         End Function
 
-        Public Overridable ReadOnly Property IsLoaded() As Boolean Implements IEntity.IsLoaded
+        Protected Overridable ReadOnly Property IsLoaded() As Boolean Implements IEntity.IsLoaded
             Get
                 Return True
             End Get

@@ -128,7 +128,7 @@ Namespace Criteria.Joins
         End Function
 
         'Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String Implements Core.IFilter.MakeQueryStmt
-        Public MustOverride Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+        Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
 
         Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter
             Get
@@ -158,7 +158,7 @@ Namespace Criteria.Joins
             End With
         End Sub
 
-        Public Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements Core.IFilter.MakeQueryStmt
+        Public Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements Core.IFilter.MakeQueryStmt
             Return MakeQueryStmt(schema, filterInfo, almgr, pname)
         End Function
     End Class
@@ -211,7 +211,7 @@ Namespace Criteria.Joins
                 Case Worm.Criteria.Joins.JoinType.CrossJoin
                     Return " cross join "
                 Case Else
-                    Throw New QueryGeneratorException("invalid join type " & _joinType.ToString)
+                    Throw New ObjectMappingException("invalid join type " & _joinType.ToString)
             End Select
         End Function
 
@@ -343,7 +343,7 @@ Namespace Database
                 MyBase.New(table, column, table2, column2, operation)
             End Sub
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
                 Dim map As MapField2Column = Nothing
@@ -367,7 +367,7 @@ Namespace Database
                     Try
                         [alias] = tableAliases(map._tableName) & schema.Selector
                     Catch ex As KeyNotFoundException
-                        Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+                        Throw New ObjectMappingException("There is not alias for table " & map._tableName.RawName, ex)
                     End Try
                 End If
 
@@ -377,7 +377,7 @@ Namespace Database
                     Try
                         alias2 = tableAliases(map2._tableName) & schema.Selector
                     Catch ex As KeyNotFoundException
-                        Throw New QueryGeneratorException("There is not alias for table " & map2._tableName.RawName, ex)
+                        Throw New ObjectMappingException("There is not alias for table " & map2._tableName.RawName, ex)
                     End Try
                 End If
 
