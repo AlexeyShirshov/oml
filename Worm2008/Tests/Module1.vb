@@ -55,7 +55,7 @@ Module Module1
                     Console.WriteLine(i / 1000)
                 End If
             Next
-            Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.DbSchema)
+            Dim t As New TestProject1.Table1(1000, mgr.Cache, mgr.SQLGenerator)
             t.CreatedAt = Now
             mgr.BeginTransaction()
             Try
@@ -140,7 +140,7 @@ Module Module1
     End Sub
 
     Sub withoutload()
-        Using mc As Worm.OrmManagerBase = TestProject1.TestManager.CreateManager(New SQLGenerator("1"))
+        Using mc As Worm.OrmManager = TestProject1.TestManager.CreateManager(New SQLGenerator("1"))
             For i As Integer = 0 To 100
                 Dim c As Worm.ReadOnlyList(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, False)
                 mc.LoadObjects(c)
@@ -149,7 +149,7 @@ Module Module1
     End Sub
 
     Sub withload()
-        Using mc As Worm.OrmManagerBase = TestProject1.TestManager.CreateManager(New SQLGenerator("1"))
+        Using mc As Worm.OrmManager = TestProject1.TestManager.CreateManager(New SQLGenerator("1"))
             For i As Integer = 0 To 100
                 Dim c As Generic.ICollection(Of TestProject1.Entity2) = mc.FindTop(Of TestProject1.Entity2)(100, Nothing, Nothing, True)
             Next

@@ -1,136 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ClassDiagram MajorVersion="1" MinorVersion="1">
-  <Font Name="Tahoma" Size="8.25" />
-  <Class Name="Worm.Orm.OrmManagerException" Collapsed="true">
-    <Position X="0.5" Y="0.5" Width="2.25" />
-    <TypeIdentifier>
-      <FileName>Managers\OrmManagerBase.vb</FileName>
-      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
-    </TypeIdentifier>
-  </Class>
-  <Class Name="Worm.Orm.OrmManagerBase">
-    <Position X="3.25" Y="0.5" Width="2.25" />
-    <TypeIdentifier>
-      <FileName>Managers\OrmManagerBase.vb</FileName>
-      <HashCode>kQIDAAR1rPQNCAALQHuQSQRBlgUIixwCIAIA8QZho2A=</HashCode>
-    </TypeIdentifier>
-    <Compartments>
-      <Compartment Name="Fields" Collapsed="true" />
-      <Compartment Name="Properties" Collapsed="true" />
-      <Compartment Name="Methods" Collapsed="true" />
-      <Compartment Name="Events" Collapsed="true" />
-      <Compartment Name="Nested Types" Collapsed="false" />
-    </Compartments>
-    <NestedTypes>
-      <Class Name="Worm.Orm.OrmManagerBase.CacheListSwitcher" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\OrmManagerBase.vb</NewMemberFileName>
-        </TypeIdentifier>
-        <Lollipop Position="0.2" />
-      </Class>
-      <Class Name="Worm.Orm.OrmManagerBase.CachedItem" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\OrmManagerBase.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Class>
-      <Class Name="Worm.Orm.OrmManagerBase.M2MCache" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\OrmManagerBase.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Class>
-      <Interface Name="Worm.Orm.OrmManagerBase.ICustDelegate(Of T)" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\OrmManagerBase.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Interface>
-      <Interface Name="Worm.Orm.OrmManagerBase.ICacheValidator" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\OrmManagerBase.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Interface>
-      <Interface Name="Worm.Orm.OrmManagerBase.INewObjects" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\OrmManagerBase.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Interface>
-      <Class Name="Worm.Orm.OrmManagerBase.CustDelegate(Of T)" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\OrmManagerBase.vb</NewMemberFileName>
-        </TypeIdentifier>
-        <Lollipop Position="0.2" />
-      </Class>
-    </NestedTypes>
-    <Lollipop Position="0.2" />
-  </Class>
-  <Class Name="Worm.Orm.OrmReadOnlyDBManager">
-    <Position X="6.25" Y="0.5" Width="3.25" />
-    <TypeIdentifier>
-      <FileName>Managers\DataProviders.vb</FileName>
-      <HashCode>URKgAEARADQCAIADASMAQAQAgFAAAAgAAAAAEAAsAQA=</HashCode>
-    </TypeIdentifier>
-    <Compartments>
-      <Compartment Name="Fields" Collapsed="true" />
-      <Compartment Name="Properties" Collapsed="true" />
-      <Compartment Name="Methods" Collapsed="true" />
-      <Compartment Name="Nested Types" Collapsed="false" />
-    </Compartments>
-    <NestedTypes>
-      <Enum Name="Worm.Orm.OrmReadOnlyDBManager.ConnAction">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\OrmRODBManager.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Enum>
-      <Class Name="Worm.Orm.OrmReadOnlyDBManager.M2MDataProvider(Of T)" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\DataProviders.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Class>
-      <Class Name="Worm.Orm.OrmReadOnlyDBManager.DistinctRelationFilterCustDelegate(Of T)" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\DataProviders.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Class>
-      <Class Name="Worm.Orm.OrmReadOnlyDBManager.BaseDataProvider(Of T)" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\DataProviders.vb</NewMemberFileName>
-        </TypeIdentifier>
-        <Lollipop Position="0.2" />
-      </Class>
-      <Class Name="Worm.Orm.OrmReadOnlyDBManager.Saver" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\OrmRODBManager.vb</NewMemberFileName>
-        </TypeIdentifier>
-        <Lollipop Position="0.2" />
-      </Class>
-      <Class Name="Worm.Orm.OrmReadOnlyDBManager.FilterCustDelegate(Of T)" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\DataProviders.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Class>
-      <Class Name="Worm.Orm.OrmReadOnlyDBManager.FilterCustDelegate4Top(Of T)" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\DataProviders.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Class>
-      <Class Name="Worm.Orm.OrmReadOnlyDBManager.ObjectStateTracker" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\OrmRODBManager.vb</NewMemberFileName>
-        </TypeIdentifier>
-        <Lollipop Position="0.2" />
-      </Class>
-      <Class Name="Worm.Orm.OrmReadOnlyDBManager.DistinctFilterCustDelegate(Of T)" Collapsed="true">
-        <TypeIdentifier>
-          <NewMemberFileName>Managers\DataProviders.vb</NewMemberFileName>
-        </TypeIdentifier>
-      </Class>
-    </NestedTypes>
-  </Class>
   <Class Name="Worm.Orm.OrmDBManager">
     <Position X="10" Y="0.5" Width="1.75" />
-    <TypeIdentifier>
-      <FileName>Managers\OrmDBManager.vb</FileName>
-      <HashCode>AAIAAAAQAAAgAAABACIAAAAAAAEAAAAAAAAAAAAAAAA=</HashCode>
-    </TypeIdentifier>
     <Compartments>
       <Compartment Name="Methods" Collapsed="true" />
       <Compartment Name="Nested Types" Collapsed="false" />
@@ -147,5 +18,239 @@
         </TypeIdentifier>
       </Class>
     </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>AAIAAAAQAAAgAAABACIAAAAAAAEAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Managers\OrmDBManager.vb</FileName>
+    </TypeIdentifier>
   </Class>
+  <Class Name="Worm.OrmManager">
+    <Position X="0.5" Y="0.5" Width="2.25" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Class Name="Worm.OrmManager.clsDic(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\OrmManager.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Interface Name="Worm.OrmManager.INewObjectsEx" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Interface>
+      <Class Name="Worm.OrmManager.M2MEnum" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Delegate Name="Worm.OrmManager.GetRootsDelegate(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\OrmManager.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+      <Class Name="Worm.OrmManager.FtsDef" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\OrmManager.vb</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+      <Interface Name="Worm.OrmManager.ICacheValidator" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Interface>
+      <Class Name="Worm.OrmManager.ApplyCriteria" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+      <Delegate Name="Worm.OrmManager.ValDelegate(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\OrmManager.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+      <Class Name="Worm.OrmManager.CachedItem" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Interface Name="Worm.OrmManager.ICustDelegate(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Interface>
+      <Class Name="Worm.OrmManager.SchemaSwitcher" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+      <Delegate Name="Worm.OrmManager.ValueForSearchDelegate" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\OrmManager.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Delegate>
+      <Interface Name="Worm.OrmManager.INewObjects" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Interface>
+      <Interface Name="Worm.OrmManager.ICustDelegateBase(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Interface>
+      <Class Name="Worm.OrmManager.CustDelegateBase(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+      <Class Name="Worm.OrmManager.CustDelegate(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Enum Name="Worm.OrmManager.SaveAction" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Struct Name="Worm.OrmManager.ExecutionResult" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+      <Class Name="Worm.OrmManager.PagerSwitcher" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+      <Class Name="Worm.OrmManager.CacheListBehavior" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+      <Class Name="Worm.OrmManager.M2MCache" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\InnerMgrClasses.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>lQEmggx1r/x9vhDK/XOcyQ1JnpVNq/yW5AqB8YRx42A=</HashCode>
+      <FileName>Managers\InnerMgrClasses.vb</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="Cache" />
+      <Property Name="MappingEngine" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="Worm.Database.OrmReadOnlyDBManager">
+    <Position X="4" Y="0.75" Width="2" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Class Name="Worm.Database.OrmReadOnlyDBManager.BaseDataProvider(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\db\DataProviders.vb</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+      <Class Name="Worm.Database.OrmReadOnlyDBManager.FilterCustDelegate(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\db\DataProviders.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Class Name="Worm.Database.OrmReadOnlyDBManager.JoinCustDelegate(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\db\DataProviders.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Class Name="Worm.Database.OrmReadOnlyDBManager.DistinctRelationFilterCustDelegate(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\db\DataProviders.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Class Name="Worm.Database.OrmReadOnlyDBManager.M2MDataProvider(Of T)" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\db\DataProviders.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Class>
+      <Enum Name="Worm.Database.OrmReadOnlyDBManager.ConnAction" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\db\OrmRODBManager.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Enum>
+      <Class Name="Worm.Database.OrmReadOnlyDBManager.BatchSaver" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\db\OrmRODBManager.vb</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+      <Class Name="Worm.Database.OrmReadOnlyDBManager.OrmTransactionalScope" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>Managers\db\OrmRODBManager.vb</NewMemberFileName>
+        </TypeIdentifier>
+        <Lollipop Position="0.2" />
+      </Class>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>VRCwAlARILQiAIQCoAPE4QQAgVAAABgwAQAAkAIkARE=</HashCode>
+      <FileName>Managers\db\DataProviders.vb</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Property Name="SQLGenerator" />
+    </ShowAsAssociation>
+  </Class>
+  <Class Name="Worm.Database.OrmDBManager">
+    <Position X="7" Y="1.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAQAAAgAAAAIAKAAAAAAAEAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Managers\db\OrmDBManager.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Database.SQLGenerator" Collapsed="true">
+    <Position X="4.75" Y="4.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Fields" Collapsed="true" />
+      <Compartment Name="Properties" Collapsed="true" />
+      <Compartment Name="Methods" Collapsed="true" />
+    </Compartments>
+    <NestedTypes>
+      <Struct Name="Worm.Database.SQLGenerator.TableUpdate" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>StmtGenerators\db\DbSchema.vb</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
+    <TypeIdentifier>
+      <HashCode>BMQAhEAo6YkARAFgFAYABAxAIAtBMIqIhmEAUQAApgA=</HashCode>
+      <FileName>StmtGenerators\db\DbSchema.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.Cache.OrmCacheBase" Collapsed="true">
+    <Position X="0.5" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CSRAwShIAKAgBgGhtIAEUGABcgQgoFGICEYgATAqrGQ=</HashCode>
+      <FileName>Cache\OrmCache.vb</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="Worm.ObjectMappingEngine" Collapsed="true">
+    <Position X="4.75" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>sMLQGCAggAUGZAKmEtQQxQvBAJgQEJBEASEAQAFEkAA=</HashCode>
+      <FileName>Mapping\MappingEngine.vb</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Font Name="Tahoma" Size="8.25" />
 </ClassDiagram>

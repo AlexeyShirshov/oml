@@ -69,10 +69,10 @@ Imports Worm.Database.Criteria.Joins
         End Using
     End Sub
 
-    <TestMethod(), ExpectedException(GetType(Worm.QueryGeneratorException))> Public Sub TestFilterFromRawTableWrong()
+    <TestMethod(), ExpectedException(GetType(Worm.ObjectMappingException))> Public Sub TestFilterFromRawTableWrong()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
-            Dim t As SourceFragment = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
+            Dim t As SourceFragment = mgr.MappingEngine.GetTables(GetType(Entity4))(0)
             Dim q As New QueryCmd(t)
             q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of Orm.OrmProperty)( _
                 New Orm.OrmProperty() { _
@@ -91,7 +91,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestFilterFromRawTable()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
 
-            Dim t As SourceFragment = mgr.ObjectSchema.GetTables(GetType(Entity4))(0)
+            Dim t As SourceFragment = mgr.MappingEngine.GetTables(GetType(Entity4))(0)
             Dim q As New QueryCmd(t)
             q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of Orm.OrmProperty)( _
                 New Orm.OrmProperty() { _
@@ -396,9 +396,9 @@ Imports Worm.Database.Criteria.Joins
 
         Assert.AreEqual(12, l.Count)
 
-        Assert.IsFalse(l(0).IsLoaded)
+        Assert.IsFalse(l(0).InternalProperties.IsLoaded)
         Assert.AreEqual("245g0nj", l(0).Title)
-        Assert.IsTrue(l(0).IsLoaded)
+        Assert.IsTrue(l(0).InternalProperties.IsLoaded)
     End Sub
 
     <TestMethod()> Public Sub TestRenew()
@@ -451,10 +451,10 @@ Imports Worm.Database.Criteria.Joins
 
             Assert.AreEqual(2, l.Count)
 
-            Assert.IsTrue(l(0).IsLoaded)
+            Assert.IsTrue(CType(l(0), IEntity).IsLoaded)
 
-            Assert.IsTrue(l(0).IsFieldLoaded("Code"))
-            Assert.IsTrue(l(0).IsFieldLoaded("ID"))
+            Assert.IsTrue(CType(l(0), IEntity).IsFieldLoaded("Code"))
+            Assert.IsTrue(CType(l(0), IEntity).IsFieldLoaded("ID"))
 
             Assert.AreEqual(5, l(0).Code)
             Assert.AreEqual(5, l(1).Code)
@@ -613,5 +613,22 @@ Imports Worm.Database.Criteria.Joins
 
             Assert.AreEqual(13, r.Count)
         End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestColumns()
+
+        Dim t As Type = GetType(Table1)
+
+        Dim q As New QueryCmd(t, New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(New SQLGenerator("1"))))
+
+        q.Select(FCtor.Field(t, "Code").Add(t, "Title"))
+
+        Dim l As ReadOnlyEntityList(Of Table1) = q.ToEntityList(Of Table1)()
+
+        Assert.IsFalse(l(0).InternalProperties.IsLoaded)
+        Assert.IsTrue(l(0).InternalProperties.IsFieldLoaded("Code"))
+        Assert.IsFalse(l(0).InternalProperties.IsFieldLoaded("Enum"))
+
     End Sub
 End Class

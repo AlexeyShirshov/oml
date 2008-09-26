@@ -27,23 +27,23 @@ End Class
 Public Interface IGetManager
     Inherits IDisposable
 
-    ReadOnly Property Manager() As OrmManagerBase
+    ReadOnly Property Manager() As OrmManager
 End Interface
 
 Public Interface ICreateManager
-    Function CreateManager() As OrmManagerBase
+    Function CreateManager() As OrmManager
 End Interface
 
 Class GetManagerDisposable
     Implements IDisposable, IGetManager
 
-    Private _mgr As OrmManagerBase
+    Private _mgr As OrmManager
 
-    Public Sub New(ByVal mgr As OrmManagerBase)
+    Public Sub New(ByVal mgr As OrmManager)
         _mgr = mgr
     End Sub
 
-    Private ReadOnly Property Manager() As OrmManagerBase Implements IGetManager.Manager
+    Private ReadOnly Property Manager() As OrmManager Implements IGetManager.Manager
         Get
             Return _mgr
         End Get
@@ -77,13 +77,13 @@ End Class
 Class ManagerWrapper
     Implements IGetManager
 
-    Private _mgr As OrmManagerBase
+    Private _mgr As OrmManager
 
-    Public Sub New(ByVal mgr As OrmManagerBase)
+    Public Sub New(ByVal mgr As OrmManager)
         _mgr = mgr
     End Sub
 
-    Public ReadOnly Property Manager() As OrmManagerBase Implements IGetManager.Manager
+    Public ReadOnly Property Manager() As OrmManager Implements IGetManager.Manager
         Get
             Return _mgr
         End Get
@@ -113,7 +113,7 @@ Class ManagerWrapper
 
 End Class
 
-Public Delegate Function CreateManagerDelegate() As OrmManagerBase
+Public Delegate Function CreateManagerDelegate() As OrmManager
 
 Public Class CreateManager
     Implements ICreateManager
@@ -124,7 +124,107 @@ Public Class CreateManager
         _del = createManDelegate
     End Sub
 
-    Public Function CreateManager() As OrmManagerBase Implements ICreateManager.CreateManager
+    Public Function CreateManager() As OrmManager Implements ICreateManager.CreateManager
         Return _del()
     End Function
 End Class
+
+Namespace Orm.Query
+
+    Public MustInherit Class QueryAspect
+        Public Enum AspectType
+            Columns
+        End Enum
+
+        Private _type As AspectType
+
+        Public ReadOnly Property AscpectType() As AspectType
+            Get
+                Return _type
+            End Get
+        End Property
+
+        Public MustOverride Function GetStaticKey() As String
+        Public MustOverride Function GetDynamicKey() As String
+        Public MustOverride Function MakeStmt(ByVal s As ObjectMappingEngine) As String
+
+        Public Sub New(ByVal type As AspectType)
+            _type = type
+        End Sub
+    End Class
+
+    Public Class DistinctAspect
+        Inherits QueryAspect
+
+        Public Sub New()
+            MyBase.New(AspectType.Columns)
+        End Sub
+
+        Public Overrides Function GetDynamicKey() As String
+            Return String.Empty
+        End Function
+
+        Public Overrides Function GetStaticKey() As String
+            Return "distinct"
+        End Function
+
+        Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine) As String
+            Return "distinct "
+        End Function
+    End Class
+
+    Public MustInherit Class TopAspect
+        Inherits QueryAspect
+
+        Private _top As Integer
+        Private _sort As Worm.Sorting.Sort
+
+        Public Sub New(ByVal top As Integer)
+            MyBase.New(AspectType.Columns)
+            _top = top
+        End Sub
+
+        Public Sub New(ByVal top As Integer, ByVal sort As Worm.Sorting.Sort)
+            MyBase.New(AspectType.Columns)
+            _top = top
+            _sort = sort
+        End Sub
+
+        Public Overrides Function GetDynamicKey() As String
+            Return "-top-" & Top.ToString & "-"
+        End Function
+
+        Public Overrides Function GetStaticKey() As String
+            If _sort IsNot Nothing Then
+                Return "-top-" & _sort.ToString
+            End If
+            Return "-top-"
+        End Function
+
+        Protected ReadOnly Property Top() As Integer
+            Get
+                Return _top
+            End Get
+        End Property
+    End Class
+
+End Namespace
+
+Namespace Database
+    Public Class TopAspect
+        Inherits Orm.Query.TopAspect
+
+        Public Sub New(ByVal top As Integer)
+            MyBase.New(top)
+        End Sub
+
+        Public Sub New(ByVal top As Integer, ByVal sort As Worm.Sorting.Sort)
+            MyBase.New(top, sort)
+        End Sub
+
+        Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine) As String
+            Return CType(s, SQLGenerator).TopStatement(Top)
+        End Function
+    End Class
+
+End Namespace

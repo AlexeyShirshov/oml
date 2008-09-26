@@ -431,7 +431,7 @@ End Class
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _
     Public Sub TestGetUnions()
         Dim schema As New SQLGenerator("1")
-        Worm.QueryGenerator.GetUnions(Nothing)
+        Worm.ObjectMappingEngine.GetUnions(Nothing)
     End Sub
 
     <TestMethod(), ExpectedException(GetType(ArgumentNullException))> _

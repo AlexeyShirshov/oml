@@ -153,7 +153,7 @@ Namespace Web
                     u = FindUserByName(mgr, username, Nothing)
                 End If
                 If u IsNot Nothing Then
-                    Dim schema As QueryGenerator = mgr.ObjectSchema
+                    Dim schema As ObjectMappingEngine = mgr.MappingEngine
                     Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
                     Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                         Using u.BeginEdit()
@@ -216,7 +216,7 @@ Namespace Web
 
 
                 Dim u As OrmBase = ProfileProvider.CreateUser(mgr, username, Nothing)
-                Dim schema As QueryGenerator = mgr.ObjectSchema
+                Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
 
                 schema.SetFieldValue(u, GetField("Email"), email, oschema)
@@ -288,7 +288,7 @@ Namespace Web
                     u = FindUserByName(mgr, username, Nothing)
                 End If
                 If u IsNot Nothing Then
-                    Dim schema As QueryGenerator = mgr.ObjectSchema
+                    Dim schema As ObjectMappingEngine = mgr.MappingEngine
                     Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
                     Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                         Using u.BeginEdit()
@@ -316,7 +316,7 @@ Namespace Web
                     u = FindUserByName(mgr, userName, Nothing)
                 End If
                 If u IsNot Nothing Then
-                    Dim schema As QueryGenerator = mgr.ObjectSchema
+                    Dim schema As ObjectMappingEngine = mgr.MappingEngine
                     Dim lf As String = GetField("IsLockedOut")
                     If schema.HasField(u.GetType, lf) Then
                         Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
@@ -343,7 +343,7 @@ Namespace Web
                     Dim u As OrmBase = Nothing
                     FindUserByEmail(mgr, user.Email, Nothing)
                     If u IsNot Nothing Then
-                        Dim schema As QueryGenerator = mgr.ObjectSchema
+                        Dim schema As ObjectMappingEngine = mgr.MappingEngine
                         Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(u.GetType)
                         Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                             Using u.BeginEdit()
@@ -368,7 +368,7 @@ Namespace Web
                     Return False
                 End If
 
-                Dim schema As QueryGenerator = mgr.ObjectSchema
+                Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim lf As String = GetField("IsLockedOut")
                 Dim tt As System.Type = u.GetType
 
@@ -425,7 +425,7 @@ Namespace Web
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, MapField("Email"), New TypeWrap(Of Object)(emailToMatch), FilterOperation.Like))
-                Dim schema As QueryGenerator = mgr.ObjectSchema
+                Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim c As CriteriaLink = CType(New Worm.Database.Criteria.Ctor(ProfileProvider.GetUserType).Field(MapField("Email")).Like(emailToMatch), CriteriaLink)
                 Dim users As IList = ProfileProvider.FindUsers(mgr, c)
                 totalRecords = users.Count
@@ -438,7 +438,7 @@ Namespace Web
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(usernameToMatch), FilterOperation.Like))
-                Dim schema As QueryGenerator = mgr.ObjectSchema
+                Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim users As IList = ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Like(usernameToMatch))
                 totalRecords = users.Count
                 Return CreateUserCollection(users, schema, pageIndex, pageSize)
@@ -447,7 +447,7 @@ Namespace Web
 
         Public Overrides Function GetAllUsers(ByVal pageIndex As Integer, ByVal pageSize As Integer, ByRef totalRecords As Integer) As System.Web.Security.MembershipUserCollection
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
-                Dim schema As QueryGenerator = mgr.ObjectSchema
+                Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 'Dim f As New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(-1), FilterOperation.NotEqual)
                 Dim users As IList = ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field("ID").NotEq(-1))
                 totalRecords = users.Count
@@ -477,7 +477,7 @@ Namespace Web
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 'Dim c As New OrmCondition.OrmConditionConstructor
                 'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, "ID", New TypeWrap(Of Object)(providerUserKey), FilterOperation.Equal))
-                Dim schema As QueryGenerator = mgr.ObjectSchema
+                Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim users As IList = ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field("ID").Eq(providerUserKey))
                 If users.Count <> 1 Then
                     Return Nothing
@@ -505,7 +505,7 @@ Namespace Web
                     If u Is Nothing Then
                         Return Nothing
                     End If
-                    Return CreateMembershipUser(mgr.ObjectSchema, u)
+                    Return CreateMembershipUser(mgr.MappingEngine, u)
                 End Using
             End If
             Return Nothing
@@ -513,7 +513,7 @@ Namespace Web
 
         Public Overrides Function GetUserNameByEmail(ByVal email As String) As String
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
-                Dim schema As QueryGenerator = mgr.ObjectSchema
+                Dim schema As ObjectMappingEngine = mgr.MappingEngine
                 Dim u As OrmBase = FindUserByEmail(mgr, email, Nothing)
                 If u Is Nothing Then
                     Return Nothing
@@ -535,7 +535,7 @@ Namespace Web
             End Get
         End Property
 
-        Protected Function CreateMembershipUser(ByVal schema As QueryGenerator, ByVal u As OrmBase) As MembershipUser
+        Protected Function CreateMembershipUser(ByVal schema As ObjectMappingEngine, ByVal u As OrmBase) As MembershipUser
             Dim lf As String = GetField("IsLockedOut")
             Dim islockedout As Boolean = False
             Dim ut As System.Type = u.GetType
@@ -597,7 +597,7 @@ Namespace Web
             Return mu
         End Function
 
-        Protected Function CreateUserCollection(ByVal users As IList, ByVal schema As QueryGenerator) As MembershipUserCollection
+        Protected Function CreateUserCollection(ByVal users As IList, ByVal schema As ObjectMappingEngine) As MembershipUserCollection
             Dim uc As New MembershipUserCollection
             For Each u As OrmBase In users
                 uc.Add(CreateMembershipUser(schema, u))
@@ -605,7 +605,7 @@ Namespace Web
             Return uc
         End Function
 
-        Protected Function CreateUserCollection(ByVal users As IList, ByVal schema As QueryGenerator, ByVal pageIndex As Integer, ByVal pageSize As Integer) As MembershipUserCollection
+        Protected Function CreateUserCollection(ByVal users As IList, ByVal schema As ObjectMappingEngine, ByVal pageIndex As Integer, ByVal pageSize As Integer) As MembershipUserCollection
             Dim uc As New MembershipUserCollection
             Dim start As Integer = Math.Max(0, (pageIndex - 1) * pageSize)
             If start < users.Count Then
@@ -646,7 +646,7 @@ Namespace Web
         Protected Function FindUserByEmail(ByVal mgr As OrmDBManager, ByVal email As String, ByVal userIsOnline As Nullable(Of Boolean)) As OrmBase
             'Dim c As New OrmCondition.OrmConditionConstructor
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, GetField("Email"), New TypeWrap(Of Object)(email), FilterOperation.Equal))
-            Dim schema As QueryGenerator = mgr.ObjectSchema
+            Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim users As IList = ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field(GetField("Email")).Eq(email))
             If users.Count <> 1 Then
                 Return Nothing
@@ -661,7 +661,7 @@ Namespace Web
         Protected Friend Function FindUserByName(ByVal mgr As OrmDBManager, ByVal username As String, ByVal userIsOnline As Nullable(Of Boolean)) As OrmBase
             'Dim c As New OrmCondition.OrmConditionConstructor
             'c.AddFilter(New OrmFilter(ProfileProvider.GetUserType, ProfileProvider._userNameField, New TypeWrap(Of Object)(username), FilterOperation.Equal))
-            Dim schema As QueryGenerator = mgr.ObjectSchema
+            Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim users As IList = ProfileProvider.FindUsers(mgr, New Ctor(ProfileProvider.GetUserType).Field(ProfileProvider._userNameField).Eq(username))
             If users.Count <> 1 Then
                 Return Nothing
@@ -687,7 +687,7 @@ Namespace Web
                 End If
 
                 If u IsNot Nothing Then
-                    Dim schema As QueryGenerator = mgr.ObjectSchema
+                    Dim schema As ObjectMappingEngine = mgr.MappingEngine
                     Dim laf As String = ProfileProvider._lastActivityField
                     If Not String.IsNullOrEmpty(laf) Then
                         Dim dt As Date = CDate(u.GetValue(laf))
@@ -706,7 +706,7 @@ Namespace Web
             End Using
         End Sub
 
-        Protected Function IsUserOnline(ByVal schema As QueryGenerator, ByVal u As OrmBase) As Boolean
+        Protected Function IsUserOnline(ByVal schema As ObjectMappingEngine, ByVal u As OrmBase) As Boolean
             If String.IsNullOrEmpty(ProfileProvider._lastActivityField) Then
                 Throw New InvalidOperationException("LastActivity field is not specified")
             End If
@@ -718,7 +718,7 @@ Namespace Web
         End Function
 
         Protected Sub UpdateFailureCount(ByVal mgr As OrmDBManager, ByVal u As OrmBase)
-            Dim schema As QueryGenerator = mgr.ObjectSchema
+            Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim ut As System.Type = u.GetType
 
             If schema.HasField(ut, GetField("IsLockedOut")) Then

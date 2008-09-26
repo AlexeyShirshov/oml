@@ -3,7 +3,7 @@ Imports Worm.Orm.Meta
 Public MustInherit Class ObjectSchemaBaseImplementationWeb
     Implements IOrmObjectSchema, IOrmSchemaInit
 
-    Protected _schema As Worm.QueryGenerator
+    Protected _schema As Worm.ObjectMappingEngine
 
     Public Overridable Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchema.ChangeValueType
         newvalue = value
@@ -44,7 +44,7 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
         Return New M2MRelation() {}
     End Function
 
-    Public Sub GetSchema(ByVal schema As Worm.QueryGenerator, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
+    Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
         _schema = schema
     End Sub
 End Class

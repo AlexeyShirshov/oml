@@ -49,9 +49,9 @@ Imports Worm.Orm.Meta
 #End Region
 
     <TestMethod()> Public Sub TestQuery()
-        Using mgr As OrmManagerBase = CreateManager()
+        Using mgr As OrmManager = CreateManager()
             Dim col As ICollection(Of Entity4) = mgr.Find(Of Entity4)( _
-                mgr.ObjectSchema.CreateCriteria(GetType(Entity4), "Title").Eq("first"))
+                mgr.MappingEngine.CreateCriteria(GetType(Entity4), "Title").Eq("first"))
 
             Assert.AreEqual(1, col.Count)
 
@@ -62,7 +62,7 @@ Imports Worm.Orm.Meta
         End Using
     End Sub
 
-    Public Shared Function CreateManager() As OrmManagerBase
+    Public Shared Function CreateManager() As OrmManager
         Return New wx.QueryManager(New wx.XPathGenerator("xml"), GetFileFromStream("data.xml"))
     End Function
 

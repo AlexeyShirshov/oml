@@ -34,7 +34,7 @@ Namespace Xml
                 _id = id
             End Sub
 
-            Public Overridable Function Validate() As Boolean Implements OrmManagerBase.ICacheValidator.Validate
+            Public Overridable Function Validate() As Boolean Implements OrmManager.ICacheValidator.Validate
                 If _f IsNot Nothing Then
                     For Each fl As IFilter In _f.GetAllFilters
                         Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
@@ -57,7 +57,7 @@ Namespace Xml
                 Return True
             End Function
 
-            Public Overridable Function Validate(ByVal ce As OrmManagerBase.CachedItem) As Boolean Implements OrmManagerBase.ICacheValidator.Validate
+            Public Overridable Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean Implements OrmManager.ICacheValidator.Validate
                 Return True
             End Function
 
@@ -66,7 +66,7 @@ Namespace Xml
                     If _f IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
                         Dim cache As OrmCacheBase = _mgr.Cache
-                        cache.AddDependType(_mgr.GetFilterInfo, tt, _key, _id, _f, _mgr.ObjectSchema)
+                        cache.AddDependType(_mgr.GetFilterInfo, tt, _key, _id, _f, _mgr.MappingEngine)
 
                         For Each fl As IFilter In _f.GetAllFilters
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
@@ -112,8 +112,8 @@ Namespace Xml
             '    End Get
             'End Property
 
-            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
-                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSorting2)
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_sort)
@@ -124,8 +124,8 @@ Namespace Xml
                 Return New CachedItem(_sort, s, _f, GetValues(withLoad), _mgr)
             End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManagerBase.CachedItem
-                Dim sortex As IOrmSorting2 = TryCast(_mgr.ObjectSchema.GetObjectSchema(GetType(T)), IOrmSorting2)
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As OrmManager.CachedItem
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(GetType(T)), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_sort)
@@ -194,7 +194,7 @@ Namespace Xml
 
             Protected ReadOnly Property Schema() As XPathGenerator
                 Get
-                    Return CType(_mgr.ObjectSchema, XPathGenerator)
+                    Return CType(_mgr.MappingEngine, XPathGenerator)
                 End Get
             End Property
 

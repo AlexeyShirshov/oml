@@ -64,7 +64,7 @@ Namespace Database
                     Case Worm.Criteria.FilterOperation.Between
                         Return " between "
                     Case Else
-                        Throw New QueryGeneratorException("invalid opration " & oper.ToString)
+                        Throw New ObjectMappingException("invalid opration " & oper.ToString)
                 End Select
             End Function
 
@@ -152,7 +152,7 @@ Namespace Database
                 Return New NonTemplateFilter() {Me}
             End Function
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 'Return TemplateBase.Oper2String(_oper) & GetParam(schema, pname)
                 Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
                 If id IsNot Nothing Then
@@ -219,11 +219,11 @@ Namespace Database
                 End Get
             End Property
 
-            Public Overloads Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overloads Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 Return MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
             End Function
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If ParamValue.ShouldUse Then
                     If Template.Table.Name = TempTable Then
                         Return Template.Column & Template.OperToStmt & GetParam(schema, pname)
@@ -242,7 +242,7 @@ Namespace Database
                             Try
                                 [alias] = tableAliases(map._tableName) & "."
                             Catch ex As KeyNotFoundException
-                                Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+                                Throw New ObjectMappingException("There is not alias for table " & map._tableName.RawName, ex)
                             End Try
                         End If
 
@@ -257,7 +257,7 @@ Namespace Database
                 Return New TableFilter() {Me}
             End Function
 
-            Public Overrides Function MakeSingleQueryStmt(ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
+            Public Overrides Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String)
                 If schema Is Nothing Then
                     Throw New ArgumentNullException("schema")
                 End If
@@ -350,11 +350,11 @@ Namespace Database
             '    End If
             'End Function
 
-            Public Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overloads Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 Return MakeQueryStmt(oschema, filterInfo, schema, almgr, pname, Nothing)
             End Function
 
-            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If _oschema Is Nothing Then
                     _oschema = oschema
                 End If
@@ -376,7 +376,7 @@ Namespace Database
                     Try
                         map = oschema.GetFieldColumnMap()(Template.FieldName)
                     Catch ex As KeyNotFoundException
-                        Throw New QueryGeneratorException(String.Format("There is not column for property {0} ", Template.Type.ToString & "." & Template.FieldName, ex))
+                        Throw New ObjectMappingException(String.Format("There is not column for property {0} ", Template.Type.ToString & "." & Template.FieldName, ex))
                     End Try
 
                     Dim [alias] As String = String.Empty
@@ -386,7 +386,7 @@ Namespace Database
                         Try
                             [alias] = tableAliases(map._tableName) & schema.Selector
                         Catch ex As KeyNotFoundException
-                            Throw New QueryGeneratorException("There is not alias for table " & map._tableName.RawName, ex)
+                            Throw New ObjectMappingException("There is not alias for table " & map._tableName.RawName, ex)
                         End Try
                     End If
 
@@ -400,11 +400,11 @@ Namespace Database
                 End If
             End Function
 
-            Public Overloads Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
+            Public Overloads Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 Return MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
             End Function
 
-            Public Overloads Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+            Public Overloads Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If schema Is Nothing Then
                     Throw New ArgumentNullException("schema")
                 End If
@@ -416,7 +416,7 @@ Namespace Database
                 Return MakeQueryStmt(_oschema, filterInfo, schema, almgr, pname, columns)
             End Function
 
-            Protected Overrides Function GetParam(ByVal schema As QueryGenerator, ByVal pmgr As ICreateParam) As String
+            Protected Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal pmgr As ICreateParam) As String
                 If _dbFilter Then
                     Throw New InvalidOperationException
                 Else
@@ -468,7 +468,7 @@ Namespace Database
                 MyBase.New(left, right, fo)
             End Sub
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 Return Left.MakeStmt(schema, pname, almgr, columns) & TemplateBase.Oper2String(Operation) & Right.MakeStmt(schema, pname, almgr, columns)
             End Function
 

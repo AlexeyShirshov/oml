@@ -70,17 +70,17 @@ Imports Worm.Database.Criteria
 
             mgr.BeginTransaction()
             Try
-                Assert.IsFalse(e.HasChanges())
-                Assert.IsFalse(e2.HasChanges())
+                Assert.IsFalse(e.InternalProperties.HasChanges())
+                Assert.IsFalse(e2.InternalProperties.HasChanges())
 
                 CType(e, Worm.Orm.IM2M).Add(e2)
 
-                Assert.IsTrue(e.HasChanges)
-                Assert.IsTrue(e2.HasChanges)
+                Assert.IsTrue(e.InternalProperties.HasChanges)
+                Assert.IsTrue(e2.InternalProperties.HasChanges)
 
                 e.SaveChanges(True)
-                Assert.IsFalse(e.HasChanges)
-                Assert.IsFalse(e2.HasChanges)
+                Assert.IsFalse(e.InternalProperties.HasChanges)
+                Assert.IsFalse(e2.InternalProperties.HasChanges)
 
                 l = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToEntityList(Of Entity4)(mgr)
                 Assert.IsNotNull(l)
@@ -118,19 +118,19 @@ Imports Worm.Database.Criteria
             Try
                 Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
 
-                    Assert.IsFalse(e.HasM2MChanges)
-                    Assert.IsFalse(e2.HasM2MChanges)
+                    Assert.IsFalse(e.InternalProperties.HasM2MChanges)
+                    Assert.IsFalse(e2.InternalProperties.HasM2MChanges)
 
                     e.M2MNew.Add(e2)
 
-                    Assert.IsTrue(e.HasM2MChanges)
-                    Assert.IsTrue(e2.HasM2MChanges)
+                    Assert.IsTrue(e.InternalProperties.HasM2MChanges)
+                    Assert.IsTrue(e2.InternalProperties.HasM2MChanges)
 
                     s.Commit()
                 End Using
 
-                Assert.IsFalse(e.HasM2MChanges)
-                Assert.IsFalse(e2.HasM2MChanges)
+                Assert.IsFalse(e.InternalProperties.HasM2MChanges)
+                Assert.IsFalse(e2.InternalProperties.HasM2MChanges)
 
                 l = e.M2MNew.Find(GetType(Entity4)).ToEntityList(Of Entity4)(mgr)
                 Assert.AreEqual(5, l.Count)

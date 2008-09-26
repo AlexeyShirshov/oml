@@ -11,6 +11,7 @@ Imports Worm.Orm
 Imports Worm
 Imports Worm.Database.Criteria
 Imports Worm.Database.Criteria.Core
+Imports Worm.Database.Sorting
 
 <TestClass()> Public Class TestAgreegates
 
@@ -82,8 +83,8 @@ Imports Worm.Database.Criteria.Core
     <TestMethod()> Public Sub TestOrder()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim t As Type = GetType(Entity4)
-            Dim r As M2MRelation = mgr.DbSchema.GetM2MRelation(t, GetType(Entity), True)
-            Dim r2 As M2MRelation = mgr.DbSchema.GetM2MRelation(GetType(Entity), t, True)
+            Dim r As M2MRelation = mgr.SQLGenerator.GetM2MRelation(t, GetType(Entity), True)
+            Dim r2 As M2MRelation = mgr.SQLGenerator.GetM2MRelation(GetType(Entity), t, True)
             Assert.IsNotNull(r)
 
             Dim table As SourceFragment = r.Table
@@ -95,7 +96,7 @@ Imports Worm.Database.Criteria.Core
             })
 
             Dim q As New QueryCmd(GetType(Entity4))
-            q.propSort = New Worm.Sorting.SortAdv(inner, SortType.Desc)
+            q.propSort = New DbSort(inner, SortType.Desc)
 
             Dim l As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
 
@@ -123,8 +124,8 @@ Imports Worm.Database.Criteria.Core
             q.Aggregates(0).Alias = "cnt"
 
             Dim t As Type = GetType(Entity4)
-            Dim r As M2MRelation = mgr.DbSchema.GetM2MRelation(t, GetType(Entity), CStr(Nothing))
-            Dim r2 As M2MRelation = mgr.DbSchema.GetM2MRelation(GetType(Entity), t, CStr(Nothing))
+            Dim r As M2MRelation = mgr.SQLGenerator.GetM2MRelation(t, GetType(Entity), CStr(Nothing))
+            Dim r2 As M2MRelation = mgr.SQLGenerator.GetM2MRelation(GetType(Entity), t, CStr(Nothing))
             Dim table As SourceFragment = r.Table
             Dim jf As New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
             q.Joins = New OrmJoin() {New OrmJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
@@ -146,7 +147,7 @@ Imports Worm.Database.Criteria.Core
             Assert.AreEqual(11, l(0))
             Assert.AreEqual(4, l(1))
 
-            q.propSort = New Worm.Sorting.SortAdv(q.Aggregates(0), SortType.Desc)
+            q.propSort = New DbSort(q.Aggregates(0), SortType.Desc)
             l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
@@ -185,14 +186,14 @@ Imports Worm.Database.Criteria.Core
             Dim typeE As Type = GetType(Entity)
             Dim typeE4 As Type = GetType(Entity4)
 
-            Dim r As M2MRelation = mgr.DbSchema.GetM2MRelation(typeE4, typeE, True)
-            Dim r2 As M2MRelation = mgr.DbSchema.GetM2MRelation(typeE, typeE4, True)
+            Dim r As M2MRelation = mgr.SQLGenerator.GetM2MRelation(typeE4, typeE, True)
+            Dim r2 As M2MRelation = mgr.SQLGenerator.GetM2MRelation(typeE, typeE4, True)
             Assert.IsNotNull(r)
 
             Dim table As SourceFragment = r.Table
 
             Dim q As New QueryCmd(typeE4)
-            q.propSort = New Worm.Sorting.SortAdv( _
+            q.propSort = New DbSort( _
                 New QueryCmd(table). _
                     SelectAgg(AggCtor.Count). _
                     Where(JoinCondition.Create(table, r2.Column).Eq(typeE4, "ID")), SortType.Desc)

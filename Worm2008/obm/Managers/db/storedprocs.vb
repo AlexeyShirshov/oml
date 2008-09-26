@@ -107,7 +107,7 @@ Namespace Database.Storedprocs
 
         Protected Function Execute(ByVal mgr As OrmReadOnlyDBManager) As Object
             _reseted(GetKey) = False
-            Dim schema As SQLGenerator = CType(mgr.ObjectSchema, SQLGenerator)
+            Dim schema As SQLGenerator = CType(mgr.MappingEngine, SQLGenerator)
             Using cmd As System.Data.Common.DbCommand = schema.CreateDBCommand
                 cmd.CommandType = System.Data.CommandType.StoredProcedure
                 cmd.CommandText = GetName()
@@ -463,8 +463,8 @@ Namespace Database.Storedprocs
         Protected MustOverride Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal result As Object)
         Protected MustOverride Function InitResult() As Object
 
-        Protected Overridable Sub EndProcess(ByVal result As Object, ByVal mgr As OrmManagerBase)
-            
+        Protected Overridable Sub EndProcess(ByVal result As Object, ByVal mgr As OrmManager)
+
         End Sub
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
@@ -650,7 +650,7 @@ Namespace Database.Storedprocs
             'Dim ce As New OrmManagerBase.CachedItem(Nothing, OrmManagerBase.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
             Dim rr As New List(Of T)
             mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, rr, GetColumns)
-            Dim l As IListEdit = OrmManagerBase.CreateReadonlyList(GetType(T), rr)
+            Dim l As IListEdit = OrmManager.CreateReadonlyList(GetType(T), rr)
             _exec = mgr.Exec 'ce.ExecutionTime
             _fecth = mgr.Fecth 'ce.FetchTime
 
@@ -684,7 +684,7 @@ Namespace Database.Storedprocs
             If GetType(ICachedEntity).IsAssignableFrom(tt) Then
                 Dim mi As Reflection.MethodInfo = Nothing
                 If Not _fromWeakList.TryGetValue(tt, mi) Then
-                    Dim tmi As Reflection.MethodInfo = GetType(IListObjectConverter).GetMethod("FromWeakList", New Type() {GetType(Object), GetType(OrmManagerBase)})
+                    Dim tmi As Reflection.MethodInfo = GetType(IListObjectConverter).GetMethod("FromWeakList", New Type() {GetType(Object), GetType(OrmManager)})
                     mi = tmi.MakeGenericMethod(New Type() {tt})
                     _fromWeakList(tt) = mi
                 End If
@@ -891,8 +891,8 @@ Namespace Database.Storedprocs
 
         Public Interface IResultSetDescriptor
             Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String)
-            Sub BeginProcess(ByVal mgr As OrmManagerBase)
-            Sub EndProcess(ByVal mgr As OrmManagerBase)
+            Sub BeginProcess(ByVal mgr As OrmManager)
+            Sub EndProcess(ByVal mgr As OrmManager)
         End Interface
 
         Public MustInherit Class OrmDescriptor(Of T As {_IEntity, New})
@@ -912,7 +912,7 @@ Namespace Database.Storedprocs
                 End If
                 If _l Is Nothing Then
                     _l = New List(Of T)
-                    _oschema = mgr.DbSchema.GetObjectSchema(GetType(T))
+                    _oschema = mgr.SQLGenerator.GetObjectSchema(GetType(T))
                 End If
                 Dim dic As Generic.IDictionary(Of Object, T) = mgr.GetDictionary(Of T)()
                 Dim loaded As Integer
@@ -924,7 +924,7 @@ Namespace Database.Storedprocs
             Protected MustOverride Function GetWithLoad() As Boolean
             Protected MustOverride Function GetPrimaryKeyIndex() As Integer
 
-            Public Function GetObjects(ByVal mgr As OrmManagerBase) As ReadOnlyObjectList(Of T)
+            Public Function GetObjects(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
                 If _o Is Nothing Then
                     Throw New InvalidOperationException("Stored procedure is not executed")
                 End If
@@ -933,7 +933,7 @@ Namespace Database.Storedprocs
                     _count = mgr.ListConverter.GetCount(_o)
                     Dim mi As Reflection.MethodInfo = Nothing
                     If Not _fromWeakList.TryGetValue(tt, mi) Then
-                        Dim tmi As Reflection.MethodInfo = GetType(IListObjectConverter).GetMethod("FromWeakList", New Type() {GetType(Object), GetType(OrmManagerBase)})
+                        Dim tmi As Reflection.MethodInfo = GetType(IListObjectConverter).GetMethod("FromWeakList", New Type() {GetType(Object), GetType(OrmManager)})
                         mi = tmi.MakeGenericMethod(New Type() {tt})
                         _fromWeakList(tt) = mi
                     End If
@@ -964,8 +964,8 @@ Namespace Database.Storedprocs
                 End Get
             End Property
 
-            Public Overridable Sub EndProcess(ByVal mgr As OrmManagerBase) Implements IResultSetDescriptor.EndProcess
-                Dim l As ReadOnlyObjectList(Of T) = CType(OrmManagerBase.CreateReadonlyList(GetType(T), _l), Global.Worm.ReadOnlyObjectList(Of T))
+            Public Overridable Sub EndProcess(ByVal mgr As OrmManager) Implements IResultSetDescriptor.EndProcess
+                Dim l As ReadOnlyObjectList(Of T) = CType(OrmManager.CreateReadonlyList(GetType(T), _l), Global.Worm.ReadOnlyObjectList(Of T))
                 If GetType(ICachedEntity).IsAssignableFrom(GetType(T)) Then
                     _o = mgr.ListConverter.ToWeakList(l)
                 Else
@@ -974,7 +974,7 @@ Namespace Database.Storedprocs
                 _l = Nothing
             End Sub
 
-            Public Overridable Sub BeginProcess(ByVal mgr As OrmManagerBase) Implements IResultSetDescriptor.BeginProcess
+            Public Overridable Sub BeginProcess(ByVal mgr As OrmManager) Implements IResultSetDescriptor.BeginProcess
 
             End Sub
         End Class
@@ -1025,7 +1025,7 @@ Namespace Database.Storedprocs
             Return CType(MyBase.GetResult(mgr), List(Of IResultSetDescriptor))
         End Function
 
-        Protected Overrides Sub EndProcess(ByVal result As Object, ByVal mgr As OrmManagerBase)
+        Protected Overrides Sub EndProcess(ByVal result As Object, ByVal mgr As OrmManager)
             For Each d As IResultSetDescriptor In CType(result, IList)
                 d.EndProcess(mgr)
             Next

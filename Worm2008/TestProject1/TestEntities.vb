@@ -23,7 +23,7 @@ Public Class Entity
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -53,7 +53,7 @@ End Class
 Public MustInherit Class ObjectSchemaBaseImplementation
     Implements IOrmObjectSchema, IOrmSchemaInit
 
-    Protected _schema As Worm.QueryGenerator
+    Protected _schema As Worm.ObjectMappingEngine
     Protected _objectType As Type
 
     Public Overridable Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchema.ChangeValueType
@@ -95,7 +95,7 @@ Public MustInherit Class ObjectSchemaBaseImplementation
         Return New M2MRelation() {}
     End Function
 
-    Public Sub GetSchema(ByVal schema As Worm.QueryGenerator, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
+    Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
         _schema = schema
         _objectType = t
     End Sub
@@ -195,7 +195,7 @@ Public Class Entity2
 
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -299,7 +299,7 @@ Public Class Entity4
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -512,7 +512,7 @@ Public Class Entity5
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 

@@ -6,9 +6,9 @@ Imports System.Collections.Generic
 Imports Worm.Criteria.Core
 Imports Worm.Orm.Meta
 
-Namespace Sorting
-    Public Class SortAdv
-        Inherits Sort
+Namespace Database.Sorting
+    Public Class DbSort
+        Inherits Worm.Sorting.Sort
 
         Private _agr As AggregateBase
         Private _q As QueryCmd

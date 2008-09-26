@@ -78,7 +78,7 @@ Namespace Cache
 
         Public ReadOnly Property Main() As IOrmBase
             Get
-                Return OrmManagerBase.CurrentManager.GetOrmBaseFromCacheOrCreate(_mainId, _mainType)
+                Return OrmManager.CurrentManager.GetOrmBaseFromCacheOrCreate(_mainId, _mainType)
             End Get
         End Property
 
@@ -190,7 +190,7 @@ Namespace Cache
         'End Property
 
         Protected Sub RejectRelated(ByVal id As Object, ByVal add As Boolean)
-            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+            Dim mgr As OrmManager = OrmManager.CurrentManager
             'Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
             Dim el As EditableListBase = GetRevert(mgr, id)
 
@@ -203,11 +203,11 @@ Namespace Cache
             End If
         End Sub
 
-        Protected Overridable Function GetRevert(ByVal mgr As OrmManagerBase, ByVal id As Object) As EditableListBase
+        Protected Overridable Function GetRevert(ByVal mgr As OrmManager, ByVal id As Object) As EditableListBase
             Return CType(mgr.GetOrmBaseFromCacheOrCreate(id, SubType), _IOrmBase).GetM2M(MainType, Key)
         End Function
 
-        Protected Overridable Function GetRevert(ByVal mgr As OrmManagerBase) As List(Of EditableListBase)
+        Protected Overridable Function GetRevert(ByVal mgr As OrmManager) As List(Of EditableListBase)
             Throw New NotSupportedException
             'Dim l As New List(Of EditableListBase)
             'For Each o As IOrmBase In Main.Find(SubType).ToList(mgr)
@@ -220,7 +220,7 @@ Namespace Cache
         End Function
 
         Protected Sub AcceptDual()
-            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+            Dim mgr As OrmManager = OrmManager.CurrentManager
             For Each el As EditableListBase In GetRevert(mgr)
                 'Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
                 'If m IsNot Nothing Then
@@ -285,7 +285,7 @@ Namespace Cache
             Return _mainType.GetHashCode Xor _subType.GetHashCode Xor _mainId.GetHashCode Xor If(String.IsNullOrEmpty(_key), 0, _key.GetHashCode)
         End Function
 
-        Public Overridable Overloads Function Accept(ByVal mgr As OrmManagerBase) As Boolean
+        Public Overridable Overloads Function Accept(ByVal mgr As OrmManager) As Boolean
             Using SyncRoot
                 Dim needaccept As Boolean = _addedList.Count > 0 OrElse _deletedList.Count > 0
                 _addedList.Clear()
@@ -300,7 +300,7 @@ Namespace Cache
             Return True
         End Function
 
-        Public Overridable Function _AcceptAdd(ByVal id As Object, ByVal mgr As OrmManagerBase) As Boolean
+        Public Overridable Function _AcceptAdd(ByVal id As Object, ByVal mgr As OrmManager) As Boolean
             Return True
         End Function
 
@@ -308,7 +308,7 @@ Namespace Cache
 
         End Sub
 
-        Public Overridable Overloads Function Accept(ByVal mgr As OrmManagerBase, ByVal id As Object) As Boolean
+        Public Overridable Overloads Function Accept(ByVal mgr As OrmManager, ByVal id As Object) As Boolean
             Using SyncRoot
                 If _addedList.Contains(id) Then
                     If Not _AcceptAdd(id, mgr) Then
@@ -352,7 +352,7 @@ Namespace Cache
             Return True
         End Function
 
-        Friend Function PrepareSave(ByVal mgr As OrmManagerBase) As EditableListBase
+        Friend Function PrepareSave(ByVal mgr As OrmManager) As EditableListBase
             Dim newl As EditableListBase = Nothing
             If Not mgr.IsNewObject(_mainType, _mainId) Then
                 Dim ad As New List(Of Object)
@@ -377,7 +377,7 @@ Namespace Cache
             Return newl
         End Function
 
-        Protected Overridable Function CheckDual(ByVal mgr As OrmManagerBase, ByVal id As Object) As Boolean
+        Protected Overridable Function CheckDual(ByVal mgr As OrmManager, ByVal id As Object) As Boolean
             Return Not GetRevert(mgr, id)._savedIds.Contains(_mainId)
         End Function
 
@@ -434,7 +434,7 @@ Namespace Cache
                     Dim arr As New List(Of Object)
                     If _mainList.Count <> 0 OrElse _addedList.Count <> 0 Then
                         If _addedList.Count <> 0 AndAlso _mainList.Count <> 0 Then
-                            Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+                            Dim mgr As OrmManager = OrmManager.CurrentManager
                             Dim col As New ArrayList
                             Dim c As IComparer = Nothing
                             If _sort Is Nothing Then
@@ -505,7 +505,7 @@ Namespace Cache
 
 #Region " Public functions "
 
-        Public Overrides Function Accept(ByVal mgr As OrmManagerBase) As Boolean
+        Public Overrides Function Accept(ByVal mgr As OrmManager) As Boolean
             _cantgetCurrent = False
             Using SyncRoot
                 Dim needaccept As Boolean = _addedList.Count > 0
@@ -590,7 +590,7 @@ Namespace Cache
             CType(_mainList, List(Of Object)).Remove(id)
         End Sub
 
-        Public Overrides Function _AcceptAdd(ByVal id As Object, ByVal mgr As OrmManagerBase) As Boolean
+        Public Overrides Function _AcceptAdd(ByVal id As Object, ByVal mgr As OrmManager) As Boolean
             If _sort Is Nothing Then
                 CType(_mainList, List(Of Object)).Add(id)
                 _addedList.Remove(id)
@@ -621,7 +621,7 @@ Namespace Cache
         Protected Overrides Function PreAdd(ByVal id As Object) As Boolean
             If _sort IsNot Nothing Then
                 Dim sr As IOrmSorting = Nothing
-                Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+                Dim mgr As OrmManager = OrmManager.CurrentManager
                 Dim col As New ArrayList(mgr.ConvertIds2Objects(_subType, _addedList, False))
                 If mgr.CanSortOnClient(_subType, col, _sort, sr) Then
                     Dim c As IComparer = Nothing
@@ -646,10 +646,10 @@ Namespace Cache
             Return False
         End Function
 
-        Protected Overrides Function GetRevert(ByVal mgr As OrmManagerBase) As System.Collections.Generic.List(Of EditableListBase)
+        Protected Overrides Function GetRevert(ByVal mgr As OrmManager) As System.Collections.Generic.List(Of EditableListBase)
             Dim l As New List(Of EditableListBase)
             For Each id As Integer In _mainList
-                Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
+                Dim m As OrmManager.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
                 If m IsNot Nothing Then
                     l.Add(m.Entry)
                 End If
@@ -657,8 +657,8 @@ Namespace Cache
             Return l
         End Function
 
-        Protected Overrides Function GetRevert(ByVal mgr As OrmManagerBase, ByVal id As Object) As EditableListBase
-            Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
+        Protected Overrides Function GetRevert(ByVal mgr As OrmManager, ByVal id As Object) As EditableListBase
+            Dim m As OrmManager.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
             If m IsNot Nothing Then
                 Return m.Entry
             End If
@@ -680,8 +680,8 @@ Namespace Cache
         '    Next
         'End Sub
 
-        Protected Overrides Function CheckDual(ByVal mgr As OrmManagerBase, ByVal id As Object) As Boolean
-            Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateOrmBase(id, SubType), MainType, Key).First
+        Protected Overrides Function CheckDual(ByVal mgr As OrmManager, ByVal id As Object) As Boolean
+            Dim m As OrmManager.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateOrmBase(id, SubType), MainType, Key).First
             Dim c As Boolean = True
             For Each i As Object In m.Entry.Original
                 If i.Equals(_mainId) Then

@@ -19,7 +19,7 @@ Public Class Table3
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -69,7 +69,7 @@ Public Class Table3
         If _code = 0 Then
             _trigger = True
         Else
-            _obj = Worm.OrmManagerBase.CurrentManager.GetOrmBaseFromCacheOrCreate(_id, GetObjectType())
+            _obj = Worm.OrmManager.CurrentManager.GetOrmBaseFromCacheOrCreate(_id, GetObjectType())
         End If
     End Sub
 
@@ -114,7 +114,7 @@ Public Class Table3
                 _code = value
                 If _trigger Then
                     _trigger = False
-                    _obj = Worm.OrmManagerBase.CurrentManager.GetOrmBaseFromCacheOrCreate(_id, GetObjectType())
+                    _obj = Worm.OrmManager.CurrentManager.GetOrmBaseFromCacheOrCreate(_id, GetObjectType())
                 End If
             End Using
         End Set
@@ -203,7 +203,7 @@ Public Class Table33
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.QueryGenerator)
+    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 

@@ -27,7 +27,7 @@ Public Class TestDic
     Public Sub TestLike()
 
         Dim s As New SQLGenerator("1")
-        Using mgr As Worm.OrmManagerBase = TestManagerRS.CreateManagerShared(s)
+        Using mgr As Worm.OrmManager = TestManagerRS.CreateManagerShared(s)
             Dim f As Worm.Criteria.CriteriaLink = New Criteria.Ctor(GetType(Table1)).Field("Title").Like("f%")
             Dim col As ICollection(Of Table1) = mgr.Find(Of Table1)(f, Nothing, False)
 

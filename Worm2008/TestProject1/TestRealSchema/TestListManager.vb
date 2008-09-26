@@ -21,7 +21,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                Dim n As New Table1(-100, mgr.Cache, mgr.ObjectSchema)
+                Dim n As New Table1(-100, mgr.Cache, mgr.MappingEngine)
                 n.EnumStr = Enum1.first
                 n.CreatedAt = Now
 
@@ -34,7 +34,7 @@ Imports Worm.Orm
                 Assert.AreEqual(2, l(0).Identifier)
                 Assert.AreEqual(3, l(1).Identifier)
 
-                n = New Table1(-100, mgr.Cache, mgr.ObjectSchema)
+                n = New Table1(-100, mgr.Cache, mgr.MappingEngine)
                 n.EnumStr = Enum1.sec
                 n.CreatedAt = Now
                 n.Enum = CType(3, Global.System.Nullable(Of Global.TestProject1.Enum1))
@@ -70,7 +70,7 @@ Imports Worm.Orm
 
             mgr.BeginTransaction()
             Try
-                Dim n As New Table1(-100, mgr.Cache, mgr.ObjectSchema)
+                Dim n As New Table1(-100, mgr.Cache, mgr.MappingEngine)
                 n.EnumStr = Enum1.sec
                 n.CreatedAt = Now
                 n.Enum = CType(3, Global.System.Nullable(Of Global.TestProject1.Enum1))

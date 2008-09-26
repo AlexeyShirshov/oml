@@ -83,7 +83,7 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t3 As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Nothing, True)
+            Dim t3 As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, True)
 
             Assert.AreEqual(2, t3.Count)
 
@@ -100,7 +100,7 @@ Public Class TestSchema
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
 
-            Dim t3 As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Nothing, False)
+            Dim t3 As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, False)
 
             Assert.AreEqual(2, t3.Count)
 
@@ -108,7 +108,7 @@ Public Class TestSchema
                 Assert.IsFalse(t2.InternalProperties.IsLoaded)
             Next
 
-            For Each t2 As Table2 In mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Nothing, True)
+            For Each t2 As Table2 In mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, True)
                 Assert.IsTrue(t2.InternalProperties.IsLoaded)
             Next
         End Using
@@ -119,7 +119,7 @@ Public Class TestSchema
         Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.ObjectSchema), New Table1(11, mgr.Cache, mgr.ObjectSchema), New Table1(15, mgr.Cache, mgr.ObjectSchema)}
+            Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.MappingEngine), New Table1(11, mgr.Cache, mgr.MappingEngine), New Table1(15, mgr.Cache, mgr.MappingEngine)}
             Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
             mgr.LoadObjects(col)
 
@@ -151,7 +151,7 @@ Public Class TestSchema
         Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.ObjectSchema), New Table1(11, mgr.Cache, mgr.ObjectSchema), New Table1(15, mgr.Cache, mgr.ObjectSchema)}
+            Dim tt() As Table1 = New Table1() {New Table1(10, mgr.Cache, mgr.MappingEngine), New Table1(11, mgr.Cache, mgr.MappingEngine), New Table1(15, mgr.Cache, mgr.MappingEngine)}
             Dim col As New Worm.ReadOnlyList(Of Table1)(New List(Of Table1)(tt))
             col = mgr.LoadObjects(col, 0, col.Count, New List(Of Meta.ColumnAttribute)(New Meta.ColumnAttribute() {New Meta.ColumnAttribute("ID")}))
             Assert.AreEqual(0, col.Count)
@@ -171,12 +171,12 @@ Public Class TestSchema
         Dim schema As New SQLGenerator("1")
 
         Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
-            Dim t2 As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Sorting.Field("DT").Asc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            Dim t2 As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Sorting.Field("DT").Asc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
 
             Assert.AreEqual(1, t2(0).Identifier)
             Assert.AreEqual(4, t2(1).Identifier)
 
-            t2 = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.ObjectSchema)), Sorting.Field("DTs").Desc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
+            t2 = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Sorting.Field("DTs").Desc, True), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
 
             Assert.AreEqual(4, t2(0).Identifier)
             Assert.AreEqual(1, t2(1).Identifier)

@@ -69,7 +69,7 @@ Public Class Expressions
             Return FormatOper() & "$" & _v._ToString
         End Function
 
-        Public Overridable Function MakeStmt(ByVal s As QueryGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String)) As String
+        Public Overridable Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String)) As String
             Return FormatOper() & FormatParam(s, pmgr, almgr, columns)
         End Function
 
@@ -94,7 +94,7 @@ Public Class Expressions
             End Select
         End Function
 
-        Protected Overridable Function FormatParam(ByVal s As QueryGenerator, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As list(Of String)) As String
+        Protected Overridable Function FormatParam(ByVal s As ObjectMappingEngine, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As list(Of String)) As String
             Dim p As IParamFilterValue = TryCast(_v, IParamFilterValue)
             If p IsNot Nothing Then
                 Return p.GetParam(s, pmgr, Nothing)
@@ -118,7 +118,7 @@ Public Class Expressions
             End If
         End Function
 
-        Public Shared Function CreateFilter(ByVal schema As QueryGenerator, ByVal lf As UnaryExp, ByVal rf As UnaryExp, ByVal fo As FilterOperation) As IFilter
+        Public Shared Function CreateFilter(ByVal schema As ObjectMappingEngine, ByVal lf As UnaryExp, ByVal rf As UnaryExp, ByVal fo As FilterOperation) As IFilter
             Dim leftValue As IFilterValue = lf._v
             Dim rightValue As IFilterValue = rf._v
             If lf.GetType Is GetType(UnaryExp) AndAlso leftValue.GetType IsNot GetType(RefValue) Then
@@ -196,7 +196,7 @@ l1:
             End Get
         End Property
 
-        Public Overrides Function MakeStmt(ByVal s As QueryGenerator, ByVal pmgr As Orm.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String)) As String
+        Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal pmgr As Orm.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String)) As String
             Return "(" & _left.MakeStmt(s, pmgr, almgr, columns) & FormatOper() & _right.MakeStmt(s, pmgr, almgr, columns) & ")"
         End Function
 

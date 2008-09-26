@@ -143,7 +143,7 @@ Namespace Web
 
         Protected Function CreateProfileCollection(ByVal pageIndex As Integer, ByVal pageSize As Integer, ByVal mgr As OrmDBManager, ByVal col As IList) As ProfileInfoCollection
             Dim profiles As New ProfileInfoCollection
-            Dim schema As QueryGenerator = mgr.ObjectSchema
+            Dim schema As ObjectMappingEngine = mgr.MappingEngine
             Dim start As Integer = pageIndex * pageSize
             If start < col.Count Then
                 Dim [end] As Integer = Math.Min((pageIndex - 1) * pageSize, col.Count)
@@ -373,8 +373,8 @@ Namespace Web
             If _updateLastActivity AndAlso Not String.IsNullOrEmpty(_lastActivityField) Then
                 If user IsNot Nothing Then
                     Using mgr As OrmDBManager = _getMgr()
-                        Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(user.GetType)
-                        mgr.ObjectSchema.SetFieldValue(user, _lastActivityField, GetNow, oschema)
+                        Dim oschema As IOrmObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                        mgr.MappingEngine.SetFieldValue(user, _lastActivityField, GetNow, oschema)
                     End Using
                 End If
                 If cok IsNot Nothing Then
@@ -424,8 +424,8 @@ Namespace Web
                         Else
                             Using mgr As OrmDBManager = _getMgr()
                                 Using user.BeginEdit
-                                    Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(user.GetType)
-                                    mgr.ObjectSchema.SetFieldValue(user, p.Name, p.PropertyValue, oschema)
+                                    Dim oschema As IOrmObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                                    mgr.MappingEngine.SetFieldValue(user, p.Name, p.PropertyValue, oschema)
                                 End Using
                             End Using
                         End If
@@ -445,14 +445,14 @@ Namespace Web
                 End If
                 If user IsNot Nothing Then
                     Using mgr As OrmDBManager = _getMgr()
-                        Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(user.GetType)
+                        Dim oschema As IOrmObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
                         Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                             Using user.BeginEdit
                                 If Not String.IsNullOrEmpty(_lastActivityField) Then
-                                    mgr.ObjectSchema.SetFieldValue(user, _lastActivityField, d, oschema)
+                                    mgr.MappingEngine.SetFieldValue(user, _lastActivityField, d, oschema)
                                 End If
                                 If Not String.IsNullOrEmpty(_lastUpdateField) Then
-                                    mgr.ObjectSchema.SetFieldValue(user, _lastUpdateField, d, oschema)
+                                    mgr.MappingEngine.SetFieldValue(user, _lastUpdateField, d, oschema)
                                 End If
                             End Using
                             st.Add(user)
@@ -537,8 +537,8 @@ Namespace Web
                     user = GetUserByName(mgr, HttpContext.Current.Profile.UserName, True, False) 'CreateUser(mgr, HttpContext.Current.Profile.UserName)
                 Catch ex As ArgumentException When ex.Message.Contains("not found")
                     user = CreateUser(mgr, HttpContext.Current.Profile.UserName, AnonymousId)
-                    Dim schema As QueryGenerator = mgr.ObjectSchema
-                    Dim oschema As IOrmObjectSchemaBase = mgr.ObjectSchema.GetObjectSchema(user.GetType)
+                    Dim schema As ObjectMappingEngine = mgr.MappingEngine
+                    Dim oschema As IOrmObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
                     For Each p As SettingsProperty In System.Web.Profile.ProfileBase.Properties
                         If Not p.IsReadOnly Then
                             If cok IsNot Nothing Then

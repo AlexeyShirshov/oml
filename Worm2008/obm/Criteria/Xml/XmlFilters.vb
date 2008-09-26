@@ -35,7 +35,7 @@ Namespace Xml
                     Case Worm.Criteria.FilterOperation.LessThan
                         Return " < "
                     Case Else
-                        Throw New QueryGeneratorException("invalid opration " & oper.ToString)
+                        Throw New ObjectMappingException("invalid opration " & oper.ToString)
                 End Select
             End Function
         End Class
@@ -51,7 +51,7 @@ Namespace Xml
                 MyBase.New(value, tmp)
             End Sub
 
-            Public Overrides Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+            Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If _oschema Is Nothing Then
                     _oschema = schema.GetObjectSchema(Template.Type)
                 End If
@@ -63,7 +63,7 @@ Namespace Xml
                 Return New XmlEntityFilter(val, CType(Template, XmlEntityTemplate))
             End Function
 
-            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As Orm.Meta.IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As QueryGenerator, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
+            Public Overloads Overrides Function MakeQueryStmt(ByVal oschema As Orm.Meta.IObjectSchemaBase, ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 If schema Is Nothing Then
                     Throw New ArgumentNullException("schema")
                 End If

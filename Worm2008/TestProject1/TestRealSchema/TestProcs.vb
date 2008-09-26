@@ -23,7 +23,7 @@ Public Class TestProcs
 
             l = p.GetResult(mgr)
 
-            Dim r1 As New Tables1to3(-100, mgr.Cache, mgr.ObjectSchema)
+            Dim r1 As New Tables1to3(-100, mgr.Cache, mgr.MappingEngine)
             r1.Title = "913nv"
             r1.Table1 = t1
             r1.Table3 = mgr.Find(Of Table33)(2)
@@ -426,7 +426,7 @@ Public Class MultiR
 
         Protected Overrides Function GetColumns() As System.Collections.Generic.List(Of ColumnAttribute)
             Dim l As New List(Of ColumnAttribute)
-            Dim mgr As Worm.OrmManagerBase = Worm.OrmManagerBase.CurrentManager
+            Dim mgr As Worm.OrmManager = Worm.OrmManager.CurrentManager
             l.Add(New ColumnAttribute("ID"))
             l.Add(New ColumnAttribute("Custom"))
             Return l
@@ -456,11 +456,11 @@ Public Class MultiR
             End Get
         End Property
 
-        Public Sub EndProcess(ByVal mgr As Worm.OrmManagerBase) Implements MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.EndProcess
+        Public Sub EndProcess(ByVal mgr As Worm.OrmManager) Implements MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.EndProcess
 
         End Sub
 
-        Public Sub BeginProcess(ByVal mgr As Worm.OrmManagerBase) Implements Worm.Database.Storedprocs.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.BeginProcess
+        Public Sub BeginProcess(ByVal mgr As Worm.OrmManager) Implements Worm.Database.Storedprocs.MultiResultsetQueryOrmStoredProcBase.IResultSetDescriptor.BeginProcess
 
         End Sub
     End Class

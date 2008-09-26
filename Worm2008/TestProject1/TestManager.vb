@@ -5,7 +5,7 @@ Imports Worm.Cache
 Imports Worm.Orm
 
 <TestClass()> Public Class TestManager
-    Implements Worm.OrmManagerBase.INewObjects, Worm.ICreateManager
+    Implements Worm.OrmManager.INewObjects, Worm.ICreateManager
 
     Private _schemas As New System.Collections.Hashtable
 
@@ -30,7 +30,7 @@ Imports Worm.Orm
             MyBase.New(cache, schema, connectionString)
         End Sub
 
-        Public Function CreateMgr() As Worm.OrmManagerBase Implements Worm.ICreateManager.CreateManager
+        Public Function CreateMgr() As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
             Return CreateManager(New SQLGenerator("1"))
         End Function
 
@@ -57,7 +57,7 @@ Imports Worm.Orm
     <TestMethod()> _
     Public Sub TestLoad()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim o As New Entity(1, mgr.Cache, mgr.ObjectSchema)
+            Dim o As New Entity(1, mgr.Cache, mgr.MappingEngine)
             Assert.IsFalse(o.InternalProperties.IsLoaded)
 
             o.Load()
@@ -69,7 +69,7 @@ Imports Worm.Orm
     <TestMethod()> _
     Public Sub TestLoad2()
         Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
-            Dim o As New Entity5(1, mgr.Cache, mgr.ObjectSchema)
+            Dim o As New Entity5(1, mgr.Cache, mgr.MappingEngine)
             Assert.IsFalse(o.InternalProperties.IsLoaded)
 
             o.Load()
@@ -491,7 +491,7 @@ Imports Worm.Orm
     <TestMethod()> _
     Public Sub TestAdd()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim e As Entity = New Entity(-100, mgr.Cache, mgr.ObjectSchema)
+            Dim e As Entity = New Entity(-100, mgr.Cache, mgr.MappingEngine)
             Assert.IsNull(e.InternalProperties.OriginalCopy)
 
             mgr.BeginTransaction()
@@ -509,7 +509,7 @@ Imports Worm.Orm
     <TestMethod()> _
     Public Sub TestAdd2()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim e As Entity = New Entity(-100, mgr.Cache, mgr.ObjectSchema)
+            Dim e As Entity = New Entity(-100, mgr.Cache, mgr.MappingEngine)
 
             mgr.BeginTransaction()
             Try
@@ -532,7 +532,7 @@ Imports Worm.Orm
     <TestMethod()> _
     Public Sub TestAdd3()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
-            Dim e As Entity = New Entity(-100, mgr.Cache, mgr.ObjectSchema)
+            Dim e As Entity = New Entity(-100, mgr.Cache, mgr.MappingEngine)
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Nothing, False)
             Assert.AreEqual(0, c.Count)
 
@@ -557,7 +557,7 @@ Imports Worm.Orm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             mgr.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
-            Dim e As Entity = New Entity(Me.GetIdentity, mgr.Cache, mgr.ObjectSchema)
+            Dim e As Entity = New Entity(Me.GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e)
             Dim e2 As TestProject1.Entity4 = mgr.Find(Of Entity4)(10)
 
@@ -595,19 +595,19 @@ Imports Worm.Orm
         Return CInt(GetIdentity(Nothing))
     End Function
 
-    Private Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManagerBase.INewObjects.GetIdentity
+    Private Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManager.INewObjects.GetIdentity
         Dim i As Integer = _id
         _id += -1
         Return i
     End Function
 
-    Private Function GetNew(ByVal t As Type, ByVal id As Object) As _ICachedEntity Implements Worm.OrmManagerBase.INewObjects.GetNew
+    Private Function GetNew(ByVal t As Type, ByVal id As Object) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew
         Dim o As OrmBase = Nothing
         _l.TryGetValue(CInt(id), o)
         Return o
     End Function
 
-    Private Sub AddNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.AddNew
+    Private Sub AddNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManager.INewObjects.AddNew
         _l.Add(CInt(CType(obj, OrmBase).Identifier), CType(obj, OrmBase))
     End Sub
 
@@ -616,7 +616,7 @@ Imports Worm.Orm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             mgr.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
-            Dim e As Entity = New Entity(GetIdentity, mgr.Cache, mgr.ObjectSchema)
+            Dim e As Entity = New Entity(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e)
             Dim e2 As TestProject1.Entity4 = mgr.Find(Of Entity4)(10)
             Dim c2 As ICollection(Of Entity) = e2.M2M.Find(Of Entity)(Nothing, Nothing, False)
@@ -778,7 +778,7 @@ Imports Worm.Orm
                 e.SaveChanges(True)
 
                 Assert.IsFalse(mgr.IsInCachePrecise(e))
-                Assert.AreEqual(ObjectState.Deleted, e.ObjectState)
+                Assert.AreEqual(ObjectState.Deleted, e.InternalProperties.ObjectState)
 
                 e = mgr.Find(Of Entity2)(10)
 
@@ -794,18 +794,18 @@ Imports Worm.Orm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e2 As TestProject1.Entity = mgr.Find(Of Entity)(1)
 
-            Assert.IsTrue(e2.CanEdit)
-            Assert.IsTrue(e2.CanLoad)
+            Assert.IsTrue(e2.InternalProperties.CanEdit)
+            Assert.IsTrue(e2.InternalProperties.CanLoad)
 
             e2.Delete()
             Assert.AreEqual(ObjectState.Deleted, e2.InternalProperties.ObjectState)
-            Assert.IsFalse(e2.CanEdit)
-            Assert.IsFalse(e2.CanLoad)
+            Assert.IsFalse(e2.InternalProperties.CanEdit)
+            Assert.IsFalse(e2.InternalProperties.CanLoad)
 
             e2 = mgr.Find(Of Entity)(1)
             Assert.AreEqual(ObjectState.Deleted, e2.InternalProperties.ObjectState)
-            Assert.IsFalse(e2.CanEdit)
-            Assert.IsFalse(e2.CanLoad)
+            Assert.IsFalse(e2.InternalProperties.CanEdit)
+            Assert.IsFalse(e2.InternalProperties.CanLoad)
 
             e2.Load()
             'mgr.BeginTransaction()
@@ -959,7 +959,7 @@ Imports Worm.Orm
             mgr.NewObjectManager = Me
             'mgr.FindNewDelegate = AddressOf GetNew
             Dim e As Entity = mgr.Find(Of Entity)(1)
-            Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.ObjectSchema)
+            Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e4)
             Dim id As Integer = e4.ID
             e4.Title = "90bu13n4gf0bh185g8b18bg81bg8b5gfvlojkqndrg90h5"
@@ -997,7 +997,7 @@ Imports Worm.Orm
             'mgr.FindNewDelegate = AddressOf GetNew
             mgr.NewObjectManager = Me
             Dim e As Entity = mgr.Find(Of Entity)(1)
-            Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.ObjectSchema)
+            Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e4)
             Dim id As Integer = e4.ID
             e4.Title = "kqndrg90h5"
@@ -1036,10 +1036,10 @@ Imports Worm.Orm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             'mgr.FindNewDelegate = AddressOf GetNew
             mgr.NewObjectManager = Me
-            Dim e As New Entity(GetIdentity, mgr.Cache, mgr.ObjectSchema)
+            Dim e As New Entity(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e)
             Dim id As Integer = e.ID
-            Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.ObjectSchema)
+            Dim e4 As New Entity4(GetIdentity, mgr.Cache, mgr.MappingEngine)
             AddNew(e4)
             Dim id4 As Integer = e4.ID
             e4.Title = "kqndrg90h5"
@@ -1079,14 +1079,14 @@ Imports Worm.Orm
     Public Sub TestLoadWithAlter()
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim c As Worm.ReadOnlyList(Of Entity2) = Nothing
-            Using New Worm.OrmManagerBase.CacheListBehavior(mgr, False)
+            Using New Worm.OrmManager.CacheListBehavior(mgr, False)
                 c = mgr.FindTop(Of Entity2)(100, Nothing, Nothing, True)
             End Using
 
             'Dim l As IList(Of Entity2) = CType(c, Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity2))
 
             Dim e As Entity2 = c(0)
-            Assert.IsNull(e.OriginalCopy)
+            Assert.IsNull(e.InternalProperties.OriginalCopy)
             Assert.AreEqual(ObjectState.None, e.InternalProperties.ObjectState)
             Dim oldv As String = e.Str
             e.Str = "ioquv"
@@ -1115,7 +1115,7 @@ Imports Worm.Orm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim col As ICollection(Of Entity) = mgr.ConvertIds2Objects(Of Entity)(New Object() {1, 2}, False)
 
-            Dim rel As Meta.M2MRelation = mgr.ObjectSchema.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
+            Dim rel As Meta.M2MRelation = mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True)
 
             mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), Nothing)
             mgr.LoadObjects(Of Entity4)(rel, Nothing, CType(col, System.Collections.ICollection), Nothing)
@@ -1137,7 +1137,7 @@ Imports Worm.Orm
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim col As ICollection(Of Entity) = mgr.ConvertIds2Objects(Of Entity)(New Object() {1, 2}, False)
             Dim col4 As New List(Of Entity4)
-            mgr.LoadObjects(Of Entity4)(mgr.ObjectSchema.GetM2MRelation(GetType(Entity), GetType(Entity4), True), Nothing, CType(col, System.Collections.ICollection), col4)
+            mgr.LoadObjects(Of Entity4)(mgr.MappingEngine.GetM2MRelation(GetType(Entity), GetType(Entity4), True), Nothing, CType(col, System.Collections.ICollection), col4)
             Assert.AreEqual(15, col4.Count)
 
             Dim e1 As Entity = mgr.Find(Of Entity)(1)
@@ -1198,7 +1198,7 @@ Imports Worm.Orm
             Dim e2 As Entity = mgr.Find(Of Entity)(2)
 
             Dim c1 As ICollection(Of Entity4) = Nothing
-            Using New Worm.OrmManagerBase.CacheListBehavior(mgr, TimeSpan.FromMilliseconds(10))
+            Using New Worm.OrmManager.CacheListBehavior(mgr, TimeSpan.FromMilliseconds(10))
                 c1 = e1.M2M.Find(Of Entity4)(Nothing, Nothing, True)
             End Using
             System.Threading.Thread.Sleep(100)
@@ -1315,11 +1315,11 @@ Imports Worm.Orm
         End Property
     End Class
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Object) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Object) Implements Worm.OrmManager.INewObjects.RemoveNew
 
     End Sub
 
-    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManagerBase.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal obj As _ICachedEntity) Implements Worm.OrmManager.INewObjects.RemoveNew
 
     End Sub
 
@@ -1347,7 +1347,7 @@ Imports Worm.Orm
     '    End Sub
     '#End Region
 
-    Public Function CreateMgr() As Worm.OrmManagerBase Implements Worm.ICreateManager.CreateManager
+    Public Function CreateMgr() As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
         Return CreateManager(New SQLGenerator("1"))
     End Function
 
