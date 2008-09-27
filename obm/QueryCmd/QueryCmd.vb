@@ -343,22 +343,25 @@ Namespace Query
 
 #End Region
 
-        Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type) As IFilter()
-            Dim i As Integer = 0
-            Dim q As QueryCmd = Me
+        Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, ByVal cs As List(Of List(Of ColumnAttribute))) As IFilter()
+
             Dim fs As New List(Of IFilter)
-            Do While q IsNot Nothing
+            For Each q As QueryCmd In New QueryIterator(Me)
                 Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
-                Dim f As IFilter = q.Prepare(j, schema, filterInfo, t)
+                Dim c As List(Of ColumnAttribute) = Nothing
+                Dim f As IFilter = q.Prepare(j, schema, filterInfo, t, c)
                 fs.Add(f)
                 js.Add(j)
-                q = q.OuterQuery
-            Loop
+                cs.Add(c)
+            Next
 
             Return fs.ToArray
         End Function
 
-        Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type) As IFilter
+        Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, ByRef cl As List(Of ColumnAttribute)) As IFilter
+
             If Joins IsNot Nothing Then
                 j.AddRange(Joins)
             End If
@@ -432,6 +435,13 @@ Namespace Query
                 f = con.Condition
             End If
 
+            If SelectList IsNot Nothing Then
+                If t IsNot Nothing Then
+
+                Else
+                    cl = New List(Of ColumnAttribute)(SelectList)
+                End If
+            End If
             Return f
         End Function
 

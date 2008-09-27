@@ -52,8 +52,8 @@ Namespace Query.Database
                         query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.EntityName)
                     End If
                 End If
-
-                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType)
+                Dim sl As New List(Of List(Of ColumnAttribute))
+                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
                 'End If
@@ -68,7 +68,7 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _proc = New ProcessorBase(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                _proc = New ProcessorBase(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
 
                 _m = query.Mark
@@ -77,8 +77,9 @@ Namespace Query.Database
                 Dim p As ProcessorBase(Of ReturnType) = CType(_proc, ProcessorBase(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType)
-                    p.Reset(j, f, query.SelectedType)
+                    Dim sl As New List(Of List(Of ColumnAttribute))
+                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
+                    p.Reset(j, f, query.SelectedType, sl)
                 Else
                     If _sm <> query.SMark Then
                         p.ResetStmt()
@@ -106,8 +107,8 @@ Namespace Query.Database
                         query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.EntityName)
                     End If
                 End If
-
-                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType)
+                Dim sl As New List(Of List(Of ColumnAttribute))
+                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
                 'End If
@@ -122,7 +123,7 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _proc = New Processor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                _proc = New Processor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
 
                 _m = query.Mark
@@ -131,8 +132,9 @@ Namespace Query.Database
                 Dim p As Processor(Of ReturnType) = CType(_proc, Processor(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType)
-                    p.Reset(j, f, query.SelectedType)
+                    Dim sl As New List(Of List(Of ColumnAttribute))
+                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
+                    p.Reset(j, f, query.SelectedType, sl)
                 Else
                     If _sm <> query.SMark Then
                         p.ResetStmt()
@@ -153,8 +155,8 @@ Namespace Query.Database
                 'If query.Joins IsNot Nothing Then
                 '    j.AddRange(query.Joins)
                 'End If
-
-                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, GetType(ReturnType))
+                Dim sl As New List(Of List(Of ColumnAttribute))
+                Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, GetType(ReturnType), sl)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
                 'End If
@@ -169,7 +171,7 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _proc = New ProcessorT(Of SelectType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
+                _proc = New ProcessorT(Of SelectType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
 
                 _m = query.Mark
@@ -178,8 +180,9 @@ Namespace Query.Database
                 Dim p As Processor(Of ReturnType) = CType(_proc, Processor(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, GetType(ReturnType))
-                    p.Reset(j, f, GetType(SelectType))
+                    Dim sl As New List(Of List(Of ColumnAttribute))
+                    Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, GetType(ReturnType), sl)
+                    p.Reset(j, f, GetType(SelectType), sl)
                 Else
                     If _sm <> query.SMark Then
                         p.ResetStmt()
@@ -522,7 +525,8 @@ Namespace Query.Database
         Protected Shared Sub FormSelectList(ByVal query As QueryCmd, ByVal queryType As Type, _
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema, _
             ByVal almgr As AliasMgr, ByVal filterInfo As Object, ByVal params As ICreateParam, _
-            ByVal columnAliases As List(Of String), ByVal innerColumns As List(Of String), ByVal withLoad As Boolean)
+            ByVal columnAliases As List(Of String), ByVal innerColumns As List(Of String), _
+            ByVal withLoad As Boolean,)
 
             Dim b As Boolean
             Dim cols As New StringBuilder

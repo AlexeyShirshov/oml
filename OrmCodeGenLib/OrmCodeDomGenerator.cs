@@ -2713,7 +2713,7 @@ namespace Worm.CodeGen.Core
 			//	if(tables.Length > tblIndex)
 			//		table = tables[tblIndex];
 			//	return table;
-			string[] strs;
+			//string[] strs;
             method.Statements.Add(
 				new CodeVariableDeclarationStatement(
 					new CodeTypeReference(typeof(SourceFragment[])), 

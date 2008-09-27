@@ -44,7 +44,8 @@ Namespace Database.Sorting
                 _agr.AddAlias = a
             ElseIf _q IsNot Nothing Then
                 Dim j As New List(Of OrmJoin)
-                Dim f As IFilter = _q.Prepare(j, s, filterInfo, t)
+                Dim sl As New List(Of ColumnAttribute)
+                Dim f As IFilter = _q.Prepare(j, s, filterInfo, t, sl)
                 sb.Append(" order by (")
                 sb.Append(DbQueryExecutor.MakeQueryStatement(filterInfo, s, _q, params, t, j, f, almgr))
                 sb.Append(")")
