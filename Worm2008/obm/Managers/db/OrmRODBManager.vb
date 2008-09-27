@@ -1155,7 +1155,7 @@ Namespace Database
         Public Sub LoadMultipleObjects(ByVal t As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, _
-            ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute))
+            ByVal values As IList, ByVal selectList As Generic.List(Of ColumnAttribute))
 
             Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
 
@@ -1175,14 +1175,14 @@ Namespace Database
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI4.MakeGenericMethod(New Type() {t})
 
             mi_real.Invoke(Me, flags, Nothing, _
-                New Object() {cmd, withLoad, values, arr}, Nothing)
+                New Object() {cmd, withLoad, values, selectList}, Nothing)
 
         End Sub
 
         Public Sub LoadMultipleObjects(ByVal t As Type, _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, _
-            ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
+            ByVal values As IList, ByVal selectList As Generic.List(Of ColumnAttribute), _
             ByVal oschema As IOrmObjectSchemaBase, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
             'Dim ltg As Type = GetType(IList(Of ))
@@ -1205,7 +1205,7 @@ Namespace Database
             Dim mi_real As Reflection.MethodInfo = _LoadMultipleObjectsMI.MakeGenericMethod(New Type() {t})
 
             mi_real.Invoke(Me, flags, Nothing, _
-                New Object() {cmd, withLoad, values, arr, oschema, fields_idx}, Nothing)
+                New Object() {cmd, withLoad, values, selectList, oschema, fields_idx}, Nothing)
 
         End Sub
 
@@ -1755,18 +1755,18 @@ Namespace Database
         Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, ByVal values As IList, _
-            ByVal arr As Generic.List(Of ColumnAttribute))
+            ByVal selectList As Generic.List(Of ColumnAttribute))
 
             Dim oschema As IOrmObjectSchema = CType(_schema.GetObjectSchema(GetType(T), False), IOrmObjectSchema)
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
-            LoadMultipleObjects(Of T)(cmd, withLoad, values, arr, oschema, fields_idx)
+            LoadMultipleObjects(Of T)(cmd, withLoad, values, selectList, oschema, fields_idx)
         End Sub
 
         Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, ByVal values As IList, _
-            ByVal arr As Generic.List(Of ColumnAttribute), ByVal oschema As IOrmObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
+            ByVal selectList As Generic.List(Of ColumnAttribute), ByVal oschema As IOrmObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
             If values Is Nothing Then
                 'values = New Generic.List(Of T)
@@ -1811,7 +1811,7 @@ Namespace Database
                     End If
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadFromResultSet(Of T)(withLoad, values, arr, dr, dic, _loadedInLastFetch, oschema, fields_idx)
+                        LoadFromResultSet(Of T)(withLoad, values, selectList, dr, dic, _loadedInLastFetch, oschema, fields_idx)
                     Loop
                     _fetch = ft.GetTime
                 End Using
@@ -1926,7 +1926,7 @@ Namespace Database
         End Sub
 
         Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.IDataReader, _
-            ByVal arr As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer, _
+            ByVal selectList As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer, _
             ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IOrmObjectSchemaBase, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column)) As _IEntity
 
@@ -1945,7 +1945,7 @@ Namespace Database
             Try
                 Dim pk_count As Integer = 0
                 Dim has_pk As Boolean = False
-                Dim pi_cache(arr.Count - 1) As Reflection.PropertyInfo
+                Dim pi_cache(selectList.Count - 1) As Reflection.PropertyInfo
                 Dim idic As IDictionary = Nothing
                 If oschema IsNot Nothing Then
                     idic = _schema.GetProperties(original_type, oschema)
@@ -1953,8 +1953,8 @@ Namespace Database
                 'Dim bl As Boolean
                 Dim oldpk() As PKDesc = Nothing
                 If ce IsNot Nothing AndAlso Not fromRS Then oldpk = ce.GetPKValues()
-                For idx As Integer = 0 To arr.Count - 1
-                    Dim c As ColumnAttribute = arr(idx)
+                For idx As Integer = 0 To selectList.Count - 1
+                    Dim c As ColumnAttribute = selectList(idx)
                     Dim pi As Reflection.PropertyInfo = If(idic IsNot Nothing, CType(idic(c), Reflection.PropertyInfo), Nothing)
                     pi_cache(idx) = pi
 
@@ -2081,14 +2081,14 @@ Namespace Database
                     ce.CreateCopyForSaveNewEntry(Nothing)
                 End If
 
-                If pk_count < arr.Count Then
+                If pk_count < selectList.Count Then
                     lock = obj.GetSyncRoot
                     If obj.ObjectState = ObjectState.Deleted OrElse obj.ObjectState = ObjectState.NotFoundInSource Then
                         Return obj
                     End If
                     'Try
-                    For idx As Integer = 0 To arr.Count - 1
-                        Dim c As ColumnAttribute = arr(idx)
+                    For idx As Integer = 0 To selectList.Count - 1
+                        Dim c As ColumnAttribute = selectList(idx)
                         Dim pi As Reflection.PropertyInfo = pi_cache(idx) '_schema.GetProperty(original_type, c)
 
                         Dim value As Object = dr.GetValue(idx + displacement)
@@ -2239,7 +2239,7 @@ Namespace Database
                 If Not loading Then obj.EndLoading()
             End Try
 
-            If ce IsNot Nothing Then ce.CheckIsAllLoaded(MappingEngine, arr.Count)
+            If ce IsNot Nothing Then ce.CheckIsAllLoaded(MappingEngine, selectList.Count)
             'End Using
 
             Return obj

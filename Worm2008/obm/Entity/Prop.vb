@@ -53,6 +53,7 @@ Namespace Orm
         Private _column As String
         Private _custom As String
         Private _values() As Pair(Of Object, String)
+        Private _attr As Field2DbRelations
 
         Public Sub New(ByVal t As Type, ByVal field As String)
             _field = field
@@ -75,6 +76,15 @@ Namespace Orm
             _values = values
             _column = [alias]
         End Sub
+
+        Public Property Attributes() As Field2DbRelations
+            Get
+                Return _attr
+            End Get
+            Set(ByVal value As Field2DbRelations)
+                _attr = value
+            End Set
+        End Property
 
         Public Property Column() As String
             Get

@@ -27,6 +27,7 @@ Namespace Query.Database
             Protected _mgr As OrmReadOnlyDBManager
             Protected _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
             Protected _f() As IFilter
+            Private _sl As List(Of List(Of ColumnAttribute))
             Protected _q As QueryCmd
             Private _key As String
             Private _id As String
@@ -34,28 +35,30 @@ Namespace Query.Database
             Private _dic As IDictionary
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd)
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of ColumnAttribute)))
                 _mgr = mgr
                 _q = q
 
-                Reset(j, f, q.SelectedType)
+                Reset(j, f, q.SelectedType, sl)
             End Sub
 
             Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type)
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of ColumnAttribute)))
                 _mgr = mgr
                 _q = q
 
-                Reset(j, f, t)
+                Reset(j, f, t, sl)
             End Sub
 
             Public Sub ResetStmt()
                 _stmt = Nothing
             End Sub
 
-            Public Sub Reset(ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal f() As IFilter, ByVal t As Type)
+            Public Sub Reset(ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+                             ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of ColumnAttribute)))
                 _j = j
                 _f = f
+                _sl = sl
 
                 _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior)
                 _id = _q.GetDynamicKey(_j, _f)
@@ -183,7 +186,7 @@ Namespace Query.Database
                 Dim c As New OrmObjectIndex
 
                 For Each p As OrmProperty In q.SelectList
-                    c.Add(New MapField2Column(p.Field, p.Column, p.Table))
+                    c.Add(New MapField2Column(p.Field, p.Column, p.Table, p.Attributes))
                 Next
 
                 If q.Aggregates IsNot Nothing Then
@@ -328,8 +331,8 @@ Namespace Query.Database
             'Private _dic As IDictionary
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd)
-                MyBase.New(mgr, j, f, q)
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of ColumnAttribute)))
+                MyBase.New(mgr, j, f, q, sl)
                 '_mgr = mgr
                 '_q = q
 
@@ -337,8 +340,8 @@ Namespace Query.Database
             End Sub
 
             Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type)
-                MyBase.New(mgr, j, f, q, t)
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of ColumnAttribute)))
+                MyBase.New(mgr, j, f, q, t, sl)
                 '_mgr = mgr
                 '_q = q
 
@@ -592,8 +595,8 @@ Namespace Query.Database
             Inherits Processor(Of ReturnType)
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd)
-                MyBase.New(mgr, j, f, q, GetType(SelectType))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of ColumnAttribute)))
+                MyBase.New(mgr, j, f, q, GetType(SelectType), sl)
             End Sub
 
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
