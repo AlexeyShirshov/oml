@@ -858,22 +858,22 @@ Namespace Database
         End Property
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
-            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManager.ICustDelegate(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
             Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, CType(filter, IFilter), sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal aspect As QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal filter As IFilter, _
-            ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManager.ICustDelegate(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
             Return New JoinCustDelegate(Of T)(Me, join, filter, sort, key, id, aspect, cols)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal filter As IFilter, _
-            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManager.ICustDelegate(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal filter As IFilter, _
-            ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManager.ICustDelegate(Of T)
+            ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManager.ICacheItemProvoder(Of T)
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
             End If
@@ -902,13 +902,13 @@ Namespace Database
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
             ByVal obj As _IOrmBase, ByVal filter As IFilter, ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, _
-            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICustDelegate(Of T2)
+            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, queryAscpect, id, key, direct)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
             ByVal obj As _IOrmBase, ByVal filter As IFilter, ByVal sort As Sort, _
-            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICustDelegate(Of T2)
+            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
             Return New M2MDataProvider(Of T2)(Me, obj, CType(filter, IFilter), sort, New QueryAspect() {}, id, key, direct)
         End Function
 
@@ -963,7 +963,7 @@ Namespace Database
                     '    arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
                     '    sb.Append(Schema.SelectID(ct, almgr, params))
                     'End If
-                    Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse SQLGenerator.NeedJoin(schema2)
+                    Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetContextFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse SQLGenerator.NeedJoin(schema2)
                     'Dim table As String = schema2.GetTables(0)
                     SQLGenerator.AppendNativeTypeJoins(selectedType, almgr, schema2.GetTables, sb, params, SQLGenerator.GetObjectSchema(ct).GetTables(0), id_clm, appendMainTable, GetFilterInfo)
                     If withLoad Then
@@ -978,7 +978,7 @@ Namespace Database
                     Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
                     con.AddFilter(connectedFilter)
                     con.AddFilter(filter)
-                    con.AddFilter(schema2.GetFilter(GetFilterInfo))
+                    con.AddFilter(schema2.GetContextFilter(GetFilterInfo))
                     SQLGenerator.AppendWhere(ct, con.Condition, almgr, sb, cfi, params)
 
                     If sort IsNot Nothing AndAlso Not sort.IsExternal Then
@@ -1183,7 +1183,7 @@ Namespace Database
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal selectList As Generic.List(Of ColumnAttribute), _
-            ByVal oschema As IOrmObjectSchemaBase, _
+            ByVal oschema As IContextObjectSchema, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
@@ -1342,7 +1342,7 @@ Namespace Database
             Else
                 Dim oschema2 As IOrmObjectSchema = SQLGenerator.GetObjectSchema(type2load)
                 Dim r2 As M2MRelation = SQLGenerator.GetM2MRelation(type2load, type, direct)
-                Dim appendMainTable As Boolean = f IsNot Nothing OrElse oschema2.GetFilter(GetFilterInfo) IsNot Nothing
+                Dim appendMainTable As Boolean = f IsNot Nothing OrElse oschema2.GetContextFilter(GetFilterInfo) IsNot Nothing
                 sb.Append(SQLGenerator.SelectM2M(type2load, type, New QueryAspect() {}, appendMainTable, True, GetFilterInfo, params, almgr, withLoad, direct))
 
                 If Not SQLGenerator.AppendWhere(type2load, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
@@ -1766,7 +1766,7 @@ Namespace Database
         Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, ByVal values As IList, _
-            ByVal selectList As Generic.List(Of ColumnAttribute), ByVal oschema As IOrmObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
+            ByVal selectList As Generic.List(Of ColumnAttribute), ByVal oschema As IContextObjectSchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
             If values Is Nothing Then
                 'values = New Generic.List(Of T)
@@ -1863,7 +1863,7 @@ Namespace Database
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
             ByVal dr As System.Data.IDataReader, _
             ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer, _
-            ByVal oschema As IOrmObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
+            ByVal oschema As IContextObjectSchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
@@ -1927,7 +1927,7 @@ Namespace Database
 
         Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.IDataReader, _
             ByVal selectList As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer, _
-            ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IOrmObjectSchemaBase, _
+            ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IContextObjectSchema, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column)) As _IEntity
 
             Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
@@ -3071,7 +3071,7 @@ l2:
                     appendMain = type2search Is sortType OrElse appendMain
                     If Not types.Contains(sortType) Then
                         If type2search IsNot sortType Then
-                            Dim srtschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
+                            Dim srtschema As IContextObjectSchema = _schema.GetObjectSchema(sortType)
                             Dim field As String = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
                             If Not String.IsNullOrEmpty(field) Then
                                 joins.Add(MakeJoin(sortType, type2search, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join))

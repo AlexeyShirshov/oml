@@ -10,7 +10,7 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
         Return False
     End Function
 
-    Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Criteria.Core.IFilter Implements IOrmObjectSchema.GetFilter
+    Public Overridable Function GetFilter(ByVal filter_info As Object) As Worm.Criteria.Core.IFilter Implements IOrmObjectSchema.GetContextFilter
         Return Nothing
     End Function
 
@@ -47,4 +47,10 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
     Public Sub GetSchema(ByVal schema As Worm.ObjectMappingEngine, ByVal t As System.Type) Implements IOrmSchemaInit.GetSchema
         _schema = schema
     End Sub
+
+    Public ReadOnly Property Table() As Worm.Orm.Meta.SourceFragment Implements Worm.Orm.Meta.IObjectSchemaBase.Table
+        Get
+            Return GetTables(0)
+        End Get
+    End Property
 End Class

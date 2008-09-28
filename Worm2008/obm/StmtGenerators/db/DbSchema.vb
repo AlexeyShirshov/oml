@@ -502,7 +502,7 @@ l1:
                 End If
                 Dim b As Boolean = False
                 'Dim os As IOrmObjectSchema = GetObjectSchema(type)
-                Dim pk_table As SourceFragment = os.GetTables(0)
+                Dim pk_table As SourceFragment = os.Table
                 For Each item As Pair(Of SourceFragment, List(Of ITemplateFilter)) In inserted_tables
                     If b Then
                         ins_cmd.Append(EndLine)
@@ -836,7 +836,7 @@ l1:
 
                     If updated_tables.Count > 0 Then
                         'Dim sch As IOrmObjectSchema = GetObjectSchema(rt)
-                        Dim pk_table As SourceFragment = esch.GetTables()(0)
+                        Dim pk_table As SourceFragment = esch.Table
                         Dim amgr As AliasMgr = AliasMgr.Create
                         Dim params As New ParamMgr(Me, "p")
 
@@ -906,7 +906,7 @@ l1:
                             Dim cn As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor
                             For Each p As PKDesc In obj.GetPKValues
                                 Dim clm As String = GetColumnNameByFieldNameInternal(esch, p.PropertyAlias, False, Nothing)
-                                cn.AddFilter(New dc.TableFilter(esch.GetTables(0), clm, New ScalarValue(p.Value), FilterOperation.Equal))
+                                cn.AddFilter(New dc.TableFilter(esch.Table, clm, New ScalarValue(p.Value), FilterOperation.Equal))
                             Next
                             Dim f As IFilter = cn.Condition
                             sel_sb.Append(f.MakeQueryStmt(Me, filterInfo, amgr, params, Nothing))
@@ -958,7 +958,7 @@ l1:
         End Sub
 
         Protected Sub GetDeletedConditions(ByVal deleted_tables As IDictionary(Of SourceFragment, IFilter), ByVal filterInfo As Object, _
-            ByVal type As Type, ByVal obj As ICachedEntity, ByVal oschema As IObjectSchemaBase, ByVal relSchema As IOrmRelationalSchema)
+            ByVal type As Type, ByVal obj As ICachedEntity, ByVal oschema As IObjectSchemaBase, ByVal relSchema As IMultiTableObjectSchema)
             'Dim oschema As IOrmObjectSchema = GetObjectSchema(type)
             Dim tables() As SourceFragment = GetTables(oschema)
             Dim pk_table As SourceFragment = tables(0)
@@ -1034,7 +1034,7 @@ l1:
                         del_cmd.Append("set @id_").Append(p.PropertyAlias).Append(" = ").Append(params.CreateParam(p.Value)).Append(EndLine)
                     Next
 
-                    GetDeletedConditions(deleted_tables, filterInfo, type, obj, relSchema, TryCast(relSchema, IOrmRelationalSchema))
+                    GetDeletedConditions(deleted_tables, filterInfo, type, obj, relSchema, TryCast(relSchema, IMultiTableObjectSchema))
 
                     For Each de As KeyValuePair(Of SourceFragment, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(GetTableName(de.Key))
@@ -1565,7 +1565,7 @@ l1:
             'End If
 
             If schema IsNot Nothing Then
-                con.AddFilter(schema.GetFilter(filter_info))
+                con.AddFilter(schema.GetContextFilter(filter_info))
             End If
 
             If Not con.IsEmpty Then
@@ -1779,7 +1779,7 @@ l1:
             Return sb.ToString
         End Function
 
-        Public Shared Function NeedJoin(ByVal schema As IOrmObjectSchemaBase) As Boolean
+        Public Shared Function NeedJoin(ByVal schema As IContextObjectSchema) As Boolean
             Dim r As Boolean = False
             Dim j As IJoinBehavior = TryCast(schema, IJoinBehavior)
             If j IsNot Nothing Then
@@ -1811,7 +1811,7 @@ l1:
             'Dim schema As IOrmObjectSchema = GetObjectSchema(t)
             Dim schema2 As IOrmObjectSchema = GetObjectSchema(type)
 
-            Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetFilter(filter_info) IsNot Nothing OrElse appendMain OrElse SQLGenerator.NeedJoin(schema2)
+            Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetContextFilter(filter_info) IsNot Nothing OrElse appendMain OrElse SQLGenerator.NeedJoin(schema2)
             sb.Append(SelectM2M(type, t, aspects, appendMainTable, appJoins, filter_info, pmgr, almgr, withLoad, key))
 
             Dim selected_r As M2MRelation = Nothing
@@ -1968,7 +1968,7 @@ l1:
             End If
             sb.Append(") ").Append([alias])
             If Not appendMain Then
-                appendMain = selSchema.GetFilter(filter_info) IsNot Nothing
+                appendMain = selSchema.GetContextFilter(filter_info) IsNot Nothing
             End If
             AppendNativeTypeJoins(searchType, almgr, GetTables(searchType), sb, params, ct, "[key]", appendMain, filter_info)
             'If fields.Count > 0 Then

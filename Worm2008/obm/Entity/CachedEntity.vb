@@ -47,7 +47,7 @@ Namespace Orm
 
             Public Sub Added(ByVal source As ICachedEntity, ByVal args As ObjectSavedArgs)
                 Dim mgr As OrmManager = OrmManager.CurrentManager
-                Dim oschema As IOrmObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(_dst.GetType)
+                Dim oschema As IContextObjectSchema = mgr.MappingEngine.GetObjectSchema(_dst.GetType)
                 For Each p As String In _props
                     If p = "ID" Then
                         Dim nm As OrmManager.INewObjects = mgr.NewObjectManager
@@ -651,7 +651,7 @@ Namespace Orm
         Protected Overridable Sub SetPK(ByVal pk As PKDesc())
             Using m As IGetManager = GetMgr()
                 Dim tt As Type = Me.GetType
-                Dim oschema As IOrmObjectSchemaBase = m.Manager.MappingEngine.GetObjectSchema(tt)
+                Dim oschema As IContextObjectSchema = m.Manager.MappingEngine.GetObjectSchema(tt)
                 For Each p As PKDesc In pk
                     Dim c As New ColumnAttribute(p.PropertyAlias)
                     SetValue(Nothing, c, oschema, p.Value)
@@ -855,7 +855,7 @@ l1:
             With reader
                 .MoveToFirstAttribute()
                 Dim t As Type = Me.GetType
-                Dim oschema As IOrmObjectSchemaBase = Nothing
+                Dim oschema As IContextObjectSchema = Nothing
                 If schema IsNot Nothing Then
                     oschema = schema.GetObjectSchema(t)
                 End If
@@ -985,7 +985,7 @@ l1:
             Dim l As New List(Of PKDesc)
             Using mc As IGetManager = GetMgr()
                 Dim schema As Worm.ObjectMappingEngine = mc.Manager.MappingEngine
-                Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(Me.GetType)
+                Dim oschema As IContextObjectSchema = schema.GetObjectSchema(Me.GetType)
                 For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
@@ -1033,7 +1033,7 @@ l1:
                 Dim columns As New Generic.List(Of ColumnAttribute)
                 Dim t As Type = obj.GetType
                 Using mc As IGetManager = GetMgr()
-                    Dim oschema As IOrmObjectSchemaBase = mc.Manager.MappingEngine.GetObjectSchema(t)
+                    Dim oschema As IContextObjectSchema = mc.Manager.MappingEngine.GetObjectSchema(t)
                     For Each de As DictionaryEntry In mc.Manager.MappingEngine.GetProperties(t, oschema)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)

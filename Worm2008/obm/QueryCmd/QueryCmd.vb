@@ -172,7 +172,7 @@ Namespace Query
 
         Protected _fields As ObjectModel.ReadOnlyCollection(Of OrmProperty)
         Protected _filter As IGetFilter
-        Protected _group As ObjectModel.ReadOnlyCollection(Of OrmProperty)
+        Protected _group As ObjectModel.ReadOnlyCollection(Of Grouping)
         Protected _order As Sort
         Protected _aggregates As ObjectModel.ReadOnlyCollection(Of AggregateBase)
         Protected _load As Boolean
@@ -203,6 +203,7 @@ Namespace Query
         Private _name As String
         Private _execCnt As Integer
         Private _schema As ObjectMappingEngine
+        Private _cacheSort As Boolean
 
         Private _createType As Type
         Public Property CreateType() As Type
@@ -344,12 +345,13 @@ Namespace Query
 #End Region
 
         Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, ByVal cs As List(Of List(Of ColumnAttribute))) As IFilter()
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, _
+            ByVal cs As List(Of List(Of OrmProperty))) As IFilter()
 
             Dim fs As New List(Of IFilter)
             For Each q As QueryCmd In New QueryIterator(Me)
                 Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
-                Dim c As List(Of ColumnAttribute) = Nothing
+                Dim c As List(Of OrmProperty) = Nothing
                 Dim f As IFilter = q.Prepare(j, schema, filterInfo, t, c)
                 fs.Add(f)
                 js.Add(j)
@@ -360,7 +362,8 @@ Namespace Query
         End Function
 
         Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, ByRef cl As List(Of ColumnAttribute)) As IFilter
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, _
+            ByRef cl As List(Of OrmProperty)) As IFilter
 
             If Joins IsNot Nothing Then
                 j.AddRange(Joins)
@@ -425,28 +428,46 @@ Namespace Query
                     'Dim os As IOrmObjectSchemaBase = schema.GetObjectSchema(selectedType)
                     'os.GetFieldColumnMap()("ID")._columnName
                     r.Add(New OrmProperty(table, selected_r.Column & " " & schema.GetColumnNameByFieldNameInternal(t, "ID", False), "ID"))
-                    _fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(r)
+                    r(0).Attributes = Field2DbRelations.PK
+                    '_fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(r)
+                    cl = r
                 End If
 
-                Dim tf As New Worm.Database.Criteria.Core.TableFilter(table, filtered_r.Column, New Worm.Criteria.Values.ScalarValue(_o.Identifier), Criteria.FilterOperation.Equal)
+                Dim tf As New Worm.Database.Criteria.Core.TableFilter(table, filtered_r.Column, _
+                    New Worm.Criteria.Values.ScalarValue(_o.Identifier), Criteria.FilterOperation.Equal)
                 Dim con As Criteria.Conditions.Condition.ConditionConstructorBase = schema.CreateConditionCtor
                 con.AddFilter(f)
                 con.AddFilter(tf)
                 f = con.Condition
             End If
 
-            If SelectList IsNot Nothing Then
+            If _fields IsNot Nothing Then
                 If t IsNot Nothing Then
-
-                Else
-                    cl = New List(Of ColumnAttribute)(SelectList)
+                    For Each pk As ColumnAttribute In schema.GetPrimaryKeys(t)
+                        Dim find As Boolean
+                        For Each fld As OrmProperty In _fields
+                            If (fld.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK _
+                                AndAlso fld.Field = pk.FieldName Then
+                                find = True
+                                Exit For
+                            End If
+                        Next
+                        If Not find Then
+                            If cl Is Nothing Then
+                                cl = New List(Of OrmProperty)
+                            End If
+                            cl.Add(New OrmProperty(t, pk.FieldName))
+                            cl(0).Attributes = pk._behavior
+                        End If
+                    Next
                 End If
             End If
             Return f
         End Function
 
         Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of OrmJoin)), _
-            ByVal fs() As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior) As String
+            ByVal fs() As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior, _
+            ByVal sl As List(Of List(Of OrmProperty))) As String
             Dim key As New StringBuilder
 
             Dim i As Integer = 0
@@ -455,7 +476,7 @@ Namespace Query
                     key.Append("$inner:")
                 End If
 
-                If Not q.GetStaticKey(key, js(i), fs(i), If(q._realType Is Nothing, realType, q._realType), cb) Then
+                If Not q.GetStaticKey(key, js(i), fs(i), If(q._realType Is Nothing, realType, q._realType), cb, sl(i)) Then
                     Return Nothing
                 End If
                 i += 1
@@ -468,7 +489,8 @@ Namespace Query
         End Function
 
         Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, ByVal j As IEnumerable(Of OrmJoin), _
-            ByVal f As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior) As Boolean
+            ByVal f As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior, _
+            ByVal sl As List(Of OrmProperty)) As Boolean
             Dim sb2 As New StringBuilder
 
             If f IsNot Nothing Then
@@ -534,6 +556,12 @@ Namespace Query
 
             sb.Append(_distinct.ToString).Append("$")
 
+            If sl IsNot Nothing Then
+                For Each c As OrmProperty In sl
+                    sb.Append(c.ToString)
+                Next
+                sb.Append("$")
+            End If
             Return True
         End Function
 
@@ -593,7 +621,7 @@ Namespace Query
 
         Public Function ToStaticString() As String
             Dim sb As New StringBuilder
-            GetStaticKey(sb, _joins, _filter.Filter, _realType, Cache.CacheListBehavior.CacheAll)
+            GetStaticKey(sb, _joins, _filter.Filter, _realType, Cache.CacheListBehavior.CacheAll, New List(Of OrmProperty)(_fields))
             Return sb.ToString
         End Function
 
@@ -627,6 +655,15 @@ Namespace Query
             Set(ByVal value As Worm.Database.Criteria.Core.TableFilter)
                 _rn = value
                 _mark = Environment.TickCount
+            End Set
+        End Property
+
+        Public Property CacheSort() As Boolean
+            Get
+                Return _cacheSort
+            End Get
+            Set(ByVal value As Boolean)
+                _cacheSort = value
             End Set
         End Property
 
@@ -723,11 +760,11 @@ Namespace Query
             End Set
         End Property
 
-        Public Property Group() As ObjectModel.ReadOnlyCollection(Of OrmProperty)
+        Public Property Group() As ObjectModel.ReadOnlyCollection(Of Grouping)
             Get
                 Return _group
             End Get
-            Set(ByVal value As ObjectModel.ReadOnlyCollection(Of OrmProperty))
+            Set(ByVal value As ObjectModel.ReadOnlyCollection(Of Grouping))
                 _group = value
                 _mark = Environment.TickCount
             End Set
@@ -855,8 +892,8 @@ Namespace Query
             Return Me
         End Function
 
-        Public Function GroupBy(ByVal fields() As OrmProperty) As QueryCmd
-            Group = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(fields)
+        Public Function GroupBy(ByVal fields() As Grouping) As QueryCmd
+            Group = New ObjectModel.ReadOnlyCollection(Of Grouping)(fields)
             Return Me
         End Function
 
@@ -1007,6 +1044,36 @@ Namespace Query
             'Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
         End Function
 
+        Public Function ToCustomList(Of T As {New, Class})(ByVal mgr As OrmManager) As IList(Of T)
+            Dim rt As Type = GetType(T)
+            Dim mpe As ObjectMappingEngine = mgr.MappingEngine
+
+            Dim hasPK As Boolean
+            Dim schema As IObjectSchemaBase = GetSchema(mpe, rt, hasPK)
+
+            Dim l As IEnumerable = Nothing
+            Dim r As New List(Of T)
+
+            If hasPK Then
+                l = ToObjectList(Of AnonymousCachedEntity)(mgr)
+            Else
+                l = ToObjectList(Of AnonymousEntity)(mgr)
+            End If
+
+            For Each kv As KeyValuePair(Of ColumnAttribute, Reflection.PropertyInfo) In mpe.GetProperties(rt, schema)
+                Dim col As ColumnAttribute = kv.Key
+                Dim pi As Reflection.PropertyInfo = kv.Value
+                For Each e As IEntity In l
+                    Dim ro As New T
+                    Dim v As Object = e.GetValue(Nothing, col, Nothing)
+                    pi.SetValue(ro, v, Nothing)
+                    r.Add(ro)
+                Next
+            Next
+
+            Return r
+        End Function
+
         Public Sub Reset(Of ReturnType As _IEntity)(ByVal mgr As OrmManager)
             GetExecutor(mgr).ResetEntity(Of ReturnType)(mgr, Me)
         End Sub
@@ -1056,6 +1123,7 @@ Namespace Query
                 ._name = _name
                 ._execCnt = _execCnt
                 ._schema = _schema
+                ._cacheSort = _cacheSort
             End With
         End Sub
 

@@ -73,7 +73,7 @@ Public Class Table1
     '    Return New Table1(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IOrmObjectSchemaBase, ByVal value As Object)
+    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IContextObjectSchema, ByVal value As Object)
         Select Case c.FieldName
             Case "Title"
                 Name = CStr(value)
@@ -94,7 +94,7 @@ Public Class Table1
         End Select
     End Sub
 
-    Public Overrides Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IOrmObjectSchemaBase) As Object
+    Public Overrides Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IContextObjectSchema) As Object
         If c.FieldName = "ddd" Then
             Return Name
         Else

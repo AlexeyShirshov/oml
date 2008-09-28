@@ -152,7 +152,7 @@ Namespace Criteria.Values
 
             If _p.Type IsNot Nothing Then
 
-                Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(_p.Type)
+                Dim oschema As IContextObjectSchema = schema.GetObjectSchema(_p.Type)
 
                 Dim map As MapField2Column = Nothing
                 Try

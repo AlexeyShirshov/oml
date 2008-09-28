@@ -43,6 +43,10 @@ Namespace Orm
         Public Shared Widening Operator CType(ByVal f As FCtor) As OrmProperty()
             Return f.GetAllProperties.ToArray
         End Operator
+
+        Public Shared Widening Operator CType(ByVal f As FCtor) As Grouping()
+            Return f.GetAllProperties.ConvertAll(Function(p As OrmProperty) New Grouping(p)).ToArray
+        End Operator
     End Class
 
     Public Class OrmProperty
@@ -54,6 +58,15 @@ Namespace Orm
         Private _custom As String
         Private _values() As Pair(Of Object, String)
         Private _attr As Field2DbRelations
+
+        Public Event OnChange()
+
+        Protected Sub New()
+        End Sub
+
+        Protected Sub New(ByVal field As String)
+            _field = field
+        End Sub
 
         Public Sub New(ByVal t As Type, ByVal field As String)
             _field = field
@@ -77,6 +90,14 @@ Namespace Orm
             _column = [alias]
         End Sub
 
+        Public Sub New(ByVal computed As String, ByVal values() As Pair(Of Object, String))
+            MyClass.New(computed, values, Nothing)
+        End Sub
+
+        Protected Sub RaiseOnChange()
+            RaiseEvent OnChange()
+        End Sub
+
         Public Property Attributes() As Field2DbRelations
             Get
                 Return _attr
@@ -92,6 +113,7 @@ Namespace Orm
             End Get
             Protected Friend Set(ByVal value As String)
                 _column = value
+                RaiseOnChange()
             End Set
         End Property
 
@@ -101,32 +123,52 @@ Namespace Orm
             End Get
             Protected Friend Set(ByVal value As String)
                 _field = value
+                RaiseOnChange()
             End Set
         End Property
 
-        Public ReadOnly Property Type() As Type
+        Public Property Type() As Type
             Get
                 Return _type
             End Get
+            Protected Set(ByVal value As Type)
+                _type = value
+                RaiseOnChange()
+            End Set
         End Property
 
-        Public ReadOnly Property Table() As SourceFragment
+        Public Property Table() As SourceFragment
             Get
                 Return _table
             End Get
+            Protected Set(ByVal value As SourceFragment)
+                _table = value
+            End Set
         End Property
 
-        Public ReadOnly Property Computed() As String
+        Public Property Computed() As String
             Get
                 Return _custom
             End Get
+            Protected Set(ByVal value As String)
+                _custom = value
+                RaiseOnChange()
+            End Set
         End Property
 
+        Public ReadOnly Property IsCustom() As Boolean
+            Get
+                Return Not String.IsNullOrEmpty(_custom)
+            End Get
+        End Property
 
-        Public ReadOnly Property Values() As Pair(Of Object, String)()
+        Public Property Values() As Pair(Of Object, String)()
             Get
                 Return _values
             End Get
+            Protected Set(ByVal value As Pair(Of Object, String)())
+                _values = value
+            End Set
         End Property
 
         Public Overrides Function ToString() As String
@@ -141,6 +183,31 @@ Namespace Orm
             End If
         End Function
 
+        Public Function GetCustomExpressionValues(ByVal schema As ObjectMappingEngine, ByVal aliases As IDictionary(Of SourceFragment, String)) As String()
+            Return ObjectMappingEngine.ExtractValues(schema, aliases, _values).ToArray
+        End Function
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return _Equals(TryCast(obj, OrmProperty))
+        End Function
+
+        Protected Overridable Function _Equals(ByVal s As OrmProperty) As Boolean
+            If s Is Nothing Then
+                Return False
+            Else
+                Dim b As Boolean
+                If Not String.IsNullOrEmpty(_custom) Then
+                    b = _custom = s._custom AndAlso _type Is s._type
+                Else
+                    b = _field = s._field AndAlso _type Is s._type
+                End If
+                Return b
+            End If
+        End Function
+
+        Public Overrides Function GetHashCode() As Integer
+            Return ToString.GetHashCode
+        End Function
     End Class
 
 End Namespace

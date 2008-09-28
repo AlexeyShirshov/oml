@@ -85,13 +85,13 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal key As String, ByVal id As String) As OrmManager.ICustDelegate(Of T)
+            ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
             Return New FilterCustDelegate(Of T)(Me, filter, sort, key, id)
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManager.ICustDelegate(Of T)
+            ByVal key As String, ByVal id As String, ByVal cols() As String) As OrmManager.ICacheItemProvoder(Of T)
             If cols Is Nothing Then
                 Throw New ArgumentNullException("cols")
             End If
@@ -115,21 +115,21 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal relation As Orm.Meta.M2MRelation, ByVal filter As Worm.Criteria.Core.IFilter, _
-            ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String) As OrmManager.ICustDelegate(Of T)
+            ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
 
             Throw New NotImplementedException
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
             ByVal obj As _IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICustDelegate(Of T2)
+            ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
 
             Throw New NotImplementedException
         End Function
 
         Protected Overloads Overrides Function GetCustDelegate(Of T2 As {New, IOrmBase})( _
             ByVal obj As _IOrmBase, ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, _
-            ByVal queryAspect() As Orm.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICustDelegate(Of T2)
+            ByVal queryAspect() As Orm.Query.QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As OrmManager.ICacheItemProvoder(Of T2)
 
             Throw New NotImplementedException
         End Function
@@ -137,7 +137,7 @@ Namespace Xml
 
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})( _
             ByVal aspect As Orm.Query.QueryAspect, ByVal join() As Worm.Criteria.Joins.OrmJoin, _
-            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManager.ICustDelegate(Of T)
+            ByVal filter As Worm.Criteria.Core.IFilter, ByVal sort As Sorting.Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As OrmManager.ICacheItemProvoder(Of T)
 
             Throw New NotImplementedException
         End Function

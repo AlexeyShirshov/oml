@@ -68,8 +68,8 @@ Namespace Xml
             con.AddFilter(filter)
 
             If t IsNot Nothing Then
-                Dim schema As IOrmObjectSchemaBase = GetObjectSchema(t)
-                con.AddFilter(schema.GetFilter(filter_info))
+                Dim schema As IContextObjectSchema = GetObjectSchema(t)
+                con.AddFilter(schema.GetContextFilter(filter_info))
             End If
 
             If Not con.IsEmpty Then
