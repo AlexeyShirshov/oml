@@ -193,7 +193,7 @@ Namespace Cache
             End Function
         End Class
 
-        Private Class TypeDepends
+        Private Class Type2SelectiveFiltersDepends
             Inherits Dictionary(Of Object, TemplateHashs)
 
             Public Function GetFilters(ByVal type As Object) As TemplateHashs
@@ -206,9 +206,19 @@ Namespace Cache
             End Function
         End Class
 
+        Private Class EntryRef
+            Inherits Dictionary(Of String, Dictionary(Of String, Object))
+
+        End Class
+
+        Private Class TypeEntryRef
+            Inherits Dictionary(Of Type, EntryRef)
+
+        End Class
 #End Region
 
         'Public ReadOnly DateTimeCreated As Date
+        Private _earlyValidate As Boolean
 
         'Protected _filters As IDictionary
         Private _modifiedobjects As IDictionary
@@ -234,7 +244,7 @@ Namespace Cache
         Private _lock As New Object
         Private _beh As CacheListBehavior
 
-        Private _tp As New TypeDepends
+        Private _tp As New Type2SelectiveFiltersDepends
         Private _qt As New Dictionary(Of Object, Dictionary(Of String, Pair(Of String)))
         Private _ct_depends As New Dictionary(Of Type, Dictionary(Of String, Dictionary(Of String, Object)))
 
@@ -932,6 +942,10 @@ Namespace Cache
             End Using
         End Sub
 
+        Protected Friend Sub UpdateCacheDeferred(ByVal t As Type, ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping))
+
+        End Sub
+
         Protected Friend Sub UpdateCache(ByVal schema As ObjectMappingEngine, _
             ByVal objs As IList, ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated, _
             ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks, Optional ByVal forseEval As Boolean = False)
@@ -945,7 +959,7 @@ Namespace Cache
                 Exit For
             Next
 
-            Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(tt)
+            Dim oschema As IContextObjectSchema = schema.GetObjectSchema(tt)
             Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
             Dim k As Object = tt
             If c IsNot Nothing Then
@@ -1409,7 +1423,7 @@ l1:
         End Function
 
         Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, _
-            ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.IDictionary
+            ByVal schema As ObjectMappingEngine, ByVal oschema As IContextObjectSchema) As System.Collections.IDictionary
             Dim k As Object = t
             If schema IsNot Nothing Then
                 k = schema.GetEntityTypeKey(filterInfo, t, oschema)
@@ -1432,7 +1446,7 @@ l1:
             Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Object, T))
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IContextObjectSchema) As System.Collections.Generic.IDictionary(Of Object, T)
             Return CType(GetOrmDictionary(filterInfo, GetType(T), schema, oschema), IDictionary(Of Object, T))
         End Function
 

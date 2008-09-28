@@ -10,8 +10,8 @@ Namespace Query.Database
 
     Partial Public Class DbQueryExecutor
 
-        Class ProcessorBase(Of ReturnType As {_IEntity})
-            Implements ICustDelegateBase(Of ReturnType)
+        Class ProviderBase(Of ReturnType As {_IEntity})
+            Implements ICacheItemProvoderBase(Of ReturnType)
 
             Private _created As Boolean
             Private _renew As Boolean
@@ -27,7 +27,7 @@ Namespace Query.Database
             Protected _mgr As OrmReadOnlyDBManager
             Protected _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
             Protected _f() As IFilter
-            Private _sl As List(Of List(Of ColumnAttribute))
+            Private _sl As List(Of List(Of OrmProperty))
             Protected _q As QueryCmd
             Private _key As String
             Private _id As String
@@ -35,7 +35,7 @@ Namespace Query.Database
             Private _dic As IDictionary
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of ColumnAttribute)))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of OrmProperty)))
                 _mgr = mgr
                 _q = q
 
@@ -43,7 +43,7 @@ Namespace Query.Database
             End Sub
 
             Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of ColumnAttribute)))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of OrmProperty)))
                 _mgr = mgr
                 _q = q
 
@@ -55,12 +55,12 @@ Namespace Query.Database
             End Sub
 
             Public Sub Reset(ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                             ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of ColumnAttribute)))
+                             ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of OrmProperty)))
                 _j = j
                 _f = f
                 _sl = sl
 
-                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior)
+                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl)
                 _id = _q.GetDynamicKey(_j, _f)
                 _sync = _id & _mgr.GetStaticKey()
 
@@ -126,7 +126,7 @@ Namespace Query.Database
                     Dim columnAliases As New List(Of String)
                     Dim j As List(Of Worm.Criteria.Joins.OrmJoin) = _j(i)
                     Dim f As IFilter = _f(i)
-                    inner = MakeQueryStatement(fi, _mgr.SQLGenerator, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, WithLoad)
+                    inner = MakeQueryStatement(fi, _mgr.SQLGenerator, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, WithLoad, _sl(i))
                     innerColumns = New List(Of String)(columnAliases)
                     q = q.OuterQuery
                     i += 1
@@ -145,7 +145,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IOrmObjectSchemaBase = dbm.SQLGenerator.GetObjectSchema(_q.SelectedType, False)
+                Dim oschema As IContextObjectSchema = dbm.SQLGenerator.GetObjectSchema(_q.SelectedType, False)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -202,7 +202,7 @@ Namespace Query.Database
                 _dic.Remove(Id)
             End Sub
 
-            Public Overridable Property Renew() As Boolean Implements ICustDelegateBase(Of ReturnType).Renew
+            Public Overridable Property Renew() As Boolean Implements ICacheItemProvoderBase(Of ReturnType).Renew
                 Get
                     Return _renew
                 End Get
@@ -211,7 +211,7 @@ Namespace Query.Database
                 End Set
             End Property
 
-            Public Overridable Property Created() As Boolean Implements ICustDelegateBase(Of ReturnType).Created
+            Public Overridable Property Created() As Boolean Implements ICacheItemProvoderBase(Of ReturnType).Created
                 Get
                     Return _created
                 End Get
@@ -220,7 +220,7 @@ Namespace Query.Database
                 End Set
             End Property
 
-            Public Overridable ReadOnly Property SmartSort() As Boolean Implements ICustDelegateBase(Of ReturnType).SmartSort
+            Public Overridable ReadOnly Property SmartSort() As Boolean Implements ICacheItemProvoderBase(Of ReturnType).SmartSort
                 Get
                     Return True
                 End Get
@@ -262,7 +262,7 @@ Namespace Query.Database
                 End Get
             End Property
 
-            Public Sub CreateDepends() Implements OrmManager.ICustDelegateBase(Of ReturnType).CreateDepends
+            Public Sub CreateDepends() Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).CreateDepends
                 If _j IsNot Nothing Then
                     For Each js As List(Of Worm.Criteria.Joins.OrmJoin) In _j
                         For Each j As OrmJoin In js
@@ -296,26 +296,26 @@ Namespace Query.Database
                 End If
             End Sub
 
-            Public ReadOnly Property Filter() As Criteria.Core.IFilter Implements OrmManager.ICustDelegateBase(Of ReturnType).Filter
+            Public ReadOnly Property Filter() As Criteria.Core.IFilter Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).Filter
                 Get
                     Return _f(0)
                 End Get
             End Property
 
-            Public Overridable Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem Implements OrmManager.ICustDelegateBase(Of ReturnType).GetCacheItem
+            Public Overridable Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).GetCacheItem
                 Return New CachedItem(GetEntities(), _mgr.Cache)
             End Function
 
-            Public ReadOnly Property Sort() As Sorting.Sort Implements OrmManager.ICustDelegateBase(Of ReturnType).Sort
+            Public ReadOnly Property Sort() As Sorting.Sort Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).Sort
                 Get
                     Return _q.propSort
                 End Get
             End Property
         End Class
 
-        Class Processor(Of ReturnType As {ICachedEntity})
-            Inherits ProcessorBase(Of ReturnType)
-            Implements OrmManager.ICacheValidator, ICustDelegate(Of ReturnType)
+        Class Provider(Of ReturnType As {ICachedEntity})
+            Inherits ProviderBase(Of ReturnType)
+            Implements OrmManager.ICacheValidator, ICacheItemProvoder(Of ReturnType)
 
             'Private _stmt As String
             'Private _params As ParamMgr
@@ -331,7 +331,7 @@ Namespace Query.Database
             'Private _dic As IDictionary
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of ColumnAttribute)))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of OrmProperty)))
                 MyBase.New(mgr, j, f, q, sl)
                 '_mgr = mgr
                 '_q = q
@@ -340,7 +340,7 @@ Namespace Query.Database
             End Sub
 
             Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of ColumnAttribute)))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of OrmProperty)))
                 MyBase.New(mgr, j, f, q, t, sl)
                 '_mgr = mgr
                 '_q = q
@@ -393,7 +393,7 @@ Namespace Query.Database
                 Return GetCacheItem(r)
             End Function
 
-            Public Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem Implements ICustDelegate(Of ReturnType).GetCacheItem
+            Public Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem Implements ICacheItemProvoder(Of ReturnType).GetCacheItem
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(_q.SelectedType), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
@@ -591,11 +591,11 @@ Namespace Query.Database
             End Function
         End Class
 
-        Class ProcessorT(Of SelectType As {ICachedEntity, New}, ReturnType As {ICachedEntity})
-            Inherits Processor(Of ReturnType)
+        Class ProviderT(Of SelectType As {ICachedEntity, New}, ReturnType As {ICachedEntity})
+            Inherits Provider(Of ReturnType)
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of ColumnAttribute)))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of OrmProperty)))
                 MyBase.New(mgr, j, f, q, GetType(SelectType), sl)
             End Sub
 

@@ -320,7 +320,7 @@ Namespace Database
 
                 _rel = relation
 
-                If mgr.MappingEngine.GetObjectSchema(relation.Type).GetFilter(mgr.GetFilterInfo) IsNot Nothing Then
+                If mgr.MappingEngine.GetObjectSchema(relation.Type).GetContextFilter(mgr.GetFilterInfo) IsNot Nothing Then
                     _appendSecong = True
                 Else
                     If f IsNot Nothing Then
@@ -346,7 +346,7 @@ Namespace Database
             End Sub
 
             Protected Overrides Function AppendWhere() As IFilter
-                Return CType(Mgr.MappingEngine.GetObjectSchema(_rel.Type).GetFilter(Mgr.GetFilterInfo), IFilter)
+                Return CType(Mgr.MappingEngine.GetObjectSchema(_rel.Type).GetContextFilter(Mgr.GetFilterInfo), IFilter)
             End Function
 
         End Class
@@ -468,7 +468,7 @@ Namespace Database
                     'If Not String.IsNullOrEmpty(_sort) AndAlso _mgr.DbSchema.GetObjectSchema(t).IsExternalSort(_sort) Then
                     '    external_sort = True
                     'End If
-                    Dim oschema As IOrmObjectSchemaBase = _mgr.MappingEngine.GetObjectSchema(ct)
+                    Dim oschema As IContextObjectSchema = _mgr.MappingEngine.GetObjectSchema(ct)
                     For Each o As IOrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
                         'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier

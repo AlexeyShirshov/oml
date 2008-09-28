@@ -132,8 +132,8 @@ Imports Worm.Database.Sorting
 
             Assert.AreEqual(39, q.ToSimpleList(Of Integer)(mgr)(0))
 
-            q.Group = New ObjectModel.ReadOnlyCollection(Of OrmProperty)( _
-                New OrmProperty() {New OrmProperty(table, r.Column)} _
+            q.Group = New ObjectModel.ReadOnlyCollection(Of Grouping)( _
+                New Grouping() {New Grouping(table, r.Column)} _
             )
 
             Dim l As IList(Of Integer) = q.ToSimpleList(Of Integer)(mgr)
@@ -164,8 +164,8 @@ Imports Worm.Database.Sorting
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Count, "Count") _
             })
-            Dim o As New OrmProperty("left({0},1)", New Pair(Of Object, String)() {New Pair(Of Object, String)(t, "Title")}, "Pref")
-            q.GroupBy(New OrmProperty() {o}).Select(New OrmProperty() {o}).Sort(Sorting.Custom("Count desc"))
+            Dim o As New Grouping("left({0},1)", New Pair(Of Object, String)() {New Pair(Of Object, String)(t, "Title")}, "Pref")
+            q.GroupBy(New Grouping() {o}).Select(New Grouping() {o}).Sort(Sorting.Custom("Count desc"))
 
             q.CreateType = GetType(AnonymousEntity)
             Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)

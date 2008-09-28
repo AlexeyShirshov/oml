@@ -37,7 +37,7 @@ Namespace Query.Database
         Private _m As Integer
         Private _sm As Integer
 
-        Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProcessorBase(Of ReturnType)
+        Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderBase(Of ReturnType)
             If _proc Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                 'If query.Joins IsNot Nothing Then
@@ -52,7 +52,7 @@ Namespace Query.Database
                         query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.EntityName)
                     End If
                 End If
-                Dim sl As New List(Of List(Of ColumnAttribute))
+                Dim sl As New List(Of List(Of OrmProperty))
                 Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
@@ -68,16 +68,16 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _proc = New ProcessorBase(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
+                _proc = New ProviderBase(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
 
                 _m = query.Mark
                 _sm = query.SMark
             Else
-                Dim p As ProcessorBase(Of ReturnType) = CType(_proc, ProcessorBase(Of ReturnType))
+                Dim p As ProviderBase(Of ReturnType) = CType(_proc, ProviderBase(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-                    Dim sl As New List(Of List(Of ColumnAttribute))
+                    Dim sl As New List(Of List(Of OrmProperty))
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                     p.Reset(j, f, query.SelectedType, sl)
                 Else
@@ -90,10 +90,10 @@ Namespace Query.Database
                 End If
             End If
 
-            Return CType(_proc, ProcessorBase(Of ReturnType))
+            Return CType(_proc, ProviderBase(Of ReturnType))
         End Function
 
-        Protected Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Processor(Of ReturnType)
+        Protected Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Provider(Of ReturnType)
             If _proc Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                 'If query.Joins IsNot Nothing Then
@@ -107,7 +107,7 @@ Namespace Query.Database
                         query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.EntityName)
                     End If
                 End If
-                Dim sl As New List(Of List(Of ColumnAttribute))
+                Dim sl As New List(Of List(Of OrmProperty))
                 Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
@@ -123,16 +123,16 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _proc = New Processor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
+                _proc = New Provider(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
 
                 _m = query.Mark
                 _sm = query.SMark
             Else
-                Dim p As Processor(Of ReturnType) = CType(_proc, Processor(Of ReturnType))
+                Dim p As Provider(Of ReturnType) = CType(_proc, Provider(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-                    Dim sl As New List(Of List(Of ColumnAttribute))
+                    Dim sl As New List(Of List(Of OrmProperty))
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                     p.Reset(j, f, query.SelectedType, sl)
                 Else
@@ -146,16 +146,16 @@ Namespace Query.Database
                 p.Created = False
             End If
 
-            Return CType(_proc, Processor(Of ReturnType))
+            Return CType(_proc, Provider(Of ReturnType))
         End Function
 
-        Protected Function GetProcessorT(Of SelectType As {ICachedEntity, New}, ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProcessorT(Of SelectType, ReturnType)
+        Protected Function GetProcessorT(Of SelectType As {ICachedEntity, New}, ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderT(Of SelectType, ReturnType)
             If _proc Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                 'If query.Joins IsNot Nothing Then
                 '    j.AddRange(query.Joins)
                 'End If
-                Dim sl As New List(Of List(Of ColumnAttribute))
+                Dim sl As New List(Of List(Of OrmProperty))
                 Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, GetType(ReturnType), sl)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
@@ -171,16 +171,16 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _proc = New ProcessorT(Of SelectType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
+                _proc = New ProviderT(Of SelectType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
 
                 _m = query.Mark
                 _sm = query.SMark
             Else
-                Dim p As Processor(Of ReturnType) = CType(_proc, Processor(Of ReturnType))
+                Dim p As Provider(Of ReturnType) = CType(_proc, Provider(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-                    Dim sl As New List(Of List(Of ColumnAttribute))
+                    Dim sl As New List(Of List(Of OrmProperty))
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, GetType(ReturnType), sl)
                     p.Reset(j, f, GetType(SelectType), sl)
                 Else
@@ -194,11 +194,11 @@ Namespace Query.Database
                 p.Created = False
             End If
 
-            Return CType(_proc, ProcessorT(Of SelectType, ReturnType))
+            Return CType(_proc, ProviderT(Of SelectType, ReturnType))
         End Function
 
         Public Function ExecSimple(Of SelectType As {New, _ICachedEntity}, ReturnType)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
-            Dim p As Processor(Of SelectType) = GetProcessor(Of SelectType)(mgr, query)
+            Dim p As Provider(Of SelectType) = GetProcessor(Of SelectType)(mgr, query)
 
             Return p.GetSimpleValues(Of ReturnType)()
         End Function
@@ -213,12 +213,12 @@ Namespace Query.Database
         'End Function
 
         Private Delegate Function GetCeDelegate(Of ReturnType As _IEntity)( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String, ByVal p2 As OrmManager.ICustDelegateBase(Of ReturnType)) As Worm.OrmManager.CachedItem
+            ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal dic As IDictionary, ByVal id As String, ByVal sync As String, ByVal p2 As OrmManager.ICacheItemProvoderBase(Of ReturnType)) As Worm.OrmManager.CachedItem
 
         Private Delegate Function GetListFromCEDelegate(Of ReturnType As _IEntity)( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal p As OrmManager.ICustDelegateBase(Of ReturnType), ByVal ce As OrmManager.CachedItem, ByVal s As Cache.IListObjectConverter.ExtractListResult) As Worm.ReadOnlyObjectList(Of ReturnType)
+            ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal p As OrmManager.ICacheItemProvoderBase(Of ReturnType), ByVal ce As OrmManager.CachedItem, ByVal s As Cache.IListObjectConverter.ExtractListResult) As Worm.ReadOnlyObjectList(Of ReturnType)
 
-        Private Delegate Function GetProcessorDelegate(Of ReturnType As _IEntity)() As ProcessorBase(Of ReturnType)
+        Private Delegate Function GetProcessorDelegate(Of ReturnType As _IEntity)() As ProviderBase(Of ReturnType)
 
         Private Function _Exec(Of ReturnType As _IEntity)(ByVal mgr As OrmManager, _
             ByVal query As QueryCmd, ByVal gp As GetProcessorDelegate(Of ReturnType), _
@@ -255,7 +255,7 @@ Namespace Query.Database
                 mgr._schema = query.Schema
             End If
 
-            Dim p As ProcessorBase(Of ReturnType) = gp()
+            Dim p As ProviderBase(Of ReturnType) = gp()
 
             mgr._dont_cache_lists = query.DontCache OrElse query.OuterQuery IsNot Nothing OrElse p.Dic Is Nothing
 
@@ -351,9 +351,9 @@ Namespace Query.Database
 
             Return CType(_Exec(Of ReturnType)(mgr, query, _
                 Function() GetProcessor(Of ReturnType)(mgr, query), _
-                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICustDelegateBase(Of ReturnType)) _
+                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase(Of ReturnType)) _
                     m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
-                Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICustDelegateBase(Of ReturnType), ce As OrmManager.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
+                Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase(Of ReturnType), ce As OrmManager.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
                     ce.GetObjectList(Of ReturnType)(m, q.propWithLoad, p2.Created, s) _
                 ), ReadOnlyEntityList(Of ReturnType))
         End Function
@@ -365,9 +365,9 @@ Namespace Query.Database
 
             Return CType(_Exec(Of ReturnType)(mgr, query, _
                 Function() GetProcessorT(Of SelectType, ReturnType)(mgr, query), _
-                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICustDelegateBase(Of ReturnType)) _
+                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase(Of ReturnType)) _
                     m.GetFromCache(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
-                Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICustDelegateBase(Of ReturnType), ce As OrmManager.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
+                Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase(Of ReturnType), ce As OrmManager.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
                     ce.GetObjectList(Of ReturnType)(m, q.propWithLoad, p2.Created, s) _
                 ), ReadOnlyEntityList(Of ReturnType))
         End Function
@@ -446,9 +446,9 @@ Namespace Query.Database
 
             Return _Exec(Of ReturnType)(mgr, query, _
                 Function() GetProcessorAnonym(Of ReturnType)(mgr, query), _
-                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICustDelegateBase(Of ReturnType)) _
+                Function(m As OrmManager, q As QueryCmd, dic As IDictionary, id As String, sync As String, p2 As OrmManager.ICacheItemProvoderBase(Of ReturnType)) _
                     m.GetFromCache2(Of ReturnType)(dic, sync, id, q.propWithLoad, p2), _
-                Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICustDelegateBase(Of ReturnType), ce As OrmManager.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
+                Function(m As OrmManager, q As QueryCmd, p2 As OrmManager.ICacheItemProvoderBase(Of ReturnType), ce As OrmManager.CachedItem, s As Cache.IListObjectConverter.ExtractListResult) _
                     CType(ce.Obj, Global.Worm.ReadOnlyObjectList(Of ReturnType)))
         End Function
 
@@ -526,13 +526,13 @@ Namespace Query.Database
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema, _
             ByVal almgr As AliasMgr, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal columnAliases As List(Of String), ByVal innerColumns As List(Of String), _
-            ByVal withLoad As Boolean,)
+            ByVal withLoad As Boolean, ByVal selList As IEnumerable(Of OrmProperty))
 
             Dim b As Boolean
             Dim cols As New StringBuilder
             If os Is Nothing Then
-                If query.SelectList IsNot Nothing Then
-                    For Each p As OrmProperty In query.SelectList
+                If selList IsNot Nothing Then
+                    For Each p As OrmProperty In selList
                         If Not String.IsNullOrEmpty(p.Table.Name) Then
                             cols.Append(s.GetTableName(p.Table)).Append(".")
                         End If
@@ -553,18 +553,18 @@ Namespace Query.Database
                 End If
             Else
                 If withLoad Then
-                    If query.SelectList Is Nothing AndAlso query.Aggregates Is Nothing Then
+                    If selList Is Nothing AndAlso query.Aggregates Is Nothing Then
                         cols.Append(s.GetSelectColumnList(queryType, Nothing, columnAliases, os))
                         sb.Append(cols.ToString)
                         b = True
-                    ElseIf query.SelectList IsNot Nothing Then
+                    ElseIf selList IsNot Nothing Then
                         'cols.Append(s.GetSelectColumnList(queryType, GetFields(s, queryType, query, withLoad), columnAliases, os))
-                        cols.Append(s.GetSelectColumns(query.SelectList, columnAliases))
+                        cols.Append(s.GetSelectColumns(selList, columnAliases))
                         sb.Append(cols.ToString)
                         b = True
                     End If
-                ElseIf query.SelectList IsNot Nothing Then
-                    For Each p As OrmProperty In query.SelectList
+                ElseIf selList IsNot Nothing Then
+                    For Each p As OrmProperty In selList
                         Dim map As MapField2Column = os.GetFieldColumnMap()(p.Field)
                         cols.Append(s.GetTableName(map._tableName)).Append(".")
                         cols.Append(map._columnName).Append(", ")
@@ -708,16 +708,16 @@ Namespace Query.Database
 
         Public Shared Function MakeQueryStatement(ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal queryType As Type, _
-            ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As AliasMgr) As String
+            ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As AliasMgr, ByVal selList As IEnumerable(Of OrmProperty)) As String
 
-            Return MakeQueryStatement(filterInfo, schema, query, params, queryType, joins, f, almgr, Nothing, Nothing, Nothing, 0, query.propWithLoad)
+            Return MakeQueryStatement(filterInfo, schema, query, params, queryType, joins, f, almgr, Nothing, Nothing, Nothing, 0, query.propWithLoad, selList)
         End Function
 
         Public Shared Function MakeQueryStatement(ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal queryType As Type, _
             ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As AliasMgr, _
             ByVal columnAliases As List(Of String), ByVal inner As String, ByVal innerColumns As List(Of String), _
-            ByVal i As Integer, ByVal withLoad As Boolean) As String
+            ByVal i As Integer, ByVal withLoad As Boolean, ByVal selList As IEnumerable(Of OrmProperty)) As String
 
             Dim sb As New StringBuilder
             Dim s As SQLGenerator = schema
@@ -737,7 +737,7 @@ Namespace Query.Database
                 sb.Append(s.TopStatement(query.propTop.Count, query.propTop.Percent, query.propTop.Ties)).Append(" ")
             End If
 
-            FormSelectList(query, queryType, sb, s, os, almgr, filterInfo, params, columnAliases, innerColumns, withLoad)
+            FormSelectList(query, queryType, sb, s, os, almgr, filterInfo, params, columnAliases, innerColumns, withLoad, selList)
 
             sb.Append(" from ")
 

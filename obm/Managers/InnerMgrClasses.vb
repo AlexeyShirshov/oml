@@ -22,7 +22,7 @@ Partial Public Class OrmManager
             p2 = o.GetSecondType
             'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
             'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
-            Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(obj.GetType)
+            Dim oschema As IContextObjectSchema = schema.GetObjectSchema(obj.GetType)
             o1 = CType(obj.GetValue(Nothing, New ColumnAttribute(p1.PropertyName), oschema), IOrmBase)
             o2 = CType(obj.GetValue(Nothing, New ColumnAttribute(p2.PropertyName), oschema), IOrmBase)
         End Sub
@@ -619,7 +619,7 @@ Partial Public Class OrmManager
         End Function
     End Structure
 
-    Public Interface ICustDelegateBase(Of T As {_IEntity})
+    Public Interface ICacheItemProvoderBase(Of T As {_IEntity})
         'Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
         Property Created() As Boolean
         Property Renew() As Boolean
@@ -631,8 +631,8 @@ Partial Public Class OrmManager
         Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem
     End Interface
 
-    Public Interface ICustDelegate(Of T As {ICachedEntity})
-        Inherits ICustDelegateBase(Of T)
+    Public Interface ICacheItemProvoder(Of T As {ICachedEntity})
+        Inherits ICacheItemProvoderBase(Of T)
         Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem
     End Interface
 
@@ -760,7 +760,7 @@ Partial Public Class OrmManager
     End Interface
 
     Public MustInherit Class CustDelegateBase(Of T As {ICachedEntity})
-        Implements ICustDelegate(Of T)
+        Implements ICacheItemProvoder(Of T)
 
         Private _created As Boolean
         Private _renew As Boolean
@@ -769,7 +769,7 @@ Partial Public Class OrmManager
 
         End Sub
 
-        Public Overridable Property Renew() As Boolean Implements ICustDelegateBase(Of T).Renew
+        Public Overridable Property Renew() As Boolean Implements ICacheItemProvoderBase(Of T).Renew
             Get
                 Return _renew
             End Get
@@ -778,7 +778,7 @@ Partial Public Class OrmManager
             End Set
         End Property
 
-        Public Overridable Property Created() As Boolean Implements ICustDelegateBase(Of T).Created
+        Public Overridable Property Created() As Boolean Implements ICacheItemProvoderBase(Of T).Created
             Get
                 Return _created
             End Get
@@ -787,19 +787,19 @@ Partial Public Class OrmManager
             End Set
         End Property
 
-        Public Overridable ReadOnly Property SmartSort() As Boolean Implements ICustDelegateBase(Of T).SmartSort
+        Public Overridable ReadOnly Property SmartSort() As Boolean Implements ICacheItemProvoderBase(Of T).SmartSort
             Get
                 Return True
             End Get
         End Property
 
         Public MustOverride Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of T) 'Implements ICustDelegate(Of T).GetValues
-        Public MustOverride Sub CreateDepends() Implements ICustDelegateBase(Of T).CreateDepends
-        Public MustOverride ReadOnly Property Filter() As IFilter Implements ICustDelegateBase(Of T).Filter
-        Public MustOverride ReadOnly Property Sort() As Sort Implements ICustDelegateBase(Of T).Sort
+        Public MustOverride Sub CreateDepends() Implements ICacheItemProvoderBase(Of T).CreateDepends
+        Public MustOverride ReadOnly Property Filter() As IFilter Implements ICacheItemProvoderBase(Of T).Filter
+        Public MustOverride ReadOnly Property Sort() As Sort Implements ICacheItemProvoderBase(Of T).Sort
         'Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
-        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem Implements ICustDelegateBase(Of T).GetCacheItem
-        Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem Implements ICustDelegate(Of T).GetCacheItem
+        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem Implements ICacheItemProvoderBase(Of T).GetCacheItem
+        Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem Implements ICacheItemProvoder(Of T).GetCacheItem
     End Class
 
     Public MustInherit Class CustDelegate(Of T As {IOrmBase, New})

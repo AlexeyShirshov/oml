@@ -5,7 +5,7 @@ Imports System.Collections.Generic
 
 Namespace Orm.Meta
     Public NotInheritable Class SimpleObjectSchema
-        Implements IOrmObjectSchema
+        Implements IObjectSchemaBase
 
         'Private _tables(-1) As SourceFragment
         Private _table As SourceFragment
@@ -71,35 +71,42 @@ Namespace Orm.Meta
         '    Return _tables(l)
         'End Function
 
-        Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As OrmJoin Implements IOrmObjectSchema.GetJoins
-            Throw New NotSupportedException("Joins is not supported in simple mode")
-        End Function
+        'Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As OrmJoin Implements IOrmObjectSchema.GetJoins
+        '    Throw New NotSupportedException("Joins is not supported in simple mode")
+        'End Function
 
-        Public Function GetTables() As SourceFragment() Implements IOrmObjectSchema.GetTables
-            Return New SourceFragment() {_table}
-        End Function
+        'Public Function GetTables() As SourceFragment() Implements IOrmObjectSchema.GetTables
+        '    Return New SourceFragment() {_table}
+        'End Function
 
-        Public Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IOrmObjectSchemaBase.ChangeValueType
+        Public Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean Implements IObjectSchemaBase.ChangeValueType
             newvalue = value
             Return False
         End Function
 
-        Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IOrmObjectSchemaBase.GetFieldColumnMap
+        Public Function GetFieldColumnMap() As Collections.IndexedCollection(Of String, MapField2Column) Implements IObjectSchemaBase.GetFieldColumnMap
             Return _cols
         End Function
 
-        Public Function GetFilter(ByVal filter_info As Object) As IFilter Implements IOrmObjectSchemaBase.GetFilter
-            Return Nothing
-        End Function
+        'Public Function GetFilter(ByVal filter_info As Object) As IFilter Implements IContextObjectSchema.GetContextFilter
+        '    Return Nothing
+        'End Function
 
-        Public Function GetM2MRelations() As M2MRelation() Implements IOrmObjectSchema.GetM2MRelations
-            'Throw New NotSupportedException("Many2many relations is not supported in simple mode")
-            Return New M2MRelation() {}
-        End Function
+        'Public Function GetM2MRelations() As M2MRelation() Implements IOrmObjectSchema.GetM2MRelations
+        '    'Throw New NotSupportedException("Many2many relations is not supported in simple mode")
+        '    Return New M2MRelation() {}
+        'End Function
 
-        Public Function GetSuppressedColumns() As ColumnAttribute() Implements IOrmObjectSchemaBase.GetSuppressedColumns
+        Public Function GetSuppressedColumns() As ColumnAttribute() Implements IObjectSchemaBase.GetSuppressedColumns
             'Throw New NotSupportedException("GetSuppressedColumns relations is not supported in simple mode")
             Return Nothing
         End Function
+
+        Public ReadOnly Property Table() As SourceFragment Implements IObjectSchemaBase.Table
+            Get
+                Return _table
+            End Get
+        End Property
     End Class
+
 End Namespace

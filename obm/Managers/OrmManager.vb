@@ -429,7 +429,7 @@ Partial Public MustInherit Class OrmManager
                     Dim id As String = f.ToString
                     If dic.Contains(id) Then
                         'Dim fs As List(Of String) = Nothing
-                        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(f, Nothing, key, id)
+                        Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(f, Nothing, key, id)
                         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
                         If v Is Nothing OrElse v.Validate() Then
                             'l.AddRange(Find(Of T)(cl, Nothing, True))
@@ -456,7 +456,7 @@ Partial Public MustInherit Class OrmManager
             'If ids.Ints.Count > 0 Then
             GetObjects(Of T)(ids, GetFilter(criteria, tt), c, True, fieldName, False)
 
-            Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(tt)
+            Dim oschema As IContextObjectSchema = _schema.GetObjectSchema(tt)
             For Each o As T In c
                 'Dim v As OrmBase = CType(_schema.GetFieldValue(o, fieldName), OrmBase)
                 Dim v As IOrmBase = CType(o.GetValue(Nothing, New ColumnAttribute(fieldName), oschema), IOrmBase)
@@ -564,7 +564,7 @@ Partial Public MustInherit Class OrmManager
 
                     If dic.Contains(id) Then
                         'Dim sync As String = GetSync(key, id)
-                        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(o, GetFilter(criteria, type2load), Nothing, id, key, direct)
+                        Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(o, GetFilter(criteria, type2load), Nothing, id, key, direct)
                         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
                         If v Is Nothing OrElse v.Validate() Then
                             Dim e As M2MCache = CType(dic(id), M2MCache)
@@ -866,7 +866,7 @@ Partial Public MustInherit Class OrmManager
     End Sub
 
     Private Function GetResultset(Of T As {_ICachedEntity, New})(ByVal withLoad As Boolean, ByVal dic As IDictionary, _
-        ByVal id As String, ByVal sync As String, ByVal del As ICustDelegate(Of T), ByRef succeeded As Boolean) As ReadOnlyEntityList(Of T)
+        ByVal id As String, ByVal sync As String, ByVal del As ICacheItemProvoder(Of T), ByRef succeeded As Boolean) As ReadOnlyEntityList(Of T)
         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
         Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
         RaiseOnDataAvailable()
@@ -985,7 +985,7 @@ l1:
             End If
         End If
 
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(aspect, joins, GetFilter(criteria, GetType(T)), sort, key, id, l)
+        Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(aspect, joins, GetFilter(criteria, GetType(T)), sort, key, id, l)
         Dim s As Boolean = True
         Dim r As ReadOnlyEntityList(Of T) = GetResultset(Of T)(withLoad, dic, id, sync, del, s)
         If Not s Then
@@ -1115,7 +1115,7 @@ l1:
 
             'CreateDepends(filter, key, id)
 
-            Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, key, id)
+            Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(filter, sort, key, id)
             'Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
             Dim s As Boolean = True
             Dim r As ReadOnlyList(Of T) = CType(GetResultset(Of T)(withLoad, dic, id, sync, del, s), Global.Worm.ReadOnlyList(Of T))
@@ -1149,7 +1149,7 @@ l1:
 
         'CreateDepends(filter, key, id)
 
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(filter, sort, key, id, cols)
+        Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(filter, sort, key, id, cols)
         Dim s As Boolean = True
         Dim r As ReadOnlyList(Of T) = CType(GetResultset(Of T)(True, dic, id, sync, del, s), Global.Worm.ReadOnlyList(Of T))
         If Not s Then
@@ -1248,23 +1248,23 @@ l1:
 #Region " Cache "
 
     Protected Friend Delegate Function ValDelegate(Of T As _ICachedEntity)(ByRef ce As CachedItem, _
-        ByVal del As ICustDelegateBase(Of T), ByVal dic As IDictionary, ByVal id As Object, _
+        ByVal del As ICacheItemProvoderBase(Of T), ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
     Protected Friend Function GetFromCache2(Of T As {_IEntity})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICustDelegateBase(Of T)) As CachedItem
+        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase(Of T)) As CachedItem
 
         Return GetFromCacheBase(Of T, _ICachedEntity)(dic, sync, id, withLoad, del, Nothing)
     End Function
 
     Protected Friend Function GetFromCache(Of T As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICustDelegateBase(Of T)) As CachedItem
+        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase(Of T)) As CachedItem
 
         Return GetFromCacheBase(Of T, T)(dic, sync, id, withLoad, del, AddressOf _ValCE(Of T))
     End Function
 
     Protected Friend Function GetFromCacheBase(Of T As _IEntity, T2 As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICustDelegateBase(Of T), ByVal vdel As ValDelegate(Of T2)) As CachedItem
+        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase(Of T), ByVal vdel As ValDelegate(Of T2)) As CachedItem
 
         Invariant()
 
@@ -1315,7 +1315,7 @@ l1:
         If del.Created Then
             If Not _dont_cache_lists Then del.CreateDepends()
         ElseIf vdel IsNot Nothing Then
-            If Not vdel(ce, CType(del, ICustDelegateBase(Of T2)), dic, id, sync, v) Then
+            If Not vdel(ce, CType(del, ICacheItemProvoderBase(Of T2)), dic, id, sync, v) Then
                 GoTo l1
             End If
         End If
@@ -1329,10 +1329,10 @@ l1:
     End Function
 
     Private Function _ValCE(Of T As _ICachedEntity)(ByRef ce As CachedItem, _
-        ByVal del_ As ICustDelegateBase(Of T), ByVal dic As IDictionary, ByVal id As Object, _
+        ByVal del_ As ICacheItemProvoderBase(Of T), ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
-        Dim del As ICustDelegate(Of T) = CType(del_, Global.Worm.OrmManager.ICustDelegate(Of T))
+        Dim del As ICacheItemProvoder(Of T) = CType(del_, Global.Worm.OrmManager.ICacheItemProvoder(Of T))
 
         If ce._expires = Date.MinValue Then
             ce._expires = _expiresPattern
@@ -1407,7 +1407,7 @@ l1:
             Return False
         End If
 
-        Dim schema As IOrmObjectSchemaBase = _schema.GetObjectSchema(t)
+        Dim schema As IContextObjectSchema = _schema.GetObjectSchema(t)
         sorting = TryCast(schema, IOrmSorting)
         'If sorting Is Nothing Then
         '    Return False
@@ -1938,7 +1938,7 @@ l1:
         Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema)
     End Function
 
-    Public Function GetDictionary(Of T)(ByVal oschema As IOrmObjectSchemaBase) As Generic.IDictionary(Of Object, T)
+    Public Function GetDictionary(Of T)(ByVal oschema As IContextObjectSchema) As Generic.IDictionary(Of Object, T)
         If oschema Is Nothing Then
             Return Nothing
         Else
@@ -2124,7 +2124,7 @@ l1:
 
         'CreateDepends(filter, key, id)
 
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(relation, GetFilter(criteria, GetType(T)), sort, key, id)
+        Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(relation, GetFilter(criteria, GetType(T)), sort, key, id)
         'Dim ce As CachedItem = GetFromCache(Of T)(dic, sync, id, withLoad, del)
         Dim s As Boolean = True
         Dim r As ReadOnlyList(Of T) = CType(GetResultset(Of T)(withLoad, dic, id, sync, del, s), Global.Worm.ReadOnlyList(Of T))
@@ -2165,7 +2165,7 @@ l1:
 
         'CreateM2MDepends(filter, key, id)
 
-        Dim del As ICustDelegate(Of T) = Nothing
+        Dim del As ICacheItemProvoder(Of T) = Nothing
         If top > 0 Then
             id &= "top" & top
             del = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, New QueryAspect() {_schema.CreateTopAspect(top)}, id, key, direct)
@@ -2207,7 +2207,7 @@ l1:
 
         'CreateM2MDepends(filter, key, id)
 
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
+        Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(obj, GetFilter(criteria, tt2), sort, id, key, direct)
         Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, withLoad, del), M2MCache)
         Dim p As New Pair(Of M2MCache, Boolean)(m, del.Created)
         Return p
@@ -2241,7 +2241,7 @@ l1:
 
         'CreateM2MDepends(filter, key, id)
 
-        Dim del As ICustDelegate(Of T) = GetCustDelegate(Of T)(obj, Nothing, Nothing, id, key, direct)
+        Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(obj, Nothing, Nothing, id, key, direct)
         Dim m As M2MCache = CType(GetFromCache(Of T)(dic, sync, id, False, del), M2MCache)
         Dim p As New Pair(Of M2MCache, Pair(Of String))(m, New Pair(Of String)(key, id))
         Return p
@@ -2527,7 +2527,7 @@ l1:
             Return col
         Else
             Dim l As IListEdit = CreateReadonlyList(GetType(T))
-            Dim oschema As IOrmObjectSchemaBase = Nothing
+            Dim oschema As IContextObjectSchema = Nothing
             Dim i As Integer = 0
             For Each o As T In col
                 If oschema Is Nothing Then
@@ -2953,7 +2953,7 @@ l1:
         Dim prop_objs(fields.Length - 1) As IListEdit
 
         Dim lt As Type = GetType(ReadOnlyEntityList(Of ))
-        Dim oschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(GetType(T))
+        Dim oschema As IContextObjectSchema = _schema.GetObjectSchema(GetType(T))
 
         For Each o As T In col
             For i As Integer = 0 To fields.Length - 1
@@ -3395,27 +3395,27 @@ l1:
     Protected Friend MustOverride Function GetStaticKey() As String
 
     Protected MustOverride Function GetCustDelegate(Of T As {IOrmBase, New})(ByVal filter As IFilter, _
-        ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
+        ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICacheItemProvoder(Of T)
 
     Protected MustOverride Function GetCustDelegate(Of T As {IOrmBase, New})(ByVal filter As IFilter, _
-        ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As ICustDelegate(Of T)
+        ByVal sort As Sort, ByVal key As String, ByVal id As String, ByVal cols() As String) As ICacheItemProvoder(Of T)
 
     Protected MustOverride Function GetCustDelegate(Of T As {IOrmBase, New})(ByVal aspect As QueryAspect, ByVal join() As OrmJoin, ByVal filter As IFilter, _
-        ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As ICustDelegate(Of T)
+        ByVal sort As Sort, ByVal key As String, ByVal id As String, Optional ByVal cols As List(Of ColumnAttribute) = Nothing) As ICacheItemProvoder(Of T)
 
     Protected MustOverride Function GetCustDelegate(Of T As {IOrmBase, New})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
-        ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
+        ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICacheItemProvoder(Of T)
 
     'Protected MustOverride Function GetCustDelegate4Top(Of T As {OrmBase, New})(ByVal top As Integer, ByVal filter As IOrmFilter, _
     '    ByVal sort As Sort, ByVal key As String, ByVal id As String) As ICustDelegate(Of T)
 
     Protected MustOverride Function GetCustDelegate(Of T2 As {IOrmBase, New})( _
         ByVal obj As _IOrmBase, ByVal filter As IFilter, _
-        ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As ICustDelegate(Of T2)
+        ByVal sort As Sort, ByVal queryAscpect() As QueryAspect, ByVal id As String, ByVal key As String, ByVal direct As String) As ICacheItemProvoder(Of T2)
 
     Protected MustOverride Function GetCustDelegate(Of T2 As {IOrmBase, New})( _
         ByVal obj As _IOrmBase, ByVal filter As IFilter, _
-        ByVal sort As Sort, ByVal id As String, ByVal key As String, ByVal direct As String) As ICustDelegate(Of T2)
+        ByVal sort As Sort, ByVal id As String, ByVal key As String, ByVal direct As String) As ICacheItemProvoder(Of T2)
 
     'Protected MustOverride Function GetCustDelegateTag(Of T As {OrmBase, New})( _
     '    ByVal obj As T, ByVal filter As IOrmFilter, ByVal sort As String, ByVal sortType As SortType, ByVal id As String, ByVal sync As String, ByVal key As String) As ICustDelegate(Of T)
@@ -3673,7 +3673,7 @@ l1:
         ByRef filter As IFilter, ByVal s As Sort, ByVal filterInfo As Object, ByRef joins() As OrmJoin, _
         ByRef appendMain As Boolean) As Boolean
         Dim l As New List(Of OrmJoin)
-        Dim oschema As IOrmObjectSchemaBase = schema.GetObjectSchema(selectType)
+        Dim oschema As IContextObjectSchema = schema.GetObjectSchema(selectType)
         Dim types As New List(Of Type)
         If filter IsNot Nothing Then
             For Each fl As IFilter In filter.Filter.GetAllFilters
@@ -3722,7 +3722,7 @@ l1:
                             End If
                         Next
 
-                        Dim newfl As IFilter = ts.GetFilter(filterInfo)
+                        Dim newfl As IFilter = ts.GetContextFilter(filterInfo)
                         If newfl IsNot Nothing Then
                             Dim con As Conditions.Condition.ConditionConstructorBase = schema.CreateConditionCtor
                             con.AddFilter(filter)

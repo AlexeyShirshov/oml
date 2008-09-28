@@ -39,7 +39,7 @@ Namespace Criteria.Core
     End Interface
 
     Public Interface IEntityFilterBase
-        Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult
+        Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IContextObjectSchema) As IEvaluableValue.EvalResult
         Function GetFilterTemplate() As IOrmFilterTemplate
         Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object
         Function MakeHash() As String
@@ -59,7 +59,7 @@ Namespace Criteria.Core
 
     Public Interface IOrmFilterTemplate
         Inherits ITemplate
-        Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String
+        Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IContextObjectSchema, ByVal obj As ICachedEntity) As String
         'Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter
         Sub SetType(ByVal t As Type)
     End Interface
@@ -235,7 +235,7 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IOrmObjectSchemaBase) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
+        Public Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IContextObjectSchema) As IEvaluableValue.EvalResult Implements IEntityFilter.Eval
             Dim evval As IEvaluableValue = TryCast(val, IEvaluableValue)
             If evval IsNot Nothing Then
                 If schema Is Nothing Then
@@ -437,7 +437,7 @@ Namespace Criteria.Core
             '_appl = appl
         End Sub
 
-        Public Overridable Function MakeFilter(ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
+        Public Overridable Function MakeFilter(ByVal schema As ObjectMappingEngine, ByVal oschema As IContextObjectSchema, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
@@ -492,7 +492,7 @@ Namespace Criteria.Core
             Return _t.ToString & _fieldname & OperToString()
         End Function
 
-        Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
+        Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IContextObjectSchema, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
             If Operation = FilterOperation.Equal Then
                 Return MakeFilter(schema, oschema, obj).ToString
             Else

@@ -134,4 +134,10 @@ Public Class CompositeEditableSchema
         newvalue = value
         Return False
     End Function
+
+    Public ReadOnly Property Table() As Worm.Orm.Meta.SourceFragment Implements Worm.Orm.Meta.IObjectSchemaBase.Table
+        Get
+            Return _tables(0)
+        End Get
+    End Property
 End Class

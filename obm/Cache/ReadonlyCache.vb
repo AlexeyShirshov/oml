@@ -35,9 +35,9 @@ Namespace Cache
 
         Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of Object, T)
 
-        Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.IDictionary
+        Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As ObjectMappingEngine, ByVal oschema As IContextObjectSchema) As System.Collections.IDictionary
 
-        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
+        Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IContextObjectSchema) As System.Collections.Generic.IDictionary(Of Object, T)
 
         Public MustOverride Sub Reset()
 

@@ -43,14 +43,14 @@ Namespace Orm.Meta
 
     Public Interface IObjectSchemaBase
         Inherits IOrmPropertyMap
-        Function GetTables() As SourceFragment()
+        ReadOnly Property Table() As SourceFragment
         Function GetSuppressedColumns() As ColumnAttribute()
         Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
     End Interface
 
-    Public Interface IOrmObjectSchemaBase
+    Public Interface IContextObjectSchema
         Inherits IObjectSchemaBase
-        Function GetFilter(ByVal filter_info As Object) As IFilter
+        Function GetContextFilter(ByVal context As Object) As IFilter
     End Interface
 
     Public Interface IOrmSorting
@@ -64,12 +64,13 @@ Namespace Orm.Meta
         ReadOnly Property SortExpiration(ByVal s As Sort) As TimeSpan
     End Interface
 
-    Public Interface IOrmRelationalSchema
+    Public Interface IMultiTableObjectSchema
+        Function GetTables() As SourceFragment()
         Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As OrmJoin
     End Interface
 
     Public Interface IOrmRelationalSchemaWithM2M
-        Inherits IOrmRelationalSchema
+        Inherits IMultiTableObjectSchema
         Function GetM2MRelations() As M2MRelation()
     End Interface
 
@@ -78,7 +79,7 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface IOrmObjectSchema
-        Inherits IOrmObjectSchemaBase, IOrmRelationalSchemaWithM2M
+        Inherits IContextObjectSchema, IOrmRelationalSchemaWithM2M
     End Interface
 
     Public Interface IReadonlyObjectSchema

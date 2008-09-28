@@ -35,8 +35,8 @@ Namespace Orm
 
     Public Interface IEntity
         Inherits ICloneable
-        Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IOrmObjectSchemaBase, ByVal value As Object)
-        Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IOrmObjectSchemaBase) As Object
+        Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IContextObjectSchema, ByVal value As Object)
+        Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IContextObjectSchema) As Object
         Function GetSyncRoot() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity
