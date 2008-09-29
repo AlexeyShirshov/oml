@@ -22,7 +22,7 @@ Partial Public Class OrmManager
             p2 = o.GetSecondType
             'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
             'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
-            Dim oschema As IContextObjectSchema = schema.GetObjectSchema(obj.GetType)
+            Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(obj.GetType)
             o1 = CType(obj.GetValue(Nothing, New ColumnAttribute(p1.PropertyName), oschema), IOrmBase)
             o2 = CType(obj.GetValue(Nothing, New ColumnAttribute(p2.PropertyName), oschema), IOrmBase)
         End Sub

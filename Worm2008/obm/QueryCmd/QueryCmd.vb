@@ -204,6 +204,7 @@ Namespace Query
         Private _execCnt As Integer
         Private _schema As ObjectMappingEngine
         Private _cacheSort As Boolean
+        Private _autoFields As Boolean
 
         Private _createType As Type
         Public Property CreateType() As Type
@@ -212,6 +213,15 @@ Namespace Query
             End Get
             Set(ByVal value As Type)
                 _createType = value
+            End Set
+        End Property
+
+        Public Property AutoFields() As Boolean
+            Get
+                Return _autoFields
+            End Get
+            Set(ByVal value As Boolean)
+                _autoFields = value
             End Set
         End Property
 
@@ -419,7 +429,7 @@ Namespace Query
                     If table.Equals(_table) Then
                         _table = Nothing
                     End If
-                    If propWithLoad AndAlso _fields.Count = 1 Then
+                    If propWithLoad AndAlso _fields IsNot Nothing AndAlso _fields.Count = 1 Then
                         _fields = Nothing
                     End If
                 Else
@@ -443,23 +453,45 @@ Namespace Query
 
             If _fields IsNot Nothing Then
                 If t IsNot Nothing Then
-                    For Each pk As ColumnAttribute In schema.GetPrimaryKeys(t)
-                        Dim find As Boolean
-                        For Each fld As OrmProperty In _fields
-                            If (fld.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK _
-                                AndAlso fld.Field = pk.FieldName Then
-                                find = True
-                                Exit For
+                    If _autoFields Then
+                        For Each pk As ColumnAttribute In schema.GetPrimaryKeys(t)
+                            Dim find As Boolean
+                            For Each fld As OrmProperty In _fields
+                                If (fld.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK _
+                                    AndAlso fld.Field = pk.FieldName Then
+                                    find = True
+                                    Exit For
+                                End If
+                            Next
+                            If Not find Then
+                                If cl Is Nothing Then
+                                    cl = New List(Of OrmProperty)
+                                End If
+                                cl.Add(New OrmProperty(t, pk.FieldName))
+                                cl(0).Attributes = pk._behavior
                             End If
                         Next
-                        If Not find Then
-                            If cl Is Nothing Then
-                                cl = New List(Of OrmProperty)
+                    ElseIf cl Is Nothing Then
+                        cl = New List(Of OrmProperty)
+                    End If
+
+                    If cl IsNot Nothing Then
+                        For Each fld As OrmProperty In _fields
+                            If Not cl.Contains(fld) Then
+                                cl.Add(fld)
                             End If
-                            cl.Add(New OrmProperty(t, pk.FieldName))
-                            cl(0).Attributes = pk._behavior
-                        End If
+                        Next
+                    End If
+                Else
+                    cl = New List(Of OrmProperty)
+                    For Each fld As OrmProperty In _fields
+                        cl.Add(fld)
                     Next
+                End If
+
+                If cl IsNot Nothing Then
+                    cl.Sort(Function(fst As OrmProperty, sec As OrmProperty) _
+                        fst.ToString.CompareTo(sec.ToString))
                 End If
             End If
             Return f
@@ -598,14 +630,25 @@ Namespace Query
                 sb.Append(_top.GetDynamicKey).Append("$")
             End If
 
-            Dim cnt As Integer = 0
-            Dim n As Sort = _order
-            Do While n IsNot Nothing
-                cnt += 1
-                n = n.Previous
-            Loop
-            If cnt > 0 Then
-                sb.Append("sort=").Append(cnt).Append("$")
+            'Dim cnt As Integer = 0
+            'Dim n As Sort = _order
+            'Do While n IsNot Nothing
+            '    cnt += 1
+            '    n = n.Previous
+            'Loop
+            'If cnt > 0 Then
+            '    sb.Append("sort=").Append(cnt).Append("$")
+            'End If
+
+            If _order IsNot Nothing Then
+                If CacheSort OrElse _top IsNot Nothing Then
+                    Dim n As Sort = _order
+                    Do While n IsNot Nothing
+                        sb.Append(n.ToString)
+                        n = n.Previous
+                    Loop
+                    sb.Append("$")
+                End If
             End If
 
             If _rn IsNot Nothing Then
@@ -621,7 +664,11 @@ Namespace Query
 
         Public Function ToStaticString() As String
             Dim sb As New StringBuilder
-            GetStaticKey(sb, _joins, _filter.Filter, _realType, Cache.CacheListBehavior.CacheAll, New List(Of OrmProperty)(_fields))
+            Dim l As List(Of OrmProperty) = Nothing
+            If _fields IsNot Nothing Then
+                l = New List(Of OrmProperty)(_fields)
+            End If
+            GetStaticKey(sb, _joins, _filter.Filter, _realType, Cache.CacheListBehavior.CacheAll, l)
             Return sb.ToString
         End Function
 
@@ -1072,6 +1119,10 @@ Namespace Query
             Next
 
             Return r
+        End Function
+
+        Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByRef pk As Boolean) As IObjectSchemaBase
+
         End Function
 
         Public Sub Reset(Of ReturnType As _IEntity)(ByVal mgr As OrmManager)

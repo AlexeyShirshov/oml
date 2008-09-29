@@ -27,7 +27,7 @@ Namespace Query.Database
             Protected _mgr As OrmReadOnlyDBManager
             Protected _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
             Protected _f() As IFilter
-            Private _sl As List(Of List(Of OrmProperty))
+            Protected _sl As List(Of List(Of OrmProperty))
             Protected _q As QueryCmd
             Private _key As String
             Private _id As String
@@ -36,29 +36,28 @@ Namespace Query.Database
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of OrmProperty)))
-                _mgr = mgr
                 _q = q
 
-                Reset(j, f, q.SelectedType, sl)
+                Reset(mgr, j, f, q.SelectedType, sl)
             End Sub
 
             Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of OrmProperty)))
-                _mgr = mgr
                 _q = q
 
-                Reset(j, f, t, sl)
+                Reset(mgr, j, f, t, sl)
             End Sub
 
             Public Sub ResetStmt()
                 _stmt = Nothing
             End Sub
 
-            Public Sub Reset(ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+            Public Sub Reset(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                              ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of OrmProperty)))
                 _j = j
                 _f = f
                 _sl = sl
+                _mgr = mgr
 
                 _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl)
                 _id = _q.GetDynamicKey(_j, _f)
@@ -145,7 +144,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IContextObjectSchema = dbm.SQLGenerator.GetObjectSchema(_q.SelectedType, False)
+                Dim oschema As IObjectSchemaBase = dbm.SQLGenerator.GetObjectSchema(_q.SelectedType, False)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -160,7 +159,7 @@ Namespace Query.Database
                     oschema = dbm.SQLGenerator.GetObjectSchema(t, False)
                 End If
 
-                dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, True), oschema, fields)
+                dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, True, _sl(0)), oschema, fields)
                 _q.ExecCount += 1
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
@@ -201,6 +200,15 @@ Namespace Query.Database
             Public Sub ResetCache()
                 _dic.Remove(Id)
             End Sub
+
+            Public Property Mgr() As OrmReadOnlyDBManager
+                Get
+                    Return _mgr
+                End Get
+                Protected Friend Set(ByVal value As OrmReadOnlyDBManager)
+                    _mgr = value
+                End Set
+            End Property
 
             Public Overridable Property Renew() As Boolean Implements ICacheItemProvoderBase(Of ReturnType).Renew
                 Get
@@ -493,7 +501,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
                 'If GetType(ReturnType) IsNot Query.SelectedType Then
-                dbm.LoadMultipleObjects(_q.SelectedType, cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad))
+                dbm.LoadMultipleObjects(_q.SelectedType, cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)))
                 _q.ExecCount += 1
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
@@ -602,7 +610,7 @@ Namespace Query.Database
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
-                dbm.LoadMultipleObjects(Of SelectType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, GetType(ReturnType), _q, _q.propWithLoad))
+                dbm.LoadMultipleObjects(Of SelectType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, GetType(ReturnType), _q, _q.propWithLoad, _sl(0)))
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function

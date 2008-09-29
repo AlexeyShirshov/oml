@@ -197,7 +197,7 @@ Public MustInherit Class ObjectMappingEngine
     'End Function
 
     Public Function GetEntityKey(ByVal filterInfo As Object, ByVal t As Type) As String
-        Dim schema As IContextObjectSchema = GetObjectSchema(t)
+        Dim schema As IObjectSchemaBase = GetObjectSchema(t)
 
         Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
 
@@ -209,7 +209,7 @@ Public MustInherit Class ObjectMappingEngine
     End Function
 
     Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type) As Object
-        Dim schema As IContextObjectSchema = GetObjectSchema(t)
+        Dim schema As IObjectSchemaBase = GetObjectSchema(t)
 
         Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
 
@@ -220,7 +220,7 @@ Public MustInherit Class ObjectMappingEngine
         End If
     End Function
 
-    Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As IContextObjectSchema) As Object
+    Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As IObjectSchemaBase) As Object
         Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
 
         If c IsNot Nothing Then
@@ -309,7 +309,7 @@ Public MustInherit Class ObjectMappingEngine
         If schema IsNot Nothing Then
             Return schema.GetM2MRelations
         Else
-            Return Nothing
+            Return New M2MRelation() {}
         End If
     End Function
 
@@ -485,7 +485,7 @@ Public MustInherit Class ObjectMappingEngine
             Throw New ArgumentNullException("maintype")
         End If
 
-        Dim schema As IContextObjectSchema = GetObjectSchema(ct)
+        Dim schema As IObjectSchemaBase = GetObjectSchema(ct)
 
         Return TryCast(schema, IRelation)
     End Function
@@ -617,7 +617,7 @@ Public MustInherit Class ObjectMappingEngine
             Throw New ArgumentNullException("type")
         End If
 
-        Dim schema As IContextObjectSchema = GetObjectSchema(type)
+        Dim schema As IObjectSchemaBase = GetObjectSchema(type)
 
         Return GetAttributes(schema, c)
     End Function
@@ -632,7 +632,7 @@ Public MustInherit Class ObjectMappingEngine
 #End Region
 
 #Region " Helpers "
-    Protected Friend Sub GetPKList(ByVal type As Type, ByVal schema As IContextObjectSchema, ByVal ids As StringBuilder, Optional ByVal columnAliases As List(Of String) = Nothing)
+    Protected Friend Sub GetPKList(ByVal type As Type, ByVal schema As IObjectSchemaBase, ByVal ids As StringBuilder, Optional ByVal columnAliases As List(Of String) = Nothing)
         If ids Is Nothing Then
             Throw New ArgumentNullException("ids")
         End If
@@ -652,7 +652,7 @@ Public MustInherit Class ObjectMappingEngine
     Public Function HasField(ByVal t As Type, ByVal field As String) As Boolean
         If String.IsNullOrEmpty(field) Then Return False
 
-        Dim schema As IContextObjectSchema = GetObjectSchema(t)
+        Dim schema As IObjectSchemaBase = GetObjectSchema(t)
 
         Return schema.GetFieldColumnMap.ContainsKey(field)
     End Function
@@ -677,7 +677,7 @@ Public MustInherit Class ObjectMappingEngine
         Return CType(GetProperties(original_type)(c), Reflection.PropertyInfo)
     End Function
 
-    Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IContextObjectSchema, ByVal c As ColumnAttribute) As Reflection.PropertyInfo
+    Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IObjectSchemaBase, ByVal c As ColumnAttribute) As Reflection.PropertyInfo
         Return CType(GetProperties(t, schema)(c), Reflection.PropertyInfo)
     End Function
 
@@ -689,7 +689,7 @@ Public MustInherit Class ObjectMappingEngine
         Return GetProperty(original_type, New ColumnAttribute(field))
     End Function
 
-    Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IContextObjectSchema, ByVal field As String) As Reflection.PropertyInfo
+    Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IObjectSchemaBase, ByVal field As String) As Reflection.PropertyInfo
         If String.IsNullOrEmpty(field) Then
             Throw New ArgumentNullException("field")
         End If
@@ -705,7 +705,7 @@ Public MustInherit Class ObjectMappingEngine
         Return CType(GetColumnProperties(original_type, Nothing)(New ColumnAttribute(field)), Reflection.PropertyInfo)
     End Function
 
-    Protected Friend Shared Function GetPropertyInt(ByVal t As Type, ByVal oschema As IContextObjectSchema, ByVal field As String) As Reflection.PropertyInfo
+    Protected Friend Shared Function GetPropertyInt(ByVal t As Type, ByVal oschema As IObjectSchemaBase, ByVal field As String) As Reflection.PropertyInfo
         If String.IsNullOrEmpty(field) Then
             Throw New ArgumentNullException("field")
         End If
@@ -714,7 +714,7 @@ Public MustInherit Class ObjectMappingEngine
     End Function
 
 
-    Public Function GetSortedFieldList(ByVal original_type As Type, Optional ByVal schema As IContextObjectSchema = Nothing) As Generic.List(Of ColumnAttribute)
+    Public Function GetSortedFieldList(ByVal original_type As Type, Optional ByVal schema As IObjectSchemaBase = Nothing) As Generic.List(Of ColumnAttribute)
         'Dim cl_type As String = New StringBuilder().Append("columnlist").Append(type.ToString).ToString
         Dim cl_type As String = "columnlist" & original_type.ToString
 
@@ -743,7 +743,7 @@ Public MustInherit Class ObjectMappingEngine
 
     '<MethodImpl(MethodImplOptions.Synchronized)> _
     Public Function GetPrimaryKeysName(ByVal original_type As Type, Optional ByVal add_alias As Boolean = True, _
-        Optional ByVal columnAliases As List(Of String) = Nothing, Optional ByVal schema As IContextObjectSchema = Nothing) As String()
+        Optional ByVal columnAliases As List(Of String) = Nothing, Optional ByVal schema As IObjectSchemaBase = Nothing) As String()
         If original_type Is Nothing Then
             Throw New ArgumentNullException("original_type")
         End If
@@ -828,7 +828,7 @@ Public MustInherit Class ObjectMappingEngine
     '    Return arr.ToArray
     'End Function
 
-    Public Shared Function GetFieldValueSchemaless(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IContextObjectSchema, ByVal pi As Reflection.PropertyInfo) As Object
+    Public Shared Function GetFieldValueSchemaless(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IObjectSchemaBase, ByVal pi As Reflection.PropertyInfo) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -853,7 +853,7 @@ Public MustInherit Class ObjectMappingEngine
             Throw New ArgumentNullException("obj")
         End If
 
-        Dim schema As IContextObjectSchema = GetObjectSchema(obj.GetType)
+        Dim schema As IObjectSchemaBase = GetObjectSchema(obj.GetType)
 
         Dim pi As Reflection.PropertyInfo = Nothing
 
@@ -870,7 +870,7 @@ Public MustInherit Class ObjectMappingEngine
         Return GetFieldValue(obj, fieldName, pi, schema)
     End Function
 
-    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IContextObjectSchema) As Object
+    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IObjectSchemaBase) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -890,7 +890,7 @@ Public MustInherit Class ObjectMappingEngine
         Return GetFieldValue(obj, fieldName, pi, schema)
     End Function
 
-    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IContextObjectSchema, ByVal pi As Reflection.PropertyInfo) As Object
+    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IObjectSchemaBase, ByVal pi As Reflection.PropertyInfo) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -910,7 +910,7 @@ Public MustInherit Class ObjectMappingEngine
         Return GetFieldValue(obj, fieldName, pi, schema)
     End Function
 
-    Public Shared Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal pi As Reflection.PropertyInfo, ByVal oschema As IContextObjectSchema) As Object
+    Public Shared Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal pi As Reflection.PropertyInfo, ByVal oschema As IObjectSchemaBase) As Object
         If pi Is Nothing Then
             Throw New ArgumentNullException("pi")
         End If
@@ -932,7 +932,7 @@ Public MustInherit Class ObjectMappingEngine
     '    End Using
     'End Function
 
-    Public Sub SetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal value As Object, ByVal oschema As IContextObjectSchema)
+    Public Sub SetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal value As Object, ByVal oschema As IObjectSchemaBase)
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -987,7 +987,7 @@ Public MustInherit Class ObjectMappingEngine
         Return sb.ToString
     End Function
 
-    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal arr As Generic.ICollection(Of ColumnAttribute), ByVal columnAliases As List(Of String), ByVal schema As IContextObjectSchema) As String
+    Protected Friend Function GetSelectColumnList(ByVal original_type As Type, ByVal arr As Generic.ICollection(Of ColumnAttribute), ByVal columnAliases As List(Of String), ByVal schema As IObjectSchemaBase) As String
         'Dim add_c As Boolean = False
         'If arr Is Nothing Then
         '    Dim s As String = CStr(sel(original_type))
@@ -1030,7 +1030,7 @@ Public MustInherit Class ObjectMappingEngine
     '    Return sb.ToString
     'End Function
 
-    Protected Friend Function GetJoinFieldNameByType(ByVal mainType As Type, ByVal subType As Type, ByVal oschema As IContextObjectSchema) As String
+    Protected Friend Function GetJoinFieldNameByType(ByVal mainType As Type, ByVal subType As Type, ByVal oschema As IObjectSchemaBase) As String
         Dim j As IJoinBehavior = TryCast(oschema, IJoinBehavior)
         Dim r As String = Nothing
         If j IsNot Nothing Then
@@ -1047,7 +1047,7 @@ Public MustInherit Class ObjectMappingEngine
         Return r
     End Function
 
-    Public Function GetJoinObj(ByVal oschema As IContextObjectSchema, _
+    Public Function GetJoinObj(ByVal oschema As IObjectSchemaBase, _
         ByVal obj As _IEntity, ByVal subType As Type) As IOrmBase
         Dim c As String = GetJoinFieldNameByType(obj.GetType, subType, oschema)
         Dim r As IOrmBase = Nothing
@@ -1505,11 +1505,11 @@ Public MustInherit Class ObjectMappingEngine
         End If
     End Function
 
-    Public Function GetObjectSchema(ByVal t As Type) As IContextObjectSchema
+    Public Function GetObjectSchema(ByVal t As Type) As IObjectSchemaBase
         Return GetObjectSchema(t, True)
     End Function
 
-    Protected Friend Function GetObjectSchema(ByVal t As Type, ByVal check As Boolean) As IContextObjectSchema
+    Protected Friend Function GetObjectSchema(ByVal t As Type, ByVal check As Boolean) As IObjectSchemaBase
         If t Is Nothing Then
             If check Then
                 Throw New ArgumentNullException("t")
@@ -1530,7 +1530,7 @@ Public MustInherit Class ObjectMappingEngine
                 End If
             End Using
         End If
-        Dim schema As IContextObjectSchema = CType(idic(t), IContextObjectSchema)
+        Dim schema As IObjectSchemaBase = CType(idic(t), IObjectSchemaBase)
 
         If schema Is Nothing AndAlso check Then
             Throw New ArgumentException(String.Format("Cannot find schema for type {0}", t))
@@ -1610,9 +1610,7 @@ Public MustInherit Class ObjectMappingEngine
             Throw New ArgumentNullException("type")
         End If
 
-        Dim schema As IOrmObjectSchema = CType(GetObjectSchema(type), IOrmObjectSchema)
-
-        Return schema.GetTables
+        Return GetTables(GetObjectSchema(type))
     End Function
 
     Public Function GetTables(ByVal schema As IObjectSchemaBase) As SourceFragment()
@@ -1634,7 +1632,7 @@ Public MustInherit Class ObjectMappingEngine
             Return col
         Else
             Dim l As New List(Of T)
-            Dim oschema As IContextObjectSchema = Nothing
+            Dim oschema As IObjectSchemaBase = Nothing
             For Each o As T In col
                 If oschema Is Nothing Then
                     oschema = Me.GetObjectSchema(o.GetType)

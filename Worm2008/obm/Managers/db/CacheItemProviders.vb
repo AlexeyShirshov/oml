@@ -319,8 +319,10 @@ Namespace Database
                 End If
 
                 _rel = relation
+                Dim s As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(relation.Type)
+                Dim cs As IContextObjectSchema = TryCast(s, IContextObjectSchema)
 
-                If mgr.MappingEngine.GetObjectSchema(relation.Type).GetContextFilter(mgr.GetFilterInfo) IsNot Nothing Then
+                If s IsNot Nothing AndAlso cs.GetContextFilter(mgr.GetFilterInfo) IsNot Nothing Then
                     _appendSecong = True
                 Else
                     If f IsNot Nothing Then
@@ -346,7 +348,13 @@ Namespace Database
             End Sub
 
             Protected Overrides Function AppendWhere() As IFilter
-                Return CType(Mgr.MappingEngine.GetObjectSchema(_rel.Type).GetContextFilter(Mgr.GetFilterInfo), IFilter)
+                Dim s As IObjectSchemaBase = Mgr.MappingEngine.GetObjectSchema(_rel.Type)
+                Dim cs As IContextObjectSchema = TryCast(s, IContextObjectSchema)
+                If cs IsNot Nothing Then
+                    Return CType(cs.GetContextFilter(Mgr.GetFilterInfo), IFilter)
+                Else
+                    Return Nothing
+                End If
             End Function
 
         End Class
@@ -468,7 +476,7 @@ Namespace Database
                     'If Not String.IsNullOrEmpty(_sort) AndAlso _mgr.DbSchema.GetObjectSchema(t).IsExternalSort(_sort) Then
                     '    external_sort = True
                     'End If
-                    Dim oschema As IContextObjectSchema = _mgr.MappingEngine.GetObjectSchema(ct)
+                    Dim oschema As IObjectSchemaBase = _mgr.MappingEngine.GetObjectSchema(ct)
                     For Each o As IOrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
                         'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier

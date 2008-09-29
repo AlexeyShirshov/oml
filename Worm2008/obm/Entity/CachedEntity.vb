@@ -8,7 +8,7 @@ Namespace Orm
     <Serializable()> _
     Public MustInherit Class CachedEntity
         Inherits Entity
-        Implements _ICachedEntity
+        Implements _ICachedEntityEx
 
         Protected _key As Integer
         Private _loaded As Boolean
@@ -47,7 +47,7 @@ Namespace Orm
 
             Public Sub Added(ByVal source As ICachedEntity, ByVal args As ObjectSavedArgs)
                 Dim mgr As OrmManager = OrmManager.CurrentManager
-                Dim oschema As IContextObjectSchema = mgr.MappingEngine.GetObjectSchema(_dst.GetType)
+                Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(_dst.GetType)
                 For Each p As String In _props
                     If p = "ID" Then
                         Dim nm As OrmManager.INewObjects = mgr.NewObjectManager
@@ -324,7 +324,7 @@ Namespace Orm
             Throw New NotSupportedException
         End Sub
 
-        Protected Overridable Sub PKLoaded(ByVal pkCount As Integer) Implements _ICachedEntity.PKLoaded
+        Protected Overridable Sub PKLoaded(ByVal pkCount As Integer) Implements _ICachedEntityEx.PKLoaded
             _key = GetCacheKey()
             _hasPK = True
         End Sub
@@ -651,7 +651,7 @@ Namespace Orm
         Protected Overridable Sub SetPK(ByVal pk As PKDesc())
             Using m As IGetManager = GetMgr()
                 Dim tt As Type = Me.GetType
-                Dim oschema As IContextObjectSchema = m.Manager.MappingEngine.GetObjectSchema(tt)
+                Dim oschema As IObjectSchemaBase = m.Manager.MappingEngine.GetObjectSchema(tt)
                 For Each p As PKDesc In pk
                     Dim c As New ColumnAttribute(p.PropertyAlias)
                     SetValue(Nothing, c, oschema, p.Value)
@@ -855,7 +855,7 @@ l1:
             With reader
                 .MoveToFirstAttribute()
                 Dim t As Type = Me.GetType
-                Dim oschema As IContextObjectSchema = Nothing
+                Dim oschema As IObjectSchemaBase = Nothing
                 If schema IsNot Nothing Then
                     oschema = schema.GetObjectSchema(t)
                 End If
@@ -985,7 +985,7 @@ l1:
             Dim l As New List(Of PKDesc)
             Using mc As IGetManager = GetMgr()
                 Dim schema As Worm.ObjectMappingEngine = mc.Manager.MappingEngine
-                Dim oschema As IContextObjectSchema = schema.GetObjectSchema(Me.GetType)
+                Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(Me.GetType)
                 For Each kv As DictionaryEntry In schema.GetProperties(Me.GetType)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
@@ -1033,7 +1033,7 @@ l1:
                 Dim columns As New Generic.List(Of ColumnAttribute)
                 Dim t As Type = obj.GetType
                 Using mc As IGetManager = GetMgr()
-                    Dim oschema As IContextObjectSchema = mc.Manager.MappingEngine.GetObjectSchema(t)
+                    Dim oschema As IObjectSchemaBase = mc.Manager.MappingEngine.GetObjectSchema(t)
                     For Each de As DictionaryEntry In mc.Manager.MappingEngine.GetProperties(t, oschema)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
@@ -1256,15 +1256,15 @@ l1:
             End If
         End Sub
 
-        Protected Overridable Function ValidateNewObject(ByVal mgr As OrmManager) As Boolean Implements ICachedEntity.ValidateNewObject
+        Protected Overridable Function ValidateNewObject(ByVal mgr As OrmManager) As Boolean Implements _ICachedEntityEx.ValidateNewObject
             Return True
         End Function
 
-        Protected Overridable Function ValidateUpdate(ByVal mgr As OrmManager) As Boolean Implements ICachedEntity.ValidateUpdate
+        Protected Overridable Function ValidateUpdate(ByVal mgr As OrmManager) As Boolean Implements _ICachedEntityEx.ValidateUpdate
             Return True
         End Function
 
-        Protected Overridable Function ValidateDelete(ByVal mgr As OrmManager) As Boolean Implements ICachedEntity.ValidateDelete
+        Protected Overridable Function ValidateDelete(ByVal mgr As OrmManager) As Boolean Implements _ICachedEntityEx.ValidateDelete
             Return True
         End Function
 

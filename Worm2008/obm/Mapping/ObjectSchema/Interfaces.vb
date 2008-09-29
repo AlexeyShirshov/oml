@@ -65,6 +65,7 @@ Namespace Orm.Meta
     End Interface
 
     Public Interface IMultiTableObjectSchema
+        Inherits IObjectSchemaBase
         Function GetTables() As SourceFragment()
         Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As OrmJoin
     End Interface

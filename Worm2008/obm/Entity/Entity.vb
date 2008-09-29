@@ -238,7 +238,7 @@ Namespace Orm
                 If mc Is Nothing Then
                     sb.Append("Cannot get object dump")
                 Else
-                    Dim oschema As IContextObjectSchema = mc.Manager.MappingEngine.GetObjectSchema(Me.GetType)
+                    Dim oschema As IObjectSchemaBase = mc.Manager.MappingEngine.GetObjectSchema(Me.GetType)
                     Dim olr As Boolean = _readRaw
                     _readRaw = True
                     Try
@@ -263,7 +263,7 @@ Namespace Orm
             Return GetValue(Nothing, New ColumnAttribute(fieldName), Nothing)
         End Function
 
-        Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IContextObjectSchema) As Object Implements IEntity.GetValue
+        Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IObjectSchemaBase) As Object Implements IEntity.GetValue
             If pi Is Nothing Then
                 Dim s As ObjectMappingEngine = OrmSchema
                 If s Is Nothing Then
@@ -302,7 +302,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As IContextObjectSchema, ByVal value As Object) Implements IEntity.SetValue
+        Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As IObjectSchemaBase, ByVal value As Object) Implements IEntity.SetValue
             If pi Is Nothing Then
                 Using m As IGetManager = GetMgr()
                     pi = m.Manager.MappingEngine.GetProperty(Me.GetType, schema, c)
@@ -339,7 +339,7 @@ Namespace Orm
             End Using
         End Function
 
-        Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, ByVal mgr As OrmManager, ByVal oschema As IContextObjectSchema)
+        Protected Overridable Sub CopyProperties(ByVal [from] As _IEntity, ByVal [to] As _IEntity, ByVal mgr As OrmManager, ByVal oschema As IObjectSchemaBase)
             For Each kv As DictionaryEntry In mgr.MappingEngine.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
@@ -349,7 +349,7 @@ Namespace Orm
 
         Protected Overridable Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity) Implements IEntity.CopyBody
             Using mc As IGetManager = GetMgr()
-                Dim oschema As IContextObjectSchema = mc.Manager.MappingEngine.GetObjectSchema(Me.GetType)
+                Dim oschema As IObjectSchemaBase = mc.Manager.MappingEngine.GetObjectSchema(Me.GetType)
                 [to].BeginLoading()
                 CopyProperties([from], [to], mc.Manager, oschema)
                 [to].EndLoading()

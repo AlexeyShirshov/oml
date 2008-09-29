@@ -35,8 +35,8 @@ Namespace Orm
 
     Public Interface IEntity
         Inherits ICloneable
-        Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IContextObjectSchema, ByVal value As Object)
-        Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IContextObjectSchema) As Object
+        Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IObjectSchemaBase, ByVal value As Object)
+        Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IObjectSchemaBase) As Object
         Function GetSyncRoot() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity
@@ -63,7 +63,7 @@ Namespace Orm
     End Interface
 
     Public Interface ICachedEntity
-        Inherits _IEntity, IComparable, System.Xml.Serialization.IXmlSerializable
+        Inherits _IEntity
         ReadOnly Property Key() As Integer
         ReadOnly Property OriginalCopy() As ICachedEntity
         Sub CreateCopyForSaveNewEntry(ByVal pk() As PKDesc)
@@ -76,9 +76,6 @@ Namespace Orm
         Sub RejectChanges()
         Sub RejectRelationChanges()
         ReadOnly Property HasChanges() As Boolean
-        Function ValidateNewObject(ByVal mgr As OrmManager) As Boolean
-        Function ValidateUpdate(ByVal mgr As OrmManager) As Boolean
-        Function ValidateDelete(ByVal mgr As OrmManager) As Boolean
         ReadOnly Property ChangeDescription() As String
         Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs)
         Event Added(ByVal sender As ICachedEntity, ByVal args As EventArgs)
@@ -86,6 +83,18 @@ Namespace Orm
         Event Updated(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event OriginalCopyRemoved(ByVal sender As ICachedEntity)
 
+    End Interface
+
+    Public Interface ICachedEntityEx
+        Inherits ICachedEntity, IComparable, System.Xml.Serialization.IXmlSerializable
+
+        Function ValidateNewObject(ByVal mgr As OrmManager) As Boolean
+        Function ValidateUpdate(ByVal mgr As OrmManager) As Boolean
+        Function ValidateDelete(ByVal mgr As OrmManager) As Boolean
+    End Interface
+
+    Public Interface _ICachedEntityEx
+        Inherits ICachedEntityEx, _ICachedEntity
     End Interface
 
     Public Interface IM2M

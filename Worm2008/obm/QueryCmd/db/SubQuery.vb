@@ -27,7 +27,7 @@ Namespace Database.Criteria.Values
             Dim t As Type = If(_q.CreateType Is Nothing, _q.SelectedType, _q.CreateType)
 
             Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
-            Dim sl As New List(Of Orm.OrmProperty)
+            Dim sl As List(Of Orm.OrmProperty) = Nothing
             Dim f As IFilter = _q.Prepare(j, schema, filterInfo, t, sl)
 
             sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(filterInfo, schema, _q, paramMgr, _

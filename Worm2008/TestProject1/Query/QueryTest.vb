@@ -157,7 +157,7 @@ Imports Worm.Database.Criteria.Joins
             Dim q As New QueryCmd(t_entity4)
             Dim jf As New JoinFilter(t_entity4, "ID", t_entity5, "ID", Worm.Criteria.FilterOperation.Equal)
             q.Joins = New OrmJoin() {New OrmJoin(t_entity5, Worm.Criteria.Joins.JoinType.Join, jf)}
-            q.Select(New OrmProperty() {New OrmProperty(t_entity5, "ID"), New OrmProperty(t_entity4, "Title")})
+            q.Select(New OrmProperty() {New OrmProperty(t_entity4, "ID"), New OrmProperty(t_entity4, "Title")})
 
             q.Sort(Sorting.Field(t_entity4, "Title").Desc)
 
@@ -622,6 +622,7 @@ Imports Worm.Database.Criteria.Joins
         Dim q As New QueryCmd(t, New CreateManager(Function() _
             TestManagerRS.CreateManagerShared(New SQLGenerator("1"))))
 
+        q.AutoFields = True
         q.Select(FCtor.Field(t, "Code").Add(t, "Title"))
 
         Dim l As ReadOnlyEntityList(Of Table1) = q.ToEntityList(Of Table1)()
@@ -631,4 +632,5 @@ Imports Worm.Database.Criteria.Joins
         Assert.IsFalse(l(0).InternalProperties.IsFieldLoaded("Enum"))
 
     End Sub
+
 End Class
