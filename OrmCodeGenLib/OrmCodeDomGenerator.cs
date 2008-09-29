@@ -2090,7 +2090,7 @@ namespace Worm.CodeGen.Core
 			method.Parameters.Add(prm);
 
             prm = new CodeParameterDeclarationExpression(
-                new CodeTypeReference(typeof (IOrmObjectSchemaBase)),
+                new CodeTypeReference(typeof(IObjectSchemaBase)),
                 "schema"
                 );
             method.Parameters.Add(prm);
@@ -2672,7 +2672,7 @@ namespace Worm.CodeGen.Core
             setvalueMethod.Attributes = MemberAttributes.Public | MemberAttributes.Override;
             setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(PropertyInfo), "pi"));
             setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(ColumnAttribute), "c"));
-			setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(IOrmObjectSchemaBase), "schema"));
+            setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(IObjectSchemaBase), "schema"));
             setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "value"));
             setvalueMethod.Statements.Add(
                 new CodeVariableDeclarationStatement(

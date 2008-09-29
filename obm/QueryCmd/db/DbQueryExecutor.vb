@@ -79,7 +79,7 @@ Namespace Query.Database
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                     Dim sl As New List(Of List(Of OrmProperty))
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
-                    p.Reset(j, f, query.SelectedType, sl)
+                    p.Reset(CType(mgr, OrmReadOnlyDBManager), j, f, query.SelectedType, sl)
                 Else
                     If _sm <> query.SMark Then
                         p.ResetStmt()
@@ -87,6 +87,7 @@ Namespace Query.Database
                     If query._resDic Then
                         p.ResetDic()
                     End If
+                    p.Mgr = CType(mgr, OrmReadOnlyDBManager)
                 End If
             End If
 
@@ -134,7 +135,7 @@ Namespace Query.Database
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                     Dim sl As New List(Of List(Of OrmProperty))
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
-                    p.Reset(j, f, query.SelectedType, sl)
+                    p.Reset(CType(mgr, OrmReadOnlyDBManager), j, f, query.SelectedType, sl)
                 Else
                     If _sm <> query.SMark Then
                         p.ResetStmt()
@@ -142,6 +143,7 @@ Namespace Query.Database
                     If query._resDic Then
                         p.ResetDic()
                     End If
+                    p.Mgr = CType(mgr, OrmReadOnlyDBManager)
                 End If
                 p.Created = False
             End If
@@ -182,7 +184,7 @@ Namespace Query.Database
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                     Dim sl As New List(Of List(Of OrmProperty))
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, GetType(ReturnType), sl)
-                    p.Reset(j, f, GetType(SelectType), sl)
+                    p.Reset(CType(mgr, OrmReadOnlyDBManager), j, f, GetType(SelectType), sl)
                 Else
                     If _sm <> query.SMark Then
                         p.ResetStmt()
@@ -190,6 +192,7 @@ Namespace Query.Database
                     If query._resDic Then
                         p.ResetDic()
                     End If
+                    p.Mgr = CType(mgr, OrmReadOnlyDBManager)
                 End If
                 p.Created = False
             End If
@@ -454,8 +457,9 @@ Namespace Query.Database
 
 #Region " Shared helpers "
 
-        Protected Shared Function GetFields(ByVal gen As ObjectMappingEngine, ByVal type As Type, ByVal q As QueryCmd, ByVal withLoad As Boolean) As List(Of ColumnAttribute)
-            Dim c As IList(Of OrmProperty) = q.SelectList
+        Protected Shared Function GetFields(ByVal gen As ObjectMappingEngine, ByVal type As Type, _
+            ByVal q As QueryCmd, ByVal withLoad As Boolean, ByVal c As IList(Of OrmProperty)) As List(Of ColumnAttribute)
+
             Dim l As List(Of ColumnAttribute) = Nothing
             If c IsNot Nothing Then
                 l = New List(Of ColumnAttribute)
@@ -523,7 +527,7 @@ Namespace Query.Database
         End Function
 
         Protected Shared Sub FormSelectList(ByVal query As QueryCmd, ByVal queryType As Type, _
-            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema, _
+            ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IObjectSchemaBase, _
             ByVal almgr As AliasMgr, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal columnAliases As List(Of String), ByVal innerColumns As List(Of String), _
             ByVal withLoad As Boolean, ByVal selList As IEnumerable(Of OrmProperty))
@@ -609,7 +613,9 @@ Namespace Query.Database
             End If
         End Sub
 
-        Protected Shared Sub FormTypeTables(ByVal filterInfo As Object, ByVal params As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IOrmObjectSchema, ByVal tables() As SourceFragment)
+        Protected Shared Sub FormTypeTables(ByVal filterInfo As Object, ByVal params As ICreateParam, _
+            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IObjectSchemaBase, ByVal tables() As SourceFragment)
+
             Dim tbl As SourceFragment = tables(0)
             Dim tbl_real As SourceFragment = tbl
             Dim [alias] As String = Nothing
@@ -626,17 +632,20 @@ Namespace Query.Database
             almgr.Replace(s, tbl, sb)
 
             sb.Append(s.GetTableName(tbl_real)).Append(" ").Append([alias])
+            Dim fs As IMultiTableObjectSchema = TryCast(os, IMultiTableObjectSchema)
 
-            For j As Integer = 1 To tables.Length - 1
-                Dim join As OrmJoin = CType(s.GetJoins(os, tbl, tables(j), filterInfo), OrmJoin)
+            If fs IsNot Nothing Then
+                For j As Integer = 1 To tables.Length - 1
+                    Dim join As OrmJoin = CType(s.GetJoins(fs, tbl, tables(j), filterInfo), OrmJoin)
 
-                If Not OrmJoin.IsEmpty(join) Then
-                    If Not almgr.Aliases.ContainsKey(tables(j)) Then
-                        almgr.AddTable(tables(j), params)
+                    If Not OrmJoin.IsEmpty(join) Then
+                        If Not almgr.Aliases.ContainsKey(tables(j)) Then
+                            almgr.AddTable(tables(j), params)
+                        End If
+                        sb.Append(join.MakeSQLStmt(s, filterInfo, almgr, params))
                     End If
-                    sb.Append(join.MakeSQLStmt(s, filterInfo, almgr, params))
-                End If
-            Next
+                Next
+            End If
         End Sub
 
         Protected Shared Sub FormJoins(ByVal filterInfo As Object, ByVal query As QueryCmd, ByVal params As ICreateParam, _
@@ -677,7 +686,7 @@ Namespace Query.Database
                             If t Is Nothing Then
                                 t = selectType
                             End If
-                            Dim schema As IOrmObjectSchema = s.GetObjectSchema(t)
+                            Dim schema As IObjectSchemaBase = s.GetObjectSchema(t)
                             Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
                             Dim map As MapField2Column = Nothing
                             If cm.TryGetValue(g.Field, map) Then
@@ -721,7 +730,7 @@ Namespace Query.Database
 
             Dim sb As New StringBuilder
             Dim s As SQLGenerator = schema
-            Dim os As IOrmObjectSchema = Nothing
+            Dim os As IObjectSchemaBase = Nothing
 
             If query.Table Is Nothing Then
                 os = s.GetObjectSchema(queryType)
@@ -747,7 +756,12 @@ Namespace Query.Database
 
                 Dim tables() As SourceFragment = Nothing
                 If os IsNot Nothing Then
-                    tables = os.GetTables()
+                    Dim fs As IMultiTableObjectSchema = TryCast(os, IMultiTableObjectSchema)
+                    If fs Is Nothing Then
+                        tables = New SourceFragment() {os.Table}
+                    Else
+                        tables = fs.GetTables()
+                    End If
                 Else
                     tables = New SourceFragment() {query.Table}
                 End If

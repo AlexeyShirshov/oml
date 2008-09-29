@@ -373,7 +373,7 @@ Namespace Web
             If _updateLastActivity AndAlso Not String.IsNullOrEmpty(_lastActivityField) Then
                 If user IsNot Nothing Then
                     Using mgr As OrmDBManager = _getMgr()
-                        Dim oschema As IContextObjectSchema = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                        Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
                         mgr.MappingEngine.SetFieldValue(user, _lastActivityField, GetNow, oschema)
                     End Using
                 End If
@@ -424,7 +424,7 @@ Namespace Web
                         Else
                             Using mgr As OrmDBManager = _getMgr()
                                 Using user.BeginEdit
-                                    Dim oschema As IContextObjectSchema = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                                    Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
                                     mgr.MappingEngine.SetFieldValue(user, p.Name, p.PropertyValue, oschema)
                                 End Using
                             End Using
@@ -445,7 +445,7 @@ Namespace Web
                 End If
                 If user IsNot Nothing Then
                     Using mgr As OrmDBManager = _getMgr()
-                        Dim oschema As IContextObjectSchema = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                        Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
                         Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
                             Using user.BeginEdit
                                 If Not String.IsNullOrEmpty(_lastActivityField) Then
@@ -538,7 +538,7 @@ Namespace Web
                 Catch ex As ArgumentException When ex.Message.Contains("not found")
                     user = CreateUser(mgr, HttpContext.Current.Profile.UserName, AnonymousId)
                     Dim schema As ObjectMappingEngine = mgr.MappingEngine
-                    Dim oschema As IContextObjectSchema = mgr.MappingEngine.GetObjectSchema(user.GetType)
+                    Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
                     For Each p As SettingsProperty In System.Web.Profile.ProfileBase.Properties
                         If Not p.IsReadOnly Then
                             If cok IsNot Nothing Then

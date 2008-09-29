@@ -931,8 +931,10 @@ Namespace Database
 
                     Dim almgr As AliasMgr = AliasMgr.Create
                     Dim params As New ParamMgr(SQLGenerator, "p")
-                    Dim schema2 As IOrmObjectSchema = SQLGenerator.GetObjectSchema(selectedType)
-                    Dim cs As IOrmObjectSchema = SQLGenerator.GetObjectSchema(ct)
+                    Dim schema2 As IObjectSchemaBase = SQLGenerator.GetObjectSchema(selectedType)
+                    Dim ctx_schema2 As IContextObjectSchema = TryCast(schema2, IContextObjectSchema)
+                    Dim mt_schema2 As IMultiTableObjectSchema = TryCast(schema2, IMultiTableObjectSchema)
+                    Dim cs As IObjectSchemaBase = SQLGenerator.GetObjectSchema(ct)
                     Dim mms As IConnectedFilter = TryCast(cs, IConnectedFilter)
                     Dim cfi As Object = GetFilterInfo()
                     If mms IsNot Nothing Then
@@ -963,11 +965,13 @@ Namespace Database
                     '    arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
                     '    sb.Append(Schema.SelectID(ct, almgr, params))
                     'End If
-                    Dim appendMainTable As Boolean = filter IsNot Nothing OrElse schema2.GetContextFilter(GetFilterInfo) IsNot Nothing OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse SQLGenerator.NeedJoin(schema2)
+                    Dim appendMainTable As Boolean = filter IsNot Nothing _
+                        OrElse (ctx_schema2 IsNot Nothing AndAlso ctx_schema2.GetContextFilter(GetFilterInfo) IsNot Nothing) _
+                        OrElse withLoad OrElse (sort IsNot Nothing AndAlso Not sort.IsExternal) OrElse SQLGenerator.NeedJoin(schema2)
                     'Dim table As String = schema2.GetTables(0)
-                    SQLGenerator.AppendNativeTypeJoins(selectedType, almgr, schema2.GetTables, sb, params, SQLGenerator.GetObjectSchema(ct).GetTables(0), id_clm, appendMainTable, GetFilterInfo)
-                    If withLoad Then
-                        For Each tbl As SourceFragment In schema2.GetTables
+                    SQLGenerator.AppendNativeTypeJoins(selectedType, almgr, If(mt_schema2 IsNot Nothing, mt_schema2.GetTables, Nothing), sb, params, cs.Table, id_clm, appendMainTable, GetFilterInfo, schema2)
+                    If withLoad AndAlso mt_schema2 IsNot Nothing Then
+                        For Each tbl As SourceFragment In mt_schema2.GetTables
                             If almgr.Aliases.ContainsKey(tbl) Then
                                 'Dim [alias] As String = almgr.Aliases(tbl)
                                 'sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
@@ -978,7 +982,9 @@ Namespace Database
                     Dim con As New Database.Criteria.Conditions.Condition.ConditionConstructor
                     con.AddFilter(connectedFilter)
                     con.AddFilter(filter)
-                    con.AddFilter(schema2.GetContextFilter(GetFilterInfo))
+                    If ctx_schema2 IsNot Nothing Then
+                        con.AddFilter(ctx_schema2.GetContextFilter(GetFilterInfo))
+                    End If
                     SQLGenerator.AppendWhere(ct, con.Condition, almgr, sb, cfi, params)
 
                     If sort IsNot Nothing AndAlso Not sort.IsExternal Then
@@ -1097,8 +1103,8 @@ Namespace Database
 
                     Dim dic1 As IDictionary = GetDictionary(firstType)
                     Dim dic2 As IDictionary = GetDictionary(secondType)
-                    Dim oschema As IOrmObjectSchema = SQLGenerator.GetObjectSchema(firstType)
-                    Dim oschema2 As IOrmObjectSchema = SQLGenerator.GetObjectSchema(secondType)
+                    Dim oschema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(firstType)
+                    Dim oschema2 As IObjectSchemaBase = SQLGenerator.GetObjectSchema(secondType)
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         Dim id1 As Object = dr.GetValue(firstidx)
@@ -1183,7 +1189,7 @@ Namespace Database
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, _
             ByVal values As IList, ByVal selectList As Generic.List(Of ColumnAttribute), _
-            ByVal oschema As IContextObjectSchema, _
+            ByVal oschema As IObjectSchemaBase, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
@@ -1312,7 +1318,7 @@ Namespace Database
                 'Dim col2 As String = orig_type.Name & "ID"
                 'dt.Columns.Add(col1, GetType(Integer))
                 'dt.Columns.Add(col2, GetType(Integer))
-                Dim oschema As IOrmObjectSchema = SQLGenerator.GetObjectSchema(ct)
+                Dim oschema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(ct)
 
                 For Each o As IOrmBase In GetObjects(ct, ids, f, withLoad, f1, idsSorted)
                     'Dim o1 As OrmBase = CType(DbSchema.GetFieldValue(o, f1), OrmBase)
@@ -1340,9 +1346,11 @@ Namespace Database
                     End If
                 Next
             Else
-                Dim oschema2 As IOrmObjectSchema = SQLGenerator.GetObjectSchema(type2load)
+                Dim oschema2 As IObjectSchemaBase = SQLGenerator.GetObjectSchema(type2load)
+                Dim ctx_oschema2 As IContextObjectSchema = TryCast(oschema2, IContextObjectSchema)
                 Dim r2 As M2MRelation = SQLGenerator.GetM2MRelation(type2load, type, direct)
-                Dim appendMainTable As Boolean = f IsNot Nothing OrElse oschema2.GetContextFilter(GetFilterInfo) IsNot Nothing
+                Dim appendMainTable As Boolean = f IsNot Nothing OrElse _
+                    (ctx_oschema2 IsNot Nothing AndAlso ctx_oschema2.GetContextFilter(GetFilterInfo) IsNot Nothing)
                 sb.Append(SQLGenerator.SelectM2M(type2load, type, New QueryAspect() {}, appendMainTable, True, GetFilterInfo, params, almgr, withLoad, direct))
 
                 If Not SQLGenerator.AppendWhere(type2load, CType(f, IFilter), almgr, sb, GetFilterInfo, params) Then
@@ -1648,7 +1656,7 @@ Namespace Database
                         'If Not modifiedloaded Then obj.IsLoaded = False
                         'obj.IsLoaded = False
                         Dim loaded As Boolean = False
-                        Dim oschema As IOrmObjectSchema = SQLGenerator.GetObjectSchema(obj.GetType)
+                        Dim oschema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(obj.GetType)
                         'obj = NormalizeObject(obj, dic)
                         Do While dr.Read
                             If loaded Then
@@ -1757,7 +1765,7 @@ Namespace Database
             ByVal withLoad As Boolean, ByVal values As IList, _
             ByVal selectList As Generic.List(Of ColumnAttribute))
 
-            Dim oschema As IOrmObjectSchema = CType(_schema.GetObjectSchema(GetType(T), False), IOrmObjectSchema)
+            Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(GetType(T))
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
             LoadMultipleObjects(Of T)(cmd, withLoad, values, selectList, oschema, fields_idx)
@@ -1766,7 +1774,7 @@ Namespace Database
         Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, ByVal values As IList, _
-            ByVal selectList As Generic.List(Of ColumnAttribute), ByVal oschema As IContextObjectSchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
+            ByVal selectList As Generic.List(Of ColumnAttribute), ByVal oschema As IObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
             If values Is Nothing Then
                 'values = New Generic.List(Of T)
@@ -1863,7 +1871,7 @@ Namespace Database
             ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
             ByVal dr As System.Data.IDataReader, _
             ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer, _
-            ByVal oschema As IContextObjectSchema, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
+            ByVal oschema As IObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
@@ -1927,7 +1935,7 @@ Namespace Database
 
         Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.IDataReader, _
             ByVal selectList As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer, _
-            ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IContextObjectSchema, _
+            ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IObjectSchemaBase, _
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column)) As _IEntity
 
             Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
@@ -2798,9 +2806,9 @@ Namespace Database
             ByVal frmt As IFtsStringFormater, Optional ByVal js() As OrmJoin = Nothing) As ReadOnlyList(Of T)
 
             Dim fields As New List(Of Pair(Of String, Type))
-            Dim searchSchema As IOrmObjectSchema = SQLGenerator.GetObjectSchema(type2search)
+            Dim searchSchema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(type2search)
             Dim selectType As System.Type = GetType(T)
-            Dim selSchema As IOrmObjectSchema = SQLGenerator.GetObjectSchema(selectType)
+            Dim selSchema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(selectType)
             Dim fsearch As IOrmFullTextSupport = TryCast(searchSchema, IOrmFullTextSupport)
             Dim queryFields As String() = Nothing
             Dim selCols, searchCols As New List(Of ColumnAttribute)
@@ -3000,8 +3008,8 @@ l2:
             Dim selCols, searchCols As New List(Of ColumnAttribute)
             Dim queryFields As String() = Nothing
 
-            Dim searchSchema As IOrmObjectSchema = SQLGenerator.GetObjectSchema(type2search)
-            Dim selSchema As IOrmObjectSchema = SQLGenerator.GetObjectSchema(selectType)
+            Dim searchSchema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(type2search)
+            Dim selSchema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(selectType)
 
             Dim appendMain As Boolean = PrepareSearch(selectType, type2search, filter, sort, contextKey, fields, _
                 joins, selCols, searchCols, queryFields, searchSchema, selSchema)
@@ -3014,7 +3022,7 @@ l2:
             ByVal sort As Sort, ByVal contextKey As Object, ByVal fields As IList(Of Pair(Of String, Type)), _
             ByVal joins As IList(Of OrmJoin), ByVal selCols As IList(Of ColumnAttribute), _
             ByVal searchCols As IList(Of ColumnAttribute), ByRef queryFields As String(), _
-            ByVal searchSchema As IOrmObjectSchema, ByVal selSchema As IOrmObjectSchema) As Boolean
+            ByVal searchSchema As IObjectSchemaBase, ByVal selSchema As IObjectSchemaBase) As Boolean
 
             'Dim searchSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(type2search)
             'Dim selSchema As IOrmObjectSchema = DbSchema.GetObjectSchema(selectType)
@@ -3071,7 +3079,7 @@ l2:
                     appendMain = type2search Is sortType OrElse appendMain
                     If Not types.Contains(sortType) Then
                         If type2search IsNot sortType Then
-                            Dim srtschema As IContextObjectSchema = _schema.GetObjectSchema(sortType)
+                            Dim srtschema As IObjectSchemaBase = _schema.GetObjectSchema(sortType)
                             Dim field As String = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
                             If Not String.IsNullOrEmpty(field) Then
                                 joins.Add(MakeJoin(sortType, type2search, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join))
@@ -3141,7 +3149,7 @@ l2:
                     Else
                         Dim tf As Database.Criteria.Core.TableFilter = TryCast(f, Database.Criteria.Core.TableFilter)
                         If tf IsNot Nothing Then
-                            If tf.Template.Table IsNot selSchema.GetTables(0) Then
+                            If tf.Template.Table IsNot selSchema.Table Then
                                 Throw New NotImplementedException
                             Else
                                 appendMain = True
@@ -3355,7 +3363,7 @@ l2:
                 Dim l As New List(Of Object)
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
-                    Dim oschema As IOrmObjectSchema = SQLGenerator.GetObjectSchema(tt)
+                    Dim oschema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(tt)
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         Dim id1 As Object = dr.GetValue(0)

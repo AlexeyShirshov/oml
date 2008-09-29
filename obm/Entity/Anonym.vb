@@ -9,11 +9,11 @@ Namespace Orm
 
         Private _props As New Dictionary(Of String, Object)
 
-        Public Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal oschema As Meta.IContextObjectSchema) As Object
+        Public Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal oschema As Meta.IObjectSchemaBase) As Object
             Return _props(c.FieldName)
         End Function
 
-        Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As Meta.IContextObjectSchema, ByVal value As Object)
+        Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As Meta.IObjectSchemaBase, ByVal value As Object)
             _props(c.FieldName) = value
         End Sub
 
@@ -29,22 +29,6 @@ Namespace Orm
         Implements _ICachedEntity
 
         Private _pk() As String
-
-        Public Function CompareTo(ByVal obj As Object) As Integer Implements System.IComparable.CompareTo
-
-        End Function
-
-        Public Function GetSchema() As System.Xml.Schema.XmlSchema Implements System.Xml.Serialization.IXmlSerializable.GetSchema
-
-        End Function
-
-        Public Sub ReadXml(ByVal reader As System.Xml.XmlReader) Implements System.Xml.Serialization.IXmlSerializable.ReadXml
-
-        End Sub
-
-        Public Sub WriteXml(ByVal writer As System.Xml.XmlWriter) Implements System.Xml.Serialization.IXmlSerializable.WriteXml
-
-        End Sub
 
         Public Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer) As Boolean Implements _ICachedEntity.CheckIsAllLoaded
 
@@ -163,17 +147,5 @@ Namespace Orm
         End Sub
 
         Public Event Updated(ByVal sender As ICachedEntity, ByVal args As System.EventArgs) Implements ICachedEntity.Updated
-
-        Public Function ValidateDelete(ByVal mgr As OrmManager) As Boolean Implements ICachedEntity.ValidateDelete
-
-        End Function
-
-        Public Function ValidateNewObject(ByVal mgr As OrmManager) As Boolean Implements ICachedEntity.ValidateNewObject
-
-        End Function
-
-        Public Function ValidateUpdate(ByVal mgr As OrmManager) As Boolean Implements ICachedEntity.ValidateUpdate
-
-        End Function
     End Class
 End Namespace

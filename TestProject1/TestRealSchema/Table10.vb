@@ -44,7 +44,7 @@ Public Class Table10
         End With
     End Sub
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IContextObjectSchema, ByVal value As Object)
+    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IObjectSchemaBase, ByVal value As Object)
         Select Case c.FieldName
             Case "Table1"
                 Tbl = CType(value, Table1)

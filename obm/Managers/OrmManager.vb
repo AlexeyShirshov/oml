@@ -456,7 +456,7 @@ Partial Public MustInherit Class OrmManager
             'If ids.Ints.Count > 0 Then
             GetObjects(Of T)(ids, GetFilter(criteria, tt), c, True, fieldName, False)
 
-            Dim oschema As IContextObjectSchema = _schema.GetObjectSchema(tt)
+            Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(tt)
             For Each o As T In c
                 'Dim v As OrmBase = CType(_schema.GetFieldValue(o, fieldName), OrmBase)
                 Dim v As IOrmBase = CType(o.GetValue(Nothing, New ColumnAttribute(fieldName), oschema), IOrmBase)
@@ -1407,7 +1407,7 @@ l1:
             Return False
         End If
 
-        Dim schema As IContextObjectSchema = _schema.GetObjectSchema(t)
+        Dim schema As IObjectSchemaBase = _schema.GetObjectSchema(t)
         sorting = TryCast(schema, IOrmSorting)
         'If sorting Is Nothing Then
         '    Return False
@@ -1938,7 +1938,7 @@ l1:
         Return _cache.GetOrmDictionary(Of T)(GetFilterInfo, _schema)
     End Function
 
-    Public Function GetDictionary(Of T)(ByVal oschema As IContextObjectSchema) As Generic.IDictionary(Of Object, T)
+    Public Function GetDictionary(Of T)(ByVal oschema As IObjectSchemaBase) As Generic.IDictionary(Of Object, T)
         If oschema Is Nothing Then
             Return Nothing
         Else
@@ -2527,7 +2527,7 @@ l1:
             Return col
         Else
             Dim l As IListEdit = CreateReadonlyList(GetType(T))
-            Dim oschema As IContextObjectSchema = Nothing
+            Dim oschema As IObjectSchemaBase = Nothing
             Dim i As Integer = 0
             For Each o As T In col
                 If oschema Is Nothing Then
@@ -2953,7 +2953,7 @@ l1:
         Dim prop_objs(fields.Length - 1) As IListEdit
 
         Dim lt As Type = GetType(ReadOnlyEntityList(Of ))
-        Dim oschema As IContextObjectSchema = _schema.GetObjectSchema(GetType(T))
+        Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(GetType(T))
 
         For Each o As T In col
             For i As Integer = 0 To fields.Length - 1
@@ -3186,14 +3186,17 @@ l1:
     Public Function SaveChanges(ByVal obj As _ICachedEntity, ByVal AcceptChanges As Boolean) As Boolean
         Try
             Dim b As Boolean = True
-            Select Case obj.ObjectState
-                Case ObjectState.Created, ObjectState.NotFoundInSource
-                    b = obj.ValidateNewObject(Me)
-                Case ObjectState.Modified
-                    b = obj.ValidateUpdate(Me)
-                Case ObjectState.Deleted
-                    b = obj.ValidateDelete(Me)
-            End Select
+            Dim v As _ICachedEntityEx = TryCast(obj, _ICachedEntityEx)
+            If v IsNot Nothing Then
+                Select Case obj.ObjectState
+                    Case ObjectState.Created, ObjectState.NotFoundInSource
+                        b = v.ValidateNewObject(Me)
+                    Case ObjectState.Modified
+                        b = v.ValidateUpdate(Me)
+                    Case ObjectState.Deleted
+                        b = v.ValidateDelete(Me)
+                End Select
+            End If
 
             If Not b Then
                 Return True
@@ -3673,7 +3676,7 @@ l1:
         ByRef filter As IFilter, ByVal s As Sort, ByVal filterInfo As Object, ByRef joins() As OrmJoin, _
         ByRef appendMain As Boolean) As Boolean
         Dim l As New List(Of OrmJoin)
-        Dim oschema As IContextObjectSchema = schema.GetObjectSchema(selectType)
+        Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(selectType)
         Dim types As New List(Of Type)
         If filter IsNot Nothing Then
             For Each fl As IFilter In filter.Filter.GetAllFilters

@@ -903,7 +903,7 @@ Namespace Database.Storedprocs
             Private _o As Object
             Private _count As Integer
             Private _loaded As Integer
-            Private _oschema As IOrmObjectSchema
+            Private _oschema As IObjectSchemaBase
 
             Public Overridable Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
                 'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)

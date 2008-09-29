@@ -432,7 +432,11 @@ Namespace Sorting
 
         Public Property FieldName() As String
             Get
-                Return Field
+                If Not String.IsNullOrEmpty(Field) Then
+                    Return Field
+                Else
+                    Return Column
+                End If
             End Get
             Set(ByVal value As String)
                 Field = value
@@ -626,7 +630,7 @@ Namespace Sorting
                 'If s.IsAny Then
                 '    Throw New NotSupportedException("Any sorting is not supported")
                 'End If
-                Dim ss As IContextObjectSchema = Nothing
+                Dim ss As IObjectSchemaBase = Nothing
                 Dim xo As Object = GetValue(x, s, ss)
                 Dim yo As Object = GetValue(y, s, ss)
                 Dim pr2 As Pair(Of _IEntity, IOrmSorting) = TryCast(yo, Pair(Of _IEntity, IOrmSorting))
@@ -676,7 +680,7 @@ Namespace Sorting
             Return p
         End Function
 
-        Private Function GetValue(ByVal x As T, ByVal s As Sort, ByRef oschema As IContextObjectSchema) As Object
+        Private Function GetValue(ByVal x As T, ByVal s As Sort, ByRef oschema As IObjectSchemaBase) As Object
             Dim xo As _IEntity = x
             If s.Type IsNot Nothing AndAlso _t IsNot s.Type Then
                 Dim schema As ObjectMappingEngine = _mgr.MappingEngine

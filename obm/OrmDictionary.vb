@@ -305,7 +305,7 @@ Namespace Orm
             Dim strong As Boolean = Not IsLeaf
             If Name = " " Then strong = False
             Dim tt As Type = GetType(T)
-            Dim oschema As IContextObjectSchema = mgr.MappingEngine.GetObjectSchema(tt)
+            Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(tt)
             Dim odic As IOrmDictionary = TryCast(oschema, IOrmDictionary)
             Dim firstField As String = _firstField
             Dim secField As String = _secField

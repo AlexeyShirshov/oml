@@ -152,4 +152,27 @@ Imports Worm.Database.Criteria.Joins
             End Try
         End Using
     End Sub
+
+    <TestMethod()> Public Sub TestSortCache()
+        Dim t As Type = GetType(Table1)
+
+        Dim q As New QueryCmd(t, New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(New SQLGenerator("1"))))
+
+        q.Top(2).Sort(Orm.Sorting.Field("DT"))
+
+        Dim r As ReadOnlyEntityList(Of Table1) = q.ToEntityList(Of Table1)()
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.AreEqual(1, r(0).ID)
+        Assert.AreEqual(2, r(1).ID)
+
+        q.Sort(Orm.Sorting.Field("Title"))
+
+        r = q.ToEntityList(Of Table1)()
+
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+        Assert.AreEqual(1, r(0).ID)
+        Assert.AreEqual(3, r(1).ID)
+
+    End Sub
 End Class

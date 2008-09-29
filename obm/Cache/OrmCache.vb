@@ -959,7 +959,7 @@ Namespace Cache
                 Exit For
             Next
 
-            Dim oschema As IContextObjectSchema = schema.GetObjectSchema(tt)
+            Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(tt)
             Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
             Dim k As Object = tt
             If c IsNot Nothing Then
@@ -1423,7 +1423,7 @@ l1:
         End Function
 
         Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, _
-            ByVal schema As ObjectMappingEngine, ByVal oschema As IContextObjectSchema) As System.Collections.IDictionary
+            ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase) As System.Collections.IDictionary
             Dim k As Object = t
             If schema IsNot Nothing Then
                 k = schema.GetEntityTypeKey(filterInfo, t, oschema)
@@ -1446,7 +1446,7 @@ l1:
             Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Object, T))
         End Function
 
-        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IContextObjectSchema) As System.Collections.Generic.IDictionary(Of Object, T)
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
             Return CType(GetOrmDictionary(filterInfo, GetType(T), schema, oschema), IDictionary(Of Object, T))
         End Function
 
