@@ -37,7 +37,7 @@ Namespace Database.Sorting
                 Dim a As Boolean = _agr.AddAlias
                 _agr.AddAlias = False
                 sb.Append(" order by ")
-                sb.Append(_agr.MakeStmt(s, columnAliases, params, almgr))
+                sb.Append(_agr.MakeStmt(s, columnAliases, params, almgr, filterInfo))
                 If Order = Orm.SortType.Desc Then
                     sb.Append(" desc")
                 End If

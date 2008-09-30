@@ -9,6 +9,16 @@ Namespace Cache
         CacheWhatCan
     End Enum
 
+    Public Enum ValidateBehavior
+        Immediate
+        Deferred
+    End Enum
+
+    Public Interface IDependentTypes
+        Function GetAddDelete() As IEnumerable(Of Type)
+        Function GetUpdate() As IEnumerable(Of Type)
+    End Interface
+
     Public MustInherit Class ReadonlyCache
 
         Public ReadOnly DateTimeCreated As Date

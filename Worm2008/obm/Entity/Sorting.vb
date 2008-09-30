@@ -447,7 +447,7 @@ Namespace Sorting
             Get
                 Return _order
             End Get
-            Set(ByVal value As SortType)
+            Protected Set(ByVal value As SortType)
                 _order = value
                 RaiseOnChange()
             End Set
@@ -570,6 +570,7 @@ Namespace Sorting
             s.Computed = Computed
             s.Table = Table
             s.Values = Values
+            s.Column = Column
             Return s
         End Function
     End Class

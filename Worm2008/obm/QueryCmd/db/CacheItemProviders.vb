@@ -34,6 +34,8 @@ Namespace Query.Database
             Private _sync As String
             Private _dic As IDictionary
 
+            Protected _notPreciseDepends As Boolean
+
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of OrmProperty)))
                 _q = q
@@ -275,9 +277,15 @@ Namespace Query.Database
                     For Each js As List(Of Worm.Criteria.Joins.OrmJoin) In _j
                         For Each j As OrmJoin In js
                             If j.Type IsNot Nothing Then
+                                _notPreciseDepends = True
                                 _mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.MappingEngine)
+                                _mgr.Cache.validate_AddDeleteType(j.Type, _key, _id)
+                                _mgr.Cache.validate_UpdateType(j.Type, _key, _id)
                             ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
+                                _notPreciseDepends = True
                                 _mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, _mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id, _mgr.MappingEngine)
+                                _mgr.Cache.validate_AddDeleteType(_mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
+                                _mgr.Cache.validate_UpdateType(_mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
                             End If
                         Next
                     Next
@@ -295,6 +303,15 @@ Namespace Query.Database
 
                     If _f IsNot Nothing AndAlso _f.Length > i Then
                         _mgr.Cache.AddDependType(_mgr.GetFilterInfo, q.SelectedType, _key, _id, _f(i), _mgr.MappingEngine)
+
+                        Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
+                        If ef IsNot Nothing AndAlso Not _notPreciseDepends Then
+                        Else
+                            Dim f As Cache.IDependentTypes = TryCast(_f(i), Cache.IDependentTypes)
+                            If f IsNot Nothing Then
+
+                            End If
+                        End If
                     End If
 
                     If q.Obj IsNot Nothing Then

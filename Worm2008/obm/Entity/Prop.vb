@@ -21,6 +21,14 @@ Namespace Orm
             Return f
         End Function
 
+        Public Shared Function Column(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String, ByVal attr As Field2DbRelations) As FCtor
+            Dim f As New FCtor
+            Dim p As New OrmProperty(table, tableColumn, [alias])
+            p.Attributes = attr
+            f.GetAllProperties.Add(p)
+            Return f
+        End Function
+
         Private _l As List(Of OrmProperty)
 
         Public Function Add(ByVal t As Type, ByVal typeField As String) As FCtor
@@ -30,6 +38,18 @@ Namespace Orm
 
         Public Function Add(ByVal table As SourceFragment, ByVal tableColumn As String) As FCtor
             GetAllProperties.Add(New OrmProperty(table, tableColumn))
+            Return Me
+        End Function
+
+        Public Function Add(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String) As FCtor
+            GetAllProperties.Add(New OrmProperty(table, tableColumn, [alias]))
+            Return Me
+        End Function
+
+        Public Function Add(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String, ByVal attr As Field2DbRelations) As FCtor
+            Dim p As New OrmProperty(table, tableColumn, [alias])
+            p.Attributes = attr
+            GetAllProperties.Add(p)
             Return Me
         End Function
 
@@ -131,7 +151,7 @@ Namespace Orm
             Get
                 Return _type
             End Get
-            Protected Set(ByVal value As Type)
+            Protected Friend Set(ByVal value As Type)
                 _type = value
                 RaiseOnChange()
             End Set
@@ -178,7 +198,11 @@ Namespace Orm
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
                 Else
-                    Return _custom
+                    If Not String.IsNullOrEmpty(_custom) Then
+                        Return _custom
+                    Else
+                        Return _column
+                    End If
                 End If
             End If
         End Function
@@ -198,8 +222,10 @@ Namespace Orm
                 Dim b As Boolean
                 If Not String.IsNullOrEmpty(_custom) Then
                     b = _custom = s._custom AndAlso _type Is s._type
-                Else
+                ElseIf Not String.IsNullOrEmpty(_field) Then
                     b = _field = s._field AndAlso _type Is s._type
+                Else
+                    b = _column = s._column AndAlso _type Is s._type
                 End If
                 Return b
             End If

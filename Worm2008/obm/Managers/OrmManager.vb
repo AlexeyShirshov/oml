@@ -1872,8 +1872,10 @@ l1:
             Dim orm As _IOrmBase = TryCast(obj, _IOrmBase)
             If orm IsNot Nothing Then
                 For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(orm, Nothing)
-                    Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
-                    mdic.Remove(o.Second.Second)
+                    If Not o.First.Entry.HasChanges Then
+                        Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
+                        mdic.Remove(o.Second.Second)
+                    End If
                 Next
             End If
 
@@ -3773,6 +3775,10 @@ l1:
         End If
         joins = l.ToArray
         Return joins.Length > 0
+    End Function
+
+    Public Function CustomObject(Of T As {New, Class})(ByVal o As T) As IEntity
+
     End Function
 End Class
 

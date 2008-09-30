@@ -41,7 +41,7 @@ Namespace Query
             MyClass.New(agFunc, String.Empty)
         End Sub
 
-        Public MustOverride Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
+        Public MustOverride Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object) As String
 
         Public ReadOnly Property AggFunc() As AggregateFunction
             Get
@@ -196,9 +196,9 @@ Namespace Query
             _oper = operation
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
+        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object) As String
             Dim s As String = FormatFunc(AggFunc, String.Empty)
-            s = String.Format(s, _oper.MakeStmt(schema, pmgr, almgr, columnAliases))
+            s = String.Format(s, _oper.MakeStmt(schema, pmgr, almgr, columnAliases, filterInfo))
             If Not String.IsNullOrEmpty([Alias]) AndAlso AddAlias Then
                 s = s & " " & [Alias]
             End If
@@ -245,7 +245,7 @@ Namespace Query
             _params = params
         End Sub
 
-        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable) As String
+        Public Overrides Function MakeStmt(ByVal schema As ObjectMappingEngine, ByVal columnAliases As List(Of String), ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal filterInfo As Object) As String
             Throw New NotImplementedException
         End Function
     End Class
