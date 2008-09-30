@@ -129,7 +129,7 @@ Namespace Database
             End Function
         End Class
 
-        Public Class NonTemplateFilter
+        Public Class NonTemplateUnaryFilter
             Inherits Worm.Criteria.Core.FilterBase
             'Implements IFilter
 
@@ -149,7 +149,7 @@ Namespace Database
             End Function
 
             Public Overrides Function GetAllFilters() As System.Collections.Generic.ICollection(Of Worm.Criteria.Core.IFilter)
-                Return New NonTemplateFilter() {Me}
+                Return New NonTemplateUnaryFilter() {Me}
             End Function
 
             Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
@@ -171,8 +171,12 @@ Namespace Database
             End Function
 
             Protected Overrides Function _Clone() As Object
-                Return New NonTemplateFilter(CType(val, Values.IDatabaseFilterValue), _oper)
+                Return New NonTemplateUnaryFilter(CType(val, Values.IDatabaseFilterValue), _oper)
             End Function
+
+            Public Shared Narrowing Operator CType(ByVal tf As NonTemplateUnaryFilter) As Cache.IDependentTypes
+
+            End Operator
             'Public Overloads Function MakeSQLStmt1(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeSQLStmt
             '    Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
             '    If id IsNot Nothing Then
@@ -461,7 +465,7 @@ Namespace Database
             End Function
         End Class
 
-        Public Class ExpFilter
+        Public Class ExpressionFilter
             Inherits Worm.Criteria.Core.ExpFilter
 
             Public Sub New(ByVal left As UnaryExp, ByVal right As UnaryExp, ByVal fo As Worm.Criteria.FilterOperation)
@@ -469,11 +473,11 @@ Namespace Database
             End Sub
 
             Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
-                Return Left.MakeStmt(schema, pname, almgr, columns) & TemplateBase.Oper2String(Operation) & Right.MakeStmt(schema, pname, almgr, columns)
+                Return Left.MakeStmt(schema, pname, almgr, columns, filterInfo) & TemplateBase.Oper2String(Operation) & Right.MakeStmt(schema, pname, almgr, columns, filterInfo)
             End Function
 
             Protected Overrides Function _Clone() As Object
-                Return New ExpFilter(Left, Right, Operation)
+                Return New ExpressionFilter(Left, Right, Operation)
             End Function
         End Class
     End Namespace

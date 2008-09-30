@@ -133,7 +133,7 @@ Imports Worm.Database.Criteria.Joins
                       Ctor.Field(tt1, "Code").Eq(45)))
 
             Dim q As QueryCmd = New QueryCmd(tt2). _
-                Where(New NonTemplateFilter(New Values.SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))
+                Where(New NonTemplateUnaryFilter(New Values.SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))
 
             Dim r As ReadOnlyList(Of Table2) = q.ToOrmList(Of Table2)(mgr)
             Assert.AreEqual(2, r.Count)
@@ -174,5 +174,43 @@ Imports Worm.Database.Criteria.Joins
         Assert.AreEqual(1, r(0).ID)
         Assert.AreEqual(3, r(1).ID)
 
+    End Sub
+
+    <TestMethod()> Public Sub TestSortCache2()
+        Dim t As Type = GetType(Entity4)
+        Dim c As New Cache.OrmCache
+
+        Dim q As QueryCmd = New QueryCmd(t, New CreateManager(Function() _
+            TestManager.CreateManager(c, New SQLGenerator("1")))).Sort(Orm.Sorting.Field("ID"))
+
+        q.ToEntityList(Of Entity4)()
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        q.ToEntityList(Of Entity4)()
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+        q.Sort(Orm.Sorting.Field("Title"))
+        q.ToEntityList(Of Entity4)()
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        q.Sort(Orm.Sorting.Field("ID"))
+        q.ToEntityList(Of Entity4)()
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        q.CacheSort = True
+
+        q.ToEntityList(Of Entity4)()
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        q.ToEntityList(Of Entity4)()
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+        q.Sort(Orm.Sorting.Field("Title"))
+        q.ToEntityList(Of Entity4)()
+        Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+        q.Sort(Orm.Sorting.Field("ID"))
+        q.ToEntityList(Of Entity4)()
+        Assert.IsTrue(q.LastExecitionResult.CacheHit)
     End Sub
 End Class

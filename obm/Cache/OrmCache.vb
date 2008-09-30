@@ -206,14 +206,30 @@ Namespace Cache
             End Function
         End Class
 
-        Private Class EntryRef
+        Private Class CacheEntryRef
             Inherits Dictionary(Of String, Dictionary(Of String, Object))
 
+            Public Overloads Sub Add(ByVal key As String, ByVal id As String)
+                Dim c As Dictionary(Of String, Object) = Nothing
+                If Not TryGetValue(key, c) Then
+                    c = New Dictionary(Of String, Object)
+                    Add(key, c)
+                End If
+                c(id) = Nothing
+            End Sub
         End Class
 
         Private Class TypeEntryRef
-            Inherits Dictionary(Of Type, EntryRef)
+            Inherits Dictionary(Of Type, CacheEntryRef)
 
+            Public Overloads Sub Add(ByVal t As Type, ByVal key As String, ByVal id As String)
+                Dim c As CacheEntryRef = Nothing
+                If Not TryGetValue(t, c) Then
+                    c = New CacheEntryRef
+                    Add(t, c)
+                End If
+                c.Add(key, id)
+            End Sub
         End Class
 #End Region
 
@@ -255,6 +271,13 @@ Namespace Cache
         Private _jt As New Dictionary(Of Type, List(Of Type))
 
         Private _trackDelete As New Dictionary(Of Type, Pair(Of Integer, List(Of Integer)))
+
+        Private _addDeleteTypes As New TypeEntryRef
+        Private _updateTypes As New TypeEntryRef
+        Private _immediateValidate As New Type2SelectiveFiltersDepends
+        Private _filteredFields As New Dictionary(Of EntityField, CacheEntryRef)
+        Private _sortedFields As New Dictionary(Of EntityField, CacheEntryRef)
+        Private _groupedFields As New Dictionary(Of EntityField, CacheEntryRef)
 
         Public Event CacheHasModification As EventHandler
 
@@ -439,6 +462,26 @@ Namespace Cache
         End Property
 
 #End Region
+
+        Public Property ValidateBehavior() As ValidateBehavior
+            Get
+                If _earlyValidate Then
+                    Return Cache.ValidateBehavior.Immediate
+                Else
+                    Return Cache.ValidateBehavior.Deferred
+                End If
+            End Get
+            Set(ByVal value As ValidateBehavior)
+                Select Case value
+                    Case Cache.ValidateBehavior.Deferred
+                        _earlyValidate = False
+                    Case Cache.ValidateBehavior.Immediate
+                        _earlyValidate = True
+                    Case Else
+                        Throw New NotSupportedException("Values " & value.ToString & " is not supported")
+                End Select
+            End Set
+        End Property
 
         Public Overrides Property CacheListBehavior() As CacheListBehavior
             Get
@@ -625,6 +668,26 @@ Namespace Cache
                         Next
                     Next
                 End If
+            End Using
+        End Sub
+
+        Public Sub validate_AddDeleteType(ByVal t As Type, ByVal key As String, ByVal id As String)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
+#End If
+                _addDeleteTypes.Add(t, key, id)
+            End Using
+        End Sub
+
+        Public Sub validate_UpdateType(ByVal t As Type, ByVal key As String, ByVal id As String)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("%G(qjg'oqgiu13rgfasd","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("%G(qjg'oqgiu13rgfasd")
+#End If
+                _updateTypes.Add(t, key, id)
             End Using
         End Sub
 

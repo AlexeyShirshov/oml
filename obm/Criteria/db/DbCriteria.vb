@@ -176,12 +176,12 @@ Namespace Database
 
             Public Function Exists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
                 Dim j As New JoinFilter(Type, Field, t, joinField, FilterOperation.Equal)
-                Return GetLink2(New NonTemplateFilter(New SubQuery(t, j), FilterOperation.Exists))
+                Return GetLink2(New NonTemplateUnaryFilter(New SubQuery(t, j), FilterOperation.Exists))
             End Function
 
             Public Function NotExists(ByVal t As Type, ByVal joinField As String) As CriteriaLink
                 Dim j As New JoinFilter(Type, Field, t, joinField, FilterOperation.Equal)
-                Return GetLink2(New NonTemplateFilter(New SubQuery(t, j), FilterOperation.NotExists))
+                Return GetLink2(New NonTemplateUnaryFilter(New SubQuery(t, j), FilterOperation.NotExists))
             End Function
 
             Public Function Exists(ByVal t As Type) As CriteriaLink
@@ -193,11 +193,11 @@ Namespace Database
             End Function
 
             Public Function Exists(ByVal t As Type, ByVal f As cc.IGetFilter) As CriteriaLink
-                Return GetLink2(New NonTemplateFilter(New SubQuery(t, f.Filter), FilterOperation.Exists))
+                Return GetLink2(New NonTemplateUnaryFilter(New SubQuery(t, f.Filter), FilterOperation.Exists))
             End Function
 
             Public Function NotExists(ByVal t As Type, ByVal f As cc.IGetFilter) As CriteriaLink
-                Return GetLink2(New NonTemplateFilter(New SubQuery(t, f.Filter), FilterOperation.NotExists))
+                Return GetLink2(New NonTemplateUnaryFilter(New SubQuery(t, f.Filter), FilterOperation.NotExists))
             End Function
         End Class
 
@@ -273,11 +273,11 @@ Namespace Database
             'End Function
 
             Public Function Exists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
-                Return CType(GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.Exists)), CriteriaLink)
+                Return CType(GetLink(New NonTemplateUnaryFilter(New SubQuery(t, joinFilter), FilterOperation.Exists)), CriteriaLink)
             End Function
 
             Public Function NotExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
-                Return CType(GetLink(New NonTemplateFilter(New SubQuery(t, joinFilter), FilterOperation.NotExists)), CriteriaLink)
+                Return CType(GetLink(New NonTemplateUnaryFilter(New SubQuery(t, joinFilter), FilterOperation.NotExists)), CriteriaLink)
             End Function
 
             'Public Function Custom(ByVal t As Type, ByVal field As String, ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink

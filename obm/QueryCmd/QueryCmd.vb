@@ -187,8 +187,8 @@ Namespace Query
         Protected _autoJoins As Boolean
         Protected _table As SourceFragment
         Protected _hint As String
-        Protected _mark As Integer = Environment.TickCount
-        Protected _statementMark As Integer = Environment.TickCount
+        Protected _mark As Guid = Guid.NewGuid 'Environment.TickCount
+        Protected _statementMark As Guid = Guid.NewGuid 'Environment.TickCount
         'Protected _returnType As Type
         Protected _realType As Type
         Protected _o As _IOrmBase
@@ -231,7 +231,7 @@ Namespace Query
             End Get
             Set(ByVal value As ObjectMappingEngine)
                 _schema = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -274,6 +274,12 @@ Namespace Query
             End Get
         End Property
 
+        Public ReadOnly Property GetMgr() As ICreateManager
+            Get
+                Return _getMgr
+            End Get
+        End Property
+
         'Protected Friend Sub SetSelectList(ByVal l As ObjectModel.ReadOnlyCollection(Of OrmProperty))
         '    _fields = l
         'End Sub
@@ -298,7 +304,7 @@ Namespace Query
         End Property
 
         Protected Sub OnSortChanged()
-            _statementMark = Environment.TickCount
+            RenewStatementMark()
         End Sub
 
 #Region " Ctors "
@@ -354,6 +360,14 @@ Namespace Query
 
 #End Region
 
+        Protected Sub RenewMark()
+            _mark = Guid.NewGuid 'Environment.TickCount
+        End Sub
+
+        Protected Sub RenewStatementMark()
+            _statementMark = Guid.NewGuid 'Environment.TickCount
+        End Sub
+
         Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, _
             ByVal cs As List(Of List(Of OrmProperty))) As IFilter()
@@ -383,6 +397,20 @@ Namespace Query
             If Filter IsNot Nothing Then
                 f = Filter.Filter(t)
             End If
+
+            Dim s As Sort = _order
+            Do While s IsNot Nothing
+                If s.Type Is Nothing AndAlso s.Table Is Nothing Then
+                    s.Type = t
+                End If
+
+                If s.Type IsNot Nothing AndAlso s.Field Is Nothing AndAlso s.Column IsNot Nothing Then
+                    s.Field = s.Column
+                    s.Column = Nothing
+                End If
+
+                s = s.Previous
+            Loop
 
             If AutoJoins OrElse _o IsNot Nothing Then
                 Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
@@ -689,7 +717,7 @@ Namespace Query
             End Get
             Set(ByVal value As QueryCmd)
                 _outer = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -701,7 +729,7 @@ Namespace Query
             End Get
             Set(ByVal value As Worm.Database.Criteria.Core.TableFilter)
                 _rn = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -711,6 +739,7 @@ Namespace Query
             End Get
             Set(ByVal value As Boolean)
                 _cacheSort = value
+                RenewMark()
             End Set
         End Property
 
@@ -729,13 +758,13 @@ Namespace Query
             End Get
         End Property
 
-        Public ReadOnly Property Mark() As Integer
+        Public ReadOnly Property Mark() As Guid
             Get
                 Return _mark
             End Get
         End Property
 
-        Public ReadOnly Property SMark() As Integer
+        Public ReadOnly Property SMark() As Guid
             Get
                 Return _statementMark
             End Get
@@ -747,7 +776,7 @@ Namespace Query
             End Get
             Set(ByVal value As String)
                 _hint = value
-                _statementMark = Environment.TickCount
+                RenewStatementMark()
             End Set
         End Property
 
@@ -803,7 +832,7 @@ Namespace Query
             End Get
             Set(ByVal value As Boolean)
                 _autoJoins = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -813,7 +842,7 @@ Namespace Query
             End Get
             Set(ByVal value As ObjectModel.ReadOnlyCollection(Of Grouping))
                 _group = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -823,7 +852,7 @@ Namespace Query
             End Get
             Set(ByVal value As OrmJoin())
                 _joins = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -833,7 +862,7 @@ Namespace Query
             End Get
             Set(ByVal value As ObjectModel.ReadOnlyCollection(Of AggregateBase))
                 _aggregates = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -843,7 +872,7 @@ Namespace Query
             End Get
             Set(ByVal value As ObjectModel.ReadOnlyCollection(Of OrmProperty))
                 _fields = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -853,8 +882,8 @@ Namespace Query
             End Get
             Set(ByVal value As Sort)
                 _order = value
-                _mark = Environment.TickCount
-                AddHandler value.OnChange, AddressOf OnSortChanged
+                RenewMark()
+                'AddHandler value.OnChange, AddressOf OnSortChanged
             End Set
         End Property
 
@@ -864,7 +893,7 @@ Namespace Query
             End Get
             Set(ByVal value As Top)
                 _top = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -874,7 +903,7 @@ Namespace Query
             End Get
             Set(ByVal value As Boolean)
                 _distinct = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -884,7 +913,7 @@ Namespace Query
             End Get
             Set(ByVal value As IGetFilter)
                 _filter = value
-                _mark = Environment.TickCount
+                RenewMark()
             End Set
         End Property
 
@@ -895,9 +924,9 @@ Namespace Query
             Set(ByVal value As Boolean)
                 _load = value
                 If _o Is Nothing Then
-                    _statementMark = Environment.TickCount
+                    RenewStatementMark()
                 Else
-                    _mark = Environment.TickCount
+                    RenewMark()
                 End If
             End Set
         End Property
@@ -930,7 +959,7 @@ Namespace Query
 
         Public Function From(ByVal t As SourceFragment) As QueryCmd
             _table = t
-            _mark = Environment.TickCount
+            RenewMark()
             Return Me
         End Function
 
@@ -1089,6 +1118,18 @@ Namespace Query
             'End If
             'Dim rmi As MethodInfo = mi.MakeGenericMethod(New Type() {GetType(T)})
             'Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
+        End Function
+
+        Public Function ToCustomList(Of T As {New, Class})() As IList(Of T)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Using mgr As OrmManager = _getMgr.CreateManager
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf New cls(_getMgr).ObjectCreated
+                Return ToCustomList(Of T)(mgr)
+            End Using
         End Function
 
         Public Function ToCustomList(Of T As {New, Class})(ByVal mgr As OrmManager) As IList(Of T)

@@ -34,8 +34,8 @@ Namespace Query.Database
 
         Private _proc As Object
         Private _procT As Object
-        Private _m As Integer
-        Private _sm As Integer
+        Private _m As Guid
+        Private _sm As Guid
 
         Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderBase(Of ReturnType)
             If _proc Is Nothing Then
@@ -70,9 +70,6 @@ Namespace Query.Database
                 'Else
                 _proc = New ProviderBase(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
-
-                _m = query.Mark
-                _sm = query.SMark
             Else
                 Dim p As ProviderBase(Of ReturnType) = CType(_proc, ProviderBase(Of ReturnType))
                 If _m <> query.Mark Then
@@ -81,15 +78,18 @@ Namespace Query.Database
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                     p.Reset(CType(mgr, OrmReadOnlyDBManager), j, f, query.SelectedType, sl)
                 Else
+                    p.Mgr = CType(mgr, OrmReadOnlyDBManager)
                     If _sm <> query.SMark Then
                         p.ResetStmt()
                     End If
                     If query._resDic Then
                         p.ResetDic()
                     End If
-                    p.Mgr = CType(mgr, OrmReadOnlyDBManager)
                 End If
             End If
+
+            _m = query.Mark
+            _sm = query.SMark
 
             Return CType(_proc, ProviderBase(Of ReturnType))
         End Function
@@ -126,9 +126,6 @@ Namespace Query.Database
                 'Else
                 _proc = New Provider(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
-
-                _m = query.Mark
-                _sm = query.SMark
             Else
                 Dim p As Provider(Of ReturnType) = CType(_proc, Provider(Of ReturnType))
                 If _m <> query.Mark Then
@@ -137,16 +134,19 @@ Namespace Query.Database
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                     p.Reset(CType(mgr, OrmReadOnlyDBManager), j, f, query.SelectedType, sl)
                 Else
+                    p.Mgr = CType(mgr, OrmReadOnlyDBManager)
                     If _sm <> query.SMark Then
                         p.ResetStmt()
                     End If
                     If query._resDic Then
                         p.ResetDic()
                     End If
-                    p.Mgr = CType(mgr, OrmReadOnlyDBManager)
                 End If
                 p.Created = False
             End If
+
+            _m = query.Mark
+            _sm = query.SMark
 
             Return CType(_proc, Provider(Of ReturnType))
         End Function
@@ -175,9 +175,6 @@ Namespace Query.Database
                 'Else
                 _proc = New ProviderT(Of SelectType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
-
-                _m = query.Mark
-                _sm = query.SMark
             Else
                 Dim p As Provider(Of ReturnType) = CType(_proc, Provider(Of ReturnType))
                 If _m <> query.Mark Then
@@ -186,16 +183,19 @@ Namespace Query.Database
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, GetType(ReturnType), sl)
                     p.Reset(CType(mgr, OrmReadOnlyDBManager), j, f, GetType(SelectType), sl)
                 Else
+                    p.Mgr = CType(mgr, OrmReadOnlyDBManager)
                     If _sm <> query.SMark Then
                         p.ResetStmt()
                     End If
                     If query._resDic Then
                         p.ResetDic()
                     End If
-                    p.Mgr = CType(mgr, OrmReadOnlyDBManager)
                 End If
                 p.Created = False
             End If
+
+            _m = query.Mark
+            _sm = query.SMark
 
             Return CType(_proc, ProviderT(Of SelectType, ReturnType))
         End Function
@@ -269,7 +269,13 @@ Namespace Query.Database
                 sync = p.Sync
             End If
 
+            'Debug.WriteLine(key)
+            'Debug.WriteLine(query.Mark)
+            'Debug.WriteLine(query.SMark)
+
             Dim ce As OrmManager.CachedItem = d(mgr, query, dic, id, sync, p)
+            p.Mgr = Nothing
+            p.Renew = False
 
             query.LastExecitionResult = mgr.GetLastExecitionResult
 
@@ -591,7 +597,7 @@ Namespace Query.Database
                     Else
                         b = True
                     End If
-                    sb.Append(a.MakeStmt(s, innerColumns, params, almgr))
+                    sb.Append(a.MakeStmt(s, innerColumns, params, almgr, filterInfo))
                     If columnAliases IsNot Nothing Then
                         columnAliases.Add(a.GetAlias)
                     End If

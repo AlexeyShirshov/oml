@@ -69,8 +69,10 @@ Public Class Expressions
             Return FormatOper() & "$" & _v._ToString
         End Function
 
-        Public Overridable Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String)) As String
-            Return FormatOper() & FormatParam(s, pmgr, almgr, columns)
+        Public Overridable Function MakeStmt(ByVal s As ObjectMappingEngine, _
+            ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String), _
+            ByVal filterInfo As Object) As String
+            Return FormatOper() & FormatParam(s, pmgr, almgr, columns, filterInfo)
         End Function
 
         Protected Function FormatOper() As String
@@ -94,7 +96,9 @@ Public Class Expressions
             End Select
         End Function
 
-        Protected Overridable Function FormatParam(ByVal s As ObjectMappingEngine, ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As list(Of String)) As String
+        Protected Overridable Function FormatParam(ByVal s As ObjectMappingEngine, _
+            ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
+            ByVal columns As List(Of String), ByVal filterInfo As Object) As String
             Dim p As IParamFilterValue = TryCast(_v, IParamFilterValue)
             If p IsNot Nothing Then
                 Return p.GetParam(s, pmgr, Nothing)
@@ -111,7 +115,12 @@ Public Class Expressions
                         If cf IsNot Nothing Then
                             Return cf.GetParam(s, almgr)
                         Else
-                            Throw New NotSupportedException
+                            Dim db As Database.Criteria.Values.IDatabaseFilterValue = TryCast(_v, Database.Criteria.Values.IDatabaseFilterValue)
+                            If db IsNot Nothing Then
+                                Return db.GetParam(CType(s, Database.SQLGenerator), filterInfo, pmgr, CType(almgr, Database.AliasMgr))
+                            Else
+                                Throw New NotSupportedException
+                            End If
                         End If
                     End If
                 End If
@@ -196,8 +205,10 @@ l1:
             End Get
         End Property
 
-        Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine, ByVal pmgr As Orm.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String)) As String
-            Return "(" & _left.MakeStmt(s, pmgr, almgr, columns) & FormatOper() & _right.MakeStmt(s, pmgr, almgr, columns) & ")"
+        Public Overrides Function MakeStmt(ByVal s As ObjectMappingEngine, _
+            ByVal pmgr As Orm.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String), _
+            ByVal filterInfo As Object) As String
+            Return "(" & _left.MakeStmt(s, pmgr, almgr, columns, filterInfo) & FormatOper() & _right.MakeStmt(s, pmgr, almgr, columns, filterInfo) & ")"
         End Function
 
         Public Overrides Function ToStaticString() As String
