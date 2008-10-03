@@ -34,11 +34,12 @@ Namespace Query.Database
 
         Private _proc As Object
         Private _procT As Object
+        Private _procA As Object
         Private _m As Guid
         Private _sm As Guid
 
-        Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderBase(Of ReturnType)
-            If _proc Is Nothing Then
+        Protected Function GetProcessorAnonym(Of ReturnType As {_IEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderAnonym(Of ReturnType)
+            If _procA Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                 'If query.Joins IsNot Nothing Then
                 '    j.AddRange(query.Joins)
@@ -68,10 +69,10 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _proc = New ProviderBase(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
+                _procA = New ProviderAnonym(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
             Else
-                Dim p As ProviderBase(Of ReturnType) = CType(_proc, ProviderBase(Of ReturnType))
+                Dim p As ProviderAnonym(Of ReturnType) = CType(_procA, ProviderAnonym(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                     Dim sl As New List(Of List(Of OrmProperty))
@@ -91,7 +92,7 @@ Namespace Query.Database
             _m = query.Mark
             _sm = query.SMark
 
-            Return CType(_proc, ProviderBase(Of ReturnType))
+            Return CType(_procA, ProviderAnonym(Of ReturnType))
         End Function
 
         Protected Function GetProcessor(Of ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As Provider(Of ReturnType)
@@ -152,7 +153,7 @@ Namespace Query.Database
         End Function
 
         Protected Function GetProcessorT(Of SelectType As {ICachedEntity, New}, ReturnType As {ICachedEntity})(ByVal mgr As OrmManager, ByVal query As QueryCmd) As ProviderT(Of SelectType, ReturnType)
-            If _proc Is Nothing Then
+            If _procT Is Nothing Then
                 Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                 'If query.Joins IsNot Nothing Then
                 '    j.AddRange(query.Joins)
@@ -173,10 +174,10 @@ Namespace Query.Database
                 'If query.Obj IsNot Nothing Then
                 '    _proc = New M2MProcessor(Of ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query)
                 'Else
-                _proc = New ProviderT(Of SelectType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
+                _procT = New ProviderT(Of SelectType, ReturnType)(CType(mgr, OrmReadOnlyDBManager), j, f, query, sl)
                 'End If
             Else
-                Dim p As Provider(Of ReturnType) = CType(_proc, Provider(Of ReturnType))
+                Dim p As Provider(Of ReturnType) = CType(_procT, Provider(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
                     Dim sl As New List(Of List(Of OrmProperty))
@@ -197,7 +198,7 @@ Namespace Query.Database
             _m = query.Mark
             _sm = query.SMark
 
-            Return CType(_proc, ProviderT(Of SelectType, ReturnType))
+            Return CType(_procT, ProviderT(Of SelectType, ReturnType))
         End Function
 
         Public Function ExecSimple(Of SelectType As {New, _ICachedEntity}, ReturnType)(ByVal mgr As OrmManager, ByVal query As QueryCmd) As System.Collections.Generic.IList(Of ReturnType) Implements IExecutor.ExecSimple
@@ -221,7 +222,7 @@ Namespace Query.Database
         Private Delegate Function GetListFromCEDelegate(Of ReturnType As _IEntity)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal p As OrmManager.ICacheItemProvoderBase(Of ReturnType), ByVal ce As OrmManager.CachedItem, ByVal s As Cache.IListObjectConverter.ExtractListResult) As Worm.ReadOnlyObjectList(Of ReturnType)
 
-        Private Delegate Function GetProcessorDelegate(Of ReturnType As _IEntity)() As ProviderBase(Of ReturnType)
+        Private Delegate Function GetProcessorDelegate(Of ReturnType As _IEntity)() As ProviderAnonym(Of ReturnType)
 
         Private Function _Exec(Of ReturnType As _IEntity)(ByVal mgr As OrmManager, _
             ByVal query As QueryCmd, ByVal gp As GetProcessorDelegate(Of ReturnType), _
@@ -258,7 +259,7 @@ Namespace Query.Database
                 mgr._schema = query.Schema
             End If
 
-            Dim p As ProviderBase(Of ReturnType) = gp()
+            Dim p As ProviderAnonym(Of ReturnType) = gp()
 
             mgr._dont_cache_lists = query.DontCache OrElse query.OuterQuery IsNot Nothing OrElse p.Dic Is Nothing
 

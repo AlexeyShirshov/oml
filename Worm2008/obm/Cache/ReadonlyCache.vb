@@ -14,6 +14,20 @@ Namespace Cache
         Deferred
     End Enum
 
+    Module qd
+        Public Function QueryDependentTypes(ByVal o As Object) As IDependentTypes
+            Dim qd As IQueryDependentTypes = TryCast(o, IQueryDependentTypes)
+            If qd IsNot Nothing Then
+                Return TryCast(qd, IDependentTypes)
+            End If
+            Return Nothing
+        End Function
+    End Module
+
+    Public Interface IQueryDependentTypes
+        Function [Get]() As IDependentTypes
+    End Interface
+
     Public Interface IDependentTypes
         Function GetAddDelete() As IEnumerable(Of Type)
         Function GetUpdate() As IEnumerable(Of Type)
