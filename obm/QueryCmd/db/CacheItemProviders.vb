@@ -10,7 +10,7 @@ Namespace Query.Database
 
     Partial Public Class DbQueryExecutor
 
-        Class ProviderBase(Of ReturnType As {_IEntity})
+        Class ProviderAnonym(Of ReturnType As {_IEntity})
             Implements ICacheItemProvoderBase(Of ReturnType)
 
             Private _created As Boolean
@@ -307,7 +307,7 @@ Namespace Query.Database
                         Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
                         If ef IsNot Nothing AndAlso Not _notPreciseDepends Then
                         Else
-                            Dim f As Cache.IDependentTypes = TryCast(_f(i), Cache.IDependentTypes)
+                            Dim f As Cache.IDependentTypes = Cache.QueryDependentTypes(_f(i))
                             If f IsNot Nothing Then
 
                             End If
@@ -339,7 +339,7 @@ Namespace Query.Database
         End Class
 
         Class Provider(Of ReturnType As {ICachedEntity})
-            Inherits ProviderBase(Of ReturnType)
+            Inherits ProviderAnonym(Of ReturnType)
             Implements OrmManager.ICacheValidator, ICacheItemProvoder(Of ReturnType)
 
             'Private _stmt As String
