@@ -132,7 +132,7 @@ Namespace Database
             Return AddTable(table, CType(Nothing, ParamMgr))
         End Function
 
-        Public Function AddTable(ByRef table As SourceFragment, ByVal pmgr As ICreateParam) As String
+        Public Function AddTable(ByRef table As SourceFragment, ByVal pmgr As ICreateParam) As String Implements IPrepareTable.AddTable
             'Dim tf As IOrmTableFunction = TryCast(schema, IOrmTableFunction)
             Dim t As SourceFragment = table
             Dim tt As SourceFragment = table.OnTableAdd(pmgr)
@@ -1066,7 +1066,7 @@ l1:
         End Function
 
         Public Overridable Function SelectWithJoin(ByVal original_type As Type, ByVal tables() As SourceFragment, _
-            ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.OrmJoin, _
+            ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.OrmJoin, _
             ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
             ByVal arr As Generic.IList(Of ColumnAttribute), ByVal schema As IObjectSchemaBase, ByVal filterInfo As Object) As String
 
@@ -1122,7 +1122,7 @@ l1:
         End Function
 
         Public Overridable Function SelectWithJoin(ByVal original_type As Type, _
-            ByVal almgr As AliasMgr, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.OrmJoin, _
+            ByVal almgr As IPrepareTable, ByVal params As ICreateParam, ByVal joins() As Worm.Criteria.Joins.OrmJoin, _
             ByVal wideLoad As Boolean, ByVal aspects() As QueryAspect, ByVal additionalColumns As String, _
             ByVal filterInfo As Object, ByVal arr As Generic.IList(Of ColumnAttribute)) As String
 
@@ -1130,7 +1130,7 @@ l1:
                 Throw New ArgumentNullException("parameter cannot be nothing", "original_type")
             End If
 
-            If almgr.IsEmpty Then
+            If almgr Is Nothing Then
                 Throw New ArgumentNullException("parameter cannot be nothing", "almgr")
             End If
 
@@ -1508,7 +1508,7 @@ l1:
         ''' <param name="sch"></param>
         ''' <returns></returns>
         ''' <remarks></remarks>
-        Protected Friend Function AppendFrom(ByVal almgr As AliasMgr, ByVal filterInfo As Object, _
+        Protected Friend Function AppendFrom(ByVal almgr As IPrepareTable, ByVal filterInfo As Object, _
             ByVal tables As SourceFragment(), ByVal selectcmd As StringBuilder, ByVal pname As ICreateParam, _
             ByVal sch As IMultiTableObjectSchema) As StringBuilder
             'Dim sch As IOrmObjectSchema = GetObjectSchema(original_type)
@@ -1550,7 +1550,7 @@ l1:
         End Function
 
         Public Overridable Function AppendWhere(ByVal t As Type, ByVal filter As Worm.Criteria.Core.IFilter, _
-            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam) As Boolean
             Dim schema As IObjectSchemaBase = Nothing
             If t IsNot Nothing Then
                 schema = GetObjectSchema(t)
@@ -1560,7 +1560,7 @@ l1:
         End Function
 
         Public Overridable Function AppendWhere(ByVal schema As IObjectSchemaBase, ByVal filter As Worm.Criteria.Core.IFilter, _
-            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam, ByVal columns As List(Of String)) As Boolean
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal filter_info As Object, ByVal pmgr As ICreateParam, ByVal columns As List(Of String)) As Boolean
 
             Dim con As New Condition.ConditionConstructor
             con.AddFilter(filter)
@@ -1593,15 +1593,14 @@ l1:
             Return False
         End Function
 
-        Public Sub AppendOrder(ByVal defaultType As Type, ByVal sort As Sort, ByVal almgr As AliasMgr, _
+        Public Sub AppendOrder(ByVal defaultType As Type, ByVal sort As Sort, ByVal almgr As IPrepareTable, _
             ByVal sb As StringBuilder, ByVal appendOrder As Boolean, ByVal selList As ObjectModel.ReadOnlyCollection(Of OrmProperty), ByVal defaultTable As SourceFragment)
             If sort IsNot Nothing AndAlso Not sort.IsExternal Then 'AndAlso Not sort.IsAny
-                Dim ns As Sort = sort
                 If appendOrder Then
                     sb.Append(" order by ")
                 End If
                 Dim pos As Integer = sb.Length
-                Do
+                For Each ns As Sort In New Sort.Iterator(sort)
                     If ns.IsExternal Then
                         Throw New ObjectMappingException("External sort must be alone")
                     End If
@@ -1688,8 +1687,7 @@ l1:
                     sb2.Append(",")
                     sb.Insert(pos, sb2.ToString)
 
-                    ns = ns.Previous
-                Loop While ns IsNot Nothing
+                Next
                 sb.Length -= 1
             End If
         End Sub

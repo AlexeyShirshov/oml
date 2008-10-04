@@ -3069,10 +3069,8 @@ l2:
 
             Dim appendMain As Boolean = False
             If sort IsNot Nothing Then
-                Dim ns As Sort = sort
-                Do
+                For Each ns As Sort In New Sort.Iterator(sort)
                     Dim sortType As System.Type = ns.Type
-                    ns = ns.Previous
                     If sortType Is Nothing Then
                         sortType = selectType
                     End If
@@ -3084,7 +3082,7 @@ l2:
                             If Not String.IsNullOrEmpty(field) Then
                                 joins.Add(MakeJoin(sortType, type2search, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join))
                                 types.Add(sortType)
-                                Continue Do
+                                Continue For
                             End If
 
                             'field = _schema.GetJoinFieldNameByType(sortType, type2search, srtschema)
@@ -3104,7 +3102,7 @@ l2:
                                 If Not String.IsNullOrEmpty(field) Then
                                     joins.Add(MakeJoin(selectType, sortType, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join, True))
                                     types.Add(sortType)
-                                    Continue Do
+                                    Continue For
                                 End If
                             End If
 
@@ -3113,7 +3111,7 @@ l2:
                             End If
                         End If
                     End If
-                Loop While ns IsNot Nothing
+                Next
             End If
 
             If filter IsNot Nothing Then

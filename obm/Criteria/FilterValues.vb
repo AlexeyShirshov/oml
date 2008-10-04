@@ -717,11 +717,12 @@ Namespace Database
     Namespace Criteria.Values
         Public Interface IDatabaseFilterValue
             Inherits Worm.Criteria.Values.IFilterValue
-            Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String
+            Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable) As String
         End Interface
 
         Public Class SubQuery
-            Implements IDatabaseFilterValue, Worm.Criteria.Values.INonTemplateValue
+            Implements IDatabaseFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
+            Cache.IQueryDependentTypes
 
             Private _t As Type
             Private _tbl As SourceFragment
@@ -801,7 +802,7 @@ Namespace Database
                 Return r
             End Function
 
-            Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr, ByVal sb As StringBuilder)
+            Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable, ByVal sb As StringBuilder)
                 If _t Is Nothing Then
                     sb.Append(dbschema.SelectWithJoin(Nothing, New SourceFragment() {_tbl}, almgr, paramMgr, _joins, _
                         False, Nothing, Nothing, Nothing, Nothing, Nothing))
@@ -817,7 +818,7 @@ Namespace Database
                 dbschema.AppendWhere(_t, _f, almgr, sb, Nothing, paramMgr)
             End Sub
 
-            Public Function GetParam(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
+            Public Function GetParam(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable) As String Implements IDatabaseFilterValue.GetParam
                 Dim sb As New StringBuilder
                 'Dim dbschema As DbSchema = CType(schema, DbSchema)
                 sb.Append("(")
@@ -851,6 +852,39 @@ Namespace Database
                     r &= "$" & _field
                 End If
                 Return r
+            End Function
+
+            Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
+                'If _t Is Nothing Then
+                '    Return New Cache.EmptyDependentTypes
+                'End If
+
+                Dim dp As New Cache.DependentTypes
+                If _joins IsNot Nothing Then
+                    For Each j As Worm.Criteria.Joins.OrmJoin In _joins
+                        Dim t As Type = j.Type
+                        If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
+                            t = mpe.GetTypeByEntityName(j.EntityName)
+                        End If
+                        'If t Is Nothing Then
+                        '    Return New Cache.EmptyDependentTypes
+                        'End If
+                        dp.AddBoth(t)
+                    Next
+                End If
+
+                If _f IsNot Nothing AndAlso TryCast(_f, IEntityFilter) Is Nothing Then
+                    For Each f As IFilter In _f.Filter.GetAllFilters
+                        Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(f)
+                        If Cache.IsCalculated(fdp) Then
+                            dp.Merge(fdp)
+                            'Else
+                            '    Return fdp
+                        End If
+                    Next
+                End If
+
+                Return dp.Get
             End Function
         End Class
     End Namespace

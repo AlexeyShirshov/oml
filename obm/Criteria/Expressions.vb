@@ -172,7 +172,8 @@ Public Class Expressions
                 End If
             Else
 l1:
-                Throw New NotImplementedException
+                Return New Database.Criteria.Core.ExpressionFilter(lf, rf, fo)
+                '               Throw New NotImplementedException
             End If
         End Function
     End Class

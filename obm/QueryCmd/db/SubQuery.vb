@@ -7,7 +7,8 @@ Imports Worm.Criteria.Core
 Namespace Database.Criteria.Values
 
     Public Class SubQueryCmd
-        Implements IDatabaseFilterValue, Worm.Criteria.Values.INonTemplateValue
+        Implements IDatabaseFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
+        Cache.IQueryDependentTypes
 
         Private _q As Query.QueryCmd
 
@@ -19,7 +20,7 @@ Namespace Database.Criteria.Values
             Return _q.ToString()
         End Function
 
-        Public Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As Orm.Meta.ICreateParam, ByVal almgr As AliasMgr) As String Implements IDatabaseFilterValue.GetParam
+        Public Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As Orm.Meta.ICreateParam, ByVal almgr As IPrepareTable) As String Implements IDatabaseFilterValue.GetParam
             Dim sb As New StringBuilder
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
@@ -40,6 +41,10 @@ Namespace Database.Criteria.Values
 
         Public Function GetStaticString() As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
             Return _q.ToStaticString
+        End Function
+
+        Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
+            Return _q.Get(mpe)
         End Function
     End Class
 End Namespace

@@ -168,7 +168,7 @@ Namespace Query
     End Class
 
     Public Class QueryCmd
-        Implements ICloneable
+        Implements ICloneable, Cache.IQueryDependentTypes
 
         Protected _fields As ObjectModel.ReadOnlyCollection(Of OrmProperty)
         Protected _filter As IGetFilter
@@ -398,8 +398,7 @@ Namespace Query
                 f = Filter.Filter(t)
             End If
 
-            Dim s As Sort = _order
-            Do While s IsNot Nothing
+            For Each s As Sort In New Sort.Iterator(_order)
                 If s.Type Is Nothing AndAlso s.Table Is Nothing Then
                     s.Type = t
                 End If
@@ -409,8 +408,7 @@ Namespace Query
                     s.Column = Nothing
                 End If
 
-                s = s.Previous
-            Loop
+            Next
 
             If AutoJoins OrElse _o IsNot Nothing Then
                 Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
@@ -561,13 +559,23 @@ Namespace Query
                         If TryCast(f, IEntityFilter) IsNot Nothing Then
                             sb2.Append(f.ToStaticString).Append("$")
                         Else
-
+                            For Each fl As IFilter In f.GetAllFilters
+                                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(fl)
+                                If Not Cache.IsCalculated(dp) Then
+                                    Throw New ApplicationException
+                                End If
+                            Next
                         End If
                     Case Cache.CacheListBehavior.CacheWhatCan
                         If TryCast(f, IEntityFilter) IsNot Nothing Then
                             sb2.Append(f.ToStaticString).Append("$")
                         Else
-                            Return False
+                            For Each fl As IFilter In f.GetAllFilters
+                                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(fl)
+                                If Not Cache.IsCalculated(dp) Then
+                                    Return False
+                                End If
+                            Next
                         End If
                     Case Else
                         Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
@@ -618,10 +626,44 @@ Namespace Query
 
             If sl IsNot Nothing Then
                 For Each c As OrmProperty In sl
-                    sb.Append(c.ToString)
+                    If GetStaticKeyFromProp(sb, cb, c) Then
+                        Return False
+                    End If
                 Next
                 sb.Append("$")
             End If
+
+            If _order IsNot Nothing Then
+                If CacheSort OrElse _top IsNot Nothing Then
+                    For Each n As Sort In New Sort.Iterator(_order)
+                        If GetStaticKeyFromProp(sb, cb, n) Then
+                            Return False
+                        End If
+                        sb.Append(n.ToString)
+                    Next
+                    sb.Append("$")
+                End If
+            End If
+
+            Return True
+        End Function
+
+        Private Shared Function GetStaticKeyFromProp(ByVal sb As StringBuilder, ByVal cb As Cache.CacheListBehavior, ByVal c As OrmProperty) As Boolean
+            If c.Type Is Nothing Then
+                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(c)
+                If Not Cache.IsCalculated(dp) Then
+                    Select Case cb
+                        Case Cache.CacheListBehavior.CacheAll
+                            'do nothing
+                        Case Cache.CacheListBehavior.CacheOrThrowException
+                        Case Cache.CacheListBehavior.CacheWhatCan
+                            Return False
+                        Case Else
+                            Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
+                    End Select
+                End If
+            End If
+            sb.Append(c.ToString)
             Return True
         End Function
 
@@ -667,17 +709,6 @@ Namespace Query
             'If cnt > 0 Then
             '    sb.Append("sort=").Append(cnt).Append("$")
             'End If
-
-            If _order IsNot Nothing Then
-                If CacheSort OrElse _top IsNot Nothing Then
-                    Dim n As Sort = _order
-                    Do While n IsNot Nothing
-                        sb.Append(n.ToString)
-                        n = n.Previous
-                    Loop
-                    sb.Append("$")
-                End If
-            End If
 
             If _rn IsNot Nothing Then
                 sb.Append(_rn.ToString)
@@ -1325,6 +1356,65 @@ Namespace Query
 
         '#End Region
 
+        Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
+            'If SelectedType Is Nothing Then
+            '    Return New Cache.EmptyDependentTypes
+            'End If
+
+            Dim dp As New Cache.DependentTypes
+            If _joins IsNot Nothing Then
+                For Each j As OrmJoin In _joins
+                    Dim t As Type = j.Type
+                    If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
+                        t = mpe.GetTypeByEntityName(j.EntityName)
+                    End If
+                    'If t Is Nothing Then
+                    '    Return New Cache.EmptyDependentTypes
+                    'End If
+                    dp.AddBoth(t)
+                Next
+            End If
+
+            If SelectedType IsNot Nothing AndAlso Not dp.IsEmpty Then
+                dp.AddBoth(SelectedType)
+            End If
+
+            If _filter IsNot Nothing AndAlso TryCast(_filter, IEntityFilter) Is Nothing Then
+                For Each f As IFilter In _filter.Filter.GetAllFilters
+                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(f)
+                    If Cache.IsCalculated(fdp) Then
+                        dp.AddBoth(SelectedType)
+                        dp.Merge(fdp)
+                        'Else
+                        '    Return fdp
+                    End If
+                Next
+            End If
+
+            If _order IsNot Nothing Then
+                For Each s As Sort In New Sort.Iterator(_order)
+                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(s)
+                    If Cache.IsCalculated(fdp) Then
+                        dp.AddUpdated(SelectedType)
+                        dp.Merge(fdp)
+                        'Else
+                        '    Return fdp
+                    End If
+                Next
+            End If
+
+            If _fields IsNot Nothing Then
+                For Each f As OrmProperty In _fields
+                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(f)
+                    If Cache.IsCalculated(fdp) Then
+                        dp.Merge(fdp)
+                        'Else
+                        '    Return fdp
+                    End If
+                Next
+            End If
+            Return dp.Get
+        End Function
     End Class
 
     Public Class OrmQueryCmd(Of T As _IOrmBase)

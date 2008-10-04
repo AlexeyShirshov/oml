@@ -494,7 +494,7 @@ Namespace Criteria.Core
 
         Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
             If Operation = FilterOperation.Equal Then
-                Return MakeFilter(schema, oschema, obj).ToString
+                Return MakeFilter(schema, oschema, obj).MakeHash
             Else
                 Return EntityFilterBase.EmptyHash
             End If

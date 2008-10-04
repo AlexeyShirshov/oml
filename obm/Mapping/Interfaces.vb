@@ -36,6 +36,7 @@ Public Interface IPrepareTable
     ''' <returns>Возвращает псевдоним таблицы</returns>
     ''' <remarks>Если таблица уже добавлена реализация может кинуть исключение</remarks>
     Function AddTable(ByRef table As SourceFragment) As String
+    Function AddTable(ByRef table As SourceFragment, ByVal pmgr As ICreateParam) As String
     ''' <summary>
     ''' Заменяет в <see cref="StringBuilder"/> названия таблиц на псевдонимы
     ''' </summary>

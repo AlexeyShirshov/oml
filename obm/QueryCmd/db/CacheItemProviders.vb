@@ -34,8 +34,6 @@ Namespace Query.Database
             Private _sync As String
             Private _dic As IDictionary
 
-            Protected _notPreciseDepends As Boolean
-
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of OrmProperty)))
                 _q = q
@@ -273,17 +271,18 @@ Namespace Query.Database
             End Property
 
             Public Sub CreateDepends() Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).CreateDepends
+                Dim notPreciseDepends As Boolean
                 If _j IsNot Nothing Then
                     For Each js As List(Of Worm.Criteria.Joins.OrmJoin) In _j
                         For Each j As OrmJoin In js
                             If j.Type IsNot Nothing Then
-                                _notPreciseDepends = True
-                                _mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.MappingEngine)
+                                notPreciseDepends = True
+                                '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.MappingEngine)
                                 _mgr.Cache.validate_AddDeleteType(j.Type, _key, _id)
                                 _mgr.Cache.validate_UpdateType(j.Type, _key, _id)
                             ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
-                                _notPreciseDepends = True
-                                _mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, _mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id, _mgr.MappingEngine)
+                                notPreciseDepends = True
+                                '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, _mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id, _mgr.MappingEngine)
                                 _mgr.Cache.validate_AddDeleteType(_mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
                                 _mgr.Cache.validate_UpdateType(_mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
                             End If
@@ -291,35 +290,64 @@ Namespace Query.Database
                     Next
                 End If
 
+                'Dim i As Integer = 0
+                'For Each q As QueryCmd In New QueryIterator(_q)
+                '    CreateDepends(q, i)
+                '    i += 1
+                'Next
+
                 Dim i As Integer = 0
                 For Each q As QueryCmd In New QueryIterator(_q)
-                    CreateDepends(q, i)
+                    Dim dp As Cache.IDependentTypes = q.Get(_mgr.MappingEngine)
+                    Cache.Add2Cache(_mgr.Cache, dp, _key, _id)
+                    If _mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Immediate Then
+                        If Not notPreciseDepends Then
+                            notPreciseDepends = Not Cache.IsEmpty(dp) AndAlso _
+                                (q.SelectedType Is Nothing OrElse Not GetType(_ICachedEntity).IsAssignableFrom(q.SelectedType))
+                        End If
+                        If Not notPreciseDepends Then
+                            Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
+                            If ef Is Nothing Then
+                                _mgr.Cache.validate_AddDeleteType(q.SelectedType, _key, _id)
+                                _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
+                            Else
+                                
+                            End If
+                        End If
+                    Else
+                        _mgr.Cache.validate_AddDeleteType(q.SelectedType, _key, _id)
+                        _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
+                    End If
+                    'If Not (Cache.IsCalculated(dp) OrElse notPreciseDepends) Then
+                    '    Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
+
+                    'End If
                     i += 1
                 Next
             End Sub
 
-            Protected Sub CreateDepends(ByVal q As QueryCmd, ByVal i As Integer)
-                If q.SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(q.SelectedType) Then
+            'Protected Sub CreateDepends(ByVal q As QueryCmd, ByVal i As Integer)
+            '    If q.SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(q.SelectedType) Then
 
-                    If _f IsNot Nothing AndAlso _f.Length > i Then
-                        _mgr.Cache.AddDependType(_mgr.GetFilterInfo, q.SelectedType, _key, _id, _f(i), _mgr.MappingEngine)
+            '        If _f IsNot Nothing AndAlso _f.Length > i Then
+            '            _mgr.Cache.AddDependType(_mgr.GetFilterInfo, q.SelectedType, _key, _id, _f(i), _mgr.MappingEngine)
 
-                        Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
-                        If ef IsNot Nothing AndAlso Not _notPreciseDepends Then
-                        Else
-                            Dim f As Cache.IDependentTypes = Cache.QueryDependentTypes(_f(i))
-                            If f IsNot Nothing Then
+            '            Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
+            '            If ef IsNot Nothing AndAlso Not _notPreciseDepends Then
+            '            Else
+            '                Dim f As Cache.IDependentTypes = Cache.QueryDependentTypes(_f(i))
+            '                If f IsNot Nothing Then
 
-                            End If
-                        End If
-                    End If
+            '                End If
+            '            End If
+            '        End If
 
-                    If q.Obj IsNot Nothing Then
-                        _mgr.Cache.AddM2MQuery(q.Obj.GetM2M(q.SelectedType, q.M2MKey), _key, _id)
-                    End If
+            '        If q.Obj IsNot Nothing Then
+            '            _mgr.Cache.AddM2MQuery(q.Obj.GetM2M(q.SelectedType, q.M2MKey), _key, _id)
+            '        End If
 
-                End If
-            End Sub
+            '    End If
+            'End Sub
 
             Public ReadOnly Property Filter() As Criteria.Core.IFilter Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).Filter
                 Get

@@ -217,9 +217,9 @@ Namespace Cache
             Public t As Type
 
             Public Function CanSort(ByVal mc As OrmManager, ByRef arr As ArrayList, ByVal sort As Sort) As Boolean
-                If sort.Previous IsNot Nothing Then
-                    Return False
-                End If
+                'If sort.Previous IsNot Nothing Then
+                '    Return False
+                'End If
 
                 arr = New ArrayList
                 For Each le As ListObjectEntry In l
