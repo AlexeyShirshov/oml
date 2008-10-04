@@ -131,6 +131,7 @@
   <ItemGroup>
     <Compile Include="Cache\Abstract.vb" />
     <Compile Include="Cache\advcache.vb" />
+    <Compile Include="Cache\classes.vb" />
     <Compile Include="Cache\ReadonlyCache.vb" />
     <Compile Include="Collections\CollectionWithIndex.vb" />
     <Compile Include="Collections\CopyEnumerators.vb" />

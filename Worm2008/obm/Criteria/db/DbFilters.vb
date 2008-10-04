@@ -131,7 +131,7 @@ Namespace Database
 
         Public Class NonTemplateUnaryFilter
             Inherits Worm.Criteria.Core.FilterBase
-            'Implements IFilter
+            Implements Cache.IQueryDependentTypes
 
             Private _oper As Worm.Criteria.FilterOperation
             Private _str As String
@@ -174,9 +174,6 @@ Namespace Database
                 Return New NonTemplateUnaryFilter(CType(val, Values.IDatabaseFilterValue), _oper)
             End Function
 
-            Public Shared Narrowing Operator CType(ByVal tf As NonTemplateUnaryFilter) As Cache.IDependentTypes
-
-            End Operator
             'Public Overloads Function MakeSQLStmt1(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeSQLStmt
             '    Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
             '    If id IsNot Nothing Then
@@ -185,6 +182,10 @@ Namespace Database
             '        Return MakeQueryStmt(schema, almgr, pname)
             '    End If
             'End Function
+
+            Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
+                Return Cache.QueryDependentTypes(Value)
+            End Function
         End Class
 
         Public Class TableFilter

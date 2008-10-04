@@ -535,7 +535,7 @@ Namespace Query.Database
 
         Protected Shared Sub FormSelectList(ByVal query As QueryCmd, ByVal queryType As Type, _
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IObjectSchemaBase, _
-            ByVal almgr As AliasMgr, ByVal filterInfo As Object, ByVal params As ICreateParam, _
+            ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal columnAliases As List(Of String), ByVal innerColumns As List(Of String), _
             ByVal withLoad As Boolean, ByVal selList As IEnumerable(Of OrmProperty))
 
@@ -621,7 +621,7 @@ Namespace Query.Database
         End Sub
 
         Protected Shared Sub FormTypeTables(ByVal filterInfo As Object, ByVal params As ICreateParam, _
-            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IObjectSchemaBase, ByVal tables() As SourceFragment)
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IObjectSchemaBase, ByVal tables() As SourceFragment)
 
             Dim tbl As SourceFragment = tables(0)
             Dim tbl_real As SourceFragment = tbl
@@ -656,7 +656,7 @@ Namespace Query.Database
         End Sub
 
         Protected Shared Sub FormJoins(ByVal filterInfo As Object, ByVal query As QueryCmd, ByVal params As ICreateParam, _
-            ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator)
+            ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator)
             For i As Integer = 0 To j.Count - 1
                 Dim join As OrmJoin = CType(j(i), OrmJoin)
 
@@ -679,7 +679,7 @@ Namespace Query.Database
             Next
         End Sub
 
-        Protected Shared Sub FormGroupBy(ByVal query As QueryCmd, ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal selectType As Type)
+        Protected Shared Sub FormGroupBy(ByVal query As QueryCmd, ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal selectType As Type)
             If query.Group IsNot Nothing Then
                 sb.Append(" group by ")
                 For Each g As OrmProperty In query.Group
@@ -710,7 +710,7 @@ Namespace Query.Database
         End Sub
 
         Protected Shared Sub FormOrderBy(ByVal query As QueryCmd, ByVal t As Type, _
-            ByVal almgr As AliasMgr, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
             ByVal params As ICreateParam, ByVal columnAliases As List(Of String))
             If query.propSort IsNot Nothing AndAlso Not query.propSort.IsExternal Then
                 Dim adv As DbSort = TryCast(query.propSort, DbSort)
@@ -724,14 +724,14 @@ Namespace Query.Database
 
         Public Shared Function MakeQueryStatement(ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal queryType As Type, _
-            ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As AliasMgr, ByVal selList As IEnumerable(Of OrmProperty)) As String
+            ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As IPrepareTable, ByVal selList As IEnumerable(Of OrmProperty)) As String
 
             Return MakeQueryStatement(filterInfo, schema, query, params, queryType, joins, f, almgr, Nothing, Nothing, Nothing, 0, query.propWithLoad, selList)
         End Function
 
         Public Shared Function MakeQueryStatement(ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal queryType As Type, _
-            ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As AliasMgr, _
+            ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As IPrepareTable, _
             ByVal columnAliases As List(Of String), ByVal inner As String, ByVal innerColumns As List(Of String), _
             ByVal i As Integer, ByVal withLoad As Boolean, ByVal selList As IEnumerable(Of OrmProperty)) As String
 

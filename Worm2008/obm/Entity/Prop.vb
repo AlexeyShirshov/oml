@@ -1,5 +1,6 @@
 ﻿Imports Worm.Orm.Meta
 Imports System.Collections.Generic
+Imports Worm.Query
 
 Namespace Orm
     Public Class FCtor
@@ -70,6 +71,7 @@ Namespace Orm
     End Class
 
     Public Class OrmProperty
+        Implements Cache.IQueryDependentTypes
 
         Private _field As String
         Private _type As Type
@@ -78,6 +80,7 @@ Namespace Orm
         Private _custom As String
         Private _values() As Pair(Of Object, String)
         Private _attr As Field2DbRelations
+        Private _q As Worm.Query.QueryCmd
 
         Public Event OnChange()
 
@@ -114,6 +117,10 @@ Namespace Orm
             MyClass.New(computed, values, Nothing)
         End Sub
 
+        Public Sub New(ByVal q As QueryCmd)
+            _q = q
+        End Sub
+
         Protected Sub RaiseOnChange()
             RaiseEvent OnChange()
         End Sub
@@ -125,6 +132,12 @@ Namespace Orm
             Set(ByVal value As Field2DbRelations)
                 _attr = value
             End Set
+        End Property
+
+        Public ReadOnly Property Query() As QueryCmd
+            Get
+                Return _q
+            End Get
         End Property
 
         Public Property Column() As String
@@ -200,8 +213,11 @@ Namespace Orm
                 Else
                     If Not String.IsNullOrEmpty(_custom) Then
                         Return _custom
-                    Else
+                    ElseIf Not String.IsNullOrEmpty(_column) Then
                         Return _column
+                    Else
+                        Debug.Assert(_q IsNot Nothing)
+                        Return _q.ToStaticString
                     End If
                 End If
             End If
@@ -233,6 +249,13 @@ Namespace Orm
 
         Public Overrides Function GetHashCode() As Integer
             Return ToString.GetHashCode
+        End Function
+
+        Public Overridable Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
+            If _q IsNot Nothing Then
+                Return _q.Get(mpe)
+            End If
+            Return Nothing
         End Function
     End Class
 

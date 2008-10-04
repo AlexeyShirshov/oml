@@ -11,7 +11,6 @@ Namespace Database.Sorting
         Inherits Worm.Sorting.Sort
 
         Private _agr As AggregateBase
-        Private _q As QueryCmd
 
         Public Sub New(ByVal agr As AggregateBase)
             _agr = agr
@@ -23,15 +22,15 @@ Namespace Database.Sorting
         End Sub
 
         Public Sub New(ByVal q As QueryCmd)
-            _q = q
+            MyBase.new(q)
         End Sub
 
         Public Sub New(ByVal q As QueryCmd, ByVal order As Orm.SortType)
-            _q = q
+            MyBase.New(q)
             Me.Order = order
         End Sub
 
-        Public Overridable Sub MakeStmt(ByVal s As SQLGenerator, ByVal almgr As AliasMgr, ByVal columnAliases As List(Of String), _
+        Public Overridable Sub MakeStmt(ByVal s As SQLGenerator, ByVal almgr As IPrepareTable, ByVal columnAliases As List(Of String), _
             ByVal sb As StringBuilder, ByVal t As Type, ByVal filterInfo As Object, ByVal params As ICreateParam)
             If _agr IsNot Nothing Then
                 Dim a As Boolean = _agr.AddAlias
@@ -42,12 +41,12 @@ Namespace Database.Sorting
                     sb.Append(" desc")
                 End If
                 _agr.AddAlias = a
-            ElseIf _q IsNot Nothing Then
+            ElseIf Query IsNot Nothing Then
                 Dim j As New List(Of OrmJoin)
                 Dim sl As List(Of Orm.OrmProperty) = Nothing
-                Dim f As IFilter = _q.Prepare(j, s, filterInfo, t, sl)
+                Dim f As IFilter = Query.Prepare(j, s, filterInfo, t, sl)
                 sb.Append(" order by (")
-                sb.Append(DbQueryExecutor.MakeQueryStatement(filterInfo, s, _q, params, t, j, f, almgr, sl))
+                sb.Append(DbQueryExecutor.MakeQueryStatement(filterInfo, s, Query, params, t, j, f, almgr, sl))
                 sb.Append(")")
                 If Order = Orm.SortType.Desc Then
                     sb.Append(" desc")
@@ -60,8 +59,6 @@ Namespace Database.Sorting
         Public Overrides Function ToString() As String
             If _agr IsNot Nothing Then
                 Return _agr.ToString
-            ElseIf _q IsNot Nothing Then
-                Return _q.ToString
             Else
                 Return MyBase.ToString
             End If

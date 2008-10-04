@@ -472,7 +472,7 @@ Namespace Database
                 MyBase.New(entityName, joinType, condition)
             End Sub
 
-            Public Function MakeSQLStmt(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal almgr As AliasMgr, ByVal pname As ICreateParam) As String
+            Public Function MakeSQLStmt(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
                 'If IsEmpty Then
                 '    Throw New InvalidOperationException("Object must be created")
                 'End If
@@ -481,7 +481,7 @@ Namespace Database
                     Throw New InvalidOperationException("Join condition must be specified")
                 End If
 
-                If almgr.IsEmpty Then
+                If almgr Is Nothing Then
                     Throw New ArgumentNullException("almgr")
                 End If
 

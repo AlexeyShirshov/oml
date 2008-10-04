@@ -292,6 +292,75 @@ Namespace Sorting
 
         'Public Event OnChange()
 
+        Public Class Iterator
+            Implements IEnumerable(Of Sort), IEnumerator(Of Sort)
+
+            Private _s As Sort
+            Private _c As Sort
+
+            Public Sub New(ByVal s As Sort)
+                _s = s
+            End Sub
+
+            Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of Sort) Implements System.Collections.Generic.IEnumerable(Of Sort).GetEnumerator
+                Return Me
+            End Function
+
+            Public ReadOnly Property Current() As Sort Implements System.Collections.Generic.IEnumerator(Of Sort).Current
+                Get
+                    Return _c
+                End Get
+            End Property
+
+            Private Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator
+                Return GetEnumerator()
+            End Function
+
+            Private ReadOnly Property _Current() As Object Implements System.Collections.IEnumerator.Current
+                Get
+                    Return Current
+                End Get
+            End Property
+
+            Public Function MoveNext() As Boolean Implements System.Collections.IEnumerator.MoveNext
+                If _c Is Nothing Then
+                    _c = _s
+                Else
+                    _c = _c.Previous
+                End If
+                Return _c IsNot Nothing
+            End Function
+
+            Public Sub Reset() Implements System.Collections.IEnumerator.Reset
+                _c = Nothing
+            End Sub
+
+#Region " IDisposable Support "
+            Private disposedValue As Boolean = False        ' To detect redundant calls
+
+            ' IDisposable
+            Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+                If Not Me.disposedValue Then
+                    If disposing Then
+                        ' TODO: free other state (managed objects).
+                    End If
+
+                    ' TODO: free your own state (unmanaged objects).
+                    ' TODO: set large fields to null.
+                End If
+                Me.disposedValue = True
+            End Sub
+
+            ' This code added by Visual Basic to correctly implement the disposable pattern.
+            Public Sub Dispose() Implements IDisposable.Dispose
+                ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+                Dispose(True)
+                GC.SuppressFinalize(Me)
+            End Sub
+#End Region
+
+        End Class
+
 #Region " Table ctors "
 
         Protected Friend Sub New(ByVal prev As Sort, ByVal t As SourceFragment, ByVal column As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
@@ -387,6 +456,10 @@ Namespace Sorting
         End Sub
 
 #End Region
+
+        Protected Sub New(ByVal q As Query.QueryCmd)
+            MyBase.New(q)
+        End Sub
 
         Protected Sub New()
         End Sub
@@ -542,7 +615,7 @@ Namespace Sorting
         '    Return ToString.GetHashCode
         'End Function
 
-        Protected Friend ReadOnly Property Previous() As Sort
+        Protected ReadOnly Property Previous() As Sort
             Get
                 Return _prev
             End Get
@@ -707,4 +780,5 @@ Namespace Sorting
             Return Compare(CType(TryCast(x, _IEntity), T), CType(TryCast(y, _IEntity), T))
         End Function
     End Class
+
 End Namespace

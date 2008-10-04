@@ -11,142 +11,6 @@ Imports Worm.Orm.Query
 
 Namespace Cache
 
-    <Serializable()> _
-    Public Class EntityProxy
-        Private _id() As PKDesc
-        Private _t As Type
-
-        Public Sub New(ByVal id() As PKDesc, ByVal type As Type)
-            _id = id
-            _t = type
-        End Sub
-
-        Public Sub New(ByVal o As ICachedEntity)
-            _id = o.GetPKValues
-            _t = o.GetType
-        End Sub
-
-        Public Function GetEntity() As ICachedEntity
-            Return OrmManager.CurrentManager.GetEntityFromCacheOrDB(_id, _t)
-        End Function
-
-        Public ReadOnly Property EntityType() As Type
-            Get
-                Return _t
-            End Get
-        End Property
-
-        Public ReadOnly Property PK() As PKDesc()
-            Get
-                Return _id
-            End Get
-        End Property
-
-        Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, EntityProxy))
-        End Function
-
-        Public Overloads Function Equals(ByVal obj As EntityProxy) As Boolean
-            If obj Is Nothing Then
-                Return False
-            End If
-            Return _t Is obj._t AndAlso IdEquals(obj.PK)
-        End Function
-
-        Protected Function IdEquals(ByVal ids() As PKDesc) As Boolean
-            If _id.Length <> ids.Length Then Return False
-            For i As Integer = 0 To _id.Length - 1
-                Dim p As PKDesc = _id(i)
-                Dim p2 As PKDesc = ids(i)
-                If p.PropertyAlias <> p2.PropertyAlias OrElse Not p.Value.Equals(p.Value) Then
-                    Return False
-                End If
-            Next
-            Return True
-        End Function
-
-        Public Overrides Function GetHashCode() As Integer
-            Return _t.GetHashCode() Xor GetIdsHashCode
-        End Function
-
-        Protected Function GetIdsHashCode() As Integer
-            Return GetIdsString.GetHashCode
-        End Function
-
-        Protected Function GetIdsString() As String
-            Dim sb As New StringBuilder
-            For Each p As PKDesc In _id
-                sb.Append(p.PropertyAlias).Append(":").Append(p.Value).Append(",")
-            Next
-            Return sb.ToString
-        End Function
-
-        Public Overrides Function ToString() As String
-            Return _t.ToString & "^" & GetIdsString()
-        End Function
-    End Class
-
-    <Serializable()> _
-    Public Class EntityField
-        Private _field As String
-        Private _t As Type
-
-        Public Sub New(ByVal field As String, ByVal type As Type)
-            _field = field
-            _t = type
-        End Sub
-
-        Public ReadOnly Property OrmType() As Type
-            Get
-                Return _t
-            End Get
-        End Property
-
-        Public ReadOnly Property Field() As String
-            Get
-                Return _field
-            End Get
-        End Property
-
-        Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, EntityField))
-        End Function
-
-        Public Overloads Function Equals(ByVal obj As EntityField) As Boolean
-            If obj Is Nothing Then
-                Return False
-            End If
-            Return _t Is obj._t AndAlso _field = obj._field
-        End Function
-
-        Public Overrides Function GetHashCode() As Integer
-            Return _t.GetHashCode() Xor _field.GetHashCode
-        End Function
-    End Class
-
-    <Serializable()> _
-    Public NotInheritable Class OrmCacheException
-        Inherits Exception
-
-        Public Sub New()
-            ' Add other code for custom properties here.
-        End Sub
-
-        Public Sub New(ByVal message As String)
-            MyBase.New(message)
-        End Sub
-
-        Public Sub New(ByVal message As String, ByVal inner As Exception)
-            MyBase.New(message, inner)
-        End Sub
-
-        Private Sub New( _
-            ByVal info As System.Runtime.Serialization.SerializationInfo, _
-            ByVal context As System.Runtime.Serialization.StreamingContext)
-            MyBase.New(info, context)
-        End Sub
-    End Class
-
     Public MustInherit Class OrmCacheBase
         Inherits ReadonlyCache
 
@@ -300,11 +164,11 @@ Namespace Cache
 
 #Region " general routines "
 
-        Protected Friend ReadOnly Property Filters() As IDictionary
-            Get
-                Return _filters
-            End Get
-        End Property
+        'Protected Friend ReadOnly Property Filters() As IDictionary
+        '    Get
+        '        Return _filters
+        '    End Get
+        'End Property
 
         Public Function ShadowCopy(ByVal t As Type, ByVal id As Integer) As ObjectModification
             Using SyncRoot
@@ -663,8 +527,9 @@ Namespace Cache
                 If _field_depends.TryGetValue(ef, d) Then
                     For Each ke As KeyValuePair(Of String, List(Of String)) In d
                         For Each key As String In ke.Value
-                            Dim dic As IDictionary = CType(_filters(key), IDictionary)
-                            dic.Remove(ke.Key)
+                            RemoveEntry(key, ke.Key)
+                            'Dim dic As IDictionary = CType(_filters(key), IDictionary)
+                            'dic.Remove(ke.Key)
                         Next
                     Next
                 End If
@@ -850,8 +715,9 @@ Namespace Cache
 #End If
                 Dim p As Pair(Of String) = Nothing
                 If _m2mQueries.TryGetValue(el, p) Then
-                    Dim dic As IDictionary = CType(_filters(p.First), System.Collections.IDictionary)
-                    dic.Remove(p.Second)
+                    'Dim dic As IDictionary = CType(_filters(p.First), System.Collections.IDictionary)
+                    'dic.Remove(p.Second)
+                    RemoveEntry(p)
                     _m2mQueries.Remove(el)
                 End If
             End Using
@@ -926,15 +792,18 @@ Namespace Cache
 
                 If _m2m_dep.TryGetValue(name, l) Then
                     For Each p As KeyValuePair(Of String, Dictionary(Of String, Object)) In l
-                        Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
-                        For Each id As String In p.Value.Keys
-                            Dim ce As OrmManager.M2MCache = TryCast(dic(id), OrmManager.M2MCache)
-                            If ce Is Nothing Then
-                                dic.Remove(id)
-                            Else
-                                etrs.Add(New Pair(Of OrmManager.M2MCache, Pair(Of String, String))(ce, New Pair(Of String, String)(p.Key, id)))
-                            End If
-                        Next
+                        Dim dic As IDictionary = _GetDictionary(p.Key)
+                        If dic IsNot Nothing Then
+                            For Each id As String In p.Value.Keys
+                                Dim ce As OrmManager.M2MCache = TryCast(dic(id), OrmManager.M2MCache)
+                                If ce Is Nothing Then
+                                    'dic.Remove(id)
+                                    RemoveEntry(p.Key, id)
+                                Else
+                                    etrs.Add(New Pair(Of OrmManager.M2MCache, Pair(Of String, String))(ce, New Pair(Of String, String)(p.Key, id)))
+                                End If
+                            Next
+                        End If
                     Next
                 End If
                 Return etrs
@@ -983,23 +852,26 @@ Namespace Cache
 
                 If _ct_depends.TryGetValue(ct, l) Then
                     For Each p As KeyValuePair(Of String, Dictionary(Of String, Object)) In l
-                        Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
-                        'Dim b As Boolean = False
-                        Dim remove As New List(Of String)
-                        For Each id As String In p.Value.Keys
-                            Dim ce As OrmManager.M2MCache = TryCast(dic(id), OrmManager.M2MCache)
-                            If ce IsNot Nothing Then
-                                If Not f(ce) Then
-                                    remove.Add(id)
+                        Dim dic As IDictionary = _GetDictionary(p.Key)
+                        If dic IsNot Nothing Then
+                            'Dim b As Boolean = False
+                            Dim remove As New List(Of String)
+                            For Each id As String In p.Value.Keys
+                                Dim ce As OrmManager.M2MCache = TryCast(dic(id), OrmManager.M2MCache)
+                                If ce IsNot Nothing Then
+                                    If Not f(ce) Then
+                                        remove.Add(id)
+                                    End If
                                 End If
-                            End If
-                        Next
-                        For Each id As String In remove
-                            dic.Remove(id)
-                        Next
-                        'If Not b Then
-                        '    Throw New OrmManagerException(String.Format("Invalid cache entry {0} for type {1}", p.Key, ct))
-                        'End If
+                            Next
+                            For Each id As String In remove
+                                'dic.Remove(id)
+                                RemoveEntry(p.Key, id)
+                            Next
+                            'If Not b Then
+                            '    Throw New OrmManagerException(String.Format("Invalid cache entry {0} for type {1}", p.Key, ct))
+                            'End If
+                        End If
                     Next
                 End If
             End Using
@@ -1038,9 +910,10 @@ Namespace Cache
                 If _qt.TryGetValue(k, l) Then
                     Dim rm As New List(Of String)
                     For Each kv As KeyValuePair(Of String, Pair(Of String)) In l
-                        Dim dic As IDictionary = CType(_filters(kv.Value.First), IDictionary)
+                        Dim dic As IDictionary = _GetDictionary(kv.Value.First)
                         If dic IsNot Nothing Then
-                            dic.Remove(kv.Value.Second)
+                            'dic.Remove(kv.Value.Second)
+                            RemoveEntry(kv.Value)
                             rm.Add(kv.Key)
                         End If
                     Next
@@ -1064,7 +937,7 @@ Namespace Cache
                 Dim l As TemplateHashs = _tp.GetFilters(k)
                 If l.Count > 0 Then
                     For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In l
-                        Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
+                        Dim dic As IDictionary = _GetDictionary(p.Key)
                         If dic IsNot Nothing Then
                             If callbacks IsNot Nothing Then
                                 callbacks.BeginUpdate(0)
@@ -1332,12 +1205,13 @@ l1:
                     Dim l As Dictionary(Of String, List(Of String)) = Nothing
                     If _object_depends.TryGetValue(op, l) Then
                         For Each p As KeyValuePair(Of String, List(Of String)) In l
-                            Dim dic As IDictionary = CType(_filters(p.Key), IDictionary)
+                            Dim dic As IDictionary = _GetDictionary(p.Key)
                             If dic IsNot Nothing Then
                                 For Each id As String In p.Value
-                                    dic.Remove(id)
+                                    'dic.Remove(id)
+                                    RemoveEntry(p.Key, id)
                                 Next
-                                _filters.Remove(p.Key)
+                                '_filters.Remove(p.Key)
                             End If
                         Next
                         _object_depends.Remove(op)
@@ -1435,7 +1309,6 @@ l1:
                 ValidateUpdateSPByType(GetType(Object), obj, fields)
             End Using
         End Sub
-
     End Class
 
     Public Class OrmCache
@@ -1448,8 +1321,9 @@ l1:
         Private _md As CreateCacheListDelegate
 
         Public Overrides Sub Reset()
-            _filters = Hashtable.Synchronized(New Hashtable)
+            '_filters = Hashtable.Synchronized(New Hashtable)
             _dics = Hashtable.Synchronized(New Hashtable)
+            MyBase.Reset()
         End Sub
 
         Public Overrides Function CreateResultsetsDictionary() As System.Collections.IDictionary
@@ -1535,42 +1409,6 @@ l1:
         Public Function GetDictionary(ByVal key As Object) As System.Collections.IDictionary Implements IExploreCache.GetDictionary
             Return CType(_dics(key), System.Collections.IDictionary)
         End Function
-    End Class
-
-    <Serializable()> _
-    Public Class ObjectModification
-        Public Enum ReasonEnum
-            Unknown
-            Delete
-            Edit
-            SaveNew
-        End Enum
-
-        Public ReadOnly User As Object
-        <CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104")> _
-        Public ReadOnly Obj As _ICachedEntity
-        Public ReadOnly DateTime As Date
-
-        Public ReadOnly Reason As ReasonEnum
-
-#If DEBUG Then
-        Protected _stack As String
-        Public ReadOnly Property StackTrace() As String
-            Get
-                Return _stack
-            End Get
-        End Property
-#End If
-        Sub New(ByVal obj As _ICachedEntity, ByVal user As Object, ByVal reason As ReasonEnum)
-            DateTime = Now
-            Me.Obj = obj
-            Me.User = user
-            Me.Reason = reason
-#If DEBUG Then
-            _stack = Environment.StackTrace
-#End If
-        End Sub
-
     End Class
 
     Public MustInherit Class WebCache

@@ -903,7 +903,7 @@ l1:
                         dic(id) = ce
                     End If
                 Else
-                    If Not del.SmartSort OrElse psort.Previous IsNot Nothing Then
+                    If Not del.SmartSort Then
                         del.Renew = True
                         GoTo l1
                     Else
@@ -2372,10 +2372,11 @@ l1:
 
                 el.MainId = obj.Identifier
                 '_cache.AddM2MQuery(el, p.First, p.Second)
-                Dim dic As IDictionary = CType(_cache.Filters(p.First), System.Collections.IDictionary)
-                If dic IsNot Nothing Then
-                    dic.Remove(p.Second)
-                End If
+                'Dim dic As IDictionary = CType(_cache.Filters(p.First), System.Collections.IDictionary)
+                'If dic IsNot Nothing Then
+                '    dic.Remove(p.Second)
+                'End If
+                _cache.RemoveEntry(p)
             Next
         End If
     End Sub
@@ -2557,8 +2558,7 @@ l1:
     Public Shared Function ApplySort(Of T As {_IEntity})(ByVal c As ICollection(Of T), ByVal s As Sort, ByVal getObj As OrmComparer(Of T).GetObjectDelegate) As ICollection(Of T)
         Dim q As New Stack(Of Sort)
         If s IsNot Nothing AndAlso Not s.IsExternal Then
-            Dim ns As Sort = s
-            Do
+            For Each ns As Sort In New Sort.Iterator(s)
                 If ns.IsExternal Then
                     Throw New ObjectMappingException("External sort must be alone")
                 End If
@@ -2566,8 +2566,7 @@ l1:
                     Throw New ObjectMappingException("Custom sort is not supported")
                 End If
                 q.Push(ns)
-                ns = ns.Previous
-            Loop While ns IsNot Nothing
+            Next
 
             Dim l As New List(Of T)(c)
             l.Sort(New OrmComparer(Of T)(q, getObj))
@@ -2583,8 +2582,7 @@ l1:
     Public Shared Function ApplySortT(ByVal c As ICollection, ByVal s As Sort) As ICollection
         Dim q As New Stack(Of Sort)
         If s IsNot Nothing AndAlso Not s.IsExternal Then
-            Dim ns As Sort = s
-            Do
+            For Each ns As Sort In New Sort.Iterator(s)
                 If ns.IsExternal Then
                     Throw New ObjectMappingException("External sort must be alone")
                 End If
@@ -2592,8 +2590,7 @@ l1:
                     Throw New ObjectMappingException("Custom sort is not supported")
                 End If
                 q.Push(ns)
-                ns = ns.Previous
-            Loop While ns IsNot Nothing
+            Next
 
             Dim l As New ArrayList(c)
             If l.Count > 0 Then
@@ -3129,17 +3126,18 @@ l1:
     End Function
 
     Protected Friend Shared Function _GetDic(ByVal cache As OrmCacheBase, ByVal key As String) As IDictionary
-        Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
-        If dic Is Nothing Then
-            Using SyncHelper.AcquireDynamicLock(key)
-                dic = CType(cache.Filters(key), IDictionary)
-                If dic Is Nothing Then
-                    dic = cache.CreateResultsetsDictionary() 'Hashtable.Synchronized(New Hashtable)
-                    cache.Filters.Add(key, dic)
-                End If
-            End Using
-        End If
-        Return dic
+        'Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
+        'If dic Is Nothing Then
+        '    Using SyncHelper.AcquireDynamicLock(key)
+        '        dic = CType(cache.Filters(key), IDictionary)
+        '        If dic Is Nothing Then
+        '            dic = cache.CreateResultsetsDictionary() 'Hashtable.Synchronized(New Hashtable)
+        '            cache.Filters.Add(key, dic)
+        '        End If
+        '    End Using
+        'End If
+        'Return dic
+        Return cache.GetDictionary(key)
     End Function
 
     Protected Friend Function GetDic(ByVal cache As OrmCacheBase, ByVal key As String) As IDictionary
@@ -3148,31 +3146,32 @@ l1:
     End Function
 
     Protected Friend Function GetDic(ByVal cache As OrmCacheBase, ByVal key As String, ByRef created As Boolean) As IDictionary
-        Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
-        created = False
-        If dic Is Nothing Then
-            Using SyncHelper.AcquireDynamicLock(key)
-                dic = CType(cache.Filters(key), IDictionary)
-                If dic Is Nothing Then
-                    dic = cache.CreateResultsetsDictionary(_list) 'Hashtable.Synchronized(New Hashtable)
-                    cache.Filters.Add(key, dic)
-                    created = True
-                End If
-            End Using
-        End If
-        Return dic
+        'Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
+        'created = False
+        'If dic Is Nothing Then
+        '    Using SyncHelper.AcquireDynamicLock(key)
+        '        dic = CType(cache.Filters(key), IDictionary)
+        '        If dic Is Nothing Then
+        '            dic = cache.CreateResultsetsDictionary(_list) 'Hashtable.Synchronized(New Hashtable)
+        '            cache.Filters.Add(key, dic)
+        '            created = True
+        '        End If
+        '    End Using
+        'End If
+        'Return dic
+        Return cache.GetDictionary(key, _list, created)
     End Function
 
-    Protected Shared Function GetDics(ByVal cache As OrmCacheBase, ByVal key As String, ByVal postfix As String) As IEnumerable(Of IDictionary)
-        Dim dics As New List(Of IDictionary)
-        For Each de As DictionaryEntry In cache.Filters
-            Dim k As String = CStr(de.Key)
-            If k <> key AndAlso k.StartsWith(key) AndAlso (String.IsNullOrEmpty(postfix) OrElse k.EndsWith(postfix)) Then
-                dics.Add(CType(de.Value, System.Collections.IDictionary))
-            End If
-        Next
-        Return dics
-    End Function
+    'Protected Shared Function GetDics(ByVal cache As OrmCacheBase, ByVal key As String, ByVal postfix As String) As IEnumerable(Of IDictionary)
+    '    Dim dics As New List(Of IDictionary)
+    '    For Each de As DictionaryEntry In cache.Filters
+    '        Dim k As String = CStr(de.Key)
+    '        If k <> key AndAlso k.StartsWith(key) AndAlso (String.IsNullOrEmpty(postfix) OrElse k.EndsWith(postfix)) Then
+    '            dics.Add(CType(de.Value, System.Collections.IDictionary))
+    '        End If
+    '    Next
+    '    Return dics
+    'End Function
 
     Private Shared Function GetFilter(ByVal criteria As IGetFilter, ByVal t As Type) As IFilter
         If criteria IsNot Nothing Then
@@ -3742,8 +3741,7 @@ l1:
         End If
 
         If s IsNot Nothing Then
-            Dim ns As Sort = s
-            Do
+            For Each ns As Sort In New Sort.Iterator(s)
                 Dim sortType As System.Type = ns.Type
                 If sortType IsNot selectType AndAlso sortType IsNot Nothing AndAlso Not types.Contains(sortType) Then
                     Dim field As String = schema.GetJoinFieldNameByType(selectType, sortType, oschema)
@@ -3751,7 +3749,7 @@ l1:
                     If Not String.IsNullOrEmpty(field) Then
                         types.Add(sortType)
                         l.Add(schema.MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
-                        Continue Do
+                        Continue For
                     End If
 
                     'Dim sschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
@@ -3770,8 +3768,7 @@ l1:
                 ElseIf sortType Is selectType OrElse sortType Is Nothing Then
                     appendMain = True
                 End If
-                ns = ns.Previous
-            Loop While ns IsNot Nothing
+            Next
         End If
         joins = l.ToArray
         Return joins.Length > 0
