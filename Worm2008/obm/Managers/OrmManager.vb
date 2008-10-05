@@ -30,7 +30,7 @@ Partial Public MustInherit Class OrmManager
     Friend _prev As OrmManager = Nothing
     'Protected hide_deleted As Boolean = True
     'Protected _check_status As Boolean = True
-    Protected Friend _schema As ObjectMappingEngine
+    Private _schema As ObjectMappingEngine
     'Private _findnew As FindNew
     'Private _remnew As RemoveNew
     Protected Friend _disposed As Boolean = False
@@ -182,10 +182,13 @@ Partial Public MustInherit Class OrmManager
     '    End Set
     'End Property
 
-    Public ReadOnly Property MappingEngine() As ObjectMappingEngine
+    Public Property MappingEngine() As ObjectMappingEngine
         Get
             Return _schema
         End Get
+        Protected Friend Set(ByVal value As ObjectMappingEngine)
+            _schema = value
+        End Set
     End Property
 
     Public Property RaiseObjectCreation() As Boolean
@@ -2951,7 +2954,7 @@ l1:
 
         Dim prop_objs(fields.Length - 1) As IListEdit
 
-        Dim lt As Type = GetType(ReadOnlyEntityList(Of ))
+        'Dim lt As Type = GetType(ReadOnlyEntityList(Of ))
         Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(GetType(T))
 
         For Each o As T In col
@@ -2960,7 +2963,8 @@ l1:
                 Dim obj As IEntity = CType(o.GetValue(Nothing, New ColumnAttribute(fields(i)), oschema), IEntity)
                 If obj IsNot Nothing Then
                     If prop_objs(i) Is Nothing Then
-                        prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IListEdit)
+                        'prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IListEdit)
+                        prop_objs(i) = CreateReadonlyList(obj.GetType)
                     End If
                     prop_objs(i).Add(obj)
                 End If

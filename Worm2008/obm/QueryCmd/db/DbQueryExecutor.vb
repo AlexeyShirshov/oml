@@ -238,7 +238,7 @@ Namespace Query.Database
             Dim oldCache As Boolean = mgr._dont_cache_lists
             Dim oldStart As Integer = mgr._start
             Dim oldLength As Integer = mgr._length
-            Dim oldSchema As ObjectMappingEngine = mgr._schema
+            Dim oldSchema As ObjectMappingEngine = mgr.MappingEngine
 
             If query.ClientPaging IsNot Nothing Then
                 mgr._start = query.ClientPaging.First
@@ -256,7 +256,7 @@ Namespace Query.Database
             End If
 
             If query.Schema IsNot Nothing Then
-                mgr._schema = query.Schema
+                mgr.MappingEngine = query.Schema
             End If
 
             Dim p As ProviderAnonym(Of ReturnType) = gp()
@@ -285,7 +285,7 @@ Namespace Query.Database
             mgr._length = oldLength
             mgr._list = oldList
             mgr._expiresPattern = oldExp
-            mgr._schema = oldSchema
+            mgr.MappingEngine = oldSchema
 
             mgr.RaiseOnDataAvailable()
 

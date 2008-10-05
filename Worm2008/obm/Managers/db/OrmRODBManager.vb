@@ -712,6 +712,7 @@ Namespace Database
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
         Private _batchSaver As BatchSaver
+        Private _stmtHelper As SQLGenerator
         Private Shared _tsStmt As New TraceSource("Worm.Diagnostics.DB.Stmt", SourceLevels.Information)
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
@@ -719,12 +720,13 @@ Namespace Database
 
         Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, schema)
+            _stmtHelper = schema
             _connStr = connectionString
         End Sub
 
         Protected Sub New(ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(schema)
-
+            _stmtHelper = schema
             _connStr = connectionString
         End Sub
 
@@ -751,7 +753,7 @@ Namespace Database
 
         Public ReadOnly Property SQLGenerator() As SQLGenerator
             Get
-                Return CType(_schema, SQLGenerator)
+                Return _stmtHelper
             End Get
         End Property
 
@@ -1070,7 +1072,7 @@ Namespace Database
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
                     Dim firstidx As Integer = 0
-                    Dim ss() As String = _schema.GetPrimaryKeysName(firstType, False)
+                    Dim ss() As String = MappingEngine.GetPrimaryKeysName(firstType, False)
                     If ss.Length > 1 Then
                         Throw New OrmManagerException("Connected type must use single primary key")
                     End If
@@ -1086,7 +1088,7 @@ Namespace Database
                     End Try
 
                     Dim secidx As Integer = 0
-                    ss = _schema.GetPrimaryKeysName(secondType, False)
+                    ss = MappingEngine.GetPrimaryKeysName(secondType, False)
                     If ss.Length > 1 Then
                         Throw New OrmManagerException("Connected type must use single primary key")
                     End If
@@ -1454,7 +1456,7 @@ Namespace Database
             Dim arr As Generic.List(Of ColumnAttribute) = Nothing
             Dim sb As New StringBuilder
             If withLoad Then
-                arr = _schema.GetSortedFieldList(original_type)
+                arr = MappingEngine.GetSortedFieldList(original_type)
                 sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of ColumnAttribute)
@@ -1515,7 +1517,7 @@ Namespace Database
             Dim arr As Generic.List(Of ColumnAttribute) = Nothing
             Dim sb As New StringBuilder
             If withLoad Then
-                arr = _schema.GetSortedFieldList(original_type)
+                arr = MappingEngine.GetSortedFieldList(original_type)
                 sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of ColumnAttribute)
@@ -1588,7 +1590,7 @@ Namespace Database
             Dim filter As IFilter = c.Condition
 
             Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
-                Dim arr As Generic.List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
+                Dim arr As Generic.List(Of ColumnAttribute) = MappingEngine.GetSortedFieldList(original_type)
 
                 With cmd
                     .CommandType = System.Data.CommandType.Text
@@ -1765,7 +1767,7 @@ Namespace Database
             ByVal withLoad As Boolean, ByVal values As IList, _
             ByVal selectList As Generic.List(Of ColumnAttribute))
 
-            Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(GetType(T))
+            Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(GetType(T))
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
             LoadMultipleObjects(Of T)(cmd, withLoad, values, selectList, oschema, fields_idx)
@@ -1797,7 +1799,7 @@ Namespace Database
                     _exec = et.GetTime
 
                     'If idx = -1 Then
-                    '    Dim pk_name As String = _schema.GetPrimaryKeysName(original_type, False)(0)
+                    '    Dim pk_name As String = MappingEngine.GetPrimaryKeysName(original_type, False)(0)
                     '    Try
                     '        idx = dr.GetOrdinal(pk_name)
                     '    Catch ex As IndexOutOfRangeException
@@ -1833,7 +1835,7 @@ Namespace Database
 
         Protected Function GetPrimaryKeyIdx(ByVal cmdtext As String, ByVal original_type As Type, ByVal dr As System.Data.IDataReader) As Integer
             Dim idx As Integer = -1
-            Dim pk_name As String = _schema.GetPrimaryKeysName(original_type, False)(0)
+            Dim pk_name As String = MappingEngine.GetPrimaryKeysName(original_type, False)(0)
             Try
                 idx = dr.GetOrdinal(pk_name)
             Catch ex As IndexOutOfRangeException
@@ -1868,7 +1870,7 @@ Namespace Database
 
         Protected Friend Sub LoadFromResultSet(Of T As {_IEntity, New})( _
             ByVal withLoad As Boolean, _
-            ByVal values As IList, ByVal arr As Generic.List(Of ColumnAttribute), _
+            ByVal values As IList, ByVal selectList As Generic.List(Of ColumnAttribute), _
             ByVal dr As System.Data.IDataReader, _
             ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer, _
             ByVal oschema As IObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
@@ -1886,7 +1888,7 @@ Namespace Database
             Dim lock As IDisposable = Nothing
             Try
                 Dim obj As New T
-                Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 0, CType(dic, System.Collections.IDictionary), True, lock, oschema, fields_idx)
+                Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, 0, CType(dic, System.Collections.IDictionary), True, lock, oschema, fields_idx)
                 AfterLoadingProcess(CType(dic, System.Collections.IDictionary), obj, lock, ro)
 #If DEBUG Then
                 Dim ce As CachedEntity = TryCast(ro, CachedEntity)
@@ -1956,7 +1958,7 @@ Namespace Database
                 Dim pi_cache(selectList.Count - 1) As Reflection.PropertyInfo
                 Dim idic As IDictionary = Nothing
                 If oschema IsNot Nothing Then
-                    idic = _schema.GetProperties(original_type, oschema)
+                    idic = MappingEngine.GetProperties(original_type, oschema)
                 End If
                 'Dim bl As Boolean
                 Dim oldpk() As PKDesc = Nothing
@@ -1997,12 +1999,12 @@ Namespace Database
                                 Try
                                     If pi Is Nothing Then
                                         obj.SetValue(pi, c, oschema, value)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     Else
                                         If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
                                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                             obj.SetValue(pi, c, oschema, v)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                         ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                                             Dim dt As DateTime = CDate(value)
                                             Dim l As Long = dt.ToBinary
@@ -2011,7 +2013,7 @@ Namespace Database
                                                 sw.Write(l)
                                                 sw.Flush()
                                                 obj.SetValue(pi, c, oschema, ms.ToArray)
-                                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                             End Using
                                         Else
                                             'If c.FieldName = "ID" Then
@@ -2019,7 +2021,7 @@ Namespace Database
                                             'Else
                                             obj.SetValue(pi, c, oschema, value)
                                             'End If
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                         End If
                                     End If
                                 Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
@@ -2030,12 +2032,12 @@ Namespace Database
                                         sw.Write(l)
                                         sw.Flush()
                                         obj.SetValue(pi, c, oschema, ms.ToArray)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     End Using
                                 Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
                                     Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                     obj.SetValue(pi, c, oschema, v)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 End Try
                                 pk_count += 1
                             End If
@@ -2106,7 +2108,7 @@ Namespace Database
 
                         If pi Is Nothing Then
                             obj.SetValue(pi, c, oschema, value)
-                            If ce IsNot Nothing Then ce.SetLoaded(c, True, False, _schema)
+                            If ce IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
                         Else
                             Dim att As Field2DbRelations = fields_idx(c.FieldName).GetAttributes(c)
                             If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -2120,7 +2122,7 @@ Namespace Database
                             ElseIf Not dr.IsDBNull(idx + displacement) AndAlso (att And Field2DbRelations.PK) <> Field2DbRelations.PK Then
                                 If (att And Field2DbRelations.Factory) = Field2DbRelations.Factory Then
                                     fac.Add(New Pair(Of String, Object)(c.FieldName, value))
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     '    'obj.CreateObject(c.FieldName, value)
                                     '    obj.SetValue(pi, c, )
                                     '    obj.SetLoaded(c, True, True)
@@ -2137,20 +2139,20 @@ Namespace Database
                                     Dim type_created As Type = pi.PropertyType
                                     Dim o As IOrmBase = GetOrmBaseFromCacheOrCreate(value, type_created)
                                     obj.SetValue(pi, c, oschema, o)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 ElseIf GetType(System.Xml.XmlDocument) Is pi.PropertyType AndAlso TypeOf (value) Is String Then
                                     Dim o As New System.Xml.XmlDocument
                                     o.LoadXml(CStr(value))
                                     obj.SetValue(pi, c, oschema, o)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 ElseIf pi.PropertyType.IsEnum AndAlso TypeOf (value) Is String Then
                                     Dim svalue As String = CStr(value).Trim
                                     If svalue = String.Empty Then
                                         obj.SetValue(pi, c, oschema, 0)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     Else
                                         obj.SetValue(pi, c, oschema, [Enum].Parse(pi.PropertyType, svalue, True))
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     End If
                                 ElseIf pi.PropertyType.IsGenericType AndAlso GetType(Nullable(Of )).Name = pi.PropertyType.Name Then
                                     Dim t As Type = pi.PropertyType.GetGenericArguments()(0)
@@ -2182,13 +2184,13 @@ Namespace Database
                                     Dim v2 As Object = pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
                                         Nothing, Nothing, New Object() {v})
                                     obj.SetValue(pi, c, oschema, v2)
-                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                    If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 Else
                                     Try
                                         If (pi.PropertyType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (pi.PropertyType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
                                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                             obj.SetValue(pi, c, oschema, v)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                         ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                                             Dim dt As DateTime = CDate(value)
                                             Dim l As Long = dt.ToBinary
@@ -2198,7 +2200,7 @@ Namespace Database
                                                 sw.Flush()
                                                 'pi.SetValue(obj, ms.ToArray, Nothing)
                                                 obj.SetValue(pi, c, oschema, ms.ToArray)
-                                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                             End Using
                                             'ElseIf pi.PropertyType Is GetType(ReleaseDate) AndAlso value.GetType Is GetType(Integer) Then
                                             '    obj.SetValue(pi, c, pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, _
@@ -2206,7 +2208,7 @@ Namespace Database
                                             '    obj.SetLoaded(c, True)
                                         Else
                                             obj.SetValue(pi, c, oschema, value)
-                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                            If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                         End If
                                         'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
                                         '    Dim dt As DateTime = CDate(value)
@@ -2221,12 +2223,12 @@ Namespace Database
                                     Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
                                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                         obj.SetValue(pi, c, oschema, v)
-                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                        If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     End Try
                                 End If
                             ElseIf dr.IsDBNull(idx + displacement) Then
                                 obj.SetValue(pi, c, oschema, Nothing)
-                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, _schema)
+                                If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                             End If
                         End If
                     Next
@@ -3050,10 +3052,10 @@ l2:
             Dim types As New List(Of Type)
 
             If selectType IsNot type2search Then
-                Dim field As String = _schema.GetJoinFieldNameByType(selectType, type2search, selSchema)
+                Dim field As String = MappingEngine.GetJoinFieldNameByType(selectType, type2search, selSchema)
 
                 If String.IsNullOrEmpty(field) Then
-                    field = _schema.GetJoinFieldNameByType(type2search, selectType, searchSchema)
+                    field = MappingEngine.GetJoinFieldNameByType(type2search, selectType, searchSchema)
 
                     If String.IsNullOrEmpty(field) Then
                         Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, type2search))
@@ -3077,28 +3079,28 @@ l2:
                     appendMain = type2search Is sortType OrElse appendMain
                     If Not types.Contains(sortType) Then
                         If type2search IsNot sortType Then
-                            Dim srtschema As IObjectSchemaBase = _schema.GetObjectSchema(sortType)
-                            Dim field As String = _schema.GetJoinFieldNameByType(type2search, sortType, searchSchema)
+                            Dim srtschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(sortType)
+                            Dim field As String = MappingEngine.GetJoinFieldNameByType(type2search, sortType, searchSchema)
                             If Not String.IsNullOrEmpty(field) Then
                                 joins.Add(MakeJoin(sortType, type2search, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join))
                                 types.Add(sortType)
                                 Continue For
                             End If
 
-                            'field = _schema.GetJoinFieldNameByType(sortType, type2search, srtschema)
+                            'field = MappingEngine.GetJoinFieldNameByType(sortType, type2search, srtschema)
                             'If Not String.IsNullOrEmpty(field) Then
                             '    joins.Add(MakeJoin(type2search, sortType, field, FilterOperation.Equal, JoinType.Join, True))
                             '    Continue Do
                             'End If
 
                             If selectType IsNot type2search Then
-                                'field = _schema.GetJoinFieldNameByType(sortType, selectType, srtschema)
+                                'field = MappingEngine.GetJoinFieldNameByType(sortType, selectType, srtschema)
                                 'If Not String.IsNullOrEmpty(field) Then
                                 '    joins.Add(MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
                                 '    Continue Do
                                 'End If
 
-                                field = _schema.GetJoinFieldNameByType(selectType, sortType, selSchema)
+                                field = MappingEngine.GetJoinFieldNameByType(selectType, sortType, selSchema)
                                 If Not String.IsNullOrEmpty(field) Then
                                     joins.Add(MakeJoin(selectType, sortType, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join, True))
                                     types.Add(sortType)
@@ -3125,14 +3127,14 @@ l2:
                         appendMain = type2search Is type2join OrElse appendMain
                         If type2search IsNot type2join Then
                             If Not types.Contains(type2join) Then
-                                Dim field As String = _schema.GetJoinFieldNameByType(type2search, type2join, searchSchema)
+                                Dim field As String = MappingEngine.GetJoinFieldNameByType(type2search, type2join, searchSchema)
 
                                 If Not String.IsNullOrEmpty(field) Then
                                     joins.Add(MakeJoin(type2join, type2search, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join))
                                     types.Add(type2join)
                                 Else
                                     If selectType IsNot type2search Then
-                                        field = _schema.GetJoinFieldNameByType(selectType, type2join, selSchema)
+                                        field = MappingEngine.GetJoinFieldNameByType(selectType, type2join, selSchema)
                                         If Not String.IsNullOrEmpty(field) Then
                                             joins.Add(MakeJoin(selectType, type2join, field, Worm.Criteria.FilterOperation.Equal, JoinType.Join, True))
                                             types.Add(type2join)
@@ -3191,8 +3193,8 @@ l2:
             ByVal selCols As List(Of ColumnAttribute), ByVal searchCols As List(Of ColumnAttribute), _
             ByVal ftsText As String, ByVal limit As Integer, ByVal fts As IFtsStringFormater, ByVal contextkey As Object) As ReadOnlyList(Of T)
 
-            Dim selSchema As IOrmObjectSchema = CType(_schema.GetObjectSchema(selectType), IOrmObjectSchema)
-            Dim searchSchema As IOrmObjectSchema = CType(_schema.GetObjectSchema(type2search), IOrmObjectSchema)
+            Dim selSchema As IOrmObjectSchema = CType(MappingEngine.GetObjectSchema(selectType), IOrmObjectSchema)
+            Dim searchSchema As IOrmObjectSchema = CType(MappingEngine.GetObjectSchema(type2search), IOrmObjectSchema)
 
             Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
 

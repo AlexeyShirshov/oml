@@ -17,28 +17,46 @@ Namespace Cache
 #Region " Classes "
 
         Private Class HashIds
-            Inherits Dictionary(Of String, List(Of String))
+            Inherits Dictionary(Of String, Dictionary(Of String, Object))
 
-            Private _default As New List(Of String)
+            Private _default As New Dictionary(Of String, Object)
 
-            Public Function GetIds(ByVal hash As String) As List(Of String)
+            Public Function GetIds(ByVal hash As String) As IEnumerable(Of String)
+                'If hash = EntityFilterBase.EmptyHash Then
+                '    Return _default
+                'Else
+                '    Dim h As List(Of String) = Nothing
+                '    If Not Me.TryGetValue(hash, h) Then
+                '        h = New List(Of String)
+                '        Me(hash) = h
+                '    End If
+                '    Return h
+                'End If
+                Return GetIds2(hash).Keys
+            End Function
+
+            Public Function GetIds2(ByVal hash As String) As Dictionary(Of String, Object)
                 If hash = EntityFilterBase.EmptyHash Then
                     Return _default
                 Else
-                    Dim h As List(Of String) = Nothing
+                    Dim h As Dictionary(Of String, Object) = Nothing
                     If Not Me.TryGetValue(hash, h) Then
-                        h = New List(Of String)
+                        h = New Dictionary(Of String, Object)
                         Me(hash) = h
                     End If
                     Return h
                 End If
             End Function
+
+            Public Overloads Sub Remove(ByVal hash As String, ByVal id As String)
+                GetIds2(hash).Remove(id)
+            End Sub
         End Class
 
         Private Class TemplateHashs
             Inherits Dictionary(Of String, Pair(Of HashIds, IOrmFilterTemplate))
 
-            Public Function GetIds(ByVal key As String, ByVal filter As IFilter) As List(Of String)
+            Public Function GetIds(ByVal key As String, ByVal filter As IFilter) As Dictionary(Of String, Object)
                 Dim p As Pair(Of HashIds, IOrmFilterTemplate) = Nothing
                 Dim f As IEntityFilter = TryCast(filter, IEntityFilter)
                 If Not TryGetValue(key, p) Then
@@ -50,11 +68,15 @@ Namespace Cache
                     Me(key) = p
                 End If
                 If f IsNot Nothing Then
-                    Return p.First.GetIds(f.MakeHash)
+                    Return p.First.GetIds2(f.MakeHash)
                 Else
-                    Return p.First.GetIds(EntityFilterBase.EmptyHash)
+                    Return p.First.GetIds2(EntityFilterBase.EmptyHash)
                 End If
             End Function
+
+            Public Overloads Sub Add(ByVal f As IFilter, ByVal key As String, ByVal id As String)
+                GetIds(key, f)(id) = Nothing
+            End Sub
         End Class
 
         Private Class Type2SelectiveFiltersDepends
@@ -556,6 +578,21 @@ Namespace Cache
             End Using
         End Sub
 
+        Protected Friend Sub validate_AddCalculatedType(ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter)
+            'Debug.WriteLine(t.Name & ": add dependent " & id)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("BLK$E&80erfvhbdvdksv","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("BLK$E&80erfvhbdvdksv")
+#End If
+                Dim l As TemplateHashs = _immediateValidate.GetFilters(t)
+                l.Add(f, key, id)
+                'Dim h As List(Of String) = l.GetIds(key, f)
+                'If Not h.Contains(id) Then
+                '    h.Add(id)
+                'End If
+            End Using
+        End Sub
         'Protected Friend Function GetRelationValue(ByVal t As Type, ByRef l As List(Of Type)) As Boolean
         '    Using SyncHelper.AcquireDynamicLock("9h3fn013gf-qjnmerg135g")
         '        Return _relations.TryGetValue(t, l)
@@ -959,7 +996,8 @@ Namespace Cache
                                         Return
                                     End Try
                                 End If
-                                Dim ids As List(Of String) = p.Value.First.GetIds(h)
+                                Dim hid As HashIds = p.Value.First
+                                Dim ids As IEnumerable(Of String) = hid.GetIds(h)
                                 Dim rm As New List(Of String)
                                 For Each id As String In ids
                                     Dim ce As OrmManager.CachedItem = TryCast(dic(id), OrmManager.CachedItem)
@@ -981,13 +1019,15 @@ Namespace Cache
                                             End If
 
                                             If r Then
-                                                dic.Remove(id)
+                                                RemoveEntry(p.Key, id)
+                                                'dic.Remove(id)
                                             ElseIf er = IEvaluableValue.EvalResult.Found Then
                                                 Dim sync As String = id & mgr.GetStaticKey
                                                 Using SyncHelper.AcquireDynamicLock(sync)
                                                     If obj.UpdateCtx.Added Then
                                                         If Not ce.Add(mgr, obj) Then
-                                                            dic.Remove(id)
+                                                            RemoveEntry(p.Key, id)
+                                                            'dic.Remove(id)
                                                         End If
                                                     ElseIf obj.UpdateCtx.Deleted Then
                                                         ce.Delete(mgr, obj)
@@ -1012,8 +1052,10 @@ Namespace Cache
                                 Next
 
                                 For Each id As String In rm
-                                    ids.Remove(id)
-                                    dic.Remove(id)
+                                    hid.Remove(h, id)
+                                    'ids.Remove(id)
+                                    RemoveEntry(p.Key, id)
+                                    'dic.Remove(id)
                                 Next
                             Next
                             If callbacks IsNot Nothing Then
@@ -1100,10 +1142,11 @@ l1:
             Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
 #End If
                 Dim l As TemplateHashs = _tp.GetFilters(schema.GetEntityTypeKey(filterInfo, t))
-                Dim h As List(Of String) = l.GetIds(key, f)
-                If Not h.Contains(id) Then
-                    h.Add(id)
-                End If
+                l.Add(f, key, id)
+                'Dim h As List(Of String) = l.GetIds(key, f)
+                'If Not h.Contains(id) Then
+                '    h.Add(id)
+                'End If
             End Using
         End Sub
 
@@ -1406,7 +1449,7 @@ l1:
             Return New ArrayList(_dics.Keys)
         End Function
 
-        Public Function GetDictionary(ByVal key As Object) As System.Collections.IDictionary Implements IExploreCache.GetDictionary
+        Public Function GetDictionary_(ByVal key As Object) As System.Collections.IDictionary Implements IExploreCache.GetDictionary
             Return CType(_dics(key), System.Collections.IDictionary)
         End Function
     End Class
