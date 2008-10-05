@@ -220,7 +220,7 @@ Namespace Xml
             End If
 
             Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
-            Dim oschema As IOrmObjectSchema = CType(_schema.GetObjectSchema(original_type), IOrmObjectSchema)
+            Dim oschema As IOrmObjectSchema = CType(MappingEngine.GetObjectSchema(original_type), IOrmObjectSchema)
             Dim ft As New PerfCounter
             Do While nodes.MoveNext
                 LoadFromNodeIterator(Of T)(nodes.Current.Clone, dic, values, _loadedInLastFetch, oschema, withLoad)
@@ -279,9 +279,9 @@ Namespace Xml
         Protected Function LoadPK(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
-            For Each c As ColumnAttribute In _schema.GetSortedFieldList(original_type)
-                If (_schema.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    Dim attr As String = _schema.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
+            For Each c As ColumnAttribute In MappingEngine.GetSortedFieldList(original_type)
+                If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                    Dim attr As String = MappingEngine.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -301,12 +301,12 @@ Namespace Xml
 
         Protected Function LoadData(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
-            Dim columns As List(Of ColumnAttribute) = _schema.GetSortedFieldList(original_type)
+            Dim columns As List(Of ColumnAttribute) = MappingEngine.GetSortedFieldList(original_type)
             For Each de As DictionaryEntry In MappingEngine.GetProperties(original_type)
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
-                If (_schema.GetAttributes(oschema, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                    Dim attr As String = _schema.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
+                If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
+                    Dim attr As String = MappingEngine.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -315,11 +315,11 @@ Namespace Xml
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
                         obj.SetValue(pi, c, oschema, nodes.Current.Value)
-                        obj.SetLoaded(c, True, True, _schema)
+                        obj.SetLoaded(c, True, True, MappingEngine)
                         sn = True
                     Loop
                 Else
-                    obj.SetLoaded(c, True, True, _schema)
+                    obj.SetLoaded(c, True, True, MappingEngine)
                 End If
             Next
             obj.CheckIsAllLoaded(MappingEngine, columns.Count)

@@ -306,12 +306,24 @@ Namespace Query.Database
                                 (q.SelectedType Is Nothing OrElse Not GetType(_ICachedEntity).IsAssignableFrom(q.SelectedType))
                         End If
                         If Not notPreciseDepends Then
+                            _mgr.Cache.validate_AddCalculatedType(q.SelectedType, Key, Id, _f(i))
+
                             Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
                             If ef Is Nothing Then
                                 _mgr.Cache.validate_AddDeleteType(q.SelectedType, _key, _id)
                                 _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
                             Else
-                                
+                                Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
+                                If tmpl.Type Is Nothing Then
+                                    Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                                End If
+                                Dim v As Criteria.Values.EntityValue = TryCast(CType(ef, EntityFilterBase).Value, Criteria.Values.EntityValue)
+                                If v IsNot Nothing Then
+                                    _mgr.Cache.validate_AddDependentObject(v.GetOrmValue(_mgr), _key, _id)
+                                Else
+                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                    _mgr.Cache.validate_AddDependentField(p, _key, _id)
+                                End If
                             End If
                         End If
                     Else

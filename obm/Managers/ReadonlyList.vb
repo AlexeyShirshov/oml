@@ -87,6 +87,33 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase})
         Next
         Return New ReadOnlyList(Of T)(l.Keys)
     End Function
+
+    Public Function LoadChilds(Of ChildType As {New, Orm.IOrmBase})() As ReadOnlyList(Of ChildType)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Using mc As IGetManager = o.GetMgr()
+                Dim fs As ICollection(Of String) = mc.Manager.MappingEngine.GetFieldNameByType(GetType(T), GetType(ChildType))
+                If fs.Count <> 1 Then
+                    Throw New OrmManagerException("You must specify field")
+                End If
+                For Each f As String In fs
+                    Return mc.Manager.LoadObjects(Of ChildType)(f, Nothing, Me)
+                Next
+            End Using
+        End If
+        Return New ReadOnlyList(Of ChildType)
+    End Function
+
+    Public Function LoadChilds(Of ChildType As {New, Orm.IOrmBase})(ByVal field As String) As ReadOnlyList(Of ChildType)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Using mc As IGetManager = o.GetMgr()
+                Return mc.Manager.LoadObjects(Of ChildType)(field, Nothing, Me)
+            End Using
+        End If
+        Return New ReadOnlyList(Of ChildType)
+    End Function
+
 End Class
 
 Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity})
@@ -157,6 +184,24 @@ Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity})
 
     Private Sub _LoadObjects() Implements ILoadableList.LoadObjects
         LoadObjects()
+    End Sub
+
+    Public Sub LoadParent(ByVal parentField As String)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Using mc As IGetManager = o.GetMgr()
+                mc.Manager.LoadObjects(Me, New String() {parentField}, 0, Me.Count)
+            End Using
+        End If
+    End Sub
+
+    Public Sub LoadParents(ByVal parentsField() As String)
+        If _l.Count > 0 Then
+            Dim o As T = _l(0)
+            Using mc As IGetManager = o.GetMgr()
+                mc.Manager.LoadObjects(Me, parentsField, 0, Me.Count)
+            End Using
+        End If
     End Sub
 End Class
 

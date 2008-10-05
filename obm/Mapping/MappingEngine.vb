@@ -209,15 +209,7 @@ Public MustInherit Class ObjectMappingEngine
     End Function
 
     Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type) As Object
-        Dim schema As IObjectSchemaBase = GetObjectSchema(t)
-
-        Dim c As ICacheBehavior = TryCast(schema, ICacheBehavior)
-
-        If c IsNot Nothing Then
-            Return c.GetEntityTypeKey(filterInfo)
-        Else
-            Return t
-        End If
+        Return GetEntityTypeKey(filterInfo, t, GetObjectSchema(t))
     End Function
 
     Public Function GetEntityTypeKey(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As IObjectSchemaBase) As Object

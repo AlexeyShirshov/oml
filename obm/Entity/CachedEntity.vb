@@ -1435,6 +1435,29 @@ l1:
                 End If
             End If
         End Sub
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, CachedEntity))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As CachedEntity) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+            Dim pks() As PKDesc = GetPKValues()
+            Dim pks2() As PKDesc = obj.GetPKValues()
+            For i As Integer = 0 To pks.Length - 1
+                Dim pk As PKDesc = pks(i)
+                If pk.PropertyAlias <> pks2(i).PropertyAlias OrElse Not pk.Value.Equals(pks2(i).Value) Then
+                    Return False
+                End If
+            Next
+            Return True
+        End Function
+
+        Public Overrides Function GetHashCode() As Integer
+            Return GetCacheKey()
+        End Function
     End Class
 
 End Namespace
