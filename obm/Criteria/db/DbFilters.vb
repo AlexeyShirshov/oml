@@ -136,7 +136,7 @@ Namespace Database
             Private _oper As Worm.Criteria.FilterOperation
             Private _str As String
 
-            Public Sub New(ByVal value As Values.IDatabaseFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
+            Public Sub New(ByVal value As IFilterValue, ByVal oper As Worm.Criteria.FilterOperation)
                 MyBase.New(value)
                 _oper = oper
             End Sub
@@ -154,12 +154,12 @@ Namespace Database
 
             Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
                 'Return TemplateBase.Oper2String(_oper) & GetParam(schema, pname)
-                Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
-                If id IsNot Nothing Then
-                    Return TemplateBase.Oper2String(_oper) & id.GetParam(CType(schema, SQLGenerator), filterInfo, pname, CType(almgr, AliasMgr))
-                Else
-                    Return MakeQueryStmt(schema, filterInfo, almgr, pname, columns)
-                End If
+                'Dim id As Values.IDatabaseFilterValue = TryCast(val, Values.IDatabaseFilterValue)
+                'If id IsNot Nothing Then
+                Return TemplateBase.Oper2String(_oper) & Value.GetParam(schema, pname, almgr, Nothing, columns, filterInfo)
+                'Else
+                'Return MakeQueryStmt(schema, filterInfo, almgr, pname, columns)
+                'End If
             End Function
 
             Public Overrides Function ToStaticString() As String
@@ -171,7 +171,7 @@ Namespace Database
             End Function
 
             Protected Overrides Function _Clone() As Object
-                Return New NonTemplateUnaryFilter(CType(val, Values.IDatabaseFilterValue), _oper)
+                Return New NonTemplateUnaryFilter(Value, _oper)
             End Function
 
             'Public Overloads Function MakeSQLStmt1(ByVal schema As DbSchema, ByVal almgr As AliasMgr, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeSQLStmt
@@ -229,7 +229,9 @@ Namespace Database
             End Function
 
             Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
-                If ParamValue.ShouldUse Then
+                Dim pf As IParamFilterValue = TryCast(Value, IParamFilterValue)
+
+                If pf Is Nothing OrElse pf.ShouldUse Then
                     If Template.Table.Name = TempTable Then
                         Return Template.Column & Template.OperToStmt & GetParam(schema, pname)
                     Else
@@ -271,7 +273,7 @@ Namespace Database
                     Throw New ArgumentNullException("pname")
                 End If
 
-                Dim prname As String = ParamValue.GetParam(schema, pname, Nothing)
+                Dim prname As String = Value.GetParam(schema, pname, Nothing, Nothing, Nothing, Nothing)
 
                 Return New Pair(Of String)(Template.Column, prname)
             End Function
@@ -315,16 +317,16 @@ Namespace Database
             Inherits Worm.Criteria.Core.EntityFilterBase
             'Implements IEntityFilter
 
-            Private _dbFilter As Boolean
+            'Private _dbFilter As Boolean
 
-            Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+            Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
                 MyBase.New(value, New OrmFilterTemplate(t, fieldName, operation))
             End Sub
 
-            Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As Values.IDatabaseFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
-                MyBase.New(value, New OrmFilterTemplate(t, fieldName, operation))
-                _dbFilter = True
-            End Sub
+            'Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As Values.IDatabaseFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+            '    MyBase.New(value, New OrmFilterTemplate(t, fieldName, operation))
+            '    _dbFilter = True
+            'End Sub
 
             Protected Sub New(ByVal v As IFilterValue, ByVal template As OrmFilterTemplate)
                 MyBase.New(v, template)
@@ -366,7 +368,7 @@ Namespace Database
 
                 Dim pv As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
-                If pv Is Nothing OrElse ParamValue.ShouldUse Then
+                If pv Is Nothing OrElse pv.ShouldUse Then
                     Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = Nothing
 
                     If almgr IsNot Nothing Then
@@ -395,11 +397,12 @@ Namespace Database
                         End Try
                     End If
 
-                    If _dbFilter Then
-                        Return [alias] & map._columnName & Template.OperToStmt & GetParam(CType(schema, SQLGenerator), filterInfo, pname, CType(almgr, AliasMgr))
-                    Else
-                        Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
-                    End If
+                    'If _dbFilter Then
+                    '    Return [alias] & map._columnName & Template.OperToStmt & GetParam(CType(schema, SQLGenerator), filterInfo, pname, CType(almgr, AliasMgr))
+                    'Else
+                    '    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, pname)
+                    'End If
+                    Return [alias] & map._columnName & Template.OperToStmt & GetParam(schema, filterInfo, pname, almgr)
                 Else
                     Return String.Empty
                 End If
@@ -421,20 +424,20 @@ Namespace Database
                 Return MakeQueryStmt(_oschema, filterInfo, schema, almgr, pname, columns)
             End Function
 
-            Protected Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal pmgr As ICreateParam) As String
-                If _dbFilter Then
-                    Throw New InvalidOperationException
-                Else
-                    Return MyBase.GetParam(schema, pmgr)
-                End If
-            End Function
+            'Protected Overrides Function GetParam(ByVal schema As ObjectMappingEngine, ByVal pmgr As ICreateParam) As String
+            '    If _dbFilter Then
+            '        Throw New InvalidOperationException
+            '    Else
+            '        Return MyBase.GetParam(schema, pmgr)
+            '    End If
+            'End Function
 
-            Protected Overloads Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal pmgr As ICreateParam, ByVal almgr As AliasMgr) As String
-                If _dbFilter Then
-                    Return CType(val, Values.IDatabaseFilterValue).GetParam(schema, filterInfo, pmgr, almgr)
-                Else
-                    Throw New InvalidOperationException
-                End If
+            Protected Overloads Function GetParam(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal pmgr As ICreateParam, ByVal almgr As IPrepareTable) As String
+                'If _dbFilter Then
+                Return Value.GetParam(schema, pmgr, almgr, AddressOf PrepareValue, Nothing, filterInfo)
+                'Else
+                'Throw New InvalidOperationException
+                'End If
             End Function
 
             Protected Overrides Function _Clone() As Object
@@ -445,11 +448,11 @@ Namespace Database
         Public Class CustomFilter
             Inherits Worm.Criteria.Core.CustomFilterBase
 
-            Public Sub New(ByVal format As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String))
+            Public Sub New(ByVal format As String, ByVal value As IFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String))
                 MyBase.New(format, value, oper, values)
             End Sub
 
-            Protected Sub New(ByVal value As IParamFilterValue)
+            Protected Sub New(ByVal value As IFilterValue)
                 MyBase.New(value)
             End Sub
 
@@ -460,7 +463,7 @@ Namespace Database
             End Property
 
             Protected Overrides Function _Clone() As Object
-                Dim c As New CustomFilter(ParamValue)
+                Dim c As New CustomFilter(Value)
                 CopyTo(c)
                 Return c
             End Function

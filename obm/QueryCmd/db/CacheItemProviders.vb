@@ -326,10 +326,15 @@ Namespace Query.Database
                                 End If
                             End If
                         End If
-                    Else
+                    ElseIf q.SelectedType IsNot Nothing Then
                         _mgr.Cache.validate_AddDeleteType(q.SelectedType, _key, _id)
                         _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
                     End If
+
+                    If q.Obj IsNot Nothing Then
+                        _mgr.Cache.AddM2MQuery(q.Obj.GetM2M(q.SelectedType, q.M2MKey), _key, _id)
+                    End If
+
                     'If Not (Cache.IsCalculated(dp) OrElse notPreciseDepends) Then
                     '    Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
 

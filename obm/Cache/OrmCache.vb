@@ -117,6 +117,19 @@ Namespace Cache
                 c.Add(key, id)
             End Sub
         End Class
+
+        Private Class FieldsRef
+            Inherits Dictionary(Of EntityField, CacheEntryRef)
+
+            Public Overloads Sub Add(ByVal ef As EntityField, ByVal key As String, ByVal id As String)
+                Dim c As CacheEntryRef = Nothing
+                If Not TryGetValue(ef, c) Then
+                    c = New CacheEntryRef
+                    Add(ef, c)
+                End If
+                c.Add(key, id)
+            End Sub
+        End Class
 #End Region
 
         'Public ReadOnly DateTimeCreated As Date
@@ -161,9 +174,9 @@ Namespace Cache
         Private _addDeleteTypes As New TypeEntryRef
         Private _updateTypes As New TypeEntryRef
         Private _immediateValidate As New Type2SelectiveFiltersDepends
-        Private _filteredFields As New Dictionary(Of EntityField, CacheEntryRef)
-        Private _sortedFields As New Dictionary(Of EntityField, CacheEntryRef)
-        Private _groupedFields As New Dictionary(Of EntityField, CacheEntryRef)
+        Private _filteredFields As New FieldsRef
+        Private _sortedFields As New FieldsRef
+        Private _groupedFields As New FieldsRef
 
         Public Event CacheHasModification As EventHandler
 
@@ -593,6 +606,33 @@ Namespace Cache
                 'End If
             End Using
         End Sub
+
+        Protected Friend Sub validate_AddDependentObject(ByVal o As ICachedEntity, ByVal key As String, ByVal id As String)
+            'Debug.WriteLine(t.Name & ": add dependent " & id)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("OP*#hnfva","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("OP*#hnfva")
+#End If
+                AddDepend(o, key, id)
+            End Using
+        End Sub
+
+        Protected Friend Sub validate_AddDependentField(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
+            'Debug.WriteLine(t.Name & ": add dependent " & id)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("N(4nfasd*)Gf","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("N(4nfasd*)Gf")
+#End If
+                Dim ef As EntityField = New EntityField(p.First, p.Second)
+
+                _filteredFields.Add(ef, key, id)
+                _sortedFields.Add(ef, key, id)
+                _groupedFields.Add(ef, key, id)
+            End Using
+        End Sub
+
         'Protected Friend Function GetRelationValue(ByVal t As Type, ByRef l As List(Of Type)) As Boolean
         '    Using SyncHelper.AcquireDynamicLock("9h3fn013gf-qjnmerg135g")
         '        Return _relations.TryGetValue(t, l)

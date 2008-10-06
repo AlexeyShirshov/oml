@@ -895,7 +895,7 @@ namespace Worm.CodeGen.Core
 					{
 						method = new CodeMemberMethod();
 						entitySchemaDefClass.Members.Add(method);
-						method.Name = "GetFilter";
+                        method.Name = "GetContextFilter";
 						// тип возвращаемого значения
 						method.ReturnType = new CodeTypeReference(typeof(Worm.Criteria.Core.IFilter));
 						// модификаторы доступа
@@ -903,7 +903,7 @@ namespace Worm.CodeGen.Core
 						method.Parameters.Add(
 							new CodeParameterDeclarationExpression(
 								new CodeTypeReference(typeof(object)),
-								"filter_info"
+								"context"
 								)
 							);
 						// реализует метод базового класса
@@ -2821,6 +2821,26 @@ namespace Worm.CodeGen.Core
                         )
                     )
                 );
+
+            if (entity.BaseEntity == null)
+            {
+                CodeMemberProperty prop = new CodeMemberProperty();
+                entitySchemaDefClass.Members.Add(prop);
+                prop.Name = "Table";
+                prop.Type = new CodeTypeReference(typeof(SourceFragment));
+                prop.Attributes = MemberAttributes.Public;
+                prop.HasSet = false;
+                prop.GetStatements.Add(
+                    new CodeMethodReturnStatement(
+                        new CodeArrayIndexerExpression(
+                            new CodeMethodInvokeExpression(
+                                new CodeMethodReferenceExpression(new CodeThisReferenceExpression(), method.Name)),
+                            new CodePrimitiveExpression(0)
+                        )
+                    )
+                );
+                prop.ImplementationTypes.Add(typeof(IObjectSchemaBase));
+            }
         }
 
         private static void CreateGetTypeMainTableMethod(EntityDescription entity, CodeTypeDeclaration entitySchemaDefClass)

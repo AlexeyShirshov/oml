@@ -99,32 +99,33 @@ Public Class Expressions
         Protected Overridable Function FormatParam(ByVal s As ObjectMappingEngine, _
             ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, _
             ByVal columns As List(Of String), ByVal filterInfo As Object) As String
-            Dim p As IParamFilterValue = TryCast(_v, IParamFilterValue)
-            If p IsNot Nothing Then
-                Return p.GetParam(s, pmgr, Nothing)
-            Else
-                Dim e As EntityPropValue = TryCast(_v, EntityPropValue)
-                If e IsNot Nothing Then
-                    Return e.GetParam(s, almgr)
-                Else
-                    Dim rv As RefValue = TryCast(_v, RefValue)
-                    If rv IsNot Nothing Then
-                        Return rv.GetParam(columns)
-                    Else
-                        Dim cf As CustomValue = TryCast(_v, CustomValue)
-                        If cf IsNot Nothing Then
-                            Return cf.GetParam(s, almgr)
-                        Else
-                            Dim db As Database.Criteria.Values.IDatabaseFilterValue = TryCast(_v, Database.Criteria.Values.IDatabaseFilterValue)
-                            If db IsNot Nothing Then
-                                Return db.GetParam(CType(s, Database.SQLGenerator), filterInfo, pmgr, CType(almgr, Database.AliasMgr))
-                            Else
-                                Throw New NotSupportedException
-                            End If
-                        End If
-                    End If
-                End If
-            End If
+            Return _v.GetParam(s, pmgr, almgr, Nothing, columns, filterInfo)
+            'Dim p As IParamFilterValue = TryCast(_v, IParamFilterValue)
+            'If p IsNot Nothing Then
+            '    Return p.GetParam(s, pmgr, Nothing)
+            'Else
+            '    Dim e As EntityPropValue = TryCast(_v, EntityPropValue)
+            '    If e IsNot Nothing Then
+            '        Return e.GetParam(s, almgr)
+            '    Else
+            '        Dim rv As RefValue = TryCast(_v, RefValue)
+            '        If rv IsNot Nothing Then
+            '            Return rv.GetParam(columns)
+            '        Else
+            '            Dim cf As CustomValue = TryCast(_v, CustomValue)
+            '            If cf IsNot Nothing Then
+            '                Return cf.GetParam(s, almgr)
+            '            Else
+            '                Dim db As Database.Criteria.Values.IDatabaseFilterValue = TryCast(_v, Database.Criteria.Values.IDatabaseFilterValue)
+            '                If db IsNot Nothing Then
+            '                    Return db.GetParam(CType(s, Database.SQLGenerator), filterInfo, pmgr, CType(almgr, Database.AliasMgr))
+            '                Else
+            '                    Throw New NotSupportedException
+            '                End If
+            '            End If
+            '        End If
+            '    End If
+            'End If
         End Function
 
         Public Shared Function CreateFilter(ByVal schema As ObjectMappingEngine, ByVal lf As UnaryExp, ByVal rf As UnaryExp, ByVal fo As FilterOperation) As IFilter

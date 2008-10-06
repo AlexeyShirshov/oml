@@ -626,7 +626,7 @@ Namespace Query
 
             If sl IsNot Nothing Then
                 For Each c As OrmProperty In sl
-                    If GetStaticKeyFromProp(sb, cb, c) Then
+                    If Not GetStaticKeyFromProp(sb, cb, c) Then
                         Return False
                     End If
                 Next
@@ -636,7 +636,7 @@ Namespace Query
             If _order IsNot Nothing Then
                 If CacheSort OrElse _top IsNot Nothing Then
                     For Each n As Sort In New Sort.Iterator(_order)
-                        If GetStaticKeyFromProp(sb, cb, n) Then
+                        If Not GetStaticKeyFromProp(sb, cb, n) Then
                             Return False
                         End If
                         sb.Append(n.ToString)
@@ -1383,7 +1383,9 @@ Namespace Query
                 For Each f As IFilter In _filter.Filter.GetAllFilters
                     Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(f)
                     If Cache.IsCalculated(fdp) Then
-                        dp.AddBoth(SelectedType)
+                        If SelectedType IsNot Nothing Then
+                            dp.AddBoth(SelectedType)
+                        End If
                         dp.Merge(fdp)
                         'Else
                         '    Return fdp
@@ -1395,7 +1397,9 @@ Namespace Query
                 For Each s As Sort In New Sort.Iterator(_order)
                     Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(s)
                     If Cache.IsCalculated(fdp) Then
-                        dp.AddUpdated(SelectedType)
+                        If SelectedType IsNot Nothing Then
+                            dp.AddUpdated(SelectedType)
+                        End If
                         dp.Merge(fdp)
                         'Else
                         '    Return fdp
