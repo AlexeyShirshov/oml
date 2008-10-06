@@ -393,9 +393,9 @@ Namespace Criteria.Conditions
             Return CType(Template, IOrmFilterTemplate)
         End Function
 
-        Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue
-            Throw New NotSupportedException
-        End Function
+        'Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue
+        '    Throw New NotSupportedException
+        'End Function
 
         'Public Overrides Function ReplaceCondition(ByVal replacement As ITemplateFilter, ByVal replacer As ITemplateFilter) As Condition
         '    If replacement.Equals(_left) Then

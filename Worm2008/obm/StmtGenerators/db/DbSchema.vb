@@ -115,7 +115,7 @@ Namespace Database
         End Sub
     End Class
 
-    Public Structure AliasMgr
+    Public Class AliasMgr
         Implements IPrepareTable
 
         Private _aliases As IDictionary(Of SourceFragment, String)
@@ -171,7 +171,7 @@ Namespace Database
         Public Sub Replace(ByVal schema As ObjectMappingEngine, ByVal table As Orm.Meta.SourceFragment, ByVal sb As System.Text.StringBuilder) Implements IPrepareTable.Replace
             sb.Replace(schema.GetTableName(table) & ".", _aliases(table) & ".")
         End Sub
-    End Structure
+    End Class
 
     Public Class SQLGenerator
         Inherits ObjectMappingEngine
@@ -2314,19 +2314,19 @@ l1:
         End Function
 
         Public Overrides Function CreateCriteria(ByVal t As Type) As Worm.Criteria.ICtor
-            Return New Criteria.Ctor(t)
+            Return New Criteria.Ctor(Me, t)
         End Function
 
         Public Overloads Overrides Function CreateCriteria(ByVal t As System.Type, ByVal fieldName As String) As Worm.Criteria.CriteriaField
-            Return Criteria.Ctor.Field(t, fieldName)
+            Return Criteria.Ctor.Field(Me, t, fieldName)
         End Function
 
         Public Overloads Overrides Function CreateCriteria(ByVal table As Orm.Meta.SourceFragment) As Worm.Criteria.ICtor
-            Return New Criteria.Ctor(table)
+            Return New Criteria.Ctor(Me, table)
         End Function
 
         Public Overloads Overrides Function CreateCriteria(ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String) As Worm.Criteria.CriteriaColumn
-            Return Criteria.Ctor.Column(table, columnName)
+            Return Criteria.Ctor.Column(Me, table, columnName)
         End Function
 
         Public Overrides Function CreateConditionCtor() As Criteria.Conditions.Condition.ConditionConstructorBase
@@ -2334,7 +2334,7 @@ l1:
         End Function
 
         Public Overrides Function CreateCriteriaLink(ByVal con As Worm.Criteria.Conditions.Condition.ConditionConstructorBase) As Worm.Criteria.CriteriaLink
-            Return New Criteria.CriteriaLink(CType(con, Criteria.Conditions.Condition.ConditionConstructor))
+            Return New Criteria.CriteriaLink(Me, CType(con, Criteria.Conditions.Condition.ConditionConstructor))
         End Function
 
         Public Overrides Function CreateTopAspect(ByVal top As Integer) As Orm.Query.TopAspect

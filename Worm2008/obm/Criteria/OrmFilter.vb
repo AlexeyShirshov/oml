@@ -35,13 +35,13 @@ Namespace Criteria.Core
     End Interface
 
     Public Interface IValuableFilter
-        ReadOnly Property Value() As IParamFilterValue
+        ReadOnly Property Value() As IFilterValue
     End Interface
 
     Public Interface IEntityFilterBase
         Function Eval(ByVal schema As ObjectMappingEngine, ByVal obj As _IEntity, ByVal oschema As IObjectSchemaBase) As IEvaluableValue.EvalResult
         Function GetFilterTemplate() As IOrmFilterTemplate
-        Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object
+        'Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object
         Function MakeHash() As String
     End Interface
 
@@ -106,13 +106,13 @@ Namespace Criteria.Core
             End If
         End Function
 
-        Public ReadOnly Property ParamValue() As IParamFilterValue Implements IValuableFilter.Value
-            Get
-                Return CType(_v, IParamFilterValue)
-            End Get
-        End Property
+        'Public ReadOnly Property ParamValue() As IParamFilterValue Implements IValuableFilter.Value
+        '    Get
+        '        Return CType(_v, IParamFilterValue)
+        '    End Get
+        'End Property
 
-        Public ReadOnly Property Value() As IFilterValue
+        Public ReadOnly Property Value() As IFilterValue Implements IValuableFilter.Value
             Get
                 Return CType(_v, IFilterValue)
             End Get
@@ -127,7 +127,7 @@ Namespace Criteria.Core
                 'Return pmgr.CreateParam(Nothing)
                 Throw New InvalidOperationException("Param is null")
             End If
-            Return ParamValue.GetParam(schema, pmgr, TryCast(Me, IEntityFilter))
+            Return Value.GetParam(schema, pmgr, Nothing, Nothing, Nothing, Nothing)
         End Function
 
         Private Function Equals1(ByVal f As IFilter) As Boolean Implements IFilter.Equals
@@ -282,7 +282,7 @@ Namespace Criteria.Core
             'Return Nothing
         End Function
 
-        Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object Implements IEntityFilter.PrepareValue
+        Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object 'Implements IEntityFilter.PrepareValue
             Return schema.ChangeValueType(_oschema, New ColumnAttribute(Template.FieldName), v)
         End Function
 
@@ -320,7 +320,7 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("pname")
             End If
 
-            Dim prname As String = ParamValue.GetParam(schema, pname, Nothing)
+            Dim prname As String = Value.GetParam(schema, pname, almgr, AddressOf PrepareValue, Nothing, Nothing)
 
             Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.FieldName)
 
@@ -526,7 +526,7 @@ Namespace Criteria.Core
         Private _sstr As String
         Private _values() As Pair(Of Object, String)
 
-        Public Sub New(ByVal format As String, ByVal value As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String))
+        Public Sub New(ByVal format As String, ByVal value As IFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String))
             MyBase.New(value)
             '_t = table
             '_field = field
@@ -535,7 +535,7 @@ Namespace Criteria.Core
             _values = values
         End Sub
 
-        Protected Sub New(ByVal value As IParamFilterValue)
+        Protected Sub New(ByVal value As IFilterValue)
             MyBase.New(value)
         End Sub
 
@@ -573,7 +573,9 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("schema")
             End If
 
-            If ParamValue.ShouldUse Then
+            Dim pf As IParamFilterValue = TryCast(Value, IParamFilterValue)
+
+            If pf Is Nothing OrElse pf.ShouldUse Then
                 Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, tableAliases, _values)
 
                 Return String.Format(_format, values.ToArray) & OperationString & GetParam(schema, pname)

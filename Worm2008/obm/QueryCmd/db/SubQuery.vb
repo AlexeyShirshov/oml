@@ -7,20 +7,28 @@ Imports Worm.Criteria.Core
 Namespace Database.Criteria.Values
 
     Public Class SubQueryCmd
-        Implements IDatabaseFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
+        Implements Worm.Criteria.Values.IFilterValue, Worm.Criteria.Values.INonTemplateValue,  _
         Cache.IQueryDependentTypes
 
         Private _q As Query.QueryCmd
+        Private _stmtGen As SQLGenerator
 
         Public Sub New(ByVal q As Query.QueryCmd)
+            MyClass.New(Nothing, q)
+        End Sub
+
+        Public Sub New(ByVal stmtGen As SQLGenerator, ByVal q As Query.QueryCmd)
             _q = q
+            _stmtGen = stmtGen
         End Sub
 
         Public Function _ToString() As String Implements Worm.Criteria.Values.IFilterValue._ToString
             Return _q.ToString()
         End Function
 
-        Public Function GetParam(ByVal schema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As Orm.Meta.ICreateParam, ByVal almgr As IPrepareTable) As String Implements IDatabaseFilterValue.GetParam
+        Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
+                          ByVal almgr As IPrepareTable, ByVal prepare As Worm.Criteria.Values.PrepareValueDelegate, _
+                          ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String Implements Worm.Criteria.Values.IFilterValue.GetParam
             Dim sb As New StringBuilder
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
@@ -31,7 +39,11 @@ Namespace Database.Criteria.Values
             Dim sl As List(Of Orm.OrmProperty) = Nothing
             Dim f As IFilter = _q.Prepare(j, schema, filterInfo, t, sl)
 
-            sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(filterInfo, schema, _q, paramMgr, _
+            If _stmtGen Is Nothing Then
+                _stmtGen = TryCast(schema, SQLGenerator)
+            End If
+
+            sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(filterInfo, _stmtGen, _q, paramMgr, _
                  t, j, f, almgr, sl))
 
             sb.Append(")")
