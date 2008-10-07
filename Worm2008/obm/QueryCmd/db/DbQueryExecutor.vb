@@ -4,7 +4,7 @@ Imports Worm.Orm
 Imports Worm.Orm.Meta
 Imports Worm.Database.Criteria.Joins
 Imports Worm.Criteria.Core
-Imports Worm.Database.Sorting
+'Imports Worm.Database.Sorting
 
 Namespace Query.Database
 
@@ -53,7 +53,7 @@ Namespace Query.Database
                         query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.EntityName)
                     End If
                 End If
-                Dim sl As New List(Of List(Of OrmProperty))
+                Dim sl As New List(Of List(Of SelectExpression))
                 Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
@@ -75,7 +75,7 @@ Namespace Query.Database
                 Dim p As ProviderAnonym(Of ReturnType) = CType(_procA, ProviderAnonym(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-                    Dim sl As New List(Of List(Of OrmProperty))
+                    Dim sl As New List(Of List(Of SelectExpression))
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                     p.Reset(CType(mgr, OrmReadOnlyDBManager), j, f, query.SelectedType, sl)
                 Else
@@ -109,7 +109,7 @@ Namespace Query.Database
                         query.SelectedType = mgr.MappingEngine.GetTypeByEntityName(query.EntityName)
                     End If
                 End If
-                Dim sl As New List(Of List(Of OrmProperty))
+                Dim sl As New List(Of List(Of SelectExpression))
                 Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
@@ -131,7 +131,7 @@ Namespace Query.Database
                 Dim p As Provider(Of ReturnType) = CType(_proc, Provider(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-                    Dim sl As New List(Of List(Of OrmProperty))
+                    Dim sl As New List(Of List(Of SelectExpression))
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, query.SelectedType, sl)
                     p.Reset(CType(mgr, OrmReadOnlyDBManager), j, f, query.SelectedType, sl)
                 Else
@@ -158,7 +158,7 @@ Namespace Query.Database
                 'If query.Joins IsNot Nothing Then
                 '    j.AddRange(query.Joins)
                 'End If
-                Dim sl As New List(Of List(Of OrmProperty))
+                Dim sl As New List(Of List(Of SelectExpression))
                 Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, GetType(ReturnType), sl)
                 'If query.Filter IsNot Nothing Then
                 '    f = query.Filter.Filter(GetType(ReturnType))
@@ -180,7 +180,7 @@ Namespace Query.Database
                 Dim p As Provider(Of ReturnType) = CType(_procT, Provider(Of ReturnType))
                 If _m <> query.Mark Then
                     Dim j As New List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-                    Dim sl As New List(Of List(Of OrmProperty))
+                    Dim sl As New List(Of List(Of SelectExpression))
                     Dim f() As IFilter = query.Prepare(j, mgr.MappingEngine, mgr.GetFilterInfo, GetType(ReturnType), sl)
                     p.Reset(CType(mgr, OrmReadOnlyDBManager), j, f, GetType(SelectType), sl)
                 Else
@@ -465,12 +465,12 @@ Namespace Query.Database
 #Region " Shared helpers "
 
         Protected Shared Function GetFields(ByVal gen As ObjectMappingEngine, ByVal type As Type, _
-            ByVal q As QueryCmd, ByVal withLoad As Boolean, ByVal c As IList(Of OrmProperty)) As List(Of ColumnAttribute)
+            ByVal q As QueryCmd, ByVal withLoad As Boolean, ByVal c As IList(Of SelectExpression)) As List(Of ColumnAttribute)
 
             Dim l As List(Of ColumnAttribute) = Nothing
             If c IsNot Nothing Then
                 l = New List(Of ColumnAttribute)
-                For Each p As OrmProperty In c
+                For Each p As SelectExpression In c
                     'If Not type.Equals(p.Type) Then
                     '    Throw New NotImplementedException
                     'End If
@@ -537,13 +537,13 @@ Namespace Query.Database
             ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IObjectSchemaBase, _
             ByVal almgr As IPrepareTable, ByVal filterInfo As Object, ByVal params As ICreateParam, _
             ByVal columnAliases As List(Of String), ByVal innerColumns As List(Of String), _
-            ByVal withLoad As Boolean, ByVal selList As IEnumerable(Of OrmProperty))
+            ByVal withLoad As Boolean, ByVal selList As IEnumerable(Of SelectExpression))
 
             Dim b As Boolean
             Dim cols As New StringBuilder
             If os Is Nothing Then
                 If selList IsNot Nothing Then
-                    For Each p As OrmProperty In selList
+                    For Each p As SelectExpression In selList
                         If Not String.IsNullOrEmpty(p.Table.Name) Then
                             cols.Append(s.GetTableName(p.Table)).Append(".")
                         End If
@@ -575,7 +575,7 @@ Namespace Query.Database
                         b = True
                     End If
                 ElseIf selList IsNot Nothing Then
-                    For Each p As OrmProperty In selList
+                    For Each p As SelectExpression In selList
                         Dim map As MapField2Column = os.GetFieldColumnMap()(p.Field)
                         cols.Append(s.GetTableName(map._tableName)).Append(".")
                         cols.Append(map._columnName).Append(", ")
@@ -682,7 +682,7 @@ Namespace Query.Database
         Protected Shared Sub FormGroupBy(ByVal query As QueryCmd, ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal selectType As Type)
             If query.Group IsNot Nothing Then
                 sb.Append(" group by ")
-                For Each g As OrmProperty In query.Group
+                For Each g As SelectExpression In query.Group
                     If g.Table IsNot Nothing Then
                         sb.Append(almgr.Aliases(g.Table)).Append(".").Append(g.Column)
                     Else
@@ -713,18 +713,19 @@ Namespace Query.Database
             ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal filterInfo As Object, _
             ByVal params As ICreateParam, ByVal columnAliases As List(Of String))
             If query.propSort IsNot Nothing AndAlso Not query.propSort.IsExternal Then
-                Dim adv As DbSort = TryCast(query.propSort, DbSort)
-                If adv IsNot Nothing Then
-                    adv.MakeStmt(s, almgr, columnAliases, sb, t, filterInfo, params)
-                Else
-                    s.AppendOrder(t, query.propSort, almgr, sb, True, query.SelectList, query.Table)
-                End If
+                s.CreateSelectExpressionFormater().Format(query.propSort, sb, s, t, almgr, params, columnAliases, filterInfo, query.SelectList, query.Table)
+                'Dim adv As DbSort = TryCast(query.propSort, DbSort)
+                'If adv IsNot Nothing Then
+                '    adv.MakeStmt(s, almgr, columnAliases, sb, t, filterInfo, params)
+                'Else
+                '    s.AppendOrder(t, query.propSort, almgr, sb, True, query.SelectList, query.Table)
+                'End If
             End If
         End Sub
 
         Public Shared Function MakeQueryStatement(ByVal filterInfo As Object, ByVal schema As SQLGenerator, _
             ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal queryType As Type, _
-            ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As IPrepareTable, ByVal selList As IEnumerable(Of OrmProperty)) As String
+            ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As IPrepareTable, ByVal selList As IEnumerable(Of SelectExpression)) As String
 
             Return MakeQueryStatement(filterInfo, schema, query, params, queryType, joins, f, almgr, Nothing, Nothing, Nothing, 0, query.propWithLoad, selList)
         End Function
@@ -733,7 +734,7 @@ Namespace Query.Database
             ByVal query As QueryCmd, ByVal params As ICreateParam, ByVal queryType As Type, _
             ByVal joins As List(Of Worm.Criteria.Joins.OrmJoin), ByVal f As IFilter, ByVal almgr As IPrepareTable, _
             ByVal columnAliases As List(Of String), ByVal inner As String, ByVal innerColumns As List(Of String), _
-            ByVal i As Integer, ByVal withLoad As Boolean, ByVal selList As IEnumerable(Of OrmProperty)) As String
+            ByVal i As Integer, ByVal withLoad As Boolean, ByVal selList As IEnumerable(Of SelectExpression)) As String
 
             Dim sb As New StringBuilder
             Dim s As SQLGenerator = schema

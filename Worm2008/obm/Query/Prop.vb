@@ -6,71 +6,79 @@ Namespace Orm
     Public Class FCtor
         Public Shared Function Field(ByVal t As Type, ByVal typeField As String) As FCtor
             Dim f As New FCtor
-            f.GetAllProperties.Add(New OrmProperty(t, typeField))
+            f.GetAllProperties.Add(New SelectExpression(t, typeField))
             Return f
         End Function
 
         Public Shared Function Column(ByVal table As SourceFragment, ByVal tableColumn As String) As FCtor
             Dim f As New FCtor
-            f.GetAllProperties.Add(New OrmProperty(table, tableColumn))
+            f.GetAllProperties.Add(New SelectExpression(table, tableColumn))
             Return f
         End Function
 
         Public Shared Function Column(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String) As FCtor
             Dim f As New FCtor
-            f.GetAllProperties.Add(New OrmProperty(table, tableColumn, [alias]))
+            f.GetAllProperties.Add(New SelectExpression(table, tableColumn, [alias]))
             Return f
         End Function
 
         Public Shared Function Column(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String, ByVal attr As Field2DbRelations) As FCtor
             Dim f As New FCtor
-            Dim p As New OrmProperty(table, tableColumn, [alias])
+            Dim p As New SelectExpression(table, tableColumn, [alias])
             p.Attributes = attr
             f.GetAllProperties.Add(p)
             Return f
         End Function
 
-        Private _l As List(Of OrmProperty)
+        Private _l As List(Of SelectExpression)
 
         Public Function Add(ByVal t As Type, ByVal typeField As String) As FCtor
-            GetAllProperties.Add(New OrmProperty(t, typeField))
+            GetAllProperties.Add(New SelectExpression(t, typeField))
             Return Me
         End Function
 
         Public Function Add(ByVal table As SourceFragment, ByVal tableColumn As String) As FCtor
-            GetAllProperties.Add(New OrmProperty(table, tableColumn))
+            GetAllProperties.Add(New SelectExpression(table, tableColumn))
             Return Me
         End Function
 
         Public Function Add(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String) As FCtor
-            GetAllProperties.Add(New OrmProperty(table, tableColumn, [alias]))
+            GetAllProperties.Add(New SelectExpression(table, tableColumn, [alias]))
             Return Me
         End Function
 
         Public Function Add(ByVal table As SourceFragment, ByVal tableColumn As String, ByVal [alias] As String, ByVal attr As Field2DbRelations) As FCtor
-            Dim p As New OrmProperty(table, tableColumn, [alias])
+            Dim p As New SelectExpression(table, tableColumn, [alias])
             p.Attributes = attr
             GetAllProperties.Add(p)
             Return Me
         End Function
 
-        Public Function GetAllProperties() As List(Of OrmProperty)
+        Public Function GetAllProperties() As List(Of SelectExpression)
             If _l Is Nothing Then
-                _l = New List(Of OrmProperty)
+                _l = New List(Of SelectExpression)
             End If
             Return _l
         End Function
 
-        Public Shared Widening Operator CType(ByVal f As FCtor) As OrmProperty()
+        Public Shared Widening Operator CType(ByVal f As FCtor) As SelectExpression()
             Return f.GetAllProperties.ToArray
         End Operator
 
         Public Shared Widening Operator CType(ByVal f As FCtor) As Grouping()
-            Return f.GetAllProperties.ConvertAll(Function(p As OrmProperty) New Grouping(p)).ToArray
+            Return f.GetAllProperties.ConvertAll(Function(p As SelectExpression) New Grouping(p)).ToArray
         End Operator
     End Class
 
-    Public Class OrmProperty
+    Public Enum PropType
+        ObjectField
+        TableColumn
+        CustomValue
+        Subquery
+        [Aggregate]
+    End Enum
+
+    Public Class SelectExpression
         Implements Cache.IQueryDependentTypes
 
         Private _field As String
@@ -81,6 +89,7 @@ Namespace Orm
         Private _values() As Pair(Of Object, String)
         Private _attr As Field2DbRelations
         Private _q As Worm.Query.QueryCmd
+        Private _agr As AggregateBase
 
         Public Event OnChange()
 
@@ -121,9 +130,33 @@ Namespace Orm
             _q = q
         End Sub
 
+        Public Sub New(ByVal agr As AggregateBase)
+            _agr = agr
+        End Sub
+
         Protected Sub RaiseOnChange()
             RaiseEvent OnChange()
         End Sub
+
+        Public ReadOnly Property PropType() As PropType
+            Get
+                If _type IsNot Nothing AndAlso Not String.IsNullOrEmpty(_field) Then
+                    Return Orm.PropType.ObjectField
+                ElseIf _table IsNot Nothing AndAlso Not String.IsNullOrEmpty(_column) Then
+                    Return Orm.PropType.TableColumn
+                Else
+                    If Not String.IsNullOrEmpty(_custom) Then
+                        Return Orm.PropType.CustomValue
+                    ElseIf Not String.IsNullOrEmpty(_column) Then
+                        Return Orm.PropType.TableColumn
+                    ElseIf _q IsNot Nothing Then
+                        Return Orm.PropType.Subquery
+                    Else
+                        Return Orm.PropType.Aggregate
+                    End If
+                End If
+            End Get
+        End Property
 
         Public Property Attributes() As Field2DbRelations
             Get
@@ -156,6 +189,16 @@ Namespace Orm
             End Get
             Protected Friend Set(ByVal value As String)
                 _field = value
+                RaiseOnChange()
+            End Set
+        End Property
+
+        Public Property [Aggregate]() As AggregateBase
+            Get
+                Return _agr
+            End Get
+            Set(ByVal value As AggregateBase)
+                _agr = value
                 RaiseOnChange()
             End Set
         End Property
@@ -215,9 +258,10 @@ Namespace Orm
                         Return _custom
                     ElseIf Not String.IsNullOrEmpty(_column) Then
                         Return _column
-                    Else
-                        Debug.Assert(_q IsNot Nothing)
+                    ElseIf _q IsNot Nothing Then
                         Return _q.ToStaticString
+                    Else
+                        Return _agr.ToString
                     End If
                 End If
             End If
@@ -228,20 +272,24 @@ Namespace Orm
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return _Equals(TryCast(obj, OrmProperty))
+            Return _Equals(TryCast(obj, SelectExpression))
         End Function
 
-        Protected Overridable Function _Equals(ByVal s As OrmProperty) As Boolean
+        Protected Overridable Function _Equals(ByVal s As SelectExpression) As Boolean
             If s Is Nothing Then
                 Return False
             Else
                 Dim b As Boolean
                 If Not String.IsNullOrEmpty(_custom) Then
-                    b = _custom = s._custom AndAlso _type Is s._type
+                    b = _custom = s._custom
                 ElseIf Not String.IsNullOrEmpty(_field) Then
                     b = _field = s._field AndAlso _type Is s._type
+                ElseIf Not String.IsNullOrEmpty(_column) Then
+                    b = _column = s._column AndAlso _table Is s._table
+                ElseIf _q IsNot Nothing Then
+                    b = _q.Equals(s._q)
                 Else
-                    b = _column = s._column AndAlso _type Is s._type
+                    b = _agr.Equals(_agr)
                 End If
                 Return b
             End If

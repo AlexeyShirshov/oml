@@ -127,21 +127,21 @@ Namespace Criteria.Values
     Public Class EntityPropValue
         Implements IFilterValue
 
-        Private _p As OrmProperty
+        Private _p As SelectExpression
 
-        Public Sub New(ByVal p As OrmProperty)
+        Public Sub New(ByVal p As SelectExpression)
             _p = p
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal field As String)
-            _p = New OrmProperty(t, field)
+            _p = New SelectExpression(t, field)
         End Sub
 
         Public Sub New(ByVal table As SourceFragment, ByVal column As String)
-            _p = New OrmProperty(table, column)
+            _p = New SelectExpression(table, column)
         End Sub
 
-        Public ReadOnly Property OrmProp() As OrmProperty
+        Public ReadOnly Property OrmProp() As SelectExpression
             Get
                 Return _p
             End Get

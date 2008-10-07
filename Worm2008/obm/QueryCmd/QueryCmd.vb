@@ -170,7 +170,7 @@ Namespace Query
     Public Class QueryCmd
         Implements ICloneable, Cache.IQueryDependentTypes
 
-        Protected _fields As ObjectModel.ReadOnlyCollection(Of OrmProperty)
+        Protected _fields As ObjectModel.ReadOnlyCollection(Of SelectExpression)
         Protected _filter As IGetFilter
         Protected _group As ObjectModel.ReadOnlyCollection(Of Grouping)
         Protected _order As Sort
@@ -370,14 +370,17 @@ Namespace Query
 
         Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, _
-            ByVal cs As List(Of List(Of OrmProperty))) As IFilter()
+            ByVal cs As List(Of List(Of SelectExpression))) As IFilter()
 
             Dim fs As New List(Of IFilter)
             For Each q As QueryCmd In New QueryIterator(Me)
                 Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
-                Dim c As List(Of OrmProperty) = Nothing
+                Dim c As List(Of SelectExpression) = Nothing
                 Dim f As IFilter = q.Prepare(j, schema, filterInfo, t, c)
-                fs.Add(f)
+                If f IsNot Nothing Then
+                    fs.Add(f)
+                End If
+
                 js.Add(j)
                 cs.Add(c)
             Next
@@ -387,7 +390,7 @@ Namespace Query
 
         Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
             ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, _
-            ByRef cl As List(Of OrmProperty)) As IFilter
+            ByRef cl As List(Of SelectExpression)) As IFilter
 
             If Joins IsNot Nothing Then
                 j.AddRange(Joins)
@@ -460,10 +463,10 @@ Namespace Query
                     End If
                 Else
                     _table = table
-                    Dim r As New List(Of OrmProperty)
+                    Dim r As New List(Of SelectExpression)
                     'Dim os As IOrmObjectSchemaBase = schema.GetObjectSchema(selectedType)
                     'os.GetFieldColumnMap()("ID")._columnName
-                    r.Add(New OrmProperty(table, selected_r.Column & " " & schema.GetColumnNameByFieldNameInternal(t, "ID", False), "ID"))
+                    r.Add(New SelectExpression(table, selected_r.Column & " " & schema.GetColumnNameByFieldNameInternal(t, "ID", False), "ID"))
                     r(0).Attributes = Field2DbRelations.PK
                     '_fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(r)
                     cl = r
@@ -482,7 +485,7 @@ Namespace Query
                     If _autoFields Then
                         For Each pk As ColumnAttribute In schema.GetPrimaryKeys(t)
                             Dim find As Boolean
-                            For Each fld As OrmProperty In _fields
+                            For Each fld As SelectExpression In _fields
                                 If (fld.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK _
                                     AndAlso fld.Field = pk.FieldName Then
                                     find = True
@@ -491,32 +494,32 @@ Namespace Query
                             Next
                             If Not find Then
                                 If cl Is Nothing Then
-                                    cl = New List(Of OrmProperty)
+                                    cl = New List(Of SelectExpression)
                                 End If
-                                cl.Add(New OrmProperty(t, pk.FieldName))
+                                cl.Add(New SelectExpression(t, pk.FieldName))
                                 cl(0).Attributes = pk._behavior
                             End If
                         Next
                     ElseIf cl Is Nothing Then
-                        cl = New List(Of OrmProperty)
+                        cl = New List(Of SelectExpression)
                     End If
 
                     If cl IsNot Nothing Then
-                        For Each fld As OrmProperty In _fields
+                        For Each fld As SelectExpression In _fields
                             If Not cl.Contains(fld) Then
                                 cl.Add(fld)
                             End If
                         Next
                     End If
                 Else
-                    cl = New List(Of OrmProperty)
-                    For Each fld As OrmProperty In _fields
+                    cl = New List(Of SelectExpression)
+                    For Each fld As SelectExpression In _fields
                         cl.Add(fld)
                     Next
                 End If
 
                 If cl IsNot Nothing Then
-                    cl.Sort(Function(fst As OrmProperty, sec As OrmProperty) _
+                    cl.Sort(Function(fst As SelectExpression, sec As SelectExpression) _
                         fst.ToString.CompareTo(sec.ToString))
                 End If
             End If
@@ -525,7 +528,7 @@ Namespace Query
 
         Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of OrmJoin)), _
             ByVal fs() As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior, _
-            ByVal sl As List(Of List(Of OrmProperty))) As String
+            ByVal sl As List(Of List(Of SelectExpression))) As String
             Dim key As New StringBuilder
 
             Dim i As Integer = 0
@@ -534,7 +537,12 @@ Namespace Query
                     key.Append("$inner:")
                 End If
 
-                If Not q.GetStaticKey(key, js(i), fs(i), If(q._realType Is Nothing, realType, q._realType), cb, sl(i)) Then
+                Dim f As IFilter = Nothing
+                If fs.Length > i Then
+                    f = fs(i)
+                End If
+
+                If Not q.GetStaticKey(key, js(i), f, If(q._realType Is Nothing, realType, q._realType), cb, sl(i)) Then
                     Return Nothing
                 End If
                 i += 1
@@ -548,7 +556,7 @@ Namespace Query
 
         Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, ByVal j As IEnumerable(Of OrmJoin), _
             ByVal f As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior, _
-            ByVal sl As List(Of OrmProperty)) As Boolean
+            ByVal sl As List(Of SelectExpression)) As Boolean
             Dim sb2 As New StringBuilder
 
             If f IsNot Nothing Then
@@ -625,7 +633,7 @@ Namespace Query
             sb.Append(_distinct.ToString).Append("$")
 
             If sl IsNot Nothing Then
-                For Each c As OrmProperty In sl
+                For Each c As SelectExpression In sl
                     If Not GetStaticKeyFromProp(sb, cb, c) Then
                         Return False
                     End If
@@ -648,7 +656,7 @@ Namespace Query
             Return True
         End Function
 
-        Private Shared Function GetStaticKeyFromProp(ByVal sb As StringBuilder, ByVal cb As Cache.CacheListBehavior, ByVal c As OrmProperty) As Boolean
+        Private Shared Function GetStaticKeyFromProp(ByVal sb As StringBuilder, ByVal cb As Cache.CacheListBehavior, ByVal c As SelectExpression) As Boolean
             If c.Type Is Nothing Then
                 Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(c)
                 If Not Cache.IsCalculated(dp) Then
@@ -675,8 +683,11 @@ Namespace Query
                 If i > 0 Then
                     id.Append("$inner:")
                 End If
-
-                q.GetDynamicKey(id, js(i), fs(i))
+                Dim f As IFilter = Nothing
+                If fs.Length > i Then
+                    f = fs(i)
+                End If
+                q.GetDynamicKey(id, js(i), f)
                 i += 1
             Next
 
@@ -723,9 +734,9 @@ Namespace Query
 
         Public Function ToStaticString() As String
             Dim sb As New StringBuilder
-            Dim l As List(Of OrmProperty) = Nothing
+            Dim l As List(Of SelectExpression) = Nothing
             If _fields IsNot Nothing Then
-                l = New List(Of OrmProperty)(_fields)
+                l = New List(Of SelectExpression)(_fields)
             End If
             GetStaticKey(sb, _joins, _filter.Filter, _realType, Cache.CacheListBehavior.CacheAll, l)
             Return sb.ToString
@@ -897,11 +908,11 @@ Namespace Query
             End Set
         End Property
 
-        Public Property SelectList() As ObjectModel.ReadOnlyCollection(Of OrmProperty)
+        Public Property SelectList() As ObjectModel.ReadOnlyCollection(Of SelectExpression)
             Get
                 Return _fields
             End Get
-            Set(ByVal value As ObjectModel.ReadOnlyCollection(Of OrmProperty))
+            Set(ByVal value As ObjectModel.ReadOnlyCollection(Of SelectExpression))
                 _fields = value
                 RenewMark()
             End Set
@@ -994,8 +1005,8 @@ Namespace Query
             Return Me
         End Function
 
-        Public Function [Select](ByVal fields() As OrmProperty) As QueryCmd
-            SelectList = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(fields)
+        Public Function [Select](ByVal fields() As SelectExpression) As QueryCmd
+            SelectList = New ObjectModel.ReadOnlyCollection(Of SelectExpression)(fields)
             Return Me
         End Function
 
@@ -1408,7 +1419,7 @@ Namespace Query
             End If
 
             If _fields IsNot Nothing Then
-                For Each f As OrmProperty In _fields
+                For Each f As SelectExpression In _fields
                     Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(f)
                     If Cache.IsCalculated(fdp) Then
                         dp.Merge(fdp)

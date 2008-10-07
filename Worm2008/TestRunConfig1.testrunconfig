@@ -3,7 +3,7 @@
   <Description>This is a default test run configuration for a local test run.</Description>
   <CodeCoverage enabled="true">
     <Regular>
-      <CodeCoverageItem binaryFile="obm\bin\Debug\Worm.Orm.dll" pdbFile="obm\bin\Debug\Worm.Orm.pdb" />
+      <CodeCoverageItem binaryFile="TestProject1\bin\Worm.Orm.dll" pdbFile="TestProject1\bin\Worm.Orm.pdb" />
     </Regular>
   </CodeCoverage>
   <Timeouts testTimeout="300000" />

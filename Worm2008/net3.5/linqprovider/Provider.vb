@@ -445,7 +445,7 @@ Namespace Linq
                                 Case "Year"
                                     Dim p As Pair(Of Object, String) = Nothing
                                     Dim ev As EntityPropValue = TryCast(b._exp.Value, EntityPropValue)
-                                    Dim pr As OrmProperty = Nothing
+                                    Dim pr As SelectExpression = Nothing
                                     If ev Is Nothing Then
                                         pr = _q.GetProperty(CType(b._exp.Value, ComputedValue).Alias)
                                     Else
@@ -508,7 +508,7 @@ Namespace Linq
                 '_t = p.Type
                 '_prop = m.Member.Name
             Else
-                Dim pr As OrmProperty = _q.GetProperty(p.Name)
+                Dim pr As SelectExpression = _q.GetProperty(p.Name)
                 If pr IsNot Nothing Then
                     _exp = New UnaryExp(New EntityPropValue(pr))
                     _mem = Nothing
@@ -558,7 +558,7 @@ Namespace Linq
             Else
                 Dim ce As ComputedValue = TryCast(exp.Value, ComputedValue)
                 If ce IsNot Nothing Then
-                    Dim p As OrmProperty = _q.GetProperty(ce.Alias)
+                    Dim p As SelectExpression = _q.GetProperty(ce.Alias)
                     Return Orm.Sorting.Field(p.Type, p.Field)
                 Else
                     Throw New NotSupportedException
@@ -861,7 +861,7 @@ Namespace Linq
             Return exp
         End Function
 
-        Protected Friend Function GetProperty(ByVal name As String) As Orm.OrmProperty
+        Protected Friend Function GetProperty(ByVal name As String) As Orm.SelectExpression
             If _sel Is Nothing Then
                 Throw New InvalidOperationException
             End If
@@ -927,13 +927,13 @@ Namespace Linq
             Return 0
         End Function
 
-        Protected Function GetSelectList() As ReadOnlyCollection(Of OrmProperty)
-            Dim l As New List(Of OrmProperty)
+        Protected Function GetSelectList() As ReadOnlyCollection(Of SelectExpression)
+            Dim l As New List(Of SelectExpression)
             If _sel IsNot Nothing Then
                 For Each e As UnaryExp In _sel
                     l.Add(CType(e.Value, EntityPropValue).OrmProp)
                 Next
-                Return New ReadOnlyCollection(Of OrmProperty)(l)
+                Return New ReadOnlyCollection(Of SelectExpression)(l)
             Else
                 Return Nothing
             End If
@@ -1110,7 +1110,7 @@ Namespace Linq
                     aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {a})
                     _q.OuterQuery = aq
                     Dim ev As EntityPropValue = TryCast(ag.Exp.Value, EntityPropValue)
-                    Dim pr As OrmProperty = Nothing
+                    Dim pr As SelectExpression = Nothing
                     If ev IsNot Nothing Then
                         pr = ev.OrmProp
                     Else
@@ -1121,7 +1121,7 @@ Namespace Linq
                             pr = GetProperty(ag.Exp.Alias)
                         End If
                     End If
-                    _q.SelectList = New ReadOnlyCollection(Of OrmProperty)(New OrmProperty() {pr})
+                    _q.SelectList = New ReadOnlyCollection(Of SelectExpression)(New SelectExpression() {pr})
                     'If _mem Is Nothing AndAlso _new Is Nothing Then
                     '    'Visit(m.Arguments(1))
                     '    _q.WithLoad = False
@@ -1161,7 +1161,7 @@ Namespace Linq
                     Dim aq As New Query.QueryCmd(CType(Nothing, Type))
                     aq.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() {New Aggregate(af, 0)})
                     _q.OuterQuery = aq
-                    _q.Select(New OrmProperty() {CType(_sel(0).Value, EntityPropValue).OrmProp})
+                    _q.Select(New SelectExpression() {CType(_sel(0).Value, EntityPropValue).OrmProp})
                 Else
                     'Dim tt As Type = _mem.Member.DeclaringType
                     'If tt.FullName.StartsWith("Worm.Orm.OrmBaseT") Then

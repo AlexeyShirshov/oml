@@ -27,7 +27,7 @@ Namespace Query.Database
             Protected _mgr As OrmReadOnlyDBManager
             Protected _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
             Protected _f() As IFilter
-            Protected _sl As List(Of List(Of OrmProperty))
+            Protected _sl As List(Of List(Of SelectExpression))
             Protected _q As QueryCmd
             Private _key As String
             Private _id As String
@@ -35,14 +35,14 @@ Namespace Query.Database
             Private _dic As IDictionary
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of OrmProperty)))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
                 _q = q
 
                 Reset(mgr, j, f, q.SelectedType, sl)
             End Sub
 
             Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of OrmProperty)))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
                 _q = q
 
                 Reset(mgr, j, f, t, sl)
@@ -53,7 +53,7 @@ Namespace Query.Database
             End Sub
 
             Public Sub Reset(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                             ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of OrmProperty)))
+                             ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
                 _j = j
                 _f = f
                 _sl = sl
@@ -124,7 +124,10 @@ Namespace Query.Database
                 For Each q As QueryCmd In New QueryIterator(_q)
                     Dim columnAliases As New List(Of String)
                     Dim j As List(Of Worm.Criteria.Joins.OrmJoin) = _j(i)
-                    Dim f As IFilter = _f(i)
+                    Dim f As IFilter = Nothing
+                    If _f.Length > i Then
+                        f = _f(i)
+                    End If
                     inner = MakeQueryStatement(fi, _mgr.SQLGenerator, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, WithLoad, _sl(i))
                     innerColumns = New List(Of String)(columnAliases)
                     q = q.OuterQuery
@@ -184,7 +187,7 @@ Namespace Query.Database
             Protected Function GetFieldsIdx(ByVal q As QueryCmd) As Collections.IndexedCollection(Of String, MapField2Column)
                 Dim c As New OrmObjectIndex
 
-                For Each p As OrmProperty In q.SelectList
+                For Each p As SelectExpression In q.SelectList
                     c.Add(New MapField2Column(p.Field, p.Column, p.Table, p.Attributes))
                 Next
 
@@ -271,17 +274,20 @@ Namespace Query.Database
             End Property
 
             Public Sub CreateDepends() Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).CreateDepends
-                Dim notPreciseDepends As Boolean
+                Dim notPreciseDependsAD As Boolean
+                Dim notPreciseDependsU As Boolean
                 If _j IsNot Nothing Then
                     For Each js As List(Of Worm.Criteria.Joins.OrmJoin) In _j
                         For Each j As OrmJoin In js
                             If j.Type IsNot Nothing Then
-                                notPreciseDepends = True
+                                notPreciseDependsAD = True
+                                notPreciseDependsU = True
                                 '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.MappingEngine)
                                 _mgr.Cache.validate_AddDeleteType(j.Type, _key, _id)
                                 _mgr.Cache.validate_UpdateType(j.Type, _key, _id)
                             ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
-                                notPreciseDepends = True
+                                notPreciseDependsAD = True
+                                notPreciseDependsU = True
                                 '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, _mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id, _mgr.MappingEngine)
                                 _mgr.Cache.validate_AddDeleteType(_mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
                                 _mgr.Cache.validate_UpdateType(_mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
@@ -295,41 +301,108 @@ Namespace Query.Database
                 '    CreateDepends(q, i)
                 '    i += 1
                 'Next
+                Dim rightType As Boolean = _q.SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(_q.SelectedType)
 
                 Dim i As Integer = 0
                 For Each q As QueryCmd In New QueryIterator(_q)
                     Dim dp As Cache.IDependentTypes = q.Get(_mgr.MappingEngine)
                     Cache.Add2Cache(_mgr.Cache, dp, _key, _id)
-                    If _mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Immediate Then
-                        If Not notPreciseDepends Then
-                            notPreciseDepends = Not Cache.IsEmpty(dp) AndAlso _
-                                (q.SelectedType Is Nothing OrElse Not GetType(_ICachedEntity).IsAssignableFrom(q.SelectedType))
-                        End If
-                        If Not notPreciseDepends Then
-                            _mgr.Cache.validate_AddCalculatedType(q.SelectedType, Key, Id, _f(i))
 
-                            Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
-                            If ef Is Nothing Then
-                                _mgr.Cache.validate_AddDeleteType(q.SelectedType, _key, _id)
-                                _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
-                            Else
-                                Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
-                                If tmpl.Type Is Nothing Then
-                                    Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
-                                End If
-                                Dim v As Criteria.Values.EntityValue = TryCast(CType(ef, EntityFilterBase).Value, Criteria.Values.EntityValue)
-                                If v IsNot Nothing Then
-                                    _mgr.Cache.validate_AddDependentObject(v.GetOrmValue(_mgr), _key, _id)
-                                Else
-                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
-                                    _mgr.Cache.validate_AddDependentField(p, _key, _id)
-                                End If
+                    If _f IsNot Nothing AndAlso _f.Length > i Then
+                        Dim vf As IValuableFilter = TryCast(_f(i), IValuableFilter)
+                        If vf IsNot Nothing Then
+                            Dim v As Criteria.Values.EntityValue = TryCast(vf.Value, Criteria.Values.EntityValue)
+                            If v IsNot Nothing Then
+                                _mgr.Cache.validate_AddDependentObject(v.GetOrmValue(_mgr), _key, _id)
                             End If
                         End If
-                    ElseIf q.SelectedType IsNot Nothing Then
-                        _mgr.Cache.validate_AddDeleteType(q.SelectedType, _key, _id)
-                        _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
                     End If
+
+                    'Dim ef As IEntityFilter = Nothing
+                    'If _f IsNot Nothing AndAlso _f.Length > i Then
+                    '    ef = TryCast(_f(i), IEntityFilter)
+                    'End If
+
+                    If _mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Immediate Then
+                        notPreciseDependsAD = notPreciseDependsAD OrElse Not Cache.IsEmpty(dp)
+                        notPreciseDependsU = notPreciseDependsAD
+                        If _f IsNot Nothing AndAlso _f.Length > i Then
+                            Dim added As Boolean = False
+                            If rightType AndAlso Not notPreciseDependsAD Then
+                                added = _mgr.Cache.validate_AddCalculatedType(q.SelectedType, Key, Id, _f(i))
+                            End If
+
+                            If Not added Then
+                                For Each fff As IFilter In _f(i).GetAllFilters
+                                    Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
+
+                                    If ef Is Nothing Then
+                                        If rightType AndAlso Not notPreciseDependsAD Then
+                                            _mgr.Cache.validate_AddDeleteType(q.SelectedType, _key, _id)
+                                            _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
+                                            notPreciseDependsAD = True
+                                            notPreciseDependsU = True
+                                        End If
+                                    Else
+                                        Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
+
+                                        If tmpl.Type Is Nothing Then
+                                            Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                                        End If
+
+                                        Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                        _mgr.Cache.validate_AddDependentFilterField(p, _key, _id)
+                                    End If
+                                Next
+                            End If
+                        End If
+                    Else
+                        If rightType Then
+                            _mgr.Cache.validate_AddDeleteType(q.SelectedType, _key, _id)
+                            notPreciseDependsAD = True
+                        End If
+
+                        If _f IsNot Nothing AndAlso _f.Length > i Then
+                            For Each fff As IFilter In _f(i).GetAllFilters
+                                Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
+
+                                If ef Is Nothing Then
+                                    If rightType Then
+                                        _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
+                                        notPreciseDependsU = True
+                                    End If
+                                Else
+                                    Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
+
+                                    If tmpl.Type Is Nothing Then
+                                        Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                                    End If
+
+                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                    _mgr.Cache.validate_AddDependentFilterField(p, _key, _id)
+                                End If
+                            Next
+                        End If
+                    End If
+
+                    For Each s As Sorting.Sort In New Sorting.Sort.Iterator(q.propSort)
+
+                        'If ef Is Nothing Then
+                        '    If rightType Then
+                        '        _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
+                        '        notPreciseDependsU = True
+                        '    End If
+                        'Else
+                        '    Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
+
+                        '    If tmpl.Type Is Nothing Then
+                        '        Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                        '    End If
+
+                        '    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                        '    _mgr.Cache.validate_AddDependentFilterField(p, _key, _id)
+                        'End If
+                    Next
 
                     If q.Obj IsNot Nothing Then
                         _mgr.Cache.AddM2MQuery(q.Obj.GetM2M(q.SelectedType, q.M2MKey), _key, _id)
@@ -401,7 +474,7 @@ Namespace Query.Database
             'Private _dic As IDictionary
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of OrmProperty)))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
                 MyBase.New(mgr, j, f, q, sl)
                 '_mgr = mgr
                 '_q = q
@@ -410,7 +483,7 @@ Namespace Query.Database
             End Sub
 
             Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of OrmProperty)))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
                 MyBase.New(mgr, j, f, q, t, sl)
                 '_mgr = mgr
                 '_q = q
@@ -472,7 +545,11 @@ Namespace Query.Database
                         s = Now.Add(ts)
                     End If
                 End If
-                Return New OrmManager.CachedItem(_q.propSort, s, _f(0), col, _mgr)
+                Dim f As IFilter = Nothing
+                If _f.Length > 0 Then
+                    f = _f(0)
+                End If
+                Return New OrmManager.CachedItem(_q.propSort, s, f, col, _mgr)
             End Function
 
             'Public Overrides Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of ReturnType)
@@ -665,7 +742,7 @@ Namespace Query.Database
             Inherits Provider(Of ReturnType)
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of OrmProperty)))
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
                 MyBase.New(mgr, j, f, q, GetType(SelectType), sl)
             End Sub
 

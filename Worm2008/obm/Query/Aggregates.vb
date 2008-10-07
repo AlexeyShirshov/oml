@@ -73,6 +73,18 @@ Namespace Query
             End If
             Return Nothing
         End Function
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, AggregateBase))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As AggregateBase) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+            Return _alias = obj._alias AndAlso _f = obj._f
+        End Function
+
     End Class
 
     'Public Class [Aggregate]
@@ -230,6 +242,21 @@ Namespace Query
             Dim s As String = FormatFunc(AggFunc, String.Empty)
             s = String.Format(s, _oper.ToString)
             Return s
+        End Function
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, Aggregate))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As Aggregate) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+            Return MyBase.Equals(obj) AndAlso _oper.Equals(obj._oper)
+        End Function
+
+        Public Overrides Function GetHashCode() As Integer
+            Return ToString.GetHashCode()
         End Function
     End Class
 

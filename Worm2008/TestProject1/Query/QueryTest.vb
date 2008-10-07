@@ -74,9 +74,9 @@ Imports Worm.Database.Criteria.Joins
 
             Dim t As SourceFragment = mgr.MappingEngine.GetTables(GetType(Entity4))(0)
             Dim q As New QueryCmd(t)
-            q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of Orm.OrmProperty)( _
-                New Orm.OrmProperty() { _
-                    New Orm.OrmProperty(t, "id", "ID") _
+            q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of Orm.SelectExpression)( _
+                New Orm.SelectExpression() { _
+                    New Orm.SelectExpression(t, "id", "ID") _
                 })
 
             Assert.IsNotNull(q)
@@ -93,9 +93,9 @@ Imports Worm.Database.Criteria.Joins
 
             Dim t As SourceFragment = mgr.MappingEngine.GetTables(GetType(Entity4))(0)
             Dim q As New QueryCmd(t)
-            q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of Orm.OrmProperty)( _
-                New Orm.OrmProperty() { _
-                    New Orm.OrmProperty(t, "id", "ID") _
+            q.SelectList = New System.Collections.ObjectModel.ReadOnlyCollection(Of Orm.SelectExpression)( _
+                New Orm.SelectExpression() { _
+                    New Orm.SelectExpression(t, "id", "ID") _
                 })
             Assert.IsNotNull(q)
 
@@ -157,7 +157,7 @@ Imports Worm.Database.Criteria.Joins
             Dim q As New QueryCmd(t_entity4)
             Dim jf As New JoinFilter(t_entity4, "ID", t_entity5, "ID", Worm.Criteria.FilterOperation.Equal)
             q.Joins = New OrmJoin() {New OrmJoin(t_entity5, Worm.Criteria.Joins.JoinType.Join, jf)}
-            q.Select(New OrmProperty() {New OrmProperty(t_entity4, "ID"), New OrmProperty(t_entity4, "Title")})
+            q.Select(New SelectExpression() {New SelectExpression(t_entity4, "ID"), New SelectExpression(t_entity4, "Title")})
 
             q.Sort(Sorting.Field(t_entity4, "Title").Desc)
 
@@ -424,7 +424,7 @@ Imports Worm.Database.Criteria.Joins
             Dim q As QueryCmd = New QueryCmd(t)
 
             'q.From(t). _
-            q.Select(New OrmProperty() {New OrmProperty(t, "id", "pk"), New OrmProperty(t, "name", "Title")}). _
+            q.Select(New SelectExpression() {New SelectExpression(t, "id", "pk"), New SelectExpression(t, "name", "Title")}). _
             Where(Ctor.Column(t, "id").GreaterThan(5)). _
             Sort(Sorting.Field("Title"))
 
