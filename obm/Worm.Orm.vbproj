@@ -144,8 +144,9 @@
     <Compile Include="Criteria\FilterValues.vb" />
     <Compile Include="Criteria\Conditions.vb" />
     <Compile Include="Criteria\Joins.vb" />
-    <Compile Include="Entity\Grouping.vb" />
-    <Compile Include="Entity\Sorting.vb" />
+    <Compile Include="Query\db\Formater.vb" />
+    <Compile Include="Query\Grouping.vb" />
+    <Compile Include="Query\Sorting.vb" />
     <Compile Include="Criteria\Xml\XmlConditions.vb" />
     <Compile Include="Criteria\Xml\XmlCriteria.vb" />
     <Compile Include="Criteria\Xml\XmlFilters.vb" />
@@ -153,7 +154,7 @@
     <Compile Include="Entity\Anonym.vb" />
     <Compile Include="Entity\CachedEntity.vb" />
     <Compile Include="Entity\Entity.vb" />
-    <Compile Include="Entity\Prop.vb" />
+    <Compile Include="Query\Prop.vb" />
     <Compile Include="Managers\Classes.vb" />
     <Compile Include="Managers\db\CacheItemProviders.vb" />
     <Compile Include="Managers\InnerMgrClasses.vb" />
@@ -171,7 +172,7 @@
     <Compile Include="Managers\OrmManager.vb">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="QueryCmd\Aggregates.vb" />
+    <Compile Include="Query\Aggregates.vb" />
     <Compile Include="QueryCmd\db\DbQueryExecutor.vb" />
     <Compile Include="QueryCmd\db\CacheItemProviders.vb" />
     <Compile Include="QueryCmd\QueryCmd.vb" />

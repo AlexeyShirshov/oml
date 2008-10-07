@@ -119,5 +119,9 @@ Namespace Xml
         Public Overrides Function CreateCustom(ByVal format As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String)) As Worm.Criteria.Core.CustomFilterBase
             Throw New NotImplementedException
         End Function
+
+        Public Overrides Function CreateSelectExpressionFormater() As Orm.ISelectExpressionFormater
+            Throw New NotImplementedException
+        End Function
     End Class
 End Namespace

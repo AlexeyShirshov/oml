@@ -11,7 +11,7 @@ Imports Worm.Orm
 Imports Worm
 Imports Worm.Database.Criteria
 Imports Worm.Database.Criteria.Core
-Imports Worm.Database.Sorting
+'Imports Worm.Database.Sorting
 
 <TestClass()> Public Class TestAgreegates
 
@@ -96,7 +96,7 @@ Imports Worm.Database.Sorting
             })
 
             Dim q As New QueryCmd(GetType(Entity4))
-            q.propSort = New DbSort(inner, SortType.Desc)
+            q.propSort = New Worm.Sorting.Sort(inner, SortType.Desc)
 
             Dim l As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
 
@@ -147,7 +147,7 @@ Imports Worm.Database.Sorting
             Assert.AreEqual(11, l(0))
             Assert.AreEqual(4, l(1))
 
-            q.propSort = New DbSort(q.Aggregates(0), SortType.Desc)
+            q.propSort = New Worm.Sorting.Sort(q.Aggregates(0), SortType.Desc)
             l = q.ToSimpleList(Of Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
@@ -193,7 +193,7 @@ Imports Worm.Database.Sorting
             Dim table As SourceFragment = r.Table
 
             Dim q As New QueryCmd(typeE4)
-            q.propSort = New DbSort( _
+            q.propSort = New Worm.Sorting.Sort( _
                 New QueryCmd(table). _
                     SelectAgg(AggCtor.Count). _
                     Where(JoinCondition.Create(table, r2.Column).Eq(typeE4, "ID")), SortType.Desc)

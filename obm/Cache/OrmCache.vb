@@ -56,27 +56,30 @@ Namespace Cache
         Private Class TemplateHashs
             Inherits Dictionary(Of String, Pair(Of HashIds, IOrmFilterTemplate))
 
-            Public Function GetIds(ByVal key As String, ByVal filter As IFilter) As Dictionary(Of String, Object)
+            Private Function GetIds(ByVal key As String, ByVal filter As IFilter, ByRef def As Boolean) As Dictionary(Of String, Object)
                 Dim p As Pair(Of HashIds, IOrmFilterTemplate) = Nothing
                 Dim f As IEntityFilter = TryCast(filter, IEntityFilter)
+                def = f Is Nothing
                 If Not TryGetValue(key, p) Then
-                    If f IsNot Nothing Then
+                    If Not def Then
                         p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, f.GetFilterTemplate)
                     Else
                         p = New Pair(Of HashIds, IOrmFilterTemplate)(New HashIds, Nothing)
                     End If
                     Me(key) = p
                 End If
-                If f IsNot Nothing Then
+                If Not def Then
                     Return p.First.GetIds2(f.MakeHash)
                 Else
                     Return p.First.GetIds2(EntityFilterBase.EmptyHash)
                 End If
             End Function
 
-            Public Overloads Sub Add(ByVal f As IFilter, ByVal key As String, ByVal id As String)
-                GetIds(key, f)(id) = Nothing
-            End Sub
+            Public Overloads Function Add(ByVal f As IFilter, ByVal key As String, ByVal id As String) As Boolean
+                Dim def As Boolean
+                GetIds(key, f, def)(id) = Nothing
+                Return def
+            End Function
         End Class
 
         Private Class Type2SelectiveFiltersDepends
@@ -116,6 +119,21 @@ Namespace Cache
                 End If
                 c.Add(key, id)
             End Sub
+
+            Public Overloads Function Remove(ByVal t As Type, ByVal cache As ReadonlyCache) As Boolean
+                Dim c As CacheEntryRef = Nothing
+                If TryGetValue(t, c) Then
+                    For Each kv As KeyValuePair(Of String, Dictionary(Of String, Object)) In c
+                        Dim key As String = kv.Key
+                        For Each kv2 As KeyValuePair(Of String, Object) In kv.Value
+                            Dim id As String = kv2.Key
+                            cache.RemoveEntry(key, id)
+                        Next
+                    Next
+                    Remove(t)
+                End If
+                Return c IsNot Nothing
+            End Function
         End Class
 
         Private Class FieldsRef
@@ -130,6 +148,11 @@ Namespace Cache
                 c.Add(key, id)
             End Sub
         End Class
+
+        'Private Class CacheEntry
+        '    Private _fields As New List(Of EntityField)
+        '    Private _updTypes As New List(Of Type)
+        'End Class
 #End Region
 
         'Public ReadOnly DateTimeCreated As Date
@@ -591,7 +614,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Sub validate_AddCalculatedType(ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter)
+        Protected Friend Function validate_AddCalculatedType(ByVal t As Type, ByVal key As String, ByVal id As String, ByVal f As IFilter) As Boolean
             'Debug.WriteLine(t.Name & ": add dependent " & id)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("BLK$E&80erfvhbdvdksv","d:\temp\")
@@ -599,13 +622,13 @@ Namespace Cache
             Using SyncHelper.AcquireDynamicLock("BLK$E&80erfvhbdvdksv")
 #End If
                 Dim l As TemplateHashs = _immediateValidate.GetFilters(t)
-                l.Add(f, key, id)
+                Return l.Add(f, key, id)
                 'Dim h As List(Of String) = l.GetIds(key, f)
                 'If Not h.Contains(id) Then
                 '    h.Add(id)
                 'End If
             End Using
-        End Sub
+        End Function
 
         Protected Friend Sub validate_AddDependentObject(ByVal o As ICachedEntity, ByVal key As String, ByVal id As String)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
@@ -618,7 +641,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Sub validate_AddDependentField(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
+        Protected Friend Sub validate_AddDependentFilterField(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
             'Debug.WriteLine(t.Name & ": add dependent " & id)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("N(4nfasd*)Gf","d:\temp\")
@@ -628,7 +651,31 @@ Namespace Cache
                 Dim ef As EntityField = New EntityField(p.First, p.Second)
 
                 _filteredFields.Add(ef, key, id)
+            End Using
+        End Sub
+
+        Protected Friend Sub validate_AddDependentSortField(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
+            'Debug.WriteLine(t.Name & ": add dependent " & id)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("N(4nfasd*)Gf","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("N(4nfasd*)Gf")
+#End If
+                Dim ef As EntityField = New EntityField(p.First, p.Second)
+
                 _sortedFields.Add(ef, key, id)
+            End Using
+        End Sub
+
+        Protected Friend Sub validate_AddDependentGroupField(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
+            'Debug.WriteLine(t.Name & ": add dependent " & id)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("N(4nfasd*)Gf","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("N(4nfasd*)Gf")
+#End If
+                Dim ef As EntityField = New EntityField(p.First, p.Second)
+
                 _groupedFields.Add(ef, key, id)
             End Using
         End Sub
@@ -958,6 +1005,48 @@ Namespace Cache
 
         End Sub
 
+        Private Sub UpdateCacheImmediate(ByVal tt As Type, ByVal schema As ObjectMappingEngine, _
+            ByVal objs As IList, ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated, _
+            ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks2, Optional ByVal forseEval As Boolean = False)
+
+            If callbacks IsNot Nothing Then
+                callbacks.BeginUpdate()
+            End If
+
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
+#End If
+                _addDeleteTypes.Remove(tt, Me)
+            End Using
+
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("%G(qjg'oqgiu13rgfasd","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("%G(qjg'oqgiu13rgfasd")
+#End If
+                _updateTypes.Remove(tt, Me)
+            End Using
+
+            For Each obj As _ICachedEntity In objs
+                If obj Is Nothing Then
+                    Throw New ArgumentException("At least one element in objs is nothing")
+                End If
+
+                If tt IsNot obj.GetType Then
+                    Throw New ArgumentException("Collection contains different types")
+                End If
+
+
+            Next
+
+            If callbacks IsNot Nothing Then
+                callbacks.EndUpdate()
+            End If
+
+        End Sub
+
         Protected Friend Sub UpdateCache(ByVal schema As ObjectMappingEngine, _
             ByVal objs As IList, ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated, _
             ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks, Optional ByVal forseEval As Boolean = False)
@@ -970,6 +1059,10 @@ Namespace Cache
                 tt = obj.GetType
                 Exit For
             Next
+
+            If ValidateBehavior = Cache.ValidateBehavior.Immediate Then
+                UpdateCacheImmediate(tt, schema, objs, mgr, afterDelegate, contextKey, TryCast(callbacks, IUpdateCacheCallbacks2), forseEval)
+            End If
 
             Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(tt)
             Dim c As ICacheBehavior = TryCast(oschema, ICacheBehavior)
@@ -1012,103 +1105,107 @@ Namespace Cache
             Using SyncHelper.AcquireDynamicLock("j13rvnopqefv9-n24bth")
 #End If
                 Dim l As TemplateHashs = _tp.GetFilters(k)
-                If l.Count > 0 Then
-                    For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In l
-                        Dim dic As IDictionary = _GetDictionary(p.Key)
-                        If dic IsNot Nothing Then
-                            If callbacks IsNot Nothing Then
-                                callbacks.BeginUpdate(0)
-                            End If
-                            For Each obj As _ICachedEntity In objs
-                                If obj Is Nothing Then
-                                    Throw New ArgumentException("At least one element in objs is nothing")
-                                End If
-
-                                If tt IsNot obj.GetType Then
-                                    Throw New ArgumentException("Collection contains different types")
-                                End If
-
-                                Dim h As String = EntityFilterBase.EmptyHash
-                                If p.Value.Second IsNot Nothing Then
-                                    Try
-                                        h = p.Value.Second.MakeHash(schema, oschema, obj)
-                                    Catch ex As ArgumentException When ex.Message.StartsWith("Template type")
-                                        Return
-                                    End Try
-                                End If
-                                Dim hid As HashIds = p.Value.First
-                                Dim ids As IEnumerable(Of String) = hid.GetIds(h)
-                                Dim rm As New List(Of String)
-                                For Each id As String In ids
-                                    Dim ce As OrmManager.CachedItem = TryCast(dic(id), OrmManager.CachedItem)
-                                    Dim f As IEntityFilter = Nothing
-                                    If ce IsNot Nothing Then
-                                        f = TryCast(ce.Filter, IEntityFilter)
-                                    End If
-                                    If ce IsNot Nothing AndAlso f IsNot Nothing Then
-                                        If callbacks IsNot Nothing Then
-                                            callbacks.BeginUpdateList(p.Key, id)
-                                        End If
-
-                                        If obj.UpdateCtx.Deleted OrElse obj.UpdateCtx.Added OrElse forseEval Then
-                                            Dim r As Boolean = False
-                                            Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
-                                            If f IsNot Nothing Then
-                                                er = f.Eval(schema, obj, oschema)
-                                                r = er = IEvaluableValue.EvalResult.Unknown
-                                            End If
-
-                                            If r Then
-                                                RemoveEntry(p.Key, id)
-                                                'dic.Remove(id)
-                                            ElseIf er = IEvaluableValue.EvalResult.Found Then
-                                                Dim sync As String = id & mgr.GetStaticKey
-                                                Using SyncHelper.AcquireDynamicLock(sync)
-                                                    If obj.UpdateCtx.Added Then
-                                                        If Not ce.Add(mgr, obj) Then
-                                                            RemoveEntry(p.Key, id)
-                                                            'dic.Remove(id)
-                                                        End If
-                                                    ElseIf obj.UpdateCtx.Deleted Then
-                                                        ce.Delete(mgr, obj)
-                                                        'Else
-                                                        '    Throw New InvalidOperationException
-                                                    End If
-                                                End Using
-                                                If callbacks IsNot Nothing Then
-                                                    callbacks.ObjectDependsUpdated(obj)
-                                                End If
-                                            End If
-                                            'Else
-                                            '    Assert(False, "Object must be in appropriate state")
-                                        End If
-                                    Else
-                                        rm.Add(id)
-                                    End If
-
-                                    If callbacks IsNot Nothing Then
-                                        callbacks.EndUpdateList(p.Key, id)
-                                    End If
-                                Next
-
-                                For Each id As String In rm
-                                    hid.Remove(h, id)
-                                    'ids.Remove(id)
-                                    RemoveEntry(p.Key, id)
-                                    'dic.Remove(id)
-                                Next
-                            Next
-                            If callbacks IsNot Nothing Then
-                                callbacks.EndUpdate()
-                            End If
-                            '_filters.Remove(p.Key)
+                For Each p As KeyValuePair(Of String, Pair(Of HashIds, IOrmFilterTemplate)) In l
+                    Dim dic As IDictionary = _GetDictionary(p.Key)
+                    If dic IsNot Nothing Then
+                        If callbacks IsNot Nothing Then
+                            callbacks.BeginUpdate(0)
                         End If
-                    Next
-                End If
+                        For Each obj As _ICachedEntity In objs
+                            If obj Is Nothing Then
+                                Throw New ArgumentException("At least one element in objs is nothing")
+                            End If
+
+                            If tt IsNot obj.GetType Then
+                                Throw New ArgumentException("Collection contains different types")
+                            End If
+
+                            Dim h As String = EntityFilterBase.EmptyHash
+                            If p.Value.Second IsNot Nothing Then
+                                Try
+                                    h = p.Value.Second.MakeHash(schema, oschema, obj)
+                                Catch ex As ArgumentException When ex.Message.StartsWith("Template type")
+                                    Return
+                                End Try
+                            End If
+                            Dim hid As HashIds = p.Value.First
+                            Dim ids As IEnumerable(Of String) = hid.GetIds(h)
+                            Dim rm As New List(Of String)
+                            For Each id As String In ids
+                                Dim ce As OrmManager.CachedItem = TryCast(dic(id), OrmManager.CachedItem)
+                                Dim f As IEntityFilter = Nothing
+                                If ce IsNot Nothing Then
+                                    f = TryCast(ce.Filter, IEntityFilter)
+                                End If
+                                If ce IsNot Nothing AndAlso f IsNot Nothing Then
+                                    If callbacks IsNot Nothing Then
+                                        callbacks.BeginUpdateList(p.Key, id)
+                                    End If
+
+                                    If obj.UpdateCtx.Deleted OrElse obj.UpdateCtx.Added OrElse forseEval Then
+                                        Dim r As Boolean = False
+                                        Dim er As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.Found
+                                        If f IsNot Nothing Then
+                                            er = f.Eval(schema, obj, oschema)
+                                            r = er = IEvaluableValue.EvalResult.Unknown
+                                        End If
+
+                                        If r Then
+                                            RemoveEntry(p.Key, id)
+                                            'dic.Remove(id)
+                                        ElseIf er = IEvaluableValue.EvalResult.Found Then
+                                            Dim sync As String = id & mgr.GetStaticKey
+                                            Using SyncHelper.AcquireDynamicLock(sync)
+                                                If obj.UpdateCtx.Added Then
+                                                    If Not ce.Add(mgr, obj) Then
+                                                        RemoveEntry(p.Key, id)
+                                                        'dic.Remove(id)
+                                                    End If
+                                                ElseIf obj.UpdateCtx.Deleted Then
+                                                    ce.Delete(mgr, obj)
+                                                    'Else
+                                                    '    Throw New InvalidOperationException
+                                                End If
+                                            End Using
+                                            If callbacks IsNot Nothing Then
+                                                callbacks.ObjectDependsUpdated(obj)
+                                            End If
+                                        End If
+                                        'Else
+                                        '    Assert(False, "Object must be in appropriate state")
+                                    End If
+                                Else
+                                    rm.Add(id)
+                                End If
+
+                                If callbacks IsNot Nothing Then
+                                    callbacks.EndUpdateList(p.Key, id)
+                                End If
+                            Next
+
+                            For Each id As String In rm
+                                hid.Remove(h, id)
+                                'ids.Remove(id)
+                                RemoveEntry(p.Key, id)
+                                'dic.Remove(id)
+                            Next
+                        Next
+                        If callbacks IsNot Nothing Then
+                            callbacks.EndUpdate()
+                        End If
+                        '_filters.Remove(p.Key)
+                    End If
+                Next
             End Using
 l1:
             ValidateProcs(objs, mgr, callbacks, afterDelegate, contextKey)
 
+            UpdateJoins(tt, objs, schema, oschema, mgr, contextKey, afterDelegate, callbacks)
+        End Sub
+
+        Private Sub UpdateJoins(ByVal tt As Type, ByVal objs As IList, ByVal schema As ObjectMappingEngine, _
+                                ByVal oschema As IObjectSchemaBase, ByVal mgr As OrmManager, ByVal contextKey As Object, _
+                                ByVal afterDelegate As OnUpdated, ByVal callbacks As IUpdateCacheCallbacks)
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("9-134g9ngpadfbgp","d:\temp\")
 #Else
@@ -1135,7 +1232,6 @@ l1:
                     Next
                 End If
             End Using
-
         End Sub
 
         Public Sub ValidateProcs(ByVal objs As IList, _

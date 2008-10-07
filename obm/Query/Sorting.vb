@@ -30,6 +30,10 @@ Namespace Orm
             Return New SortOrder(CType(Nothing, Type), fieldName)
         End Function
 
+        'Public Shared Function Column(ByVal clm As String) As SortOrder
+        '    Return New SortOrder(CType(Nothing, SourceFragment), clm)
+        'End Function
+
         'Public Shared Function Custom(ByVal sortExpression As String, ByVal values() As Pair(Of Object, String)) As SortOrder
         '    Return SortOrder.CreateCustom(sortExpression, Nothing, values)
         'End Function
@@ -275,7 +279,7 @@ Namespace Sorting
     End Class
 
     Public Class Sort
-        Inherits OrmProperty
+        Inherits SelectExpression
         Implements ICloneable
 
         'Private _f As String
@@ -457,7 +461,17 @@ Namespace Sorting
 
 #End Region
 
-        Protected Sub New(ByVal q As Query.QueryCmd)
+        Public Sub New(ByVal agr As Query.AggregateBase, ByVal order As SortType)
+            MyBase.New(agr)
+            _order = order
+        End Sub
+
+        Public Sub New(ByVal q As Query.QueryCmd, ByVal order As SortType)
+            MyBase.New(q)
+            _order = order
+        End Sub
+
+        Public Sub New(ByVal q As Query.QueryCmd)
             MyBase.New(q)
         End Sub
 
@@ -591,7 +605,7 @@ Namespace Sorting
         '    End If
         'End Function
 
-        Protected Overrides Function _Equals(ByVal p As Orm.OrmProperty) As Boolean
+        Protected Overrides Function _Equals(ByVal p As Orm.SelectExpression) As Boolean
             Dim s As Sort = TryCast(p, Sort)
             If s Is Nothing Then
                 Return False

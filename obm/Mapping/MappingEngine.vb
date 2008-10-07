@@ -960,9 +960,9 @@ Public MustInherit Class ObjectMappingEngine
     '    Return GetColumnValue(obj, pk_name)
     'End Function
 
-    Protected Friend Function GetSelectColumns(ByVal props As IEnumerable(Of OrmProperty), ByVal columnAliases As List(Of String)) As String
+    Protected Friend Function GetSelectColumns(ByVal props As IEnumerable(Of SelectExpression), ByVal columnAliases As List(Of String)) As String
         Dim sb As New StringBuilder
-        For Each pr As OrmProperty In props
+        For Each pr As SelectExpression In props
             If pr.Type Is Nothing Then
                 If pr.Table Is Nothing Then
                     sb.Append(String.Format(pr.Computed, ExtractValues(Me, Nothing, pr.Values).ToArray)).Append(", ")
@@ -1717,7 +1717,7 @@ Public MustInherit Class ObjectMappingEngine
     Public MustOverride Function CreateTopAspect(ByVal top As Integer, ByVal sort As Sorting.Sort) As Worm.Orm.Query.TopAspect
     Public MustOverride Function GetTableName(ByVal t As SourceFragment) As String
     Public MustOverride Function CreateExecutor() As Worm.Query.IExecutor
-
+    Public MustOverride Function CreateSelectExpressionFormater() As ISelectExpressionFormater
     Protected Friend MustOverride Function MakeJoin(ByVal type2join As Type, ByVal selectType As Type, ByVal field As String, _
         ByVal oper As Criteria.FilterOperation, ByVal joinType As JoinType, Optional ByVal switchTable As Boolean = False) As OrmJoin
     Protected Friend MustOverride Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As OrmJoin()

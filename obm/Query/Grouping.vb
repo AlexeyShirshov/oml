@@ -2,7 +2,7 @@
 
 Namespace Orm
     Public Class Grouping
-        Inherits OrmProperty
+        Inherits SelectExpression
 
         Public Enum SummaryValues
             None
@@ -13,7 +13,7 @@ Namespace Orm
         Private _cube As SummaryValues
         Private _all As Boolean
 
-        Public Sub New(ByVal p As OrmProperty)
+        Public Sub New(ByVal p As SelectExpression)
             MyBase.New(p.Computed, p.Values, p.Column)
             Type = p.Type
             Table = p.Table
@@ -56,7 +56,7 @@ Namespace Orm
             End Set
         End Property
 
-        Protected Overrides Function _Equals(ByVal p As OrmProperty) As Boolean
+        Protected Overrides Function _Equals(ByVal p As SelectExpression) As Boolean
             Dim g As Grouping = TryCast(p, Grouping)
             If g Is Nothing Then
                 Return False

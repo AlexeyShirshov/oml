@@ -1594,7 +1594,7 @@ l1:
         End Function
 
         Public Sub AppendOrder(ByVal defaultType As Type, ByVal sort As Sort, ByVal almgr As IPrepareTable, _
-            ByVal sb As StringBuilder, ByVal appendOrder As Boolean, ByVal selList As ObjectModel.ReadOnlyCollection(Of OrmProperty), ByVal defaultTable As SourceFragment)
+            ByVal sb As StringBuilder, ByVal appendOrder As Boolean, ByVal selList As ObjectModel.ReadOnlyCollection(Of SelectExpression), ByVal defaultTable As SourceFragment)
             If sort IsNot Nothing AndAlso Not sort.IsExternal Then 'AndAlso Not sort.IsAny
                 If appendOrder Then
                     sb.Append(" order by ")
@@ -1659,7 +1659,7 @@ l1:
                             Dim clm As String = ns.FieldName
                             Dim tbl As SourceFragment = ns.Table
                             If selList IsNot Nothing Then
-                                For Each p As OrmProperty In selList
+                                For Each p As SelectExpression In selList
                                     If p.Field = clm AndAlso Not String.IsNullOrEmpty(p.Column) Then
                                         If p.Table Is Nothing AndAlso tbl Is Nothing Then
                                             clm = p.Column
@@ -2390,6 +2390,10 @@ l1:
 
         Public Overrides Function CreateCustom(ByVal format As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation, ByVal ParamArray values() As Pair(Of Object, String)) As Worm.Criteria.Core.CustomFilterBase
             Return New Criteria.Core.CustomFilter(format, value, oper, values)
+        End Function
+
+        Public Overrides Function CreateSelectExpressionFormater() As Orm.ISelectExpressionFormater
+            Return New SelectExpressionFormater(Me)
         End Function
     End Class
 

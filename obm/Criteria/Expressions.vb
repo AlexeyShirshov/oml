@@ -69,6 +69,21 @@ Public Class Expressions
             Return FormatOper() & "$" & _v._ToString
         End Function
 
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, UnaryExp))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As UnaryExp) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+            Return _o = obj._o AndAlso Object.Equals(_v, obj._v)
+        End Function
+
+        Public Overrides Function GetHashCode() As Integer
+            Return ToString.GetHashCode()
+        End Function
+
         Public Overridable Function MakeStmt(ByVal s As ObjectMappingEngine, _
             ByVal pmgr As Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal columns As List(Of String), _
             ByVal filterInfo As Object) As String
@@ -219,6 +234,22 @@ l1:
 
         Public Overrides Function ToString() As String
             Return _left.ToString & "$" & Operation.ToString & "$" & _right.ToString
+        End Function
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, BinaryExp))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As BinaryExp) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+
+            Return Operation = obj.Operation AndAlso _left.Equals(obj._left) AndAlso _right.Equals(obj._right)
+        End Function
+
+        Public Overrides Function GetHashCode() As Integer
+            Return ToString.GetHashCode
         End Function
     End Class
 End Class

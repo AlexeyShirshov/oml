@@ -16,4 +16,13 @@ Namespace Cache
         Sub ObjectDependsUpdated(ByVal o As ICachedEntity)
     End Interface
 
+    Public Interface IUpdateCacheCallbacks2
+        Sub BeginUpdate()
+        Sub EndUpdate()
+        Sub BeginUpdateProcs()
+        Sub EndUpdateProcs()
+        Sub BeginUpdateList(ByVal key As String, ByVal id As String)
+        Sub EndUpdateList(ByVal key As String, ByVal id As String)
+        Sub ObjectDependsUpdated(ByVal o As ICachedEntity)
+    End Interface
 End Namespace
