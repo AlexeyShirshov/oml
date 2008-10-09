@@ -1481,7 +1481,7 @@ l1:
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
                         Dim o As CachedEntity = CType(GetValue(CType(kv.Key, ColumnAttribute).FieldName), CachedEntity)
-                        If o.HasChanges Then
+                        If o IsNot Nothing AndAlso o.HasChanges Then
                             l.Add(o)
                         End If
                     End If
@@ -1492,23 +1492,31 @@ l1:
 
         Protected Friend Function GetChangedObjectGraph() As List(Of CachedEntity)
             Dim l As New List(Of CachedEntity)
-            l.AddRange(GetRelatedChangedObjects())
+            GetChangedObjectGraph(l)
+            Return l
+        End Function
+
+        Protected Friend Sub GetChangedObjectGraph(ByVal gl As List(Of CachedEntity))
+            Dim l As New List(Of CachedEntity)
+
+            For Each o As CachedEntity In GetRelatedChangedObjects()
+                If Not gl.Contains(o) Then
+                    gl.Add(o)
+                    l.Add(o)
+                End If
+            Next
+
             For Each o As CachedEntity In GetM2MRelatedChangedObjects()
-                If Not l.Contains(o) Then
+                If Not gl.Contains(o) Then
+                    gl.Add(o)
                     l.Add(o)
                 End If
             Next
 
             For Each o As CachedEntity In l
-                For Each innerObj As CachedEntity In o.GetChangedObjectGraph()
-                    If Not l.Contains(innerObj) Then
-                        l.Add(innerObj)
-                    End If
-                Next
+                o.GetChangedObjectGraph(gl)
             Next
-
-            Return l
-        End Function
+        End Sub
 
         Protected Friend Function GetChangedObjectGraphWithSelf() As List(Of CachedEntity)
             Dim l As List(Of CachedEntity) = GetChangedObjectGraph()
