@@ -1459,7 +1459,7 @@ l1:
             Return GetCacheKey()
         End Function
 
-        Protected Friend Function GetM2MRelatedChangedObjects() As List(Of CachedEntity)
+        Protected Function GetM2MRelatedChangedObjects() As List(Of CachedEntity)
             Dim l As New List(Of CachedEntity)
             'Using mc As IGetManager = GetMgr()
             '    For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In mc.Manager.Cache.GetM2MEntries(Me, Nothing)
@@ -1474,7 +1474,7 @@ l1:
             Return l
         End Function
 
-        Protected Friend Function GetRelatedChangedObjects() As List(Of CachedEntity)
+        Protected Overridable Function GetRelatedChangedObjects() As List(Of CachedEntity)
             Dim l As New List(Of CachedEntity)
             Using mc As IGetManager = GetMgr()
                 For Each kv As DictionaryEntry In mc.Manager.MappingEngine.GetProperties(Me.GetType)
