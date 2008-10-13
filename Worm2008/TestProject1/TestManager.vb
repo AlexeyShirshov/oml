@@ -974,7 +974,7 @@ Imports Worm.Orm
             mgr.BeginTransaction()
             Try
                 Dim created As Boolean
-                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(created)
+                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(Of OrmReadOnlyDBManager.BatchSaver)(created)
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()
@@ -1012,7 +1012,7 @@ Imports Worm.Orm
             mgr.BeginTransaction()
             Try
                 Dim created As Boolean
-                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(created)
+                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(Of OrmReadOnlyDBManager.BatchSaver)(created)
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()
@@ -1054,7 +1054,7 @@ Imports Worm.Orm
             mgr.BeginTransaction()
             Try
                 Dim created As Boolean
-                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(created)
+                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(Of OrmReadOnlyDBManager.BatchSaver)(created)
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()

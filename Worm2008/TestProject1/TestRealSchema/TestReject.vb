@@ -112,7 +112,7 @@ Public Class TestReject
             Try
                 t2.Delete()
                 Dim created As Boolean
-                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(created)
+                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(Of OrmReadOnlyDBManager.BatchSaver)(created)
                     Assert.IsTrue(created)
                     s.Add(t1)
                     s.Add(t2)
@@ -139,7 +139,7 @@ Public Class TestReject
             Try
                 t2.Money = 1000
                 Dim created As Boolean
-                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(created)
+                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(Of OrmReadOnlyDBManager.BatchSaver)(created)
                     Assert.IsTrue(created)
                     s.Add(t1)
                     s.Add(t2)
@@ -170,7 +170,7 @@ Public Class TestReject
                 t2.Money = 1000
                 a = t1.Version
                 Dim created As Boolean
-                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(created)
+                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(Of OrmReadOnlyDBManager.BatchSaver)(created)
                     Assert.IsTrue(created)
                     s.Add(t1)
                     s.Add(t2)
@@ -206,7 +206,7 @@ Public Class TestReject
                 t2.Money = 10
                 a = t1.Version
                 Dim created As Boolean
-                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(created)
+                Using s As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(Of OrmReadOnlyDBManager.BatchSaver)(created)
                     Assert.IsTrue(created)
                     s.Add(t1)
                     s.Add(t2)

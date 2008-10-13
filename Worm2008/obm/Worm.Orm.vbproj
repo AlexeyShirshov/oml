@@ -144,6 +144,7 @@
     <Compile Include="Criteria\FilterValues.vb" />
     <Compile Include="Criteria\Conditions.vb" />
     <Compile Include="Criteria\Joins.vb" />
+    <Compile Include="Managers\db\Saver.vb" />
     <Compile Include="Query\db\Formater.vb" />
     <Compile Include="Query\Grouping.vb" />
     <Compile Include="Query\Sorting.vb" />
