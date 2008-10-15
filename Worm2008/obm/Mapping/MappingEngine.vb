@@ -297,7 +297,7 @@ Public MustInherit Class ObjectMappingEngine
             Throw New ArgumentNullException("maintype")
         End If
 
-        Dim schema As IOrmRelationalSchemaWithM2M = TryCast(GetObjectSchema(maintype), IOrmRelationalSchemaWithM2M)
+        Dim schema As IMultiTableWithM2MSchema = TryCast(GetObjectSchema(maintype), IMultiTableWithM2MSchema)
         If schema IsNot Nothing Then
             Return schema.GetM2MRelations
         Else
@@ -312,16 +312,16 @@ Public MustInherit Class ObjectMappingEngine
 
         Dim sch As IObjectSchemaBase = GetObjectSchema(maintype)
         Dim editable As IReadonlyObjectSchema = TryCast(sch, IReadonlyObjectSchema)
-        Dim schema As IOrmRelationalSchemaWithM2M = Nothing
+        Dim schema As IMultiTableWithM2MSchema = Nothing
         If editable IsNot Nothing Then
             schema = editable.GetEditableSchema
         Else
-            schema = TryCast(sch, IOrmRelationalSchemaWithM2M)
+            schema = TryCast(sch, IMultiTableWithM2MSchema)
         End If
         If schema IsNot Nothing Then
             Dim m As M2MRelation() = schema.GetM2MRelations
             If m Is Nothing AndAlso editable IsNot Nothing Then
-                schema = TryCast(sch, IOrmRelationalSchemaWithM2M)
+                schema = TryCast(sch, IMultiTableWithM2MSchema)
                 If schema IsNot Nothing Then
                     m = schema.GetM2MRelations
                 End If

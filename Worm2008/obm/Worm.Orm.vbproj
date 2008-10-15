@@ -110,6 +110,8 @@
     <None Include="Diagrams\Mapping.cd" />
     <None Include="Diagrams\OrmBase.cd" />
     <None Include="Diagrams\OrmManager.cd" />
+    <None Include="Diagrams\Schema.cd" />
+    <None Include="Diagrams\schema_ext.cd" />
     <None Include="My Project\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>

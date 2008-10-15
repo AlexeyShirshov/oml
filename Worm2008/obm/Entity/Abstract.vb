@@ -93,6 +93,10 @@ Namespace Orm
         Function ValidateDelete(ByVal mgr As OrmManager) As Boolean
     End Interface
 
+    Public Interface IFactory
+        Sub CreateObject(ByVal field As String, ByVal value As Object)
+    End Interface
+
     Public Interface _ICachedEntityEx
         Inherits ICachedEntityEx, _ICachedEntity
     End Interface
