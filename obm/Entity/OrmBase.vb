@@ -2357,7 +2357,7 @@ Namespace Orm
 		'    MyBase.SetValue(pi, c, Nothing, value)
 		'End Sub
 
-        Public Overridable Overloads Sub CreateObject(ByVal field As String, ByVal value As Object) Implements Meta.IFactory.CreateObject
+        Public Overridable Overloads Sub CreateObject(ByVal field As String, ByVal value As Object) Implements IFactory.CreateObject
 
         End Sub
 

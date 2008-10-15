@@ -196,6 +196,7 @@ Namespace Database
                 Dim added As Boolean
                 If Not _objects.Contains(o) Then
                     added = True
+                    _objects.Add(o)
                     AddHandler o.OriginalCopyRemoved, AddressOf ObjRejected
 #If DEBUG Then
                     If o.HasChanges Then

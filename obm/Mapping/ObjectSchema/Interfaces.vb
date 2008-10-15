@@ -70,29 +70,25 @@ Namespace Orm.Meta
         Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As OrmJoin
     End Interface
 
-    Public Interface IOrmRelationalSchemaWithM2M
+    Public Interface IMultiTableWithM2MSchema
         Inherits IMultiTableObjectSchema
         Function GetM2MRelations() As M2MRelation()
     End Interface
 
-    Public Interface IRelMapObjectSchema
-        Inherits IOrmRelationalSchemaWithM2M, IObjectSchemaBase
-    End Interface
+    'Public Interface IRelMapObjectSchema
+    '    Inherits IMultiTableWithM2MSchema
+    'End Interface
 
     Public Interface IOrmObjectSchema
-        Inherits IContextObjectSchema, IOrmRelationalSchemaWithM2M
+        Inherits IContextObjectSchema, IMultiTableWithM2MSchema
     End Interface
 
     Public Interface IReadonlyObjectSchema
-        Function GetEditableSchema() As IRelMapObjectSchema
+        Function GetEditableSchema() As IMultiTableWithM2MSchema
     End Interface
 
     Public Interface IDBValueFilter
         Function CreateValue(ByVal c As ColumnAttribute, ByVal obj As IEntity, ByVal value As Object) As Object
-    End Interface
-
-    Public Interface IFactory
-        Sub CreateObject(ByVal field As String, ByVal value As Object)
     End Interface
 
     'Public Interface IGetFilterValue
