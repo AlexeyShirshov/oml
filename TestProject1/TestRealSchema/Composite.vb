@@ -89,13 +89,13 @@ Public Class CompositeSchema
         Return MyBase.GetJoins(left, right)
     End Function
 
-    Public Function GetEditableSchema() As IRelMapObjectSchema Implements IReadonlyObjectSchema.GetEditableSchema
+    Public Function GetEditableSchema() As IMultiTableWithM2MSchema Implements IReadonlyObjectSchema.GetEditableSchema
         Return New CompositeEditableSchema
     End Function
 End Class
 
 Public Class CompositeEditableSchema
-    Implements IRelMapObjectSchema
+    Implements IMultiTableWithM2MSchema
 
     Private _idx As OrmObjectIndex
     Private _tables() As SourceFragment = {New SourceFragment("dbo.m1")}
@@ -104,7 +104,7 @@ Public Class CompositeEditableSchema
         First
     End Enum
 
-    Public Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IRelMapObjectSchema.GetFieldColumnMap
+    Public Function GetFieldColumnMap() As Worm.Collections.IndexedCollection(Of String, MapField2Column) Implements IMultiTableWithM2MSchema.GetFieldColumnMap
         If _idx Is Nothing Then
             Dim idx As New OrmObjectIndex
             idx.Add(New MapField2Column("ID", "id", GetTables()(Tables.First)))
@@ -114,15 +114,15 @@ Public Class CompositeEditableSchema
         Return _idx
     End Function
 
-    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.OrmJoin Implements IRelMapObjectSchema.GetJoins
+    Public Function GetJoins(ByVal left As SourceFragment, ByVal right As SourceFragment) As Worm.Criteria.Joins.OrmJoin Implements IMultiTableWithM2MSchema.GetJoins
         Return Nothing
     End Function
 
-    Public Function GetTables() As SourceFragment() Implements IRelMapObjectSchema.GetTables
+    Public Function GetTables() As SourceFragment() Implements IMultiTableWithM2MSchema.GetTables
         Return _tables
     End Function
 
-    Public Function GetM2MRelations() As Worm.Orm.Meta.M2MRelation() Implements Worm.Orm.Meta.IOrmRelationalSchemaWithM2M.GetM2MRelations
+    Public Function GetM2MRelations() As Worm.Orm.Meta.M2MRelation() Implements Worm.Orm.Meta.IMultiTableWithM2MSchema.GetM2MRelations
         Return Nothing
     End Function
 
