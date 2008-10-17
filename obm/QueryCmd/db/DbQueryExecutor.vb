@@ -208,11 +208,11 @@ Namespace Query.Database
         End Function
 
         'Private Shared Function _GetCe(Of ReturnType As _ICachedEntity)( _
-        '    ByVal mgr As OrmManagerBase, ByVal query As QueryCmd, ByVal p As ProcessorBase(Of ReturnType), ByVal dic As IDictionary, ByVal id As String, ByVal sync As String) As Worm.OrmManagerBase.CachedItem
+        '    ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal p As ProcessorBase(Of ReturnType), ByVal dic As IDictionary, ByVal id As String, ByVal sync As String) As Worm.OrmManager.CachedItem
         '    Return mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.propWithLoad, p)
         'End Function
 
-        'Private Shared Function d2(Of ReturnType As _IEntity)(ByVal mgr As OrmManagerBase, ByVal query As QueryCmd, ByVal p As ProcessorBase(Of ReturnType), ByVal ce As OrmManagerBase.CachedItem, ByVal s As Cache.IListObjectConverter.ExtractListResult) As Worm.ReadOnlyObjectList(Of ReturnType)
+        'Private Shared Function d2(Of ReturnType As _IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd, ByVal p As ProcessorBase(Of ReturnType), ByVal ce As OrmManager.CachedItem, ByVal s As Cache.IListObjectConverter.ExtractListResult) As Worm.ReadOnlyObjectList(Of ReturnType)
         '    Return ce.GetObjectList(Of ReturnType)(mgr, query.propWithLoad, p.Created, s)
         'End Function
 
@@ -228,6 +228,8 @@ Namespace Query.Database
             ByVal query As QueryCmd, ByVal gp As GetProcessorDelegate(Of ReturnType), _
             ByVal d As GetCeDelegate(Of ReturnType), ByVal d2 As GetListFromCEDelegate(Of ReturnType)) As ReadOnlyObjectList(Of ReturnType)
 
+            Dim dbm As OrmReadOnlyDBManager = CType(mgr, OrmReadOnlyDBManager)
+
             Dim key As String = Nothing
             Dim dic As IDictionary = Nothing
             Dim id As String = Nothing
@@ -239,10 +241,11 @@ Namespace Query.Database
             Dim oldStart As Integer = mgr._start
             Dim oldLength As Integer = mgr._length
             Dim oldSchema As ObjectMappingEngine = mgr.MappingEngine
+            Dim timeout As Nullable(Of Integer) = dbm.CommandTimeout
 
             If query.ClientPaging IsNot Nothing Then
-                mgr._start = query.ClientPaging.First
-                mgr._length = query.ClientPaging.Second
+                mgr._start = query.ClientPaging.Start
+                mgr._length = query.ClientPaging.Length
             End If
 
             If query.LiveTime <> New TimeSpan Then
@@ -256,7 +259,11 @@ Namespace Query.Database
             End If
 
             If query.Schema IsNot Nothing Then
-                mgr.MappingEngine = query.Schema
+                mgr.SetSchema(query.Schema)
+            End If
+
+            If query.CommandTimed.HasValue Then
+                dbm.CommandTimeout = query.CommandTimed
             End If
 
             Dim p As ProviderAnonym(Of ReturnType) = gp()
@@ -285,7 +292,8 @@ Namespace Query.Database
             mgr._length = oldLength
             mgr._list = oldList
             mgr._expiresPattern = oldExp
-            mgr.MappingEngine = oldSchema
+            mgr.SetSchema(oldSchema)
+            dbm.CommandTimeout = timeout
 
             mgr.RaiseOnDataAvailable()
 
@@ -340,7 +348,7 @@ Namespace Query.Database
             '    sync = p.Sync
             'End If
 
-            'Dim ce As OrmManagerBase.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.propWithLoad, p)
+            'Dim ce As OrmManager.CachedItem = mgr.GetFromCache(Of ReturnType)(dic, sync, id, query.propWithLoad, p)
             'query.LastExecitionResult = mgr.GetLastExecitionResult
 
             'mgr._dont_cache_lists = oldCache
@@ -439,7 +447,7 @@ Namespace Query.Database
             '    End If
             'End If
 
-            'query.LastExecitionResult = New OrmManagerBase.ExecutionResult(r.Count, e, f, _hit, mgr._loadedInLastFetch)
+            'query.LastExecitionResult = New OrmManager.ExecutionResult(r.Count, e, f, _hit, mgr._loadedInLastFetch)
 
             'mgr._dont_cache_lists = oldCache
             'mgr._start = oldStart

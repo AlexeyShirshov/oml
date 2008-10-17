@@ -232,7 +232,7 @@ Partial Public Class OrmManager
         '    _obj = obj
         'End Sub
 
-        'Public Sub New(ByVal sort As String, ByVal sortType As SortType, ByVal obj As IEnumerable, ByVal mark As Object, ByVal mc As OrmManagerBase)
+        'Public Sub New(ByVal sort As String, ByVal sortType As SortType, ByVal obj As IEnumerable, ByVal mark As Object, ByVal mc As OrmManager)
         '    _sort = sort
         '    _st = sortType
         '    _obj = mc.ListConverter.ToWeakList(obj)
@@ -295,7 +295,7 @@ Partial Public Class OrmManager
         End Property
 
         'Public Shared Function CreateEmpty(ByVal sort As String) As CachedItem
-        '    Return New CachedItem(sort, Nothing, Nothing, OrmManagerBase.CurrentManager)
+        '    Return New CachedItem(sort, Nothing, Nothing, OrmManager.CurrentManager)
         'End Function
 
         'Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -383,7 +383,7 @@ Partial Public Class OrmManager
             Return mgr.ListConverter.FromWeakList(Of T)(_obj, mgr)
         End Function
 
-        'Public Sub SetObjectList(ByVal mc As OrmManagerBase, ByVal value As OrmBase())
+        'Public Sub SetObjectList(ByVal mc As OrmManager, ByVal value As OrmBase())
         '    _obj = mc.ListConverter.ToWeakList(value)
         'End Sub
 
@@ -746,11 +746,11 @@ Partial Public Class OrmManager
     End Interface
 
     Public Interface INewObjects
-        Function GetIdentity(ByVal t As Type) As Object
-        Function GetNew(ByVal t As Type, ByVal id As Object) As _ICachedEntity
+        Function GetPKForNewObject(ByVal t As Type) As Object
+        Function GetNew(ByVal t As Type, ByVal pk() As PKDesc) As _ICachedEntity
         Sub AddNew(ByVal obj As _ICachedEntity)
         Sub RemoveNew(ByVal obj As _ICachedEntity)
-        Sub RemoveNew(ByVal t As Type, ByVal id As Object)
+        Sub RemoveNew(ByVal t As Type, ByVal pk() As PKDesc)
     End Interface
 
     Public Interface INewObjectsEx

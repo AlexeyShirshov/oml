@@ -191,7 +191,7 @@ Namespace Cache
 
         Protected Sub RejectRelated(ByVal id As Object, ByVal add As Boolean)
             Dim mgr As OrmManager = OrmManager.CurrentManager
-            'Dim m As OrmManagerBase.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
+            'Dim m As OrmManager.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
             Dim el As EditableListBase = GetRevert(mgr, id)
 
             Dim l As IList(Of Object) = el.Added
@@ -222,7 +222,7 @@ Namespace Cache
         Protected Sub AcceptDual()
             Dim mgr As OrmManager = OrmManager.CurrentManager
             For Each el As EditableListBase In GetRevert(mgr)
-                'Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
+                'Dim m As OrmManager.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
                 'If m IsNot Nothing Then
                 If el.Added.Contains(_mainId) OrElse el.Deleted.Contains(_mainId) Then
                     If Not el.Accept(mgr, _mainId) Then
@@ -354,10 +354,12 @@ Namespace Cache
 
         Friend Function PrepareSave(ByVal mgr As OrmManager) As EditableListBase
             Dim newl As EditableListBase = Nothing
-            If Not mgr.IsNewObject(_mainType, _mainId) Then
+            Dim mo As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(_mainId, _mainType)
+            If Not mgr.IsNewObject(_mainType, mo.GetPKValues) Then
                 Dim ad As New List(Of Object)
                 For Each id As Object In _addedList
-                    If mgr.IsNewObject(SubType, id) Then
+                    Dim ao As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(id, _subType)
+                    If mgr.IsNewObject(SubType, ao.GetPKValues) Then
                         If _new Is Nothing Then
                             _new = New List(Of Object)
                         End If
@@ -666,9 +668,9 @@ Namespace Cache
         End Function
 
         'Protected Sub AcceptDual()
-        '    Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+        '    Dim mgr As OrmManager = OrmManager.CurrentManager
         '    For Each id As Integer In _mainList
-        '        Dim m As OrmManagerBase.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
+        '        Dim m As OrmManager.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
         '        If m IsNot Nothing Then
         '            If m.Entry.Added.Contains(_mainId) OrElse m.Entry.Deleted.Contains(_mainId) Then
         '                If Not m.Entry.Accept(mgr, _mainId) Then

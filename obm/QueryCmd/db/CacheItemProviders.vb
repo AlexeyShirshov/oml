@@ -79,7 +79,7 @@ Namespace Query.Database
                 Dim r As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
 
-                Using cmd As System.Data.Common.DbCommand = dbm.SQLGenerator.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
                     ', dbm, Query, GetType(ReturnType), _j, _f
                     MakeStatement(cmd)
 
@@ -170,7 +170,7 @@ Namespace Query.Database
             Public Function GetSimpleValues(Of T)() As IList(Of T)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
 
-                Using cmd As System.Data.Common.DbCommand = dbm.SQLGenerator.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = dbm.CreateDBCommand
                     ', dbm, Query, GetType(ReturnType), _j, _f
                     MakeStatement(cmd)
 
@@ -783,7 +783,7 @@ Namespace Query.Database
         '        Throw New NotSupportedException
         '    End Function
 
-        '    Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of ReturnType)) As OrmManagerBase.CachedItem
+        '    Public Overrides Function GetCacheItem(ByVal col As ReadOnlyList(Of ReturnType)) As OrmManager.CachedItem
         '        Dim ids As New List(Of Object)
         '        For Each o As ReturnType In col
         '            ids.Add(o.Identifier)
@@ -791,12 +791,12 @@ Namespace Query.Database
         '        Return GetCacheItem(ids)
         '    End Function
 
-        '    Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManagerBase.CachedItem
+        '    Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
         '        Return GetCacheItem(GetValuesInternal(withLoad))
         '    End Function
 
-        '    Protected Overloads Function GetCacheItem(ByVal ids As List(Of Object)) As OrmManagerBase.CachedItem
-        '        Return New OrmManagerBase.M2MCache(Query.Sort, Filter, Query.Obj.Identifier, ids, Mgr, Query.Obj.GetType, GetType(ReturnType), Query.Key)
+        '    Protected Overloads Function GetCacheItem(ByVal ids As List(Of Object)) As OrmManager.CachedItem
+        '        Return New OrmManager.M2MCache(Query.Sort, Filter, Query.Obj.Identifier, ids, Mgr, Query.Obj.GetType, GetType(ReturnType), Query.Key)
         '    End Function
 
         '    Protected Function GetValuesInternal(ByVal withLoad As Boolean) As List(Of Object)

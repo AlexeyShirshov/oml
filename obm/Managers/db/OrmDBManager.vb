@@ -48,7 +48,7 @@ Namespace Database
                 End Try
                 If cmdtext.Length > 0 Then
                     If SQLGenerator.SupportMultiline Then
-                        Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                        Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                             With cmd
                                 .CommandType = System.Data.CommandType.Text
                                 .CommandText = cmdtext
@@ -74,7 +74,7 @@ Namespace Database
                             Dim prev_error As Boolean = False
                             For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
                                 If stmt = String.Empty Then Continue For
-                                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                                     Dim sel As Boolean = stmt.IndexOf("select") >= 0
                                     With cmd
                                         .CommandType = System.Data.CommandType.Text
@@ -165,7 +165,7 @@ Namespace Database
                         BeginTransaction()
                         Try
                             If SQLGenerator.SupportMultiline Then
-                                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                                     With cmd
                                         .CommandType = System.Data.CommandType.Text
                                         .CommandText = cmdtext
@@ -185,7 +185,7 @@ Namespace Database
                             Else
                                 For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
                                     If stmt = "" Then Continue For
-                                    Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                                    Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                                         Dim sel As Boolean = stmt.IndexOf("select") >= 0
                                         With cmd
                                             .CommandType = System.Data.CommandType.Text
@@ -341,7 +341,7 @@ Namespace Database
                 Throw New ArgumentNullException("obj parameter cannot be nothing")
             End If
 
-            Assert(obj.ObjectState = ObjectState.Deleted, "Object " & obj.objname & " should be in Deleted state")
+            Assert(obj.ObjectState = ObjectState.Deleted, "Object " & obj.ObjName & " should be in Deleted state")
 
             'Dim t As Type = obj.GetType
 
@@ -354,7 +354,7 @@ Namespace Database
                     BeginTransaction()
                     Try
                         If SQLGenerator.SupportMultiline Then
-                            Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                                 With cmd
                                     .CommandType = System.Data.CommandType.Text
                                     .CommandText = cmdtext
@@ -375,7 +375,7 @@ Namespace Database
                         Else
                             For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
                                 If stmt = "" Then Continue For
-                                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                                     With cmd
                                         .CommandType = System.Data.CommandType.Text
                                         .CommandText = stmt
@@ -532,7 +532,7 @@ Namespace Database
         '                            processedType.Add(acp.el.SubType)
         '                        Next
         '                    End If
-        '                    For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
+        '                    For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
         '                        'Dim m As M2MCache = o.First
         '                        'If Not Schema.IsMany2ManyReadonly(t, m.Entry.SubType) AndAlso Not processedType.Contains(m.Entry.SubType) Then
         '                        '    'Dim r As M2MRelation = Schema.GetM2MRelation(t, m.Entry.SubType, m.Entry.Direct)
@@ -627,7 +627,7 @@ Namespace Database
                 End If
             Next
 #End If
-            Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                 Dim params As New ParamMgr(SQLGenerator, "p")
                 With cmd
                     .CommandText = SQLGenerator.Delete(t, f, params)

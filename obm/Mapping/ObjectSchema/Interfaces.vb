@@ -91,6 +91,10 @@ Namespace Orm.Meta
         Function CreateValue(ByVal c As ColumnAttribute, ByVal obj As IEntity, ByVal value As Object) As Object
     End Interface
 
+    'Public Interface IFactory
+    '    Sub CreateObject(ByVal field As String, ByVal value As Object)
+    'End Interface
+
     'Public Interface IGetFilterValue
     '    ReadOnly Property FilterValue() As IDBValueFilter
     'End Interface

@@ -180,10 +180,10 @@ Namespace Orm
             '        Return False
             '    End If
             'End If
-            'For Each o As Pair(Of OrmManagerBase.M2MCache, Pair(Of String, String)) In mgr.Cache.GetM2MEtries(obj, Nothing)
-            '    Dim m As OrmManagerBase.M2MCache = o.First
+            'For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In mgr.Cache.GetM2MEtries(obj, Nothing)
+            '    Dim m As OrmManager.M2MCache = o.First
             '    If m.Entry.SubType Is el.SubType AndAlso m.Filter IsNot Nothing Then
-            '        Dim dic As IDictionary = OrmManagerBase.GetDic(mgr.Cache, o.Second.First)
+            '        Dim dic As IDictionary = OrmManager.GetDic(mgr.Cache, o.Second.First)
             '        dic.Remove(o.Second.Second)
             '    End If
             'Next
@@ -221,6 +221,45 @@ Namespace Orm
             End Set
         End Property
 
+    End Class
+
+    Public Class KeyWrapper
+        Private _id As PKDesc()
+        Private _key As Integer
+
+        Public Sub New(ByVal o As ICachedEntity)
+            _id = o.GetPKValues
+            _key = o.Key
+        End Sub
+
+        Public Overrides Function GetHashCode() As Integer
+            Return _key
+        End Function
+
+        Public Overrides Function Equals(ByVal obj As Object) As Boolean
+            Return Equals(TryCast(obj, KeyWrapper))
+        End Function
+
+        Public Overloads Function Equals(ByVal obj As KeyWrapper) As Boolean
+            If obj Is Nothing Then
+                Return False
+            End If
+
+            Dim ids() As PKDesc = obj._id
+            If _id.Length <> ids.Length Then Return False
+            For i As Integer = 0 To _id.Length - 1
+                Dim p As PKDesc = _id(i)
+                Dim p2 As PKDesc = ids(i)
+                If p.PropertyAlias <> p2.PropertyAlias OrElse Not p.Value.Equals(p.Value) Then
+                    Return False
+                End If
+            Next
+            Return True
+        End Function
+
+        Public Overrides Function ToString() As String
+            Return _key.ToString
+        End Function
     End Class
 End Namespace
 

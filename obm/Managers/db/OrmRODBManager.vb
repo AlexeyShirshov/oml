@@ -28,6 +28,7 @@ Namespace Database
         Private _batchSaver As BatchSaver
         Private _stmtHelper As SQLGenerator
         Private Shared _tsStmt As New TraceSource("Worm.Diagnostics.DB.Stmt", SourceLevels.Information)
+        Private _timeout As Nullable(Of Integer)
 
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
         Protected Shared _LoadMultipleObjectsMI4 As Reflection.MethodInfo = Nothing
@@ -64,6 +65,15 @@ Namespace Database
             Get
                 Return True
             End Get
+        End Property
+
+        Public Property CommandTimeout() As Nullable(Of Integer)
+            Get
+                Return _timeout
+            End Get
+            Set(ByVal value As Nullable(Of Integer))
+                _timeout = value
+            End Set
         End Property
 
         Public ReadOnly Property SQLGenerator() As SQLGenerator
@@ -174,6 +184,11 @@ Namespace Database
             End Get
         End Property
 
+        Protected Friend Overrides Sub SetSchema(ByVal schema As ObjectMappingEngine)
+            _stmtHelper = CType(schema, Database.SQLGenerator)
+            MyBase.SetSchema(schema)
+        End Sub
+
         Protected Overloads Overrides Function GetCustDelegate(Of T As {New, IOrmBase})(ByVal relation As M2MRelation, ByVal filter As IFilter, _
             ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManager.ICacheItemProvoder(Of T)
             Return New DistinctRelationFilterCustDelegate(Of T)(Me, relation, CType(filter, IFilter), sort, key, id)
@@ -213,7 +228,7 @@ Namespace Database
         End Function
 
         'Protected Overrides Function GetCustDelegate4Top(Of T As {New, OrmBase})(ByVal top As Integer, ByVal filter As IOrmFilter, _
-        '    ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManagerBase.ICustDelegate(Of T)
+        '    ByVal sort As Sort, ByVal key As String, ByVal id As String) As OrmManager.ICustDelegate(Of T)
         '    Return New FilterCustDelegate4Top(Of T)(Me, top, filter, sort, key, id)
         'End Function
 
@@ -231,16 +246,24 @@ Namespace Database
 
         'Protected Overrides Function GetCustDelegateTag(Of T As {New, OrmBase})( _
         '    ByVal obj As T, ByVal filter As IOrmFilter, ByVal sort As String, ByVal sortType As SortType, _
-        '    ByVal id As String, ByVal sync As String, ByVal key As String) As OrmManagerBase.ICustDelegate(Of T)
+        '    ByVal id As String, ByVal sync As String, ByVal key As String) As OrmManager.ICustDelegate(Of T)
         '    '    Return New M2MCustDelegate(Of T)(Me, obj, filter, sort, sortType, id, sync, key, True)
         '    Throw New NotImplementedException
         'End Function
+
+        Public Function CreateDBCommand() As System.Data.Common.DbCommand
+            If _timeout.HasValue Then
+                Return _stmtHelper.CreateDBCommand(_timeout.Value)
+            Else
+                Return _stmtHelper.CreateDBCommand()
+            End If
+        End Function
 
         Protected Function FindConnected(ByVal ct As Type, ByVal selectedType As Type, _
             ByVal filterType As Type, ByVal connectedFilter As IFilter, _
             ByVal filter As IFilter, ByVal withLoad As Boolean, _
             ByVal sort As Sort, ByVal q() As QueryAspect) As IList
-            Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                 Dim arr As Generic.List(Of ColumnAttribute) = Nothing
 
                 With cmd
@@ -687,7 +710,7 @@ Namespace Database
                     '    Schema.AppendOrder(original_type, sort, sortType, almgr, sb_cmd)
                     'End If
 
-                    Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                    Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                         With cmd
                             .CommandType = System.Data.CommandType.Text
                             .CommandText = sb_cmd.ToString
@@ -795,7 +818,7 @@ Namespace Database
                 '    Schema.AppendOrder(original_type, sort, sortType, almgr, sb_cmd)
                 'End If
 
-                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                     With cmd
                         .CommandType = System.Data.CommandType.Text
                         .CommandText = sb_cmd.ToString
@@ -856,7 +879,7 @@ Namespace Database
                 '    Schema.AppendOrder(original_type, sort, sortType, almgr, sb_cmd)
                 'End If
 
-                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                     With cmd
                         .CommandType = System.Data.CommandType.Text
                         .CommandText = sb_cmd.ToString
@@ -904,7 +927,7 @@ Namespace Database
             Next
             Dim filter As IFilter = c.Condition
 
-            Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                 Dim arr As Generic.List(Of ColumnAttribute) = MappingEngine.GetSortedFieldList(original_type)
 
                 With cmd
@@ -913,7 +936,7 @@ Namespace Database
                     Dim almgr As AliasMgr = AliasMgr.Create
                     Dim params As New ParamMgr(SQLGenerator, "p")
                     Dim sb As New StringBuilder
-                    sb.Append(SQLGenerator.Select(original_type, almgr, params, Nothing, Nothing, GetFilterInfo))
+                    sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
                     SQLGenerator.AppendWhere(original_type, filter, almgr, sb, GetFilterInfo, params)
 
                     params.AppendParams(.Parameters)
@@ -1269,7 +1292,6 @@ Namespace Database
             Dim loading As Boolean = False
             Try
                 Dim pk_count As Integer = 0
-                Dim has_pk As Boolean = False
                 Dim pi_cache(selectList.Count - 1) As Reflection.PropertyInfo
                 Dim idic As IDictionary = Nothing
                 If oschema IsNot Nothing Then
@@ -1299,7 +1321,7 @@ Namespace Database
                             '        WriteLine(sb.ToString)
                             '    End If
                             'End If
-                            has_pk = True
+                            pk_count += 1
                             Dim value As Object = dr.GetValue(idx + displacement)
                             If fv IsNot Nothing Then
                                 value = fv.CreateValue(c, obj, value)
@@ -1354,13 +1376,12 @@ Namespace Database
                                     obj.SetValue(pi, c, oschema, v)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 End Try
-                                pk_count += 1
                             End If
                         End If
                     End If
                 Next
 
-                If has_pk Then
+                If pk_count > 0 Then
                     If ce IsNot Nothing Then
                         ce.PKLoaded(pk_count)
 
@@ -1749,7 +1770,7 @@ Namespace Database
                 Dim sb_cmd As New StringBuilder
                 sb_cmd.Append(sb.ToString).Append(cmd_str.First)
 
-                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                     With cmd
                         .CommandType = System.Data.CommandType.Text
                         .CommandText = sb_cmd.ToString
@@ -1865,7 +1886,7 @@ Namespace Database
                 Dim sb_cmd As New StringBuilder
                 sb_cmd.Append(sb.ToString).Append(cmd_str.First)
 
-                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                     With cmd
                         .CommandType = System.Data.CommandType.Text
                         .CommandText = sb_cmd.ToString
@@ -2136,7 +2157,7 @@ Namespace Database
                 joins, selCols, searchCols, queryFields, searchSchema, selSchema)
 
             Dim col As New List(Of T)
-            Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
 
                 With cmd
                     .CommandType = System.Data.CommandType.Text
@@ -2163,7 +2184,7 @@ Namespace Database
             Dim f2 As IOrmFullTextSupportEx = TryCast(searchSchema, IOrmFullTextSupportEx)
             Dim tokens() As String = frmt.GetTokens
             If tokens.Length > 1 AndAlso (f2 Is Nothing OrElse f2.UseFreeText) Then
-                Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                     With cmd
                         .CommandType = System.Data.CommandType.Text
 
@@ -2511,7 +2532,7 @@ l2:
             Dim selSchema As IOrmObjectSchema = CType(MappingEngine.GetObjectSchema(selectType), IOrmObjectSchema)
             Dim searchSchema As IOrmObjectSchema = CType(MappingEngine.GetObjectSchema(type2search), IOrmObjectSchema)
 
-            Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
 
                 With cmd
                     .CommandType = System.Data.CommandType.Text
@@ -2554,7 +2575,7 @@ l2:
         Protected Overrides Function BuildDictionary(Of T As {New, IOrmBase})(ByVal level As Integer, ByVal filter As IFilter, ByVal joins() As OrmJoin) As DicIndex(Of T)
             Invariant()
             Dim params As New ParamMgr(SQLGenerator, "p")
-            Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                 cmd.CommandText = SQLGenerator.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), joins, GetFilterInfo)
                 cmd.CommandType = System.Data.CommandType.Text
                 params.AppendParams(cmd.Parameters)
@@ -2574,7 +2595,7 @@ l2:
             ByVal filter As IFilter, ByVal joins() As OrmJoin, ByVal firstField As String, ByVal secondField As String) As DicIndex(Of T)
             Invariant()
             Dim params As New ParamMgr(SQLGenerator, "p")
-            Using cmd As System.Data.Common.DbCommand = SQLGenerator.CreateDBCommand
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
                 cmd.CommandText = SQLGenerator.GetDictionarySelect(GetType(T), level, params, CType(filter, IFilter), joins, GetFilterInfo, firstField, secondField)
                 cmd.CommandType = System.Data.CommandType.Text
                 params.AppendParams(cmd.Parameters)

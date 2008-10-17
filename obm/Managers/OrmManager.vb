@@ -35,7 +35,7 @@ Partial Public MustInherit Class OrmManager
     'Private _remnew As RemoveNew
     Protected Friend _disposed As Boolean = False
     'Protected _sites() As Partner
-    Protected Shared _mcSwitch As New TraceSwitch("mcSwitch", "Switch for OrmManagerBase", "3") 'info
+    Protected Shared _mcSwitch As New TraceSwitch("mcSwitch", "Switch for OrmManager", "3") 'info
     Protected Shared _LoadObjectsMI As Reflection.MethodInfo = Nothing
     Private Shared _realCreateDbObjectDic As Hashtable = Hashtable.Synchronized(New Hashtable())
     Private Shared _realLoadTypeDic As Hashtable = Hashtable.Synchronized(New Hashtable())
@@ -43,7 +43,7 @@ Partial Public MustInherit Class OrmManager
 
     Protected _findload As Boolean = False
     '#If DEBUG Then
-    '        Protected _next As OrmManagerBase
+    '        Protected _next As OrmManager
     '#End If
     'Public Delegate Function FindNew(ByVal type As Type, ByVal id As Integer) As OrmBase
     'Public Delegate Sub RemoveNew(ByVal type As Type, ByVal id As Integer)
@@ -182,13 +182,17 @@ Partial Public MustInherit Class OrmManager
     '    End Set
     'End Property
 
-    Public Property MappingEngine() As ObjectMappingEngine
+    Protected Friend Overridable Sub SetSchema(ByVal schema As ObjectMappingEngine)
+        _schema = schema
+    End Sub
+
+    Public ReadOnly Property MappingEngine() As ObjectMappingEngine
         Get
             Return _schema
         End Get
-        Protected Friend Set(ByVal value As ObjectMappingEngine)
-            _schema = value
-        End Set
+        'Protected Friend Set(ByVal value As ObjectMappingEngine)
+        '    _schema = value
+        'End Set
     End Property
 
     Public Property RaiseObjectCreation() As Boolean
@@ -231,11 +235,11 @@ Partial Public MustInherit Class OrmManager
     Public Shared Property CurrentManager() As OrmManager
         Get
             'If System.Web.HttpContext.Current IsNot Nothing Then
-            '    Return CType(System.Web.HttpContext.Current.Items(myConstLocalStorageString), OrmManagerBase)
+            '    Return CType(System.Web.HttpContext.Current.Items(myConstLocalStorageString), OrmManager)
             'Else
             '    Return _cur
             'End If
-            'Return CType(Thread.GetData(LocalStorage), OrmManagerBase)
+            'Return CType(Thread.GetData(LocalStorage), OrmManager)
             Return _cur
         End Get
         Protected Set(ByVal value As OrmManager)
@@ -317,7 +321,7 @@ Partial Public MustInherit Class OrmManager
         End Set
     End Property
 
-    Public Function IsNewObject(ByVal t As Type, ByVal id As Object) As Boolean
+    Public Function IsNewObject(ByVal t As Type, ByVal id() As PKDesc) As Boolean
         Return _newMgr IsNot Nothing AndAlso _newMgr.GetNew(t, id) IsNot Nothing
     End Function
 
@@ -755,6 +759,12 @@ Partial Public MustInherit Class OrmManager
         Dim o As T = CreateOrmBase(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(GetFromCacheOrLoadFromDB(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
+    End Function
+
+    Public Function GetOrmBaseFromCacheOrDB(ByVal id As Object, ByVal type As Type) As IOrmBase
+        Dim o As IOrmBase = CreateOrmBase(id, type)
+        o.SetObjectState(ObjectState.NotLoaded)
+        Return CType(GetFromCacheOrLoadFromDB(o, GetDictionary(type)), IOrmBase)
     End Function
 
     Public Function [Get](Of T As {IOrmBase, New})(ByVal id As Object) As T
@@ -1606,14 +1616,14 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 #End If
-        Dim id As Integer = obj.Key
+        Dim id As KeyWrapper = New KeyWrapper(obj)
         Dim created As Boolean = False ', checked As Boolean = False
         Dim a As _ICachedEntity = CType(dic(id), _ICachedEntity)
         If a Is Nothing AndAlso _newMgr IsNot Nothing Then
-            a = _newMgr.GetNew(type, id)
+            a = _newMgr.GetNew(type, obj.GetPKValues)
             If a IsNot Nothing Then Return a
         End If
-        Dim sync_key As String = "LoadType" & id & type.ToString
+        Dim sync_key As String = "LoadType" & id.ToString & type.ToString
         If a Is Nothing Then
             Using SyncHelper.AcquireDynamicLock(sync_key)
                 a = CType(dic(id), _ICachedEntity)
@@ -1696,7 +1706,7 @@ l1:
         Dim a As T = Nothing
         Dim id As Object = obj.Identifier
         If Not dic.TryGetValue(id, a) AndAlso _newMgr IsNot Nothing Then
-            a = CType(_newMgr.GetNew(type, id), T)
+            a = CType(_newMgr.GetNew(type, obj.GetPKValues), T)
             If a IsNot Nothing Then Return a
         End If
         Dim sync_key As String = "LoadType" & id.ToString & type.ToString
@@ -1786,7 +1796,7 @@ l1:
     Protected Sub AddObjectInternal(ByVal obj As ICachedEntity, ByVal dic As IDictionary)
         Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
         Dim trace As Boolean = False
-        Dim id As Integer = obj.Key
+        Dim id As KeyWrapper = New KeyWrapper(obj)
         SyncLock dic.SyncRoot
             If Not dic.Contains(id) Then
                 dic.Add(id, obj)
@@ -1822,7 +1832,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        Dim id As Integer = obj.Key
+        Dim id As KeyWrapper = New KeyWrapper(obj)
         SyncLock dic.SyncRoot
             Dim o As ICachedEntity = CType(dic(id), ICachedEntity)
             If o Is Nothing Then
@@ -1860,15 +1870,15 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        Dim id As Integer = obj.Key
-        Dim sync_key As String = "LoadType" & id & t.ToString
+        Dim id As KeyWrapper = New KeyWrapper(obj)
+        Dim sync_key As String = "LoadType" & id.ToString & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
             If Cache.ShadowCopy(t, id) IsNot Nothing Then
                 Return False
             End If
 
-            dic.Remove(obj.Key)
+            dic.Remove(id)
 
             _cache.RemoveDepends(obj)
 
@@ -1905,7 +1915,7 @@ l1:
             Throw New OrmManagerException("Collection for " & t.Name & " not exists")
         End If
 
-        Return ReferenceEquals(dic(obj.Key), obj)
+        Return ReferenceEquals(dic(New KeyWrapper(obj)), obj)
     End Function
 
     Public Function IsInCache(ByVal id As Integer, ByVal t As Type) As Boolean
@@ -1976,7 +1986,7 @@ l1:
     Private Shared Sub InsertObject(Of T As {IOrmBase})(ByVal mgr As OrmManager, ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IOrmBase)
         If o IsNot Nothing Then
             If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
+                If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.GetPKValues)) Then
                     Dim idx As Integer = l.BinarySearch(o.Identifier)
                     If idx < 0 Then
                         l.Insert(Not idx, o.Identifier)
@@ -2224,7 +2234,7 @@ l1:
         'pm(5) = True
         Dim types As Type() = New Type() {GetType(_IOrmBase), GetType(String)}
         Dim o() As Object = New Object() {mainobj, direct}
-        'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
+        'Dim m As M2MCache = CType(GetType(OrmManager).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
         '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
         Dim mi As Reflection.MethodInfo = GetType(OrmManager).GetMethod("FindM2MReturnKeys", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
         Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {t})
@@ -2422,7 +2432,7 @@ l1:
         'pm(5) = True
         Dim types As Type() = New Type() {GetType(_IOrmBase), GetType(String), GetType(IGetFilter), GetType(Sort), GetType(Boolean)}
         Dim o() As Object = New Object() {mainobj, direct, Nothing, Nothing, False}
-        'Dim m As M2MCache = CType(GetType(OrmManagerBase).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
+        'Dim m As M2MCache = CType(GetType(OrmManager).InvokeMember("FindM2M", Reflection.BindingFlags.InvokeMethod Or Reflection.BindingFlags.NonPublic, _
         '    Nothing, Me, o, New Reflection.ParameterModifier() {pm}, Nothing, Nothing), M2MCache)
         Dim mi As Reflection.MethodInfo = GetType(OrmManager).GetMethod("FindM2M", flags, Nothing, Reflection.CallingConventions.Any, types, Nothing)
         Dim mi_real As Reflection.MethodInfo = mi.MakeGenericMethod(New Type() {tt2})
@@ -3075,7 +3085,7 @@ l1:
                 If obj IsNot Nothing Then
                     CType(arr, IListEdit).Add(obj)
                 ElseIf _newMgr IsNot Nothing Then
-                    obj = CType(_newMgr.GetNew(type, id), T)
+                    obj = CType(_newMgr.GetNew(type, obj.GetPKValues), T)
                     If obj IsNot Nothing Then CType(arr, IListEdit).Add(obj)
                 End If
             Next
@@ -3102,7 +3112,7 @@ l1:
                     If obj IsNot Nothing Then
                         CType(arr, IListEdit).Add(obj)
                     ElseIf _newMgr IsNot Nothing Then
-                        obj = CType(_newMgr.GetNew(type, id), T)
+                        obj = CType(_newMgr.GetNew(type, obj.GetPKValues), T)
                         If obj IsNot Nothing Then CType(arr, IListEdit).Add(obj)
                     End If
                 Next

@@ -279,21 +279,21 @@ Namespace Orm
                 End Get
             End Property
 
-            'Public Function GetM2MRelatedChangedObjects() As List(Of OrmBase)
-            '    Return _o.GetM2MRelatedChangedObjects
-            'End Function
+            Public Function GetM2MRelatedChangedObjects() As List(Of CachedEntity)
+                Return _o.GetM2MRelatedChangedObjects
+            End Function
 
-            'Public Function GetRelatedChangedObjects() As List(Of OrmBase)
-            '    Return _o.GetRelatedChangedObjects
-            'End Function
+            Public Function GetRelatedChangedObjects() As List(Of CachedEntity)
+                Return _o.GetRelatedChangedObjects
+            End Function
 
-            'Public Function GetChangedObjectGraph() As List(Of OrmBase)
-            '    Return _o.GetChangedObjectGraph
-            'End Function
+            Public Function GetChangedObjectGraph() As List(Of CachedEntity)
+                Return _o.GetChangedObjectGraph
+            End Function
 
-            'Public Function GetChangedObjectGraphWithSelf() As List(Of OrmBase)
-            '    Return _o.GetChangedObjectGraphWithSelf
-            'End Function
+            Public Function GetChangedObjectGraphWithSelf() As List(Of CachedEntity)
+                Return _o.GetChangedObjectGraphWithSelf
+            End Function
         End Class
 
         Public Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs) Implements ICachedEntity.Saved
@@ -523,9 +523,10 @@ Namespace Orm
                         ElseIf _upd.Added Then
                             '_valProcs = False
                             Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
-                            Dim o As CachedEntity = CType(dic(Key), CachedEntity)
+                            Dim kw As KeyWrapper = New KeyWrapper(Me)
+                            Dim o As CachedEntity = CType(dic(kw), CachedEntity)
                             If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
-                                dic(Key) = Me
+                                dic(kw) = Me
                             End If
                             If updateCache Then
                                 'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
@@ -611,7 +612,7 @@ Namespace Orm
 
             'Dim rel As IRelation = mc.ObjectSchema.GetConnectedTypeRelation(t)
             'If rel IsNot Nothing Then
-            '    Dim c As New OrmManagerBase.M2MEnum(rel, Me, mc.ObjectSchema)
+            '    Dim c As New OrmManager.M2MEnum(rel, Me, mc.ObjectSchema)
             '    mc.Cache.ConnectedEntityEnum(t, AddressOf c.Accept)
             'End If
         End Sub
@@ -1366,7 +1367,7 @@ l1:
         End Function
 
         Public Function EnsureLoaded() As CachedEntity
-            'OrmManagerBase.CurrentMediaContent.LoadObject(Me)
+            'OrmManager.CurrentMediaContent.LoadObject(Me)
             Using mc As IGetManager = GetMgr()
                 Return CType(mc.Manager.GetLoadedObjectFromCacheOrDB(Me, mc.Manager.GetDictionary(Me.GetType)), CachedEntity)
             End Using

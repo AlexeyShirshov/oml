@@ -209,8 +209,8 @@ Namespace Cache
 
         Public Event RegisterObjectRemoval(ByVal obj As ICachedEntity)
 
-        'Public Delegate Sub OnUpdateAfterDeleteEnd(ByVal o As OrmBase, ByVal mgr As OrmManagerBase)
-        'Public Delegate Sub OnUpdateAfterAddEnd(ByVal o As OrmBase, ByVal mgr As OrmManagerBase, ByVal contextKey As Object)
+        'Public Delegate Sub OnUpdateAfterDeleteEnd(ByVal o As OrmBase, ByVal mgr As OrmManager)
+        'Public Delegate Sub OnUpdateAfterAddEnd(ByVal o As OrmBase, ByVal mgr As OrmManager, ByVal contextKey As Object)
         Public Delegate Sub OnUpdated(ByVal o As _ICachedEntity, ByVal mgr As OrmManager, ByVal contextKey As Object)
 
         Sub New()
@@ -228,9 +228,9 @@ Namespace Cache
         '    End Get
         'End Property
 
-        Public Function ShadowCopy(ByVal t As Type, ByVal id As Integer) As ObjectModification
+        Public Function ShadowCopy(ByVal t As Type, ByVal id As KeyWrapper) As ObjectModification
             Using SyncRoot
-                Dim name As String = t.Name & ":" & id
+                Dim name As String = t.Name & ":" & id.ToString
                 Return CType(_modifiedobjects(name), ObjectModification)
             End Using
         End Function
@@ -310,9 +310,9 @@ Namespace Cache
         '        Dim mo As ModifiedObject = Nothing
         '        Dim name As String = obj.GetType().Name & ":" & id
         '        'Using SyncHelper.AcquireDynamicLock(name)
-        '        Assert(OrmManagerBase.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
+        '        Assert(OrmManager.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
         '        Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
-        '        mo = New ModifiedObject(obj, OrmManagerBase.CurrentManager.CurrentUser, reason)
+        '        mo = New ModifiedObject(obj, OrmManager.CurrentManager.CurrentUser, reason)
         '        _modifiedobjects.Add(name, mo)
         '        'End Using
         '        If _modifiedobjects.Count = 1 Then

@@ -319,6 +319,12 @@ Namespace Database
 #End Region
 
 #Region " data factory "
+        Public Overridable Function CreateDBCommand(ByVal timeout As Integer) As System.Data.Common.DbCommand
+            Dim cmd As New SqlCommand
+            cmd.CommandTimeout = timeout
+            Return cmd
+        End Function
+
         Public Overridable Function CreateDBCommand() As System.Data.Common.DbCommand
             Dim cmd As New SqlCommand
             'cmd.CommandTimeout = XMedia.Framework.Configuration.ApplicationConfiguration.CommandTimeout \ 1000
@@ -522,8 +528,11 @@ l1:
                         Dim values_sb As New StringBuilder
                         values_sb.Append(") values(")
                         For Each f As ITemplateFilter In item.Second
-                            Dim p As Pair(Of String) = f.MakeSingleQueryStmt(Me, Nothing, params)
                             Dim ef As EntityFilterBase = TryCast(f, EntityFilterBase)
+                            If ef IsNot Nothing Then
+                                CType(ef, IEntityFilter).PrepareValue = False
+                            End If
+                            Dim p As Pair(Of String) = f.MakeSingleQueryStmt(Me, Nothing, params)
                             If ef IsNot Nothing Then
                                 p = ef.MakeSingleQueryStmt(os, Me, Nothing, params)
                                 If ef.Template.FieldName = "ID" Then
