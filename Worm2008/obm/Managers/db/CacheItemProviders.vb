@@ -161,7 +161,7 @@ Namespace Database
             Public Overrides Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
                 Dim original_type As Type = GetType(T)
 
-                Using cmd As System.Data.Common.DbCommand = _mgr.SQLGenerator.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = _mgr.CreateDBCommand
                     Dim arr As Generic.List(Of ColumnAttribute) = _cols
 
                     With cmd
@@ -376,7 +376,7 @@ Namespace Database
                 _obj = obj
                 _direct = direct
                 _qa = queryAscpect
-                '_sync = sync & OrmManagerBase.GetTablePostfix
+                '_sync = sync & OrmManager.GetTablePostfix
                 '_rev = rev
             End Sub
 
@@ -387,7 +387,7 @@ Namespace Database
             Protected Function GetValuesInternal(ByVal withLoad As Boolean) As System.Collections.Generic.IList(Of Object)
                 Dim t As Type = GetType(T)
 
-                Using cmd As System.Data.Common.DbCommand = _mgr.SQLGenerator.CreateDBCommand
+                Using cmd As System.Data.Common.DbCommand = _mgr.CreateDBCommand
                     With cmd
                         Dim params As IList(Of System.Data.Common.DbParameter) = Nothing
                         Dim almgr As AliasMgr = AliasMgr.Create
@@ -558,7 +558,7 @@ Namespace Database
                 End If
             End Sub
 
-            'Public Overrides Function Validate(ByVal ce As OrmManagerBase.CachedItem) As Boolean
+            'Public Overrides Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean
             '    Dim m As M2MCache = CType(ce, M2MCache)
             'End Function
         End Class

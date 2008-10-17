@@ -25,20 +25,20 @@ Public Class TestTracker
         Return CInt(GetIdentity(Nothing))
     End Function
 
-    Public Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManager.INewObjects.GetIdentity
+    Public Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManager.INewObjects.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
         Return i
     End Function
 
-    Public Function GetNew(ByVal t As System.Type, ByVal id As Object) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew
+    Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew
         Dim o As OrmBase = Nothing
-        _new_objects.TryGetValue(CInt(id), o)
+        _new_objects.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Object) Implements Worm.OrmManager.INewObjects.RemoveNew
-        _new_objects.Remove(CInt(id))
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) Implements Worm.OrmManager.INewObjects.RemoveNew
+        _new_objects.Remove(CInt(id(0).Value))
         Debug.WriteLine("removed: " & id.ToString)
     End Sub
 

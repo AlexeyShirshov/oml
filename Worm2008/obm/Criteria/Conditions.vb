@@ -441,6 +441,22 @@ Namespace Criteria.Conditions
             End If
             Return l
         End Function
+
+        Public Property PrepareValue() As Boolean Implements Core.IEntityFilter.PrepareValue
+            Get
+                Dim b As Boolean = Left.PrepareValue
+                If Right IsNot Nothing Then
+                    b = b AndAlso Right.PrepareValue
+                End If
+                Return b
+            End Get
+            Set(ByVal value As Boolean)
+                Left.PrepareValue = value
+                If Right IsNot Nothing Then
+                    Right.PrepareValue = value
+                End If
+            End Set
+        End Property
     End Class
 
 End Namespace

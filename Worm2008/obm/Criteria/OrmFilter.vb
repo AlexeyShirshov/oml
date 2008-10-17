@@ -47,7 +47,7 @@ Namespace Criteria.Core
 
     Public Interface IEntityFilter
         Inherits ITemplateFilter, IEntityFilterBase
-
+        Property PrepareValue() As Boolean
     End Interface
 
     Public Interface ITemplate
@@ -208,9 +208,11 @@ Namespace Criteria.Core
         Inherits TemplatedFilterBase
         Implements IEntityFilter
 
+
         'Private _templ As OrmFilterTemplate
         Private _str As String
         Protected _oschema As IObjectSchemaBase
+        Private _prep As Boolean = True
 
         Public Const EmptyHash As String = "fd_empty_hash_aldf"
 
@@ -320,7 +322,12 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("pname")
             End If
 
-            Dim prname As String = Value.GetParam(schema, pname, almgr, AddressOf PrepareValue, Nothing, Nothing)
+            Dim pd As Values.PrepareValueDelegate = Nothing
+            If _prep Then
+                pd = AddressOf PrepareValue
+            End If
+
+            Dim prname As String = Value.GetParam(schema, pname, almgr, pd, Nothing, Nothing)
 
             Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.FieldName)
 
@@ -355,6 +362,15 @@ Namespace Criteria.Core
                 Return EmptyHash
             End If
         End Function
+
+        Private Property _PrepareValue() As Boolean Implements IEntityFilter.PrepareValue
+            Get
+                Return _prep
+            End Get
+            Set(ByVal value As Boolean)
+                _prep = value
+            End Set
+        End Property
     End Class
 
     Public MustInherit Class TemplateBase

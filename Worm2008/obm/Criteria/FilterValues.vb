@@ -543,7 +543,7 @@ Namespace Criteria.Values
 
         'Public Overrides ReadOnly Property Value() As Object
         '    Get
-        '        Return GetOrmValue(OrmManagerBase.CurrentManager)
+        '        Return GetOrmValue(OrmManager.CurrentManager)
         '    End Get
         'End Property
     End Class
@@ -767,7 +767,7 @@ Namespace Database
             End Sub
 
             Public Sub New(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal f As IEntityFilter, ByVal field As String)
-                '_tbl = CType(OrmManagerBase.CurrentManager.ObjectSchema.GetObjectSchema(t), IOrmObjectSchema).GetTables(0)
+                '_tbl = CType(OrmManager.CurrentManager.ObjectSchema.GetObjectSchema(t), IOrmObjectSchema).GetTables(0)
                 _stmtGen = stmtGen
                 _t = t
                 _f = f

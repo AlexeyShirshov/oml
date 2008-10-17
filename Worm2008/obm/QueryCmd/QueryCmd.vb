@@ -99,6 +99,11 @@ Namespace Query
         End Function
     End Class
 
+    Public Class Paging
+        Public Start As Integer
+        Public Length As Integer
+    End Class
+
     Public Class QueryIterator
         Implements IEnumerator(Of QueryCmd), IEnumerable(Of QueryCmd)
 
@@ -182,7 +187,7 @@ Namespace Query
         Protected _dontcache As Boolean
         Private _liveTime As TimeSpan
         Private _mgrMark As String
-        Protected _clientPage As Pair(Of Integer)
+        Protected _clientPage As Paging
         Protected _joins() As OrmJoin
         Protected _autoJoins As Boolean
         Protected _table As SourceFragment
@@ -205,6 +210,7 @@ Namespace Query
         Private _schema As ObjectMappingEngine
         Private _cacheSort As Boolean
         Private _autoFields As Boolean
+        Private _timeout As Nullable(Of Integer)
 
         Private _createType As Type
         Public Property CreateType() As Type
@@ -222,6 +228,15 @@ Namespace Query
             End Get
             Set(ByVal value As Boolean)
                 _autoFields = value
+            End Set
+        End Property
+
+        Public Property CommandTimed() As Nullable(Of Integer)
+            Get
+                Return _timeout
+            End Get
+            Set(ByVal value As Nullable(Of Integer))
+                _timeout = value
             End Set
         End Property
 
@@ -828,11 +843,11 @@ Namespace Query
             End Get
         End Property
 
-        Public Property ClientPaging() As Pair(Of Integer)
+        Public Property ClientPaging() As Paging
             Get
                 Return _clientPage
             End Get
-            Set(ByVal value As Pair(Of Integer))
+            Set(ByVal value As Paging)
                 _clientPage = value
             End Set
         End Property
@@ -1032,7 +1047,7 @@ Namespace Query
         '    Return q
         'End Function
 
-        'Public Function ToListTypeless(ByVal mgr As OrmManagerBase) As IList
+        'Public Function ToListTypeless(ByVal mgr As OrmManager) As IList
         '    Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
         '    Dim e As IList = CType(q.GetType.InvokeMember("_Exec", Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.InvokeMethod, _
         '                           Nothing, q, New Object() {mgr}), System.Collections.IList)
@@ -1080,7 +1095,7 @@ Namespace Query
             Try
                 mgr.RaiseObjectCreation = True
                 AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
-                'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManagerBase) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
+                'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManager) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
                 Return ToEntityList(Of T)(mgr)
             Finally
                 If mgr IsNot Nothing Then
@@ -1093,7 +1108,7 @@ Namespace Query
             Using mgr As OrmManager = getMgr.CreateManager
                 mgr.RaiseObjectCreation = True
                 AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
-                'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManagerBase) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
+                'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManager) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
                 Return ToEntityList(Of T)(mgr)
             End Using
         End Function
@@ -1107,11 +1122,7 @@ Namespace Query
                 Throw New InvalidOperationException("OrmManager required")
             End If
 
-            Using mgr As OrmManager = _getMgr.CreateManager
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(_getMgr).ObjectCreated
-                Return ToEntityList(Of T)(mgr)
-            End Using
+            Return ToEntityList(Of T)(_getMgr)
         End Function
 
         Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
@@ -1138,6 +1149,14 @@ Namespace Query
             End Using
         End Function
 
+        Public Function ToOrmList(Of T As _IOrmBase)() As ReadOnlyList(Of T)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return ToOrmList(Of T)(_getMgr)
+        End Function
+
         Public Function ToList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As IList(Of T)
             Return ToEntityList(Of T)(mgr)
         End Function
@@ -1146,7 +1165,7 @@ Namespace Query
             Return GetExecutor(mgr).Exec(Of SelectType, ReturnType)(mgr, Me)
         End Function
 
-        'Public Function ExecTypeless(ByVal mgr As OrmManagerBase) As IEnumerator
+        'Public Function ExecTypeless(ByVal mgr As OrmManager) As IEnumerator
         '    Return ToListTypeless(mgr).GetEnumerator
         'End Function
 
@@ -1641,6 +1660,54 @@ Namespace Query
                 Return q
             End If
         End Function
+
+        Public Shared Function Create(ByVal table As SourceFragment) As OrmQueryCmd(Of T)
+            Return Create(table, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create() As OrmQueryCmd(Of T)
+            Return Create(OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal selectType As Type) As OrmQueryCmd(Of T)
+            Return Create(selectType, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function CreateByEntityName(ByVal entityName As String) As OrmQueryCmd(Of T)
+            Return Create(entityName, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal obj As _IOrmBase) As OrmQueryCmd(Of T)
+            Return Create(obj, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal key As String) As OrmQueryCmd(Of T)
+            Return Create(obj, key, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment) As OrmQueryCmd(Of T)
+            Return Create(name, table, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal name As String) As OrmQueryCmd(Of T)
+            Return Create(name, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal selectType As Type) As OrmQueryCmd(Of T)
+            Return Create(name, selectType, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As OrmQueryCmd(Of T)
+            Return CreateByEntityName(name, entityName, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase) As OrmQueryCmd(Of T)
+            Return Create(name, obj, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String) As OrmQueryCmd(Of T)
+            Return Create(name, obj, key, OrmManager.CurrentManager)
+        End Function
     End Class
 
     'Public Class QueryCmd(Of ReturnType As {_ICachedEntity, New})
@@ -1655,11 +1722,11 @@ Namespace Query
     '        End Set
     '    End Property
 
-    '    Public Function Exec(ByVal mgr As OrmManagerBase) As ReadOnlyEntityList(Of ReturnType)
+    '    Public Function Exec(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of ReturnType)
     '        Return GetExecutor(mgr).Exec(Of ReturnType)(mgr, Me)
     '    End Function
 
-    '    Public Function [Single](ByVal mgr As OrmManagerBase) As ReturnType
+    '    Public Function [Single](ByVal mgr As OrmManager) As ReturnType
     '        Dim r As ReadOnlyEntityList(Of ReturnType) = Exec(mgr)
     '        If r.Count <> 1 Then
     '            Throw New InvalidOperationException
@@ -1668,7 +1735,7 @@ Namespace Query
     '        End If
     '    End Function
 
-    '    Public Function Exec(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
+    '    Public Function Exec(Of T)(ByVal mgr As OrmManager) As IList(Of T)
     '        Return GetExecutor(mgr).ExecSimple(Of ReturnType, T)(mgr, Me)
     '    End Function
     'End Class
@@ -1676,15 +1743,15 @@ Namespace Query
     'Public Class QueryEntity(Of ReturnType As {_IEntity, New})
     '    Inherits QueryCmdBase
 
-    '    'Protected Function _Exec(ByVal mgr As OrmManagerBase) As ReadOnlyList(Of ReturnType)
+    '    'Protected Function _Exec(ByVal mgr As OrmManager) As ReadOnlyList(Of ReturnType)
     '    '    Return GetExecutor(mgr).Exec(Of ReturnType)(mgr, Me)
     '    'End Function
 
-    '    Public Function Exec(ByVal mgr As OrmManagerBase) As ReadOnlyObjectList(Of ReturnType)
+    '    Public Function Exec(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of ReturnType)
     '        Return GetExecutor(mgr).ExecEntity(Of ReturnType)(mgr, Me)
     '    End Function
 
-    '    'Public Function Exec(Of T)(ByVal mgr As OrmManagerBase) As IList(Of T)
+    '    'Public Function Exec(Of T)(ByVal mgr As OrmManager) As IList(Of T)
     '    '    Return GetExecutor(mgr).Exec(Of ReturnType, T)(mgr, Me)
     '    'End Function
 
@@ -1697,7 +1764,7 @@ Namespace Query
     '        End Set
     '    End Property
 
-    '    Public Function [Single](ByVal mgr As OrmManagerBase) As ReturnType
+    '    Public Function [Single](ByVal mgr As OrmManager) As ReturnType
     '        Dim r As ReadOnlyObjectList(Of ReturnType) = Exec(mgr)
     '        If r.Count <> 1 Then
     '            Throw New InvalidOperationException

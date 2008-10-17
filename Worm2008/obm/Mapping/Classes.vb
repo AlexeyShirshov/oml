@@ -14,6 +14,9 @@
 
         Private _table As String
         Private _schema As String
+#If DEBUG Then
+        Private _stack As String = Environment.StackTrace
+#End If
 
         Public Sub New()
 

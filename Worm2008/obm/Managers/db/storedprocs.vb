@@ -108,7 +108,7 @@ Namespace Database.Storedprocs
         Protected Function Execute(ByVal mgr As OrmReadOnlyDBManager) As Object
             _reseted(GetKey) = False
             Dim schema As SQLGenerator = CType(mgr.MappingEngine, SQLGenerator)
-            Using cmd As System.Data.Common.DbCommand = schema.CreateDBCommand
+            Using cmd As System.Data.Common.DbCommand = mgr.CreateDBCommand
                 cmd.CommandType = System.Data.CommandType.StoredProcedure
                 cmd.CommandText = GetName()
                 InitInParams(schema, cmd)
@@ -642,12 +642,12 @@ Namespace Database.Storedprocs
         Protected MustOverride Function GetWithLoad() As Boolean
 
         Protected Overloads Overrides Function Execute(ByVal mgr As OrmReadOnlyDBManager, ByVal cmd As System.Data.Common.DbCommand) As Object
-            'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
+            'Dim mgr As OrmReadOnlyDBManager = CType(OrmManager.CurrentManager, OrmReadOnlyDBManager)
             If mgr._externalFilter IsNot Nothing Then
                 Throw New InvalidOperationException("External filter is not applicable for store procedures")
             End If
             _donthit = True
-            'Dim ce As New OrmManagerBase.CachedItem(Nothing, OrmManagerBase.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
+            'Dim ce As New OrmManager.CachedItem(Nothing, OrmManager.CreateReadonlyList(GetType(T), mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, Nothing, GetColumns)), mgr)
             Dim rr As New List(Of T)
             mgr.LoadMultipleObjects(Of T)(cmd, GetWithLoad, rr, GetColumns)
             Dim l As IListEdit = OrmManager.CreateReadonlyList(GetType(T), rr)
@@ -671,7 +671,7 @@ Namespace Database.Storedprocs
         End Function
 
         Public Shadows Function GetResult(ByVal mgr As OrmReadOnlyDBManager) As ReadOnlyObjectList(Of T)
-            'Dim ce As OrmManagerBase.CachedItem = CType(MyBase.GetResult(mgr), OrmManagerBase.CachedItem)
+            'Dim ce As OrmManager.CachedItem = CType(MyBase.GetResult(mgr), OrmManager.CachedItem)
             '_count = ce.GetCount(mgr)
             Dim wl As Object = MyBase.GetResult(mgr)
             Dim tt As Type = GetType(T)
@@ -906,7 +906,7 @@ Namespace Database.Storedprocs
             Private _oschema As IObjectSchemaBase
 
             Public Overridable Sub ProcessReader(ByVal mgr As OrmReadOnlyDBManager, ByVal dr As System.Data.Common.DbDataReader, ByVal cmdtext As String) Implements IResultSetDescriptor.ProcessReader
-                'Dim mgr As OrmReadOnlyDBManager = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
+                'Dim mgr As OrmReadOnlyDBManager = CType(OrmManager.CurrentManager, OrmReadOnlyDBManager)
                 If mgr._externalFilter IsNot Nothing Then
                     Throw New InvalidOperationException("External filter is not applicable for store procedures")
                 End If

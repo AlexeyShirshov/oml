@@ -78,13 +78,13 @@ Namespace Orm
         'Public Class ObjectSavedArgs
         '    Inherits EventArgs
 
-        '    Private _sa As OrmManagerBase.SaveAction
+        '    Private _sa As OrmManager.SaveAction
 
-        '    Public Sub New(ByVal saveAction As OrmManagerBase.SaveAction)
+        '    Public Sub New(ByVal saveAction As OrmManager.SaveAction)
         '        _sa = saveAction
         '    End Sub
 
-        '    Public ReadOnly Property SaveAction() As OrmManagerBase.SaveAction
+        '    Public ReadOnly Property SaveAction() As OrmManager.SaveAction
         '        Get
         '            Return _sa
         '        End Get
@@ -102,10 +102,10 @@ Namespace Orm
         '    End Sub
 
         '    Public Sub Added(ByVal source As CachedEntity, ByVal args As ObjectSavedArgs)
-        '        Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+        '        Dim mgr As OrmManager = OrmManager.CurrentManager
         '        For Each p As String In _props
         '            If p = "ID" Then
-        '                Dim nm As OrmManagerBase.INewObjects = mgr.NewObjectManager
+        '                Dim nm As OrmManager.INewObjects = mgr.NewObjectManager
         '                If nm IsNot Nothing Then
         '                    nm.RemoveNew(_dst)
         '                End If
@@ -414,12 +414,12 @@ Namespace Orm
         'Public Class ManagerRequiredArgs
         '    Inherits EventArgs
 
-        '    Private _mgr As OrmManagerBase
-        '    Public Property Manager() As OrmManagerBase
+        '    Private _mgr As OrmManager
+        '    Public Property Manager() As OrmManager
         '        Get
         '            Return _mgr
         '        End Get
-        '        Set(ByVal value As OrmManagerBase)
+        '        Set(ByVal value As OrmManager)
         '            _mgr = value
         '        End Set
         '    End Property
@@ -485,7 +485,7 @@ Namespace Orm
         '#End If
         'for xml serialization
         Public Sub New()
-            'Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
+            'Dim arr As Generic.List(Of ColumnAttribute) = OrmManager.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
             'members_load_state = New BitArray(arr.Count)
 
             Init()
@@ -687,8 +687,8 @@ Namespace Orm
         End Sub
 
         Protected Overridable Overloads Sub Init()
-            'If OrmManagerBase.CurrentManager IsNot Nothing Then
-            '    _mgrStr = OrmManagerBase.CurrentManager.IdentityString
+            'If OrmManager.CurrentManager IsNot Nothing Then
+            '    _mgrStr = OrmManager.CurrentManager.IdentityString
             'End If
         End Sub
 
@@ -822,7 +822,7 @@ Namespace Orm
             End Using
         End Sub
 
-        '        Protected Friend Function Save(ByVal mc As OrmManagerBase) As Boolean
+        '        Protected Friend Function Save(ByVal mc As OrmManager) As Boolean
         '            CheckCash()
         '            If IsReadOnly Then
         '                Throw New OrmObjectException(ObjName & "Object in readonly state")
@@ -868,7 +868,7 @@ Namespace Orm
         '        End Function
 
         'Protected Friend Function GetMgr() As IGetManager
-        '    Dim mgr As OrmManagerBase = OrmManagerBase.CurrentManager
+        '    Dim mgr As OrmManager = OrmManager.CurrentManager
         '    If Not String.IsNullOrEmpty(_mgrStr) Then
         '        Do While mgr IsNot Nothing AndAlso mgr.IdentityString <> _mgrStr
         '            mgr = mgr._prev
@@ -972,7 +972,7 @@ Namespace Orm
         '        End If
 
         '        Using gmc As IGetManager = GetMgr()
-        '            Dim mc As OrmManagerBase = gmc.Manager
+        '            Dim mc As OrmManager = gmc.Manager
         '            _valProcs = _needAccept.Count > 0
 
         '            AcceptRelationalChanges(mc)
@@ -1018,7 +1018,7 @@ Namespace Orm
 
         'Friend Sub UpdateCache()
         '    Using gmc As IGetManager = GetMgr()
-        '        Dim mc As OrmManagerBase = gmc.Manager
+        '        Dim mc As OrmManager = gmc.Manager
         '        If _upd IsNot Nothing OrElse _valProcs Then
         '            mc.InvalidateCache(Me, CType(_upd, System.Collections.ICollection))
         '        Else
@@ -1035,7 +1035,7 @@ Namespace Orm
         '    End Using
         'End Sub
 
-        'Friend Shared Sub Accept_AfterUpdateCache(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
+        'Friend Shared Sub Accept_AfterUpdateCache(ByVal obj As OrmBase, ByVal mc As OrmManager, _
         '    ByVal contextKey As Object)
 
         '    If obj._needDelete Then
@@ -1045,22 +1045,22 @@ Namespace Orm
         '    End If
         'End Sub
 
-        'Protected Friend Shared Sub ClearCacheFlags(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
+        'Protected Friend Shared Sub ClearCacheFlags(ByVal obj As OrmBase, ByVal mc As OrmManager, _
         '    ByVal contextKey As Object)
         '    obj._needAdd = False
         '    obj._needDelete = False
         'End Sub
 
-        'Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As OrmBase, ByVal mc As OrmManagerBase)
+        'Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As OrmBase, ByVal mc As OrmManager)
         '    mc._RemoveObjectFromCache(obj)
         '    mc.Cache.RegisterDelete(obj)
         '    'obj._needDelete = False
         'End Sub
 
-        'Friend Shared Sub Accept_AfterUpdateCacheAdd(ByVal obj As OrmBase, ByVal mc As OrmManagerBase, _
+        'Friend Shared Sub Accept_AfterUpdateCacheAdd(ByVal obj As OrmBase, ByVal mc As OrmManager, _
         '    ByVal contextKey As Object)
         '    'obj._needAdd = False
-        '    Dim nm As OrmManagerBase.INewObjects = mc.NewObjectManager
+        '    Dim nm As OrmManager.INewObjects = mc.NewObjectManager
         '    If nm IsNot Nothing Then
         '        Dim mo As OrmBase = TryCast(contextKey, OrmBase)
         '        If mo Is Nothing Then
@@ -1246,7 +1246,7 @@ Namespace Orm
             Return Nothing
         End Function
 
-        'Protected Friend Sub RaiseSaved(ByVal sa As OrmManagerBase.SaveAction)
+        'Protected Friend Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
         '    RaiseEvent Saved(Me, New ObjectSavedArgs(sa))
         'End Sub
 #End Region
@@ -1523,7 +1523,7 @@ Namespace Orm
         '                    If _state = Orm.ObjectState.Created Then
         '                        Dim name As String = Me.GetType.Name
         '                        Using gmc As IGetManager = GetMgr()
-        '                            Dim mc As OrmManagerBase = gmc.Manager
+        '                            Dim mc As OrmManager = gmc.Manager
         '                            Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
         '                            If dic Is Nothing Then
         '                                Throw New OrmObjectException("Collection for " & name & " not exists")
@@ -1568,7 +1568,7 @@ Namespace Orm
         'Protected Sub PrepareRead()
         '    If Not IsLoaded AndAlso state = Obm.ObjectState.None Then
         '        '    Dim c As New ColumnAttribute(FieldName)
-        '        '    Dim arr As Generic.List(Of ColumnAttribute) = OrmManagerBase.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
+        '        '    Dim arr As Generic.List(Of ColumnAttribute) = OrmManager.CurrentMediaContent.DatabaseSchema.GetSortedFieldList(Me.GetType)
         '        '    Dim idx As Integer = arr.BinarySearch(c)
         '        '    If idx < 0 Then Throw New MediaObjectModelException("There is no such field " & c.FieldName)
 
@@ -1639,7 +1639,7 @@ Namespace Orm
         'End Sub
 
         'Public Function EnsureLoaded() As OrmBase
-        '    'OrmManagerBase.CurrentMediaContent.LoadObject(Me)
+        '    'OrmManager.CurrentMediaContent.LoadObject(Me)
         '    Using mc As IGetManager = GetMgr()
         '        Return mc.Manager.LoadType(_id, Me.GetType, True, True)
         '    End Using
@@ -1658,9 +1658,9 @@ Namespace Orm
         '        'Throw New OrmObjectException("Use Identifier property to get ID")
         '        Return Identifier
         '    Else
-        '        Dim s As QueryGenerator = OrmSchema
+        '        Dim s As OrmManager = OrmSchema
         '        If s Is Nothing Then
-        '            Return QueryGenerator.GetFieldValueSchemaless(Me, propAlias)
+        '            Return OrmManager.GetFieldValueSchemaless(Me, propAlias)
         '        Else
         '            Return s.GetFieldValue(Me, propAlias, Nothing)
         '        End If
@@ -1672,9 +1672,9 @@ Namespace Orm
         '        'Throw New OrmObjectException("Use Identifier property to get ID")
         '        Return Identifier
         '    Else
-        '        Dim s As QueryGenerator = OrmSchema
+        '        Dim s As OrmManager = OrmSchema
         '        If s Is Nothing Then
-        '            Return QueryGenerator.GetFieldValueSchemaless(Me, propAlias, schema)
+        '            Return OrmManager.GetFieldValueSchemaless(Me, propAlias, schema)
         '        Else
         '            Return s.GetFieldValue(Me, propAlias, schema)
         '        End If
@@ -1730,7 +1730,7 @@ Namespace Orm
 
         '            _loading = False
         '            Using mc As IGetManager = GetMgr()
-        '                Dim schema As QueryGenerator = mc.Manager.ObjectSchema
+        '                Dim schema As OrmManager = mc.Manager.ObjectSchema
         '                If schema IsNot Nothing Then CheckIsAllLoaded(schema, Integer.MaxValue)
         '            End Using
         '        End Sub
@@ -1983,15 +1983,15 @@ Namespace Orm
         'Protected MustOverride Sub RevertToOriginalVersion()
         'Protected Friend MustOverride Function CreateOriginalVersion() As OrmBase
 
-        'Protected Friend Overridable Function ValidateNewObject(ByVal mgr As OrmManagerBase) As Boolean
+        'Protected Friend Overridable Function ValidateNewObject(ByVal mgr As OrmManager) As Boolean
         '    Return True
         'End Function
 
-        'Protected Friend Overridable Function ValidateUpdate(ByVal mgr As OrmManagerBase) As Boolean
+        'Protected Friend Overridable Function ValidateUpdate(ByVal mgr As OrmManager) As Boolean
         '    Return True
         'End Function
 
-        'Protected Friend Overridable Function ValidateDelete(ByVal mgr As OrmManagerBase) As Boolean
+        'Protected Friend Overridable Function ValidateDelete(ByVal mgr As OrmManager) As Boolean
         '    Return True
         'End Function
 
@@ -2026,7 +2026,7 @@ Namespace Orm
 
         Protected Overrides Sub PKLoaded(ByVal pkCount As Integer)
             If pkCount <> 1 Then
-                Throw New OrmObjectException("OrmBase derived class must have only one PK")
+                Throw New OrmObjectException(String.Format("OrmBase derived class must have only one PK. The values is {0}", pkCount))
             End If
             MyBase.PKLoaded(pkCount)
         End Sub
@@ -2203,7 +2203,7 @@ Namespace Orm
 
     '    Public ReadOnly Property Entity() As T Implements IOrmProxy(Of T).Entity
     '        Get
-    '            Return OrmManagerBase.CurrentManager.Find(Of T)(_id)
+    '            Return OrmManager.CurrentManager.Find(Of T)(_id)
     '        End Get
     '    End Property
 

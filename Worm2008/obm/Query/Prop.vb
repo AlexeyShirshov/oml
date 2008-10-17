@@ -260,8 +260,10 @@ Namespace Orm
                         Return _column
                     ElseIf _q IsNot Nothing Then
                         Return _q.ToStaticString
-                    Else
+                    ElseIf _agr IsNot Nothing Then
                         Return _agr.ToString
+                    Else
+                        Return _field
                     End If
                 End If
             End If

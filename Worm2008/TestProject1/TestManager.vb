@@ -595,15 +595,15 @@ Imports Worm.Orm
         Return CInt(GetIdentity(Nothing))
     End Function
 
-    Private Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManager.INewObjects.GetIdentity
+    Private Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManager.INewObjects.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
         Return i
     End Function
 
-    Private Function GetNew(ByVal t As Type, ByVal id As Object) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew
+    Private Function GetNew(ByVal t As Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew
         Dim o As OrmBase = Nothing
-        _l.TryGetValue(CInt(id), o)
+        _l.TryGetValue(CInt(id(0).Value), o)
         Return o
     End Function
 
@@ -1092,7 +1092,7 @@ Imports Worm.Orm
             e.Str = "ioquv"
             Assert.AreEqual(ObjectState.Modified, e.InternalProperties.ObjectState)
 
-            'Using New Orm.OrmManagerBase.CacheListSwitcher(mgr, False)
+            'Using New Orm.OrmManager.CacheListSwitcher(mgr, False)
             c = mgr.FindTop(Of Entity2)(100, Nothing, Nothing, True)
             'End Using
 
@@ -1315,7 +1315,7 @@ Imports Worm.Orm
         End Property
     End Class
 
-    Public Sub RemoveNew(ByVal t As System.Type, ByVal id As Object) Implements Worm.OrmManager.INewObjects.RemoveNew
+    Public Sub RemoveNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) Implements Worm.OrmManager.INewObjects.RemoveNew
 
     End Sub
 

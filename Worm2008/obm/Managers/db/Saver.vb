@@ -114,7 +114,7 @@ Namespace Database
             End Sub
 
             'Public Sub New()
-            '    _mgr = CType(OrmManagerBase.CurrentManager, OrmReadOnlyDBManager)
+            '    _mgr = CType(OrmManager.CurrentManager, OrmReadOnlyDBManager)
             'End Sub
 
             Public ReadOnly Property [Error]() As Boolean
@@ -592,7 +592,16 @@ Namespace Database
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
 
-                Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetIdentity(GetType(T)))
+                Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetPKForNewObject(GetType(T)))
+            End Function
+
+            Public Function CreateNewEntity(Of T As {_ICachedEntity, New})() As T
+                If _mgr.NewObjectManager Is Nothing Then
+                    Throw New InvalidOperationException("NewObjectManager is not set")
+                End If
+
+                Dim pk() As PKDesc = CType(_mgr.NewObjectManager.GetPKForNewObject(GetType(T)), PKDesc())
+                Return CreateNewObject(Of T)(pk)
             End Function
 
             Public Overridable Function CreateNewObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
@@ -628,7 +637,7 @@ Namespace Database
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
 
-                Return CreateNewObject(t, _mgr.NewObjectManager.GetIdentity(t))
+                Return CreateNewObject(t, _mgr.NewObjectManager.GetPKForNewObject(t))
             End Function
 
             Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As IOrmBase
