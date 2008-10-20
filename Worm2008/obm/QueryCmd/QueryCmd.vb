@@ -467,7 +467,7 @@ Namespace Query
                 'Dim table As OrmTable = _o.M2M.GetTable(t, _key)
 
                 If _appendMain OrElse propWithLoad Then
-                    Dim jf As New Worm.Database.Criteria.Joins.JoinFilter(table, selected_r.Column, t, "ID", Criteria.FilterOperation.Equal)
+                    Dim jf As New Worm.Database.Criteria.Joins.JoinFilter(table, selected_r.Column, t, OrmBaseT.PKName, Criteria.FilterOperation.Equal)
                     Dim jn As New Worm.Database.Criteria.Joins.OrmJoin(table, JoinType.Join, jf)
                     j.Add(jn)
                     If table.Equals(_table) Then
@@ -481,7 +481,7 @@ Namespace Query
                     Dim r As New List(Of SelectExpression)
                     'Dim os As IOrmObjectSchemaBase = schema.GetObjectSchema(selectedType)
                     'os.GetFieldColumnMap()("ID")._columnName
-                    r.Add(New SelectExpression(table, selected_r.Column & " " & schema.GetColumnNameByFieldNameInternal(t, "ID", False), "ID"))
+                    r.Add(New SelectExpression(table, selected_r.Column & " " & schema.GetColumnNameByFieldNameInternal(t, OrmBaseT.PKName, False), OrmBaseT.PKName))
                     r(0).Attributes = Field2DbRelations.PK
                     '_fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(r)
                     cl = r
@@ -1214,7 +1214,7 @@ Namespace Query
                 Dim pi As Reflection.PropertyInfo = kv.Value
                 For Each e As IEntity In l
                     Dim ro As New T
-                    Dim v As Object = e.GetValue(Nothing, col, Nothing)
+                    Dim v As Object = e.GetValueOptimized(Nothing, col, Nothing)
                     pi.SetValue(ro, v, Nothing)
                     r.Add(ro)
                 Next

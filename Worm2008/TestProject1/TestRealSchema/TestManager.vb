@@ -11,6 +11,7 @@ Imports Worm.Sorting
 Imports Worm.Criteria.Values
 Imports Worm.Database.Criteria.Joins
 Imports Worm.Database.Criteria.Core
+Imports Worm.Orm.Meta
 
 <TestClass()> _
 Public Class TestManagerRS
@@ -1246,14 +1247,14 @@ Public Class TestManagerRS
         _new_objects.Add(CInt(CType(obj, IOrmBase).Identifier), CType(obj, OrmBase))
     End Sub
 
-    Public Function GetIdentity(ByVal type As Type) As Object Implements Worm.OrmManager.INewObjects.GetPKForNewObject
+    Public Function GetIdentity(ByVal type As Type) As PKDesc() Implements Worm.OrmManager.INewObjects.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
-        Return i
+        Return New PKDesc() {New PKDesc("id", _id)}
     End Function
 
     Public Function GetIdentity() As Integer
-        Return CInt(GetIdentity(Nothing))
+        Return CInt(GetIdentity(Nothing)(0).Value)
     End Function
 
     Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew

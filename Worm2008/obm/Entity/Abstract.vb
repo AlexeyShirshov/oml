@@ -35,8 +35,8 @@ Namespace Orm
 
     Public Interface IEntity
         Inherits ICloneable
-        Sub SetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IObjectSchemaBase, ByVal value As Object)
-        Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IObjectSchemaBase) As Object
+        Sub SetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IObjectSchemaBase, ByVal value As Object)
+        Function GetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IObjectSchemaBase) As Object
         Function GetSyncRoot() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity
@@ -223,24 +223,22 @@ Namespace Orm
 
     End Class
 
-    Public Class KeyWrapper
+    Public Class PKWrapper
         Private _id As PKDesc()
-        Private _key As Integer
 
-        Public Sub New(ByVal o As ICachedEntity)
-            _id = o.GetPKValues
-            _key = o.Key
+        Public Sub New(ByVal pk() As PKDesc)
+            _id = pk
         End Sub
 
         Public Overrides Function GetHashCode() As Integer
-            Return _key
+            Return ToString.GetHashCode
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
-            Return Equals(TryCast(obj, KeyWrapper))
+            Return Equals(TryCast(obj, PKWrapper))
         End Function
 
-        Public Overloads Function Equals(ByVal obj As KeyWrapper) As Boolean
+        Public Overloads Function Equals(ByVal obj As PKWrapper) As Boolean
             If obj Is Nothing Then
                 Return False
             End If
@@ -249,8 +247,15 @@ Namespace Orm
             If _id.Length <> ids.Length Then Return False
             For i As Integer = 0 To _id.Length - 1
                 Dim p As PKDesc = _id(i)
-                Dim p2 As PKDesc = ids(i)
-                If p.PropertyAlias <> p2.PropertyAlias OrElse Not p.Value.Equals(p.Value) Then
+                Dim find As Boolean
+                For j As Integer = 0 To ids.Length - 1
+                    Dim p2 As PKDesc = ids(j)
+                    If p.PropertyAlias = p2.PropertyAlias AndAlso p.Value.Equals(p.Value) Then
+                        find = True
+                        Exit For
+                    End If
+                Next
+                If Not find Then
                     Return False
                 End If
             Next
@@ -258,7 +263,11 @@ Namespace Orm
         End Function
 
         Public Overrides Function ToString() As String
-            Return _key.ToString
+            Dim sb As New StringBuilder
+            For Each pk As PKDesc In _id
+                sb.Append(pk.PropertyAlias).Append(" = ").Append(pk.Value)
+            Next
+            Return sb.ToString
         End Function
     End Class
 End Namespace

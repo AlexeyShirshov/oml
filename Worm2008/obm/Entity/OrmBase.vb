@@ -2214,6 +2214,10 @@ Namespace Orm
     '    End Property
     'End Class
 
+    Public Module OrmBaseT
+        Public Const PKName As String = "ID"
+    End Module
+
     <Serializable()> _
     Public MustInherit Class OrmBaseT(Of T As {New, OrmBaseT(Of T)})
         Inherits OrmBase
@@ -2309,7 +2313,7 @@ Namespace Orm
         ''' Идентификатор объекта
         ''' </summary>
         ''' <remarks>Если производный класс имеет составной первичный ключ, это свойство лучше переопределить</remarks>
-        <ColumnAttribute("ID", Field2DbRelations.PrimaryKey)> _
+        <ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PrimaryKey)> _
         Public Overrides Property Identifier() As Object
             Get
                 'Using SyncHelper(True)
@@ -2337,7 +2341,7 @@ Namespace Orm
         End Property
 
         Public Overrides Function GetPKValues() As PKDesc()
-            Return New PKDesc() {New PKDesc("ID", _id)}
+            Return New PKDesc() {New PKDesc(OrmBaseT.PKName, _id)}
         End Function
 
         Protected Overrides Sub SetPK(ByVal pk() As PKDesc)
@@ -2362,7 +2366,7 @@ Namespace Orm
         End Sub
 
         Protected Overrides Function IsFieldLoaded(ByVal fieldName As String) As Boolean
-            If fieldName = "ID" Then
+            If fieldName = OrmBaseT.PKName Then
                 Return True
             Else
                 Return MyBase.IsFieldLoaded(fieldName)

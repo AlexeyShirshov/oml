@@ -216,13 +216,13 @@ Namespace Database
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
-                If c = "ID" Then
+                If c = OrmBaseT.PKName Then
                     has_id = True
                 End If
                 l.Add(col)
             Next
             If Not has_id Then
-                l.Add(SQLGenerator.GetColumnByFieldName(GetType(T), "ID"))
+                l.Add(SQLGenerator.GetColumnByFieldName(GetType(T), OrmBaseT.PKName))
             End If
             Return New FilterCustDelegate(Of T)(Me, CType(filter, IFilter), l, sort, key, id)
         End Function
@@ -663,8 +663,8 @@ Namespace Database
                 For Each o As IOrmBase In GetObjects(ct, ids, f, withLoad, f1, idsSorted)
                     'Dim o1 As OrmBase = CType(DbSchema.GetFieldValue(o, f1), OrmBase)
                     'Dim o2 As OrmBase = CType(DbSchema.GetFieldValue(o, f2), OrmBase)
-                    Dim o1 As IOrmBase = CType(o.GetValue(Nothing, New ColumnAttribute(f1), oschema), IOrmBase)
-                    Dim o2 As IOrmBase = CType(o.GetValue(Nothing, New ColumnAttribute(f2), oschema), IOrmBase)
+                    Dim o1 As IOrmBase = CType(o.GetValueOptimized(Nothing, New ColumnAttribute(f1), oschema), IOrmBase)
+                    Dim o2 As IOrmBase = CType(o.GetValueOptimized(Nothing, New ColumnAttribute(f2), oschema), IOrmBase)
 
                     Dim id1 As Object = o1.Identifier
                     Dim id2 As Object = o2.Identifier
@@ -798,7 +798,7 @@ Namespace Database
                 sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of ColumnAttribute)
-                arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
+                arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
                 sb.Append(SQLGenerator.SelectID(original_type, almgr, params, GetFilterInfo))
             End If
 
@@ -859,7 +859,7 @@ Namespace Database
                 sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of ColumnAttribute)
-                arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
+                arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
                 sb.Append(SQLGenerator.SelectID(original_type, almgr, params, GetFilterInfo))
             End If
 
@@ -1335,12 +1335,12 @@ Namespace Database
 
                                 Try
                                     If pi Is Nothing Then
-                                        obj.SetValue(pi, c, oschema, value)
+                                        obj.SetValueOptimized(pi, c, oschema, value)
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     Else
                                         If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
                                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                            obj.SetValue(pi, c, oschema, v)
+                                            obj.SetValueOptimized(pi, c, oschema, v)
                                             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                         ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                                             Dim dt As DateTime = CDate(value)
@@ -1349,14 +1349,14 @@ Namespace Database
                                                 Dim sw As New IO.StreamWriter(ms)
                                                 sw.Write(l)
                                                 sw.Flush()
-                                                obj.SetValue(pi, c, oschema, ms.ToArray)
+                                                obj.SetValueOptimized(pi, c, oschema, ms.ToArray)
                                                 If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                             End Using
                                         Else
                                             'If c.FieldName = "ID" Then
                                             '    obj.Identifier = CInt(value)
                                             'Else
-                                            obj.SetValue(pi, c, oschema, value)
+                                            obj.SetValueOptimized(pi, c, oschema, value)
                                             'End If
                                             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                         End If
@@ -1368,12 +1368,12 @@ Namespace Database
                                         Dim sw As New IO.StreamWriter(ms)
                                         sw.Write(l)
                                         sw.Flush()
-                                        obj.SetValue(pi, c, oschema, ms.ToArray)
+                                        obj.SetValueOptimized(pi, c, oschema, ms.ToArray)
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     End Using
                                 Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
                                     Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                    obj.SetValue(pi, c, oschema, v)
+                                    obj.SetValueOptimized(pi, c, oschema, v)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 End Try
                             End If
@@ -1443,7 +1443,7 @@ Namespace Database
                         End If
 
                         If pi Is Nothing Then
-                            obj.SetValue(pi, c, oschema, value)
+                            obj.SetValueOptimized(pi, c, oschema, value)
                             If ce IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
                         Else
                             Dim att As Field2DbRelations = fields_idx(c.FieldName).GetAttributes(c)
@@ -1474,20 +1474,20 @@ Namespace Database
                                 ElseIf GetType(IOrmBase).IsAssignableFrom(pi.PropertyType) Then
                                     Dim type_created As Type = pi.PropertyType
                                     Dim o As IOrmBase = GetOrmBaseFromCacheOrCreate(value, type_created)
-                                    obj.SetValue(pi, c, oschema, o)
+                                    obj.SetValueOptimized(pi, c, oschema, o)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 ElseIf GetType(System.Xml.XmlDocument) Is pi.PropertyType AndAlso TypeOf (value) Is String Then
                                     Dim o As New System.Xml.XmlDocument
                                     o.LoadXml(CStr(value))
-                                    obj.SetValue(pi, c, oschema, o)
+                                    obj.SetValueOptimized(pi, c, oschema, o)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 ElseIf pi.PropertyType.IsEnum AndAlso TypeOf (value) Is String Then
                                     Dim svalue As String = CStr(value).Trim
                                     If svalue = String.Empty Then
-                                        obj.SetValue(pi, c, oschema, 0)
+                                        obj.SetValueOptimized(pi, c, oschema, 0)
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     Else
-                                        obj.SetValue(pi, c, oschema, [Enum].Parse(pi.PropertyType, svalue, True))
+                                        obj.SetValueOptimized(pi, c, oschema, [Enum].Parse(pi.PropertyType, svalue, True))
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     End If
                                 ElseIf pi.PropertyType.IsGenericType AndAlso GetType(Nullable(Of )).Name = pi.PropertyType.Name Then
@@ -1519,13 +1519,13 @@ Namespace Database
                                     End If
                                     Dim v2 As Object = pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
                                         Nothing, Nothing, New Object() {v})
-                                    obj.SetValue(pi, c, oschema, v2)
+                                    obj.SetValueOptimized(pi, c, oschema, v2)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 Else
                                     Try
                                         If (pi.PropertyType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (pi.PropertyType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
                                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                            obj.SetValue(pi, c, oschema, v)
+                                            obj.SetValueOptimized(pi, c, oschema, v)
                                             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                         ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                                             Dim dt As DateTime = CDate(value)
@@ -1535,7 +1535,7 @@ Namespace Database
                                                 sw.Write(l)
                                                 sw.Flush()
                                                 'pi.SetValue(obj, ms.ToArray, Nothing)
-                                                obj.SetValue(pi, c, oschema, ms.ToArray)
+                                                obj.SetValueOptimized(pi, c, oschema, ms.ToArray)
                                                 If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                             End Using
                                             'ElseIf pi.PropertyType Is GetType(ReleaseDate) AndAlso value.GetType Is GetType(Integer) Then
@@ -1543,7 +1543,7 @@ Namespace Database
                                             '        Nothing, New Object() {value}))
                                             '    obj.SetLoaded(c, True)
                                         Else
-                                            obj.SetValue(pi, c, oschema, value)
+                                            obj.SetValueOptimized(pi, c, oschema, value)
                                             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                         End If
                                         'Catch ex As ArgumentException When ex.Message.StartsWith("Object of type 'System.DateTime' cannot be converted to type 'System.Byte[]'")
@@ -1558,12 +1558,12 @@ Namespace Database
                                         '    End Using
                                     Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
                                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
-                                        obj.SetValue(pi, c, oschema, v)
+                                        obj.SetValueOptimized(pi, c, oschema, v)
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     End Try
                                 End If
                             ElseIf dr.IsDBNull(idx + displacement) Then
-                                obj.SetValue(pi, c, oschema, Nothing)
+                                obj.SetValueOptimized(pi, c, oschema, Nothing)
                                 If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                             End If
                         End If
@@ -1766,7 +1766,7 @@ Namespace Database
             Dim values As New Generic.List(Of T2)
             Dim pcnt As Integer = params.Params.Count
             Dim nextp As Integer = pcnt
-            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, "ID", almgr, params, original_type, True)
+            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, OrmBaseT.PKName, almgr, params, original_type, True)
                 Dim sb_cmd As New StringBuilder
                 sb_cmd.Append(sb.ToString).Append(cmd_str.First)
 
@@ -1782,9 +1782,13 @@ Namespace Database
                 End Using
             Next
 
+            Dim vdic As New Dictionary(Of T2, T2)
+            For Each v As T2 In values
+                vdic.Add(v, v)
+            Next
             Dim result As New ReadOnlyList(Of T2)(original_type)
             Dim ar As IListEdit = result
-            Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
+            'Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
             If remove_not_found Then
                 'For Each o As T In objs
                 '    If Not withLoad Then
@@ -1814,20 +1818,49 @@ Namespace Database
                 '        End If
                 '    End If
                 'Next
+                Dim i As Integer = 0
                 For Each o As T2 In objs
-                    Dim pos As Integer = values.IndexOf(o)
-                    If pos >= 0 Then
-                        If withLoad Then
-                            If values(pos).IsLoaded Then
-                                ar.Add(values(pos))
+                    If i >= start AndAlso i < start + length Then
+                        Dim ro As T2 = Nothing
+                        If vdic.TryGetValue(o, ro) Then
+                            If withLoad Then
+                                If ro.IsLoaded Then
+                                    ar.Add(ro)
+                                End If
+                            Else
+                                ar.Add(ro)
                             End If
                         Else
-                            ar.Add(values(pos))
+                            If o.ObjectState <> ObjectState.NotFoundInSource Then
+                                ar.Add(o)
+                            End If
+                        End If
+                    Else
+                        If o.ObjectState <> ObjectState.NotFoundInSource Then
+                            ar.Add(o)
                         End If
                     End If
+                    i += 1
                 Next
             Else
-                result = New ReadOnlyList(Of T2)(original_type, values)
+                If vdic.Count = 0 Then
+                    result = New ReadOnlyList(Of T2)(original_type, objs)
+                Else
+                    Dim i As Integer = 0
+                    For Each o As T2 In objs
+                        If i >= start AndAlso i < start + length Then
+                            Dim ro As T2 = Nothing
+                            If vdic.TryGetValue(o, ro) Then
+                                ar.Add(ro)
+                            Else
+                                ar.Add(o)
+                            End If
+                        Else
+                            ar.Add(o)
+                        End If
+                    Next
+                End If
+
                 'If ListConverter.IsWeak Then
                 '    For Each o As T In objs
                 '        Dim obj As T = Nothing
@@ -1882,7 +1915,7 @@ Namespace Database
             Dim values As New Generic.List(Of T2)
             Dim pcnt As Integer = params.Params.Count
             Dim nextp As Integer = pcnt
-            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, "ID", almgr, params, realType, True)
+            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, OrmBaseT.PKName, almgr, params, realType, True)
                 Dim sb_cmd As New StringBuilder
                 sb_cmd.Append(sb.ToString).Append(cmd_str.First)
 
@@ -2224,7 +2257,7 @@ Namespace Database
                     For Each p As Pair(Of String, Type) In fields
                         'If p.Second Is selectType Then
                         Dim f As String = p.First
-                        Dim s As String = CStr(o.GetValue(Nothing, New ColumnAttribute(f), searchSchema))
+                        Dim s As String = CStr(o.GetValueOptimized(Nothing, New ColumnAttribute(f), searchSchema))
                         If s IsNot Nothing Then
                             If s.Equals(query, StringComparison.InvariantCultureIgnoreCase) Then
                                 full.Add(o)
@@ -2381,8 +2414,8 @@ l2:
             '    End If
             'End If
             'If selectType IsNot type2search Then
-            selCols.Insert(0, New ColumnAttribute("ID", Field2DbRelations.PK))
-            fields.Insert(0, New Pair(Of String, Type)("ID", selectType))
+            selCols.Insert(0, New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
+            fields.Insert(0, New Pair(Of String, Type)(OrmBaseT.PKName, selectType))
             'End If
 
             Dim types As New List(Of Type)

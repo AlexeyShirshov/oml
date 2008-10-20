@@ -909,7 +909,7 @@ Public MustInherit Class ObjectMappingEngine
 
         Using obj.SyncHelper(True, fieldName)
             'Return pi.GetValue(obj, Nothing)
-            Return obj.GetValue(pi, New ColumnAttribute(fieldName), oschema)
+            Return obj.GetValueOptimized(pi, New ColumnAttribute(fieldName), oschema)
         End Using
     End Function
 
@@ -936,7 +936,7 @@ Public MustInherit Class ObjectMappingEngine
         End If
 
         Using obj.SyncHelper(False, fieldName)
-            obj.SetValue(pi, GetColumnByFieldName(obj.GetType, fieldName), oschema, value)
+            obj.SetValueOptimized(pi, GetColumnByFieldName(obj.GetType, fieldName), oschema, value)
             'pi.SetValue(obj, value, Nothing)
         End Using
     End Sub
@@ -1046,7 +1046,7 @@ Public MustInherit Class ObjectMappingEngine
         If Not String.IsNullOrEmpty(c) Then
             Dim id As Object = Nothing
             If obj.IsFieldLoaded(c) Then
-                id = obj.GetValue(Nothing, New ColumnAttribute(c), oschema)
+                id = obj.GetValueOptimized(Nothing, New ColumnAttribute(c), oschema)
             Else
                 id = GetFieldValue(obj, c, oschema)
             End If
@@ -1141,8 +1141,13 @@ Public MustInherit Class ObjectMappingEngine
         If main Is Nothing Then Throw New ArgumentNullException("main")
 
         'Dim l As New List(Of ColumnAttribute)
+        Return GetColumnByFieldName(main, fieldName, GetObjectSchema(main))
+    End Function
 
-        For Each de As DictionaryEntry In GetProperties(main)
+    Public Function GetColumnByFieldName(ByVal main As Type, ByVal fieldName As String, ByVal oschema As IObjectSchemaBase) As ColumnAttribute
+        If main Is Nothing Then Throw New ArgumentNullException("main")
+
+        For Each de As DictionaryEntry In GetProperties(main, oschema)
             Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
             If c.FieldName = fieldName Then
                 Return c

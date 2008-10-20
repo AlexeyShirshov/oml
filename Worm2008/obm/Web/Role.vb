@@ -81,7 +81,7 @@ Namespace Web
         Public Overrides Function GetAllRoles() As String()
             Using mgr As OrmDBManager = ProfileProvider._getMgr()
                 Dim roles As New Generic.List(Of String)
-                For Each r As OrmBase In FindRoles(mgr, CType(New Ctor(GetRoleType).Field("ID").NotEq(-1), CriteriaLink))
+                For Each r As OrmBase In FindRoles(mgr, CType(New Ctor(GetRoleType).Field(OrmBaseT.PKName).NotEq(-1), CriteriaLink))
                     roles.Add(CStr(r.GetValue(_rolenameField)))
                 Next
                 Return roles.ToArray

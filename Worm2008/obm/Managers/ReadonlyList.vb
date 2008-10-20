@@ -114,6 +114,15 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase})
         Return New ReadOnlyList(Of ChildType)
     End Function
 
+    Public Overloads Function GetRange(ByVal index As Integer, ByVal count As Integer) As ReadOnlyList(Of T)
+        If _l.Count > 0 Then
+            Dim lst As List(Of T) = _l.GetRange(index, count)
+            Return New ReadOnlyList(Of T)(lst)
+        Else
+            Return Me
+        End If
+    End Function
+
 End Class
 
 Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity})
@@ -203,6 +212,15 @@ Public Class ReadOnlyEntityList(Of T As {Orm.ICachedEntity})
             End Using
         End If
     End Sub
+
+    Public Overloads Function GetRange(ByVal index As Integer, ByVal count As Integer) As ReadOnlyEntityList(Of T)
+        If _l.Count > 0 Then
+            Dim lst As List(Of T) = _l.GetRange(index, count)
+            Return New ReadOnlyEntityList(Of T)(lst)
+        Else
+            Return Me
+        End If
+    End Function
 End Class
 
 Public Class ReadOnlyObjectList(Of T As {Orm._IEntity})

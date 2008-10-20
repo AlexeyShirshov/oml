@@ -386,6 +386,7 @@ Namespace Linq
 
         Private _q As QueryVisitor
         Private _mem As String
+        Private _cannotEval As Boolean
 
         Public Sub New(ByVal schema As ObjectMappingEngine, ByVal q As QueryVisitor)
             MyBase.new(schema)
@@ -428,8 +429,14 @@ Namespace Linq
             Else
                 Dim b As New SimpleExpVis(_schema, _q, m.Member.Name)
                 b.Visit(m.Expression)
-                If b.Exp Is Nothing Then
-                    Dim i = 10
+                If Not b._cannotEval Then
+                    Dim v As Object = Eval(m)
+                    Dim o As IOrmBase = TryCast(v, IOrmBase)
+                    If o IsNot Nothing Then
+                        _exp = New UnaryExp(New EntityValue(o))
+                    Else
+                        _exp = New UnaryExp(New ScalarValue(v))
+                    End If
                 Else
                     If Not String.IsNullOrEmpty(b._mem) Then
                         If m.Expression.Type.FullName.StartsWith("System.Nullable") Then
@@ -502,6 +509,7 @@ Namespace Linq
         End Function
 
         Protected Overrides Function VisitParameter(ByVal p As System.Linq.Expressions.ParameterExpression) As System.Linq.Expressions.Expression
+            _cannotEval = True
             If GetType(OrmBase).IsAssignableFrom(p.Type) Then
                 _exp = New UnaryExp(_mem, New EntityPropValue(p.Type, GetField(p.Type, _mem)))
                 _mem = Nothing
@@ -525,11 +533,14 @@ Namespace Linq
         End Function
 
         Protected Overrides Function VisitConstant(ByVal c As System.Linq.Expressions.ConstantExpression) As System.Linq.Expressions.Expression
-            If c.Type.IsPrimitive OrElse GetType(String) Is c.Type Then
-                _exp = New UnaryExp(New ScalarValue(c.Value))
-                'Else
-                '    _v = New ScalarValue(Eval(c))
+            If _mem Is Nothing Then
+                _exp = New UnaryExp(New ScalarValue(Eval(c)))
             End If
+            'If c.Type.IsPrimitive OrElse GetType(String) Is c.Type Then
+            '    _exp = New UnaryExp(New ScalarValue(c.Value))
+            '    'Else
+            '    '    _v = New ScalarValue(Eval(c))
+            'End If
             Return Nothing
         End Function
     End Class

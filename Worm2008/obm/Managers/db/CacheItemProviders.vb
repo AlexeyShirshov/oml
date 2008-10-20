@@ -177,7 +177,7 @@ Namespace Database
                             AppendSelect(sb, original_type, almgr, params, arr)
                         Else
                             arr = New Generic.List(Of ColumnAttribute)
-                            arr.Add(New ColumnAttribute("ID", Field2DbRelations.PK))
+                            arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
                             AppendSelectID(sb, original_type, almgr, params, arr)
                         End If
 
@@ -480,8 +480,8 @@ Namespace Database
                     For Each o As IOrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
                         'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
-                        Dim id1 As Object = CType(o.GetValue(Nothing, New ColumnAttribute(f1), oschema), IOrmBase).Identifier
-                        Dim id2 As Object = CType(o.GetValue(Nothing, New ColumnAttribute(f2), oschema), IOrmBase).Identifier
+                        Dim id1 As Object = CType(o.GetValueOptimized(Nothing, New ColumnAttribute(f1), oschema), IOrmBase).Identifier
+                        Dim id2 As Object = CType(o.GetValueOptimized(Nothing, New ColumnAttribute(f2), oschema), IOrmBase).Identifier
 
                         If Not id1.Equals(_obj.Identifier) Then
                             Throw New OrmManagerException("Wrong relation statement")
