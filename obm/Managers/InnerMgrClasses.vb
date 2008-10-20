@@ -23,8 +23,8 @@ Partial Public Class OrmManager
             'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
             'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
             Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(obj.GetType)
-            o1 = CType(obj.GetValue(Nothing, New ColumnAttribute(p1.PropertyName), oschema), IOrmBase)
-            o2 = CType(obj.GetValue(Nothing, New ColumnAttribute(p2.PropertyName), oschema), IOrmBase)
+            o1 = CType(obj.GetValueOptimized(Nothing, New ColumnAttribute(p1.PropertyName), oschema), IOrmBase)
+            o2 = CType(obj.GetValueOptimized(Nothing, New ColumnAttribute(p2.PropertyName), oschema), IOrmBase)
         End Sub
 
         Public Function Add(ByVal e As M2MCache) As Boolean
@@ -120,17 +120,22 @@ Partial Public Class OrmManager
 
         Private _disposedValue As Boolean = False        ' To detect redundant calls
         Private _oldSchema As ObjectMappingEngine
+        Private _mgr As OrmManager
 
         Public Sub New(ByVal schema As ObjectMappingEngine)
-            Dim mgr As OrmManager = OrmManager.CurrentManager
+            MyClass.New(schema, OrmManager.CurrentManager)
+        End Sub
+
+        Public Sub New(ByVal schema As ObjectMappingEngine, ByVal mgr As OrmManager)
+            _mgr = mgr
             _oldSchema = mgr.MappingEngine
-            mgr._schema = schema
+            mgr.SetSchema(schema)
         End Sub
 
         ' IDisposable
         Protected Overridable Sub Dispose(ByVal disposing As Boolean)
             If Not Me._disposedValue Then
-                OrmManager.CurrentManager._schema = _oldSchema
+                _mgr.SetSchema(_oldSchema)
             End If
             Me._disposedValue = True
         End Sub
@@ -746,7 +751,7 @@ Partial Public Class OrmManager
     End Interface
 
     Public Interface INewObjects
-        Function GetPKForNewObject(ByVal t As Type) As Object
+        Function GetPKForNewObject(ByVal t As Type) As PKDesc()
         Function GetNew(ByVal t As Type, ByVal pk() As PKDesc) As _ICachedEntity
         Sub AddNew(ByVal obj As _ICachedEntity)
         Sub RemoveNew(ByVal obj As _ICachedEntity)

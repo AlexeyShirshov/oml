@@ -210,11 +210,11 @@ Namespace Database
             End Function
 
             Public Function Exists(ByVal t As Type) As CriteriaLink
-                Return Exists(t, "ID")
+                Return Exists(t, Orm.OrmBaseT.PKName)
             End Function
 
             Public Function NotExists(ByVal t As Type) As CriteriaLink
-                Return NotExists(t, "ID")
+                Return NotExists(t, Orm.OrmBaseT.PKName)
             End Function
 
             Public Function Exists(ByVal t As Type, ByVal f As cc.IGetFilter) As CriteriaLink

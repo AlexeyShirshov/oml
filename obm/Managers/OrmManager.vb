@@ -466,7 +466,7 @@ Partial Public MustInherit Class OrmManager
             Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(tt)
             For Each o As T In c
                 'Dim v As OrmBase = CType(_schema.GetFieldValue(o, fieldName), OrmBase)
-                Dim v As IOrmBase = CType(o.GetValue(Nothing, New ColumnAttribute(fieldName), oschema), IOrmBase)
+                Dim v As IOrmBase = CType(o.GetValueOptimized(Nothing, New ColumnAttribute(fieldName), oschema), IOrmBase)
                 Dim ll As ReadOnlyList(Of T) = Nothing
                 If Not lookups.TryGetValue(v, ll) Then
                     ll = New ReadOnlyList(Of T)
@@ -755,6 +755,23 @@ Partial Public MustInherit Class OrmManager
         Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
+    Public Function GetOrmBaseFromCacheOrCreate(Of T As {IOrmBase, New})(ByVal id As Object, ByVal add2CacheOnCreate As Boolean) As T
+        'Dim o As T = CreateObject(Of T)(id)
+        'Assert(o IsNot Nothing, "Object must be created: " & id.ToString & ". Type - " & GetType(T).ToString)
+        'Using o.GetSyncRoot()
+        '    If o.ObjectState = ObjectState.Created AndAlso Not IsNewObject(GetType(T), id) Then
+        '        Debug.Assert(Not o.IsLoaded)
+        '        Throw New ApplicationException
+        '        'o.ObjectState = ObjectState.NotLoaded
+        '        'AddObject(o)
+        '    End If
+        'End Using
+        'Return o
+        Dim o As T = CreateOrmBase(Of T)(id)
+        o.SetObjectState(ObjectState.NotLoaded)
+        Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary), add2CacheOnCreate), T)
+    End Function
+
     Public Function GetOrmBaseFromCacheOrDB(Of T As {IOrmBase, New})(ByVal id As Object) As T
         Dim o As T = CreateOrmBase(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
@@ -988,13 +1005,13 @@ l1:
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
-                If c = "ID" Then
+                If c = OrmBaseT.PKName Then
                     has_id = True
                 End If
                 l.Add(col)
             Next
             If Not has_id Then
-                l.Add(_schema.GetColumnByFieldName(GetType(T), "ID"))
+                l.Add(_schema.GetColumnByFieldName(GetType(T), OrmBaseT.PKName))
             End If
         End If
 
@@ -1616,7 +1633,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 #End If
-        Dim id As KeyWrapper = New KeyWrapper(obj)
+        Dim id As CacheKey = New CacheKey(obj)
         Dim created As Boolean = False ', checked As Boolean = False
         Dim a As _ICachedEntity = CType(dic(id), _ICachedEntity)
         If a Is Nothing AndAlso _newMgr IsNot Nothing Then
@@ -1796,7 +1813,7 @@ l1:
     Protected Sub AddObjectInternal(ByVal obj As ICachedEntity, ByVal dic As IDictionary)
         Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
         Dim trace As Boolean = False
-        Dim id As KeyWrapper = New KeyWrapper(obj)
+        Dim id As CacheKey = New CacheKey(obj)
         SyncLock dic.SyncRoot
             If Not dic.Contains(id) Then
                 dic.Add(id, obj)
@@ -1832,7 +1849,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        Dim id As KeyWrapper = New KeyWrapper(obj)
+        Dim id As CacheKey = New CacheKey(obj)
         SyncLock dic.SyncRoot
             Dim o As ICachedEntity = CType(dic(id), ICachedEntity)
             If o Is Nothing Then
@@ -1870,7 +1887,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        Dim id As KeyWrapper = New KeyWrapper(obj)
+        Dim id As CacheKey = New CacheKey(obj)
         Dim sync_key As String = "LoadType" & id.ToString & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
@@ -1915,7 +1932,7 @@ l1:
             Throw New OrmManagerException("Collection for " & t.Name & " not exists")
         End If
 
-        Return ReferenceEquals(dic(New KeyWrapper(obj)), obj)
+        Return ReferenceEquals(dic(New CacheKey(obj)), obj)
     End Function
 
     Public Function IsInCache(ByVal id As Integer, ByVal t As Type) As Boolean
@@ -2970,7 +2987,7 @@ l1:
         For Each o As T In col
             For i As Integer = 0 To fields.Length - 1
                 'Dim obj As OrmBase = CType(ObjectSchema.GetFieldValue(o, fields(i)), OrmBase)
-                Dim obj As IEntity = CType(o.GetValue(Nothing, New ColumnAttribute(fields(i)), oschema), IEntity)
+                Dim obj As IEntity = CType(o.GetValueOptimized(Nothing, New ColumnAttribute(fields(i)), oschema), IEntity)
                 If obj IsNot Nothing Then
                     If prop_objs(i) Is Nothing Then
                         'prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IListEdit)
@@ -3080,7 +3097,7 @@ l1:
             Dim type As Type = GetType(T)
 
             For Each id As Object In ids
-                Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id)
+                Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id, False)
 
                 If obj IsNot Nothing Then
                     CType(arr, IListEdit).Add(obj)
@@ -3091,7 +3108,7 @@ l1:
             Next
         Else
             Dim r As ReadOnlyList(Of T) = ConvertIds2Objects(Of T)(ids, False)
-            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() {New ColumnAttribute("ID")}))
+            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() {New ColumnAttribute(OrmBaseT.PKName)}))
         End If
         Return arr
     End Function
@@ -3119,7 +3136,7 @@ l1:
             End If
         Else
             Dim r As ReadOnlyList(Of T) = ConvertIds2Objects(Of T)(ids, start, length, False)
-            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() {New ColumnAttribute("ID")}))
+            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() {New ColumnAttribute(OrmBaseT.PKName)}))
         End If
         Return arr
     End Function

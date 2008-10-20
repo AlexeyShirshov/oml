@@ -263,7 +263,7 @@ Namespace Orm
             Return GetValue(Nothing, New ColumnAttribute(fieldName), Nothing)
         End Function
 
-        Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IObjectSchemaBase) As Object Implements IEntity.GetValue
+        Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IObjectSchemaBase) As Object Implements IEntity.GetValueOptimized
             If pi Is Nothing Then
                 Dim s As ObjectMappingEngine = OrmSchema
                 If s Is Nothing Then
@@ -302,7 +302,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As IObjectSchemaBase, ByVal value As Object) Implements IEntity.SetValue
+        Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As IObjectSchemaBase, ByVal value As Object) Implements IEntity.SetValueOptimized
             If pi Is Nothing Then
                 Using m As IGetManager = GetMgr()
                     pi = m.Manager.MappingEngine.GetProperty(Me.GetType, schema, c)
@@ -343,7 +343,7 @@ Namespace Orm
             For Each kv As DictionaryEntry In mgr.MappingEngine.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                [to].SetValue(pi, c, oschema, [from].GetValue(pi, c, oschema))
+                [to].SetValueOptimized(pi, c, oschema, [from].GetValueOptimized(pi, c, oschema))
             Next
         End Sub
 

@@ -102,13 +102,13 @@ Namespace Xml
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
-                If c = "ID" Then
+                If c = OrmBaseT.PKName Then
                     has_id = True
                 End If
                 l.Add(col)
             Next
             If Not has_id Then
-                l.Add(MappingEngine.GetColumnByFieldName(GetType(T), "ID"))
+                l.Add(MappingEngine.GetColumnByFieldName(GetType(T), OrmBaseT.PKName))
             End If
             Return New FilterCustDelegate(Of T)(Me, filter, l, sort, key, id)
         End Function
@@ -289,7 +289,7 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        obj.SetValue(Nothing, c, oschema, nodes.Current.Value)
+                        obj.SetValueOptimized(Nothing, c, oschema, nodes.Current.Value)
                         sn = True
                         cnt += 1
                     Loop
@@ -314,7 +314,7 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        obj.SetValue(pi, c, oschema, nodes.Current.Value)
+                        obj.SetValueOptimized(pi, c, oschema, nodes.Current.Value)
                         obj.SetLoaded(c, True, True, MappingEngine)
                         sn = True
                     Loop

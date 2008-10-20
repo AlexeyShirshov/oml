@@ -3,6 +3,7 @@ Imports System.Collections.Generic
 Imports Worm.Database
 Imports Worm.Cache
 Imports Worm.Orm
+Imports Worm.Orm.Meta
 
 <TestClass()> Public Class TestManager
     Implements Worm.OrmManager.INewObjects, Worm.ICreateManager
@@ -592,13 +593,13 @@ Imports Worm.Orm
     Private _l As New Dictionary(Of Integer, OrmBase)
 
     Private Function GetIdentity() As Integer
-        Return CInt(GetIdentity(Nothing))
+        Return CInt(GetIdentity(Nothing)(0).Value)
     End Function
 
-    Private Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManager.INewObjects.GetPKForNewObject
+    Private Function GetIdentity(ByVal t As Type) As Meta.PKDesc() Implements Worm.OrmManager.INewObjects.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
-        Return i
+        Return New PKDesc() {New PKDesc("id", _id)}
     End Function
 
     Private Function GetNew(ByVal t As Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew

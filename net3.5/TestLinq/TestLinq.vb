@@ -750,6 +750,21 @@ Imports Worm.Linq
         Dim l = q.ToList
 
     End Sub
+
+    <TestMethod()> _
+    Public Sub TestVariableRef()
+        Dim ctx As New WormDBContext(GetConn)
+
+        Dim e As QueryWrapperT(Of TestProject1.Table1) = ctx.CreateQueryWrapper(Of TestProject1.Table1)()
+
+        Dim code = 2
+        Dim q = From k In e _
+                Where k.Code = code _
+                Select k
+
+        Dim l = q.ToList
+    End Sub
+
     'Class cls
     '    Public Sub New(ByVal i As Integer?)
 

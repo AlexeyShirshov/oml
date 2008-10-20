@@ -37,9 +37,21 @@ Namespace Orm
 
         Public Class RelatedObject
             Private _dst As CachedEntity
-            Private _props() As String
+            Private _props() As Pair(Of String)
 
             Public Sub New(ByVal src As CachedEntity, ByVal dst As CachedEntity, ByVal properties() As String)
+                _dst = dst
+
+                Dim l As New List(Of Pair(Of String))
+                For Each p As String In properties
+                    l.Add(New Pair(Of String)(p, p))
+                Next
+                _props = l.ToArray
+
+                AddHandler src.Saved, AddressOf Added
+            End Sub
+
+            Public Sub New(ByVal src As CachedEntity, ByVal dst As CachedEntity, ByVal properties() As Pair(Of String))
                 _dst = dst
                 _props = properties
                 AddHandler src.Saved, AddressOf Added
@@ -47,24 +59,40 @@ Namespace Orm
 
             Public Sub Added(ByVal source As ICachedEntity, ByVal args As ObjectSavedArgs)
                 Dim mgr As OrmManager = OrmManager.CurrentManager
-                Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(_dst.GetType)
-                For Each p As String In _props
-                    If p = "ID" Then
-                        Dim nm As OrmManager.INewObjects = mgr.NewObjectManager
-                        If nm IsNot Nothing Then
-                            nm.RemoveNew(_dst)
-                        End If
-                        _dst.SetPK(source.GetPKValues)
-                        If nm IsNot Nothing Then
-                            mgr.NewObjectManager.AddNew(_dst)
-                        End If
-                    Else
-                        Dim o As Object = source.GetValue(Nothing, New ColumnAttribute(p), oschema)
-                        Dim c As New ColumnAttribute(p)
-                        Dim pi As Reflection.PropertyInfo = mgr.MappingEngine.GetProperty(_dst.GetType, oschema, c)
-                        _dst.SetValue(pi, c, oschema, o)
+                Dim dt As Type = _dst.GetType
+                Dim schema As ObjectMappingEngine = mgr.MappingEngine
+                Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(dt)
+                Dim pk As Boolean, pk_old As PKDesc() = _dst.GetPKValues
+                For Each p As Pair(Of String) In _props
+                    'If p = "ID" Then
+                    '    Dim nm As OrmManager.INewObjects = mgr.NewObjectManager
+                    '    If nm IsNot Nothing Then
+                    '        nm.RemoveNew(_dst)
+                    '    End If
+                    '    _dst.SetPK(source.GetPKValues)
+                    '    If nm IsNot Nothing Then
+                    '        mgr.NewObjectManager.AddNew(_dst)
+                    '    End If
+                    'Else
+                    Dim dc As ColumnAttribute = schema.GetColumnByFieldName(dt, p.Second, oschema)
+                    Dim sc As New ColumnAttribute(p.First)
+                    Dim o As Object = source.GetValueOptimized(Nothing, sc, oschema)
+                    'Dim pi As Reflection.PropertyInfo = mgr.MappingEngine.GetProperty(dt, oschema, c)
+                    '_dst.SetValue(pi, c, oschema, o)
+                    schema.SetFieldValue(_dst, p.Second, o, oschema)
+                    If (schema.GetAttributes(oschema, dc) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        pk = True
                     End If
+                    'End If
                 Next
+                If pk Then
+                    Dim nm As OrmManager.INewObjects = mgr.NewObjectManager
+                    If nm IsNot Nothing Then
+                        nm.RemoveNew(dt, pk_old)
+
+                        mgr.NewObjectManager.AddNew(_dst)
+                    End If
+                End If
                 RemoveHandler source.Saved, AddressOf Added
             End Sub
         End Class
@@ -523,7 +551,7 @@ Namespace Orm
                         ElseIf _upd.Added Then
                             '_valProcs = False
                             Dim dic As IDictionary = mc.GetDictionary(Me.GetType)
-                            Dim kw As KeyWrapper = New KeyWrapper(Me)
+                            Dim kw As CacheKey = New CacheKey(Me)
                             Dim o As CachedEntity = CType(dic(kw), CachedEntity)
                             If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
                                 dic(kw) = Me
@@ -1038,7 +1066,7 @@ l1:
                     For Each de As DictionaryEntry In mc.Manager.MappingEngine.GetProperties(t, oschema)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-                        Dim original As Object = obj.GetValue(pi, c, oschema)
+                        Dim original As Object = obj.GetValueOptimized(pi, c, oschema)
                         If (mc.Manager.MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
                             Dim current As Object = GetValue(pi, c, oschema)
                             If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _

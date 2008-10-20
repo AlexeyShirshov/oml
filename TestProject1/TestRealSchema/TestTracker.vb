@@ -5,6 +5,7 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
 Imports Worm.Orm
 Imports Worm.Database
+Imports Worm.Orm.Meta
 
 <TestClass()> _
 Public Class TestTracker
@@ -22,13 +23,13 @@ Public Class TestTracker
     End Sub
 
     Public Function GetIdentity() As Integer
-        Return CInt(GetIdentity(Nothing))
+        Return CInt(GetIdentity(Nothing)(0).Value)
     End Function
 
-    Public Function GetIdentity(ByVal t As Type) As Object Implements Worm.OrmManager.INewObjects.GetPKForNewObject
+    Public Function GetIdentity(ByVal t As Type) As PKDesc() Implements Worm.OrmManager.INewObjects.GetPKForNewObject
         Dim i As Integer = _id
         _id += -1
-        Return i
+        Return New PKDesc() {New PKDesc(OrmBaseT.PKName, i)}
     End Function
 
     Public Function GetNew(ByVal t As System.Type, ByVal id() As Meta.PKDesc) As _ICachedEntity Implements Worm.OrmManager.INewObjects.GetNew

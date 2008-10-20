@@ -35,7 +35,7 @@ Namespace Orm.Meta
                 End If
 
                 If String.IsNullOrEmpty(c.Column) Then
-                    If c.FieldName = "ID" Then
+                    If c.FieldName = OrmBaseT.PKName Then
                         c.Column = pk
                     Else
                         Throw New ObjectMappingException(String.Format("Column for property {0} entity {1} is undefined", c.FieldName, t))

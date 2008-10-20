@@ -175,4 +175,23 @@ Namespace Cache
 
     End Class
 
+    Public Class CacheKey
+        Inherits PKWrapper
+
+        Private _key As Integer
+
+        Public Sub New(ByVal o As ICachedEntity)
+            MyBase.New(o.GetPKValues)
+            _key = o.Key
+        End Sub
+
+        Public Overrides Function GetHashCode() As Integer
+            Return _key
+        End Function
+
+        Public Overrides Function ToString() As String
+            Return _key.ToString
+        End Function
+    End Class
+
 End Namespace

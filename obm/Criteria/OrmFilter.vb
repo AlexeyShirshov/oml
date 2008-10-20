@@ -251,7 +251,7 @@ Namespace Criteria.Core
                 Dim t As Type = obj.GetType
                 If Template.Type Is t Then
                     Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
-                    Dim v As Object = obj.GetValue(Nothing, New ColumnAttribute(Template.FieldName), oschema) 'schema.GetFieldValue(obj, _fieldname)
+                    Dim v As Object = obj.GetValueOptimized(Nothing, New ColumnAttribute(Template.FieldName), oschema) 'schema.GetFieldValue(obj, _fieldname)
                     r = evval.Eval(v, Template)
                     'If v IsNot Nothing Then
                     '    r = evval.Eval(v, Template)
@@ -465,7 +465,7 @@ Namespace Criteria.Core
                 End If
                 Return MakeFilter(schema, schema.GetObjectSchema(_t), o)
             Else
-                Dim v As Object = obj.GetValue(Nothing, New ColumnAttribute(_fieldname), oschema)
+                Dim v As Object = obj.GetValueOptimized(Nothing, New ColumnAttribute(_fieldname), oschema)
 
                 Return CreateEntityFilter(_t, _fieldname, New ScalarValue(v), Operation)
             End If

@@ -535,7 +535,7 @@ l1:
                             Dim p As Pair(Of String) = f.MakeSingleQueryStmt(Me, Nothing, params)
                             If ef IsNot Nothing Then
                                 p = ef.MakeSingleQueryStmt(os, Me, Nothing, params)
-                                If ef.Template.FieldName = "ID" Then
+                                If ef.Template.FieldName = OrmBaseT.PKName Then
                                     Dim att As Field2DbRelations = os.GetFieldColumnMap(ef.Template.FieldName).GetAttributes(GetColumnByFieldName(type, ef.Template.FieldName))
                                     If (att And Field2DbRelations.SyncInsert) = 0 AndAlso _
                                         (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
@@ -610,7 +610,7 @@ l1:
                             Throw New NotImplementedException
                             'ins_cmd.Append(GetColumnNameByFieldName(type, "ID", pk_table)).Append(" = @id")
                         Else
-                            ins_cmd.Append(GetColumnNameByFieldName(os, "ID")).Append(" = @id")
+                            ins_cmd.Append(GetColumnNameByFieldName(os, OrmBaseT.PKName)).Append(" = @id")
                         End If
                     End If
                 End If
@@ -1190,7 +1190,7 @@ l1:
                     End If
                 End If
 
-                Dim f As New JoinFilter(tbl, r2.Column, original_type, "ID", FilterOperation.Equal)
+                Dim f As New JoinFilter(tbl, r2.Column, original_type, OrmBaseT.PKName, FilterOperation.Equal)
                 Dim join As New OrmJoin(tbl, Joins.JoinType.Join, f)
 
                 almgr.AddTable(tbl)
@@ -1409,7 +1409,7 @@ l1:
                         If Not OrmJoin.IsEmpty(join) Then
                             almgr.AddTable(tables(j), pname)
 
-                            join.InjectJoinFilter(selectedType, "ID", table, id)
+                            join.InjectJoinFilter(selectedType, OrmBaseT.PKName, table, id)
                             'OrmFilter.ChangeValueToLiteral(join, selectedType, "ID", table, id)
                             'For Each fl As OrmFilter In join.Condition.GetAllFilters
                             '    If Not fl.IsLiteralValue Then
@@ -1443,7 +1443,7 @@ l1:
                     'dic.Add(pk_table, tbl)
                     adal = True
                 End If
-                Dim j As New OrmJoin(tbl, Joins.JoinType.Join, New JoinFilter(table, id, selectedType, "ID", FilterOperation.Equal))
+                Dim j As New OrmJoin(tbl, Joins.JoinType.Join, New JoinFilter(table, id, selectedType, OrmBaseT.PKName, FilterOperation.Equal))
                 Dim al As String = almgr.AddTable(tbl, pname)
                 If adal Then
                     almgr.AddTable(pk_table, al)
@@ -1764,12 +1764,12 @@ l1:
                 Next
             End If
             sb.Append([alias]).Append(".")
-            sb.Append(filtered_r.Column).Append(" ").Append(filteredType.Name).Append("ID")
+            sb.Append(filtered_r.Column).Append(" ").Append(filteredType.Name).Append(OrmBaseT.PKName)
             If filteredType Is selectedType Then
                 sb.Append("Rev")
             End If
             sb.Append(",").Append([alias]).Append(".").Append(id_clm)
-            sb.Append(" ").Append(selectedType.Name).Append("ID")
+            sb.Append(" ").Append(selectedType.Name).Append(OrmBaseT.PKName)
             If withLoad Then
                 sb.Append(",").Append(GetSelectColumnList(selectedType, Nothing, Nothing, schema))
                 appendMainTable = True
@@ -1958,7 +1958,7 @@ l1:
                     columns.Length -= 1
                 End If
             Else
-                Dim m As MapField2Column = searchSchema.GetFieldColumnMap("ID")
+                Dim m As MapField2Column = searchSchema.GetFieldColumnMap(OrmBaseT.PKName)
                 sb.Append("[key] ").Append(m._columnName)
             End If
             sb.Append(" from ").Append(table).Append("(")
@@ -2011,7 +2011,7 @@ l1:
                     'If tm Is Nothing Then
                     '    Throw New DBSchemaException("Invalid join")
                     'End If
-                    join.InjectJoinFilter(searchType, "ID", ct, "[key]")
+                    join.InjectJoinFilter(searchType, OrmBaseT.PKName, ct, "[key]")
                     'Dim al As String = almgr.AddTable(join.Table)
                     'columns = columns.Replace(join.Table.TableName & ".", al & ".")
                     Dim tbl As SourceFragment = join.Table
@@ -2378,7 +2378,7 @@ l1:
             '    tbl = GetTables(selectType)(0)
             'End If
 
-            Dim jf As New Database.Criteria.Joins.JoinFilter(type2join, "ID", selectType, field, oper)
+            Dim jf As New Database.Criteria.Joins.JoinFilter(type2join, OrmBaseT.PKName, selectType, field, oper)
 
             Dim t As Type = type2join
             If switchTable Then
@@ -2389,10 +2389,10 @@ l1:
         End Function
 
         Protected Friend Overrides Function MakeM2MJoin(ByVal m2m As M2MRelation, ByVal type2join As Type) As Worm.Criteria.Joins.OrmJoin()
-            Dim jf As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, m2m.Type, "ID", Worm.Criteria.FilterOperation.Equal)
+            Dim jf As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, m2m.Type, OrmBaseT.PKName, Worm.Criteria.FilterOperation.Equal)
             Dim mj As New Database.Criteria.Joins.OrmJoin(m2m.Table, Joins.JoinType.Join, jf)
             m2m = GetM2MRelation(m2m.Type, type2join, True)
-            Dim jt As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, type2join, "ID", Worm.Criteria.FilterOperation.Equal)
+            Dim jt As New Database.Criteria.Joins.JoinFilter(m2m.Table, m2m.Column, type2join, OrmBaseT.PKName, Worm.Criteria.FilterOperation.Equal)
             Dim tj As New Database.Criteria.Joins.OrmJoin(GetTables(type2join)(0), Joins.JoinType.Join, jt)
             Return New Database.Criteria.Joins.OrmJoin() {mj, tj}
         End Function

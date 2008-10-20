@@ -228,7 +228,7 @@ Namespace Cache
         '    End Get
         'End Property
 
-        Public Function ShadowCopy(ByVal t As Type, ByVal id As KeyWrapper) As ObjectModification
+        Public Function ShadowCopy(ByVal t As Type, ByVal id As CacheKey) As ObjectModification
             Using SyncRoot
                 Dim name As String = t.Name & ":" & id.ToString
                 Return CType(_modifiedobjects(name), ObjectModification)

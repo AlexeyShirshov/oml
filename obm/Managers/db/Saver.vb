@@ -592,7 +592,7 @@ Namespace Database
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
 
-                Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetPKForNewObject(GetType(T)))
+                Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetPKForNewObject(GetType(T))(0).Value)
             End Function
 
             Public Function CreateNewEntity(Of T As {_ICachedEntity, New})() As T
@@ -600,7 +600,7 @@ Namespace Database
                     Throw New InvalidOperationException("NewObjectManager is not set")
                 End If
 
-                Dim pk() As PKDesc = CType(_mgr.NewObjectManager.GetPKForNewObject(GetType(T)), PKDesc())
+                Dim pk() As PKDesc = _mgr.NewObjectManager.GetPKForNewObject(GetType(T))
                 Return CreateNewObject(Of T)(pk)
             End Function
 

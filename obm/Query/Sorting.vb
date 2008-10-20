@@ -733,8 +733,8 @@ Namespace Sorting
                         End If
                     Else
                         Dim pr As Pair(Of _IEntity, IOrmSorting) = TryCast(xo, Pair(Of _IEntity, IOrmSorting))
-                        xo = pr.First.GetValue(Nothing, New ColumnAttribute(s.FieldName), ss)
-                        yo = pr2.First.GetValue(Nothing, New ColumnAttribute(s.FieldName), ss)
+                        xo = pr.First.GetValueOptimized(Nothing, New ColumnAttribute(s.FieldName), ss)
+                        yo = pr2.First.GetValueOptimized(Nothing, New ColumnAttribute(s.FieldName), ss)
                     End If
                 End If
                 Dim k As Integer = 1
@@ -784,10 +784,10 @@ Namespace Sorting
                 If ss IsNot Nothing Then
                     Return New Pair(Of IEntity, IOrmSorting)(xo, ss)
                 Else
-                    Return xo.GetValue(Nothing, New ColumnAttribute(s.FieldName), Nothing)
+                    Return xo.GetValueOptimized(Nothing, New ColumnAttribute(s.FieldName), Nothing)
                 End If
             End If
-            Return xo.GetValue(Nothing, New ColumnAttribute(s.FieldName), oschema)
+            Return xo.GetValueOptimized(Nothing, New ColumnAttribute(s.FieldName), oschema)
         End Function
 
         Private Function _Compare(ByVal x As Object, ByVal y As Object) As Integer Implements System.Collections.IComparer.Compare
