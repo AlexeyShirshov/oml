@@ -224,6 +224,10 @@ Namespace Query.Database
 
         Private Delegate Function GetProcessorDelegate(Of ReturnType As _IEntity)() As ProviderAnonym(Of ReturnType)
 
+        Private Sub SetSchema4Object(ByVal o As ICachedEntity, ByVal mgr As OrmManager)
+            CType(o, _ICachedEntity).SetSpecificSchema(mgr.MappingEngine)
+        End Sub
+
         Private Function _Exec(Of ReturnType As _IEntity)(ByVal mgr As OrmManager, _
             ByVal query As QueryCmd, ByVal gp As GetProcessorDelegate(Of ReturnType), _
             ByVal d As GetCeDelegate(Of ReturnType), ByVal d2 As GetListFromCEDelegate(Of ReturnType)) As ReadOnlyObjectList(Of ReturnType)
@@ -242,6 +246,7 @@ Namespace Query.Database
             Dim oldLength As Integer = mgr._length
             Dim oldSchema As ObjectMappingEngine = mgr.MappingEngine
             Dim timeout As Nullable(Of Integer) = dbm.CommandTimeout
+            Dim oldC As Boolean = mgr.RaiseObjectCreation
 
             If query.ClientPaging IsNot Nothing Then
                 mgr._start = query.ClientPaging.Start
@@ -259,7 +264,9 @@ Namespace Query.Database
             End If
 
             If query.Schema IsNot Nothing Then
+                mgr.RaiseObjectCreation = True
                 mgr.SetSchema(query.Schema)
+                AddHandler mgr.ObjectCreated, AddressOf SetSchema4Object
             End If
 
             If query.CommandTimed.HasValue Then
@@ -287,20 +294,24 @@ Namespace Query.Database
 
             query.LastExecitionResult = mgr.GetLastExecitionResult
 
+            mgr.RaiseOnDataAvailable()
+
+            Dim s As Cache.IListObjectConverter.ExtractListResult
+            'Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
+            'Return r
+            Dim res As ReadOnlyObjectList(Of ReturnType) = d2(mgr, query, p, ce, s)
+
             mgr._dont_cache_lists = oldCache
             mgr._start = oldStart
             mgr._length = oldLength
             mgr._list = oldList
             mgr._expiresPattern = oldExp
             mgr.SetSchema(oldSchema)
+            RemoveHandler mgr.ObjectCreated, AddressOf SetSchema4Object
             dbm.CommandTimeout = timeout
+            mgr.RaiseObjectCreation = oldC
 
-            mgr.RaiseOnDataAvailable()
-
-            Dim s As Cache.IListObjectConverter.ExtractListResult
-            'Dim r As ReadOnlyList(Of ReturnType) = ce.GetObjectList(Of ReturnType)(mgr, query.WithLoad, p.Created, s)
-            'Return r
-            Return d2(mgr, query, p, ce, s)
+            Return res
         End Function
 
         Public Function Exec(Of ReturnType As {_ICachedEntity})(ByVal mgr As OrmManager, _

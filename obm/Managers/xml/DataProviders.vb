@@ -34,7 +34,7 @@ Namespace Xml
                 _id = id
             End Sub
 
-            Public Overridable Function Validate() As Boolean Implements OrmManager.ICacheValidator.Validate
+            Public Overridable Function Validate() As Boolean Implements OrmManager.ICacheValidator.ValidateBeforCacheProbe
                 If _f IsNot Nothing Then
                     For Each fl As IFilter In _f.GetAllFilters
                         Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
@@ -57,7 +57,7 @@ Namespace Xml
                 Return True
             End Function
 
-            Public Overridable Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean Implements OrmManager.ICacheValidator.Validate
+            Public Overridable Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
                 Return True
             End Function
 

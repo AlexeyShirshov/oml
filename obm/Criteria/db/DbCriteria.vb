@@ -71,14 +71,18 @@ Namespace Database
                 Return New CriteriaField(stmtGen, t, fieldName)
             End Function
 
+            Public Shared Function ColumnOnInlineTable(ByVal columnName As String) As CriteriaColumn
+                Return Column(Nothing, Nothing, columnName)
+            End Function
+
             Public Shared Function Column(ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String) As CriteriaColumn
                 Return Column(Nothing, table, columnName)
             End Function
 
             Public Shared Function Column(ByVal stmtGen As SQLGenerator, ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String) As CriteriaColumn
-                If table Is Nothing Then
-                    Throw New ArgumentNullException("table")
-                End If
+                'If table Is Nothing Then
+                '    Throw New ArgumentNullException("table")
+                'End If
 
                 If String.IsNullOrEmpty(columnName) Then
                     Throw New ArgumentNullException("columnName")
@@ -139,7 +143,11 @@ Namespace Database
             End Sub
 
             Protected Overrides Function CreateFilter(ByVal v As Worm.Criteria.Values.IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.IFilter
-                Return New TableFilter(Table, Column, v, oper)
+                If Table Is Nothing Then
+                    Return New TableFilter(Column, v, oper)
+                Else
+                    Return New TableFilter(Table, Column, v, oper)
+                End If
             End Function
 
             Protected Overrides Function GetLink(ByVal fl As Worm.Criteria.Core.IFilter) As Worm.Criteria.CriteriaLink

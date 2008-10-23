@@ -406,7 +406,7 @@ Partial Public MustInherit Class OrmManager
 #If DEBUG Then
         Dim ft As Type = _schema.GetFieldTypeByName(tt, fieldName)
         For Each o As IOrmBase In ecol
-            If o.GetType IsNot ft Then
+            If Not ft.IsAssignableFrom(o.GetType) Then
                 Throw New ArgumentNullException(String.Format("Cannot load {0} with such collection. There is not relation", tt.Name))
             End If
             Exit For
@@ -438,7 +438,7 @@ Partial Public MustInherit Class OrmManager
                         'Dim fs As List(Of String) = Nothing
                         Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(f, Nothing, key, id)
                         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
-                        If v Is Nothing OrElse v.Validate() Then
+                        If v Is Nothing OrElse v.ValidateBeforCacheProbe() Then
                             'l.AddRange(Find(Of T)(cl, Nothing, True))
                             lookups.Add(o, New ReadOnlyList(Of T)(Find(Of T)(cl, Nothing, True)))
                             hasInCache.Add(o, Nothing)
@@ -573,9 +573,9 @@ Partial Public MustInherit Class OrmManager
                         'Dim sync As String = GetSync(key, id)
                         Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(o, GetFilter(criteria, type2load), Nothing, id, key, direct)
                         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
-                        If v Is Nothing OrElse v.Validate() Then
+                        If v Is Nothing OrElse v.ValidateBeforCacheProbe() Then
                             Dim e As M2MCache = CType(dic(id), M2MCache)
-                            If Not v.Validate(e) Then
+                            If Not v.ValidateItemFromCache(e) Then
                                 newc.Add(o)
                             End If
                             'l.AddRange(FindMany2Many(Of T)(o, filter, Nothing, SortType.Asc, True))
@@ -769,7 +769,11 @@ Partial Public MustInherit Class OrmManager
         'Return o
         Dim o As T = CreateOrmBase(Of T)(id)
         o.SetObjectState(ObjectState.NotLoaded)
-        Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary), add2CacheOnCreate), T)
+        Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary), add2CacheOnCreate)
+        If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
+            o.SetObjectState(ObjectState.Created)
+        End If
+        Return CType(obj, T)
     End Function
 
     Public Function GetOrmBaseFromCacheOrDB(Of T As {IOrmBase, New})(ByVal id As Object) As T
@@ -923,7 +927,7 @@ l1:
                 Dim psort As Sort = del.Sort
 
                 If ce.SortEquals(psort) OrElse psort Is Nothing Then
-                    If v IsNot Nothing AndAlso Not v.Validate(ce) Then
+                    If v IsNot Nothing AndAlso Not v.ValidateItemFromCache(ce) Then
                         del.Renew = True
                         GoTo l1
                     End If
@@ -1304,7 +1308,7 @@ l1:
             v = TryCast(del, ICacheValidator)
         End If
 
-        Dim renew As Boolean = v IsNot Nothing AndAlso Not v.Validate()
+        Dim renew As Boolean = v IsNot Nothing AndAlso Not v.ValidateBeforCacheProbe()
 
         'Dim sort As String = del.Sort
         'Dim sort_type As SortType = del.SortType
@@ -1374,18 +1378,21 @@ l1:
             Return False
         End If
 
+        If v IsNot Nothing AndAlso Not v.ValidateItemFromCache(ce) Then
+            del.Renew = True
+            Return False
+        End If
+
         If _externalFilter Is Nothing Then
             Dim psort As Sort = del.Sort
 
             If ce.SortEquals(psort) OrElse psort Is Nothing Then
-                If v IsNot Nothing AndAlso Not v.Validate(ce) Then
-                    del.Renew = True
-                    Return False
-                End If
                 If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
                     Dim objs As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me)
                     ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
-                    dic(id) = ce
+                    If ce.CanRenewAfterSort Then
+                        dic(id) = ce
+                    End If
                 End If
             Else
                 'Dim loaded As Integer = 0
@@ -1394,7 +1401,9 @@ l1:
                     Dim srt As IOrmSorting = Nothing
                     If psort.IsExternal Then
                         ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
-                        dic(id) = ce
+                        If ce.CanRenewAfterSort Then
+                            dic(id) = ce
+                        End If
                     ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
                         Using SyncHelper.AcquireDynamicLock(sync)
                             Dim sc As IComparer(Of T) = Nothing
@@ -1407,7 +1416,9 @@ l1:
                                 Dim os As ReadOnlyEntityList(Of T) = CType(CreateReadonlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
                                 os.Sort(sc)
                                 ce = del.GetCacheItem(os)
-                                dic(id) = ce
+                                If ce.CanRenewAfterSort Then
+                                    dic(id) = ce
+                                End If
                             Else
                                 del.Renew = True
                                 Return False
@@ -2172,7 +2183,7 @@ l1:
     End Function
 
     Protected Friend Function GetM2MKey(ByVal tt1 As Type, ByVal tt2 As Type, ByVal direct As String) As String
-        Return _schema.GetEntityKey(GetFilterInfo, tt1) & Const_JoinStaticString & direct & " - new version - " & tt2.Name & "$" & GetStaticKey()
+        Return _schema.GetEntityKey(GetFilterInfo, tt1) & Const_JoinStaticString & direct & " - new version - " & _schema.GetEntityKey(GetFilterInfo, tt2) & "$" & GetStaticKey()
     End Function
 
     Protected Friend Function FindMany2Many2(Of T As {IOrmBase, New})(ByVal obj As _IOrmBase, ByVal criteria As IGetFilter, _
@@ -2390,12 +2401,12 @@ l1:
                 End If
             Next
 
-            For Each el As EditableListBase In obj.GetAllEditable
+            For Each el As EditableListBase In obj.GetAllRelation
                 Dim p As Pair(Of String) = _cache.RemoveM2MQuery(el)
 
                 For Each id As Object In el.Added
                     Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
-                    Dim oel As EditableListBase = o.GetM2M(tt1, el.Key)
+                    Dim oel As EditableListBase = o.GetRelation(tt1, el.Key)
                     oel.Added.Remove(oldId)
                     oel.Added.Add(obj.Identifier)
                 Next
@@ -2551,6 +2562,15 @@ l1:
             rt = GetType(ReadOnlyObjectList(Of ))
         End If
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t}), New Object() {l}), IListEdit)
+    End Function
+
+    Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IFilter) As ReadOnlyObjectList(Of T)
+        Dim evaluated As Boolean
+        Dim r As ReadOnlyObjectList(Of T) = ApplyFilter(col, filter, evaluated)
+        If Not evaluated Then
+            Throw New InvalidOperationException("Filter is not applyable")
+        End If
+        Return r
     End Function
 
     Public Function ApplyFilter(Of T As {_IEntity})(ByVal col As ReadOnlyObjectList(Of T), ByVal filter As IFilter, ByRef evaluated As Boolean) As ReadOnlyObjectList(Of T)
@@ -3124,7 +3144,7 @@ l1:
                 length = Math.Min(length + start, ids.Count)
                 For i As Integer = start To length - 1
                     Dim id As Object = ids(i)
-                    Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id)
+                    Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id, False)
 
                     If obj IsNot Nothing Then
                         CType(arr, IListEdit).Add(obj)

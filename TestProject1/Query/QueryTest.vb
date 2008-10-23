@@ -607,7 +607,8 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestWrapper2()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As OrmQueryCmd(Of Entity) = OrmQueryCmd(Of Entity).Create(mgr)
+            'Dim q As OrmQueryCmd(Of Entity) = QueryCmd.Create(GetType(Entity)).GetOrmCommand(Of Entity)(mgr)
+            Dim q As OrmQueryCmd(Of Entity) = QueryCmd.CreateAndGetOrmCommand(Of Entity)(mgr)
 
             Dim r As ReadOnlyList(Of Entity) = q
 

@@ -153,5 +153,8 @@ Namespace Orm
 
         End Sub
 
+        Public Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.SetSpecificSchema
+
+        End Sub
     End Class
 End Namespace

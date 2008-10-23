@@ -296,6 +296,22 @@ Public Class ReadOnlyObjectList(Of T As {Orm._IEntity})
         End If
     End Function
 
+    Public Function ApplyFilter(ByVal filter As IFilter) As ReadOnlyObjectList(Of T)
+        If _l.Count > 0 Then
+            Dim evaluated As Boolean
+            Dim o As T = _l(0)
+            Using mc As IGetManager = o.GetMgr()
+                Dim r As ReadOnlyObjectList(Of T) = mc.Manager.ApplyFilter(Of T)(Me, filter, evaluated)
+                If Not evaluated Then
+                    Throw New InvalidOperationException("Filter is not applyable")
+                End If
+                Return r
+            End Using
+        Else
+            Return Me
+        End If
+    End Function
+
     Public Function ApplySort(ByVal s As Sorting.Sort) As ICollection(Of T)
         Return OrmManager.ApplySort(Of T)(Me, s)
     End Function

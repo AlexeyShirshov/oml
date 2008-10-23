@@ -335,60 +335,60 @@ Namespace Orm
             End Function
         End Class
 
-        <EditorBrowsable(EditorBrowsableState.Never)> _
-        Public Class M2MClassNew
-            Private _o As OrmBase
+        '<EditorBrowsable(EditorBrowsableState.Never)> _
+        'Public Class M2MClassNew
+        '    Private _o As OrmBase
 
-            Friend Sub New(ByVal o As OrmBase)
-                _o = o
-            End Sub
+        '    Friend Sub New(ByVal o As OrmBase)
+        '        _o = o
+        '    End Sub
 
-            Protected ReadOnly Property GetMgr() As IGetManager
-                Get
-                    Return _o.GetMgr
-                End Get
-            End Property
+        '    Protected ReadOnly Property GetMgr() As IGetManager
+        '        Get
+        '            Return _o.GetMgr
+        '        End Get
+        '    End Property
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String) As Worm.ReadOnlyList(Of T)
-                Throw New NotImplementedException
-            End Function
+        '    Public Function Search(Of T As {IOrmBase, New})(ByVal text As String) As Worm.ReadOnlyList(Of T)
+        '        Throw New NotImplementedException
+        '    End Function
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal sort As Sort) As Worm.ReadOnlyList(Of T)
-                Throw New NotImplementedException
-            End Function
+        '    Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal sort As Sort) As Worm.ReadOnlyList(Of T)
+        '        Throw New NotImplementedException
+        '    End Function
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
-                Throw New NotImplementedException
-            End Function
+        '    Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+        '        Throw New NotImplementedException
+        '    End Function
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
-                Throw New NotImplementedException
-            End Function
+        '    Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+        '        Throw New NotImplementedException
+        '    End Function
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean) As Worm.ReadOnlyList(Of T)
-                Throw New NotImplementedException
-            End Function
+        '    Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean) As Worm.ReadOnlyList(Of T)
+        '        Throw New NotImplementedException
+        '    End Function
 
-            Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
-                Throw New NotImplementedException
-            End Function
+        '    Public Function Search(Of T As {IOrmBase, New})(ByVal text As String, ByVal criteria As IGetFilter, ByVal sort As Boolean, ByVal direct As Boolean) As Worm.ReadOnlyList(Of T)
+        '        Throw New NotImplementedException
+        '    End Function
 
-            Public Function GetTable(ByVal t As Type, ByVal key As String) As SourceFragment
-                Using mc As IGetManager = _o.GetMgr()
-                    Dim s As ObjectMappingEngine = mc.Manager.MappingEngine
-                    Dim m2m As M2MRelation = s.GetM2MRelation(_o.GetType, t, key)
-                    If m2m Is Nothing Then
-                        Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
-                    Else
-                        Return m2m.Table
-                    End If
-                End Using
-            End Function
+        '    Public Function GetTable(ByVal t As Type, ByVal key As String) As SourceFragment
+        '        Using mc As IGetManager = _o.GetMgr()
+        '            Dim s As ObjectMappingEngine = mc.Manager.MappingEngine
+        '            Dim m2m As M2MRelation = s.GetM2MRelation(_o.GetType, t, key)
+        '            If m2m Is Nothing Then
+        '                Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
+        '            Else
+        '                Return m2m.Table
+        '            End If
+        '        End Using
+        '    End Function
 
-            Public Function GetTable(ByVal t As Type) As SourceFragment
-                Return GetTable(t, Nothing)
-            End Function
-        End Class
+        '    Public Function GetTable(ByVal t As Type) As SourceFragment
+        '        Return GetTable(t, Nothing)
+        '    End Function
+        'End Class
 
         Private Class ChangedEventHelper
             Implements IDisposable
@@ -921,7 +921,7 @@ Namespace Orm
                 SyncLock "1efb139gf8bh"
                     For Each id As Object In el.Added
                         Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
-                        Dim m As EditableListBase = o.GetM2M(Me.GetType, el.Key)
+                        Dim m As EditableListBase = o.GetRelation(Me.GetType, el.Key)
                         m.Added.Remove(Identifier)
                         m._savedIds.Remove(Identifier)
                         If updateCache Then
@@ -937,7 +937,7 @@ Namespace Orm
 
                     For Each id As Object In el.Deleted
                         Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
-                        Dim m As EditableListBase = o.GetM2M(Me.GetType, el.Key)
+                        Dim m As EditableListBase = o.GetRelation(Me.GetType, el.Key)
                         m.Deleted.Remove(Identifier)
                         If updateCache Then
                             mgr.Cache.UpdateM2MQueries(el)
@@ -2043,7 +2043,7 @@ Namespace Orm
             Return q
         End Function
 
-        Protected Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase Implements _IOrmBase.GetM2M
+        Protected Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase 'Implements _IOrmBase.GetM2M
             Dim el As EditableListBase = Nothing
             Using GetSyncRoot()
                 For Each e As EditableListBase In _m2m
@@ -2069,7 +2069,7 @@ Namespace Orm
                 Dim el As EditableListBase = GetM2M(obj.GetType, key)
                 Using el.SyncRoot
                     If Not el.Added.Contains(obj.Identifier) Then
-                        Dim el2 As EditableListBase = obj.GetM2M(Me.GetType, key)
+                        Dim el2 As EditableListBase = obj.GetRelation(Me.GetType, key)
                         SyncLock "1efb139gf8bh"
                             If Not el2.Added.Contains(Identifier) Then
                                 If el.Deleted.Contains(obj.Identifier) Then
@@ -2110,7 +2110,7 @@ Namespace Orm
                 Dim el As EditableListBase = GetM2M(obj.GetType, key)
                 Using el.SyncRoot
                     If Not el.Deleted.Contains(obj.Identifier) Then
-                        Dim el2 As EditableListBase = obj.GetM2M(Me.GetType, key)
+                        Dim el2 As EditableListBase = obj.GetRelation(Me.GetType, key)
                         SyncLock "1efb139gf8bh"
                             If Not el2.Deleted.Contains(Identifier) Then
                                 If el.Added.Contains(obj.Identifier) Then
@@ -2140,7 +2140,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Function _GetAll() As IList(Of EditableListBase) Implements _IOrmBase.GetAllEditable
+        Protected Function _GetAll() As IList(Of EditableListBase) 'Implements _IOrmBase.GetAllEditable
             Return _m2m
         End Function
 
@@ -2161,6 +2161,34 @@ Namespace Orm
         '    Dim q As New Worm.Query.QueryCmdBase(Me, key)
         '    Return q
         'End Function
+
+        Public Function GetRelation(ByVal t As System.Type) As Cache.EditableListBase Implements IM2M.GetRelation
+            Return GetM2M(t, Nothing)
+        End Function
+
+        Public Function GetRelation(ByVal t As System.Type, ByVal key As String) As Cache.EditableListBase Implements IM2M.GetRelation
+            Return GetM2M(t, key)
+        End Function
+
+        Public Function GetRelationSchema(ByVal t As System.Type) As Meta.M2MRelation Implements IM2M.GetRelationSchema
+            Return GetRelationSchema(t, Nothing)
+        End Function
+
+        Public Function GetRelationSchema(ByVal t As System.Type, ByVal key As String) As Meta.M2MRelation Implements IM2M.GetRelationSchema
+            Using mc As IGetManager = GetMgr()
+                Dim s As ObjectMappingEngine = mc.Manager.MappingEngine
+                Dim m2m As M2MRelation = s.GetM2MRelation(Me.GetType, t, key)
+                If m2m Is Nothing Then
+                    Throw New ArgumentException(String.Format("Invalid type {0} or key {1}", t.ToString, key))
+                Else
+                    Return m2m
+                End If
+            End Using
+        End Function
+
+        Public Function GetAllRelation() As System.Collections.Generic.IList(Of Cache.EditableListBase) Implements IM2M.GetAllRelation
+            Return _GetAll()
+        End Function
     End Class
 
     Public Enum ObjectState
@@ -2370,6 +2398,22 @@ Namespace Orm
                 Return True
             Else
                 Return MyBase.IsFieldLoaded(fieldName)
+            End If
+        End Function
+
+        Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As Meta.IObjectSchemaBase, ByVal value As Object)
+            If c.FieldName = OrmBaseT.PKName Then
+                _id = value
+            Else
+                MyBase.SetValue(pi, c, schema, value)
+            End If
+        End Sub
+
+        Public Overloads Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal oschema As Meta.IObjectSchemaBase) As Object
+            If c.FieldName = OrmBaseT.PKName Then
+                Return _id
+            Else
+                Return MyBase.GetValue(pi, c, oschema)
             End If
         End Function
     End Class

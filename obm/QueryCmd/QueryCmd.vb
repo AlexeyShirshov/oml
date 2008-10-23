@@ -102,6 +102,14 @@ Namespace Query
     Public Class Paging
         Public Start As Integer
         Public Length As Integer
+
+        Public Sub New()
+        End Sub
+
+        Public Sub New(ByVal start As Integer, ByVal length As Integer)
+            Me.Start = start
+            Me.Length = length
+        End Sub
     End Class
 
     Public Class QueryIterator
@@ -543,7 +551,7 @@ Namespace Query
 
         Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of OrmJoin)), _
             ByVal fs() As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior, _
-            ByVal sl As List(Of List(Of SelectExpression))) As String
+            ByVal sl As List(Of List(Of SelectExpression)), ByVal realTypeKey As String) As String
             Dim key As New StringBuilder
 
             Dim i As Integer = 0
@@ -563,7 +571,7 @@ Namespace Query
                 i += 1
             Next
 
-            'key &= mgr.ObjectSchema.GetEntityKey(mgr.GetFilterInfo, GetType(T))
+            key.Append(realTypeKey).Append("$")
 
             key.Append("$").Append(mgrKey)
             Return key.ToString
@@ -1169,6 +1177,50 @@ Namespace Query
         '    Return ToListTypeless(mgr).GetEnumerator
         'End Function
 
+        Public Function [Single](Of T)(ByVal mgr As OrmManager) As T
+            Dim l As IList(Of T) = ToSimpleList(Of T)(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [SingleOrDefault](Of T)(ByVal mgr As OrmManager) As T
+            Dim l As IList(Of T) = ToSimpleList(Of T)(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function SingleEntity(Of T As _ICachedEntity)(ByVal mgr As OrmManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function SingleOrm(Of T As _IOrmBase)(ByVal mgr As OrmManager) As T
+            Dim l As ReadOnlyList(Of T) = ToOrmList(Of T)(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function SingleOrDefaultOrm(Of T As _IOrmBase)(ByVal mgr As OrmManager) As T
+            Dim l As ReadOnlyList(Of T) = ToOrmList(Of T)(mgr)
+            If l.Count > 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
         Public Function ToSimpleList(Of T)(ByVal mgr As OrmManager) As IList(Of T)
             Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
             'Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
@@ -1449,14 +1501,204 @@ Namespace Query
             End If
             Return dp.Get
         End Function
+
+        Public Function GetOrmCommand(Of T As _IOrmBase)(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
+            'Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As New OrmQueryCmd(Of T)(Table)
+            CopyTo(q)
+            If _getMgr Is Nothing Then
+                q.Exec(mgr)
+            End If
+            Return q
+        End Function
+
+        Public Function GetOrmCommand(Of T As _IOrmBase)() As OrmQueryCmd(Of T)
+            Dim mgr As OrmManager = OrmManager.CurrentManager
+            Dim q As New OrmQueryCmd(Of T)(Table)
+            CopyTo(q)
+            If _getMgr Is Nothing Then
+                q.Exec(mgr)
+            End If
+            Return q
+        End Function
+
+#Region " Create methods "
+
+        Public Shared Function Create(ByVal table As SourceFragment, ByVal mgr As OrmManager) As QueryCmd
+            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            If f Is Nothing Then
+                Dim q As New QueryCmd(table)
+                Return q
+            Else
+                Return f.Create(table)
+            End If
+        End Function
+
+        Public Shared Function CreateAndGetOrmCommand(Of T As _IOrmBase)(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
+            Dim selectType As Type = GetType(T)
+            Return Create(selectType, mgr).GetOrmCommand(Of T)(mgr)
+        End Function
+
+        Public Shared Function Create(ByVal selectType As Type, ByVal mgr As OrmManager) As QueryCmd
+            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            If f Is Nothing Then
+                Dim q As New QueryCmd(selectType)
+                Return q
+            Else
+                Return f.Create(selectType)
+            End If
+        End Function
+
+        Public Shared Function CreateByEntityName(ByVal entityName As String, ByVal mgr As OrmManager) As QueryCmd
+            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            If f Is Nothing Then
+                Dim q As New QueryCmd(entityName)
+                Return q
+            Else
+                Return f.CreateByEntityName(entityName)
+            End If
+        End Function
+
+        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal mgr As OrmManager) As QueryCmd
+            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            If f Is Nothing Then
+                Dim q As New QueryCmd(obj)
+                Return q
+            Else
+                Return f.Create(obj)
+            End If
+        End Function
+
+        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As QueryCmd
+            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            If f Is Nothing Then
+                Dim q As New QueryCmd(obj, key)
+                Return q
+            Else
+                Return f.Create(obj, key)
+            End If
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment, ByVal mgr As OrmManager) As QueryCmd
+            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            If f Is Nothing Then
+                Dim q As New QueryCmd(table)
+                q.Name = name
+                Return q
+            Else
+                Return f.Create(name, table)
+            End If
+        End Function
+
+        Public Shared Function CreateAndGetOrmCommand(Of T As _IOrmBase)(ByVal name As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
+            Dim selectType As Type = GetType(T)
+            Return Create(name, selectType, mgr).GetOrmCommand(Of T)(mgr)
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal selectType As Type, ByVal mgr As OrmManager) As QueryCmd
+            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            If f Is Nothing Then
+                Dim q As New QueryCmd(selectType)
+                q.Name = name
+                Return q
+            Else
+                Return f.Create(name, selectType)
+            End If
+        End Function
+
+        Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String, ByVal mgr As OrmManager) As QueryCmd
+            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            If f Is Nothing Then
+                Dim q As New QueryCmd(entityName)
+                q.Name = name
+                Return q
+            Else
+                Return f.CreateByEntityName(name, entityName)
+            End If
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal mgr As OrmManager) As QueryCmd
+            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            If f Is Nothing Then
+                Dim q As New QueryCmd(obj)
+                q.Name = name
+                Return q
+            Else
+                Return f.Create(name, obj)
+            End If
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As QueryCmd
+            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            If f Is Nothing Then
+                Dim q As New QueryCmd(obj, key)
+                q.Name = name
+                Return q
+            Else
+                Return f.Create(name, obj, key)
+            End If
+        End Function
+
+        Public Shared Function Create(ByVal table As SourceFragment) As QueryCmd
+            Return Create(table, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function CreateAndGetOrmCommand(Of T As _IOrmBase)() As OrmQueryCmd(Of T)
+            Return CreateAndGetOrmCommand(Of T)(OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal selectType As Type) As QueryCmd
+            Return Create(selectType, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function CreateByEntityName(ByVal entityName As String) As QueryCmd
+            Return CreateByEntityName(entityName, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal obj As _IOrmBase) As QueryCmd
+            Return Create(obj, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal key As String) As QueryCmd
+            Return Create(obj, key, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
+            Return Create(name, table, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function CreateAndGetOrmCommand(Of T As _IOrmBase)(ByVal name As String) As OrmQueryCmd(Of T)
+            Return CreateAndGetOrmCommand(Of T)(name, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal selectType As Type) As QueryCmd
+            Return Create(name, selectType, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
+            Return CreateByEntityName(name, entityName, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase) As QueryCmd
+            Return Create(name, obj, OrmManager.CurrentManager)
+        End Function
+
+        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String) As QueryCmd
+            Return Create(name, obj, key, OrmManager.CurrentManager)
+        End Function
+
+
+#End Region
+
     End Class
 
     Public Class OrmQueryCmd(Of T As _IOrmBase)
         Inherits QueryCmd
+        Implements Generic.IEnumerable(Of T)
 
         Private _preCmp As ReadOnlyList(Of T)
 
-        Public Sub Compute(ByVal mgr As OrmManager)
+        Public Sub Exec(ByVal mgr As OrmManager)
             _preCmp = ToOrmList(Of T)(mgr)
         End Sub
 
@@ -1516,198 +1758,26 @@ Namespace Query
 
 #End Region
 
-        Public Shared Function Create(ByVal table As SourceFragment, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            If f Is Nothing Then
-                Dim q As New OrmQueryCmd(Of T)(table)
-                q.Compute(mgr)
-                Return q
-            Else
-                Dim q As New OrmQueryCmd(Of T)
-                f.Create(table).CopyTo(q)
-                Return q
-            End If
+        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of T) Implements System.Collections.Generic.IEnumerable(Of T).GetEnumerator
+            Return CType(Me, ReadOnlyList(Of T)).GetEnumerator
         End Function
 
-        Public Shared Function Create(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim selectType As Type = GetType(T)
-            Return Create(selectType, mgr)
+        Protected Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator
+            Return GetEnumerator()
         End Function
 
-        Public Shared Function Create(ByVal selectType As Type, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            If f Is Nothing Then
-                Dim q As New OrmQueryCmd(Of T)(selectType)
-                q.Compute(mgr)
-                Return q
-            Else
-                Dim q As New OrmQueryCmd(Of T)
-                f.Create(selectType).CopyTo(q)
-                Return q
-            End If
-        End Function
-
-        Public Shared Function CreateByEntityName(ByVal entityName As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            If f Is Nothing Then
-                Dim q As New OrmQueryCmd(Of T)(entityName)
-                q.Compute(mgr)
-                Return q
-            Else
-                Dim q As New OrmQueryCmd(Of T)
-                f.CreateByEntityName(entityName).CopyTo(q)
-                Return q
-            End If
-        End Function
-
-        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            If f Is Nothing Then
-                Dim q As New OrmQueryCmd(Of T)(obj)
-                q.Compute(mgr)
-                Return q
-            Else
-                Dim q As New OrmQueryCmd(Of T)
-                f.Create(obj).CopyTo(q)
-                Return q
-            End If
-        End Function
-
-        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            If f Is Nothing Then
-                Dim q As New OrmQueryCmd(Of T)(obj, key)
-                q.Compute(mgr)
-                Return q
-            Else
-                Dim q As New OrmQueryCmd(Of T)
-                f.Create(obj, key).CopyTo(q)
-                Return q
-            End If
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            If f Is Nothing Then
-                Dim q As New OrmQueryCmd(Of T)(table)
-                q.Name = name
-                q.Compute(mgr)
-                Return q
-            Else
-                Dim q As New OrmQueryCmd(Of T)
-                f.Create(name, table).CopyTo(q)
-                Return q
-            End If
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim selectType As Type = GetType(T)
-            Return Create(name, selectType, mgr)
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal selectType As Type, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            If f Is Nothing Then
-                Dim q As New OrmQueryCmd(Of T)(selectType)
-                q.Name = name
-                q.Compute(mgr)
-                Return q
-            Else
-                Dim q As New OrmQueryCmd(Of T)
-                f.Create(name, selectType).CopyTo(q)
-                Return q
-            End If
-        End Function
-
-        Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            If f Is Nothing Then
-                Dim q As New OrmQueryCmd(Of T)(entityName)
-                q.Name = name
-                q.Compute(mgr)
-                Return q
-            Else
-                Dim q As New OrmQueryCmd(Of T)
-                f.CreateByEntityName(name, entityName).CopyTo(q)
-                Return q
-            End If
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            If f Is Nothing Then
-                Dim q As New OrmQueryCmd(Of T)(obj)
-                q.Name = name
-                q.Compute(mgr)
-                Return q
-            Else
-                Dim q As New OrmQueryCmd(Of T)
-                f.Create(name, obj).CopyTo(q)
-                Return q
-            End If
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
-            Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            If f Is Nothing Then
-                Dim q As New OrmQueryCmd(Of T)(obj, key)
-                q.Name = name
-                q.Compute(mgr)
-                Return q
-            Else
-                Dim q As New OrmQueryCmd(Of T)
-                f.Create(name, obj, key).CopyTo(q)
-                Return q
-            End If
-        End Function
-
-        Public Shared Function Create(ByVal table As SourceFragment) As OrmQueryCmd(Of T)
-            Return Create(table, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create() As OrmQueryCmd(Of T)
-            Return Create(OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create(ByVal selectType As Type) As OrmQueryCmd(Of T)
-            Return Create(selectType, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function CreateByEntityName(ByVal entityName As String) As OrmQueryCmd(Of T)
-            Return Create(entityName, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create(ByVal obj As _IOrmBase) As OrmQueryCmd(Of T)
-            Return Create(obj, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal key As String) As OrmQueryCmd(Of T)
-            Return Create(obj, key, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment) As OrmQueryCmd(Of T)
-            Return Create(name, table, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create(ByVal name As String) As OrmQueryCmd(Of T)
-            Return Create(name, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal selectType As Type) As OrmQueryCmd(Of T)
-            Return Create(name, selectType, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As OrmQueryCmd(Of T)
-            Return CreateByEntityName(name, entityName, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase) As OrmQueryCmd(Of T)
-            Return Create(name, obj, OrmManager.CurrentManager)
-        End Function
-
-        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String) As OrmQueryCmd(Of T)
-            Return Create(name, obj, key, OrmManager.CurrentManager)
-        End Function
+        Public Overrides Property SelectedType() As System.Type
+            Get
+                If MyBase.SelectedType Is Nothing Then
+                    Return GetType(T)
+                Else
+                    Return MyBase.SelectedType
+                End If
+            End Get
+            Set(ByVal value As System.Type)
+                MyBase.SelectedType = value
+            End Set
+        End Property
     End Class
 
     'Public Class QueryCmd(Of ReturnType As {_ICachedEntity, New})

@@ -445,6 +445,12 @@ Namespace Database
                     Dim dic2 As IDictionary = GetDictionary(secondType)
                     Dim oschema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(firstType)
                     Dim oschema2 As IObjectSchemaBase = SQLGenerator.GetObjectSchema(secondType)
+                    Dim props As IDictionary = MappingEngine.GetProperties(firstType, oschema)
+                    Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
+
+                    Dim props2 As IDictionary = MappingEngine.GetProperties(secondType, oschema2)
+                    Dim cm2 As Collections.IndexedCollection(Of String, MapField2Column) = oschema2.GetFieldColumnMap
+
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         Dim id1 As Object = dr.GetValue(firstidx)
@@ -454,7 +460,7 @@ Namespace Database
                                 'If obj1.IsLoaded Then obj1.IsLoaded = False
                                 Dim lock As IDisposable = Nothing
                                 Try
-                                    Dim ro As _IEntity = LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1, True, lock, oschema, oschema.GetFieldColumnMap)
+                                    Dim ro As _IEntity = LoadFromDataReader(obj1, dr, first_cols, False, 0, dic1, True, lock, oschema, cm, props)
                                     AfterLoadingProcess(dic1, obj1, lock, ro)
                                     values.Add(ro)
                                 Finally
@@ -475,7 +481,7 @@ Namespace Database
                                     'If obj2.IsLoaded Then obj2.IsLoaded = False
                                     Dim lock As IDisposable = Nothing
                                     Try
-                                        Dim ro2 As _IEntity = LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2, True, lock, oschema2, oschema2.GetFieldColumnMap)
+                                        Dim ro2 As _IEntity = LoadFromDataReader(obj2, dr, sec_cols, False, first_cols.Count, dic2, True, lock, oschema2, cm2, props2)
                                         AfterLoadingProcess(dic2, obj2, lock, ro2)
                                     Finally
                                         If lock IsNot Nothing Then
@@ -731,6 +737,9 @@ Namespace Database
                             Using dr As System.Data.IDataReader = cmd.ExecuteReader
                                 _exec = et.GetTime
 
+                                Dim props As IDictionary = MappingEngine.GetProperties(type2load, oschema2)
+                                Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema2.GetFieldColumnMap
+
                                 Dim ft As New PerfCounter
                                 Do While dr.Read
                                     Dim id1 As Object = dr.GetValue(0)
@@ -751,7 +760,7 @@ Namespace Database
                                                 'If obj.IsLoaded Then obj.IsLoaded = False
                                                 Dim lock As IDisposable = Nothing
                                                 Try
-                                                    Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 2, dic, True, lock, oschema2, oschema2.GetFieldColumnMap)
+                                                    Dim ro As _IEntity = LoadFromDataReader(obj, dr, arr, False, 2, dic, True, lock, oschema2, cm, props)
                                                     AfterLoadingProcess(dic, obj, lock, ro)
                                                 Finally
                                                     If lock IsNot Nothing Then
@@ -997,6 +1006,8 @@ Namespace Database
                         'obj.IsLoaded = False
                         Dim loaded As Boolean = False
                         Dim oschema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(obj.GetType)
+                        Dim props As IDictionary = MappingEngine.GetProperties(obj.GetType, oschema)
+                        Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
                         'obj = NormalizeObject(obj, dic)
                         Do While dr.Read
                             If loaded Then
@@ -1005,7 +1016,7 @@ Namespace Database
                             If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse Not _cache.IsDeleted(obj)) Then
                                 Dim lock As IDisposable = Nothing
                                 Try
-                                    LoadFromDataReader(obj, dr, arr, check_pk, 0, dic, False, lock, oschema, oschema.GetFieldColumnMap)
+                                    LoadFromDataReader(obj, dr, arr, check_pk, 0, dic, False, lock, oschema, cm, props)
                                     obj.CorrectStateAfterLoading(False)
                                 Finally
                                     If lock IsNot Nothing Then
@@ -1157,9 +1168,14 @@ Namespace Database
                     If il IsNot Nothing Then
                         values = il.List
                     End If
+                    Dim props As IDictionary = Nothing
+                    If oschema IsNot Nothing Then
+                        props = MappingEngine.GetProperties(original_type, oschema)
+                    End If
+
                     Dim ft As New PerfCounter
                     Do While dr.Read
-                        LoadFromResultSet(Of T)(withLoad, values, selectList, dr, dic, _loadedInLastFetch, oschema, fields_idx)
+                        LoadFromResultSet(Of T)(withLoad, values, selectList, dr, dic, _loadedInLastFetch, oschema, fields_idx, props)
                     Loop
                     _fetch = ft.GetTime
                 End Using
@@ -1211,7 +1227,8 @@ Namespace Database
             ByVal values As IList, ByVal selectList As Generic.List(Of ColumnAttribute), _
             ByVal dr As System.Data.IDataReader, _
             ByVal dic As IDictionary(Of Object, T), ByRef loaded As Integer, _
-            ByVal oschema As IObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
+            ByVal oschema As IObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column), _
+            ByVal props As IDictionary)
 
             'Dim id As Integer = CInt(dr.GetValue(idx))
             'Dim obj As OrmBase = CreateDBObject(Of T)(id, dic, withLoad OrElse AlwaysAdd2Cache OrElse Not ListConverter.IsWeak)
@@ -1226,7 +1243,7 @@ Namespace Database
             Dim lock As IDisposable = Nothing
             Try
                 Dim obj As New T
-                Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, 0, CType(dic, System.Collections.IDictionary), True, lock, oschema, fields_idx)
+                Dim ro As _IEntity = LoadFromDataReader(obj, dr, selectList, False, 0, CType(dic, System.Collections.IDictionary), True, lock, oschema, fields_idx, props)
                 AfterLoadingProcess(CType(dic, System.Collections.IDictionary), obj, lock, ro)
 #If DEBUG Then
                 Dim ce As CachedEntity = TryCast(ro, CachedEntity)
@@ -1276,7 +1293,7 @@ Namespace Database
         Protected Function LoadFromDataReader(ByVal obj As _IEntity, ByVal dr As System.Data.IDataReader, _
             ByVal selectList As Generic.IList(Of ColumnAttribute), ByVal check_pk As Boolean, ByVal displacement As Integer, _
             ByVal dic As IDictionary, ByVal fromRS As Boolean, ByRef lock As IDisposable, ByVal oschema As IObjectSchemaBase, _
-            ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column)) As _IEntity
+            ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column), ByVal props As IDictionary) As _IEntity
 
             Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
 
@@ -1293,16 +1310,12 @@ Namespace Database
             Try
                 Dim pk_count As Integer = 0
                 Dim pi_cache(selectList.Count - 1) As Reflection.PropertyInfo
-                Dim idic As IDictionary = Nothing
-                If oschema IsNot Nothing Then
-                    idic = MappingEngine.GetProperties(original_type, oschema)
-                End If
                 'Dim bl As Boolean
                 Dim oldpk() As PKDesc = Nothing
                 If ce IsNot Nothing AndAlso Not fromRS Then oldpk = ce.GetPKValues()
                 For idx As Integer = 0 To selectList.Count - 1
                     Dim c As ColumnAttribute = selectList(idx)
-                    Dim pi As Reflection.PropertyInfo = If(idic IsNot Nothing, CType(idic(c), Reflection.PropertyInfo), Nothing)
+                    Dim pi As Reflection.PropertyInfo = If(props IsNot Nothing, CType(props(c), Reflection.PropertyInfo), Nothing)
                     pi_cache(idx) = pi
 
                     If fields_idx.ContainsKey(c.FieldName) Then
@@ -1338,11 +1351,12 @@ Namespace Database
                                         obj.SetValueOptimized(pi, c, oschema, value)
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     Else
-                                        If (pi.PropertyType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (pi.PropertyType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
-                                            Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                        Dim propType As Type = pi.PropertyType
+                                        If (propType Is GetType(Boolean) AndAlso value.GetType Is GetType(Short)) OrElse (propType Is GetType(Integer) AndAlso value.GetType Is GetType(Long)) Then
+                                            Dim v As Object = Convert.ChangeType(value, propType)
                                             obj.SetValueOptimized(pi, c, oschema, v)
                                             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                        ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                                        ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                                             Dim dt As DateTime = CDate(value)
                                             Dim l As Long = dt.ToBinary
                                             Using ms As New IO.MemoryStream
@@ -1371,7 +1385,7 @@ Namespace Database
                                         obj.SetValueOptimized(pi, c, oschema, ms.ToArray)
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     End Using
-                                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
+                                Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0 AndAlso pi IsNot Nothing
                                     Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                                     obj.SetValueOptimized(pi, c, oschema, v)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
@@ -1432,7 +1446,7 @@ Namespace Database
                     If obj.ObjectState = ObjectState.Deleted OrElse obj.ObjectState = ObjectState.NotFoundInSource Then
                         Return obj
                     End If
-                    'Try
+
                     For idx As Integer = 0 To selectList.Count - 1
                         Dim c As ColumnAttribute = selectList(idx)
                         Dim pi As Reflection.PropertyInfo = pi_cache(idx) '_schema.GetProperty(original_type, c)
@@ -1447,10 +1461,11 @@ Namespace Database
                             If ce IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
                         Else
                             Dim att As Field2DbRelations = fields_idx(c.FieldName).GetAttributes(c)
+                            Dim propType As Type = pi.PropertyType
                             If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                 Dim v As Object = pi.GetValue(obj, Nothing)
-                                If Not value.GetType Is pi.PropertyType AndAlso pi.PropertyType IsNot GetType(Object) Then
-                                    value = Convert.ChangeType(value, pi.PropertyType)
+                                If Not value.GetType Is propType AndAlso propType IsNot GetType(Object) Then
+                                    value = Convert.ChangeType(value, propType)
                                 End If
                                 If Not v.Equals(value) Then
                                     Throw New OrmManagerException("PK values is not equals (" & dr.GetName(idx + displacement) & "): value from db: " & value.ToString & "; value from object: " & v.ToString)
@@ -1471,27 +1486,35 @@ Namespace Database
                                     '    '    obj.SetValue(pi, c, o)
                                     '    '    obj.SetLoaded(c, True)
                                     '    'End If
-                                ElseIf GetType(IOrmBase).IsAssignableFrom(pi.PropertyType) Then
-                                    Dim type_created As Type = pi.PropertyType
+                                ElseIf GetType(IOrmBase).IsAssignableFrom(propType) Then
+                                    Dim type_created As Type = propType
+                                    Dim en As String = MappingEngine.GetEntityNameByType(type_created)
+                                    If Not String.IsNullOrEmpty(en) Then
+                                        type_created = MappingEngine.GetTypeByEntityName(en)
+
+                                        If type_created Is Nothing Then
+                                            Throw New OrmManagerException("Cannot find type for entity " & en)
+                                        End If
+                                    End If
                                     Dim o As IOrmBase = GetOrmBaseFromCacheOrCreate(value, type_created)
                                     obj.SetValueOptimized(pi, c, oschema, o)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                ElseIf GetType(System.Xml.XmlDocument) Is pi.PropertyType AndAlso TypeOf (value) Is String Then
+                                ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
                                     Dim o As New System.Xml.XmlDocument
                                     o.LoadXml(CStr(value))
                                     obj.SetValueOptimized(pi, c, oschema, o)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                ElseIf pi.PropertyType.IsEnum AndAlso TypeOf (value) Is String Then
+                                ElseIf propType.IsEnum AndAlso TypeOf (value) Is String Then
                                     Dim svalue As String = CStr(value).Trim
                                     If svalue = String.Empty Then
                                         obj.SetValueOptimized(pi, c, oschema, 0)
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     Else
-                                        obj.SetValueOptimized(pi, c, oschema, [Enum].Parse(pi.PropertyType, svalue, True))
+                                        obj.SetValueOptimized(pi, c, oschema, [Enum].Parse(propType, svalue, True))
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     End If
-                                ElseIf pi.PropertyType.IsGenericType AndAlso GetType(Nullable(Of )).Name = pi.PropertyType.Name Then
-                                    Dim t As Type = pi.PropertyType.GetGenericArguments()(0)
+                                ElseIf propType.IsGenericType AndAlso GetType(Nullable(Of )).Name = propType.Name Then
+                                    Dim t As Type = propType.GetGenericArguments()(0)
                                     Dim v As Object = Nothing
                                     If t.IsPrimitive Then
                                         v = Convert.ChangeType(value, t)
@@ -1517,17 +1540,17 @@ Namespace Database
                                             'v = Convert.ChangeType(value, t)
                                         End Try
                                     End If
-                                    Dim v2 As Object = pi.PropertyType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
+                                    Dim v2 As Object = propType.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, _
                                         Nothing, Nothing, New Object() {v})
                                     obj.SetValueOptimized(pi, c, oschema, v2)
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 Else
                                     Try
-                                        If (pi.PropertyType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (pi.PropertyType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
-                                            Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                        If (propType.IsPrimitive AndAlso value.GetType.IsPrimitive) OrElse (propType Is GetType(Long) AndAlso value.GetType Is GetType(Decimal)) Then
+                                            Dim v As Object = Convert.ChangeType(value, propType)
                                             obj.SetValueOptimized(pi, c, oschema, v)
                                             If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
-                                        ElseIf pi.PropertyType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
+                                        ElseIf propType Is GetType(Byte()) AndAlso value.GetType Is GetType(Date) Then
                                             Dim dt As DateTime = CDate(value)
                                             Dim l As Long = dt.ToBinary
                                             Using ms As New IO.MemoryStream
@@ -1557,7 +1580,7 @@ Namespace Database
                                         '        obj.SetLoaded(c, True)
                                         '    End Using
                                     Catch ex As ArgumentException When ex.Message.IndexOf("cannot be converted") > 0
-                                        Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
+                                        Dim v As Object = Convert.ChangeType(value, propType)
                                         obj.SetValueOptimized(pi, c, oschema, v)
                                         If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                     End Try
@@ -1831,12 +1854,12 @@ Namespace Database
                                 ar.Add(ro)
                             End If
                         Else
-                            If o.ObjectState <> ObjectState.NotFoundInSource Then
+                            If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created Then
                                 ar.Add(o)
                             End If
                         End If
                     Else
-                        If o.ObjectState <> ObjectState.NotFoundInSource Then
+                        If o.ObjectState <> ObjectState.NotFoundInSource AndAlso o.ObjectState <> ObjectState.Created Then
                             ar.Add(o)
                         End If
                     End If
@@ -2728,11 +2751,14 @@ l2:
                 End If
                 _loadedInLastFetch = 0
                 Dim dic As IDictionary = CType(GetDictionary(Of T)(), System.Collections.IDictionary)
-                Dim et As New PerfCounter
+                Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(tt)
+                Dim props As IDictionary = MappingEngine.GetProperties(tt, oschema)
+                Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
                 Dim l As New List(Of Object)
+
+                Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
-                    Dim oschema As IObjectSchemaBase = SQLGenerator.GetObjectSchema(tt)
                     Dim ft As New PerfCounter
                     Do While dr.Read
                         Dim id1 As Object = dr.GetValue(0)
@@ -2741,14 +2767,21 @@ l2:
                         End If
                         Dim id2 As Object = dr.GetValue(1)
                         l.Add(id2)
-                        Dim o As T = GetOrmBaseFromCacheOrCreate(Of T)(id2)
+
+                        Dim o_ As T = CreateOrmBase(Of T)(id2)
+                        o_.SetObjectState(ObjectState.NotLoaded)
+                        Dim o As T = CType(NormalizeObject(o_, CType(dic, System.Collections.IDictionary)), T)
+                        If _raiseCreated AndAlso ReferenceEquals(o, o_) Then
+                            RaiseObjectCreated(o)
+                        End If
+
                         If withLoad AndAlso Not _cache.IsDeleted(tt, o.Key) Then
                             If o.ObjectState <> ObjectState.Modified Then
                                 Using o.GetSyncRoot()
                                     'If obj.IsLoaded Then obj.IsLoaded = False
                                     Dim lock As IDisposable = Nothing
                                     Try
-                                        Dim ro As _IEntity = LoadFromDataReader(o, dr, columns, False, 2, dic, True, lock, oschema, oschema.GetFieldColumnMap)
+                                        Dim ro As _IEntity = LoadFromDataReader(o, dr, columns, False, 2, dic, True, lock, oschema, cm, props)
                                         AfterLoadingProcess(dic, o, lock, ro)
                                     Finally
                                         If lock IsNot Nothing Then
