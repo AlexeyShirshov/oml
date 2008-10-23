@@ -74,6 +74,31 @@ Imports Worm.Database.Criteria.Joins
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestFilterUpdate()
+        Dim m As New TestManagerRS
+        Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+            Dim q As New QueryCmd(GetType(Table1))
+            q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
+            Assert.IsNotNull(q)
+
+            Assert.AreEqual(2, q.ToEntityList(Of Table1)(mgr).Count)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                    Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+                    t.EnumStr = Enum1.sec
+
+                    s.Commit()
+                End Using
+
+                Assert.AreEqual(3, q.ToEntityList(Of Table1)(mgr).Count)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
     <TestMethod()> Public Sub TestJoin()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))

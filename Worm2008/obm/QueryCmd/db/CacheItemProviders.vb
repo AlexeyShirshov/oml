@@ -59,7 +59,14 @@ Namespace Query.Database
                 _sl = sl
                 _mgr = mgr
 
-                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl)
+                Dim str As String
+                If t Is Nothing Then
+                    str = _q.Table.RawName
+                Else
+                    str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, t)
+                End If
+
+                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl, str)
                 _id = _q.GetDynamicKey(_j, _f)
                 _sync = _id & _mgr.GetStaticKey()
 
@@ -405,7 +412,7 @@ Namespace Query.Database
                     Next
 
                     If q.Obj IsNot Nothing Then
-                        _mgr.Cache.AddM2MQuery(q.Obj.GetM2M(q.SelectedType, q.M2MKey), _key, _id)
+                        _mgr.Cache.AddM2MQuery(q.Obj.GetRelation(q.SelectedType, q.M2MKey), _key, _id)
                     End If
 
                     'If Not (Cache.IsCalculated(dp) OrElse notPreciseDepends) Then
@@ -706,35 +713,40 @@ Namespace Query.Database
             '    ResetDic()
             'End Sub
 
-            Public Overridable Function Validate() As Boolean Implements OrmManager.ICacheValidator.Validate
-                If _f IsNot Nothing Then
-                    For Each f_ As IFilter In _f
-                        If f_ IsNot Nothing Then
-                            For Each fl As IFilter In f_.GetAllFilters
-                                Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
-                                If f IsNot Nothing Then
-                                    Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+            Public Overridable Function Validate() As Boolean Implements OrmManager.ICacheValidator.ValidateBeforCacheProbe
+                'If _f IsNot Nothing Then
+                '    For Each f_ As IFilter In _f
+                '        If f_ IsNot Nothing Then
+                '            For Each fl As IFilter In f_.GetAllFilters
+                '                Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
+                '                If f IsNot Nothing Then
+                '                    Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
 
-                                    Dim fields As List(Of String) = Nothing
-                                    If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
-                                        Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
-                                        If idx >= 0 Then
-                                            Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
-                                            _mgr.Cache.ResetFieldDepends(p)
-                                            _mgr.Cache.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
-                                            Return False
-                                        End If
-                                    End If
-                                End If
-                            Next
-                        End If
-                    Next
-                End If
+                '                    Dim fields As List(Of String) = Nothing
+                '                    If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
+                '                        Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
+                '                        If idx >= 0 Then
+                '                            Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                '                            _mgr.Cache.ResetFieldDepends(p)
+                '                            _mgr.Cache.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                '                            Return False
+                '                        End If
+                '                    End If
+                '                End If
+                '            Next
+                '        End If
+                '    Next
+                'End If
                 Return True
             End Function
 
-            Public Overridable Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean Implements OrmManager.ICacheValidator.Validate
-                Return True
+            Public Overridable Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
+                Dim f As IEntityFilter = Nothing
+                If _f IsNot Nothing AndAlso _f.Length > 0 Then
+                    f = TryCast(_f(0), IEntityFilter)
+                End If
+
+                Return _mgr.Cache.UpdateCacheDeferred(_q.SelectedType, f, _q.propSort, _q.Group)
             End Function
         End Class
 

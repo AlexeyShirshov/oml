@@ -73,7 +73,7 @@ Imports Worm.Database.Criteria.Core
                 New Aggregate(AggregateFunction.Count) _
             })
 
-            Dim i As Integer = q.ToSimpleList(Of Integer)(mgr)(0)
+            Dim i As Integer = q.Single(Of Integer)(mgr) 'q.ToSimpleList(Of Integer)(mgr)(0)
 
             Assert.AreEqual(12, i)
 

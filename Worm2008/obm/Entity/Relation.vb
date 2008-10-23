@@ -204,7 +204,7 @@ Namespace Cache
         End Sub
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManager, ByVal id As Object) As EditableListBase
-            Return CType(mgr.GetOrmBaseFromCacheOrCreate(id, SubType), _IOrmBase).GetM2M(MainType, Key)
+            Return CType(mgr.GetOrmBaseFromCacheOrCreate(id, SubType), _IOrmBase).GetRelation(MainType, Key)
         End Function
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManager) As List(Of EditableListBase)

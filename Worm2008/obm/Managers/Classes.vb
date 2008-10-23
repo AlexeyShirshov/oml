@@ -38,9 +38,14 @@ Class GetManagerDisposable
     Implements IDisposable, IGetManager
 
     Private _mgr As OrmManager
+    Private _oldSchema As ObjectMappingEngine
 
-    Public Sub New(ByVal mgr As OrmManager)
+    Public Sub New(ByVal mgr As OrmManager, ByVal schema As ObjectMappingEngine)
         _mgr = mgr
+        If Not mgr.MappingEngine.Equals(schema) AndAlso schema IsNot Nothing Then
+            _oldSchema = mgr.MappingEngine
+            mgr.SetSchema(schema)
+        End If
     End Sub
 
     Private ReadOnly Property Manager() As OrmManager Implements IGetManager.Manager
@@ -56,6 +61,10 @@ Class GetManagerDisposable
         If Not Me.disposedValue Then
             If disposing Then
                 ' TODO: free other state (managed objects).
+            End If
+
+            If _oldSchema IsNot Nothing Then
+                _mgr.SetSchema(_oldSchema)
             End If
 
             _mgr.Dispose()
@@ -78,9 +87,14 @@ Class ManagerWrapper
     Implements IGetManager
 
     Private _mgr As OrmManager
+    Private _oldSchema As ObjectMappingEngine
 
-    Public Sub New(ByVal mgr As OrmManager)
+    Public Sub New(ByVal mgr As OrmManager, ByVal schema As ObjectMappingEngine)
         _mgr = mgr
+        If Not mgr.MappingEngine.Equals(schema) AndAlso schema IsNot Nothing Then
+            _oldSchema = mgr.MappingEngine
+            mgr.SetSchema(schema)
+        End If
     End Sub
 
     Public ReadOnly Property Manager() As OrmManager Implements IGetManager.Manager
@@ -99,6 +113,9 @@ Class ManagerWrapper
                 ' TODO: free other state (managed objects).
             End If
 
+            If _oldSchema IsNot Nothing Then
+                _mgr.SetSchema(_oldSchema)
+            End If
         End If
         Me.disposedValue = True
     End Sub

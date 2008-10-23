@@ -498,8 +498,8 @@ End Class
     <TestMethod()> _
     Public Sub TestAlter()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim c As IList(Of Entity4) = CType(mgr.ConvertIds2Objects(Of Entity4)(New Object() {2}, False), Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
-            Dim e As Entity4 = c(0)
+            'Dim c As IList(Of Entity4) = CType(mgr.ConvertIds2Objects(Of Entity4)(New Object() {2}, False), Global.System.Collections.Generic.IList(Of Global.TestProject1.Entity4))
+            Dim e As Entity4 = mgr.GetOrmBaseFromCacheOrCreate(Of Entity4)(2)
             Assert.AreEqual(ObjectState.NotLoaded, e.InternalProperties.ObjectState)
             Dim expected As String = "wrtbg"
             e.Title = "345"

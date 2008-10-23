@@ -170,8 +170,8 @@ Namespace Criteria.Joins
         Protected _type As Type
         Protected _en As String
 
-        Public Sub New(ByVal Table As SourceFragment, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
-            _table = Table
+        Public Sub New(ByVal table As SourceFragment, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
+            _table = table
             _joinType = joinType
             _condition = condition
         End Sub
@@ -494,13 +494,14 @@ Namespace Database
                     End If
                 End If
 
+                Dim alTable As SourceFragment = tbl
                 Dim tableAliases As IDictionary(Of SourceFragment, String) = almgr.Aliases
                 If Not tableAliases.ContainsKey(tbl) Then
                     almgr.AddTable(tbl, pname)
                 End If
                 'Dim table As String = _table
                 'Dim sch as IOrmObjectSchema = schema.GetObjectSchema(
-                Return JoinTypeString() & schema.GetTableName(tbl) & " " & tableAliases(tbl) & " on " & Condition.MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
+                Return JoinTypeString() & schema.GetTableName(tbl) & " " & tableAliases(alTable) & " on " & Condition.MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
             End Function
 
             Protected Overrides Function CreateOrmFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase

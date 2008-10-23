@@ -200,6 +200,8 @@ Namespace Cache
         Private _filteredFields As New FieldsRef
         Private _sortedFields As New FieldsRef
         Private _groupedFields As New FieldsRef
+        Private _addedTypes As New Dictionary(Of Type, Type)
+        Private _deletedTypes As New Dictionary(Of Type, Type)
 
         Public Event CacheHasModification As EventHandler
 
@@ -1001,9 +1003,60 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Sub UpdateCacheDeferred(ByVal t As Type, ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping))
+        Protected Friend Function UpdateCacheDeferred(ByVal t As Type, ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
 
-        End Sub
+            If t IsNot Nothing Then
+                Dim wasAdded, wasDeleted As Boolean
+
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("qoegnq","d:\temp\")
+#Else
+                Using SyncHelper.AcquireDynamicLock("qoegnq")
+#End If
+                    wasAdded = _addedTypes.ContainsKey(t)
+                    wasDeleted = _deletedTypes.ContainsKey(t)
+
+                    If wasAdded Then
+                        _addedTypes.Remove(t)
+                    End If
+
+                    If wasDeleted Then
+                        _deletedTypes.Remove(t)
+                    End If
+                End Using
+
+                If wasAdded OrElse wasDeleted Then
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
+#Else
+                    Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
+#End If
+                        If _addDeleteTypes.Remove(t, Me) Then
+                            Return False
+                        End If
+                    End Using
+                End If
+            End If
+
+            If f IsNot Nothing AndAlso _invalidate.Count > 0 Then
+                For Each fl As IEntityFilter In f.GetAllFilters
+                    Dim fields As List(Of String) = Nothing
+                    Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                    If GetUpdatedFields(tmpl.Type, fields) Then
+                        Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
+                        If idx >= 0 Then
+                            Dim ef As New EntityField(tmpl.FieldName, tmpl.Type)
+                            _filteredFields.Remove(ef)
+                            ResetFieldDepends(New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type))
+                            RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                            Return False
+                        End If
+                    End If
+                Next
+            End If
+
+            Return True
+        End Function
 
         Private Sub UpdateCacheImmediate(ByVal tt As Type, ByVal schema As ObjectMappingEngine, _
             ByVal objs As IList, ByVal mgr As OrmManager, ByVal afterDelegate As OnUpdated, _
@@ -1052,13 +1105,40 @@ Namespace Cache
             ByVal contextKey As Object, ByVal callbacks As IUpdateCacheCallbacks, Optional ByVal forseEval As Boolean = False)
 
             Dim tt As Type = Nothing
-            For Each obj As ICachedEntity In objs
+            Dim addType As Type = Nothing
+            Dim delType As Type = Nothing
+
+            For Each obj As _ICachedEntity In objs
                 If obj Is Nothing Then
                     Throw New ArgumentException("At least one element in objs is nothing")
                 End If
                 tt = obj.GetType
-                Exit For
+
+                If ValidateBehavior = Cache.ValidateBehavior.Immediate OrElse (addType IsNot Nothing AndAlso delType IsNot Nothing) Then
+                    Exit For
+                End If
+
+                If obj.UpdateCtx.Added Then
+                    addType = tt
+                ElseIf obj.UpdateCtx.Deleted Then
+                    delType = tt
+                End If
             Next
+
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("qoegnq","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("qoegnq")
+#End If
+                If addType IsNot Nothing Then
+                    _addedTypes(addType) = addType
+                End If
+
+                If delType IsNot Nothing Then
+                    _deletedTypes(delType) = delType
+                End If
+
+            End Using
 
             If ValidateBehavior = Cache.ValidateBehavior.Immediate Then
                 UpdateCacheImmediate(tt, schema, objs, mgr, afterDelegate, contextKey, TryCast(callbacks, IUpdateCacheCallbacks2), forseEval)

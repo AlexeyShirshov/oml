@@ -60,6 +60,7 @@ Namespace Orm
         Sub RaiseCopyRemoved()
         Function Save(ByVal mc As OrmManager) As Boolean
         Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
+        Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine)
     End Interface
 
     Public Interface ICachedEntity
@@ -112,6 +113,11 @@ Namespace Orm
         'Sub Delete(ByVal t As Type, ByVal key As String)
         Sub Cancel(ByVal t As Type)
         Sub Cancel(ByVal t As Type, ByVal key As String)
+        Function GetRelationSchema(ByVal t As Type) As M2MRelation
+        Function GetRelationSchema(ByVal t As Type, ByVal key As String) As M2MRelation
+        Function GetRelation(ByVal t As Type) As EditableListBase
+        Function GetRelation(ByVal t As Type, ByVal key As String) As EditableListBase
+        Function GetAllRelation() As Generic.IList(Of EditableListBase)
     End Interface
 
     Public Interface IOrmBase
@@ -128,8 +134,8 @@ Namespace Orm
         Inherits IOrmBase
         Function AddAccept(ByVal acs As AcceptState2) As Boolean
         Function GetAccept(ByVal m As OrmManager.M2MCache) As AcceptState2
-        Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase
-        Function GetAllEditable() As Generic.IList(Of EditableListBase)
+        'Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase
+        'Function GetAllEditable() As Generic.IList(Of EditableListBase)
         Sub RejectM2MIntermidiate()
     End Interface
 

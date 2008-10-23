@@ -121,21 +121,33 @@ Partial Public Class OrmManager
         Private _disposedValue As Boolean = False        ' To detect redundant calls
         Private _oldSchema As ObjectMappingEngine
         Private _mgr As OrmManager
+        Private _r As Boolean
 
         Public Sub New(ByVal schema As ObjectMappingEngine)
             MyClass.New(schema, OrmManager.CurrentManager)
+        End Sub
+
+        Private Sub ObjectCreated(ByVal obj As ICachedEntity, ByVal mgr As OrmManager)
+            CType(obj, _ICachedEntity).SetSpecificSchema(mgr.MappingEngine)
         End Sub
 
         Public Sub New(ByVal schema As ObjectMappingEngine, ByVal mgr As OrmManager)
             _mgr = mgr
             _oldSchema = mgr.MappingEngine
             mgr.SetSchema(schema)
+            _r = mgr.RaiseObjectCreation
+            If Not _oldSchema.Equals(schema) Then
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf ObjectCreated
+            End If
         End Sub
 
         ' IDisposable
         Protected Overridable Sub Dispose(ByVal disposing As Boolean)
             If Not Me._disposedValue Then
                 _mgr.SetSchema(_oldSchema)
+                _mgr.RaiseObjectCreation = _r
+                RemoveHandler _mgr.ObjectCreated, AddressOf ObjectCreated
             End If
             Me._disposedValue = True
         End Sub
@@ -286,6 +298,12 @@ Partial Public Class OrmManager
             _execTime = mgr.Exec
             _fetchTime = mgr.Fecth
         End Sub
+
+        Public Overridable ReadOnly Property CanRenewAfterSort() As Boolean
+            Get
+                Return True
+            End Get
+        End Property
 
         Public ReadOnly Property ExecutionTime() As TimeSpan
             Get
@@ -490,6 +508,12 @@ Partial Public Class OrmManager
             _execTime = mgr.Exec
             _fetchTime = mgr.Fecth
         End Sub
+
+        Public Overrides ReadOnly Property CanRenewAfterSort() As Boolean
+            Get
+                Return Not Entry.HasChanges
+            End Get
+        End Property
 
         'Public ReadOnly Property List() As EditableList
         '    Get
@@ -746,8 +770,8 @@ Partial Public Class OrmManager
     End Class
 
     Public Interface ICacheValidator
-        Function Validate(ByVal ce As CachedItem) As Boolean
-        Function Validate() As Boolean
+        Function ValidateItemFromCache(ByVal ce As CachedItem) As Boolean
+        Function ValidateBeforCacheProbe() As Boolean
     End Interface
 
     Public Interface INewObjects

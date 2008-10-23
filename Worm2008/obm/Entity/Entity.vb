@@ -73,6 +73,8 @@ Namespace Orm
         Protected _readRaw As Boolean
         <NonSerialized()> _
         Private _cm As ICreateManager
+        <NonSerialized()> _
+        Protected _schema As ObjectMappingEngine
 
         Public Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs) Implements IEntity.ManagerRequired
         Public Event PropertyChanged(ByVal sender As IEntity, ByVal args As PropertyChangedEventArgs)
@@ -184,17 +186,17 @@ Namespace Orm
                         Return Nothing
                     Else
                         If a.DisposeMgr Then
-                            Return New GetManagerDisposable(mgr)
+                            Return New GetManagerDisposable(mgr, _schema)
                         Else
-                            Return New ManagerWrapper(mgr)
+                            Return New ManagerWrapper(mgr, _schema)
                         End If
                     End If
                 Else
-                    Return New GetManagerDisposable(_cm.CreateManager)
+                    Return New GetManagerDisposable(_cm.CreateManager, _schema)
                 End If
             Else
                 'don't dispose
-                Return New ManagerWrapper(mgr)
+                Return New ManagerWrapper(mgr, _schema)
             End If
         End Function
 
@@ -303,6 +305,7 @@ Namespace Orm
         End Sub
 
         Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As IObjectSchemaBase, ByVal value As Object) Implements IEntity.SetValueOptimized
+
             If pi Is Nothing Then
                 Using m As IGetManager = GetMgr()
                     pi = m.Manager.MappingEngine.GetProperty(Me.GetType, schema, c)

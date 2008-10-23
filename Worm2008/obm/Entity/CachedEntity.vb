@@ -410,11 +410,11 @@ Namespace Orm
             If idx < 0 AndAlso check Then Throw New OrmObjectException("There is no such field " & c.FieldName)
 
             If idx >= 0 Then
-                Using SyncHelper(False)
-                    Dim old As Boolean = _members_load_state(idx)
-                    _members_load_state(idx) = loaded
-                    Return old
-                End Using
+                'Using SyncHelper(False)
+                Dim old As Boolean = _members_load_state(idx)
+                _members_load_state(idx) = loaded
+                Return old
+                'End Using
             End If
         End Function
 
@@ -741,7 +741,7 @@ l1:
 
                 CType(Me, _IEntity).EndLoading()
 
-                If Schema IsNot Nothing Then CheckIsAllLoaded(Schema, Integer.MaxValue)
+                If schema IsNot Nothing Then CheckIsAllLoaded(schema, Integer.MaxValue)
             End Using
         End Sub
 
@@ -962,7 +962,16 @@ l1:
                             '    SetLoaded(c, True)
                             'Else
                             Using mc As IGetManager = GetMgr()
-                                Dim v As IOrmBase = mc.Manager.GetOrmBaseFromCacheOrCreate(value, pi.PropertyType)
+                                Dim type_created As Type = pi.PropertyType
+                                Dim en As String = schema.GetEntityNameByType(type_created)
+                                If Not String.IsNullOrEmpty(en) Then
+                                    type_created = schema.GetTypeByEntityName(en)
+
+                                    If type_created Is Nothing Then
+                                        Throw New OrmManagerException("Cannot find type for entity " & en)
+                                    End If
+                                End If
+                                Dim v As IOrmBase = mc.Manager.GetOrmBaseFromCacheOrCreate(value, type_created)
                                 If pi IsNot Nothing Then
                                     pi.SetValue(obj, v, Nothing)
                                     SetLoaded(c, True, True, schema)
@@ -1554,6 +1563,10 @@ l1:
             End If
             Return l
         End Function
+
+        Public Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.SetSpecificSchema
+            _schema = mpe
+        End Sub
     End Class
 
 End Namespace
