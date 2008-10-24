@@ -11,10 +11,10 @@ Namespace Query.Database
     Partial Public Class DbQueryExecutor
 
         Class ProviderAnonym(Of ReturnType As {_IEntity})
-            Implements ICacheItemProvoderBase(Of ReturnType)
+            Inherits CacheItemBaseProvider
 
-            Private _created As Boolean
-            Private _renew As Boolean
+            'Private _created As Boolean
+            'Private _renew As Boolean
 
             Protected Sub New()
 
@@ -24,15 +24,15 @@ Namespace Query.Database
             Protected _params As ParamMgr
             Private _cmdType As System.Data.CommandType
 
-            Protected _mgr As OrmReadOnlyDBManager
-            Protected _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
-            Protected _f() As IFilter
-            Protected _sl As List(Of List(Of SelectExpression))
-            Protected _q As QueryCmd
-            Private _key As String
-            Private _id As String
-            Private _sync As String
-            Private _dic As IDictionary
+            'Protected _mgr As OrmReadOnlyDBManager
+            'Protected _j As List(Of List(Of Worm.Criteria.Joins.OrmJoin))
+            'Protected _f() As IFilter
+            'Protected _sl As List(Of List(Of SelectExpression))
+            'Protected _q As QueryCmd
+            'Private _key As String
+            'Private _id As String
+            'Private _sync As String
+            'Private _dic As IDictionary
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
@@ -52,7 +52,7 @@ Namespace Query.Database
                 _stmt = Nothing
             End Sub
 
-            Public Sub Reset(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+            Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                              ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
                 _j = j
                 _f = f
@@ -63,7 +63,7 @@ Namespace Query.Database
                 If t Is Nothing Then
                     str = _q.Table.RawName
                 Else
-                    str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, t)
+                    str = Mgr.MappingEngine.GetEntityKey(Mgr.GetFilterInfo, t)
                 End If
 
                 _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl, str)
@@ -109,7 +109,7 @@ Namespace Query.Database
                 If String.IsNullOrEmpty(_stmt) Then
                     _cmdType = System.Data.CommandType.Text
 
-                    _params = New ParamMgr(_mgr.SQLGenerator, "p")
+                    _params = New ParamMgr(CType(_mgr, OrmReadOnlyDBManager).SQLGenerator, "p")
                     _stmt = _MakeStatement()
                 End If
 
@@ -119,15 +119,18 @@ Namespace Query.Database
             End Sub
 
             Protected Overridable Function _MakeStatement() As String
+                Return _MakeStatement(_q.SelectedType)
+            End Function
+
+            Protected Function _MakeStatement(ByVal t As Type) As String
                 Dim almgr As AliasMgr = AliasMgr.Create
                 Dim fi As Object = _mgr.GetFilterInfo
-                Dim t As Type = _q.SelectedType
                 Dim i As Integer = 0
                 'Dim q As QueryCmd = _q
                 'Dim sb As New StringBuilder
                 Dim inner As String = Nothing
                 Dim innerColumns As List(Of String) = Nothing
-                'Do While q IsNot Nothing
+                Dim stmtGen As SQLGenerator = CType(_mgr, OrmReadOnlyDBManager).SQLGenerator
                 For Each q As QueryCmd In New QueryIterator(_q)
                     Dim columnAliases As New List(Of String)
                     Dim j As List(Of Worm.Criteria.Joins.OrmJoin) = _j(i)
@@ -135,7 +138,7 @@ Namespace Query.Database
                     If _f.Length > i Then
                         f = _f(i)
                     End If
-                    inner = MakeQueryStatement(fi, _mgr.SQLGenerator, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, WithLoad, _sl(i))
+                    inner = MakeQueryStatement(fi, stmtGen, q, _params, t, j, f, almgr, columnAliases, inner, innerColumns, i, WithLoad, _sl(i))
                     innerColumns = New List(Of String)(columnAliases)
                     q = q.OuterQuery
                     i += 1
@@ -186,7 +189,7 @@ Namespace Query.Database
             End Function
 
             Protected Overridable Function ExecStmt(Of T)(ByVal cmd As System.Data.Common.DbCommand) As IList(Of T)
-                Dim l As IList(Of T) = _mgr.GetSimpleValues(Of T)(cmd)
+                Dim l As IList(Of T) = CType(_mgr, OrmReadOnlyDBManager).GetSimpleValues(Of T)(cmd)
                 _q.ExecCount += 1
                 Return l
             End Function
@@ -210,39 +213,6 @@ Namespace Query.Database
             Public Sub ResetCache()
                 _dic.Remove(Id)
             End Sub
-
-            Public Property Mgr() As OrmReadOnlyDBManager
-                Get
-                    Return _mgr
-                End Get
-                Protected Friend Set(ByVal value As OrmReadOnlyDBManager)
-                    _mgr = value
-                End Set
-            End Property
-
-            Public Overridable Property Renew() As Boolean Implements ICacheItemProvoderBase(Of ReturnType).Renew
-                Get
-                    Return _renew
-                End Get
-                Set(ByVal Value As Boolean)
-                    _renew = Value
-                End Set
-            End Property
-
-            Public Overridable Property Created() As Boolean Implements ICacheItemProvoderBase(Of ReturnType).Created
-                Get
-                    Return _created
-                End Get
-                Set(ByVal Value As Boolean)
-                    _created = Value
-                End Set
-            End Property
-
-            Public Overridable ReadOnly Property SmartSort() As Boolean Implements ICacheItemProvoderBase(Of ReturnType).SmartSort
-                Get
-                    Return True
-                End Get
-            End Property
 
             Public ReadOnly Property Key() As String
                 Get
@@ -280,148 +250,6 @@ Namespace Query.Database
                 End Get
             End Property
 
-            Public Sub CreateDepends() Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).CreateDepends
-                Dim notPreciseDependsAD As Boolean
-                Dim notPreciseDependsU As Boolean
-                If _j IsNot Nothing Then
-                    For Each js As List(Of Worm.Criteria.Joins.OrmJoin) In _j
-                        For Each j As OrmJoin In js
-                            If j.Type IsNot Nothing Then
-                                notPreciseDependsAD = True
-                                notPreciseDependsU = True
-                                '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, j.Type, _key, _id, _mgr.MappingEngine)
-                                _mgr.Cache.validate_AddDeleteType(j.Type, _key, _id)
-                                _mgr.Cache.validate_UpdateType(j.Type, _key, _id)
-                            ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
-                                notPreciseDependsAD = True
-                                notPreciseDependsU = True
-                                '_mgr.Cache.AddFilterlessDependType(_mgr.GetFilterInfo, _mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id, _mgr.MappingEngine)
-                                _mgr.Cache.validate_AddDeleteType(_mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
-                                _mgr.Cache.validate_UpdateType(_mgr.MappingEngine.GetTypeByEntityName(j.EntityName), _key, _id)
-                            End If
-                        Next
-                    Next
-                End If
-
-                'Dim i As Integer = 0
-                'For Each q As QueryCmd In New QueryIterator(_q)
-                '    CreateDepends(q, i)
-                '    i += 1
-                'Next
-                Dim rightType As Boolean = _q.SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(_q.SelectedType)
-
-                Dim i As Integer = 0
-                For Each q As QueryCmd In New QueryIterator(_q)
-                    Dim dp As Cache.IDependentTypes = q.Get(_mgr.MappingEngine)
-                    Cache.Add2Cache(_mgr.Cache, dp, _key, _id)
-
-                    If _f IsNot Nothing AndAlso _f.Length > i Then
-                        Dim vf As IValuableFilter = TryCast(_f(i), IValuableFilter)
-                        If vf IsNot Nothing Then
-                            Dim v As Criteria.Values.EntityValue = TryCast(vf.Value, Criteria.Values.EntityValue)
-                            If v IsNot Nothing Then
-                                _mgr.Cache.validate_AddDependentObject(v.GetOrmValue(_mgr), _key, _id)
-                            End If
-                        End If
-                    End If
-
-                    'Dim ef As IEntityFilter = Nothing
-                    'If _f IsNot Nothing AndAlso _f.Length > i Then
-                    '    ef = TryCast(_f(i), IEntityFilter)
-                    'End If
-
-                    If _mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Immediate Then
-                        notPreciseDependsAD = notPreciseDependsAD OrElse Not Cache.IsEmpty(dp)
-                        notPreciseDependsU = notPreciseDependsAD
-                        If _f IsNot Nothing AndAlso _f.Length > i Then
-                            Dim added As Boolean = False
-                            If rightType AndAlso Not notPreciseDependsAD Then
-                                added = _mgr.Cache.validate_AddCalculatedType(q.SelectedType, Key, Id, _f(i))
-                            End If
-
-                            If Not added Then
-                                For Each fff As IFilter In _f(i).GetAllFilters
-                                    Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
-
-                                    If ef Is Nothing Then
-                                        If rightType AndAlso Not notPreciseDependsAD Then
-                                            _mgr.Cache.validate_AddDeleteType(q.SelectedType, _key, _id)
-                                            _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
-                                            notPreciseDependsAD = True
-                                            notPreciseDependsU = True
-                                        End If
-                                    Else
-                                        Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
-
-                                        If tmpl.Type Is Nothing Then
-                                            Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
-                                        End If
-
-                                        Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
-                                        _mgr.Cache.validate_AddDependentFilterField(p, _key, _id)
-                                    End If
-                                Next
-                            End If
-                        End If
-                    Else
-                        If rightType Then
-                            _mgr.Cache.validate_AddDeleteType(q.SelectedType, _key, _id)
-                            notPreciseDependsAD = True
-                        End If
-
-                        If _f IsNot Nothing AndAlso _f.Length > i Then
-                            For Each fff As IFilter In _f(i).GetAllFilters
-                                Dim ef As IEntityFilter = TryCast(fff, IEntityFilter)
-
-                                If ef Is Nothing Then
-                                    If rightType Then
-                                        _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
-                                        notPreciseDependsU = True
-                                    End If
-                                Else
-                                    Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
-
-                                    If tmpl.Type Is Nothing Then
-                                        Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
-                                    End If
-
-                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
-                                    _mgr.Cache.validate_AddDependentFilterField(p, _key, _id)
-                                End If
-                            Next
-                        End If
-                    End If
-
-                    For Each s As Sorting.Sort In New Sorting.Sort.Iterator(q.propSort)
-
-                        'If ef Is Nothing Then
-                        '    If rightType Then
-                        '        _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
-                        '        notPreciseDependsU = True
-                        '    End If
-                        'Else
-                        '    Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
-
-                        '    If tmpl.Type Is Nothing Then
-                        '        Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
-                        '    End If
-
-                        '    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
-                        '    _mgr.Cache.validate_AddDependentFilterField(p, _key, _id)
-                        'End If
-                    Next
-
-                    If q.Obj IsNot Nothing Then
-                        _mgr.Cache.AddM2MQuery(q.Obj.GetRelation(q.SelectedType, q.M2MKey), _key, _id)
-                    End If
-
-                    'If Not (Cache.IsCalculated(dp) OrElse notPreciseDepends) Then
-                    '    Dim ef As IEntityFilter = TryCast(_f(i), IEntityFilter)
-
-                    'End If
-                    i += 1
-                Next
-            End Sub
 
             'Protected Sub CreateDepends(ByVal q As QueryCmd, ByVal i As Integer)
             '    If q.SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(q.SelectedType) Then
@@ -446,21 +274,9 @@ Namespace Query.Database
             '    End If
             'End Sub
 
-            Public ReadOnly Property Filter() As Criteria.Core.IFilter Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).Filter
-                Get
-                    Return _f(0)
-                End Get
-            End Property
-
-            Public Overridable Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).GetCacheItem
+            Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
                 Return New CachedItem(GetEntities(), _mgr.Cache)
             End Function
-
-            Public ReadOnly Property Sort() As Sorting.Sort Implements OrmManager.ICacheItemProvoderBase(Of ReturnType).Sort
-                Get
-                    Return _q.propSort
-                End Get
-            End Property
         End Class
 
         Class Provider(Of ReturnType As {ICachedEntity})
@@ -543,8 +359,12 @@ Namespace Query.Database
                 Return GetCacheItem(r)
             End Function
 
-            Public Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem Implements ICacheItemProvoder(Of ReturnType).GetCacheItem
-                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(_q.SelectedType), IOrmSorting2)
+            Public Overridable Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem Implements ICacheItemProvoder(Of ReturnType).GetCacheItem
+                Return _GetCacheItem(col, _q.SelectedType)
+            End Function
+
+            Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType), ByVal t As Type) As OrmManager.CachedItem
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(t), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(_q.propSort)
@@ -741,12 +561,7 @@ Namespace Query.Database
             End Function
 
             Public Overridable Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean Implements OrmManager.ICacheValidator.ValidateItemFromCache
-                Dim f As IEntityFilter = Nothing
-                If _f IsNot Nothing AndAlso _f.Length > 0 Then
-                    f = TryCast(_f(0), IEntityFilter)
-                End If
-
-                Return _mgr.Cache.UpdateCacheDeferred(_q.SelectedType, f, _q.propSort, _q.Group)
+                Return ValidateFromCache()
             End Function
         End Class
 
@@ -761,9 +576,17 @@ Namespace Query.Database
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
-                dbm.LoadMultipleObjects(Of SelectType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, GetType(ReturnType), _q, _q.propWithLoad, _sl(0)))
+                dbm.LoadMultipleObjects(Of SelectType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, GetType(SelectType), _q, _q.propWithLoad, _sl(0)))
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
+            End Function
+
+            Protected Overrides Function _MakeStatement() As String
+                Return _MakeStatement(GetType(SelectType))
+            End Function
+
+            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem
+                Return _GetCacheItem(col, GetType(SelectType))
             End Function
         End Class
 

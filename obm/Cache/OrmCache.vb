@@ -156,7 +156,7 @@ Namespace Cache
 #End Region
 
         'Public ReadOnly DateTimeCreated As Date
-        Private _earlyValidate As Boolean
+        Private _deferredValidate As Boolean
 
         'Protected _filters As IDictionary
         Private _modifiedobjects As IDictionary
@@ -389,18 +389,18 @@ Namespace Cache
 
         Public Property ValidateBehavior() As ValidateBehavior
             Get
-                If _earlyValidate Then
-                    Return Cache.ValidateBehavior.Immediate
-                Else
+                If _deferredValidate Then
                     Return Cache.ValidateBehavior.Deferred
+                Else
+                    Return Cache.ValidateBehavior.Immediate
                 End If
             End Get
             Set(ByVal value As ValidateBehavior)
                 Select Case value
                     Case Cache.ValidateBehavior.Deferred
-                        _earlyValidate = False
+                        _deferredValidate = True
                     Case Cache.ValidateBehavior.Immediate
-                        _earlyValidate = True
+                        _deferredValidate = False
                     Case Else
                         Throw New NotSupportedException("Values " & value.ToString & " is not supported")
                 End Select
@@ -1038,21 +1038,24 @@ Namespace Cache
                 End If
             End If
 
-            If f IsNot Nothing AndAlso _invalidate.Count > 0 Then
-                For Each fl As IEntityFilter In f.GetAllFilters
-                    Dim fields As List(Of String) = Nothing
-                    Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
-                    If GetUpdatedFields(tmpl.Type, fields) Then
-                        Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
-                        If idx >= 0 Then
-                            Dim ef As New EntityField(tmpl.FieldName, tmpl.Type)
-                            _filteredFields.Remove(ef)
-                            ResetFieldDepends(New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type))
-                            RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
-                            Return False
+            If _invalidate.Count > 0 Then
+
+                If f IsNot Nothing Then
+                    For Each fl As IEntityFilter In f.GetAllFilters
+                        Dim fields As List(Of String) = Nothing
+                        Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                        If GetUpdatedFields(tmpl.Type, fields) Then
+                            Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
+                            If idx >= 0 Then
+                                Dim ef As New EntityField(tmpl.FieldName, tmpl.Type)
+                                _filteredFields.Remove(ef)
+                                ResetFieldDepends(New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type))
+                                RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                                Return False
+                            End If
                         End If
-                    End If
-                Next
+                    Next
+                End If
             End If
 
             Return True
