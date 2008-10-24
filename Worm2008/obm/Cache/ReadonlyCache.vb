@@ -44,7 +44,11 @@ Namespace Cache
         End Sub
 
         Public Function IsEmpty(ByVal dp As IDependentTypes) As Boolean
-            Return Not (dp.GetAddDelete.GetEnumerator.MoveNext OrElse dp.GetUpdate.GetEnumerator.MoveNext)
+            If dp Is Nothing Then
+                Return True
+            Else
+                Return Not (dp.GetAddDelete.GetEnumerator.MoveNext OrElse dp.GetUpdate.GetEnumerator.MoveNext)
+            End If
         End Function
     End Module
 

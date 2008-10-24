@@ -648,7 +648,7 @@ Partial Public Class OrmManager
         End Function
     End Structure
 
-    Public Interface ICacheItemProvoderBase(Of T As {_IEntity})
+    Public Interface ICacheItemProvoderBase
         'Function GetValues(ByVal withLoad As Boolean) As ReadOnlyList(Of T)
         Property Created() As Boolean
         Property Renew() As Boolean
@@ -661,7 +661,7 @@ Partial Public Class OrmManager
     End Interface
 
     Public Interface ICacheItemProvoder(Of T As {ICachedEntity})
-        Inherits ICacheItemProvoderBase(Of T)
+        Inherits ICacheItemProvoderBase
         Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem
     End Interface
 
@@ -798,7 +798,7 @@ Partial Public Class OrmManager
 
         End Sub
 
-        Public Overridable Property Renew() As Boolean Implements ICacheItemProvoderBase(Of T).Renew
+        Public Overridable Property Renew() As Boolean Implements ICacheItemProvoderBase.Renew
             Get
                 Return _renew
             End Get
@@ -807,7 +807,7 @@ Partial Public Class OrmManager
             End Set
         End Property
 
-        Public Overridable Property Created() As Boolean Implements ICacheItemProvoderBase(Of T).Created
+        Public Overridable Property Created() As Boolean Implements ICacheItemProvoderBase.Created
             Get
                 Return _created
             End Get
@@ -816,18 +816,18 @@ Partial Public Class OrmManager
             End Set
         End Property
 
-        Public Overridable ReadOnly Property SmartSort() As Boolean Implements ICacheItemProvoderBase(Of T).SmartSort
+        Public Overridable ReadOnly Property SmartSort() As Boolean Implements ICacheItemProvoderBase.SmartSort
             Get
                 Return True
             End Get
         End Property
 
         Public MustOverride Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of T) 'Implements ICustDelegate(Of T).GetValues
-        Public MustOverride Sub CreateDepends() Implements ICacheItemProvoderBase(Of T).CreateDepends
-        Public MustOverride ReadOnly Property Filter() As IFilter Implements ICacheItemProvoderBase(Of T).Filter
-        Public MustOverride ReadOnly Property Sort() As Sort Implements ICacheItemProvoderBase(Of T).Sort
+        Public MustOverride Sub CreateDepends() Implements ICacheItemProvoderBase.CreateDepends
+        Public MustOverride ReadOnly Property Filter() As IFilter Implements ICacheItemProvoderBase.Filter
+        Public MustOverride ReadOnly Property Sort() As Sort Implements ICacheItemProvoderBase.Sort
         'Public MustOverride ReadOnly Property SortType() As SortType Implements ICustDelegate(Of T).SortType
-        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem Implements ICacheItemProvoderBase(Of T).GetCacheItem
+        Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As CachedItem Implements ICacheItemProvoderBase.GetCacheItem
         Public MustOverride Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of T)) As CachedItem Implements ICacheItemProvoder(Of T).GetCacheItem
     End Class
 

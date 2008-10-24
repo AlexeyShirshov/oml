@@ -11,7 +11,7 @@ Imports Worm.Database.Criteria.Core
 Imports Worm.Criteria.Values
 Imports Worm.Database.Criteria.Joins
 
-<TestClass()> Public Class CacheQueryTest
+<TestClass()> Public Class DeferredCacheQueryTest
 
     Private testContextInstance As TestContext
 
@@ -53,6 +53,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestFilter()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.AutoTypeField("ID").GreaterThan(2)
             Assert.IsNotNull(q)
@@ -77,6 +78,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestFilterUpdate()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
             Assert.IsNotNull(q)
@@ -102,6 +104,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestJoin()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.Field(GetType(Table2), "Money").Eq(1)
             q.AutoJoins = True
@@ -128,6 +131,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestUpdate()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table2))
             q.Filter = Ctor.AutoTypeField("Money").GreaterThan(1)
             Dim l As ReadOnlyEntityList(Of Table2) = q.ToEntityList(Of Table2)(mgr)
@@ -150,6 +154,8 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestCorrelatedSubqueryCache()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
+
             Dim tt1 As Type = GetType(Table1)
             Dim tt2 As Type = GetType(Table2)
 
@@ -181,8 +187,11 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestSortCache()
         Dim t As Type = GetType(Table1)
 
+        Dim cache As New Cache.OrmCache
+        cache.ValidateBehavior = Worm.Cache.ValidateBehavior.Deferred
+
         Dim q As New QueryCmd(t, New CreateManager(Function() _
-            TestManagerRS.CreateManagerShared(New SQLGenerator("1"))))
+            TestManagerRS.CreateManagerShared(New SQLGenerator("1"), cache)))
 
         q.Top(2).Sort(Orm.Sorting.Field("DT"))
 
@@ -204,6 +213,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestSortCache2()
         Dim t As Type = GetType(Entity4)
         Dim c As New Cache.OrmCache
+        c.ValidateBehavior = Worm.Cache.ValidateBehavior.Deferred
 
         Dim q As QueryCmd = New QueryCmd(t, New CreateManager(Function() _
             TestManager.CreateManager(c, New SQLGenerator("1")))).Sort(Orm.Sorting.Field("ID"))

@@ -1504,7 +1504,7 @@ Namespace Query
 
         Public Function GetOrmCommand(Of T As _IOrmBase)(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             'Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
-            Dim q As New OrmQueryCmd(Of T)(Table)
+            Dim q As New OrmQueryCmd(Of T)()
             CopyTo(q)
             If _getMgr Is Nothing Then
                 q.Exec(mgr)
@@ -1514,24 +1514,24 @@ Namespace Query
 
         Public Function GetOrmCommand(Of T As _IOrmBase)() As OrmQueryCmd(Of T)
             Dim mgr As OrmManager = OrmManager.CurrentManager
-            Dim q As New OrmQueryCmd(Of T)(Table)
-            CopyTo(q)
-            If _getMgr Is Nothing Then
-                q.Exec(mgr)
-            End If
-            Return q
+            Return GetOrmCommand(Of T)(mgr)
         End Function
 
 #Region " Create methods "
 
         Public Shared Function Create(ByVal table As SourceFragment, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                Dim q As New QueryCmd(table)
-                Return q
+                q = New QueryCmd(table)
             Else
-                Return f.Create(table)
+                q = f.Create(table)
             End If
+            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+            If cm IsNot Nothing Then
+                q._getMgr = cm
+            End If
+            Return q
         End Function
 
         Public Shared Function CreateAndGetOrmCommand(Of T As _IOrmBase)(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
@@ -1541,53 +1541,78 @@ Namespace Query
 
         Public Shared Function Create(ByVal selectType As Type, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                Dim q As New QueryCmd(selectType)
-                Return q
+                q = New QueryCmd(selectType)
             Else
-                Return f.Create(selectType)
+                q = f.Create(selectType)
             End If
+            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+            If cm IsNot Nothing Then
+                q._getMgr = cm
+            End If
+            Return q
         End Function
 
         Public Shared Function CreateByEntityName(ByVal entityName As String, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                Dim q As New QueryCmd(entityName)
-                Return q
+                q = New QueryCmd(entityName)
             Else
-                Return f.CreateByEntityName(entityName)
+                q = f.CreateByEntityName(entityName)
             End If
+            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+            If cm IsNot Nothing Then
+                q._getMgr = cm
+            End If
+            Return q
         End Function
 
         Public Shared Function Create(ByVal obj As _IOrmBase, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                Dim q As New QueryCmd(obj)
-                Return q
+                q = New QueryCmd(obj)
             Else
-                Return f.Create(obj)
+                q = f.Create(obj)
             End If
+            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+            If cm IsNot Nothing Then
+                q._getMgr = cm
+            End If
+            Return q
         End Function
 
         Public Shared Function Create(ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                Dim q As New QueryCmd(obj, key)
-                Return q
+                q = New QueryCmd(obj, key)
             Else
-                Return f.Create(obj, key)
+                q = f.Create(obj, key)
             End If
+            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+            If cm IsNot Nothing Then
+                q._getMgr = cm
+            End If
+            Return q
         End Function
 
         Public Shared Function Create(ByVal name As String, ByVal table As SourceFragment, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                Dim q As New QueryCmd(table)
+                q = New QueryCmd(table)
                 q.Name = name
-                Return q
             Else
-                Return f.Create(name, table)
+                q = f.Create(name, table)
             End If
+            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+            If cm IsNot Nothing Then
+                q._getMgr = cm
+            End If
+            Return q
         End Function
 
         Public Shared Function CreateAndGetOrmCommand(Of T As _IOrmBase)(ByVal name As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
@@ -1597,46 +1622,66 @@ Namespace Query
 
         Public Shared Function Create(ByVal name As String, ByVal selectType As Type, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                Dim q As New QueryCmd(selectType)
+                q = New QueryCmd(selectType)
                 q.Name = name
-                Return q
             Else
-                Return f.Create(name, selectType)
+                q = f.Create(name, selectType)
             End If
+            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+            If cm IsNot Nothing Then
+                q._getMgr = cm
+            End If
+            Return q
         End Function
 
         Public Shared Function CreateByEntityName(ByVal name As String, ByVal entityName As String, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                Dim q As New QueryCmd(entityName)
+                q = New QueryCmd(entityName)
                 q.Name = name
-                Return q
             Else
-                Return f.CreateByEntityName(name, entityName)
+                q = f.CreateByEntityName(name, entityName)
             End If
+            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+            If cm IsNot Nothing Then
+                q._getMgr = cm
+            End If
+            Return q
         End Function
 
         Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                Dim q As New QueryCmd(obj)
+                q = New QueryCmd(obj)
                 q.Name = name
-                Return q
             Else
-                Return f.Create(name, obj)
+                q = f.Create(name, obj)
             End If
+            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+            If cm IsNot Nothing Then
+                q._getMgr = cm
+            End If
+            Return q
         End Function
 
         Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
+            Dim q As QueryCmd = Nothing
             If f Is Nothing Then
-                Dim q As New QueryCmd(obj, key)
+                q = New QueryCmd(obj, key)
                 q.Name = name
-                Return q
             Else
-                Return f.Create(name, obj, key)
+                q = f.Create(name, obj, key)
             End If
+            Dim cm As ICreateManager = TryCast(mgr, ICreateManager)
+            If cm IsNot Nothing Then
+                q._getMgr = cm
+            End If
+            Return q
         End Function
 
         Public Shared Function Create(ByVal table As SourceFragment) As QueryCmd
@@ -1687,7 +1732,6 @@ Namespace Query
             Return Create(name, obj, key, OrmManager.CurrentManager)
         End Function
 
-
 #End Region
 
     End Class
@@ -1697,15 +1741,17 @@ Namespace Query
         Implements Generic.IEnumerable(Of T)
 
         Private _preCmp As ReadOnlyList(Of T)
+        Private _oldMark As Guid
 
         Public Sub Exec(ByVal mgr As OrmManager)
             _preCmp = ToOrmList(Of T)(mgr)
+            _oldMark = _mark
         End Sub
 
         Public Shared Widening Operator CType(ByVal cmd As OrmQueryCmd(Of T)) As ReadOnlyList(Of T)
             If cmd._getMgr IsNot Nothing Then
                 Return cmd.ToOrmList(Of T)(cmd._getMgr)
-            ElseIf cmd._preCmp IsNot Nothing Then
+            ElseIf cmd._preCmp IsNot Nothing AndAlso cmd._oldMark = cmd._mark Then
                 Return cmd._preCmp
             Else
                 Throw New InvalidOperationException("Cannot convert to list")

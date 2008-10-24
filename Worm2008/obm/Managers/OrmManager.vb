@@ -434,11 +434,12 @@ Partial Public MustInherit Class OrmManager
                     Dim key As String = FindGetKey(f, tt) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                     Dim dic As IDictionary = GetDic(_cache, key)
                     Dim id As String = f.ToString
-                    If dic.Contains(id) Then
+                    Dim ce As CachedItem = CType(dic(id), CachedItem)
+                    If ce IsNot Nothing Then
                         'Dim fs As List(Of String) = Nothing
                         Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(f, Nothing, key, id)
                         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
-                        If v Is Nothing OrElse v.ValidateBeforCacheProbe() Then
+                        If v Is Nothing OrElse v.ValidateBeforCacheProbe() OrElse v.ValidateItemFromCache(ce) Then
                             'l.AddRange(Find(Of T)(cl, Nothing, True))
                             lookups.Add(o, New ReadOnlyList(Of T)(Find(Of T)(cl, Nothing, True)))
                             hasInCache.Add(o, Nothing)
@@ -485,6 +486,7 @@ Partial Public MustInherit Class OrmManager
                     j += 1
                 End If
                 Dim v As ReadOnlyList(Of T) = Nothing
+                Dim hasInCache_ As Boolean = hasInCache.ContainsKey(obj)
                 If lookups.TryGetValue(obj, v) Then
                     For Each oo As IEntity In v
                         CType(l, IListEdit).Add(oo)
@@ -492,7 +494,7 @@ Partial Public MustInherit Class OrmManager
                 Else
                     v = New ReadOnlyList(Of T)
                 End If
-                If Not _dont_cache_lists AndAlso Not hasInCache.ContainsKey(obj) Then
+                If Not _dont_cache_lists AndAlso Not hasInCache_ Then
                     'Dim con As New OrmCondition.OrmConditionConstructor
                     'con.AddFilter(New OrmFilter(tt, fieldName, k, FilterOperation.Equal))
                     'con.AddFilter(filter)
@@ -569,11 +571,12 @@ Partial Public MustInherit Class OrmManager
                         id &= criteria.Filter(type2load).ToString
                     End If
 
-                    If dic.Contains(id) Then
+                    Dim ce As CachedItem = CType(dic(id), CachedItem)
+                    If ce IsNot Nothing Then
                         'Dim sync As String = GetSync(key, id)
                         Dim del As ICacheItemProvoder(Of T) = GetCustDelegate(Of T)(o, GetFilter(criteria, type2load), Nothing, id, key, direct)
                         Dim v As ICacheValidator = TryCast(del, ICacheValidator)
-                        If v Is Nothing OrElse v.ValidateBeforCacheProbe() Then
+                        If v Is Nothing OrElse v.ValidateBeforCacheProbe() OrElse v.ValidateItemFromCache(ce) Then
                             Dim e As M2MCache = CType(dic(id), M2MCache)
                             If Not v.ValidateItemFromCache(e) Then
                                 newc.Add(o)
@@ -1281,24 +1284,24 @@ l1:
 
 #Region " Cache "
 
-    Protected Friend Delegate Function ValDelegate(Of T As _ICachedEntity)(ByRef ce As CachedItem, _
-        ByVal del As ICacheItemProvoderBase(Of T), ByVal dic As IDictionary, ByVal id As Object, _
+    Protected Friend Delegate Function ValDelegate(ByRef ce As CachedItem, _
+        ByVal del As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
     Protected Friend Function GetFromCache2(Of T As {_IEntity})(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase(Of T)) As CachedItem
+        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItem
 
-        Return GetFromCacheBase(Of T, _ICachedEntity)(dic, sync, id, withLoad, del, Nothing)
+        Return GetFromCacheBase(Of T)(dic, sync, id, withLoad, del, Nothing)
     End Function
 
     Protected Friend Function GetFromCache(Of T As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase(Of T)) As CachedItem
+        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase) As CachedItem
 
-        Return GetFromCacheBase(Of T, T)(dic, sync, id, withLoad, del, AddressOf _ValCE(Of T))
+        Return GetFromCacheBase(Of T)(dic, sync, id, withLoad, del, AddressOf _ValCE(Of T))
     End Function
 
-    Protected Friend Function GetFromCacheBase(Of T As _IEntity, T2 As _ICachedEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
-        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase(Of T), ByVal vdel As ValDelegate(Of T2)) As CachedItem
+    Protected Friend Function GetFromCacheBase(Of T As _IEntity)(ByVal dic As IDictionary, ByVal sync As String, ByVal id As Object, _
+        ByVal withLoad As Boolean, ByVal del As ICacheItemProvoderBase, ByVal vdel As ValDelegate) As CachedItem
 
         Invariant()
 
@@ -1349,7 +1352,7 @@ l1:
         If del.Created Then
             If Not _dont_cache_lists Then del.CreateDepends()
         ElseIf vdel IsNot Nothing Then
-            If Not vdel(ce, CType(del, ICacheItemProvoderBase(Of T2)), dic, id, sync, v) Then
+            If Not vdel(ce, del, dic, id, sync, v) Then
                 GoTo l1
             End If
         End If
@@ -1363,7 +1366,7 @@ l1:
     End Function
 
     Private Function _ValCE(Of T As _ICachedEntity)(ByRef ce As CachedItem, _
-        ByVal del_ As ICacheItemProvoderBase(Of T), ByVal dic As IDictionary, ByVal id As Object, _
+        ByVal del_ As ICacheItemProvoderBase, ByVal dic As IDictionary, ByVal id As Object, _
         ByVal sync As String, ByVal v As ICacheValidator) As Boolean
 
         Dim del As ICacheItemProvoder(Of T) = CType(del_, Global.Worm.OrmManager.ICacheItemProvoder(Of T))
