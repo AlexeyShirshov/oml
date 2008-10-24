@@ -1003,7 +1003,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function UpdateCacheDeferred(ByVal t As Type, ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
+        Protected Friend Function UpdateCacheDeferred(ByVal t As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
 
             If t IsNot Nothing Then
                 Dim wasAdded, wasDeleted As Boolean
