@@ -245,12 +245,34 @@ Namespace Query
 
         Protected Function ValidateFromCache() As Boolean
             If Cache.ValidateBehavior = Worm.Cache.ValidateBehavior.Deferred Then
+                Dim l As New List(Of Type)
+
+                If _j IsNot Nothing Then
+                    For Each js As List(Of Worm.Criteria.Joins.OrmJoin) In _j
+                        For Each j As OrmJoin In js
+                            If j.Type IsNot Nothing Then
+                                l.Add(j.Type)
+                            ElseIf Not String.IsNullOrEmpty(j.EntityName) Then
+                                l.Add(MappingEngine.GetTypeByEntityName(j.EntityName))
+                            End If
+                        Next
+                    Next
+                End If
+
+                For Each q As QueryCmd In New QueryIterator(_q)
+                    Dim dp As Cache.IDependentTypes = q.Get(MappingEngine)
+                    If Not Worm.Cache.IsEmpty(dp) Then
+                        l.AddRange(dp.GetAddDelete)
+                        l.AddRange(dp.GetUpdate)
+                    End If
+                Next
+
                 Dim f As IEntityFilter = Nothing
                 If _f IsNot Nothing AndAlso _f.Length > 0 Then
                     f = TryCast(_f(0), IEntityFilter)
                 End If
 
-                Return _mgr.Cache.UpdateCacheDeferred(_q.SelectedType, f, _q.propSort, _q.Group)
+                Return _mgr.Cache.UpdateCacheDeferred(l, f, _q.propSort, _q.Group)
             End If
             Return True
         End Function
