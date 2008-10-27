@@ -63,7 +63,7 @@ Namespace Query.Database
                 If t Is Nothing Then
                     str = _q.Table.RawName
                 Else
-                    str = Mgr.MappingEngine.GetEntityKey(Mgr.GetFilterInfo, t)
+                    str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, t)
                 End If
 
                 _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl, str)

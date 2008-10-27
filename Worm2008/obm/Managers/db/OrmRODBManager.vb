@@ -33,7 +33,7 @@ Namespace Database
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
         Protected Shared _LoadMultipleObjectsMI4 As Reflection.MethodInfo = Nothing
 
-        Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator, ByVal connectionString As String)
+        Public Sub New(ByVal cache As ReadonlyCache, ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, schema)
             _stmtHelper = schema
             _connStr = connectionString
@@ -402,9 +402,12 @@ Namespace Database
             End If
 
             Dim b As ConnAction = TestConn(cmd)
+            Dim ec As OrmCache = TryCast(_cache, OrmCache)
             Try
-                _cache.BeginTrackDelete(firstType)
-                _cache.BeginTrackDelete(secondType)
+                If ec IsNot Nothing Then
+                    ec.BeginTrackDelete(firstType)
+                    ec.BeginTrackDelete(secondType)
+                End If
 
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
@@ -455,7 +458,7 @@ Namespace Database
                     Do While dr.Read
                         Dim id1 As Object = dr.GetValue(firstidx)
                         Dim obj1 As IOrmBase = GetOrmBaseFromCacheOrCreate(id1, firstType)
-                        If Not _cache.IsDeleted(obj1) AndAlso obj1.ObjectState <> ObjectState.Modified Then
+                        If (ec Is Nothing OrElse Not ec.IsDeleted(obj1)) AndAlso obj1.ObjectState <> ObjectState.Modified Then
                             Using obj1.GetSyncRoot()
                                 'If obj1.IsLoaded Then obj1.IsLoaded = False
                                 Dim lock As IDisposable = Nothing
@@ -475,8 +478,7 @@ Namespace Database
 
                         Dim id2 As Object = dr.GetValue(secidx)
                         Dim obj2 As IOrmBase = GetOrmBaseFromCacheOrCreate(id2, secondType)
-                        If Not _cache.IsDeleted(obj2) Then
-                            If obj2.ObjectState <> ObjectState.Modified Then
+                        If (ec Is Nothing OrElse Not ec.IsDeleted(obj2)) AndAlso obj2.ObjectState <> ObjectState.Modified Then
                                 Using obj2.GetSyncRoot()
                                     'If obj2.IsLoaded Then obj2.IsLoaded = False
                                     Dim lock As IDisposable = Nothing
@@ -490,15 +492,16 @@ Namespace Database
                                         End If
                                     End Try
                                 End Using
-                            End If
                         End If
                     Loop
                     _fetch = ft.GetTime
 
                 End Using
             Finally
-                _cache.EndTrackDelete(secondType)
-                _cache.EndTrackDelete(firstType)
+                If ec IsNot Nothing Then
+                    ec.EndTrackDelete(secondType)
+                    ec.EndTrackDelete(firstType)
+                End If
                 CloseConn(b)
             End Try
 
@@ -728,10 +731,12 @@ Namespace Database
                         If withLoad Then
                             arr = SQLGenerator.GetSortedFieldList(type2load)
                         End If
+                        Dim ec As OrmCache = TryCast(_cache, OrmCache)
+
                         Dim b As ConnAction = TestConn(cmd)
                         Try
-                            If withLoad Then
-                                _cache.BeginTrackDelete(type2load)
+                            If withLoad AndAlso ec IsNot Nothing Then
+                                ec.BeginTrackDelete(type2load)
                             End If
                             Dim et As New PerfCounter
                             Using dr As System.Data.IDataReader = cmd.ExecuteReader
@@ -754,7 +759,7 @@ Namespace Database
                                         edic.Add(id1, el)
                                     End If
                                     Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id2)
-                                    If withLoad AndAlso Not _cache.IsDeleted(type2load, obj.Key) Then
+                                    If withLoad AndAlso (ec Is Nothing OrElse Not ec.IsDeleted(type2load, obj.Key)) Then
                                         If obj.ObjectState <> ObjectState.Modified Then
                                             Using obj.GetSyncRoot()
                                                 'If obj.IsLoaded Then obj.IsLoaded = False
@@ -775,8 +780,8 @@ Namespace Database
                                 _fetch = ft.GetTime
                             End Using
                         Finally
-                            If withLoad Then
-                                _cache.EndTrackDelete(type2load)
+                            If withLoad AndAlso ec IsNot Nothing Then
+                                ec.EndTrackDelete(type2load)
                             End If
                             CloseConn(b)
                         End Try
@@ -987,10 +992,10 @@ Namespace Database
             Invariant()
 
             Dim dic As IDictionary = GetDictionary(obj.GetType)
-            'Dim b As ConnAction = TestConn(cmd)
+            Dim ec As OrmCache = TryCast(_cache, OrmCache)
             Try
-                If load Then
-                    _cache.BeginTrackDelete(obj.GetType)
+                If load AndAlso ec IsNot Nothing Then
+                    ec.BeginTrackDelete(obj.GetType)
                 End If
                 Dim et As New PerfCounter
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
@@ -1013,7 +1018,7 @@ Namespace Database
                             If loaded Then
                                 Throw New OrmManagerException(String.Format("Statement [{0}] returns more than one record", cmd.CommandText))
                             End If
-                            If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse Not _cache.IsDeleted(obj)) Then
+                            If obj.ObjectState <> ObjectState.Deleted AndAlso (Not load OrElse ec Is Nothing OrElse Not ec.IsDeleted(obj)) Then
                                 Dim lock As IDisposable = Nothing
                                 Try
                                     LoadFromDataReader(obj, dr, arr, check_pk, 0, dic, False, lock, oschema, cm, props)
@@ -1075,8 +1080,8 @@ Namespace Database
                 End Using
                 _cache.LogLoadTime(obj, et.GetTime)
             Finally
-                If load Then
-                    _cache.EndTrackDelete(obj.GetType)
+                If load AndAlso ec IsNot Nothing Then
+                    ec.EndTrackDelete(obj.GetType)
                 End If
                 'CloseConn(b)
             End Try
@@ -1137,10 +1142,11 @@ Namespace Database
             'Dim idx As Integer = -1
             Dim b As ConnAction = TestConn(cmd)
             Dim original_type As Type = GetType(T)
+            Dim c As OrmCache = TryCast(_cache, OrmCache)
             Try
                 _loadedInLastFetch = 0
-                If withLoad Then
-                    _cache.BeginTrackDelete(original_type)
+                If withLoad AndAlso c IsNot Nothing Then
+                    c.BeginTrackDelete(original_type)
                 End If
 
                 Dim et As New PerfCounter
@@ -1180,8 +1186,8 @@ Namespace Database
                     _fetch = ft.GetTime
                 End Using
             Finally
-                If withLoad Then
-                    _cache.EndTrackDelete(original_type)
+                If withLoad AndAlso c IsNot Nothing Then
+                    c.EndTrackDelete(original_type)
                 End If
                 CloseConn(b)
             End Try
@@ -1310,7 +1316,7 @@ Namespace Database
             Try
                 Dim pk_count As Integer = 0
                 Dim pi_cache(selectList.Count - 1) As Reflection.PropertyInfo
-                'Dim bl As Boolean
+                Dim attrs(selectList.Count - 1) As Field2DbRelations
                 Dim oldpk() As PKDesc = Nothing
                 If ce IsNot Nothing AndAlso Not fromRS Then oldpk = ce.GetPKValues()
                 For idx As Integer = 0 To selectList.Count - 1
@@ -1319,7 +1325,9 @@ Namespace Database
                     pi_cache(idx) = pi
 
                     If fields_idx.ContainsKey(c.FieldName) Then
-                        If idx >= 0 AndAlso (fields_idx(c.FieldName).GetAttributes(c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
+                        Dim attr As Field2DbRelations = fields_idx(c.FieldName).GetAttributes(c)
+                        attrs(idx) = attr
+                        If idx >= 0 AndAlso (attr And Field2DbRelations.PK) = Field2DbRelations.PK Then
                             Assert(idx + displacement < dr.FieldCount, c.FieldName)
                             'If dr.FieldCount <= idx + displacement Then
                             '    If _mcSwitch.TraceError Then
@@ -1399,7 +1407,8 @@ Namespace Database
                     If ce IsNot Nothing Then
                         ce.PKLoaded(pk_count)
 
-                        If _cache.IsDeleted(ce) Then
+                        Dim c As OrmCache = TryCast(_cache, OrmCache)
+                        If c IsNot Nothing AndAlso c.IsDeleted(ce) Then
                             Return obj
                         End If
 
@@ -1460,7 +1469,7 @@ Namespace Database
                             obj.SetValueOptimized(pi, c, oschema, value)
                             If ce IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
                         Else
-                            Dim att As Field2DbRelations = fields_idx(c.FieldName).GetAttributes(c)
+                            Dim att As Field2DbRelations = attrs(idx)
                             Dim propType As Type = pi.PropertyType
                             If check_pk AndAlso (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                 Dim v As Object = pi.GetValue(obj, Nothing)
@@ -1676,7 +1685,11 @@ Namespace Database
                             End If
                             tp = DbTypeConvertor.ToSqlDbType(p.DbType).ToString
                             If p.DbType = System.Data.DbType.String Then
-                                tp &= "(" & p.Size.ToString & ")"
+                                If p.Size = 0 Then
+                                    tp &= "(1)"
+                                Else
+                                    tp &= "(" & p.Size.ToString & ")"
+                                End If
                             End If
                         End If
                         sb.Append(SQLGenerator.DeclareVariable(p.ParameterName, tp))
@@ -2745,9 +2758,10 @@ l2:
             ByVal obj As IOrmBase, ByVal sort As Sort, ByVal columns As IList(Of ColumnAttribute)) As List(Of Object)
             Dim b As ConnAction = TestConn(cmd)
             Dim tt As Type = GetType(T)
+            Dim c As OrmCache = TryCast(_cache, OrmCache)
             Try
-                If withLoad Then
-                    _cache.BeginTrackDelete(tt)
+                If withLoad AndAlso c IsNot Nothing Then
+                    c.BeginTrackDelete(tt)
                 End If
                 _loadedInLastFetch = 0
                 Dim dic As IDictionary = CType(GetDictionary(Of T)(), System.Collections.IDictionary)
@@ -2775,7 +2789,7 @@ l2:
                             RaiseObjectCreated(o)
                         End If
 
-                        If withLoad AndAlso Not _cache.IsDeleted(tt, o.Key) Then
+                        If withLoad AndAlso (c Is Nothing OrElse Not c.IsDeleted(tt, o.Key)) Then
                             If o.ObjectState <> ObjectState.Modified Then
                                 Using o.GetSyncRoot()
                                     'If obj.IsLoaded Then obj.IsLoaded = False
@@ -2807,8 +2821,8 @@ l2:
                 End If
                 Return l
             Finally
-                If withLoad Then
-                    _cache.EndTrackDelete(tt)
+                If withLoad AndAlso c IsNot Nothing Then
+                    c.EndTrackDelete(tt)
                 End If
                 CloseConn(b)
             End Try

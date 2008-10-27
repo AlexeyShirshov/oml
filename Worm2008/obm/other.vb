@@ -524,3 +524,39 @@ Public NotInheritable Class DbTypeConvertor
     End Structure
 End Class
 
+Public Class OnExitScopeAction
+    Implements IDisposable
+
+    Public Delegate Sub Action()
+    Public Delegate Sub Action(Of T)(ByVal t1 As T)
+    Public Delegate Sub Action(Of T, T2)(ByVal t1 As T, ByVal t2 As T2)
+
+    Private _action As Action
+
+    Public Sub New(ByVal action As Action)
+        _action = action
+    End Sub
+
+#Region " IDisposable Support "
+    Private disposedValue As Boolean = False        ' To detect redundant calls
+
+    ' IDisposable
+    Protected Overridable Sub Dispose(ByVal disposing As Boolean)
+        If Not Me.disposedValue Then
+            If disposing Then
+                _action()
+            End If
+
+        End If
+        Me.disposedValue = True
+    End Sub
+
+    ' This code added by Visual Basic to correctly implement the disposable pattern.
+    Public Sub Dispose() Implements IDisposable.Dispose
+        ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
+        Dispose(True)
+        GC.SuppressFinalize(Me)
+    End Sub
+#End Region
+
+End Class

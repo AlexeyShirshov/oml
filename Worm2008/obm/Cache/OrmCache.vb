@@ -1,7 +1,6 @@
 Imports System.Runtime.CompilerServices
 Imports System.Collections.Generic
 Imports Worm.Orm
-Imports Worm.Database.Storedprocs
 Imports Worm.Orm.Meta
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Values
@@ -11,8 +10,11 @@ Imports Worm.Orm.Query
 
 Namespace Cache
 
-    Public MustInherit Class OrmCacheBase
+    Public Class OrmCache
         Inherits ReadonlyCache
+        Implements IExploreCache
+
+        Public Delegate Function CreateCacheListDelegate(ByVal mark As String) As IDictionary
 
 #Region " Classes "
 
@@ -106,6 +108,16 @@ Namespace Cache
                 End If
                 c(id) = Nothing
             End Sub
+
+            Public Overloads Sub Remove(ByVal cache As ReadonlyCache)
+                For Each kv As KeyValuePair(Of String, Dictionary(Of String, Object)) In Me
+                    Dim key As String = kv.Key
+                    For Each kv2 As KeyValuePair(Of String, Object) In kv.Value
+                        Dim id As String = kv2.Key
+                        cache.RemoveEntry(key, id)
+                    Next
+                Next
+            End Sub
         End Class
 
         Private Class TypeEntryRef
@@ -123,13 +135,7 @@ Namespace Cache
             Public Overloads Function Remove(ByVal t As Type, ByVal cache As ReadonlyCache) As Boolean
                 Dim c As CacheEntryRef = Nothing
                 If TryGetValue(t, c) Then
-                    For Each kv As KeyValuePair(Of String, Dictionary(Of String, Object)) In c
-                        Dim key As String = kv.Key
-                        For Each kv2 As KeyValuePair(Of String, Object) In kv.Value
-                            Dim id As String = kv2.Key
-                            cache.RemoveEntry(key, id)
-                        Next
-                    Next
+                    c.Remove(cache)
                     Remove(t)
                 End If
                 Return c IsNot Nothing
@@ -155,11 +161,13 @@ Namespace Cache
         'End Class
 #End Region
 
+        Private _rootObjectsDictionary As IDictionary = Hashtable.Synchronized(New Hashtable)
+        Private _md As CreateCacheListDelegate
+
         'Public ReadOnly DateTimeCreated As Date
         Private _deferredValidate As Boolean
 
         'Protected _filters As IDictionary
-        Private _modifiedobjects As IDictionary
         'Private _invalidate_types As New List(Of Type)
         ''' <summary>
         ''' dictionary.key - тип
@@ -169,8 +177,6 @@ Namespace Cache
         Private _invalidate As New Dictionary(Of Type, List(Of String))
         'Private _relations As New Dictionary(Of Type, List(Of Type))
         Private _object_depends As New Dictionary(Of EntityProxy, Dictionary(Of String, List(Of String)))
-        Private _procs As New Dictionary(Of String, StoredProcBase)
-        Private _procTypes As New Dictionary(Of Type, List(Of StoredProcBase))
         ''' <summary>
         ''' pair.first - поле
         ''' pair.second - тип
@@ -186,10 +192,9 @@ Namespace Cache
         Private _qt As New Dictionary(Of Object, Dictionary(Of String, Pair(Of String)))
         Private _ct_depends As New Dictionary(Of Type, Dictionary(Of String, Dictionary(Of String, Object)))
 
-        Private _m2m_dep As New Dictionary(Of String, Dictionary(Of String, Dictionary(Of String, Object)))
-        Private _m2mQueries As New Dictionary(Of EditableListBase, Pair(Of String))
+        Private _m2mSimpleQueries As New Dictionary(Of EditableListBase, CacheEntryRef)
 
-        Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
+        'Private _loadTimes As New Dictionary(Of Type, Pair(Of Integer, TimeSpan))
         Private _jt As New Dictionary(Of Type, List(Of Type))
 
         Private _trackDelete As New Dictionary(Of Type, Pair(Of Integer, List(Of Integer)))
@@ -202,25 +207,23 @@ Namespace Cache
         Private _groupedFields As New FieldsRef
         Private _addedTypes As New Dictionary(Of Type, Type)
         Private _deletedTypes As New Dictionary(Of Type, Type)
+        Private _m2mQueries As New Dictionary(Of M2MRelation, CacheEntryRef)
 
-        Public Event CacheHasModification As EventHandler
+        Public Delegate Function EnumM2MCache(ByVal mgr As OrmManager, ByVal entity As OrmManager.M2MCache) As Boolean
 
-        Public Event CacheHasnotModification As EventHandler
-
-        Public Delegate Function EnumM2MCache(ByVal entity As OrmManager.M2MCache) As Boolean
-
-        Public Event RegisterObjectRemoval(ByVal obj As ICachedEntity)
+        Public Event OnObjectUpdated(ByVal cache As OrmCache, ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String))
+        Public Event OnObjectAdded(ByVal cache As OrmCache, ByVal obj As _ICachedEntity)
+        Public Event OnObjectDeleted(ByVal cache As OrmCache, ByVal obj As _ICachedEntity)
 
         'Public Delegate Sub OnUpdateAfterDeleteEnd(ByVal o As OrmBase, ByVal mgr As OrmManager)
         'Public Delegate Sub OnUpdateAfterAddEnd(ByVal o As OrmBase, ByVal mgr As OrmManager, ByVal contextKey As Object)
         Public Delegate Sub OnUpdated(ByVal o As _ICachedEntity, ByVal mgr As OrmManager, ByVal contextKey As Object)
 
-        Sub New()
-            MyBase.new()
-            '_filters = Hashtable.Synchronized(New Hashtable)
-            'DateTimeCreated = Now
-            _modifiedobjects = Hashtable.Synchronized(New Hashtable)
-        End Sub
+        'Sub New()
+        '    MyBase.new()
+        '    '_filters = Hashtable.Synchronized(New Hashtable)
+        '    'DateTimeCreated = Now
+        'End Sub
 
 #Region " general routines "
 
@@ -229,79 +232,6 @@ Namespace Cache
         '        Return _filters
         '    End Get
         'End Property
-
-        Public Function ShadowCopy(ByVal t As Type, ByVal id As CacheKey) As ObjectModification
-            Using SyncRoot
-                Dim name As String = t.Name & ":" & id.ToString
-                Return CType(_modifiedobjects(name), ObjectModification)
-            End Using
-        End Function
-
-        Public Function ShadowCopy(ByVal obj As _ICachedEntity) As ObjectModification
-            Using SyncRoot
-                If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj")
-                End If
-
-                If obj.IsPKLoaded Then
-                    Dim name As String = obj.GetType().Name & ":" & obj.Key
-                    Return CType(_modifiedobjects(name), ObjectModification)
-                Else
-                    Return Nothing
-                End If
-            End Using
-        End Function
-
-        Public ReadOnly Property SyncRoot() As IDisposable
-            Get
-#If DebugLocks Then
-                Return New CSScopeMgr_Debug(_lock, "d:\temp\")
-#Else
-                Return New CSScopeMgr(_lock)
-#End If
-            End Get
-        End Property
-
-        Protected Friend Function RegisterModification(ByVal obj As _ICachedEntity, ByVal reason As ObjectModification.ReasonEnum) As ObjectModification
-            Using SyncRoot
-                If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj")
-                End If
-
-                Dim mo As ObjectModification = Nothing
-                Dim name As String = obj.GetType().Name & ":" & obj.Key
-                'Using SyncHelper.AcquireDynamicLock(name)
-                Assert(OrmManager.CurrentManager IsNot Nothing, "You have to create MediaContent object to perform this operation")
-                Assert(Not _modifiedobjects.Contains(name), "Key " & name & " already in collection")
-                mo = New ObjectModification(obj, OrmManager.CurrentManager.CurrentUser, reason)
-                _modifiedobjects.Add(name, mo)
-                'End Using
-                If _modifiedobjects.Count = 1 Then
-                    RaiseEvent CacheHasModification(Me, EventArgs.Empty)
-                End If
-                Return mo
-            End Using
-        End Function
-
-        Public Function GetModifiedObjects(Of T As {ICachedEntity})() As ICollection(Of T)
-            Dim al As New Generic.List(Of T)
-            Dim tt As Type = GetType(T)
-            For Each s As String In New ArrayList(_modifiedobjects.Keys)
-                If s.IndexOf(tt.Name & ":") >= 0 Then
-                    Dim mo As ObjectModification = CType(_modifiedobjects(s), ObjectModification)
-                    If mo IsNot Nothing Then
-                        al.Add(CType(mo.Obj, T))
-                    End If
-                End If
-            Next
-            Return al
-        End Function
-
-        Protected Shared Sub Assert(ByVal condition As Boolean, ByVal message As String)
-            Debug.Assert(condition, message)
-            Trace.Assert(condition, message)
-            If Not condition Then Throw New OrmCacheException(message)
-        End Sub
 
         'Protected Friend Function RegisterModification(ByVal obj As ICachedEntity, ByVal id As Integer, ByVal reason As ModifiedObject.ReasonEnum) As ModifiedObject
         '    Using SyncRoot
@@ -324,64 +254,9 @@ Namespace Cache
         '    End Using
         'End Function
 
-        Protected Friend Sub RegisterExistingModification(ByVal obj As ICachedEntity, ByVal key As Integer)
-            Using SyncRoot
-                If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj")
-                End If
-
-                Dim name As String = obj.GetType().Name & ":" & key
-                _modifiedobjects.Add(name, obj.OriginalCopy)
-                If _modifiedobjects.Count = 1 Then
-                    RaiseEvent CacheHasModification(Me, EventArgs.Empty)
-                End If
-            End Using
-        End Sub
-
-#If TraceCreation Then
-        Private _s As New List(Of Pair(Of String, _ICachedEntity))
-        Public Function IndexOfUnreg(ByVal o As _ICachedEntity) As Integer
-            For i As Integer = 0 To _s.Count - 1
-                If _s(i).Second = o Then
-                    Return i
-                End If
-            Next
-        End Function
-#End If
-        Protected Friend Sub UnregisterModification(ByVal obj As _ICachedEntity)
-            Using SyncRoot
-                If obj Is Nothing Then
-                    Throw New ArgumentNullException("obj")
-                End If
-
-                If _modifiedobjects.Count > 0 Then
-                    Dim name As String = obj.GetType().Name & ":" & obj.Key
-                    _modifiedobjects.Remove(name)
-                    obj.RaiseCopyRemoved()
-#If TraceCreation Then
-                    _s.Add(New Pair(Of String, _ICachedEntity)(Environment.StackTrace, obj))
-#End If
-                    If _modifiedobjects.Count = 0 Then 'AndAlso obj.old_state <> ObjectState.Created Then
-                        RaiseEvent CacheHasnotModification(Me, EventArgs.Empty)
-                    End If
-                    'If obj.ObjectState = ObjectState.Modified Then
-                    '    Throw New OrmCacheException("Unregistered object must not be in modified state")
-                    'End If
-                End If
-            End Using
-        End Sub
-
         Public Overrides ReadOnly Property IsReadonly() As Boolean
             Get
                 Return False
-            End Get
-        End Property
-
-        Public ReadOnly Property IsModified() As Boolean
-            Get
-                Using SyncRoot
-                    Return _modifiedobjects.Count <> 0
-                End Using
             End Get
         End Property
 
@@ -425,39 +300,6 @@ Namespace Cache
         'Public MustOverride Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As Type, ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.IDictionary
 
         'Public MustOverride Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IOrmObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
-
-#If TraceCreation Then
-        Private _added As ArrayList = arraylist.Synchronized( New ArrayList)
-        Private _removed As ArrayList = ArrayList.Synchronized(New ArrayList)
-
-        Private Function IndexOfRemoved(ByVal obj As _ICachedEntity) As Integer
-            For i As Integer = 0 To _removed.Count - 1
-                Dim r As Pair(Of Date, _ICachedEntity) = CType(_removed(i), Pair(Of Date, _ICachedEntity))
-                If r.Second = obj Then
-                    Return i
-                End If
-            Next
-        End Function
-
-        Private Function IndexOfAdded(ByVal obj As _ICachedEntity) As Integer
-            For i As Integer = 0 To _added.Count - 1
-                Dim r As Pair(Of Date, Pair(Of Type, Integer)) = CType(_added(i), Pair(Of Date, Pair(Of Global.System.Type, Integer)))
-                If r.Second.First.Equals(obj.GetType) AndAlso r.Second.Second = obj.Identifier Then
-                    Return i
-                End If
-            Next
-        End Function
-#End If
-
-        Public Overridable Sub RegisterRemoval(ByVal obj As _ICachedEntity)
-            Debug.Assert(ShadowCopy(obj) Is Nothing)
-            RaiseEvent RegisterObjectRemoval(obj)
-            obj.RemoveFromCache(Me)
-            RemoveDepends(obj)
-#If TraceCreation Then
-            _removed.add(new Pair(Of date,ormbase)(Now,obj))
-#End If
-        End Sub
 
         Friend Sub BeginTrackDelete(ByVal t As Type)
             Using SyncHelper.AcquireDynamicLock("309fjsdfas;d")
@@ -528,29 +370,6 @@ Namespace Cache
                 End If
             End Using
         End Function
-
-        Public Function GetLoadTime(ByVal t As Type) As Pair(Of Integer, TimeSpan)
-            Dim p As Pair(Of Integer, TimeSpan) = Nothing
-            _loadTimes.TryGetValue(t, p)
-            Return p
-        End Function
-
-        Protected Friend Sub LogLoadTime(ByVal obj As IEntity, ByVal time As TimeSpan)
-            Dim t As Type = obj.GetType
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("q89rbvadfk" & t.ToString,"d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("q89rbvadfk" & t.ToString)
-#End If
-
-                Dim p As Pair(Of Integer, TimeSpan) = Nothing
-                If _loadTimes.TryGetValue(t, p) Then
-                    _loadTimes(t) = New Pair(Of Integer, TimeSpan)(p.First + 1, p.Second.Add(time))
-                Else
-                    _loadTimes(t) = New Pair(Of Integer, TimeSpan)(1, time)
-                End If
-            End Using
-        End Sub
 
         Protected Friend Sub AddFieldDepend(ByVal p As Pair(Of String, Type), ByVal key As String, ByVal id As String)
 #If DebugLocks Then
@@ -760,7 +579,7 @@ Namespace Cache
                 End Using
             End If
 
-            ValidateSPOnUpdate(obj, fields)
+            RaiseEvent OnObjectUpdated(Me, obj, fields)
         End Sub
 
         Protected Friend Sub RemoveUpdatedFields(ByVal t As Type, ByVal field As String)
@@ -813,7 +632,23 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function RemoveM2MQuery(ByVal el As EditableListBase) As Pair(Of String)
+        '        Protected Friend Function RemoveM2MQuery(ByVal el As EditableListBase) As Pair(Of String)
+        '            If el Is Nothing Then
+        '                Throw New ArgumentNullException("el")
+        '            End If
+
+        '#If DebugLocks Then
+        '            Using SyncHelper.AcquireDynamicLock_Debug("hadfgadfgasdfopgh","d:\temp\")
+        '#Else
+        '            Using SyncHelper.AcquireDynamicLock("hadfgadfgasdfopgh")
+        '#End If
+        '                Dim p As Pair(Of String) = _m2mSimpleQueries(el)
+        '                _m2mSimpleQueries.Remove(el)
+        '                Return p
+        '            End Using
+        '        End Function
+
+        Protected Friend Sub RemoveM2MQueries(ByVal el As EditableListBase)
             If el Is Nothing Then
                 Throw New ArgumentNullException("el")
             End If
@@ -823,13 +658,15 @@ Namespace Cache
 #Else
             Using SyncHelper.AcquireDynamicLock("hadfgadfgasdfopgh")
 #End If
-                Dim p As Pair(Of String) = _m2mQueries(el)
-                _m2mQueries.Remove(el)
-                Return p
+                Dim ce As CacheEntryRef = Nothing
+                If _m2mSimpleQueries.TryGetValue(el, ce) Then
+                    ce.Remove(Me)
+                    _m2mSimpleQueries.Remove(el)
+                End If
             End Using
-        End Function
+        End Sub
 
-        Protected Friend Sub UpdateM2MQueries(ByVal el As EditableListBase)
+        Protected Friend Sub AddM2MSimpleQuery(ByVal el As EditableListBase, ByVal key As String, ByVal id As String)
             If el Is Nothing Then
                 Throw New ArgumentNullException("el")
             End If
@@ -839,132 +676,18 @@ Namespace Cache
 #Else
             Using SyncHelper.AcquireDynamicLock("hadfgadfgasdfopgh")
 #End If
-                Dim p As Pair(Of String) = Nothing
-                If _m2mQueries.TryGetValue(el, p) Then
-                    'Dim dic As IDictionary = CType(_filters(p.First), System.Collections.IDictionary)
-                    'dic.Remove(p.Second)
-                    RemoveEntry(p)
-                    _m2mQueries.Remove(el)
+                Dim ce As CacheEntryRef = Nothing
+                If Not _m2mSimpleQueries.TryGetValue(el, ce) Then
+                    ce = New CacheEntryRef
+                    _m2mSimpleQueries.Add(el, ce)
+                    '_m2mSimpleQueries.Add(el, New Pair(Of String)(key, id))
                 End If
-            End Using
-        End Sub
-
-        Protected Friend Sub AddM2MQuery(ByVal el As EditableListBase, ByVal key As String, ByVal id As String)
-            If el Is Nothing Then
-                Throw New ArgumentNullException("el")
-            End If
-
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("hadfgadfgasdfopgh","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("hadfgadfgasdfopgh")
-#End If
-                If Not _m2mQueries.ContainsKey(el) Then
-                    _m2mQueries.Add(el, New Pair(Of String)(key, id))
-                End If
+                ce.Add(key, id)
             End Using
 
         End Sub
 
-        Protected Friend Sub AddM2MObjDependent(ByVal obj As _IOrmBase, ByVal key As String, ByVal id As String)
-            If obj Is Nothing Then
-                Throw New ArgumentNullException("obj")
-            End If
-
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("bhiasdbvgklbg135t","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("bhiasdbvgklbg135t")
-#End If
-                Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
-
-                If _m2m_dep.TryGetValue(obj.GetName, l) Then
-                    Dim ll As Dictionary(Of String, Object) = Nothing
-                    If l.TryGetValue(key, ll) Then
-                        If Not ll.ContainsKey(id) Then
-                            ll.Add(id, Nothing)
-                        End If
-                    Else
-                        ll = New Dictionary(Of String, Object)
-                        ll.Add(id, Nothing)
-                        l.Add(key, ll)
-                    End If
-                Else
-                    l = New Dictionary(Of String, Dictionary(Of String, Object))
-                    Dim ll As New Dictionary(Of String, Object)
-                    ll.Add(id, Nothing)
-                    l.Add(key, ll)
-                    _m2m_dep.Add(obj.GetName, l)
-                End If
-            End Using
-        End Sub
-
-        Protected Friend Function GetM2MEntries(ByVal obj As _IOrmBase, ByVal name As String) As ICollection(Of Pair(Of OrmManager.M2MCache, Pair(Of String, String)))
-            If obj Is Nothing Then
-                Throw New ArgumentNullException("obj")
-            End If
-
-            If String.IsNullOrEmpty(name) Then
-                name = obj.GetName
-            End If
-
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("bhiasdbvgklbg135t", "d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("bhiasdbvgklbg135t")
-#End If
-                Dim etrs As New List(Of Pair(Of OrmManager.M2MCache, Pair(Of String, String)))
-                Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
-
-                If _m2m_dep.TryGetValue(name, l) Then
-                    For Each p As KeyValuePair(Of String, Dictionary(Of String, Object)) In l
-                        Dim dic As IDictionary = _GetDictionary(p.Key)
-                        If dic IsNot Nothing Then
-                            For Each id As String In p.Value.Keys
-                                Dim ce As OrmManager.M2MCache = TryCast(dic(id), OrmManager.M2MCache)
-                                If ce Is Nothing Then
-                                    'dic.Remove(id)
-                                    RemoveEntry(p.Key, id)
-                                Else
-                                    etrs.Add(New Pair(Of OrmManager.M2MCache, Pair(Of String, String))(ce, New Pair(Of String, String)(p.Key, id)))
-                                End If
-                            Next
-                        End If
-                    Next
-                End If
-                Return etrs
-            End Using
-        End Function
-
-        Protected Friend Sub UpdateM2MEntries(ByVal obj As _IOrmBase, ByVal oldId As Object, ByVal name As String)
-            If obj Is Nothing Then
-                Throw New ArgumentNullException("obj")
-            End If
-
-            If String.IsNullOrEmpty(name) Then
-                Throw New ArgumentNullException("name")
-            End If
-
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("bhiasdbvgklbg135t", "d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("bhiasdbvgklbg135t")
-#End If
-                Dim l As Dictionary(Of String, Dictionary(Of String, Object)) = Nothing
-                If _m2m_dep.TryGetValue(name, l) Then
-                    _m2m_dep.Remove(name)
-                    _m2m_dep.Add(obj.GetName, l)
-
-                    For Each kv As KeyValuePair(Of String, Dictionary(Of String, Object)) In l
-                        Dim d As Dictionary(Of String, Object) = kv.Value
-                        d.Remove(oldId.ToString)
-                        d.Add(obj.Identifier.ToString, Nothing)
-                    Next
-                End If
-            End Using
-        End Sub
-
-        Protected Friend Sub ConnectedEntityEnum(ByVal ct As Type, ByVal f As EnumM2MCache)
+        Protected Friend Sub ConnectedEntityEnum(ByVal mgr As OrmManager, ByVal ct As Type, ByVal f As EnumM2MCache)
             If ct Is Nothing Then
                 Throw New ArgumentNullException("ct")
             End If
@@ -985,7 +708,7 @@ Namespace Cache
                             For Each id As String In p.Value.Keys
                                 Dim ce As OrmManager.M2MCache = TryCast(dic(id), OrmManager.M2MCache)
                                 If ce IsNot Nothing Then
-                                    If Not f(ce) Then
+                                    If Not f(mgr, ce) Then
                                         remove.Add(id)
                                     End If
                                 End If
@@ -1005,45 +728,45 @@ Namespace Cache
 
         Protected Friend Function UpdateCacheDeferred(ByVal t As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
 
-            If t IsNot Nothing Then
-                Dim wasAdded, wasDeleted As Boolean
+            '            If t IsNot Nothing Then
+            '                Dim wasAdded, wasDeleted As Boolean
 
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("qoegnq","d:\temp\")
-#Else
-                Using SyncHelper.AcquireDynamicLock("qoegnq")
-#End If
-                    wasAdded = _addedTypes.ContainsKey(t)
-                    wasDeleted = _deletedTypes.ContainsKey(t)
+            '#If DebugLocks Then
+            '            Using SyncHelper.AcquireDynamicLock_Debug("qoegnq","d:\temp\")
+            '#Else
+            '                Using SyncHelper.AcquireDynamicLock("qoegnq")
+            '#End If
+            '                    wasAdded = _addedTypes.ContainsKey(t)
+            '                    wasDeleted = _deletedTypes.ContainsKey(t)
 
-                    If wasAdded Then
-                        _addedTypes.Remove(t)
-                    End If
+            '                    If wasAdded Then
+            '                        _addedTypes.Remove(t)
+            '                    End If
 
-                    If wasDeleted Then
-                        _deletedTypes.Remove(t)
-                    End If
-                End Using
+            '                    If wasDeleted Then
+            '                        _deletedTypes.Remove(t)
+            '                    End If
+            '                End Using
 
-                If wasAdded OrElse wasDeleted Then
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
-#Else
-                    Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
-#End If
-                        If _addDeleteTypes.Remove(t, Me) Then
-                            Return False
-                        End If
-                    End Using
-                End If
-            End If
+            '                If wasAdded OrElse wasDeleted Then
+            '#If DebugLocks Then
+            '            Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
+            '#Else
+            '                    Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
+            '#End If
+            '                        If _addDeleteTypes.Remove(t, Me) Then
+            '                            Return False
+            '                        End If
+            '                    End Using
+            '                End If
+            '            End If
 
             If _invalidate.Count > 0 Then
 
                 If f IsNot Nothing Then
                     For Each fl As IEntityFilter In f.GetAllFilters
                         Dim fields As List(Of String) = Nothing
-                        Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                        Dim tmpl As OrmFilterTemplateBase = CType(fl.Template, OrmFilterTemplateBase)
                         If GetUpdatedFields(tmpl.Type, fields) Then
                             Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
                             If idx >= 0 Then
@@ -1281,7 +1004,7 @@ Namespace Cache
                 Next
             End Using
 l1:
-            ValidateProcs(objs, mgr, callbacks, afterDelegate, contextKey)
+            ValidateExternal(objs, mgr, callbacks, afterDelegate, contextKey)
 
             UpdateJoins(tt, objs, schema, oschema, mgr, contextKey, afterDelegate, callbacks)
         End Sub
@@ -1317,7 +1040,7 @@ l1:
             End Using
         End Sub
 
-        Public Sub ValidateProcs(ByVal objs As IList, _
+        Public Sub ValidateExternal(ByVal objs As IList, _
             ByVal mgr As OrmManager, ByVal callbacks As IUpdateCacheCallbacks, _
             ByVal afterDelegate As OnUpdated, ByVal contextKey As Object)
             If callbacks IsNot Nothing Then
@@ -1329,9 +1052,11 @@ l1:
                 End If
 
                 If obj.UpdateCtx.Added Then
-                    ValidateSPOnInsertDelete(obj)
+                    RaiseEvent OnObjectAdded(Me, obj)
+                    'ValidateSPOnInsertDelete(obj)
                 ElseIf obj.UpdateCtx.Deleted Then
-                    ValidateSPOnInsertDelete(obj)
+                    RaiseEvent OnObjectDeleted(Me, obj)
+                    'ValidateSPOnInsertDelete(obj)
                     'Else
                     '    Throw New InvalidOperationException
                 End If
@@ -1451,6 +1176,10 @@ l1:
             End Using
         End Sub
 
+        Public Overrides Sub RegisterRemoval(ByVal obj As Orm._ICachedEntity)
+            MyBase.RegisterRemoval(obj)
+            RemoveDepends(obj)
+        End Sub
         ''' <summary>
         ''' Удаляет все ключи в кеше, которые зависят от данного объекта
         ''' </summary>
@@ -1482,109 +1211,9 @@ l1:
             End If
         End Sub
 
-        Private Sub AddStoredProcType(ByVal sp As StoredProcBase, ByVal t As Type)
-            Dim l As List(Of StoredProcBase) = Nothing
-            If _procTypes.TryGetValue(t, l) Then
-                Dim pos As Integer = l.IndexOf(sp)
-                If pos < 0 Then
-                    l.Add(sp)
-                Else
-                    l(pos) = sp
-                End If
-            Else
-                l = New List(Of StoredProcBase)
-                l.Add(sp)
-                _procTypes(t) = l
-            End If
-        End Sub
-
-        Protected Friend Sub AddStoredProc(ByVal key As String, ByVal sp As StoredProcBase)
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
-#End If
-                If sp.Cached Then
-                    _procs(key) = sp
-                    Dim types As ICollection(Of Type) = sp.GetTypesToValidate
-                    If types IsNot Nothing AndAlso types.Count > 0 Then
-                        For Each t As Type In types
-                            AddStoredProcType(sp, t)
-                        Next
-                    Else
-                        AddStoredProcType(sp, GetType(Object))
-                    End If
-                End If
-            End Using
-        End Sub
-
-        Private Sub ValidateSPByType(ByVal t As Type, ByVal obj As ICachedEntity)
-            Dim l As List(Of StoredProcBase) = Nothing
-            If _procTypes.TryGetValue(t, l) Then
-                For Each sp As StoredProcBase In l
-                    Try
-                        If Not sp.IsReseted Then
-                            Dim r As StoredProcBase.ValidateResult = sp.ValidateOnInsertDelete(obj)
-                            If r <> StoredProcBase.ValidateResult.DontReset Then
-                                sp.ResetCache(Me, r)
-                            End If
-                        End If
-                    Catch ex As Exception
-                        Throw New OrmCacheException(String.Format("Fail to validate sp {0}", sp.Name), ex)
-                    End Try
-                Next
-            End If
-        End Sub
-
-        Private Sub ValidateUpdateSPByType(ByVal t As Type, ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String))
-            Dim l As List(Of StoredProcBase) = Nothing
-            If _procTypes.TryGetValue(t, l) Then
-                For Each sp As StoredProcBase In l
-                    If Not sp.IsReseted Then
-                        Dim r As StoredProcBase.ValidateResult = sp.ValidateOnUpdate(obj, fields)
-                        If r <> StoredProcBase.ValidateResult.DontReset Then
-                            sp.ResetCache(Me, r)
-                        End If
-                    End If
-                Next
-            End If
-        End Sub
-
-        Protected Sub ValidateSPOnInsertDelete(ByVal obj As ICachedEntity)
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
-#End If
-                ValidateSPByType(obj.GetType, obj)
-                ValidateSPByType(GetType(Object), obj)
-            End Using
-        End Sub
-
-        Protected Friend Sub ValidateSPOnUpdate(ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String))
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
-#End If
-                ValidateUpdateSPByType(obj.GetType, obj, fields)
-                ValidateUpdateSPByType(GetType(Object), obj, fields)
-            End Using
-        End Sub
-    End Class
-
-    Public Class OrmCache
-        Inherits OrmCacheBase
-        Implements IExploreCache
-
-        Public Delegate Function CreateCacheListDelegate(ByVal mark As String) As IDictionary
-
-        Private _dics As IDictionary = Hashtable.Synchronized(New Hashtable)
-        Private _md As CreateCacheListDelegate
-
         Public Overrides Sub Reset()
             '_filters = Hashtable.Synchronized(New Hashtable)
-            _dics = Hashtable.Synchronized(New Hashtable)
+            _rootObjectsDictionary = Hashtable.Synchronized(New Hashtable)
             MyBase.Reset()
         End Sub
 
@@ -1608,13 +1237,13 @@ l1:
                 k = schema.GetEntityTypeKey(filterInfo, t)
             End If
 
-            Dim dic As IDictionary = CType(_dics(k), IDictionary)
+            Dim dic As IDictionary = CType(_rootObjectsDictionary(k), IDictionary)
             If dic Is Nothing Then
                 Using SyncRoot
-                    dic = CType(_dics(k), IDictionary)
+                    dic = CType(_rootObjectsDictionary(k), IDictionary)
                     If dic Is Nothing Then
-                        dic = CreateDictionary(t)
-                        _dics(k) = dic
+                        dic = CreateDictionary4ObjectInstances(t)
+                        _rootObjectsDictionary(k) = dic
                     End If
                 End Using
             End If
@@ -1628,13 +1257,13 @@ l1:
                 k = schema.GetEntityTypeKey(filterInfo, t, oschema)
             End If
 
-            Dim dic As IDictionary = CType(_dics(k), IDictionary)
+            Dim dic As IDictionary = CType(_rootObjectsDictionary(k), IDictionary)
             If dic Is Nothing Then
                 Using SyncRoot
-                    dic = CType(_dics(k), IDictionary)
+                    dic = CType(_rootObjectsDictionary(k), IDictionary)
                     If dic Is Nothing Then
-                        dic = CreateDictionary(t)
-                        _dics(k) = dic
+                        dic = CreateDictionary4ObjectInstances(t)
+                        _rootObjectsDictionary(k) = dic
                     End If
                 End Using
             End If
@@ -1650,26 +1279,28 @@ l1:
         End Function
 
         Public Sub New()
+            MyBase.New()
             Reset()
         End Sub
 
         Public Sub New(ByVal cacheListDelegate As CreateCacheListDelegate)
+            MyBase.New()
             Reset()
             _md = cacheListDelegate
         End Sub
 
-        Protected Overridable Function CreateDictionary(ByVal t As Type) As IDictionary
+        Protected Overridable Function CreateDictionary4ObjectInstances(ByVal t As Type) As IDictionary
             Dim gt As Type = GetType(Collections.SynchronizedDictionary(Of ))
             gt = gt.MakeGenericType(New Type() {t})
             Return CType(gt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IDictionary)
         End Function
 
         Public Function GetAllKeys() As System.Collections.ArrayList Implements IExploreCache.GetAllKeys
-            Return New ArrayList(_dics.Keys)
+            Return New ArrayList(_rootObjectsDictionary.Keys)
         End Function
 
         Public Function GetDictionary_(ByVal key As Object) As System.Collections.IDictionary Implements IExploreCache.GetDictionary
-            Return CType(_dics(key), System.Collections.IDictionary)
+            Return CType(_rootObjectsDictionary(key), System.Collections.IDictionary)
         End Function
     End Class
 
@@ -1702,7 +1333,7 @@ l1:
             Return MyBase.CreateResultsetsDictionary(mark)
         End Function
 
-        Protected Overrides Function CreateDictionary(ByVal t As System.Type) As System.Collections.IDictionary
+        Protected Overrides Function CreateDictionary4ObjectInstances(ByVal t As System.Type) As System.Collections.IDictionary
             Dim pol As DictionatyCachePolicy = GetPolicy(t)
             Dim args() As Object = Nothing
             Dim dt As Type = Nothing
@@ -1729,5 +1360,9 @@ l1:
         Protected Overrides Function CreateListConverter() As IListObjectConverter
             Return New ListConverter
         End Function
+
+        Public Sub New()
+            MyBase.New()
+        End Sub
     End Class
 End Namespace

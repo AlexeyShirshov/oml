@@ -624,6 +624,13 @@ Namespace Query.Database
                 Next
             End If
 
+            If Not b Then
+                If os IsNot Nothing Then
+                    Throw New NotSupportedException("Select columns must be specified")
+                End If
+                sb.Append("*")
+            End If
+
             If query.RowNumberFilter IsNot Nothing Then
                 If Not s.SupportRowNumber Then
                     Throw New NotSupportedException("RowNumber statement is not supported by " & s.Name)
@@ -639,8 +646,12 @@ Namespace Query.Database
             End If
         End Sub
 
+        Protected Delegate Function Func(Of T)() As T
+
         Protected Shared Sub FormTypeTables(ByVal filterInfo As Object, ByVal params As ICreateParam, _
-            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, ByVal os As IObjectSchemaBase, ByVal tables() As SourceFragment)
+            ByVal almgr As IPrepareTable, ByVal sb As StringBuilder, ByVal s As SQLGenerator, _
+            ByVal os As IObjectSchemaBase, ByVal tables() As SourceFragment, _
+            Optional ByVal apd As func(Of String) = Nothing)
 
             Dim tbl As SourceFragment = tables(0)
             Dim tbl_real As SourceFragment = tbl
@@ -658,6 +669,10 @@ Namespace Query.Database
             almgr.Replace(s, tbl, sb)
 
             sb.Append(s.GetTableName(tbl_real)).Append(" ").Append([alias])
+            If apd IsNot Nothing Then
+                sb.Append(apd())
+            End If
+
             Dim fs As IMultiTableObjectSchema = TryCast(os, IMultiTableObjectSchema)
 
             If fs IsNot Nothing Then
@@ -687,13 +702,30 @@ Namespace Query.Database
                     '    End If
                     'End If
                     'almgr.AddTable(tbl, CType(Nothing, ParamMgr))
-                    sb.Append(join.MakeSQLStmt(s, filterInfo, almgr, params))
 
-                    Dim tbl As SourceFragment = join.Table
-                    If tbl Is Nothing Then
-                        tbl = s.GetTables(join.Type)(0)
+                    If join.Table Is Nothing Then
+                        Dim t As Type = join.Type
+                        If t Is Nothing Then
+                            t = s.GetTypeByEntityName(join.EntityName)
+                        End If
+
+                        Dim oschema As IObjectSchemaBase = s.GetObjectSchema(t)
+                        Dim tables() As SourceFragment
+                        Dim fs As IMultiTableObjectSchema = TryCast(oschema, IMultiTableObjectSchema)
+                        If fs Is Nothing Then
+                            tables = New SourceFragment() {oschema.Table}
+                        Else
+                            tables = fs.GetTables()
+                        End If
+                        sb.Append(join.JoinTypeString())
+                        FormTypeTables(filterInfo, params, almgr, sb, s, oschema, tables, _
+                                       Function() " on " & join.Condition.MakeQueryStmt(s, filterInfo, almgr, params, Nothing))
+                        'tbl = s.GetTables(t)(0)
+                    Else
+                        sb.Append(join.MakeSQLStmt(s, filterInfo, almgr, params))
+                        almgr.Replace(s, join.Table, sb)
                     End If
-                    almgr.Replace(s, tbl, sb)
+
                 End If
             Next
         End Sub

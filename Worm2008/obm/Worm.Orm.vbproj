@@ -142,6 +142,7 @@
     <Compile Include="Criteria\db\DbConditions.vb" />
     <Compile Include="Criteria\db\DbCriteria.vb" />
     <Compile Include="Criteria\db\DbFilters.vb" />
+    <Compile Include="Criteria\db\DbJoins.vb" />
     <Compile Include="Criteria\Expressions.vb" />
     <Compile Include="Criteria\FilterValues.vb" />
     <Compile Include="Criteria\Conditions.vb" />

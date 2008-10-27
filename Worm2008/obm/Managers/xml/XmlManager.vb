@@ -15,7 +15,7 @@ Namespace Xml
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
 
-        Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As XPathGenerator, ByVal fileName As String)
+        Public Sub New(ByVal cache As OrmCache, ByVal schema As XPathGenerator, ByVal fileName As String)
             MyBase.New(cache, schema)
             _fileName = fileName
         End Sub
@@ -26,7 +26,7 @@ Namespace Xml
             _fileName = filename
         End Sub
 
-        Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As XPathGenerator, ByVal stream As IO.Stream)
+        Public Sub New(ByVal cache As OrmCache, ByVal schema As XPathGenerator, ByVal stream As IO.Stream)
             MyBase.New(cache, schema)
             _stream = stream
         End Sub

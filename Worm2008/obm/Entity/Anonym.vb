@@ -45,7 +45,7 @@ Namespace Orm
 
         End Function
 
-        Public Overloads Sub Init(ByVal pk() As Meta.PKDesc, ByVal cache As Cache.OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _ICachedEntity.Init
+        Public Overloads Sub Init(ByVal pk() As Meta.PKDesc, ByVal cache As Cache.ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _ICachedEntity.Init
 
         End Sub
 
@@ -141,7 +141,7 @@ Namespace Orm
 
         End Sub
 
-        Public Sub RemoveFromCache(ByVal cache As Cache.OrmCacheBase) Implements ICachedEntity.RemoveFromCache
+        Public Sub RemoveFromCache(ByVal cache As Cache.ReadonlyCache) Implements ICachedEntity.RemoveFromCache
 
         End Sub
 

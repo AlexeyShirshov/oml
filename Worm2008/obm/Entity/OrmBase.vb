@@ -543,7 +543,7 @@ Namespace Orm
         '    End Set
         'End Property
 
-        'Friend ReadOnly Property OrmCache() As OrmCacheBase
+        'Friend ReadOnly Property OrmCache() As OrmCache
         '    Get
         '        Using mc As IGetManager = GetMgr()
         '            If mc IsNot Nothing Then
@@ -652,18 +652,18 @@ Namespace Orm
         '    End If
         'End Sub
 
-        'Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
+        'Protected Sub New(ByVal id As Integer, ByVal cache As OrmCache, ByVal schema As QueryGenerator)
         '    Init(id, cache, schema)
         '    Init()
         'End Sub
 
-        'Friend Sub Init(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator, ByVal mgrString As String) Implements IOrmBase.Init
+        'Friend Sub Init(ByVal id As Integer, ByVal cache As OrmCache, ByVal schema As QueryGenerator, ByVal mgrString As String) Implements IOrmBase.Init
         '    MyBase.Init(cache, cache, mgrString)
         '    Me._id = id
         '    PKLoaded()
         'End Sub
 
-        'Friend Sub Init(ByVal cache As OrmCacheBase, ByVal schema As QueryGenerator)
+        'Friend Sub Init(ByVal cache As OrmCache, ByVal schema As QueryGenerator)
 
         '    If schema IsNot Nothing Then
         '        Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
@@ -675,11 +675,11 @@ Namespace Orm
         '    ObjectState = Orm.ObjectState.NotLoaded
         'End Sub
 
-        Protected Overrides Sub Init(ByVal pk() As PKDesc, ByVal cache As Cache.OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Protected Overrides Sub Init(ByVal pk() As PKDesc, ByVal cache As Cache.ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
             Throw New NotSupportedException
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _IOrmBase.Init
+        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _IOrmBase.Init
             MyBase._Init(cache, schema, mgrIdentityString)
             Identifier = id
             PKLoaded(1)
@@ -906,15 +906,18 @@ Namespace Orm
 
         Protected Overrides Sub AcceptRelationalChanges(ByVal updateCache As Boolean, ByVal mgr As OrmManager)
             Dim t As Type = Me.GetType
+            Dim cache As OrmCache = TryCast(mgr.Cache, OrmCache)
+
             For Each acs As AcceptState2 In _needAccept
                 acs.Accept(Me, mgr)
             Next
             _needAccept.Clear()
 
             Dim rel As IRelation = mgr.MappingEngine.GetConnectedTypeRelation(t)
-            If rel IsNot Nothing Then
+
+            If rel IsNot Nothing AndAlso cache IsNot Nothing Then
                 Dim c As New OrmManager.M2MEnum(rel, Me, mgr.MappingEngine)
-                mgr.Cache.ConnectedEntityEnum(t, AddressOf c.Accept)
+                cache.ConnectedEntityEnum(mgr, t, AddressOf c.Accept)
             End If
 
             For Each el As EditableListBase In _m2m
@@ -924,8 +927,8 @@ Namespace Orm
                         Dim m As EditableListBase = o.GetRelation(Me.GetType, el.Key)
                         m.Added.Remove(Identifier)
                         m._savedIds.Remove(Identifier)
-                        If updateCache Then
-                            mgr.Cache.UpdateM2MQueries(m)
+                        If updateCache AndAlso cache IsNot Nothing Then
+                            cache.RemoveM2MQueries(m)
                         Else
                             Dim l As List(Of EditableListBase) = CType(Me, _ICachedEntity).UpdateCtx.Relations
                             If Not l.Contains(m) Then
@@ -939,8 +942,8 @@ Namespace Orm
                         Dim o As _IOrmBase = CType(mgr.GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
                         Dim m As EditableListBase = o.GetRelation(Me.GetType, el.Key)
                         m.Deleted.Remove(Identifier)
-                        If updateCache Then
-                            mgr.Cache.UpdateM2MQueries(el)
+                        If updateCache AndAlso cache IsNot Nothing Then
+                            cache.RemoveM2MQueries(el)
                         Else
                             Dim l As List(Of EditableListBase) = CType(Me, _ICachedEntity).UpdateCtx.Relations
                             If Not l.Contains(m) Then
@@ -951,8 +954,8 @@ Namespace Orm
                     el.Deleted.Clear()
                     el.Reject2()
 
-                    If updateCache Then
-                        mgr.Cache.UpdateM2MQueries(el)
+                    If updateCache AndAlso cache IsNot Nothing Then
+                        cache.RemoveM2MQueries(el)
                     Else
                         Dim l As List(Of EditableListBase) = CType(Me, _ICachedEntity).UpdateCtx.Relations
                         If Not l.Contains(el) Then
@@ -1219,7 +1222,7 @@ Namespace Orm
         '    _id = CInt(value)
         'End Sub
 
-        'Protected Friend Overridable Sub RemoveFromCache(ByVal cache As OrmCacheBase)
+        'Protected Friend Overridable Sub RemoveFromCache(ByVal cache As OrmBase)
 
         'End Sub
 
@@ -1452,21 +1455,22 @@ Namespace Orm
                 Using gmc As IGetManager = GetMgr()
                     Dim mc As OrmManager = gmc.Manager
                     Dim rel As IRelation = mc.MappingEngine.GetConnectedTypeRelation(t)
-                    If rel IsNot Nothing Then
+                    Dim cache As OrmCache = TryCast(mc.Cache, OrmCache)
+                    If rel IsNot Nothing AndAlso cache IsNot Nothing Then
                         Dim c As New OrmManager.M2MEnum(rel, Me, mc.MappingEngine)
-                        mc.Cache.ConnectedEntityEnum(t, AddressOf c.Reject)
+                        cache.ConnectedEntityEnum(mc, t, AddressOf c.Reject)
                     End If
-                End Using
-                For Each acs As AcceptState2 In _needAccept
-                    If acs.el IsNot Nothing Then
-                        acs.el.Reject(True)
-                    End If
-                Next
-                _needAccept.Clear()
+                    For Each acs As AcceptState2 In _needAccept
+                        If acs.el IsNot Nothing Then
+                            acs.el.Reject(mc, True)
+                        End If
+                    Next
+                    _needAccept.Clear()
 
-                For Each el As EditableListBase In _m2m
-                    el.Reject(True)
-                Next
+                    For Each el As EditableListBase In _m2m
+                        el.Reject(mc, True)
+                    Next
+                End Using
             End Using
         End Sub
 
@@ -2136,7 +2140,7 @@ Namespace Orm
         Protected Sub _Cancel(ByVal t As Type, ByVal key As String) Implements IM2M.Cancel
             Using mc As IGetManager = GetMgr()
                 Dim el As EditableListBase = GetM2M(t, key)
-                el.Reject(True)
+                el.Reject(mc.Manager, True)
             End Using
         End Sub
 
@@ -2258,16 +2262,17 @@ Namespace Orm
 
         End Sub
 
-        Protected Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As ObjectMappingEngine)
+        Protected Sub New(ByVal id As Integer, ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine)
             MyBase.New()
             MyBase.Init(id, cache, schema, Nothing)
             'SetObjectStateClear(Orm.ObjectState.Created)
             'Throw New NotSupportedException
         End Sub
 
-        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
             MyBase.Init(id, cache, schema, mgrIdentityString)
         End Sub
+
         Protected Overrides Sub Init()
             MyBase.Init()
         End Sub

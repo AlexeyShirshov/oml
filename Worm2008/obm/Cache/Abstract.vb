@@ -1,4 +1,5 @@
 ﻿Imports Worm.Orm
+Imports System.Collections.Generic
 
 Namespace Cache
     Public Interface IExploreCache
@@ -25,4 +26,14 @@ Namespace Cache
         Sub EndUpdateList(ByVal key As String, ByVal id As String)
         Sub ObjectDependsUpdated(ByVal o As ICachedEntity)
     End Interface
+
+    Public Interface IQueryDependentTypes
+        Function [Get](ByVal mpe As ObjectMappingEngine) As IDependentTypes
+    End Interface
+
+    Public Interface IDependentTypes
+        Function GetAddDelete() As IEnumerable(Of Type)
+        Function GetUpdate() As IEnumerable(Of Type)
+    End Interface
+
 End Namespace

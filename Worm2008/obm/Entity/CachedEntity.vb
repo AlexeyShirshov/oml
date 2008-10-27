@@ -147,7 +147,7 @@ Namespace Orm
             Public Function IsFieldLoaded(ByVal fieldName As String) As Boolean
                 Return _o.IsFieldLoaded(fieldName)
             End Function
-            'Public ReadOnly Property OrmCache() As OrmCacheBase
+            'Public ReadOnly Property OrmCache() As OrmBase
             '    Get
             '        Using mc As IGetManager = GetMgr()
             '            If mc IsNot Nothing Then
@@ -341,14 +341,17 @@ Namespace Orm
             Dim clone As CachedEntity = CType(CreateClone(), CachedEntity)
             SetObjectState(Orm.ObjectState.Modified)
             Using mc As IGetManager = GetMgr()
-                mc.Manager.Cache.RegisterModification(clone, ObjectModification.ReasonEnum.Unknown)
-                If pk IsNot Nothing Then clone.SetPK(pk)
+                Dim c As OrmCache = TryCast(mc.Manager.Cache, OrmCache)
+                If c IsNot Nothing Then
+                    c.RegisterModification(clone, ObjectModification.ReasonEnum.Unknown)
+                End If
             End Using
+            If pk IsNot Nothing Then clone.SetPK(pk)
         End Sub
 
         Protected MustOverride Function GetCacheKey() As Integer
 
-        Protected Overrides Sub Init(ByVal cache As Cache.OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Protected Overrides Sub Init(ByVal cache As Cache.ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
             Throw New NotSupportedException
         End Sub
 
@@ -418,7 +421,7 @@ Namespace Orm
             End If
         End Function
 
-        Public Overridable Sub RemoveFromCache(ByVal cache As OrmCacheBase) Implements ICachedEntity.RemoveFromCache
+        Public Overridable Sub RemoveFromCache(ByVal cache As ReadonlyCache) Implements ICachedEntity.RemoveFromCache
 
         End Sub
 
@@ -539,11 +542,11 @@ Namespace Orm
 
                     If ObjectState <> Orm.ObjectState.None Then
                         mo = RemoveVersionData(setState)
-
+                        Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
                         If _upd.Deleted Then
                             '_valProcs = False
-                            If updateCache Then
-                                mc.Cache.UpdateCache(mc.MappingEngine, New CachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
+                            If updateCache AndAlso c IsNot Nothing Then
+                                c.UpdateCache(mc.MappingEngine, New CachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
                                 'mc.Cache.UpdateCacheOnDelete(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing)
                             End If
                             Accept_AfterUpdateCacheDelete(Me, mc)
@@ -556,9 +559,9 @@ Namespace Orm
                             If (o Is Nothing) OrElse (Not o.IsLoaded AndAlso IsLoaded) Then
                                 dic(kw) = Me
                             End If
-                            If updateCache Then
+                            If updateCache AndAlso c IsNot Nothing Then
                                 'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
-                                mc.Cache.UpdateCache(mc.MappingEngine, New CachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
+                                c.UpdateCache(mc.MappingEngine, New CachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
                             End If
                             Accept_AfterUpdateCacheAdd(Me, mc, mo)
                             RaiseEvent Added(Me, EventArgs.Empty)
@@ -647,7 +650,10 @@ Namespace Orm
 
         Friend Shared Sub Accept_AfterUpdateCacheDelete(ByVal obj As CachedEntity, ByVal mc As OrmManager)
             mc._RemoveObjectFromCache(obj)
-            mc.Cache.RegisterDelete(obj)
+            Dim c As OrmCache = TryCast(mc.Cache, OrmCache)
+            If c IsNot Nothing Then
+                c.RegisterDelete(obj)
+            End If
             'obj._needDelete = False
         End Sub
 
@@ -669,7 +675,7 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Sub _Init(ByVal cache As OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Protected Sub _Init(ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
             MyBase.Init(cache, schema, mgrIdentityString)
             If schema IsNot Nothing Then
                 Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
@@ -689,7 +695,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _ICachedEntity.Init
+        Protected Overridable Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _ICachedEntity.Init
             _Init(cache, schema, mgrIdentityString)
             SetPK(pk)
             PKLoaded(pk.Length)
@@ -918,10 +924,12 @@ l1:
 
                 If pk_count > 0 Then
                     PKLoaded(pk_count)
-
-                    If OrmCache.IsDeleted(Me) Then
-                        Return
-                    End If
+                    Using mc As IGetManager = GetMgr()
+                        Dim c As OrmCache = CType(mc.Manager.Cache, OrmCache)
+                        If c IsNot Nothing AndAlso c.IsDeleted(Me) Then
+                            Return
+                        End If
+                    End Using
 
                     If ObjectState = ObjectState.Created Then
                         CreateCopyForSaveNewEntry(Nothing)
@@ -1170,11 +1178,14 @@ l1:
             Using gmc As IGetManager = GetMgr()
                 Dim mc As OrmManager = gmc.Manager
                 UpdateCacheAfterUpdate()
-                If _upd.Deleted OrElse _upd.Added Then
-                    mc.Cache.UpdateCache(mc.MappingEngine, New ICachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
+                Dim c As OrmCache = CType(mc.Cache, OrmCache)
+                If (_upd.Deleted OrElse _upd.Added) AndAlso c IsNot Nothing Then
+                    c.UpdateCache(mc.MappingEngine, New ICachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
                 End If
                 For Each el As EditableListBase In New List(Of EditableListBase)(_upd.Relations)
-                    mc.Cache.UpdateM2MQueries(el)
+                    If c IsNot Nothing Then
+                        c.RemoveM2MQueries(el)
+                    End If
                     _upd.Relations.Remove(el)
                 Next
             End Using
@@ -1446,7 +1457,10 @@ l1:
                 Next
             End If
             Using mc As IGetManager = GetMgr()
-                mc.Manager.Cache.AddUpdatedFields(Me, l)
+                Dim c As OrmCache = CType(mc.Manager.Cache, OrmCache)
+                If c IsNot Nothing Then
+                    c.AddUpdatedFields(Me, l)
+                End If
                 _upd.UpdatedFields = Nothing
             End Using
         End Sub

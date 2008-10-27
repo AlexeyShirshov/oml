@@ -196,6 +196,41 @@ Imports Worm.Database.Criteria.Joins
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestM2MJoinAuto()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim t_entity4 As Type = GetType(Entity4)
+            Dim t_entity As Type = GetType(Entity)
+            Dim t_entity5 As Type = GetType(Entity5)
+
+            Dim q As New QueryCmd(t_entity)
+            q = q.Where(Ctor.Field(t_entity4, "Title").Like("%b")). _
+                Select(FCtor.Field(t_entity, "ID").Add(t_entity4, "Title"))
+            q.AutoJoins = True
+
+            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
+
+            Assert.AreEqual(17, l.Count)
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestM2MJoin()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+            Dim t_entity4 As Type = GetType(Entity4)
+            Dim t_entity As Type = GetType(Entity)
+            Dim t_entity5 As Type = GetType(Entity5)
+
+            Dim q As New QueryCmd(t_entity)
+            Dim jf As New JoinFilter(t_entity4, t_entity)
+            q.Joins = New OrmJoin() {New OrmJoin(t_entity4, Worm.Criteria.Joins.JoinType.Join, jf)}
+            q = q.Where(Ctor.Field(t_entity4, "Title").Like("%b")). _
+                Select(FCtor.Field(t_entity, "ID").Add(t_entity4, "Title"))
+
+            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
+
+            Assert.AreEqual(17, l.Count)
+        End Using
+    End Sub
+
     <TestMethod()> Public Sub TestDistinct()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
@@ -279,6 +314,30 @@ Imports Worm.Database.Criteria.Joins
             Assert.AreEqual(4, r.Count)
             For Each o As Entity4 In r
                 Assert.IsTrue(o.InternalProperties.IsLoaded)
+            Next
+
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestM2M2()
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
+
+            Dim e As Entity = mgr.GetOrmBaseFromCacheOrDB(Of Entity)(1)
+            Assert.IsNotNull(e)
+
+            Dim q As New QueryCmd(e)
+
+            Dim q2 As QueryCmd = New QueryCmd(e). _
+                Where(Ctor.Field(GetType(Entity4), "Title").Eq("first"))
+
+            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
+            Dim r2 As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
+
+            Assert.AreEqual(4, r.Count)
+            Assert.AreEqual(1, r2.Count)
+
+            For Each o As Entity4 In r
+                Assert.IsFalse(o.InternalProperties.IsLoaded)
             Next
 
         End Using

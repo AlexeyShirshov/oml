@@ -294,6 +294,6 @@ Namespace Web
             Return _l(idx).Second.ToString
         End Function
 
-        Protected MustOverride ReadOnly Property Cache() As OrmCacheBase
+        Protected MustOverride ReadOnly Property Cache() As OrmCache
     End Class
 End Namespace

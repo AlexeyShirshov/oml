@@ -11,7 +11,7 @@ Namespace Database
     Public Class OrmDBManager
         Inherits OrmReadOnlyDBManager
 
-        Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator, ByVal connectionString As String)
+        Public Sub New(ByVal cache As OrmCache, ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, schema, connectionString)
         End Sub
 

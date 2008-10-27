@@ -25,7 +25,7 @@ Partial Public MustInherit Class OrmManager
     Protected Const myConstLocalStorageString As String = "afoivnaodfvodfviogb3159fhbdofvad"
     'Public Const CustomSort As String = "q890h5f130nmv90h1nv9b1v-9134fb"
 
-    Protected _cache As OrmCacheBase
+    Protected _cache As ReadonlyCache
     'Private _dispose_cash As Boolean
     Friend _prev As OrmManager = Nothing
     'Protected hide_deleted As Boolean = True
@@ -113,7 +113,7 @@ Partial Public MustInherit Class OrmManager
     End Property
 
     <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")> _
-    Protected Sub New(ByVal cache As OrmCacheBase, ByVal schema As ObjectMappingEngine)
+    Protected Sub New(ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine)
 
         If cache Is Nothing Then
             Throw New ArgumentNullException("cache")
@@ -273,7 +273,7 @@ Partial Public MustInherit Class OrmManager
         End Get
     End Property
 
-    Public ReadOnly Property Cache() As OrmCacheBase
+    Public ReadOnly Property Cache() As ReadonlyCache
         Get
             Invariant()
             Return _cache
@@ -486,7 +486,6 @@ Partial Public MustInherit Class OrmManager
                     j += 1
                 End If
                 Dim v As ReadOnlyList(Of T) = Nothing
-                Dim hasInCache_ As Boolean = hasInCache.ContainsKey(obj)
                 If lookups.TryGetValue(obj, v) Then
                     For Each oo As IEntity In v
                         CType(l, IListEdit).Add(oo)
@@ -494,7 +493,7 @@ Partial Public MustInherit Class OrmManager
                 Else
                     v = New ReadOnlyList(Of T)
                 End If
-                If Not _dont_cache_lists AndAlso Not hasInCache_ Then
+                If Not _dont_cache_lists AndAlso Not hasInCache.ContainsKey(obj) Then
                     'Dim con As New OrmCondition.OrmConditionConstructor
                     'con.AddFilter(New OrmFilter(tt, fieldName, k, FilterOperation.Equal))
                     'con.AddFilter(filter)
@@ -635,7 +634,7 @@ Partial Public MustInherit Class OrmManager
                         End If
 
                         'Dim sync As String = GetSync(key, id)
-                        el.Accept(Nothing)
+                        el.Accept(Me)
                         dic(id) = New M2MCache(Nothing, GetFilter(criteria, type2load), el, Me)
                     End If
                 Next
@@ -1403,10 +1402,11 @@ l1:
                 If objs IsNot Nothing AndAlso objs.Count > 0 Then
                     Dim srt As IOrmSorting = Nothing
                     If psort.IsExternal Then
-                        ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
+                        Dim ce2 As CachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
                         If ce.CanRenewAfterSort Then
-                            dic(id) = ce
+                            dic(id) = ce2
                         End If
+                        ce = ce2
                     ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
                         Using SyncHelper.AcquireDynamicLock(sync)
                             Dim sc As IComparer(Of T) = Nothing
@@ -1418,10 +1418,11 @@ l1:
                             If sc IsNot Nothing Then
                                 Dim os As ReadOnlyEntityList(Of T) = CType(CreateReadonlyList(GetType(T), objs), Global.Worm.ReadOnlyEntityList(Of T))
                                 os.Sort(sc)
-                                ce = del.GetCacheItem(os)
+                                Dim ce2 As CachedItem = del.GetCacheItem(os)
                                 If ce.CanRenewAfterSort Then
-                                    dic(id) = ce
+                                    dic(id) = ce2
                                 End If
+                                ce = ce2
                             Else
                                 del.Renew = True
                                 Return False
@@ -1911,16 +1912,19 @@ l1:
 
             dic.Remove(id)
 
-            _cache.RemoveDepends(obj)
+            Dim c As OrmCache = TryCast(_cache, OrmCache)
+            If c IsNot Nothing Then
+                c.RemoveDepends(obj)
 
             Dim orm As _IOrmBase = TryCast(obj, _IOrmBase)
             If orm IsNot Nothing Then
-                For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(orm, Nothing)
+                    For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In c.GetM2MEntries(orm, Nothing)
                     If Not o.First.Entry.HasChanges Then
                         Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
                         mdic.Remove(o.Second.Second)
                     End If
                 Next
+                End If
             End If
 
             _cache.RegisterRemoval(obj)
@@ -2006,7 +2010,7 @@ l1:
 
         Debug.Assert(_cache IsNot Nothing)
         If _cache Is Nothing Then
-            Throw New ArgumentNullException("OrmCacheBase cannot be nothing")
+            Throw New ArgumentNullException("OrmCache cannot be nothing")
         End If
     End Sub
 
@@ -2296,7 +2300,7 @@ l1:
     Protected Friend Sub M2MCancel(ByVal mainobj As _IOrmBase, ByVal t As Type)
         For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(mainobj, Nothing)
             If o.First.Entry.SubType Is t Then
-                o.First.Entry.Reject(True)
+                o.First.Entry.Reject(Me, True)
             End If
         Next
     End Sub
@@ -2404,8 +2408,10 @@ l1:
                 End If
             Next
 
+            Dim c As OrmCache = TryCast(_cache, OrmCache)
             For Each el As EditableListBase In obj.GetAllRelation
-                Dim p As Pair(Of String) = _cache.RemoveM2MQuery(el)
+                'Dim p As Pair(Of String) = _cache.RemoveM2MQuery(el)
+                If c IsNot Nothing Then c.RemoveM2MQueries(el)
 
                 For Each id As Object In el.Added
                     Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
@@ -2420,7 +2426,7 @@ l1:
                 'If dic IsNot Nothing Then
                 '    dic.Remove(p.Second)
                 'End If
-                _cache.RemoveEntry(p)
+                '_cache.RemoveEntry(p)
             Next
         End If
     End Sub
@@ -3179,7 +3185,7 @@ l1:
         Return LoadObjects(Of T)(ConvertIds2Objects(Of T)(ids, start, length, False))
     End Function
 
-    Protected Friend Shared Function _GetDic(ByVal cache As OrmCacheBase, ByVal key As String) As IDictionary
+    Protected Friend Shared Function _GetDic(ByVal cache As ReadonlyCache, ByVal key As String) As IDictionary
         'Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
         'If dic Is Nothing Then
         '    Using SyncHelper.AcquireDynamicLock(key)
@@ -3194,12 +3200,12 @@ l1:
         Return cache.GetDictionary(key)
     End Function
 
-    Protected Friend Function GetDic(ByVal cache As OrmCacheBase, ByVal key As String) As IDictionary
+    Protected Friend Function GetDic(ByVal cache As ReadonlyCache, ByVal key As String) As IDictionary
         Dim b As Boolean
         Return GetDic(cache, key, b)
     End Function
 
-    Protected Friend Function GetDic(ByVal cache As OrmCacheBase, ByVal key As String, ByRef created As Boolean) As IDictionary
+    Protected Friend Function GetDic(ByVal cache As ReadonlyCache, ByVal key As String, ByRef created As Boolean) As IDictionary
         'Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
         'created = False
         'If dic Is Nothing Then
@@ -3216,7 +3222,7 @@ l1:
         Return cache.GetDictionary(key, _list, created)
     End Function
 
-    'Protected Shared Function GetDics(ByVal cache As OrmCacheBase, ByVal key As String, ByVal postfix As String) As IEnumerable(Of IDictionary)
+    'Protected Shared Function GetDics(ByVal cache As OrmCache, ByVal key As String, ByVal postfix As String) As IEnumerable(Of IDictionary)
     '    Dim dics As New List(Of IDictionary)
     '    For Each de As DictionaryEntry In cache.Filters
     '        Dim k As String = CStr(de.Key)
@@ -3240,6 +3246,10 @@ l1:
 
     Public Function SaveChanges(ByVal obj As _ICachedEntity, ByVal AcceptChanges As Boolean) As Boolean
         Try
+            If _cache.IsReadonly Then
+                Throw New OrmManagerException("Cache is readonly")
+            End If
+
             Dim b As Boolean = True
             Dim v As _ICachedEntityEx = TryCast(obj, _ICachedEntityEx)
             If v IsNot Nothing Then
@@ -3295,7 +3305,7 @@ l1:
                             Dim oo As IRelation = TryCast(MappingEngine.GetObjectSchema(t), IRelation)
                             If oo IsNot Nothing Then
                                 Dim o As New M2MEnum(oo, orm, MappingEngine)
-                                Cache.ConnectedEntityEnum(t, AddressOf o.Remove)
+                                CType(_cache, OrmCache).ConnectedEntityEnum(Me, t, AddressOf o.Remove)
                             End If
                         End If
                     End If
@@ -3312,7 +3322,7 @@ l1:
                             Dim oo As IRelation = TryCast(MappingEngine.GetObjectSchema(t), IRelation)
                             If oo IsNot Nothing Then
                                 Dim o As New M2MEnum(oo, orm, MappingEngine)
-                                Cache.ConnectedEntityEnum(t, AddressOf o.Add)
+                                CType(_cache, OrmCache).ConnectedEntityEnum(Me, t, AddressOf o.Add)
                             End If
 
                             M2MUpdate(orm, old_id)
@@ -3535,7 +3545,10 @@ l1:
         If Not IsInCachePrecise(obj) Then
             Add2Cache(obj)
             If obj.OriginalCopy IsNot Nothing Then
-                Me.Cache.RegisterExistingModification(obj, obj.Key)
+                Dim c As OrmCache = TryCast(_cache, OrmCache)
+                If c IsNot Nothing Then
+                    c.RegisterExistingModification(obj, obj.Key)
+                End If
             End If
         End If
     End Sub
