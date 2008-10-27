@@ -41,23 +41,26 @@ Namespace Database
 
             Public Overridable Function Validate() As Boolean Implements OrmManager.ICacheValidator.ValidateBeforCacheProbe
                 If _f IsNot Nothing Then
-                    For Each fl As IFilter In _f.GetAllFilters
-                        Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
-                        If f IsNot Nothing Then
-                            Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                    Dim c As OrmCache = TryCast(_mgr.Cache, OrmCache)
+                    If c IsNot Nothing Then
+                        For Each fl As IFilter In _f.GetAllFilters
+                            Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
+                            If f IsNot Nothing Then
+                                Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
 
-                            Dim fields As List(Of String) = Nothing
-                            If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
-                                Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
-                                If idx >= 0 Then
-                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
-                                    _mgr.Cache.ResetFieldDepends(p)
-                                    _mgr.Cache.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
-                                    Return False
+                                Dim fields As List(Of String) = Nothing
+                                If c.GetUpdatedFields(tmpl.Type, fields) Then
+                                    Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
+                                    If idx >= 0 Then
+                                        Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                        c.ResetFieldDepends(p)
+                                        c.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                                        Return False
+                                    End If
                                 End If
                             End If
-                        End If
-                    Next
+                        Next
+                    End If
                 End If
                 Return True
             End Function
@@ -67,10 +70,10 @@ Namespace Database
             End Function
 
             Public Overrides Sub CreateDepends()
-                If Not _mgr._dont_cache_lists Then
-                    If _f IsNot Nothing Then
+                If Not _mgr._dont_cache_lists AndAlso _f IsNot Nothing Then
+                    Dim cache As OrmCache = TryCast(_mgr.Cache, OrmCache)
+                    If cache IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
-                        Dim cache As OrmCacheBase = _mgr.Cache
                         cache.AddDependType(_mgr.GetFilterInfo, tt, _key, _id, _f, _mgr.MappingEngine)
 
                         For Each fl As IFilter In _f.GetAllFilters
@@ -297,9 +300,11 @@ Namespace Database
             Public Overrides Sub CreateDepends()
                 MyBase.CreateDepends()
                 If _asc IsNot Nothing AndAlso _asc.Length > 0 AndAlso _f Is Nothing Then
-                    Dim tt As System.Type = GetType(T)
-                    Dim cache As OrmCacheBase = _mgr.Cache
-                    cache.AddFilterlessDependType(_mgr.GetFilterInfo, tt, _key, _id, _mgr.MappingEngine)
+                    Dim cache As OrmCache = TryCast(_mgr.Cache, OrmCache)
+                    If cache IsNot Nothing Then
+                        Dim tt As System.Type = GetType(T)
+                        cache.AddFilterlessDependType(_mgr.GetFilterInfo, tt, _key, _id, _mgr.MappingEngine)
+                    End If
                 End If
             End Sub
         End Class
@@ -498,8 +503,9 @@ Namespace Database
                         l = l2
                     End If
 
-                    If Not _mgr._dont_cache_lists Then
-                        _mgr.Cache.AddConnectedDepend(ct, _key, _id)
+                    Dim c As OrmCache = TryCast(_mgr.Cache, OrmCache)
+                    If c IsNot Nothing AndAlso Not _mgr._dont_cache_lists Then
+                        c.AddConnectedDepend(ct, _key, _id)
                     End If
 
                     Return New M2MCache(_sort, _f, _obj.Identifier, l, _mgr, mt, t, _direct)
@@ -520,7 +526,7 @@ Namespace Database
                 If Not _mgr._dont_cache_lists Then
                     Dim tt As Type = GetType(T)
                     If _f IsNot Nothing Then
-                        Dim cache As OrmCacheBase = _mgr.Cache
+                        Dim cache As OrmCache = TryCast(_mgr.Cache, OrmCache)
                         'cache.AddDependType(tt, _key, _id, _f)
 
                         For Each bf As IFilter In _f.GetAllFilters

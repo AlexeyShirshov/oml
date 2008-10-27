@@ -53,7 +53,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestFilter()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
-            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.AutoTypeField("ID").GreaterThan(2)
             Assert.IsNotNull(q)
@@ -78,7 +78,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestFilterUpdate()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
-            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
             Assert.IsNotNull(q)
@@ -104,7 +104,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestTableFilterUpdate()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
-            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.Column(mgr.MappingEngine.GetTables(GetType(Table1))(0), "enum_str").Eq(Enum1.sec.ToString)
             Assert.IsNotNull(q)
@@ -130,7 +130,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestJoin()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
-            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.Field(GetType(Table2), "Money").Eq(1)
             q.AutoJoins = True
@@ -157,7 +157,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestUpdate()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
-            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table2))
             q.Filter = Ctor.AutoTypeField("Money").GreaterThan(1)
             Dim l As ReadOnlyEntityList(Of Table2) = q.ToEntityList(Of Table2)(mgr)
@@ -180,7 +180,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestCorrelatedSubqueryCache()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
-            mgr.Cache.ValidateBehavior = Cache.ValidateBehavior.Deferred
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
             Dim tt1 As Type = GetType(Table1)
             Dim tt2 As Type = GetType(Table2)
@@ -273,5 +273,55 @@ Imports Worm.Database.Criteria.Joins
         q.Sort(Orm.Sorting.Field("ID"))
         q.ToEntityList(Of Entity4)()
         Assert.IsTrue(q.LastExecitionResult.CacheHit)
+    End Sub
+
+    <TestMethod()> Public Sub TestM2M()
+        Dim tm As New TestManager
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+            mgr.NewObjectManager = tm
+
+            Dim e As Entity = mgr.GetOrmBaseFromCacheOrDB(Of Entity)(1)
+            Assert.IsNotNull(e)
+
+            Dim q As New QueryCmd(e)
+
+            Dim q2 As QueryCmd = New QueryCmd(e). _
+                Where(Ctor.Field(GetType(Entity4), "Title").Eq("first"))
+
+            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
+            Dim r2 As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
+
+            Assert.AreEqual(4, r.Count)
+            Assert.AreEqual(1, r2.Count)
+
+            For Each o As Entity4 In r
+                Assert.IsFalse(o.InternalProperties.IsLoaded)
+            Next
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                    Dim en4 As Entity4 = s.CreateNewObject(Of Entity4)()
+                    en4.Title = "xxx"
+                    e.M2MNew.Add(en4)
+
+                    Assert.AreEqual(4, q.ToEntityList(Of Entity4)(mgr))
+                    Assert.IsTrue(q.LastExecitionResult.CacheHit)
+
+                    Assert.AreEqual(1, q2.ToEntityList(Of Entity4)(mgr))
+                    Assert.IsTrue(q2.LastExecitionResult.CacheHit)
+
+                    s.Commit()
+                End Using
+
+                Assert.AreEqual(5, q.ToEntityList(Of Entity4)(mgr))
+                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+                Assert.AreEqual(1, q2.ToEntityList(Of Entity4)(mgr))
+                Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
     End Sub
 End Class

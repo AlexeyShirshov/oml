@@ -118,17 +118,17 @@ Namespace Cache
             End Using
         End Sub
 
-        Public Sub Reject(ByVal rejectDual As Boolean)
+        Public Sub Reject(ByVal mc As OrmManager, ByVal rejectDual As Boolean)
             Using SyncRoot
                 If rejectDual Then
                     For Each id As Integer In _addedList
-                        RejectRelated(id, True)
+                        RejectRelated(mc, id, True)
                     Next
                 End If
                 _addedList.Clear()
                 If rejectDual Then
                     For Each id As Integer In _deletedList
-                        RejectRelated(id, False)
+                        RejectRelated(mc, id, False)
                     Next
                 End If
                 _deletedList.Clear()
@@ -189,8 +189,7 @@ Namespace Cache
         '    End Get
         'End Property
 
-        Protected Sub RejectRelated(ByVal id As Object, ByVal add As Boolean)
-            Dim mgr As OrmManager = OrmManager.CurrentManager
+        Protected Sub RejectRelated(ByVal mgr As OrmManager, ByVal id As Object, ByVal add As Boolean)
             'Dim m As OrmManager.M2MCache = mgr.FindM2MNonGeneric(mgr.CreateDBObject(id, SubType), MainType, GetRealDirect).First
             Dim el As EditableListBase = GetRevert(mgr, id)
 
@@ -219,8 +218,7 @@ Namespace Cache
             'Return l
         End Function
 
-        Protected Sub AcceptDual()
-            Dim mgr As OrmManager = OrmManager.CurrentManager
+        Protected Sub AcceptDual(ByVal mgr As OrmManager)
             For Each el As EditableListBase In GetRevert(mgr)
                 'Dim m As OrmManager.M2MCache = mgr.GetM2MNonGeneric(id.ToString, _subType, _mainType, GetRealDirect)
                 'If m IsNot Nothing Then
@@ -294,7 +292,7 @@ Namespace Cache
                 RemoveNew()
 
                 If needaccept Then
-                    AcceptDual()
+                    AcceptDual(mgr)
                 End If
             End Using
             Return True
@@ -524,7 +522,7 @@ Namespace Cache
                         If _mainList.Count > 0 Then
                             col = New ArrayList(mgr.ConvertIds2Objects(_subType, _mainList, False))
                             If Not mgr.CanSortOnClient(_subType, col, _sort, sr) Then
-                                AcceptDual()
+                                AcceptDual(mgr)
                                 Return False
                             End If
                             If sr Is Nothing Then
@@ -533,7 +531,7 @@ Namespace Cache
                                 c = sr.CreateSortComparer(_sort)
                             End If
                             If c Is Nothing Then
-                                AcceptDual()
+                                AcceptDual(mgr)
                                 Return False
                             End If
                         End If
@@ -579,7 +577,7 @@ Namespace Cache
                 RemoveNew()
 
                 If needaccept Then
-                    AcceptDual()
+                    AcceptDual(mgr)
                 End If
             End Using
             Return True

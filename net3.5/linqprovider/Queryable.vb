@@ -18,12 +18,12 @@ Namespace Linq
             End Set
         End Property
 
-        Private _cache As Cache.OrmCacheBase
-        Public Property Cache() As Cache.OrmCacheBase
+        Private _cache As Cache.ReadonlyCache
+        Public Property Cache() As Cache.ReadonlyCache
             Get
                 Return _cache
             End Get
-            Set(ByVal value As Cache.OrmCacheBase)
+            Set(ByVal value As Cache.ReadonlyCache)
                 _cache = value
             End Set
         End Property
@@ -54,14 +54,14 @@ Namespace Linq
             MyClass.New(New Cache.OrmCache, New SQLGenerator("1"), conn)
         End Sub
 
-        Public Sub New(ByVal cache As Cache.OrmCacheBase, ByVal schema As ObjectMappingEngine, ByVal conn As String)
+        Public Sub New(ByVal cache As Cache.OrmCache, ByVal schema As ObjectMappingEngine, ByVal conn As String)
             _conn = conn
             Me.Cache = cache
             Me.Schema = schema
         End Sub
 
         Public Overrides Function CreateManager() As OrmManager
-            Return New OrmDBManager(Cache, CType(Schema, SQLGenerator), _conn)
+            Return New OrmDBManager(CType(Cache, Worm.Cache.OrmCache), CType(Schema, SQLGenerator), _conn)
         End Function
 
         Public Overrides Function CreateReadonlyManager() As OrmManager

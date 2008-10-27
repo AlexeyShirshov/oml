@@ -279,6 +279,10 @@ Namespace Database
             End Function
 
             Protected Sub Save()
+                If _mgr.Cache.IsReadonly Then
+                    Throw New InvalidOperationException("Cache is readonly")
+                End If
+
                 RaiseEvent PreSave()
                 Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
                 Dim saved As New List(Of Pair(Of ObjectState, _ICachedEntity)), copies As New List(Of Pair(Of ICachedEntity))
@@ -391,7 +395,7 @@ Namespace Database
                                         Dim ls As List(Of _ICachedEntity) = l2(t)
                                         '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                         '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
-                                        _mgr.Cache.UpdateCache(_mgr.MappingEngine, ls, _mgr, _
+                                        CType(_mgr.Cache, OrmCache).UpdateCache(_mgr.MappingEngine, ls, _mgr, _
                                             AddressOf CachedEntity.ClearCacheFlags, Nothing, _callbacks)
                                     Next
                                 Else

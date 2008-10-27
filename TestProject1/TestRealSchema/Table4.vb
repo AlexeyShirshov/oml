@@ -14,7 +14,7 @@ Public Class Table4
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As OrmCacheBase, ByVal schema As Worm.ObjectMappingEngine)
+    Public Sub New(ByVal id As Integer, ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 

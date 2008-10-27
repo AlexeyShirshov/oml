@@ -33,6 +33,7 @@ Namespace Database.Storedprocs
 
         Public MustOverride ReadOnly Property ExecutionTime() As TimeSpan
         Public MustOverride ReadOnly Property FetchTime() As TimeSpan
+        Public Const StoreName As String = "Worm.StoredP"
 
         Private _cache As Boolean
         Private _reseted As New Dictionary(Of String, Boolean)
@@ -146,7 +147,7 @@ Namespace Database.Storedprocs
                         result = dic(id)
                         If result Is Nothing OrElse Expires() Then
                             Expire()
-                            mgr.Cache.AddStoredProc(sync, Me)
+                            AddStoredProc(sync, Me, mgr.Cache)
                             result = Execute(mgr)
                             'PutInCache(dic, id, result)
                             dic(id) = result
@@ -184,7 +185,7 @@ Namespace Database.Storedprocs
             Return mgr.GetDic(mgr.Cache, key)
         End Function
 
-        Public Sub ResetCache(ByVal c As OrmCacheBase, ByVal r As ValidateResult)
+        Public Sub ResetCache(ByVal c As ReadonlyCache, ByVal r As ValidateResult)
             Dim key As String = "StroredProcedure:" & GetName()
 
             Dim id As String = GetKey()
@@ -267,6 +268,98 @@ Namespace Database.Storedprocs
             If String.IsNullOrEmpty(id) Then id = "empty"
             Return key & id
         End Function
+
+        Private Sub AddStoredProcType(ByVal sp As StoredProcBase, ByVal t As Type, ByVal cache As ReadonlyCache)
+            Dim l As List(Of StoredProcBase) = cache.GetExternalObject(StoreName, _
+                Function() New List(Of StoredProcBase))
+
+            SyncLock l
+                Dim pos As Integer = l.IndexOf(sp)
+                If pos < 0 Then
+                    l.Add(sp)
+                Else
+                    l(pos) = sp
+                End If
+            End SyncLock
+
+            Dim c As OrmCache = TryCast(cache, OrmCache)
+            If c IsNot Nothing Then
+                AddHandler c.OnObjectUpdated, AddressOf sp.ValidateSPOnUpdate
+                AddHandler c.OnObjectAdded, AddressOf sp.ValidateSPOnInsertDelete
+                AddHandler c.OnObjectDeleted, AddressOf sp.ValidateSPOnInsertDelete
+            End If
+        End Sub
+
+        Protected Friend Sub AddStoredProc(ByVal key As String, ByVal sp As StoredProcBase, ByVal cache As ReadonlyCache)
+            If sp.Cached Then
+                Dim types As ICollection(Of Type) = sp.GetTypesToValidate
+                If types IsNot Nothing AndAlso types.Count > 0 Then
+                    For Each t As Type In types
+                        AddStoredProcType(sp, t, cache)
+                    Next
+                Else
+                    AddStoredProcType(sp, GetType(Object), cache)
+                End If
+            End If
+        End Sub
+
+        Private Sub ValidateSPByType(ByVal cache As OrmCache, ByVal t As Type, ByVal obj As ICachedEntity)
+            Dim l As List(Of StoredProcBase) = cache.GetExternalObject(Of List(Of StoredProcBase))(StoreName)
+            If l IsNot Nothing Then
+                SyncLock l
+                    For Each sp As StoredProcBase In l
+                        Try
+                            If Not sp.IsReseted Then
+                                Dim r As StoredProcBase.ValidateResult = sp.ValidateOnInsertDelete(obj)
+                                If r <> StoredProcBase.ValidateResult.DontReset Then
+                                    sp.ResetCache(cache, r)
+                                End If
+                            End If
+                        Catch ex As Exception
+                            Throw New OrmCacheException(String.Format("Fail to validate sp {0}", sp.Name), ex)
+                        End Try
+                    Next
+                End SyncLock
+            End If
+        End Sub
+
+        Private Sub ValidateUpdateSPByType(ByVal cache As OrmCache, ByVal t As Type, ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String))
+            Dim l As List(Of StoredProcBase) = cache.GetExternalObject(Of List(Of StoredProcBase))(StoreName)
+            If l IsNot Nothing Then
+                SyncLock l
+                    For Each sp As StoredProcBase In l
+                        If Not sp.IsReseted Then
+                            Dim r As StoredProcBase.ValidateResult = sp.ValidateOnUpdate(obj, fields)
+                            If r <> StoredProcBase.ValidateResult.DontReset Then
+                                sp.ResetCache(cache, r)
+                            End If
+                        End If
+                    Next
+                End SyncLock
+            End If
+        End Sub
+
+        Protected Sub ValidateSPOnInsertDelete(ByVal cache As OrmCache, ByVal obj As ICachedEntity)
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
+#End If
+                ValidateSPByType(cache, obj.GetType, obj)
+                ValidateSPByType(cache, GetType(Object), obj)
+            End Using
+        End Sub
+
+        Protected Friend Sub ValidateSPOnUpdate(ByVal cache As OrmCache, ByVal obj As _ICachedEntity, ByVal fields As ICollection(Of String))
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("olnfv9807b45gnpoweg01j3g","d:\temp\")
+#Else
+            Using SyncHelper.AcquireDynamicLock("olnfv9807b45gnpoweg01j3g")
+#End If
+                ValidateUpdateSPByType(cache, obj.GetType, obj, fields)
+                ValidateUpdateSPByType(cache, GetType(Object), obj, fields)
+            End Using
+        End Sub
     End Class
 
     Public MustInherit Class NonQueryStoredProcBase

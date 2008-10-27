@@ -1133,8 +1133,19 @@ Namespace Query
             Return ToEntityList(Of T)(_getMgr)
         End Function
 
+        Private Sub SetCT2Nothing()
+            _createType = Nothing
+        End Sub
+
         Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
-            Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
+            If GetType(AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso _createType Is Nothing Then
+                _createType = GetType(T)
+                Using New OnExitScopeAction(AddressOf SetCT2Nothing)
+                    Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
+                End Using
+            Else
+                Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
+            End If
         End Function
 
         Public Function ToOrmList(Of T As {_IOrmBase})(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
@@ -1453,7 +1464,9 @@ Namespace Query
                     'If t Is Nothing Then
                     '    Return New Cache.EmptyDependentTypes
                     'End If
-                    dp.AddBoth(t)
+                    If t IsNot Nothing Then
+                        dp.AddBoth(t)
+                    End If
                 Next
             End If
 

@@ -81,7 +81,7 @@ namespace TestsCodeGenLib
 			baseClassCtor = new CodeConstructor();
 			baseClassCtor.Attributes = MemberAttributes.Public;
 			baseClassCtor.Parameters.Add(new CodeParameterDeclarationExpression(typeof (Int32), "id"));
-			baseClassCtor.Parameters.Add(new CodeParameterDeclarationExpression("Worm.Cache.OrmCacheBase", "cache"));
+			baseClassCtor.Parameters.Add(new CodeParameterDeclarationExpression("Worm.Cache.ReadonlyCache", "cache"));
 			baseClassCtor.Parameters.Add(new CodeParameterDeclarationExpression("Worm.ObjectMappingEngine", "schema"));
 			baseClassCtor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("id"));
 			baseClassCtor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("cache"));

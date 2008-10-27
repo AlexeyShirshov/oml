@@ -107,6 +107,14 @@ Namespace Database
                 Return New CriteriaLink(Nothing, New Conditions.Condition.ConditionConstructor).AndNotExists(t, filter)
             End Function
 
+            Public Shared Function Exists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+                Return New CriteriaLink(Nothing, New Condition.ConditionConstructor).AndExists(cmd)
+            End Function
+
+            Public Shared Function NotExists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+                Return New CriteriaLink(Nothing, New Conditions.Condition.ConditionConstructor).AndNotExists(cmd)
+            End Function
+
             Public Shared Function Custom(ByVal format As String, ByVal ParamArray values() As Pair(Of Object, String)) As CriteriaBase
                 Return New CustomCF(Nothing, format, values)
             End Function
@@ -232,6 +240,14 @@ Namespace Database
             Public Function NotExists(ByVal t As Type, ByVal f As cc.IGetFilter) As CriteriaLink
                 Return GetLink2(New NonTemplateUnaryFilter(New SubQuery(_stmtGen, t, f.Filter), FilterOperation.NotExists))
             End Function
+
+            Public Function Exists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+                Return GetLink2(New NonTemplateUnaryFilter(New SubQueryCmd(_stmtGen, cmd), FilterOperation.Exists))
+            End Function
+
+            Public Function NotExists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+                Return GetLink2(New NonTemplateUnaryFilter(New SubQueryCmd(_stmtGen, cmd), FilterOperation.NotExists))
+            End Function
         End Class
 
         Public Class CustomCF
@@ -317,6 +333,14 @@ Namespace Database
 
             Public Function NotExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
                 Return CType(GetLink(New NonTemplateUnaryFilter(New SubQuery(_stmtGen, t, joinFilter), FilterOperation.NotExists)), CriteriaLink)
+            End Function
+
+            Public Function Exists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+                Return CType(GetLink(New NonTemplateUnaryFilter(New SubQueryCmd(_stmtGen, cmd), FilterOperation.Exists)), CriteriaLink)
+            End Function
+
+            Public Function NotExists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+                Return CType(GetLink(New NonTemplateUnaryFilter(New SubQueryCmd(_stmtGen, cmd), FilterOperation.NotExists)), CriteriaLink)
             End Function
 
             'Public Function Custom(ByVal t As Type, ByVal field As String, ByVal oper As FilterOperation, ByVal value As IFilterValue) As CriteriaLink
@@ -407,6 +431,22 @@ Namespace Database
 
             Public Function OrNotExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
                 Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or).NotExists(t, joinFilter)
+            End Function
+
+            Public Function AndExists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+                Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).Exists(cmd)
+            End Function
+
+            Public Function AndNotExists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+                Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).NotExists(cmd)
+            End Function
+
+            Public Function OrExists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+                Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or).Exists(cmd)
+            End Function
+
+            Public Function OrNotExists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+                Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or).NotExists(cmd)
             End Function
 
             Protected Overrides Function _Clone() As Object

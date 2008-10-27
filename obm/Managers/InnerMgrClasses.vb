@@ -27,12 +27,11 @@ Partial Public Class OrmManager
             o2 = CType(obj.GetValueOptimized(Nothing, New ColumnAttribute(p2.PropertyName), oschema), IOrmBase)
         End Sub
 
-        Public Function Add(ByVal e As M2MCache) As Boolean
+        Public Function Add(ByVal mgr As OrmManager, ByVal e As M2MCache) As Boolean
             If e Is Nothing Then
                 Throw New ArgumentNullException("e")
             End If
 
-            Dim mgr As OrmManager = OrmManager.CurrentManager
             Dim el As EditableList = e.Entry
             Dim obj As IOrmBase = Nothing, subobj As IOrmBase = Nothing
             If el.Main.Equals(o1) Then
@@ -70,7 +69,7 @@ Partial Public Class OrmManager
             Return True
         End Function
 
-        Public Function Remove(ByVal e As M2MCache) As Boolean
+        Public Function Remove(ByVal mgr As OrmManager, ByVal e As M2MCache) As Boolean
             If e Is Nothing Then
                 Throw New ArgumentNullException("e")
             End If
@@ -84,26 +83,26 @@ Partial Public Class OrmManager
             Return True
         End Function
 
-        Public Function Accept(ByVal e As M2MCache) As Boolean
+        Public Function Accept(ByVal mgr As OrmManager, ByVal e As M2MCache) As Boolean
             If e Is Nothing Then
                 Throw New ArgumentNullException("e")
             End If
 
             Dim el As EditableList = e.Entry
             If el.Main.Equals(o1) OrElse el.Main.Equals(o2) Then
-                Return el.Accept(OrmManager.CurrentManager)
+                Return el.Accept(mgr)
             End If
             Return True
         End Function
 
-        Public Function Reject(ByVal e As M2MCache) As Boolean
+        Public Function Reject(ByVal mgr As OrmManager, ByVal e As M2MCache) As Boolean
             If e Is Nothing Then
                 Throw New ArgumentNullException("e")
             End If
 
             Dim el As EditableList = e.Entry
             If el.Main.Equals(o1) OrElse el.Main.Equals(o2) Then
-                el.Reject(False)
+                el.Reject(mgr, False)
             End If
             Return True
         End Function
@@ -236,7 +235,7 @@ Partial Public Class OrmManager
         'Protected _st As SortType
         Protected _obj As Object
         'Protected _mark As Object
-        Protected _cache As OrmCacheBase
+        'Protected _cache As OrmBase
         Protected _f As IFilter
         Protected Friend _expires As Date
         Protected _sortExpires As Date
@@ -270,8 +269,8 @@ Partial Public Class OrmManager
             'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
             _obj = mgr.ListConverter.ToWeakList(obj)
             'End Using
-            _cache = mgr.Cache
-            If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
+            '_cache = mgr.Cache
+            If obj IsNot Nothing Then mgr._cache.RegisterCreationCacheItem(Me.GetType)
             _f = filter
             _expires = mgr._expiresPattern
             _sortExpires = sortExpire
@@ -279,10 +278,10 @@ Partial Public Class OrmManager
             _fetchTime = mgr.Fecth
         End Sub
 
-        Friend Sub New(ByVal obj As IEnumerable, ByVal cache As OrmCacheBase)
+        Friend Sub New(ByVal obj As IEnumerable, ByVal cache As ReadonlyCache)
             _obj = obj
-            _cache = cache
-            If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
+            '_cache = cache
+            If obj IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
         End Sub
 
         Public Sub New(ByVal filter As IFilter, ByVal obj As IEnumerable, ByVal mgr As OrmManager)
@@ -291,8 +290,8 @@ Partial Public Class OrmManager
             'Using p As New CoreFramework.Debuging.OutputTimer("To week list")
             _obj = mgr.ListConverter.ToWeakList(obj)
             'End Using
-            _cache = mgr.Cache
-            If obj IsNot Nothing Then _cache.RegisterCreationCacheItem(Me.GetType)
+            '_cache = mgr.Cache
+            If obj IsNot Nothing Then mgr._cache.RegisterCreationCacheItem(Me.GetType)
             _f = filter
             _expires = mgr._expiresPattern
             _execTime = mgr.Exec
@@ -353,7 +352,7 @@ Partial Public Class OrmManager
         'End Function
 
         Public Overridable Function GetCount(ByVal mgr As OrmManager) As Integer
-            Return _cache.ListConverter.GetCount(_obj)
+            Return mgr.Cache.ListConverter.GetCount(_obj)
         End Function
 
         Public Sub Expire()
@@ -438,9 +437,9 @@ Partial Public Class OrmManager
             End Get
         End Property
 
-        Protected Overrides Sub Finalize()
-            If _obj IsNot Nothing Then _cache.RegisterRemovalCacheItem(Me)
-        End Sub
+        'Protected Overrides Sub Finalize()
+        '    If _obj IsNot Nothing Then _cache.RegisterRemovalCacheItem(Me)
+        'End Sub
 
         Public Overridable Function Add(ByVal mgr As OrmManager, ByVal obj As ICachedEntity) As Boolean
             Return mgr.ListConverter.Add(_obj, mgr, obj, _sort)
@@ -480,9 +479,9 @@ Partial Public Class OrmManager
             End If
 
             '_st = sortType
-            _cache = mgr.Cache
+            '_cache = mgr.Cache
             If obj IsNot Nothing Then
-                _cache.RegisterCreationCacheItem(Me.GetType)
+                mgr._cache.RegisterCreationCacheItem(Me.GetType)
                 _obj = New EditableList(mainId, obj, mainType, subType, key, sort)
             End If
             _f = filter
@@ -498,9 +497,9 @@ Partial Public Class OrmManager
             End If
 
             '_st = SortType
-            _cache = mgr.Cache
+            '_cache = mgr.Cache
             If el IsNot Nothing Then
-                _cache.RegisterCreationCacheItem(Me.GetType)
+                mgr._cache.RegisterCreationCacheItem(Me.GetType)
                 _obj = el
             End If
             _f = filter

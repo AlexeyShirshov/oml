@@ -1,5 +1,6 @@
 ﻿Imports Worm.Orm.Meta
 Imports Worm.Orm
+Imports System.Collections.Generic
 
 Namespace Cache
 
@@ -191,6 +192,120 @@ Namespace Cache
 
         Public Overrides Function ToString() As String
             Return _key.ToString
+        End Function
+    End Class
+
+    Module qd
+        Public Function QueryDependentTypes(ByVal o As Object) As IDependentTypes
+            Dim qd As IQueryDependentTypes = TryCast(o, IQueryDependentTypes)
+            If qd IsNot Nothing Then
+                Return TryCast(qd, IDependentTypes)
+            End If
+
+            Return New EmptyDependentTypes
+        End Function
+
+        Public Function IsCalculated(ByVal dp As IDependentTypes) As Boolean
+            If dp Is Nothing Then
+                Return True
+            Else
+                Return dp.GetType IsNot GetType(EmptyDependentTypes)
+            End If
+        End Function
+
+        Public Sub Add2Cache(ByVal cache As OrmCache, ByVal dp As IDependentTypes, ByVal key As String, ByVal id As String)
+            If dp IsNot Nothing Then
+                For Each t As Type In dp.GetAddDelete
+                    cache.validate_AddDeleteType(t, key, id)
+                Next
+                For Each t As Type In dp.GetUpdate
+                    cache.validate_UpdateType(t, key, id)
+                Next
+            End If
+        End Sub
+
+        Public Function IsEmpty(ByVal dp As IDependentTypes) As Boolean
+            If dp Is Nothing Then
+                Return True
+            Else
+                Return Not (dp.GetAddDelete.GetEnumerator.MoveNext OrElse dp.GetUpdate.GetEnumerator.MoveNext)
+            End If
+        End Function
+    End Module
+
+    NotInheritable Class EmptyDependentTypes
+        Implements IDependentTypes
+
+        Public Function GetAddDelete() As System.Collections.Generic.IEnumerable(Of System.Type) Implements IDependentTypes.GetAddDelete
+            Return Nothing
+        End Function
+
+        Public Function GetUpdate() As System.Collections.Generic.IEnumerable(Of System.Type) Implements IDependentTypes.GetUpdate
+            Return Nothing
+        End Function
+    End Class
+
+    Class DependentTypes
+        Implements IDependentTypes
+
+        Private _d As New List(Of Type)
+        Private _u As New List(Of Type)
+
+        Public Sub AddBoth(ByVal t As Type)
+            AddDeleted(t)
+            AddUpdated(t)
+        End Sub
+
+        Public Sub AddDeleted(ByVal t As Type)
+            If Not _d.Contains(t) Then
+                _d.Add(t)
+            End If
+        End Sub
+
+        Public Sub AddUpdated(ByVal t As Type)
+            If Not _u.Contains(t) Then
+                _u.Add(t)
+            End If
+        End Sub
+
+        Public Sub AddDeleted(ByVal col As IEnumerable(Of Type))
+            For Each t As Type In col
+                AddDeleted(t)
+            Next
+        End Sub
+
+        Public Sub AddUpdated(ByVal col As IEnumerable(Of Type))
+            For Each t As Type In col
+                AddUpdated(t)
+            Next
+        End Sub
+
+        Public Sub Merge(ByVal dp As IDependentTypes)
+            If dp IsNot Nothing Then
+                AddDeleted(dp.GetAddDelete)
+                AddUpdated(dp.GetUpdate)
+            End If
+        End Sub
+
+        Public ReadOnly Property IsEmpty() As Boolean
+            Get
+                Return _d.Count = 0 AndAlso _u.Count = 0
+            End Get
+        End Property
+
+        Public Function [Get]() As IDependentTypes
+            If IsEmpty Then
+                Return Nothing
+            End If
+            Return Me
+        End Function
+
+        Public Function GetAddDelete() As System.Collections.Generic.IEnumerable(Of System.Type) Implements IDependentTypes.GetAddDelete
+            Return _d
+        End Function
+
+        Public Function GetUpdate() As System.Collections.Generic.IEnumerable(Of System.Type) Implements IDependentTypes.GetUpdate
+            Return _u
         End Function
     End Class
 

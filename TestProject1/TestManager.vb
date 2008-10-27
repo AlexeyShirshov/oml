@@ -27,7 +27,7 @@ Imports Worm.Orm.Meta
         Inherits OrmReadOnlyDBManager
         Implements Worm.ICreateManager
 
-        Public Sub New(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator, ByVal connectionString As String)
+        Public Sub New(ByVal cache As OrmCache, ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, schema, connectionString)
         End Sub
 
@@ -37,7 +37,7 @@ Imports Worm.Orm.Meta
 
     End Class
 
-    Public Shared Function CreateManager(ByVal cache As OrmCacheBase, ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
+    Public Shared Function CreateManager(ByVal cache As OrmCache, ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
         Return New CustomMgr(cache, schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")

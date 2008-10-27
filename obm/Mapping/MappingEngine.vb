@@ -408,13 +408,24 @@ Public MustInherit Class ObjectMappingEngine
     End Function
 
     Public Function GetEntityNameByType(ByVal t As Type) As String
+        Dim dic As IDictionary = CType(map("mthdEntityByType"), System.Collections.IDictionary)
+        If dic Is Nothing Then
+            dic = Hashtable.Synchronized(New Hashtable)
+            map("mthdEntityByType") = dic
+        End If
+        If dic.Contains(t) Then
+            Return CStr(dic(t))
+        End If
+        Dim ver As String = Nothing
         Dim a() As Attribute = Attribute.GetCustomAttributes(t, GetType(EntityAttribute))
         For Each ea As EntityAttribute In a
             If ea.Version = _version Then
-                Return ea.EntityName
+                ver = ea.EntityName
+                Exit For
             End If
         Next
-        Return Nothing
+        dic(t) = ver
+        Return ver
     End Function
 
     Public Function GetConnectedType(ByVal maintype As Type, ByVal subtype As Type) As Type

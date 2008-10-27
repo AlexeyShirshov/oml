@@ -36,23 +36,26 @@ Namespace Xml
 
             Public Overridable Function Validate() As Boolean Implements OrmManager.ICacheValidator.ValidateBeforCacheProbe
                 If _f IsNot Nothing Then
+                    Dim c As OrmCache = TryCast(_mgr.Cache, OrmCache)
+                    If c IsNot Nothing Then
                     For Each fl As IFilter In _f.GetAllFilters
                         Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                         If f IsNot Nothing Then
                             Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
 
                             Dim fields As List(Of String) = Nothing
-                            If _mgr.Cache.GetUpdatedFields(tmpl.Type, fields) Then
+                                If c.GetUpdatedFields(tmpl.Type, fields) Then
                                 Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
                                 If idx >= 0 Then
                                     Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
-                                    _mgr.Cache.ResetFieldDepends(p)
-                                    _mgr.Cache.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                                        c.ResetFieldDepends(p)
+                                        c.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
                                     Return False
+                                    End If
                                 End If
                             End If
-                        End If
-                    Next
+                        Next
+                    End If
                 End If
                 Return True
             End Function
@@ -62,10 +65,10 @@ Namespace Xml
             End Function
 
             Public Overrides Sub CreateDepends()
-                If Not _mgr._dont_cache_lists Then
-                    If _f IsNot Nothing Then
+                If Not _mgr._dont_cache_lists AndAlso _f IsNot Nothing Then
+                    Dim cache As OrmCache = TryCast(_mgr.Cache, OrmCache)
+                    If cache IsNot Nothing Then
                         Dim tt As System.Type = GetType(T)
-                        Dim cache As OrmCacheBase = _mgr.Cache
                         cache.AddDependType(_mgr.GetFilterInfo, tt, _key, _id, _f, _mgr.MappingEngine)
 
                         For Each fl As IFilter In _f.GetAllFilters
