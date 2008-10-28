@@ -185,7 +185,7 @@ Namespace Database.Storedprocs
             Return mgr.GetDic(mgr.Cache, key)
         End Function
 
-        Public Sub ResetCache(ByVal c As ReadonlyCache, ByVal r As ValidateResult)
+        Public Sub ResetCache(ByVal c As CacheBase, ByVal r As ValidateResult)
             Dim key As String = "StroredProcedure:" & GetName()
 
             Dim id As String = GetKey()
@@ -269,7 +269,7 @@ Namespace Database.Storedprocs
             Return key & id
         End Function
 
-        Private Sub AddStoredProcType(ByVal sp As StoredProcBase, ByVal t As Type, ByVal cache As ReadonlyCache)
+        Private Sub AddStoredProcType(ByVal sp As StoredProcBase, ByVal t As Type, ByVal cache As CacheBase)
             Dim l As List(Of StoredProcBase) = cache.GetExternalObject(StoreName, _
                 Function() New List(Of StoredProcBase))
 
@@ -290,7 +290,7 @@ Namespace Database.Storedprocs
             End If
         End Sub
 
-        Protected Friend Sub AddStoredProc(ByVal key As String, ByVal sp As StoredProcBase, ByVal cache As ReadonlyCache)
+        Protected Friend Sub AddStoredProc(ByVal key As String, ByVal sp As StoredProcBase, ByVal cache As CacheBase)
             If sp.Cached Then
                 Dim types As ICollection(Of Type) = sp.GetTypesToValidate
                 If types IsNot Nothing AndAlso types.Count > 0 Then

@@ -56,7 +56,13 @@ Namespace Database.Criteria.Values
         End Function
 
         Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
-            Return _q.Get(mpe)
+            Dim qp As Cache.IDependentTypes = _q.Get(mpe)
+            If Cache.IsEmpty(qp) Then
+                Dim dt As New Cache.DependentTypes
+                dt.AddBoth(_q.SelectedType)
+                qp = dt
+            End If
+            Return qp
         End Function
     End Class
 End Namespace

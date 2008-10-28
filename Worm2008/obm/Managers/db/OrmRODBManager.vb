@@ -33,7 +33,7 @@ Namespace Database
         Protected Shared _LoadMultipleObjectsMI As Reflection.MethodInfo = Nothing
         Protected Shared _LoadMultipleObjectsMI4 As Reflection.MethodInfo = Nothing
 
-        Public Sub New(ByVal cache As ReadonlyCache, ByVal schema As SQLGenerator, ByVal connectionString As String)
+        Public Sub New(ByVal cache As CacheBase, ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, schema)
             _stmtHelper = schema
             _connStr = connectionString

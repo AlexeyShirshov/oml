@@ -184,7 +184,7 @@ Namespace Database
             'End Function
 
             Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
-                Return Cache.QueryDependentTypes(Value)
+                Return Cache.QueryDependentTypes(mpe, Value)
             End Function
         End Class
 

@@ -66,7 +66,7 @@ Namespace Query.Database
                     str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, t)
                 End If
 
-                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl, str)
+                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl, str, _mgr.MappingEngine)
                 _id = _q.GetDynamicKey(_j, _f)
                 _sync = _id & _mgr.GetStaticKey()
 

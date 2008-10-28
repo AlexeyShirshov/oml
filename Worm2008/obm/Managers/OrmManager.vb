@@ -25,7 +25,7 @@ Partial Public MustInherit Class OrmManager
     Protected Const myConstLocalStorageString As String = "afoivnaodfvodfviogb3159fhbdofvad"
     'Public Const CustomSort As String = "q890h5f130nmv90h1nv9b1v-9134fb"
 
-    Protected _cache As ReadonlyCache
+    Protected _cache As CacheBase
     'Private _dispose_cash As Boolean
     Friend _prev As OrmManager = Nothing
     'Protected hide_deleted As Boolean = True
@@ -113,7 +113,7 @@ Partial Public MustInherit Class OrmManager
     End Property
 
     <CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1805")> _
-    Protected Sub New(ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine)
+    Protected Sub New(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
 
         If cache Is Nothing Then
             Throw New ArgumentNullException("cache")
@@ -273,7 +273,7 @@ Partial Public MustInherit Class OrmManager
         End Get
     End Property
 
-    Public ReadOnly Property Cache() As ReadonlyCache
+    Public ReadOnly Property Cache() As CacheBase
         Get
             Invariant()
             Return _cache
@@ -738,6 +738,16 @@ Partial Public MustInherit Class OrmManager
         Dim o As IOrmBase = CreateOrmBase(id, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return CType(NormalizeObject(o, GetDictionary(type)), IOrmBase)
+    End Function
+
+    Public Function GetOrmBaseFromCacheOrCreate(ByVal id As Object, ByVal type As Type, ByVal add2CacheOnCreate As Boolean) As IOrmBase
+        Dim o As IOrmBase = CreateOrmBase(id, type)
+        o.SetObjectState(ObjectState.NotLoaded)
+        Dim obj As _ICachedEntity = NormalizeObject(o, CType(GetDictionary(type), System.Collections.IDictionary), add2CacheOnCreate)
+        If ReferenceEquals(o, obj) AndAlso Not add2CacheOnCreate Then
+            o.SetObjectState(ObjectState.Created)
+        End If
+        Return CType(obj, IOrmBase)
     End Function
 
     Public Function GetOrmBaseFromCacheOrCreate(Of T As {IOrmBase, New})(ByVal id As Object) As T
@@ -1654,6 +1664,11 @@ l1:
         If a Is Nothing AndAlso _newMgr IsNot Nothing Then
             a = _newMgr.GetNew(type, obj.GetPKValues)
             If a IsNot Nothing Then Return a
+            Dim oc As ICachedEntity = obj.OriginalCopy
+            If oc IsNot Nothing Then
+                a = _newMgr.GetNew(type, oc.GetPKValues)
+                If a IsNot Nothing Then Return a
+            End If
         End If
         Dim sync_key As String = "LoadType" & id.ToString & type.ToString
         If a Is Nothing Then
@@ -1916,14 +1931,14 @@ l1:
             If c IsNot Nothing Then
                 c.RemoveDepends(obj)
 
-            Dim orm As _IOrmBase = TryCast(obj, _IOrmBase)
-            If orm IsNot Nothing Then
+                Dim orm As _IOrmBase = TryCast(obj, _IOrmBase)
+                If orm IsNot Nothing Then
                     For Each o As Pair(Of OrmManager.M2MCache, Pair(Of String, String)) In c.GetM2MEntries(orm, Nothing)
-                    If Not o.First.Entry.HasChanges Then
-                        Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
-                        mdic.Remove(o.Second.Second)
-                    End If
-                Next
+                        If Not o.First.Entry.HasChanges Then
+                            Dim mdic As IDictionary = GetDic(Cache, o.Second.First)
+                            mdic.Remove(o.Second.Second)
+                        End If
+                    Next
                 End If
             End If
 
@@ -3185,7 +3200,7 @@ l1:
         Return LoadObjects(Of T)(ConvertIds2Objects(Of T)(ids, start, length, False))
     End Function
 
-    Protected Friend Shared Function _GetDic(ByVal cache As ReadonlyCache, ByVal key As String) As IDictionary
+    Protected Friend Shared Function _GetDic(ByVal cache As CacheBase, ByVal key As String) As IDictionary
         'Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
         'If dic Is Nothing Then
         '    Using SyncHelper.AcquireDynamicLock(key)
@@ -3200,12 +3215,12 @@ l1:
         Return cache.GetDictionary(key)
     End Function
 
-    Protected Friend Function GetDic(ByVal cache As ReadonlyCache, ByVal key As String) As IDictionary
+    Protected Friend Function GetDic(ByVal cache As CacheBase, ByVal key As String) As IDictionary
         Dim b As Boolean
         Return GetDic(cache, key, b)
     End Function
 
-    Protected Friend Function GetDic(ByVal cache As ReadonlyCache, ByVal key As String, ByRef created As Boolean) As IDictionary
+    Protected Friend Function GetDic(ByVal cache As CacheBase, ByVal key As String, ByRef created As Boolean) As IDictionary
         'Dim dic As IDictionary = CType(cache.Filters(key), IDictionary)
         'created = False
         'If dic Is Nothing Then

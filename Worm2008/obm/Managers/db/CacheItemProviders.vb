@@ -525,8 +525,8 @@ Namespace Database
             Public Overrides Sub CreateDepends()
                 If Not _mgr._dont_cache_lists Then
                     Dim tt As Type = GetType(T)
-                    If _f IsNot Nothing Then
-                        Dim cache As OrmCache = TryCast(_mgr.Cache, OrmCache)
+                    Dim cache As OrmCache = TryCast(_mgr.Cache, OrmCache)
+                    If _f IsNot Nothing AndAlso cache IsNot Nothing Then
                         'cache.AddDependType(tt, _key, _id, _f)
 
                         For Each bf As IFilter In _f.GetAllFilters
@@ -560,8 +560,6 @@ Namespace Database
                     End If
                 End If
 
-                If Not _mgr._dont_cache_lists Then
-                End If
             End Sub
 
             'Public Overrides Function Validate(ByVal ce As OrmManager.CachedItem) As Boolean

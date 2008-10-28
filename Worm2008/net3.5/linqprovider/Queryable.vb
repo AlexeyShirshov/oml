@@ -18,12 +18,12 @@ Namespace Linq
             End Set
         End Property
 
-        Private _cache As Cache.ReadonlyCache
-        Public Property Cache() As Cache.ReadonlyCache
+        Private _cache As Cache.CacheBase
+        Public Property Cache() As Cache.CacheBase
             Get
                 Return _cache
             End Get
-            Set(ByVal value As Cache.ReadonlyCache)
+            Set(ByVal value As Cache.CacheBase)
                 _cache = value
             End Set
         End Property

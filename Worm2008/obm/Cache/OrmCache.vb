@@ -109,7 +109,7 @@ Namespace Cache
                 c(id) = Nothing
             End Sub
 
-            Public Overloads Sub Remove(ByVal cache As ReadonlyCache)
+            Public Overloads Sub Remove(ByVal cache As CacheBase)
                 For Each kv As KeyValuePair(Of String, Dictionary(Of String, Object)) In Me
                     Dim key As String = kv.Key
                     For Each kv2 As KeyValuePair(Of String, Object) In kv.Value
@@ -132,7 +132,7 @@ Namespace Cache
                 c.Add(key, id)
             End Sub
 
-            Public Overloads Function Remove(ByVal t As Type, ByVal cache As ReadonlyCache) As Boolean
+            Public Overloads Function Remove(ByVal t As Type, ByVal cache As CacheBase) As Boolean
                 Dim c As CacheEntryRef = Nothing
                 If TryGetValue(t, c) Then
                     c.Remove(cache)
@@ -161,7 +161,6 @@ Namespace Cache
         'End Class
 #End Region
 
-        Private _rootObjectsDictionary As IDictionary = Hashtable.Synchronized(New Hashtable)
         Private _md As CreateCacheListDelegate
 
         'Public ReadOnly DateTimeCreated As Date
@@ -726,42 +725,51 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function UpdateCacheDeferred(ByVal t As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
+        Protected Friend Function UpdateCacheDeferred(ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
 
-            '            If t IsNot Nothing Then
-            '                Dim wasAdded, wasDeleted As Boolean
+            For Each t As Type In ts
+                Dim wasAdded, wasDeleted As Boolean
 
-            '#If DebugLocks Then
-            '            Using SyncHelper.AcquireDynamicLock_Debug("qoegnq","d:\temp\")
-            '#Else
-            '                Using SyncHelper.AcquireDynamicLock("qoegnq")
-            '#End If
-            '                    wasAdded = _addedTypes.ContainsKey(t)
-            '                    wasDeleted = _deletedTypes.ContainsKey(t)
+#If DebugLocks Then
+                        Using SyncHelper.AcquireDynamicLock_Debug("qoegnq","d:\temp\")
+#Else
+                Using SyncHelper.AcquireDynamicLock("qoegnq")
+#End If
+                    wasAdded = _addedTypes.ContainsKey(t)
+                    wasDeleted = _deletedTypes.ContainsKey(t)
 
-            '                    If wasAdded Then
-            '                        _addedTypes.Remove(t)
-            '                    End If
+                    If wasAdded Then
+                        _addedTypes.Remove(t)
+                    End If
 
-            '                    If wasDeleted Then
-            '                        _deletedTypes.Remove(t)
-            '                    End If
-            '                End Using
+                    If wasDeleted Then
+                        _deletedTypes.Remove(t)
+                    End If
+                End Using
 
-            '                If wasAdded OrElse wasDeleted Then
-            '#If DebugLocks Then
-            '            Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
-            '#Else
-            '                    Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
-            '#End If
-            '                        If _addDeleteTypes.Remove(t, Me) Then
-            '                            Return False
-            '                        End If
-            '                    End Using
-            '                End If
-            '            End If
+                If wasAdded OrElse wasDeleted Then
+#If DebugLocks Then
+                        Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
+#Else
+                    Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
+#End If
+                        If _addDeleteTypes.Remove(t, Me) Then
+                            Return False
+                        End If
+                    End Using
+                End If
+            Next
 
             If _invalidate.Count > 0 Then
+
+                For Each t As Type In _invalidate.Keys
+                    If ts.Contains(t) Then
+                        Dim removed As Boolean = _updateTypes.Remove(t, Me)
+                        If removed Then
+                            Return False
+                        End If
+                    End If
+                Next
 
                 If f IsNot Nothing Then
                     For Each fl As IEntityFilter In f.GetAllFilters
@@ -1213,13 +1221,8 @@ l1:
 
         Public Overrides Sub Reset()
             '_filters = Hashtable.Synchronized(New Hashtable)
-            _rootObjectsDictionary = Hashtable.Synchronized(New Hashtable)
             MyBase.Reset()
         End Sub
-
-        Public Overrides Function CreateResultsetsDictionary() As System.Collections.IDictionary
-            Return Hashtable.Synchronized(New Hashtable)
-        End Function
 
         Public Overrides Function CreateResultsetsDictionary(ByVal mark As String) As System.Collections.IDictionary
             If _md IsNot Nothing AndAlso Not String.IsNullOrEmpty(mark) Then
@@ -1230,53 +1233,6 @@ l1:
         End Function
 
         'Public Overrides ReadOnly Property OrmDictionaryT(of T)() As System.Collections.Generic.IDictionary(Of Integer, T)
-
-        Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, ByVal schema As ObjectMappingEngine) As System.Collections.IDictionary
-            Dim k As Object = t
-            If schema IsNot Nothing Then
-                k = schema.GetEntityTypeKey(filterInfo, t)
-            End If
-
-            Dim dic As IDictionary = CType(_rootObjectsDictionary(k), IDictionary)
-            If dic Is Nothing Then
-                Using SyncRoot
-                    dic = CType(_rootObjectsDictionary(k), IDictionary)
-                    If dic Is Nothing Then
-                        dic = CreateDictionary4ObjectInstances(t)
-                        _rootObjectsDictionary(k) = dic
-                    End If
-                End Using
-            End If
-            Return dic
-        End Function
-
-        Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, _
-            ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase) As System.Collections.IDictionary
-            Dim k As Object = t
-            If schema IsNot Nothing Then
-                k = schema.GetEntityTypeKey(filterInfo, t, oschema)
-            End If
-
-            Dim dic As IDictionary = CType(_rootObjectsDictionary(k), IDictionary)
-            If dic Is Nothing Then
-                Using SyncRoot
-                    dic = CType(_rootObjectsDictionary(k), IDictionary)
-                    If dic Is Nothing Then
-                        dic = CreateDictionary4ObjectInstances(t)
-                        _rootObjectsDictionary(k) = dic
-                    End If
-                End Using
-            End If
-            Return dic
-        End Function
-
-        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of Object, T)
-            Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Object, T))
-        End Function
-
-        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
-            Return CType(GetOrmDictionary(filterInfo, GetType(T), schema, oschema), IDictionary(Of Object, T))
-        End Function
 
         Public Sub New()
             MyBase.New()
@@ -1289,19 +1245,6 @@ l1:
             _md = cacheListDelegate
         End Sub
 
-        Protected Overridable Function CreateDictionary4ObjectInstances(ByVal t As Type) As IDictionary
-            Dim gt As Type = GetType(Collections.SynchronizedDictionary(Of ))
-            gt = gt.MakeGenericType(New Type() {t})
-            Return CType(gt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IDictionary)
-        End Function
-
-        Public Function GetAllKeys() As System.Collections.ArrayList Implements IExploreCache.GetAllKeys
-            Return New ArrayList(_rootObjectsDictionary.Keys)
-        End Function
-
-        Public Function GetDictionary_(ByVal key As Object) As System.Collections.IDictionary Implements IExploreCache.GetDictionary
-            Return CType(_rootObjectsDictionary(key), System.Collections.IDictionary)
-        End Function
     End Class
 
     Public MustInherit Class WebCache

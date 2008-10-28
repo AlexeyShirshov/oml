@@ -23,7 +23,7 @@ Public Class Entity
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -201,7 +201,7 @@ Public Class Entity2
 
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -305,7 +305,7 @@ Public Class Entity4
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 
@@ -518,7 +518,7 @@ Public Class Entity5
         MyBase.New()
     End Sub
 
-    Public Sub New(ByVal id As Integer, ByVal cache As ReadonlyCache, ByVal schema As Worm.ObjectMappingEngine)
+    Public Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As Worm.ObjectMappingEngine)
         MyBase.New(id, cache, schema)
     End Sub
 

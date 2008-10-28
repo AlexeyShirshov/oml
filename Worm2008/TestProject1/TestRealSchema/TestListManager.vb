@@ -9,7 +9,7 @@ Imports Worm.Orm
     Public Sub TestAddWithSort()
         Dim schema As SQLGenerator = New SQLGenerator("1")
 
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(schema)
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(schema)
             Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
 
             Assert.AreEqual(2, c.Count)
@@ -58,7 +58,7 @@ Imports Worm.Orm
     Public Sub TestDelete()
         Dim schema As SQLGenerator = New SQLGenerator("1")
 
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(schema)
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(schema)
             Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(New Criteria.Ctor(GetType(Table1)).Field("EnumStr").Eq(Enum1.sec), Sorting.Field("Enum").Asc, True)
 
             Assert.AreEqual(2, c.Count)

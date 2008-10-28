@@ -52,7 +52,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestFilter()
         Dim m As New TestManagerRS
-        Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.AutoTypeField("ID").GreaterThan(2)
@@ -77,7 +77,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestFilterUpdate()
         Dim m As New TestManagerRS
-        Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
@@ -103,7 +103,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestTableFilterUpdate()
         Dim m As New TestManagerRS
-        Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.Column(mgr.MappingEngine.GetTables(GetType(Table1))(0), "enum_str").Eq(Enum1.sec.ToString)
@@ -129,7 +129,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestJoin()
         Dim m As New TestManagerRS
-        Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table1))
             q.Filter = Ctor.Field(GetType(Table2), "Money").Eq(1)
@@ -156,7 +156,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestUpdate()
         Dim m As New TestManagerRS
-        Using mgr As OrmReadOnlyDBManager = m.CreateManager(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table2))
             q.Filter = Ctor.AutoTypeField("Money").GreaterThan(1)
@@ -179,7 +179,7 @@ Imports Worm.Database.Criteria.Joins
     End Sub
 
     <TestMethod()> Public Sub TestCorrelatedSubqueryCache()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
 
             Dim tt1 As Type = GetType(Table1)
@@ -305,19 +305,19 @@ Imports Worm.Database.Criteria.Joins
                     en4.Title = "xxx"
                     e.M2MNew.Add(en4)
 
-                    Assert.AreEqual(4, q.ToEntityList(Of Entity4)(mgr))
+                    Assert.AreEqual(4, q.ToEntityList(Of Entity4)(mgr).Count)
                     Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
-                    Assert.AreEqual(1, q2.ToEntityList(Of Entity4)(mgr))
+                    Assert.AreEqual(1, q2.ToEntityList(Of Entity4)(mgr).Count)
                     Assert.IsTrue(q2.LastExecitionResult.CacheHit)
 
                     s.Commit()
                 End Using
 
-                Assert.AreEqual(5, q.ToEntityList(Of Entity4)(mgr))
+                Assert.AreEqual(5, q.ToEntityList(Of Entity4)(mgr).Count)
                 Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-                Assert.AreEqual(1, q2.ToEntityList(Of Entity4)(mgr))
+                Assert.AreEqual(1, q2.ToEntityList(Of Entity4)(mgr).Count)
                 Assert.IsFalse(q2.LastExecitionResult.CacheHit)
             Finally
                 mgr.Rollback()

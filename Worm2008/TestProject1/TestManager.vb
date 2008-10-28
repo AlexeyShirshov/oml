@@ -20,14 +20,14 @@ Imports Worm.Orm.Meta
     End Function
 
     Public Shared Function CreateManager(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
-        Return CreateManager(New OrmCache, schema)
+        Return CreateManager(New ReadonlyCache, schema)
     End Function
 
     Public Class CustomMgr
         Inherits OrmReadOnlyDBManager
         Implements Worm.ICreateManager
 
-        Public Sub New(ByVal cache As OrmCache, ByVal schema As SQLGenerator, ByVal connectionString As String)
+        Public Sub New(ByVal cache As ReadonlyCache, ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, schema, connectionString)
         End Sub
 
@@ -37,7 +37,7 @@ Imports Worm.Orm.Meta
 
     End Class
 
-    Public Shared Function CreateManager(ByVal cache As OrmCache, ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
+    Public Shared Function CreateManager(ByVal cache As ReadonlyCache, ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
         Return New CustomMgr(cache, schema, "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
@@ -425,7 +425,7 @@ Imports Worm.Orm.Meta
 
     <TestMethod()> _
     Public Sub TestM2MAdd3()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Entity = mgr.Find(Of Entity)(2)
 
             Dim c As ICollection(Of Entity4) = e.M2M.Find(Of Entity4)(Nothing, Sorting.Field("Title").Asc, True)

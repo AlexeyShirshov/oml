@@ -214,7 +214,7 @@ Namespace Query
         End Property
 
 
-        Protected ReadOnly Property Cache() As Cache.ReadonlyCache
+        Protected ReadOnly Property Cache() As Cache.CacheBase
             Get
                 Return _mgr.Cache
             End Get
@@ -248,7 +248,7 @@ Namespace Query
         End Property
 
         Protected Function ValidateFromCache() As Boolean
-            Dim cache As Cache.OrmCache = CType(Mgr.Cache, Cache.OrmCache)
+            Dim cache As Cache.OrmCache = TryCast(Mgr.Cache, Cache.OrmCache)
             If cache IsNot Nothing AndAlso cache.ValidateBehavior = Worm.Cache.ValidateBehavior.Deferred Then
                 Dim l As New List(Of Type)
 

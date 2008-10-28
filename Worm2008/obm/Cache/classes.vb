@@ -196,10 +196,10 @@ Namespace Cache
     End Class
 
     Module qd
-        Public Function QueryDependentTypes(ByVal o As Object) As IDependentTypes
+        Public Function QueryDependentTypes(ByVal mpe As ObjectMappingEngine, ByVal o As Object) As IDependentTypes
             Dim qd As IQueryDependentTypes = TryCast(o, IQueryDependentTypes)
             If qd IsNot Nothing Then
-                Return TryCast(qd, IDependentTypes)
+                Return qd.Get(mpe)
             End If
 
             Return New EmptyDependentTypes

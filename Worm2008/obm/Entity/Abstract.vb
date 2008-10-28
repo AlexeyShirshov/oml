@@ -23,7 +23,7 @@ Namespace Orm
         Inherits IEntity
         Sub BeginLoading()
         Sub EndLoading()
-        Sub Init(ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Sub Init(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
         Function GetMgr() As IGetManager
         ReadOnly Property ObjName() As String
         Function GetOldState() As ObjectState
@@ -49,7 +49,7 @@ Namespace Orm
 
     Public Interface _ICachedEntity
         Inherits ICachedEntity
-        Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
         Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
         Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
@@ -69,7 +69,7 @@ Namespace Orm
         ReadOnly Property OriginalCopy() As ICachedEntity
         Sub CreateCopyForSaveNewEntry(ByVal pk() As PKDesc)
         Sub Load()
-        Sub RemoveFromCache(ByVal cache As ReadonlyCache)
+        Sub RemoveFromCache(ByVal cache As CacheBase)
         Sub UpdateCache()
         Function GetPKValues() As PKDesc()
         Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean
@@ -122,7 +122,7 @@ Namespace Orm
 
     Public Interface IOrmBase
         Inherits _ICachedEntity, IM2M
-        Overloads Sub Init(ByVal id As Object, ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
         Property Identifier() As Object
         Function GetOldName(ByVal id As Object) As String
         Function GetName() As String

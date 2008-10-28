@@ -675,11 +675,11 @@ Namespace Orm
         '    ObjectState = Orm.ObjectState.NotLoaded
         'End Sub
 
-        Protected Overrides Sub Init(ByVal pk() As PKDesc, ByVal cache As Cache.ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Protected Overrides Sub Init(ByVal pk() As PKDesc, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
             Throw New NotSupportedException
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _IOrmBase.Init
+        Protected Overridable Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _IOrmBase.Init
             MyBase._Init(cache, schema, mgrIdentityString)
             Identifier = id
             PKLoaded(1)
@@ -2262,14 +2262,14 @@ Namespace Orm
 
         End Sub
 
-        Protected Sub New(ByVal id As Integer, ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine)
+        Protected Sub New(ByVal id As Integer, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
             MyBase.New()
             MyBase.Init(id, cache, schema, Nothing)
             'SetObjectStateClear(Orm.ObjectState.Created)
             'Throw New NotSupportedException
         End Sub
 
-        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Protected Overrides Sub Init(ByVal id As Object, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
             MyBase.Init(id, cache, schema, mgrIdentityString)
         End Sub
 
@@ -2390,9 +2390,9 @@ Namespace Orm
             End If
         End Sub
 
-		'Public Overridable Overloads Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
-		'    MyBase.SetValue(pi, c, Nothing, value)
-		'End Sub
+        'Public Overridable Overloads Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal value As Object)
+        '    MyBase.SetValue(pi, c, Nothing, value)
+        'End Sub
 
         Public Overridable Overloads Sub CreateObject(ByVal field As String, ByVal value As Object) Implements IFactory.CreateObject
 
