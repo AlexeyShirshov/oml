@@ -14,7 +14,7 @@ Namespace Cache
         Deferred
     End Enum
 
-    Public MustInherit Class ReadonlyCache
+    Public MustInherit Class CacheBase
 
         Public ReadOnly DateTimeCreated As Date
 
@@ -477,5 +477,114 @@ Namespace Cache
             End Using
         End Sub
 
+    End Class
+
+    Public Class ReadonlyCache
+        Inherits CacheBase
+        Implements IExploreCache
+
+        Private _rootObjectsDictionary As IDictionary = Hashtable.Synchronized(New Hashtable)
+
+        Public Overloads Overrides Function CreateResultsetsDictionary() As System.Collections.IDictionary
+            Return Hashtable.Synchronized(New Hashtable)
+        End Function
+
+        Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, ByVal schema As ObjectMappingEngine) As System.Collections.IDictionary
+            Dim k As Object = t
+            If schema IsNot Nothing Then
+                k = schema.GetEntityTypeKey(filterInfo, t)
+            End If
+
+            Dim dic As IDictionary = CType(_rootObjectsDictionary(k), IDictionary)
+            If dic Is Nothing Then
+                Using SyncRoot
+                    dic = CType(_rootObjectsDictionary(k), IDictionary)
+                    If dic Is Nothing Then
+                        dic = CreateDictionary4ObjectInstances(t)
+                        _rootObjectsDictionary(k) = dic
+                    End If
+                End Using
+            End If
+            Return dic
+        End Function
+
+        Public Overrides Function GetOrmDictionary(ByVal filterInfo As Object, ByVal t As System.Type, _
+            ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase) As System.Collections.IDictionary
+            Dim k As Object = t
+            If schema IsNot Nothing Then
+                k = schema.GetEntityTypeKey(filterInfo, t, oschema)
+            End If
+
+            Dim dic As IDictionary = CType(_rootObjectsDictionary(k), IDictionary)
+            If dic Is Nothing Then
+                Using SyncRoot
+                    dic = CType(_rootObjectsDictionary(k), IDictionary)
+                    If dic Is Nothing Then
+                        dic = CreateDictionary4ObjectInstances(t)
+                        _rootObjectsDictionary(k) = dic
+                    End If
+                End Using
+            End If
+            Return dic
+        End Function
+
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As System.Collections.Generic.IDictionary(Of Object, T)
+            Return CType(GetOrmDictionary(filterInfo, GetType(T), schema), IDictionary(Of Object, T))
+        End Function
+
+        Public Overrides Function GetOrmDictionary(Of T)(ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase) As System.Collections.Generic.IDictionary(Of Object, T)
+            Return CType(GetOrmDictionary(filterInfo, GetType(T), schema, oschema), IDictionary(Of Object, T))
+        End Function
+
+        Protected Overridable Function CreateDictionary4ObjectInstances(ByVal t As Type) As IDictionary
+            Dim gt As Type = GetType(Collections.SynchronizedDictionary(Of ))
+            gt = gt.MakeGenericType(New Type() {t})
+            Return CType(gt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, Nothing), IDictionary)
+        End Function
+
+        Public Function GetAllKeys() As System.Collections.ArrayList Implements IExploreCache.GetAllKeys
+            Return New ArrayList(_rootObjectsDictionary.Keys)
+        End Function
+
+        Public Function GetDictionary_(ByVal key As Object) As System.Collections.IDictionary Implements IExploreCache.GetDictionary
+            Return CType(_rootObjectsDictionary(key), System.Collections.IDictionary)
+        End Function
+
+        Public Overrides Sub Reset()
+            _rootObjectsDictionary = Hashtable.Synchronized(New Hashtable)
+            MyBase.Reset()
+        End Sub
+    End Class
+
+    Public MustInherit Class ReadonlyWebCache
+        Inherits ReadonlyCache
+
+        Protected Overrides Function CreateDictionary4ObjectInstances(ByVal t As System.Type) As System.Collections.IDictionary
+            Dim pol As DictionatyCachePolicy = GetPolicy(t)
+            Dim args() As Object = Nothing
+            Dim dt As Type = Nothing
+            If pol Is Nothing Then
+                dt = GetType(Collections.SynchronizedDictionary(Of ))
+            Else
+                dt = GetType(OrmDictionary(Of ))
+                args = GetArgs(t, pol)
+            End If
+            dt = dt.MakeGenericType(New Type() {t})
+            Return CType(dt.InvokeMember(Nothing, Reflection.BindingFlags.CreateInstance, Nothing, Nothing, _
+                args), System.Collections.IDictionary)
+        End Function
+
+        Protected Function GetArgs(ByVal t As Type, ByVal pol As DictionatyCachePolicy) As Object()
+            Return New Object() { _
+                Me, pol.AbsoluteExpiration, pol.SlidingExpiration, _
+                pol.Priority, pol.Dependency _
+            }
+        End Function
+
+        Protected MustOverride Function GetPolicy(ByVal t As Type) As DictionatyCachePolicy
+
+        Protected Overrides Function CreateListConverter() As IListObjectConverter
+            Return New ListConverter
+        End Function
     End Class
 End Namespace

@@ -212,7 +212,7 @@ Namespace Orm
             End Get
         End Property
 
-        Protected ReadOnly Property OrmCache() As ReadonlyCache
+        Protected ReadOnly Property OrmCache() As CacheBase
             Get
                 Using mc As IGetManager = GetMgr()
                     If mc IsNot Nothing Then
@@ -315,7 +315,7 @@ Namespace Orm
             pi.SetValue(Me, value, Nothing)
         End Sub
 
-        Protected Overridable Sub Init(ByVal cache As Cache.ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _IEntity.Init
+        Protected Overridable Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _IEntity.Init
             _mgrStr = mgrIdentityString
 
             If cache IsNot Nothing Then cache.RegisterCreation(Me)

@@ -351,7 +351,7 @@ Namespace Orm
 
         Protected MustOverride Function GetCacheKey() As Integer
 
-        Protected Overrides Sub Init(ByVal cache As Cache.ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Protected Overrides Sub Init(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
             Throw New NotSupportedException
         End Sub
 
@@ -421,7 +421,7 @@ Namespace Orm
             End If
         End Function
 
-        Public Overridable Sub RemoveFromCache(ByVal cache As ReadonlyCache) Implements ICachedEntity.RemoveFromCache
+        Public Overridable Sub RemoveFromCache(ByVal cache As CacheBase) Implements ICachedEntity.RemoveFromCache
 
         End Sub
 
@@ -675,7 +675,7 @@ Namespace Orm
             End If
         End Sub
 
-        Protected Sub _Init(ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Protected Sub _Init(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
             MyBase.Init(cache, schema, mgrIdentityString)
             If schema IsNot Nothing Then
                 Dim arr As Generic.List(Of ColumnAttribute) = schema.GetSortedFieldList(Me.GetType)
@@ -695,7 +695,7 @@ Namespace Orm
             End Using
         End Sub
 
-        Protected Overridable Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As ReadonlyCache, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _ICachedEntity.Init
+        Protected Overridable Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _ICachedEntity.Init
             _Init(cache, schema, mgrIdentityString)
             SetPK(pk)
             PKLoaded(pk.Length)
@@ -925,7 +925,7 @@ l1:
                 If pk_count > 0 Then
                     PKLoaded(pk_count)
                     Using mc As IGetManager = GetMgr()
-                        Dim c As OrmCache = CType(mc.Manager.Cache, OrmCache)
+                        Dim c As OrmCache = TryCast(mc.Manager.Cache, OrmCache)
                         If c IsNot Nothing AndAlso c.IsDeleted(Me) Then
                             Return
                         End If
@@ -1457,7 +1457,7 @@ l1:
                 Next
             End If
             Using mc As IGetManager = GetMgr()
-                Dim c As OrmCache = CType(mc.Manager.Cache, OrmCache)
+                Dim c As OrmCache = TryCast(mc.Manager.Cache, OrmCache)
                 If c IsNot Nothing Then
                     c.AddUpdatedFields(Me, l)
                 End If

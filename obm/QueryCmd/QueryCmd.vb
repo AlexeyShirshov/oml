@@ -551,7 +551,8 @@ Namespace Query
 
         Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of OrmJoin)), _
             ByVal fs() As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior, _
-            ByVal sl As List(Of List(Of SelectExpression)), ByVal realTypeKey As String) As String
+            ByVal sl As List(Of List(Of SelectExpression)), ByVal realTypeKey As String, _
+            ByVal mpe As ObjectMappingEngine) As String
             Dim key As New StringBuilder
 
             Dim i As Integer = 0
@@ -565,7 +566,7 @@ Namespace Query
                     f = fs(i)
                 End If
 
-                If Not q.GetStaticKey(key, js(i), f, If(q._realType Is Nothing, realType, q._realType), cb, sl(i)) Then
+                If Not q.GetStaticKey(key, js(i), f, If(q._realType Is Nothing, realType, q._realType), cb, sl(i), mpe) Then
                     Return Nothing
                 End If
                 i += 1
@@ -579,7 +580,7 @@ Namespace Query
 
         Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, ByVal j As IEnumerable(Of OrmJoin), _
             ByVal f As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior, _
-            ByVal sl As List(Of SelectExpression)) As Boolean
+            ByVal sl As List(Of SelectExpression), ByVal mpe As ObjectMappingEngine) As Boolean
             Dim sb2 As New StringBuilder
 
             If f IsNot Nothing Then
@@ -591,7 +592,7 @@ Namespace Query
                             sb2.Append(f.ToStaticString).Append("$")
                         Else
                             For Each fl As IFilter In f.GetAllFilters
-                                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(fl)
+                                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, fl)
                                 If Not Cache.IsCalculated(dp) Then
                                     Throw New ApplicationException
                                 End If
@@ -602,7 +603,7 @@ Namespace Query
                             sb2.Append(f.ToStaticString).Append("$")
                         Else
                             For Each fl As IFilter In f.GetAllFilters
-                                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(fl)
+                                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, fl)
                                 If Not Cache.IsCalculated(dp) Then
                                     Return False
                                 End If
@@ -657,7 +658,7 @@ Namespace Query
 
             If sl IsNot Nothing Then
                 For Each c As SelectExpression In sl
-                    If Not GetStaticKeyFromProp(sb, cb, c) Then
+                    If Not GetStaticKeyFromProp(sb, cb, c, mpe) Then
                         Return False
                     End If
                 Next
@@ -667,7 +668,7 @@ Namespace Query
             If _order IsNot Nothing Then
                 If CacheSort OrElse _top IsNot Nothing Then
                     For Each n As Sort In New Sort.Iterator(_order)
-                        If Not GetStaticKeyFromProp(sb, cb, n) Then
+                        If Not GetStaticKeyFromProp(sb, cb, n, mpe) Then
                             Return False
                         End If
                         sb.Append(n.ToString)
@@ -679,9 +680,9 @@ Namespace Query
             Return True
         End Function
 
-        Private Shared Function GetStaticKeyFromProp(ByVal sb As StringBuilder, ByVal cb As Cache.CacheListBehavior, ByVal c As SelectExpression) As Boolean
+        Private Shared Function GetStaticKeyFromProp(ByVal sb As StringBuilder, ByVal cb As Cache.CacheListBehavior, ByVal c As SelectExpression, ByVal mpe As ObjectMappingEngine) As Boolean
             If c.Type Is Nothing Then
-                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(c)
+                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, c)
                 If Not Cache.IsCalculated(dp) Then
                     Select Case cb
                         Case Cache.CacheListBehavior.CacheAll
@@ -761,7 +762,7 @@ Namespace Query
             If _fields IsNot Nothing Then
                 l = New List(Of SelectExpression)(_fields)
             End If
-            GetStaticKey(sb, _joins, _filter.Filter, _realType, Cache.CacheListBehavior.CacheAll, l)
+            GetStaticKey(sb, _joins, _filter.Filter, _realType, Cache.CacheListBehavior.CacheAll, l, Nothing)
             Return sb.ToString
         End Function
 
@@ -1476,7 +1477,7 @@ Namespace Query
 
             If _filter IsNot Nothing AndAlso TryCast(_filter, IEntityFilter) Is Nothing Then
                 For Each f As IFilter In _filter.Filter.GetAllFilters
-                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(f)
+                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
                     If Cache.IsCalculated(fdp) Then
                         If SelectedType IsNot Nothing Then
                             dp.AddBoth(SelectedType)
@@ -1490,7 +1491,7 @@ Namespace Query
 
             If _order IsNot Nothing Then
                 For Each s As Sort In New Sort.Iterator(_order)
-                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(s)
+                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, s)
                     If Cache.IsCalculated(fdp) Then
                         If SelectedType IsNot Nothing Then
                             dp.AddUpdated(SelectedType)
@@ -1504,7 +1505,7 @@ Namespace Query
 
             If _fields IsNot Nothing Then
                 For Each f As SelectExpression In _fields
-                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(f)
+                    Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
                     If Cache.IsCalculated(fdp) Then
                         dp.Merge(fdp)
                         'Else

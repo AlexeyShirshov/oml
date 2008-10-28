@@ -908,7 +908,7 @@ Namespace Database
 
                 If _f IsNot Nothing AndAlso TryCast(_f, IEntityFilter) Is Nothing Then
                     For Each f As IFilter In _f.Filter.GetAllFilters
-                        Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(f)
+                        Dim fdp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, f)
                         If Cache.IsCalculated(fdp) Then
                             dp.Merge(fdp)
                             'Else

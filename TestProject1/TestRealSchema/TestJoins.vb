@@ -133,7 +133,7 @@ Public Class TestJoinsRS
     <TestMethod()> _
     Public Sub TestJoinUpdateCache()
         Dim tm As New TestManagerRS
-        Using mgr As OrmReadOnlyDBManager = tm.CreateManager(tm.GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = tm.CreateWriteManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
             Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first"), Nothing, False)
             Assert.AreEqual(2, c.Count)
@@ -159,7 +159,7 @@ Public Class TestJoinsRS
     <TestMethod()> _
     Public Sub TestJoinUpdateCache2()
         Dim tm As New TestManagerRS
-        Using mgr As OrmReadOnlyDBManager = tm.CreateManager(tm.GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = tm.CreateWriteManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
             Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first"), Nothing, False)
             Assert.AreEqual(2, c.Count)
@@ -187,7 +187,7 @@ Public Class TestJoinsRS
     <TestMethod()> _
     Public Sub TestJoinUpdateCache3()
         Dim tm As New TestManagerRS
-        Using mgr As OrmReadOnlyDBManager = tm.CreateManager(tm.GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = tm.CreateWriteManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
             Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first"), Nothing, False)
             Assert.AreEqual(2, c.Count)

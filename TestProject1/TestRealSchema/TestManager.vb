@@ -27,27 +27,52 @@ Public Class TestManagerRS
         Return s
     End Function
 
-    Private _cache As OrmCache
-    Protected Function GetCache() As OrmCache
+    Private _cache As CacheBase
+    Protected Function GetCache() As CacheBase
         If _c Then
             If _cache Is Nothing Then
-                _cache = New OrmCache
+                _cache = New ReadonlyCache
             End If
             Return _cache
+        Else
+            Return New ReadonlyCache
+        End If
+    End Function
+
+    Private _rwcache As OrmCache
+    Protected Function GetRWCache() As OrmCache
+        If _c Then
+            If _rwcache Is Nothing Then
+                _rwcache = New OrmCache
+            End If
+            Return _rwcache
         Else
             Return New OrmCache
         End If
     End Function
 
     Public Shared Function CreateManagerSharedFullText(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
-        Return New OrmDBManager(New OrmCache, schema, My.Settings.FullTextEnabledConn)
+        Return New OrmReadOnlyDBManager(New ReadonlyCache, schema, My.Settings.FullTextEnabledConn)
     End Function
 
     Public Shared Function CreateManagerShared(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
-        Return CreateManagerShared(schema, New OrmCache)
+        Return CreateManagerShared(schema, New ReadonlyCache)
     End Function
 
-    Public Shared Function CreateManagerShared(ByVal schema As SQLGenerator, ByVal cache As OrmCache) As OrmReadOnlyDBManager
+    Public Shared Function CreateWriteManagerShared(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
+        Return CreateWriteManagerShared(schema, New OrmCache)
+    End Function
+
+    Public Shared Function CreateManagerShared(ByVal schema As SQLGenerator, ByVal cache As ReadonlyCache) As OrmReadOnlyDBManager
+#If UseUserInstance Then
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
+        Return New OrmReadOnlyDBManager(cache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+#Else
+        Return New OrmReadOnlyDBManager(cache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+#End If
+    End Function
+
+    Public Shared Function CreateWriteManagerShared(ByVal schema As SQLGenerator, ByVal cache As OrmCache) As OrmDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
         Return New OrmDBManager(cache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
@@ -63,9 +88,20 @@ Public Class TestManagerRS
     Public Function CreateManager(ByVal schema As SQLGenerator) As OrmReadOnlyDBManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
-        Dim mgr As New OrmDBManager(GetCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+        Dim mgr As New OrmReadOnlyDBManager(GetCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
 #Else
-        Dim mgr As New OrmDBManager(getCache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+        Dim mgr As New OrmReadOnlyDBManager(getCache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
+#End If
+        mgr.NewObjectManager = Me
+        Return mgr
+    End Function
+
+    Public Function CreateWriteManager(ByVal schema As SQLGenerator) As OrmDBManager
+#If UseUserInstance Then
+        Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\wormtest.mdf"))
+        Dim mgr As New OrmDBManager(GetRWCache, schema, "Data Source=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
+#Else
+        Dim mgr As New OrmDBManager(getrwCache, schema, "Server=.\sqlexpress;Integrated security=true;Initial catalog=wormtest")
 #End If
         mgr.NewObjectManager = Me
         Return mgr
@@ -93,7 +129,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestSave()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
 
             t2.Tbl = mgr.Find(Of Table1)(2)
@@ -110,7 +146,7 @@ Public Class TestManagerRS
 
     <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
     Public Sub TestSaveConcurrency()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t As Table3 = mgr.Find(Of Table3)(1)
             Assert.IsNotNull(t)
             t.Code = t.Code + CByte(10)
@@ -121,7 +157,7 @@ Public Class TestManagerRS
             Dim t2 As Table3 = Nothing
             Dim prev As Byte = 0
             Try
-                Using mgr2 As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+                Using mgr2 As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
                     t2 = mgr2.Find(Of Table3)(1)
                     prev = t2.Code
                     t2.Code = t.Code + CByte(10)
@@ -130,7 +166,7 @@ Public Class TestManagerRS
 
                 mgr.SaveChanges(t, True)
             Finally
-                Using mgr2 As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+                Using mgr2 As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
                     t2.Code = prev
                     mgr2.SaveChanges(t2, True)
                 End Using
@@ -140,7 +176,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestValidateCache()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
             Dim tt As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(New Table1(1, mgr.Cache, mgr.MappingEngine)), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
             Assert.AreEqual(2, tt.Count)
@@ -162,7 +198,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestValidateCache2()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             'Dim t1 As Table1 = New Table1(1, mgr.Cache, mgr.ObjectSchema)
             Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrCreate(Of Table1)(1)
 
@@ -187,7 +223,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestValidateCache3()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t1 As Table1 = New Table1(1, mgr.Cache, mgr.MappingEngine)
             Dim tt As IList(Of Table2) = CType(mgr.Find(Of Table2)(New Criteria.Ctor(GetType(Table2)).Field("Table1").Eq(t1), Nothing, WithLoad), Global.System.Collections.Generic.IList(Of Global.TestProject1.Table2))
             Assert.AreEqual(2, tt.Count)
@@ -219,7 +255,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestXmlField()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t As Table3 = mgr.Find(Of Table3)(2)
 
             Assert.AreEqual("root", t.Xml.DocumentElement.Name)
@@ -233,7 +269,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestAddBlob()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t2 As New Table2(-100, mgr.Cache, mgr.MappingEngine)
 
             mgr.BeginTransaction()
@@ -263,7 +299,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestAddWithPK()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t As New Table4(4, mgr.Cache, mgr.MappingEngine)
             Dim g As Guid = t.GUID
             mgr.BeginTransaction()
@@ -280,7 +316,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestAddWithPK2()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("2"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("2"))
             Dim t As New Table4(4, mgr.Cache, mgr.MappingEngine)
 
 
@@ -368,7 +404,7 @@ Public Class TestManagerRS
     Public Sub TestComplexM2M()
         Dim schema As SQLGenerator = GetSchema("1")
 
-        Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t3 As Table33 = mgr.Find(Of Table33)(1)
             Dim c As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
@@ -404,7 +440,7 @@ Public Class TestManagerRS
     Public Sub TestComplexM2M2()
         Dim schema As SQLGenerator = GetSchema("1")
 
-        Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t3 As Table33 = mgr.Find(Of Table33)(1)
             Dim c As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
@@ -438,7 +474,7 @@ Public Class TestManagerRS
     Public Sub TestComplexM2M3()
         Dim schema As SQLGenerator = GetSchema("1")
 
-        Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t3 As Table33 = mgr.Find(Of Table33)(2)
             Dim t As Type = schema.GetTypeByEntityName("Table3")
@@ -469,7 +505,7 @@ Public Class TestManagerRS
     Public Sub TestComplexM2M4()
         Dim schema As SQLGenerator = GetSchema("1")
 
-        Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t3 As Table33 = mgr.Find(Of Table33)(1)
             Dim c As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(Nothing, Nothing, WithLoad)
@@ -491,7 +527,7 @@ Public Class TestManagerRS
     Public Sub TestComplexM2M5()
         Dim schema As SQLGenerator = GetSchema("1")
 
-        Using mgr As OrmReadOnlyDBManager = CreateManager(schema)
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(schema)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t3 As Table33 = mgr.Find(Of Table33)(1)
             Dim c As ICollection(Of Table33) = t1.M2M.Find(Of Table33)(Nothing, Nothing, True)
@@ -618,7 +654,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestM2MFilterValidation()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim tt1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t As Type = mgr.MappingEngine.GetTypeByEntityName("Table3")
             'Dim con As New Orm.OrmCondition.OrmConditionConstructor
@@ -645,7 +681,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestM2MSorting()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim tt1 As Table1 = mgr.Find(Of Table1)(1)
             Dim t As Type = mgr.MappingEngine.GetTypeByEntityName("Table3")
             'Dim con As New Orm.OrmCondition.OrmConditionConstructor
@@ -701,7 +737,7 @@ Public Class TestManagerRS
 
     <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
     Public Sub TestMultipleDelete()
-        Using mgr As OrmDBManager = CType(CreateManager(GetSchema("1")), OrmDBManager)
+        Using mgr As OrmDBManager = CreateWriteManager(GetSchema("1"))
             Dim f As New Core.EntityFilter(GetType(Table3), "Code", New ScalarValue(1), Worm.Criteria.FilterOperation.LessEqualThan)
             mgr.BeginTransaction()
 
@@ -716,7 +752,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestDeleteNotLoaded()
-        Using mgr As OrmDBManager = CType(CreateManager(GetSchema("1")), OrmDBManager)
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
             Dim t As Table1 = mgr.GetOrmBaseFromCacheOrCreate(Of Table1)(1)
             Assert.AreEqual(ObjectState.NotLoaded, t.InternalProperties.ObjectState)
             t.Delete()
@@ -726,7 +762,7 @@ Public Class TestManagerRS
 
     <TestMethod(), ExpectedException(GetType(Data.SqlClient.SqlException))> _
     Public Sub TestSimpleObjects()
-        Using mgr As OrmDBManager = CType(CreateManager(GetSchema("1")), OrmDBManager)
+        Using mgr As OrmDBManager = CreateWriteManager(GetSchema("1"))
             Dim s1 As SimpleObj = mgr.Find(Of SimpleObj)(1)
 
             Assert.AreEqual("first", s1.Title)
@@ -743,7 +779,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestSimpleObjects2()
-        Using mgr As OrmDBManager = CType(CreateManager(GetSchema("1")), OrmDBManager)
+        Using mgr As OrmDBManager = CreateWriteManager(GetSchema("1"))
             Dim s1 As SimpleObj2 = mgr.Find(Of SimpleObj2)(2)
 
             Assert.AreEqual("second", s1.Title)
@@ -796,7 +832,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestCompositeDelete()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Composite = mgr.Find(Of Composite)(1)
             Assert.AreEqual(1, e.ID)
             Assert.AreEqual("привет", e.Message)
@@ -820,7 +856,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestCompositeUpdate()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As Composite = mgr.Find(Of Composite)(1)
             Assert.AreEqual(1, e.ID)
             Assert.AreEqual("привет", e.Message)
@@ -839,7 +875,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestCompositeInsert()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim e As New Composite(1, mgr.Cache, mgr.SQLGenerator)
             e.Message = "don"
             e.Message2 = "dionsd"
@@ -872,7 +908,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestFilter()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim c As ICollection(Of Table2) = mgr.Find(Of Table2)(Criteria.Ctor.AutoTypeField("Money").Eq(1), Nothing, False)
             Dim c2 As ICollection(Of Table2) = mgr.Find(Of Table2)(Criteria.Ctor.AutoTypeField("Money").Eq(2), Nothing, False)
 
@@ -993,7 +1029,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestInSubQuery()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(Criteria.Ctor.AutoTypeField("Table1").In( _
                 GetType(Table1)), Nothing, False)
 
@@ -1029,7 +1065,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestExistSubQuery()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim tt2 As Type = GetType(Table2)
 
             Dim t As ICollection(Of Table2) = mgr.Find(Of Table2)(New Criteria.Ctor(tt2).Field("Table1").Exists( _
@@ -1075,7 +1111,7 @@ Public Class TestManagerRS
 
     <TestMethod()> _
     Public Sub TestBetween()
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim c As ICollection(Of Table1) = mgr.Find(Of Table1)(Criteria.Ctor.AutoTypeField("Code").Between(2, 45), Sorting.Field("Code"), False)
 
             Assert.AreEqual(2, c.Count)
@@ -1131,7 +1167,7 @@ Public Class TestManagerRS
     Public Sub TestSaveNew()
         'OrmReadOnlyDBManager.StmtSource.Listeners.Add(New Diagnostics.DefaultTraceListener)
         OrmReadOnlyDBManager.StmtSource.Listeners(0).TraceOutputOptions = TraceOptions.None
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t1 As Table1 = New Table1(-345, mgr.Cache, mgr.MappingEngine)
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
             t2.Tbl = t1
@@ -1152,7 +1188,7 @@ Public Class TestManagerRS
     Public Sub TestSaveNewSmart()
         'OrmReadOnlyDBManager.StmtSource.Listeners.Add(New Diagnostics.DefaultTraceListener)
         OrmReadOnlyDBManager.StmtSource.Listeners(0).TraceOutputOptions = TraceOptions.None
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             Dim t1 As Table1 = New Table1(-345, mgr.Cache, mgr.MappingEngine)
             t1.CreatedAt = Now
             Dim t2 As Table2 = mgr.Find(Of Table2)(1)
@@ -1201,7 +1237,7 @@ Public Class TestManagerRS
 
         Assert.AreEqual(ObjectState.Created, t.InternalProperties.ObjectState)
 
-        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+        Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             mgr.BeginTransaction()
             Try
                 Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)

@@ -78,7 +78,7 @@ Namespace Cache
 
         Public ReadOnly Property Main() As IOrmBase
             Get
-                Return OrmManager.CurrentManager.GetOrmBaseFromCacheOrCreate(_mainId, _mainType)
+                Return OrmManager.CurrentManager.GetOrmBaseFromCacheOrCreate(_mainId, _mainType, False)
             End Get
         End Property
 
@@ -203,7 +203,7 @@ Namespace Cache
         End Sub
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManager, ByVal id As Object) As EditableListBase
-            Return CType(mgr.GetOrmBaseFromCacheOrCreate(id, SubType), _IOrmBase).GetRelation(MainType, Key)
+            Return CType(mgr.GetOrmBaseFromCacheOrCreate(id, SubType, False), _IOrmBase).GetRelation(MainType, Key)
         End Function
 
         Protected Overridable Function GetRevert(ByVal mgr As OrmManager) As List(Of EditableListBase)
@@ -352,11 +352,11 @@ Namespace Cache
 
         Friend Function PrepareSave(ByVal mgr As OrmManager) As EditableListBase
             Dim newl As EditableListBase = Nothing
-            Dim mo As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(_mainId, _mainType)
+            Dim mo As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(_mainId, _mainType, False)
             If Not mgr.IsNewObject(_mainType, mo.GetPKValues) Then
                 Dim ad As New List(Of Object)
                 For Each id As Object In _addedList
-                    Dim ao As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(id, _subType)
+                    Dim ao As _ICachedEntity = mgr.GetOrmBaseFromCacheOrCreate(id, _subType, False)
                     If mgr.IsNewObject(SubType, ao.GetPKValues) Then
                         If _new Is Nothing Then
                             _new = New List(Of Object)
@@ -471,7 +471,7 @@ Namespace Cache
                                         Exit Do
                                     End If
                                     Dim ex As IOrmBase = CType(col(i), OrmBase)
-                                    Dim ad As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(_addedList(j), _subType)
+                                    Dim ad As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(_addedList(j), _subType, False)
                                     If c.Compare(ex, ad) < 0 Then
                                         arr.Add(ex.Identifier)
                                         i += 1
@@ -552,7 +552,7 @@ Namespace Cache
                                 Exit Do
                             End If
                             Dim ex As IOrmBase = CType(col(i), IOrmBase)
-                            Dim ad As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(_addedList(j), _subType)
+                            Dim ad As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(_addedList(j), _subType, False)
                             If c.Compare(ex, ad) < 0 Then
                                 ml.Add(ex.Identifier)
                                 i += 1
@@ -609,7 +609,7 @@ Namespace Cache
                 If c Is Nothing Then
                     Return False
                 End If
-                Dim ad As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(id, _subType)
+                Dim ad As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(id, _subType, False)
                 Dim pos As Integer = col.BinarySearch(ad, c)
                 If pos < 0 Then
                     _mainList.Insert(Not pos, id)
@@ -631,7 +631,7 @@ Namespace Cache
                         c = sr.CreateSortComparer(_sort)
                     End If
                     If c IsNot Nothing Then
-                        Dim pos As Integer = col.BinarySearch(mgr.GetOrmBaseFromCacheOrCreate(id, _subType), c)
+                        Dim pos As Integer = col.BinarySearch(mgr.GetOrmBaseFromCacheOrCreate(id, _subType, False), c)
                         If pos < 0 Then
                             _addedList.Insert(Not pos, id)
                             Return True

@@ -13,7 +13,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP1()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
             Dim p As New P1Proc
             Dim l As List(Of Pair(Of Table1, Integer)) = p.GetResult(mgr)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -45,7 +45,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestP11()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
             Dim p As New P1Proc
             Dim l As List(Of Pair(Of Table1, Integer)) = p.GetResult(mgr)
             Dim t1 As Table1 = mgr.Find(Of Table1)(1)
@@ -107,7 +107,7 @@ Public Class TestProcs
 
     <TestMethod()> _
     Public Sub TestNonQuery_P4()
-        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
             Dim p As New P4Proc(1)
             Dim s As String = p.GetResult(mgr)
 

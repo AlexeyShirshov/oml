@@ -278,7 +278,7 @@ Partial Public Class OrmManager
             _fetchTime = mgr.Fecth
         End Sub
 
-        Friend Sub New(ByVal obj As IEnumerable, ByVal cache As ReadonlyCache)
+        Friend Sub New(ByVal obj As IEnumerable, ByVal cache As CacheBase)
             _obj = obj
             '_cache = cache
             If obj IsNot Nothing Then cache.RegisterCreationCacheItem(Me.GetType)
