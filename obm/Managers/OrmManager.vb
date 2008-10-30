@@ -560,7 +560,7 @@ Partial Public MustInherit Class OrmManager
                     Dim tt1 As Type = o.GetType
                     Dim key As String = GetM2MKey(tt1, type2load, direct)
                     If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                        key &= criteria.Filter(type2load).ToStaticString
+                        key &= criteria.Filter(type2load).GetStaticString(_schema)
                     End If
 
                     Dim dic As IDictionary = GetDic(_cache, key)
@@ -623,7 +623,7 @@ Partial Public MustInherit Class OrmManager
                         Dim tt1 As Type = o.GetType
                         Dim key As String = GetM2MKey(tt1, type2load, direct)
                         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                            key &= criteria.Filter(type2load).ToStaticString
+                            key &= criteria.Filter(type2load).GetStaticString(_schema)
                         End If
 
                         Dim dic As IDictionary = GetDic(_cache, key)
@@ -860,7 +860,7 @@ Partial Public MustInherit Class OrmManager
         Dim key As String = String.Empty
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(GetType(T)).ToStaticString
+            key &= criteria.Filter(GetType(T)).GetStaticString(_schema)
         End If
 
         If joins IsNot Nothing Then
@@ -1117,7 +1117,7 @@ l1:
     End Function
 
     Protected Function FindGetKey(ByVal filter As IFilter, ByVal t As Type) As String
-        Return filter.ToStaticString & GetStaticKey() & _schema.GetEntityKey(GetFilterInfo, t)
+        Return filter.GetStaticString(_schema) & GetStaticKey() & _schema.GetEntityKey(GetFilterInfo, t)
     End Function
 
     Public Function Find(Of T As {IOrmBase, New})(ByVal criteria As IGetFilter) As ReadOnlyList(Of T)
@@ -2161,7 +2161,7 @@ l1:
         Dim key As String = "distinct" & _schema.GetEntityKey(GetFilterInfo, GetType(T))
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(GetType(T)).ToStaticString
+            key &= criteria.Filter(GetType(T)).GetStaticString(_schema)
         End If
 
         If relation IsNot Nothing Then
@@ -2218,7 +2218,7 @@ l1:
 
         Dim key As String = GetM2MKey(tt1, tt2, direct)
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(tt2).ToStaticString
+            key &= criteria.Filter(tt2).GetStaticString(_schema)
         End If
 
         Dim dic As IDictionary = GetDic(_cache, key)
@@ -2258,7 +2258,7 @@ l1:
 
         Dim key As String = GetM2MKey(tt1, tt2, direct)
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(tt2).ToStaticString
+            key &= criteria.Filter(tt2).GetStaticString(_schema)
         End If
 
         Dim dic As IDictionary = GetDic(_cache, key)
@@ -3518,7 +3518,7 @@ l1:
 
     'Protected MustOverride Overloads Sub FindObjects(ByVal t As Type, ByVal WithLoad As Boolean, ByVal arr As System.Collections.ArrayList, ByVal sort As String, ByVal sort_type As SortType)
 
-    Protected Friend MustOverride Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
+    Public MustOverride Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
 
     Protected MustOverride Function InsertObject(ByVal obj As _ICachedEntity) As Boolean
 
@@ -3621,7 +3621,7 @@ l1:
         End If
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key = criteria.Filter(tt).ToStaticString & _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
+            key = criteria.Filter(tt).GetStaticString(_schema) & _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
         Else
             key = _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
         End If

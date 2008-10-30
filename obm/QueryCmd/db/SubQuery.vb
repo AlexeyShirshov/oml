@@ -23,7 +23,7 @@ Namespace Database.Criteria.Values
         End Sub
 
         Public Function _ToString() As String Implements Worm.Criteria.Values.IFilterValue._ToString
-            Return _q.ToString()
+            Return _q._ToString()
         End Function
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
@@ -51,8 +51,8 @@ Namespace Database.Criteria.Values
             Return sb.ToString
         End Function
 
-        Public Function GetStaticString() As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
-            Return _q.ToStaticString
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+            Return _q.ToStaticString(mpe)
         End Function
 
         Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get

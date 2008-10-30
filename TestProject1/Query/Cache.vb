@@ -101,6 +101,35 @@ Imports Worm.Database.Criteria.Joins
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestOrmFilterUpdate()
+        Dim m As New TestManagerRS
+        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
+
+            Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(3)
+            Assert.IsNotNull(t1)
+
+            Dim q As New QueryCmd(GetType(Table2))
+            q.Filter = Ctor.AutoTypeField("Money").Eq(t1)
+
+            Assert.AreEqual(0, q.ToEntityList(Of Table2)(mgr).Count)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                    t1.Delete()
+
+                    s.Commit()
+                End Using
+
+                Assert.AreEqual(0, q.ToEntityList(Of Table2)(mgr).Count)
+                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
     <TestMethod()> Public Sub TestTableFilterUpdate()
         Dim m As New TestManagerRS
         Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
@@ -198,8 +227,9 @@ Imports Worm.Database.Criteria.Joins
 
             mgr.BeginTransaction()
             Try
-                r(0).Tbl.Enum = CType(r(0).ID + 1, TestProject1.Enum1)
-                r(0).Tbl.SaveChanges(True)
+                Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(3)
+                t1.Enum = Enum1.first
+                t1.SaveChanges(True)
 
                 r = q.ToOrmList(Of Table2)(mgr)
                 Assert.AreEqual(0, r.Count)

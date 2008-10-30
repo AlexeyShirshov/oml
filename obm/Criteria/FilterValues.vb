@@ -5,12 +5,17 @@ Imports Worm.Orm
 
 Namespace Criteria.Values
 
+    Public Interface IQueryElement
+        Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String
+        Function _ToString() As String
+    End Interface
+
     Public Interface INonTemplateValue
-        Function GetStaticString() As String
+        Inherits IQueryElement
     End Interface
 
     Public Interface IFilterValue
-        Function _ToString() As String
+        Inherits IQueryElement
         Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String
@@ -53,6 +58,10 @@ Namespace Criteria.Values
                           ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, _
                           ByVal aliases As IList(Of String), ByVal filterInfo As Object) As String Implements IFilterValue.GetParam
             Return aliases(_num)
+        End Function
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+            Return "refval"
         End Function
     End Class
 
@@ -98,6 +107,10 @@ Namespace Criteria.Values
 
             Return String.Format(_f, values.ToArray)
         End Function
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+            Return "custval"
+        End Function
     End Class
 
     Public Class ComputedValue
@@ -121,6 +134,10 @@ Namespace Criteria.Values
 
         Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As Orm.Meta.ICreateParam, ByVal almgr As IPrepareTable, ByVal prepare As PrepareValueDelegate, ByVal aliases As System.Collections.Generic.IList(Of String), ByVal filterInfo As Object) As String Implements IFilterValue.GetParam
             Return [Alias]
+        End Function
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+            Return "compval"
         End Function
     End Class
 
@@ -206,6 +223,10 @@ Namespace Criteria.Values
 
                 Return [alias] & _p.Column
             End If
+        End Function
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+            Return _p.GetStaticString(mpe)
         End Function
     End Class
 
@@ -428,6 +449,10 @@ Namespace Criteria.Values
                 Return True
             End Get
         End Property
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+            Return "scalarval"
+        End Function
     End Class
 
     Public Class LiteralValue
@@ -454,6 +479,10 @@ Namespace Criteria.Values
                 Return True
             End Get
         End Property
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
+            Return "litval"
+        End Function
     End Class
 
     Public Class DBNullValue
@@ -821,7 +850,7 @@ Namespace Database
                     Next
                 End If
                 If _f IsNot Nothing Then
-                    r &= "$" & _f.ToString
+                    r &= "$" & _f._ToString
                 End If
                 If Not String.IsNullOrEmpty(_field) Then
                     r &= "$" & _field
@@ -863,7 +892,7 @@ Namespace Database
                 Return sb.ToString
             End Function
 
-            Public Overridable Function GetStaticString() As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
+            Public Overridable Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Worm.Criteria.Values.INonTemplateValue.GetStaticString
                 Dim r As String = Nothing
                 If _t IsNot Nothing Then
                     r = _t.ToString()
@@ -879,7 +908,7 @@ Namespace Database
                     Next
                 End If
                 If _f IsNot Nothing Then
-                    r &= "$" & _f.ToStaticString
+                    r &= "$" & _f.GetStaticString(mpe)
                 End If
                 If Not String.IsNullOrEmpty(_field) Then
                     r &= "$" & _field

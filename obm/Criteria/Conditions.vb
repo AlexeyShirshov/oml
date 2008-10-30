@@ -239,22 +239,22 @@ Namespace Criteria.Conditions
             Throw New NotSupportedException
         End Function
 
-        Private Function _ToString() As String Implements IFilter.ToString
+        Private Function _ToString() As String Implements IFilter._ToString
             Dim r As String = String.Empty
             If _right IsNot Nothing Then
-                r = _right.ToString()
+                r = _right._ToString()
             End If
 
-            Return _left.ToString() & Condition2String() & r
+            Return _left._ToString() & Condition2String() & r
         End Function
 
-        Public Function ToStaticString() As String Implements IFilter.ToStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IFilter.GetStaticString
             Dim r As String = String.Empty
             If _right IsNot Nothing Then
-                r = _right.ToStaticString()
+                r = _right.GetStaticString(mpe)
             End If
 
-            Return _left.ToStaticString() & Condition2String() & r
+            Return _left.GetStaticString(mpe) & Condition2String() & r
         End Function
 
         Public ReadOnly Property Filter() As Core.IFilter Implements Core.IGetFilter.Filter

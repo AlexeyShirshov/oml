@@ -272,6 +272,10 @@ Namespace Query
                     End If
                 Next
 
+                If _q.SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(_q.SelectedType) Then
+                    l.Add(_q.SelectedType)
+                End If
+
                 Dim f As IEntityFilter = Nothing
                 If _f IsNot Nothing AndAlso _f.Length > 0 Then
                     f = TryCast(_f(0), IEntityFilter)

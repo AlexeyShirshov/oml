@@ -424,7 +424,7 @@ namespace Worm.CodeGen.Core
                         ctr.Attributes = MemberAttributes.Public;
                         // параметры конструктора
                         ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(int), "id"));
-                        ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(ReadonlyCache), "cache"));
+                        ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(CacheBase), "cache"));
                         ctr.Parameters.Add(new CodeParameterDeclarationExpression(typeof(Worm.ObjectMappingEngine), "schema"));
                         // передача параметров базовому конструктору
                         ctr.BaseConstructorArgs.Add(new CodeVariableReferenceExpression("id"));

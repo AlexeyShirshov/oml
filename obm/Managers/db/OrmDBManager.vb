@@ -11,6 +11,8 @@ Namespace Database
     Public Class OrmDBManager
         Inherits OrmReadOnlyDBManager
 
+        Private _upd As New DBUpdater
+
         Public Sub New(ByVal cache As OrmCache, ByVal schema As SQLGenerator, ByVal connectionString As String)
             MyBase.New(cache, schema, connectionString)
         End Sub
@@ -25,253 +27,256 @@ Namespace Database
             End Get
         End Property
 
-        Protected Friend Overrides Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
-            Invariant()
+        Public Overrides Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
+            Return _upd.UpdateObject(Me, obj)
+            'Invariant()
 
-            If obj Is Nothing Then
-                Throw New ArgumentNullException("obj parameter cannot be nothing")
-            End If
+            'If obj Is Nothing Then
+            '    Throw New ArgumentNullException("obj parameter cannot be nothing")
+            'End If
 
-            Assert(obj.ObjectState = ObjectState.Modified, "Object " & obj.ObjName & " should be in Modified state")
-            'Dim t As Type = obj.GetType
+            'Assert(obj.ObjectState = ObjectState.Modified, "Object " & obj.ObjName & " should be in Modified state")
+            ''Dim t As Type = obj.GetType
 
-            Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
-            Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
-            Dim upd As IList(Of Worm.Criteria.Core.EntityFilterBase) = Nothing
-            Dim inv As Boolean
-            Using obj.GetSyncRoot()
-                Dim cmdtext As String = Nothing
-                Try
-                    cmdtext = SQLGenerator.Update(obj, GetFilterInfo, params, cols, upd)
-                Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
-                    Return False
-                End Try
-                If cmdtext.Length > 0 Then
-                    If SQLGenerator.SupportMultiline Then
-                        Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                            With cmd
-                                .CommandType = System.Data.CommandType.Text
-                                .CommandText = cmdtext
-                                For Each p As System.Data.Common.DbParameter In params
-                                    .Parameters.Add(p)
-                                Next
-                            End With
+            'Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
+            'Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
+            'Dim upd As IList(Of Worm.Criteria.Core.EntityFilterBase) = Nothing
+            'Dim inv As Boolean
+            'Using obj.GetSyncRoot()
+            '    Dim cmdtext As String = Nothing
+            '    Try
+            '        cmdtext = SQLGenerator.Update(obj, GetFilterInfo, params, cols, upd)
+            '    Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
+            '        Return False
+            '    End Try
+            '    If cmdtext.Length > 0 Then
+            '        If SQLGenerator.SupportMultiline Then
+            '            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+            '                With cmd
+            '                    .CommandType = System.Data.CommandType.Text
+            '                    .CommandText = cmdtext
+            '                    For Each p As System.Data.Common.DbParameter In params
+            '                        .Parameters.Add(p)
+            '                    Next
+            '                End With
 
-                            Dim b As ConnAction = TestConn(cmd)
-                            Try
-                                LoadSingleObject(cmd, cols, obj, False, False, False)
+            '                Dim b As ConnAction = TestConn(cmd)
+            '                Try
+            '                    LoadSingleObject(cmd, cols, obj, False, False, False)
 
-                                inv = True
-                            Finally
-                                CloseConn(b)
-                            End Try
+            '                    inv = True
+            '                Finally
+            '                    CloseConn(b)
+            '                End Try
 
-                        End Using
-                    Else
-                        Dim tran As System.Data.Common.DbTransaction = Transaction
-                        BeginTransaction()
-                        Try
-                            Dim prev_error As Boolean = False
-                            For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
-                                If stmt = String.Empty Then Continue For
-                                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                                    Dim sel As Boolean = stmt.IndexOf("select") >= 0
-                                    With cmd
-                                        .CommandType = System.Data.CommandType.Text
-                                        .CommandText = stmt
-                                        Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
-                                        For i As Integer = 0 To ExtractParamsCount(stmt) - 1
-                                            .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
-                                            p.RemoveAt(0)
-                                        Next
-                                    End With
+            '            End Using
+            '        Else
+            '            Dim tran As System.Data.Common.DbTransaction = Transaction
+            '            BeginTransaction()
+            '            Try
+            '                Dim prev_error As Boolean = False
+            '                For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
+            '                    If stmt = String.Empty Then Continue For
+            '                    Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+            '                        Dim sel As Boolean = stmt.IndexOf("select") >= 0
+            '                        With cmd
+            '                            .CommandType = System.Data.CommandType.Text
+            '                            .CommandText = stmt
+            '                            Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
+            '                            For i As Integer = 0 To ExtractParamsCount(stmt) - 1
+            '                                .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
+            '                                p.RemoveAt(0)
+            '                            Next
+            '                        End With
 
-                                    If stmt.StartsWith("{{error}}") Then
-                                        If prev_error Then
-                                            cmd.CommandText = stmt.Remove(0, 9).Trim
-                                        Else
-                                            Continue For
-                                        End If
-                                    ElseIf prev_error Then
-                                        Throw SQLGenerator.PrepareConcurrencyException(obj)
-                                    End If
+            '                        If stmt.StartsWith("{{error}}") Then
+            '                            If prev_error Then
+            '                                cmd.CommandText = stmt.Remove(0, 9).Trim
+            '                            Else
+            '                                Continue For
+            '                            End If
+            '                        ElseIf prev_error Then
+            '                            Throw SQLGenerator.PrepareConcurrencyException(obj)
+            '                        End If
 
-                                    prev_error = False
-                                    Dim b As ConnAction = TestConn(cmd)
-                                    Try
-                                        If sel Then
-                                            LoadSingleObject(cmd, cols, obj, False, False, False)
-                                        Else
-                                            Dim r As Integer = cmd.ExecuteNonQuery()
-                                            If r = 0 Then
-                                                prev_error = True
-                                                If _mcSwitch.TraceWarning Then
-                                                    WriteLine(cmd.CommandText & " affected 0 rows!")
-                                                End If
-                                                'Debug.WriteLine(Environment.StackTrace.ToString)
-                                            End If
-                                        End If
-                                    Finally
-                                        CloseConn(b)
-                                    End Try
-                                End Using
-                            Next
+            '                        prev_error = False
+            '                        Dim b As ConnAction = TestConn(cmd)
+            '                        Try
+            '                            If sel Then
+            '                                LoadSingleObject(cmd, cols, obj, False, False, False)
+            '                            Else
+            '                                Dim r As Integer = cmd.ExecuteNonQuery()
+            '                                If r = 0 Then
+            '                                    prev_error = True
+            '                                    If _mcSwitch.TraceWarning Then
+            '                                        WriteLine(cmd.CommandText & " affected 0 rows!")
+            '                                    End If
+            '                                    'Debug.WriteLine(Environment.StackTrace.ToString)
+            '                                End If
+            '                            End If
+            '                        Finally
+            '                            CloseConn(b)
+            '                        End Try
+            '                    End Using
+            '                Next
 
-                            inv = True
-                        Finally
-                            If tran Is Nothing Then
-                                Commit()
-                            End If
-                        End Try
-                    End If
-                End If
+            '                inv = True
+            '            Finally
+            '                If tran Is Nothing Then
+            '                    Commit()
+            '                End If
+            '            End Try
+            '        End If
+            '    End If
 
-                If inv Then
-                    obj.UpdateCtx.UpdatedFields = upd
-                    'Это было вне юзинга
-                    'InvalidateCache(obj, CType(upd, System.Collections.ICollection))
-                End If
-            End Using
-            Return True
+            '    If inv Then
+            '        obj.UpdateCtx.UpdatedFields = upd
+            '        'Это было вне юзинга
+            '        'InvalidateCache(obj, CType(upd, System.Collections.ICollection))
+            '    End If
+            'End Using
+            'Return True
         End Function
 
         Protected Overrides Function InsertObject(ByVal obj As _ICachedEntity) As Boolean
-            Invariant()
+            Return _upd.InsertObject(Me, obj)
+            'Invariant()
 
-            If obj Is Nothing Then
-                Throw New ArgumentNullException("obj parameter cannot be nothing")
-            End If
+            'If obj Is Nothing Then
+            '    Throw New ArgumentNullException("obj parameter cannot be nothing")
+            'End If
 
-            Assert(obj.ObjectState = ObjectState.Created, "Object " & obj.ObjName & " should be in Created state")
+            'Assert(obj.ObjectState = ObjectState.Created, "Object " & obj.ObjName & " should be in Created state")
 
-            Dim oldl As Boolean = obj.IsLoaded
-            Dim err As Boolean = True
-            Try
-                'obj.IsLoaded = True
+            'Dim oldl As Boolean = obj.IsLoaded
+            'Dim err As Boolean = True
+            'Try
+            '    'obj.IsLoaded = True
 
-                'Dim t As Type = obj.GetType
+            '    'Dim t As Type = obj.GetType
 
-                Dim params As ICollection(Of System.Data.Common.DbParameter) = Nothing
-                Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
-                Using obj.GetSyncRoot()
-                    Dim cmdtext As String = Nothing
-                    Try
-                        cmdtext = SQLGenerator.Insert(obj, GetFilterInfo, params, cols)
-                    Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
-                        Return False
-                    End Try
-                    If cmdtext.Length > 0 Then
-                        Dim tran As System.Data.IDbTransaction = Transaction
-                        BeginTransaction()
-                        Try
-                            If SQLGenerator.SupportMultiline Then
-                                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                                    With cmd
-                                        .CommandType = System.Data.CommandType.Text
-                                        .CommandText = cmdtext
-                                        For Each p As System.Data.IDataParameter In params
-                                            .Parameters.Add(p)
-                                        Next
-                                    End With
+            '    Dim params As ICollection(Of System.Data.Common.DbParameter) = Nothing
+            '    Dim cols As Generic.IList(Of ColumnAttribute) = Nothing
+            '    Using obj.GetSyncRoot()
+            '        Dim cmdtext As String = Nothing
+            '        Try
+            '            cmdtext = SQLGenerator.Insert(obj, GetFilterInfo, params, cols)
+            '        Catch ex As ObjectMappingException When ex.Message.Contains("Cannot save object while it has reference to new object")
+            '            Return False
+            '        End Try
+            '        If cmdtext.Length > 0 Then
+            '            Dim tran As System.Data.IDbTransaction = Transaction
+            '            BeginTransaction()
+            '            Try
+            '                If SQLGenerator.SupportMultiline Then
+            '                    Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+            '                        With cmd
+            '                            .CommandType = System.Data.CommandType.Text
+            '                            .CommandText = cmdtext
+            '                            For Each p As System.Data.IDataParameter In params
+            '                                .Parameters.Add(p)
+            '                            Next
+            '                        End With
 
-                                    Dim b As ConnAction = TestConn(cmd)
-                                    Try
-                                        LoadSingleObject(cmd, cols, obj, False, False, True)
-                                    Finally
-                                        CloseConn(b)
-                                    End Try
-                                    'obj.AcceptChanges(cash)
-                                End Using
-                            Else
-                                For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
-                                    If stmt = "" Then Continue For
-                                    Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                                        Dim sel As Boolean = stmt.IndexOf("select") >= 0
-                                        With cmd
-                                            .CommandType = System.Data.CommandType.Text
-                                            .CommandText = stmt
-                                            Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
-                                            For i As Integer = 0 To ExtractParamsCount(stmt) - 1
-                                                .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
-                                                p.RemoveAt(0)
-                                            Next
-                                        End With
+            '                        Dim b As ConnAction = TestConn(cmd)
+            '                        Try
+            '                            LoadSingleObject(cmd, cols, obj, False, False, True)
+            '                        Finally
+            '                            CloseConn(b)
+            '                        End Try
+            '                        'obj.AcceptChanges(cash)
+            '                    End Using
+            '                Else
+            '                    For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
+            '                        If stmt = "" Then Continue For
+            '                        Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+            '                            Dim sel As Boolean = stmt.IndexOf("select") >= 0
+            '                            With cmd
+            '                                .CommandType = System.Data.CommandType.Text
+            '                                .CommandText = stmt
+            '                                Dim p As IList(Of System.Data.Common.DbParameter) = CType(params, Global.System.Collections.Generic.IList(Of Global.System.Data.Common.DbParameter))
+            '                                For i As Integer = 0 To ExtractParamsCount(stmt) - 1
+            '                                    .Parameters.Add(CType(p(0), System.Data.Common.DbParameter))
+            '                                    p.RemoveAt(0)
+            '                                Next
+            '                            End With
 
-                                        Dim b As ConnAction = TestConn(cmd)
-                                        Try
-                                            If sel Then
-                                                LoadSingleObject(cmd, cols, obj, False, False, True)
-                                            Else
-                                                cmd.ExecuteNonQuery()
-                                            End If
-                                        Finally
-                                            CloseConn(b)
-                                        End Try
-                                    End Using
-                                Next
-                                'obj.AcceptChanges(cash)
-                            End If
-                        Finally
-                            If tran Is Nothing Then
-                                Commit()
-                            End If
-                        End Try
-                    End If
-                End Using
-                err = False
-            Finally
-                If Not err Then
-                    obj.SetLoaded(True)
-                    'If obj.ObjectState = ObjectState.Modified Then
-                    '    obj.SetObjectState(ObjectState.None)
-                    'End If
-                End If
-            End Try
-            Return True
+            '                            Dim b As ConnAction = TestConn(cmd)
+            '                            Try
+            '                                If sel Then
+            '                                    LoadSingleObject(cmd, cols, obj, False, False, True)
+            '                                Else
+            '                                    cmd.ExecuteNonQuery()
+            '                                End If
+            '                            Finally
+            '                                CloseConn(b)
+            '                            End Try
+            '                        End Using
+            '                    Next
+            '                    'obj.AcceptChanges(cash)
+            '                End If
+            '            Finally
+            '                If tran Is Nothing Then
+            '                    Commit()
+            '                End If
+            '            End Try
+            '        End If
+            '    End Using
+            '    err = False
+            'Finally
+            '    If Not err Then
+            '        obj.SetLoaded(True)
+            '        'If obj.ObjectState = ObjectState.Modified Then
+            '        '    obj.SetObjectState(ObjectState.None)
+            '        'End If
+            '    End If
+            'End Try
+            'Return True
         End Function
 
         Protected Overrides Sub M2MSave(ByVal obj As IOrmBase, ByVal t As Type, ByVal direct As String, ByVal el As EditableListBase)
-            If obj Is Nothing Then
-                Throw New ArgumentNullException("obj")
-            End If
+            _upd.M2MSave(Me, obj, t, direct, el)
+            'If obj Is Nothing Then
+            '    Throw New ArgumentNullException("obj")
+            'End If
 
-            If el Is Nothing Then
-                Throw New ArgumentNullException("el")
-            End If
+            'If el Is Nothing Then
+            '    Throw New ArgumentNullException("el")
+            'End If
 
-            Dim tt As Type = obj.GetType
-            Dim p As New ParamMgr(SQLGenerator, "p")
-            Dim cmd_text As String = SQLGenerator.SaveM2M(obj, SQLGenerator.GetM2MRelationForEdit(tt, t, direct), el, p)
+            'Dim tt As Type = obj.GetType
+            'Dim p As New ParamMgr(SQLGenerator, "p")
+            'Dim cmd_text As String = SQLGenerator.SaveM2M(obj, SQLGenerator.GetM2MRelationForEdit(tt, t, direct), el, p)
 
-            If Not String.IsNullOrEmpty(cmd_text) Then
-                Dim [error] As Boolean = True
-                Dim tran As System.Data.Common.DbTransaction = Transaction
-                BeginTransaction()
-                Try
-                    Using cmd As New System.Data.SqlClient.SqlCommand(cmd_text)
-                        With cmd
-                            .CommandType = System.Data.CommandType.Text
-                            p.AppendParams(.Parameters)
-                        End With
+            'If Not String.IsNullOrEmpty(cmd_text) Then
+            '    Dim [error] As Boolean = True
+            '    Dim tran As System.Data.Common.DbTransaction = Transaction
+            '    BeginTransaction()
+            '    Try
+            '        Using cmd As New System.Data.SqlClient.SqlCommand(cmd_text)
+            '            With cmd
+            '                .CommandType = System.Data.CommandType.Text
+            '                p.AppendParams(.Parameters)
+            '            End With
 
-                        Dim r As ConnAction = TestConn(cmd)
-                        Try
-                            Dim i As Integer = cmd.ExecuteNonQuery()
-                            [error] = i = 0
-                        Finally
-                            CloseConn(r)
-                        End Try
-                    End Using
-                Finally
-                    If tran Is Nothing Then
-                        If [error] Then
-                            Rollback()
-                        Else
-                            Commit()
-                        End If
-                    End If
-                End Try
-            End If
+            '            Dim r As ConnAction = TestConn(cmd)
+            '            Try
+            '                Dim i As Integer = cmd.ExecuteNonQuery()
+            '                [error] = i = 0
+            '            Finally
+            '                CloseConn(r)
+            '            End Try
+            '        End Using
+            '    Finally
+            '        If tran Is Nothing Then
+            '            If [error] Then
+            '                Rollback()
+            '            Else
+            '                Commit()
+            '            End If
+            '        End If
+            '    End Try
+            'End If
         End Sub
 
         'Protected Overrides Sub Obj2ObjRelationSave2(ByVal obj As OrmBase, ByVal dt As System.Data.DataTable, ByVal sync As String, ByVal t As System.Type)
@@ -335,83 +340,84 @@ Namespace Database
         'End Sub
 
         Protected Friend Overrides Sub DeleteObject(ByVal obj As ICachedEntity)
-            Invariant()
+            _upd.DeleteObject(Me, obj)
+            'Invariant()
 
-            If obj Is Nothing Then
-                Throw New ArgumentNullException("obj parameter cannot be nothing")
-            End If
+            'If obj Is Nothing Then
+            '    Throw New ArgumentNullException("obj parameter cannot be nothing")
+            'End If
 
-            Assert(obj.ObjectState = ObjectState.Deleted, "Object " & obj.ObjName & " should be in Deleted state")
+            'Assert(obj.ObjectState = ObjectState.Deleted, "Object " & obj.ObjName & " should be in Deleted state")
 
-            'Dim t As Type = obj.GetType
+            ''Dim t As Type = obj.GetType
 
-            Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
-            Using obj.GetSyncRoot()
-                Dim cmdtext As String = SQLGenerator.Delete(obj, params, GetFilterInfo)
-                If cmdtext.Length > 0 Then
-                    Dim [error] As Boolean = True
-                    Dim tran As System.Data.Common.DbTransaction = Transaction
-                    BeginTransaction()
-                    Try
-                        If SQLGenerator.SupportMultiline Then
-                            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                                With cmd
-                                    .CommandType = System.Data.CommandType.Text
-                                    .CommandText = cmdtext
-                                    For Each p As System.Data.Common.DbParameter In params
-                                        .Parameters.Add(p)
-                                    Next
-                                End With
+            'Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
+            'Using obj.GetSyncRoot()
+            '    Dim cmdtext As String = SQLGenerator.Delete(obj, params, GetFilterInfo)
+            '    If cmdtext.Length > 0 Then
+            '        Dim [error] As Boolean = True
+            '        Dim tran As System.Data.Common.DbTransaction = Transaction
+            '        BeginTransaction()
+            '        Try
+            '            If SQLGenerator.SupportMultiline Then
+            '                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+            '                    With cmd
+            '                        .CommandType = System.Data.CommandType.Text
+            '                        .CommandText = cmdtext
+            '                        For Each p As System.Data.Common.DbParameter In params
+            '                            .Parameters.Add(p)
+            '                        Next
+            '                    End With
 
-                                Dim b As ConnAction = TestConn(cmd)
-                                Try
-                                    Dim i As Integer = cmd.ExecuteNonQuery
+            '                    Dim b As ConnAction = TestConn(cmd)
+            '                    Try
+            '                        Dim i As Integer = cmd.ExecuteNonQuery
 
-                                    [error] = i = 0
-                                Finally
-                                    CloseConn(b)
-                                End Try
-                            End Using
-                        Else
-                            For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
-                                If stmt = "" Then Continue For
-                                Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                                    With cmd
-                                        .CommandType = System.Data.CommandType.Text
-                                        .CommandText = stmt
-                                        Dim p As IList(Of System.Data.Common.DbParameter) = Nothing
-                                        For j As Integer = 0 To ExtractParamsCount(stmt) - 1
-                                            .Parameters.Add(CType(p(0), System.Data.IDataParameter))
-                                            p.RemoveAt(0)
-                                        Next
-                                    End With
+            '                        [error] = i = 0
+            '                    Finally
+            '                        CloseConn(b)
+            '                    End Try
+            '                End Using
+            '            Else
+            '                For Each stmt As String In Microsoft.VisualBasic.Split(cmdtext, SQLGenerator.EndLine)
+            '                    If stmt = "" Then Continue For
+            '                    Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+            '                        With cmd
+            '                            .CommandType = System.Data.CommandType.Text
+            '                            .CommandText = stmt
+            '                            Dim p As IList(Of System.Data.Common.DbParameter) = Nothing
+            '                            For j As Integer = 0 To ExtractParamsCount(stmt) - 1
+            '                                .Parameters.Add(CType(p(0), System.Data.IDataParameter))
+            '                                p.RemoveAt(0)
+            '                            Next
+            '                        End With
 
-                                    Dim b As ConnAction = TestConn(cmd)
-                                    Try
-                                        Dim i As Integer = cmd.ExecuteNonQuery()
-                                        If Not stmt.StartsWith("set") Then [error] = i = 0
-                                    Finally
-                                        CloseConn(b)
-                                    End Try
-                                End Using
-                            Next
-                        End If
-                    Finally
-                        If tran Is Nothing Then
-                            If [error] Then
-                                Rollback()
-                            Else
-                                Commit()
-                            End If
-                        End If
-                    End Try
+            '                        Dim b As ConnAction = TestConn(cmd)
+            '                        Try
+            '                            Dim i As Integer = cmd.ExecuteNonQuery()
+            '                            If Not stmt.StartsWith("set") Then [error] = i = 0
+            '                        Finally
+            '                            CloseConn(b)
+            '                        End Try
+            '                    End Using
+            '                Next
+            '            End If
+            '        Finally
+            '            If tran Is Nothing Then
+            '                If [error] Then
+            '                    Rollback()
+            '                Else
+            '                    Commit()
+            '                End If
+            '            End If
+            '        End Try
 
-                    If [error] Then
-                        Debug.Assert(False)
-                        Throw SQLGenerator.PrepareConcurrencyException(obj)
-                    End If
-                End If
-            End Using
+            '        If [error] Then
+            '            Debug.Assert(False)
+            '            Throw SQLGenerator.PrepareConcurrencyException(obj)
+            '        End If
+            '    End If
+            'End Using
         End Sub
 
         'Public Overrides Function AddObject(ByVal obj As OrmBase) As OrmBase
@@ -617,31 +623,32 @@ Namespace Database
         'End Sub
 
         Public Function Delete(ByVal f As cc.IEntityFilter) As Integer
-            Dim t As Type = Nothing
-#If DEBUG Then
-            For Each fl As EntityFilter In f.GetAllFilters
-                If t Is Nothing Then
-                    t = fl.Template.Type
-                ElseIf t IsNot fl.Template.Type Then
-                    Throw New InvalidOperationException("All filters must have the same type")
-                End If
-            Next
-#End If
-            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
-                Dim params As New ParamMgr(SQLGenerator, "p")
-                With cmd
-                    .CommandText = SQLGenerator.Delete(t, f, params)
-                    .CommandType = System.Data.CommandType.Text
-                    params.AppendParams(.Parameters)
-                End With
+            Return _upd.Delete(Me, f)
+            '            Dim t As Type = Nothing
+            '#If DEBUG Then
+            '            For Each fl As EntityFilter In f.GetAllFilters
+            '                If t Is Nothing Then
+            '                    t = fl.Template.Type
+            '                ElseIf t IsNot fl.Template.Type Then
+            '                    Throw New InvalidOperationException("All filters must have the same type")
+            '                End If
+            '            Next
+            '#End If
+            '            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+            '                Dim params As New ParamMgr(SQLGenerator, "p")
+            '                With cmd
+            '                    .CommandText = SQLGenerator.Delete(t, f, params)
+            '                    .CommandType = System.Data.CommandType.Text
+            '                    params.AppendParams(.Parameters)
+            '                End With
 
-                Dim r As ConnAction = TestConn(cmd)
-                Try
-                    Return cmd.ExecuteNonQuery()
-                Finally
-                    CloseConn(r)
-                End Try
-            End Using
+            '                Dim r As ConnAction = TestConn(cmd)
+            '                Try
+            '                    Return cmd.ExecuteNonQuery()
+            '                Finally
+            '                    CloseConn(r)
+            '                End Try
+            '            End Using
         End Function
 
         'Protected Sub OdbcRowUpdatingEventHandler(ByVal sender As Object, ByVal e As System.Data.Odbc.OdbcRowUpdatingEventArgs)
