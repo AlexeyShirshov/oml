@@ -162,12 +162,12 @@ Namespace Database
                 'End If
             End Function
 
-            Public Overrides Function ToStaticString() As String
+            Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
                 Dim v As INonTemplateValue = TryCast(val, INonTemplateValue)
                 If v Is Nothing Then
                     Throw New NotImplementedException("Value is not implement INonTemplateValue")
                 End If
-                Return v.GetStaticString & "$" & TemplateBase.Oper2String(_oper)
+                Return v.GetStaticString(mpe) & "$" & TemplateBase.Oper2String(_oper)
             End Function
 
             Protected Overrides Function _Clone() As Object

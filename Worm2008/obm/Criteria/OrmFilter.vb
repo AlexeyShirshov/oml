@@ -12,14 +12,14 @@ Namespace Criteria.Core
     End Interface
 
     Public Interface IFilter
-        Inherits IGetFilter, ICloneable
+        Inherits IGetFilter, ICloneable, IQueryElement
         'Function MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As String
         Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As List(Of String)) As String
         Function GetAllFilters() As ICollection(Of IFilter)
         Function Equals(ByVal f As IFilter) As Boolean
         Function ReplaceFilter(ByVal replacement As IFilter, ByVal replacer As IFilter) As IFilter
-        Function ToString() As String
-        Function ToStaticString() As String
+        'Function ToString() As String
+        'Function ToStaticString() As String
         Overloads Function Clone() As IFilter
     End Interface
 
@@ -76,11 +76,11 @@ Namespace Criteria.Core
             _v = value
         End Sub
 
-        Protected MustOverride Function _ToString() As String Implements IFilter.ToString
+        Protected MustOverride Function _ToString() As String Implements IFilter._ToString
         Protected MustOverride Function _Clone() As Object Implements ICloneable.Clone
         Public MustOverride Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String Implements IFilter.MakeQueryStmt
         Public MustOverride Function GetAllFilters() As System.Collections.Generic.ICollection(Of IFilter) Implements IFilter.GetAllFilters
-        Public MustOverride Function ToStaticString() As String Implements IFilter.ToStaticString
+        Public MustOverride Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IFilter.GetStaticString
 
         Public Function Clone() As IFilter Implements IFilter.Clone
             Return CType(_Clone(), IFilter)
@@ -193,7 +193,7 @@ Namespace Criteria.Core
 
         Public MustOverride Function MakeSingleQueryStmt(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam) As Pair(Of String) Implements ITemplateFilter.MakeSingleQueryStmt
 
-        Public Overrides Function ToStaticString() As String
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
             Return _templ.GetStaticString
         End Function
 
@@ -357,7 +357,7 @@ Namespace Criteria.Core
 
         Public Function MakeHash() As String Implements IEntityFilter.MakeHash
             If Template.Operation = FilterOperation.Equal Then
-                Return ToString()
+                Return _ToString()
             Else
                 Return EmptyHash
             End If
@@ -600,7 +600,7 @@ Namespace Criteria.Core
             End If
         End Function
 
-        Public Overrides Function ToStaticString() As String
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
             'Dim o As Object = _t
             'If o Is Nothing Then
             '    o = _tbl.TableName
@@ -717,11 +717,11 @@ Namespace Criteria.Core
             Return Nothing
         End Function
 
-        Public Function ToStaticString() As String Implements IFilter.ToStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IFilter.GetStaticString
             Return _left.ToStaticString & _fo.ToString & _right.ToStaticString
         End Function
 
-        Protected Function _ToString() As String Implements IFilter.ToString
+        Protected Function _ToString() As String Implements IFilter._ToString
             Return _left.ToString & _fo.ToString & _right.ToString
         End Function
 

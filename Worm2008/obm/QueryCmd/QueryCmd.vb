@@ -181,7 +181,7 @@ Namespace Query
     End Class
 
     Public Class QueryCmd
-        Implements ICloneable, Cache.IQueryDependentTypes
+        Implements ICloneable, Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
 
         Protected _fields As ObjectModel.ReadOnlyCollection(Of SelectExpression)
         Protected _filter As IGetFilter
@@ -586,10 +586,10 @@ Namespace Query
             If f IsNot Nothing Then
                 Select Case cb
                     Case Cache.CacheListBehavior.CacheAll
-                        sb2.Append(f.ToStaticString).Append("$")
+                        sb2.Append(f.GetStaticString(mpe)).Append("$")
                     Case Cache.CacheListBehavior.CacheOrThrowException
                         If TryCast(f, IEntityFilter) IsNot Nothing Then
-                            sb2.Append(f.ToStaticString).Append("$")
+                            sb2.Append(f.GetStaticString(mpe)).Append("$")
                         Else
                             For Each fl As IFilter In f.GetAllFilters
                                 Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, fl)
@@ -600,7 +600,7 @@ Namespace Query
                         End If
                     Case Cache.CacheListBehavior.CacheWhatCan
                         If TryCast(f, IEntityFilter) IsNot Nothing Then
-                            sb2.Append(f.ToStaticString).Append("$")
+                            sb2.Append(f.GetStaticString(mpe)).Append("$")
                         Else
                             For Each fl As IFilter In f.GetAllFilters
                                 Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, fl)
@@ -628,7 +628,7 @@ Namespace Query
                                     Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
                             End Select
                         End If
-                        sb2.Append(join.GetStaticString)
+                        sb2.Append(join.GetStaticString(mpe))
                     End If
                 Next
             End If
@@ -647,7 +647,7 @@ Namespace Query
             sb.Append(sb2.ToString)
 
             If _rn IsNot Nothing Then
-                sb.Append(_rn.ToStaticString)
+                sb.Append(_rn.ToStaticString(mpe))
             End If
 
             If _top IsNot Nothing Then
@@ -751,18 +751,16 @@ Namespace Query
         End Sub
 
         Public Overrides Function ToString() As String
-            Dim sb As New StringBuilder
-            GetDynamicKey(sb, _joins, _filter.Filter)
-            Return sb.ToString
+            Throw New NotSupportedException
         End Function
 
-        Public Function ToStaticString() As String
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
             Dim sb As New StringBuilder
             Dim l As List(Of SelectExpression) = Nothing
             If _fields IsNot Nothing Then
                 l = New List(Of SelectExpression)(_fields)
             End If
-            GetStaticKey(sb, _joins, _filter.Filter, _realType, Cache.CacheListBehavior.CacheAll, l, Nothing)
+            GetStaticKey(sb, _joins, _filter.Filter, _realType, Cache.CacheListBehavior.CacheAll, l, mpe)
             Return sb.ToString
         End Function
 
@@ -1748,6 +1746,15 @@ Namespace Query
 
 #End Region
 
+        Public Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
+            Dim sb As New StringBuilder
+            GetDynamicKey(sb, _joins, _filter.Filter)
+            Return sb.ToString
+        End Function
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
+            Return ToStaticString(mpe)
+        End Function
     End Class
 
     Public Class OrmQueryCmd(Of T As _IOrmBase)

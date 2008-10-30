@@ -34,6 +34,14 @@ Public Interface ICreateManager
     Function CreateManager() As OrmManager
 End Interface
 
+Public Interface IAdminManager
+    Function UpdateObject(ByVal obj As Orm._ICachedEntity) As Boolean
+    Function InsertObject(ByVal obj As Orm._ICachedEntity) As Boolean
+    Sub DeleteObject(ByVal obj As Orm.ICachedEntity)
+    Function Delete(ByVal f As Criteria.Core.IEntityFilter) As Integer
+    Sub M2MSave(ByVal obj As Orm.IOrmBase, ByVal t As Type, ByVal direct As String, ByVal el As Cache.EditableListBase)
+End Interface
+
 Class GetManagerDisposable
     Implements IDisposable, IGetManager
 

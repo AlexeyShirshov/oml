@@ -762,14 +762,21 @@ Namespace Cache
 
             If _invalidate.Count > 0 Then
 
-                For Each t As Type In _invalidate.Keys
-                    If ts.Contains(t) Then
-                        Dim removed As Boolean = _updateTypes.Remove(t, Me)
-                        If removed Then
-                            Return False
+#If DebugLocks Then
+            Using SyncHelper.AcquireDynamicLock_Debug("913bh5g9nh04nvgtr0924ng","d:\temp\")
+#Else
+                Using SyncHelper.AcquireDynamicLock("913bh5g9nh04nvgtr0924ng")
+#End If
+                    For Each t As Type In _invalidate.Keys
+                        If ts.Contains(t) Then
+                            Dim removed As Boolean = _updateTypes.Remove(t, Me)
+                            If removed Then
+                                Return False
+                            End If
                         End If
-                    End If
-                Next
+                    Next
+
+                End Using
 
                 If f IsNot Nothing Then
                     For Each fl As IEntityFilter In f.GetAllFilters

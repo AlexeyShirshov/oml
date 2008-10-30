@@ -65,8 +65,8 @@ Namespace Orm
             Return MyBase._Equals(g) AndAlso _cube = g._cube AndAlso _all = g._all
         End Function
 
-        Public Overrides Function ToString() As String
-            Return MyBase.ToString() & _cube & _all
+        Public Overrides Function _ToString() As String
+            Return MyBase._ToString() & _cube & _all
         End Function
     End Class
 End Namespace

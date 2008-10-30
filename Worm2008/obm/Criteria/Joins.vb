@@ -142,7 +142,7 @@ Namespace Criteria.Joins
             Equals(TryCast(f, JoinFilter))
         End Function
 
-        Private Function _ToString() As String Implements Core.IFilter.ToString
+        Private Function _ToString() As String Implements Core.IFilter._ToString
             Dim sb As New StringBuilder
 
             If _e1 IsNot Nothing Then
@@ -172,7 +172,7 @@ Namespace Criteria.Joins
             Return _ToString.GetHashCode
         End Function
 
-        Public Function ToStaticString() As String Implements Core.IFilter.ToStaticString
+        Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Core.IFilter.GetStaticString
             Return _ToString()
         End Function
 
@@ -213,6 +213,7 @@ Namespace Criteria.Joins
     End Class
 
     Public MustInherit Class OrmJoin
+        Implements IQueryElement
         Protected _table As SourceFragment
         Protected _joinType As Worm.Criteria.Joins.JoinType
         Protected _condition As Core.IFilter
@@ -277,23 +278,23 @@ Namespace Criteria.Joins
             _condition = _condition.ReplaceFilter(replacement, replacer)
         End Sub
 
-        Public Function GetStaticString() As String
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             If _table IsNot Nothing Then
-                Return _table.RawName & JoinTypeString() & _condition.ToStaticString
+                Return _table.RawName & JoinTypeString() & _condition.GetStaticString(mpe)
             ElseIf _type IsNot Nothing Then
-                Return _type.ToString & JoinTypeString() & _condition.ToStaticString
+                Return _type.ToString & JoinTypeString() & _condition.GetStaticString(mpe)
             Else
-                Return _en & JoinTypeString() & _condition.ToStaticString
+                Return _en & JoinTypeString() & _condition.GetStaticString(mpe)
             End If
         End Function
 
-        Public Overrides Function ToString() As String
+        Public Overrides Function ToString() As String Implements IQueryElement._ToString
             If _table IsNot Nothing Then
-                Return _table.RawName & JoinTypeString() & _condition.ToString
+                Return _table.RawName & JoinTypeString() & _condition._ToString
             ElseIf _type IsNot Nothing Then
-                Return _type.ToString & JoinTypeString() & _condition.ToString
+                Return _type.ToString & JoinTypeString() & _condition._ToString
             Else
-                Return _en & JoinTypeString() & _condition.ToString
+                Return _en & JoinTypeString() & _condition._ToString
             End If
         End Function
 

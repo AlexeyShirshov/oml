@@ -79,7 +79,7 @@ Namespace Orm
     End Enum
 
     Public Class SelectExpression
-        Implements Cache.IQueryDependentTypes
+        Implements Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
 
         Private _field As String
         Private _type As Type
@@ -247,7 +247,7 @@ Namespace Orm
             End Set
         End Property
 
-        Public Overrides Function ToString() As String
+        Public Overridable Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
             If _type IsNot Nothing Then
                 Return _type.ToString & "$" & _field
             Else
@@ -259,7 +259,7 @@ Namespace Orm
                     ElseIf Not String.IsNullOrEmpty(_column) Then
                         Return _column
                     ElseIf _q IsNot Nothing Then
-                        Return _q.ToStaticString
+                        Return _q._ToString
                     ElseIf _agr IsNot Nothing Then
                         Return _agr.ToString
                     Else
@@ -306,6 +306,28 @@ Namespace Orm
                 Return _q.Get(mpe)
             End If
             Return Nothing
+        End Function
+
+        Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
+            If _type IsNot Nothing Then
+                Return _type.ToString & "$" & _field
+            Else
+                If _table IsNot Nothing Then
+                    Return _table.RawName & "$" & _column
+                Else
+                    If Not String.IsNullOrEmpty(_custom) Then
+                        Return _custom
+                    ElseIf Not String.IsNullOrEmpty(_column) Then
+                        Return _column
+                    ElseIf _q IsNot Nothing Then
+                        Return _q.ToStaticString(mpe)
+                    ElseIf _agr IsNot Nothing Then
+                        Return _agr.ToString
+                    Else
+                        Return _field
+                    End If
+                End If
+            End If
         End Function
     End Class
 

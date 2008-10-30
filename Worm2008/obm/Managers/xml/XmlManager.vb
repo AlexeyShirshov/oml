@@ -59,7 +59,7 @@ Namespace Xml
         '    Throw New NotImplementedException
         'End Function
 
-        Protected Friend Overrides Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
+        Public Overrides Function UpdateObject(ByVal obj As _ICachedEntity) As Boolean
             Throw New NotImplementedException
         End Function
 
