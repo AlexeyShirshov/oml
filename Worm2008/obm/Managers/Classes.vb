@@ -221,7 +221,7 @@ Namespace Orm.Query
 
         Public Overrides Function GetStaticKey() As String
             If _sort IsNot Nothing Then
-                Return "-top-" & _sort.ToString
+                Return "-top-" & _sort._ToString
             End If
             Return "-top-"
         End Function

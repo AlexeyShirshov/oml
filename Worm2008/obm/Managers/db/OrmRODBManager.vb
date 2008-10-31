@@ -386,7 +386,7 @@ Namespace Database
         Private _conn As System.Data.Common.DbConnection
         Private _exec As TimeSpan
         Private _fetch As TimeSpan
-        Private _batchSaver As BatchSaver
+        Friend _batchSaver As ObjectListSaver
         Private _stmtHelper As SQLGenerator
         Private Shared _tsStmt As New TraceSource("Worm.Diagnostics.DB.Stmt", SourceLevels.Information)
         Private _timeout As Nullable(Of Integer)
@@ -412,7 +412,7 @@ Namespace Database
             End Get
         End Property
 
-        Public Function CreateBatchSaver(Of T As {BatchSaver, New})(ByRef createdNew As Boolean) As BatchSaver
+        Public Function CreateBatchSaver(Of T As {ObjectListSaver, New})(ByRef createdNew As Boolean) As ObjectListSaver
             createdNew = False
             If _batchSaver Is Nothing Then
                 _batchSaver = New T

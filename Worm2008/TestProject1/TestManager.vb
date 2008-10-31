@@ -975,7 +975,7 @@ Imports Worm.Orm.Meta
             mgr.BeginTransaction()
             Try
                 Dim created As Boolean
-                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(Of OrmReadOnlyDBManager.BatchSaver)(created)
+                Using saver As ObjectListSaver = mgr.CreateBatchSaver(Of ObjectListSaver)(created)
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()
@@ -1013,7 +1013,7 @@ Imports Worm.Orm.Meta
             mgr.BeginTransaction()
             Try
                 Dim created As Boolean
-                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(Of OrmReadOnlyDBManager.BatchSaver)(created)
+                Using saver As ObjectListSaver = mgr.CreateBatchSaver(Of ObjectListSaver)(created)
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()
@@ -1055,7 +1055,7 @@ Imports Worm.Orm.Meta
             mgr.BeginTransaction()
             Try
                 Dim created As Boolean
-                Using saver As OrmReadOnlyDBManager.BatchSaver = mgr.CreateBatchSaver(Of OrmReadOnlyDBManager.BatchSaver)(created)
+                Using saver As ObjectListSaver = mgr.CreateBatchSaver(Of ObjectListSaver)(created)
                     saver.Add(e)
                     saver.Add(e4)
                     saver.Commit()
@@ -1220,14 +1220,14 @@ Imports Worm.Orm.Meta
             mgr.BeginTransaction()
             Try
                 For Each t As Entity In c
-                    Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
-                        Using st2 As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                    Using st As New ModificationsTracker(mgr)
+                        Using st2 As New ModificationsTracker(mgr)
                             t.Delete()
-                            st2.Commit()
+                            st2.AcceptModifications()
                         End Using
                         Assert.AreEqual(ObjectState.Deleted, t.InternalProperties.ObjectState)
                         Assert.IsTrue(st.Saver.AffectedObjects.Contains(t))
-                        st.Commit()
+                        st.AcceptModifications()
                     End Using
                     Exit For
                 Next

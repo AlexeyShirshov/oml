@@ -116,7 +116,7 @@ Imports Worm.Database.Criteria
 
             mgr.BeginTransaction()
             Try
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
 
                     Assert.IsFalse(e.InternalProperties.HasM2MChanges)
                     Assert.IsFalse(e2.InternalProperties.HasM2MChanges)
@@ -126,7 +126,7 @@ Imports Worm.Database.Criteria
                     Assert.IsTrue(e.InternalProperties.HasM2MChanges)
                     Assert.IsTrue(e2.InternalProperties.HasM2MChanges)
 
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 Assert.IsFalse(e.InternalProperties.HasM2MChanges)
@@ -159,7 +159,7 @@ Imports Worm.Database.Criteria
             Try
                 Dim e2 As Entity4 = Nothing
 
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
                     s.Add(e)
 
                     e2 = s.CreateNewObject(Of Entity4)()
@@ -168,7 +168,7 @@ Imports Worm.Database.Criteria
 
                     Assert.IsFalse(CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToEntityList(Of Entity)(mgr).Contains(e))
 
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 l = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToEntityList(Of Entity4)(mgr)
@@ -197,9 +197,9 @@ Imports Worm.Database.Criteria
 
             mgr.BeginTransaction()
             Try
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
                     e.M2MNew.Delete(l(0))
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 Dim q2 As QueryCmd = e.M2MNew.Find(GetType(Entity4))

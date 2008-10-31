@@ -694,7 +694,7 @@ Public Class TestManagerRS
 
             mgr.BeginTransaction()
             Try
-                Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using st As New ModificationsTracker(mgr)
                     Dim tt2 As Table33 = New Table33(-100, mgr.Cache, mgr.MappingEngine)
                     st.Add(tt2)
                     tt2.RefObject = tt1
@@ -706,7 +706,7 @@ Public Class TestManagerRS
                     t3.Table1 = tt1
                     t3.Table3 = tt2
                     t3.Title = "sdfpsdfm"
-                    st.Commit()
+                    st.AcceptModifications()
                 End Using
 
                 c = tt1.M2M.Find(Of Table33)(Nothing, s, WithLoad)
@@ -1202,10 +1202,10 @@ Public Class TestManagerRS
                 Assert.AreEqual(ObjectState.Modified, t2.InternalProperties.ObjectState)
                 Assert.IsTrue(b)
 
-                Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using st As New ModificationsTracker(mgr)
                     st.Add(t2)
                     st.Add(t1)
-                    st.Commit()
+                    st.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(ObjectState.None, t2.InternalProperties.ObjectState)
@@ -1240,10 +1240,10 @@ Public Class TestManagerRS
         Using mgr As OrmReadOnlyDBManager = CreateWriteManager(GetSchema("1"))
             mgr.BeginTransaction()
             Try
-                Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using st As New ModificationsTracker(mgr)
                     st.Add(t)
 
-                    st.Commit()
+                    st.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(ObjectState.None, t.InternalProperties.ObjectState)

@@ -446,7 +446,7 @@ Namespace Web
                 If user IsNot Nothing Then
                     Using mgr As OrmDBManager = _getMgr()
                         Dim oschema As IObjectSchemaBase = mgr.MappingEngine.GetObjectSchema(user.GetType)
-                        Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                        Using st As New ModificationsTracker(mgr)
                             Using user.BeginEdit
                                 If Not String.IsNullOrEmpty(_lastActivityField) Then
                                     mgr.MappingEngine.SetFieldValue(user, _lastActivityField, d, oschema)
@@ -456,7 +456,7 @@ Namespace Web
                                 End If
                             End Using
                             st.Add(user)
-                            st.Commit()
+                            st.AcceptModifications()
                         End Using
                     End Using
                 End If

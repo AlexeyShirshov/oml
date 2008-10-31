@@ -562,6 +562,10 @@ Namespace Sorting
         'End Property
 
         Public Overrides Function ToString() As String
+            Throw New NotSupportedException
+        End Function
+
+        Public Overrides Function _ToString() As String
             'Dim s As String = Nothing
             'If Not String.IsNullOrEmpty(_custom) Then
             '    s = _custom
@@ -574,7 +578,7 @@ Namespace Sorting
             'End If
 
             'Return s
-            Return MyBase.ToString & _order.ToString & _ext.ToString
+            Return MyBase._ToString & _order.ToString & _ext.ToString
         End Function
 
         'Public Overrides Function Equals(ByVal obj As Object) As Boolean

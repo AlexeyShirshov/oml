@@ -671,7 +671,7 @@ Namespace Query
                         If Not GetStaticKeyFromProp(sb, cb, n, mpe) Then
                             Return False
                         End If
-                        sb.Append(n.ToString)
+                        sb.Append(n._ToString)
                     Next
                     sb.Append("$")
                 End If
@@ -695,7 +695,7 @@ Namespace Query
                     End Select
                 End If
             End If
-            sb.Append(c.ToString)
+            sb.Append(c._ToString)
             Return True
         End Function
 
