@@ -164,22 +164,24 @@ Namespace Query
                     End If
 
                     For Each s As Sorting.Sort In New Sorting.Sort.Iterator(q.propSort)
-
-                        'If ef Is Nothing Then
-                        '    If rightType Then
-                        '        _mgr.Cache.validate_UpdateType(q.SelectedType, _key, _id)
-                        '        notPreciseDependsU = True
-                        '    End If
-                        'Else
-                        '    Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
-
-                        '    If tmpl.Type Is Nothing Then
-                        '        Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
-                        '    End If
-
-                        '    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
-                        '    _mgr.Cache.validate_AddDependentFilterField(p, _key, _id)
-                        'End If
+                        If Not String.IsNullOrEmpty(s.FieldName) Then
+                            Dim t As Type = s.Type
+                            If t Is Nothing AndAlso s.Table Is Nothing AndAlso String.IsNullOrEmpty(s.CustomSortExpression) Then
+                                t = _q.SelectedType
+                            End If
+                            If t Is Nothing Then
+                                If rightType AndAlso Not notPreciseDependsU Then
+                                    cache.validate_UpdateType(q.SelectedType, _key, _id)
+                                    notPreciseDependsU = True
+                                End If
+                            Else
+                                Dim p As New Pair(Of String, Type)(s.FieldName, t)
+                                cache.validate_AddDependentSortField(p, _key, _id)
+                            End If
+                        ElseIf rightType AndAlso Not notPreciseDependsU Then
+                            cache.validate_UpdateType(q.SelectedType, _key, _id)
+                            notPreciseDependsU = True
+                        End If
                     Next
 
                     If q.Obj IsNot Nothing Then
@@ -281,7 +283,7 @@ Namespace Query
                     f = TryCast(_f(0), IEntityFilter)
                 End If
 
-                Return cache.UpdateCacheDeferred(l, f, _q.propSort, _q.Group)
+                Return cache.UpdateCacheDeferred(_q.SelectedType, l, f, _q.propSort, _q.Group)
             End If
             Return True
         End Function

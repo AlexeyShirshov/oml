@@ -354,4 +354,71 @@ Imports Worm.Database.Criteria.Joins
             End Try
         End Using
     End Sub
+
+    <TestMethod()> Public Sub TestSortValidate()
+        Dim tm As New TestManager
+        Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+            mgr.NewObjectManager = tm
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
+
+            Dim q As QueryCmd = New QueryCmd(GetType(Entity4)).Where( _
+                Ctor.AutoTypeField("ID").GreaterThan(5)).Sort(Orm.Sorting.Field("Title"))
+
+            Dim q2 As QueryCmd = New QueryCmd(GetType(Entity4)).Where( _
+                Ctor.AutoTypeField("Title").Eq("djkg"))
+
+            Dim l As IList(Of Entity4) = q.ToOrmList(Of Entity4)(mgr)
+            Assert.AreEqual(7, l.Count)
+            Dim f As Entity4 = l(0)
+
+            Assert.AreEqual(0, q2.ToOrmList(Of Entity4)(mgr).Count)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New ModificationsTracker(mgr)
+                    f.Title = "djkg"
+                    s.AcceptModifications()
+                End Using
+
+                Assert.AreNotEqual(f, q.ToOrmList(Of Entity4)(mgr)(0))
+                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+                Assert.AreEqual(1, q2.ToOrmList(Of Entity4)(mgr).Count)
+                Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestSortValidate2()
+        Dim tm As New TestManagerRS
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+            mgr.NewObjectManager = tm
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
+
+            Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
+                Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)).Sort(Orm.Sorting.Custom("name"))
+
+            Dim l As IList(Of Table1) = q.ToOrmList(Of Table1)(mgr)
+            Assert.AreEqual(2, l.Count)
+            Dim f As Table1 = l(0)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New ModificationsTracker(mgr)
+                    f.Code = 20
+                    s.AcceptModifications()
+                End Using
+
+                Assert.AreEqual(f, q.ToOrmList(Of Table1)(mgr)(0))
+                Assert.IsFalse(q.LastExecitionResult.CacheHit)
+
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
 End Class

@@ -305,7 +305,7 @@ Namespace Orm
             If _q IsNot Nothing Then
                 Return _q.Get(mpe)
             End If
-            Return Nothing
+            Return New Cache.EmptyDependentTypes
         End Function
 
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString

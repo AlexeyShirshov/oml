@@ -257,8 +257,8 @@ Imports Worm.Database.Criteria.Core
 
             Dim expected As String = "declare @id_ID int" & vbCrLf & _
                 "set @id_ID = @p1" & vbCrLf & _
-                "delete from dbo.ent1 where id = @id_ID" & vbCrLf & _
-                "delete from dbo.t1 where i = @id_ID"
+                "delete from dbo.t1 where i = @id_ID" & vbCrLf & _
+                "delete from dbo.ent1 where id = @id_ID"
 
             Assert.AreEqual(expected, schemaV1.Delete(o, params, Nothing))
 

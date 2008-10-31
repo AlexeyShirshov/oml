@@ -1045,11 +1045,18 @@ l1:
 
                     GetDeletedConditions(deleted_tables, filterInfo, type, obj, relSchema, TryCast(relSchema, IMultiTableObjectSchema))
 
+                    Dim pkFilter As IFilter = deleted_tables(relSchema.Table)
+                    deleted_tables.Remove(relSchema.Table)
+
                     For Each de As KeyValuePair(Of SourceFragment, IFilter) In deleted_tables
                         del_cmd.Append("delete from ").Append(GetTableName(de.Key))
                         del_cmd.Append(" where ").Append(de.Value.MakeQueryStmt(Me, filterInfo, Nothing, params, Nothing))
                         del_cmd.Append(EndLine)
                     Next
+                    del_cmd.Append("delete from ").Append(GetTableName(relSchema.Table))
+                    del_cmd.Append(" where ").Append(pkFilter.MakeQueryStmt(Me, filterInfo, Nothing, params, Nothing))
+                    del_cmd.Append(EndLine)
+
                     del_cmd.Length -= EndLine.Length
                     dbparams = params.Params
                 End If
