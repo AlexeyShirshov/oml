@@ -94,6 +94,7 @@
     <Compile Include="ASPHosting\TestCache.vb" />
     <Compile Include="ASPHosting\TestProcess.vb" />
     <Compile Include="ASPHosting\TestRoles.vb" />
+    <Compile Include="Query\ImmCache.vb" />
     <Compile Include="TestComplexEntities.vb" />
     <Compile Include="GuidPK.vb" />
     <Compile Include="My Project\Settings.Designer.vb">

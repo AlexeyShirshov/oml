@@ -80,7 +80,7 @@ Namespace Cache
             Public Overloads Function Add(ByVal f As IFilter, ByVal key As String, ByVal id As String) As Boolean
                 Dim def As Boolean
                 GetIds(key, f, def)(id) = Nothing
-                Return def
+                Return Not def
             End Function
         End Class
 
@@ -153,6 +153,16 @@ Namespace Cache
                 End If
                 c.Add(key, id)
             End Sub
+
+            Public Overloads Function Remove(ByVal t As Type, ByVal fieldName As String, ByVal cache As CacheBase) As Boolean
+                Dim c As CacheEntryRef = Nothing
+                Dim ef As New EntityField(fieldName, t)
+                If TryGetValue(ef, c) Then
+                    c.Remove(cache)
+                    Remove(ef)
+                End If
+                Return c IsNot Nothing
+            End Function
         End Class
 
         'Private Class CacheEntry
@@ -394,7 +404,8 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Sub ResetFieldDepends(ByVal p As Pair(Of String, Type))
+        Protected Friend Function ResetFieldDepends(ByVal p As Pair(Of String, Type)) As Boolean
+            Dim rv As Boolean
 #If DebugLocks Then
             Using SyncHelper.AcquireDynamicLock_Debug("9nhervg-jrgfl;jg94gt","d:\temp\")
 #Else
@@ -406,13 +417,15 @@ Namespace Cache
                     For Each ke As KeyValuePair(Of String, List(Of String)) In d
                         For Each key As String In ke.Value
                             RemoveEntry(key, ke.Key)
+                            rv = True
                             'Dim dic As IDictionary = CType(_filters(key), IDictionary)
                             'dic.Remove(ke.Key)
                         Next
                     Next
                 End If
             End Using
-        End Sub
+            Return rv
+        End Function
 
         Public Sub validate_AddDeleteType(ByVal t As Type, ByVal key As String, ByVal id As String)
 #If DebugLocks Then
@@ -725,7 +738,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function UpdateCacheDeferred(ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
+        Protected Friend Function UpdateCacheDeferred(ByVal selType As Type, ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
 
             For Each t As Type In ts
                 Dim wasAdded, wasDeleted As Boolean
@@ -769,8 +782,7 @@ Namespace Cache
 #End If
                     For Each t As Type In _invalidate.Keys
                         If ts.Contains(t) Then
-                            Dim removed As Boolean = _updateTypes.Remove(t, Me)
-                            If removed Then
+                            If _updateTypes.Remove(t, Me) Then
                                 Return False
                             End If
                         End If
@@ -780,20 +792,42 @@ Namespace Cache
 
                 If f IsNot Nothing Then
                     For Each fl As IEntityFilter In f.GetAllFilters
-                        Dim fields As List(Of String) = Nothing
                         Dim tmpl As OrmFilterTemplateBase = CType(fl.Template, OrmFilterTemplateBase)
+                        Dim fields As List(Of String) = Nothing
                         If GetUpdatedFields(tmpl.Type, fields) Then
-                            Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
-                            If idx >= 0 Then
-                                Dim ef As New EntityField(tmpl.FieldName, tmpl.Type)
-                                _filteredFields.Remove(ef)
-                                ResetFieldDepends(New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type))
-                                RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
-                                Return False
+                            If fields.Contains(tmpl.FieldName) Then
+                                Dim b As Boolean = _filteredFields.Remove(tmpl.Type, tmpl.FieldName, Me)
+                                b = b Or ResetFieldDepends(New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type))
+
+                                If b Then
+                                    _sortedFields.Remove(tmpl.Type, tmpl.FieldName, Me)
+                                    RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                                    Return False
+                                End If
                             End If
                         End If
                     Next
                 End If
+
+                For Each sort As Sorting.Sort In New Sorting.Sort.Iterator(s)
+                    If Not String.IsNullOrEmpty(sort.FieldName) Then
+                        Dim t As Type = s.Type
+                        If t Is Nothing Then
+                            t = selType
+                        End If
+                        Dim fields As List(Of String) = Nothing
+                        If GetUpdatedFields(t, fields) Then
+                            If fields.Contains(sort.FieldName) Then
+                                If _sortedFields.Remove(t, sort.FieldName, Me) Then
+                                    _filteredFields.Remove(t, sort.FieldName, Me)
+                                    ResetFieldDepends(New Pair(Of String, Type)(sort.FieldName, t))
+                                    RemoveUpdatedFields(t, sort.FieldName)
+                                    Return False
+                                End If
+                            End If
+                        End If
+                    End If
+                Next
             End If
 
             Return True
@@ -807,22 +841,6 @@ Namespace Cache
                 callbacks.BeginUpdate()
             End If
 
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
-#End If
-                _addDeleteTypes.Remove(tt, Me)
-            End Using
-
-#If DebugLocks Then
-            Using SyncHelper.AcquireDynamicLock_Debug("%G(qjg'oqgiu13rgfasd","d:\temp\")
-#Else
-            Using SyncHelper.AcquireDynamicLock("%G(qjg'oqgiu13rgfasd")
-#End If
-                _updateTypes.Remove(tt, Me)
-            End Using
-
             For Each obj As _ICachedEntity In objs
                 If obj Is Nothing Then
                     Throw New ArgumentException("At least one element in objs is nothing")
@@ -832,7 +850,30 @@ Namespace Cache
                     Throw New ArgumentException("Collection contains different types")
                 End If
 
+                If obj.UpdateCtx.Added OrElse obj.UpdateCtx.Deleted Then
+#If DebugLocks Then
+                    Using SyncHelper.AcquireDynamicLock_Debug("(_H* 234ngf90ganv","d:\temp\")
+#Else
+                    Using SyncHelper.AcquireDynamicLock("(_H* 234ngf90ganv")
+#End If
+                        _addDeleteTypes.Remove(tt, Me)
+                    End Using
+                ElseIf obj.UpdateCtx.UpdatedFields IsNot Nothing Then
+                    Dim removed As Boolean
+#If DebugLocks Then
+                    Using SyncHelper.AcquireDynamicLock_Debug("%G(qjg'oqgiu13rgfasd","d:\temp\")
+#Else
+                    Using SyncHelper.AcquireDynamicLock("%G(qjg'oqgiu13rgfasd")
+#End If
+                        removed = _updateTypes.Remove(tt, Me)
+                    End Using
 
+                    If Not removed Then
+                        For Each f As EntityFilterBase In obj.UpdateCtx.UpdatedFields
+                            _filteredFields.Remove(f.Template.Type, f.Template.FieldName, Me)
+                        Next
+                    End If
+                End If
             Next
 
             If callbacks IsNot Nothing Then
