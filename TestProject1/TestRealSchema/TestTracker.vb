@@ -68,7 +68,7 @@ Public Class TestTracker
 
             mgr.BeginTransaction()
             Try
-                Using tracker As New OrmReadOnlyDBManager.OrmTransactionalScope
+                Using tracker As New ModificationsTracker
                     AddHandler tracker.Saver.ObjectRejected, AddressOf Objr
                     'AddHandler tracker.BeginRollback, AddressOf br
 
@@ -83,7 +83,7 @@ Public Class TestTracker
                     Assert.IsTrue(_new_objects.ContainsKey(t2.ID))
                     t2.Money = 1000
 
-                    tracker.Commit()
+                    tracker.AcceptModifications()
                 End Using
             Finally
                 Assert.AreEqual(0, _new_objects.Count)
@@ -102,7 +102,7 @@ Public Class TestTracker
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()
             Try
-                Using tracker As New OrmReadOnlyDBManager.OrmTransactionalScope
+                Using tracker As New ModificationsTracker
                     AddHandler tracker.Saver.ObjectRejected, AddressOf Objr
                     'AddHandler tracker.BeginRollback, AddressOf br
 
@@ -119,7 +119,7 @@ Public Class TestTracker
 
                     tt.Code = 10
 
-                    tracker.Commit()
+                    tracker.AcceptModifications()
                 End Using
             Finally
                 Assert.AreEqual(0, _new_objects.Count)
@@ -139,7 +139,7 @@ Public Class TestTracker
             Dim tt As Table1 = mgr.Find(Of Table1)(1)
             mgr.BeginTransaction()
             Try
-                Using tracker As New OrmReadOnlyDBManager.OrmTransactionalScope
+                Using tracker As New ModificationsTracker
                     Dim t As Table1 = tracker.CreateNewObject(Of Table1)()
                     t.CreatedAt = Now
 
@@ -148,7 +148,7 @@ Public Class TestTracker
 
                     tt.Code = 10
 
-                    tracker.Commit()
+                    tracker.AcceptModifications()
                 End Using
             Finally
                 Assert.AreEqual(0, _new_objects.Count)
@@ -174,13 +174,13 @@ Public Class TestTracker
 
             mgr.BeginTransaction()
             Try
-                Using tracker As New OrmReadOnlyDBManager.OrmTransactionalScope
+                Using tracker As New ModificationsTracker
                     tracker.Saver.AcceptInBatch = True
 
                     tt.Code = 10
                     tt2.Code = 100
 
-                    tracker.Commit()
+                    tracker.AcceptModifications()
                 End Using
             Finally
                 Assert.AreEqual(10, tt.Code.Value)
@@ -192,5 +192,59 @@ Public Class TestTracker
                 mgr.Rollback()
             End Try
         End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestRecover()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+            Dim tt As Table2 = mgr.Find(Of Table2)(1)
+            Assert.AreEqual(Of Decimal)(1, tt.Money)
+
+            mgr.BeginTransaction()
+            Try
+                Using tracker As New ModificationsTracker
+                    AddHandler tracker.Saver.ObjectSavingError, AddressOf er
+                    tt.Money = 200
+
+                    tracker.AcceptModifications()
+                End Using
+
+                Assert.AreEqual(Of Decimal)(20, tt.Money)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestRecover2()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+            mgr.NewObjectManager = Me
+            mgr.BeginTransaction()
+            Try
+                Dim tt As Table2
+                Using tracker As New ModificationsTracker
+                    AddHandler tracker.Saver.ObjectSavingError, AddressOf er
+
+                    tt = tracker.CreateNewObject(Of Table2)()
+                    tt.Money = 200
+                    tt.Tbl = mgr.Find(Of Table1)(2)
+
+                    tracker.AcceptModifications()
+                End Using
+
+                Assert.IsNotNull(tt)
+                Assert.AreEqual(Of Decimal)(20, tt.Money)
+                Assert.AreEqual(ObjectState.None, tt.InternalProperties.ObjectState)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    Private Sub er(ByVal sender As ObjectListSaver, ByVal args As ObjectListSaver.SaveErrorEventArgs)
+        Dim t As Table2 = CType(args.Entity, Table2)
+        t.Money = 20
+        args.Retry = True
     End Sub
 End Class

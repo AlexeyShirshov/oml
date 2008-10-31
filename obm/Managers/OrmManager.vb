@@ -1562,7 +1562,7 @@ l1:
 #End Region
 
 #Region " Object support "
-    Protected Function GetSyncForSave(ByVal t As Type, ByVal obj As ICachedEntity) As IDisposable
+    Protected Friend Function GetSyncForSave(ByVal t As Type, ByVal obj As ICachedEntity) As IDisposable
 #If DebugLocks Then
             Return SyncHelper.AcquireDynamicLock_Debug("4098jwefpv345mfds-" & New EntityProxy(obj).ToString, "d:\temp\")
 #Else

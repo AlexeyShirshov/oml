@@ -68,9 +68,9 @@ Imports Worm.Database.Criteria
             Assert.AreEqual("wf0pvmdb", f.Name)
             mgr.BeginTransaction()
             Try
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
                     f.Name = "xxx"
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 Dim f2 As ComplexPK = New QueryCmd(GetType(ComplexPK)).Where _

@@ -7,7 +7,7 @@ Module TestLocks
             Randomize()
             Dim min As Integer, max As Integer
             GetMinMax(mgr, min, max)
-            Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+            Using st As New ModificationsTracker(mgr)
                 Do
                     Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
                     Do While t Is Nothing
@@ -15,7 +15,7 @@ Module TestLocks
                     Loop
                     t.Name = Guid.NewGuid.ToString
                 Loop While st.Saver.AffectedObjects.Count < 2
-                st.Commit()
+                st.AcceptModifications()
             End Using
         End Using
     End Sub

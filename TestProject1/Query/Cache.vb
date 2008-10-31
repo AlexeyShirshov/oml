@@ -62,10 +62,10 @@ Imports Worm.Database.Criteria.Joins
 
             mgr.BeginTransaction()
             Try
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
                     Dim t1 As Table1 = s.CreateNewObject(Of Table1)()
                     t1.CreatedAt = Now
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(2, q.ToEntityList(Of Table1)(mgr).Count)
@@ -87,11 +87,11 @@ Imports Worm.Database.Criteria.Joins
 
             mgr.BeginTransaction()
             Try
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
                     Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
                     t.EnumStr = Enum1.sec
 
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(3, q.ToEntityList(Of Table1)(mgr).Count)
@@ -116,10 +116,10 @@ Imports Worm.Database.Criteria.Joins
 
             mgr.BeginTransaction()
             Try
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
                     t1.Delete()
 
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(0, q.ToEntityList(Of Table2)(mgr).Count)
@@ -142,11 +142,11 @@ Imports Worm.Database.Criteria.Joins
 
             mgr.BeginTransaction()
             Try
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
                     Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
                     t.EnumStr = Enum1.sec
 
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(3, q.ToEntityList(Of Table1)(mgr).Count)
@@ -169,11 +169,11 @@ Imports Worm.Database.Criteria.Joins
 
             mgr.BeginTransaction()
             Try
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
                     Dim t1 As Table2 = s.CreateNewObject(Of Table2)()
                     t1.Money = 1
                     t1.Tbl = mgr.Find(Of Table1)(2)
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(2, q.ToEntityList(Of Table1)(mgr).Count)
@@ -194,10 +194,10 @@ Imports Worm.Database.Criteria.Joins
 
             mgr.BeginTransaction()
             Try
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
                     Dim t1 As Table2 = l(0)
                     t1.Money = 1
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(0, q.ToEntityList(Of Table2)(mgr).Count)
@@ -330,7 +330,7 @@ Imports Worm.Database.Criteria.Joins
 
             mgr.BeginTransaction()
             Try
-                Using s As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                Using s As New ModificationsTracker(mgr)
                     Dim en4 As Entity4 = s.CreateNewObject(Of Entity4)()
                     en4.Title = "xxx"
                     e.M2MNew.Add(en4)
@@ -341,7 +341,7 @@ Imports Worm.Database.Criteria.Joins
                     Assert.AreEqual(1, q2.ToEntityList(Of Entity4)(mgr).Count)
                     Assert.IsTrue(q2.LastExecitionResult.CacheHit)
 
-                    s.Commit()
+                    s.AcceptModifications()
                 End Using
 
                 Assert.AreEqual(5, q.ToEntityList(Of Entity4)(mgr).Count)

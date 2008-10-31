@@ -3,7 +3,6 @@ Imports Worm.Cache
 Imports Worm
 Imports Worm.Database.Criteria
 Imports Worm.Database.OrmReadOnlyDBManager
-Imports Worm.Database.OrmReadOnlyDBManager.BatchSaver
 
 Module Module2
 
@@ -74,7 +73,7 @@ Module Module2
             End Get
         End Property
 
-        Public Sub ObjectSaving(ByVal sender As BatchSaver, ByVal args As CancelEventArgs)
+        Public Sub ObjectSaving(ByVal sender As ObjectListSaver, ByVal args As ObjectListSaver.CancelEventArgs)
             _s = args.SavedObject.ObjectState
         End Sub
 
@@ -294,7 +293,7 @@ Module Module2
                                 Dim ls As New TextWriterTraceListener(sw)
                                 mgr.AddListener(ls)
                                 Try
-                                    Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                                    Using st As New ModificationsTracker(mgr)
                                         Using t.BeginAlter
                                             'If t.InternalProperties.ObjectState <> Orm.ObjectState.Deleted Then
                                             done = t.Delete()
@@ -313,7 +312,7 @@ Module Module2
                                         End If
                                         'Debug.Assert(Not done OrElse st.Saver.AffectedObjects.Count > 0)
                                         'Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
-                                        st.Commit()
+                                        st.AcceptModifications()
                                         Debug.Assert(Not done OrElse t.InternalProperties.ObjectState = Orm.ObjectState.Deleted)
                                         AddHandler st.Saver.ObjectSaving, AddressOf t.ObjectSaving
                                         AddHandler st.Saver.ObjectSaved, AddressOf ObjectSaved
@@ -360,7 +359,7 @@ Module Module2
                 Dim done As Boolean
                 Do
                     Try
-                        Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                        Using st As New ModificationsTracker(mgr)
                             'Dim t As New TestEditTable(GetIdentity, mgr.Cache, mgr.ObjectSchema)
                             Dim t As TestEditTable = mgr.CreateOrmBase(Of TestEditTable)(GetIdentity)
                             t.Name = Guid.NewGuid.ToString
@@ -368,7 +367,7 @@ Module Module2
                                 t.Code = r.Next(1000)
                             End If
                             st.Add(t)
-                            st.Commit()
+                            st.AcceptModifications()
                         End Using
                         done = True
                     Catch ex As InvalidOperationException When ex.Message.Contains("Timeout expired")
@@ -398,7 +397,7 @@ Module Module2
                     Try
                         Dim min As Integer, max As Integer
                         GetMinMax(mgr, min, max)
-                        Using st As New OrmReadOnlyDBManager.OrmTransactionalScope(mgr)
+                        Using st As New ModificationsTracker(mgr)
                             Do
                                 Dim t As TestEditTable = mgr.Find(Of TestEditTable)(r.Next(min, max))
                                 If t IsNot Nothing Then
@@ -421,7 +420,7 @@ Module Module2
                                 End If
                                 If st.Saver.AffectedObjects.Count > 4 Then Exit For
                             Loop While True
-                            st.Commit()
+                            st.AcceptModifications()
                         End Using
                         done = True
                     Catch ex As OrmManagerException When ex.InnerException IsNot Nothing AndAlso ex.InnerException.Message = "xxx"
