@@ -3260,6 +3260,7 @@ l1:
     End Function
 
     Public Function SaveChanges(ByVal obj As _ICachedEntity, ByVal AcceptChanges As Boolean) As Boolean
+        Dim oldObj As ICachedEntity = Nothing
         Try
             If _cache.IsReadonly Then
                 Throw New OrmManagerException("Cache is readonly")
@@ -3410,7 +3411,7 @@ l1:
                         If hasNew Then
                             Throw New OrmObjectException("Cannot accept changes. Some of relation has new objects")
                         End If
-                        obj.AcceptChanges(False, OrmBase.IsGoodState(state))
+                        oldObj = obj.AcceptChanges(False, OrmBase.IsGoodState(state))
                     End If
 
                     err = False
@@ -3430,7 +3431,7 @@ l1:
         Finally
             '            If obj.ObjSaved AndAlso AcceptChanges Then
             If AcceptChanges Then
-                obj.UpdateCache()
+                obj.UpdateCache(oldObj)
             End If
         End Try
     End Function

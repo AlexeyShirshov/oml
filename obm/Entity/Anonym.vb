@@ -149,7 +149,7 @@ Namespace Orm
 
         End Function
 
-        Public Sub UpdateCache() Implements ICachedEntity.UpdateCache
+        Public Sub UpdateCache(ByVal oldObj As ICachedEntity) Implements _ICachedEntity.UpdateCache
 
         End Sub
 

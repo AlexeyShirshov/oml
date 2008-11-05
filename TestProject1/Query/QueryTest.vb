@@ -220,8 +220,7 @@ Imports Worm.Database.Criteria.Joins
             Dim t_entity5 As Type = GetType(Entity5)
 
             Dim q As New QueryCmd(t_entity)
-            Dim jf As New JoinFilter(t_entity4, t_entity)
-            q.Joins = New OrmJoin() {New OrmJoin(t_entity4, Worm.Criteria.Joins.JoinType.Join, jf)}
+            q.Joins = New OrmJoin() {New OrmJoin(t_entity4, Worm.Criteria.Joins.JoinType.Join, t_entity)}
             q = q.Where(Ctor.Field(t_entity4, "Title").Like("%b")). _
                 Select(FCtor.Field(t_entity, "ID").Add(t_entity4, "Title"))
 
@@ -394,10 +393,10 @@ Imports Worm.Database.Criteria.Joins
             'q.GroupBy(New OrmProperty() {New OrmProperty(t, "code")}). _
             'Select(New OrmProperty() {New OrmProperty(t, "code", "Code")}).Sort(Sorting.Custom("cnt desc"))
 
-            q.GroupBy(FCtor.Column(t, "code")). _
-                Select(FCtor.Column(t, "code", "Code")). _
-                Sort(Sorting.Custom("cnt desc")). _
-                SelectAgg(AggCtor.Count("cnt"))
+            q.Select(FCtor.Column(t, "code", "Code")). _
+                SelectAgg(AggCtor.Count("cnt")). _
+                GroupBy(FCtor.Column(t, "code")). _
+                Sort(Sorting.Custom("cnt desc"))
 
             Dim l As IList(Of Worm.Orm.AnonymousEntity) = q.ToObjectList(Of Worm.Orm.AnonymousEntity)(mgr)
 
