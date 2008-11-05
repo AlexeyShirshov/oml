@@ -69,6 +69,7 @@ Imports Worm.Database.Criteria.Joins
                 End Using
 
                 Assert.AreEqual(2, q.ToEntityList(Of Table1)(mgr).Count)
+                Assert.IsFalse(q.LastExecitionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
@@ -91,6 +92,33 @@ Imports Worm.Database.Criteria.Joins
                     Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
                     t.EnumStr = Enum1.sec
 
+                    s.AcceptModifications()
+                End Using
+
+                Assert.AreEqual(3, q.ToEntityList(Of Table1)(mgr).Count)
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestFilterUpdateBatch()
+        Dim m As New TestManagerRS
+        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
+            Dim q As New QueryCmd(GetType(Table1))
+            q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
+            Assert.IsNotNull(q)
+
+            Assert.AreEqual(2, q.ToEntityList(Of Table1)(mgr).Count)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New ModificationsTracker(mgr)
+                    Dim t As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+                    t.EnumStr = Enum1.sec
+
+                    s.Saver.AcceptInBatch = True
                     s.AcceptModifications()
                 End Using
 

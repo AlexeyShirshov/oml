@@ -25,9 +25,6 @@ Namespace Criteria.Joins
         Friend _e2 As Pair(Of Type, String)
         Friend _t2 As Pair(Of SourceFragment, String)
 
-        Friend _types As Pair(Of Type)
-        Friend _key As String
-
         Friend _oper As FilterOperation
 
         Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal t2 As Type, ByVal fieldName2 As String, ByVal operation As FilterOperation)
@@ -78,14 +75,14 @@ Namespace Criteria.Joins
             _oper = operation
         End Sub
 
-        Public Sub New(ByVal t1 As Type, ByVal t2 As Type)
-            MyClass.New(t1, t2, Nothing)
-        End Sub
+        'Public Sub New(ByVal t1 As Type, ByVal t2 As Type)
+        '    MyClass.New(t1, t2, Nothing)
+        'End Sub
 
-        Public Sub New(ByVal t1 As Type, ByVal t2 As Type, ByVal key As String)
-            _types = New Pair(Of Type)(t1, t2)
-            _key = key
-        End Sub
+        'Public Sub New(ByVal t1 As Type, ByVal t2 As Type, ByVal key As String)
+        '    _types = New Pair(Of Type)(t1, t2)
+        '    _key = key
+        'End Sub
 
         Protected Sub New()
         End Sub
@@ -149,16 +146,16 @@ Namespace Criteria.Joins
                 sb.Append(_e1.First.ToString).Append(_e1.Second).Append(" - ")
             ElseIf _t1 IsNot Nothing Then
                 sb.Append(_t1.First.RawName).Append(_t1.Second).Append(" - ")
-            Else
-                sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
+                'Else
+                '    sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
             End If
 
             If _e2 IsNot Nothing Then
                 sb.Append(_e2.First.ToString).Append(_e2.Second).Append(" - ")
             ElseIf _t2 IsNot Nothing Then
                 sb.Append(_t2.First.RawName).Append(_t2.Second).Append(" - ")
-            Else
-                sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
+                'Else
+                '    sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
             End If
 
             Return sb.ToString
@@ -219,6 +216,8 @@ Namespace Criteria.Joins
         Protected _condition As Core.IFilter
         Protected _type As Type
         Protected _en As String
+        Private _jt As Type
+        Private _key As String
 
         Public Sub New(ByVal table As SourceFragment, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
             _table = table
@@ -236,6 +235,13 @@ Namespace Criteria.Joins
             _en = entityName
             _joinType = joinType
             _condition = condition
+        End Sub
+
+        Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal joinEntityType As Type)
+            _type = type
+            _joinType = joinType
+            _condition = Condition
+            _jt = joinEntityType
         End Sub
 
         Public Shared Function IsEmpty(ByVal j As OrmJoin) As Boolean

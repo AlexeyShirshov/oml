@@ -413,7 +413,7 @@ l1:
                             RaiseEvent BeginAccepting()
                             If _acceptInBatch Then
                                 'Dim l As New Dictionary(Of OrmBase, OrmBase)
-                                Dim l2 As New Dictionary(Of Type, List(Of _ICachedEntity))
+                                Dim l2 As New Dictionary(Of Type, List(Of Pair(Of _ICachedEntity)))
                                 Dim val As New List(Of ICachedEntity)
                                 For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                     Dim o As _ICachedEntity = p.Second
@@ -422,38 +422,39 @@ l1:
                                     Debug.Assert(_mgr.Cache.ShadowCopy(o) Is Nothing)
                                     'l.Add(o, mo)
                                     RaiseEvent ObjectAccepted(o)
-                                    If CType(o, _ICachedEntity).UpdateCtx.Added OrElse CType(o, _ICachedEntity).UpdateCtx.Deleted Then
-                                        Dim ls As List(Of _ICachedEntity) = Nothing
-                                        If Not l2.TryGetValue(o.GetType, ls) Then
-                                            ls = New List(Of _ICachedEntity)
-                                            l2.Add(o.GetType, ls)
-                                        End If
-                                        ls.Add(o)
-                                    Else
+                                    If o.UpdateCtx.UpdatedFields IsNot Nothing Then
                                         val.Add(o)
                                     End If
-                                Next
-                                For Each o As CachedEntity In val
-                                    o.UpdateCacheAfterUpdate()
+                                    Dim ls As List(Of Pair(Of _ICachedEntity)) = Nothing
+                                    If Not l2.TryGetValue(o.GetType, ls) Then
+                                        ls = New List(Of Pair(Of _ICachedEntity))
+                                        l2.Add(o.GetType, ls)
+                                    End If
+                                    ls.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
                                 Next
                                 For Each t As Type In l2.Keys
-                                    Dim ls As List(Of _ICachedEntity) = l2(t)
+                                    Dim ls As List(Of Pair(Of _ICachedEntity)) = l2(t)
                                     '_mgr.Cache.UpdateCache(_mgr.ObjectSchema, ls, _mgr, _
                                     '    AddressOf OrmBase.Accept_AfterUpdateCache, l, _callbacks)
                                     CType(_mgr.Cache, OrmCache).UpdateCache(_mgr.MappingEngine, ls, _mgr, _
-                                        AddressOf CachedEntity.ClearCacheFlags, Nothing, _callbacks)
+                                        AddressOf CachedEntity.ClearCacheFlags, Nothing, _callbacks, False, False)
+                                Next
+                                For Each o As CachedEntity In val
+                                    o.UpdateCacheAfterUpdate(CType(_mgr.Cache, OrmCache))
                                 Next
                             Else
+                                Dim svd As New List(Of Pair(Of _ICachedEntity))
                                 For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                     Dim o As _ICachedEntity = p.Second
                                     RaiseEvent ObjectAccepting(o)
-                                    o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
+                                    Dim mo As ICachedEntity = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
                                     Debug.Assert(_mgr.Cache.ShadowCopy(o) Is Nothing)
                                     RaiseEvent ObjectAccepted(o)
+                                    svd.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
                                 Next
-                                For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
-                                    Dim o As ICachedEntity = p.Second
-                                    o.UpdateCache()
+                                For Each p As Pair(Of _ICachedEntity) In svd
+                                    Dim o As _ICachedEntity = p.First
+                                    o.UpdateCache(p.Second)
                                 Next
                             End If
 

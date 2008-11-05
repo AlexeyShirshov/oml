@@ -546,7 +546,7 @@ Namespace Orm
                         If _upd.Deleted Then
                             '_valProcs = False
                             If updateCache AndAlso c IsNot Nothing Then
-                                c.UpdateCache(mc.MappingEngine, New CachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
+                                c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(Me, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, False)
                                 'mc.Cache.UpdateCacheOnDelete(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing)
                             End If
                             Accept_AfterUpdateCacheDelete(Me, mc)
@@ -561,13 +561,16 @@ Namespace Orm
                             End If
                             If updateCache AndAlso c IsNot Nothing Then
                                 'mc.Cache.UpdateCacheOnAdd(mc.ObjectSchema, New OrmBase() {Me}, mc, Nothing, Nothing)
-                                c.UpdateCache(mc.MappingEngine, New CachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
+                                c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(Me, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, False)
                             End If
                             Accept_AfterUpdateCacheAdd(Me, mc, mo)
                             RaiseEvent Added(Me, EventArgs.Empty)
                         Else
                             If updateCache Then
-                                UpdateCacheAfterUpdate()
+                                UpdateCacheAfterUpdate(c)
+                                If c IsNot Nothing Then
+                                    c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(Me, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, True)
+                                End If
                             End If
                             RaiseEvent Updated(Me, EventArgs.Empty)
                         End If
@@ -1174,14 +1177,14 @@ l1:
             End Using
         End Function
 
-        Public Sub UpdateCache() Implements ICachedEntity.UpdateCache
+        Public Sub UpdateCache(ByVal oldObj As ICachedEntity) Implements _ICachedEntity.UpdateCache
             Using gmc As IGetManager = GetMgr()
                 Dim mc As OrmManager = gmc.Manager
-                UpdateCacheAfterUpdate()
                 Dim c As OrmCache = CType(mc.Cache, OrmCache)
-                If (_upd.Deleted OrElse _upd.Added) AndAlso c IsNot Nothing Then
-                    c.UpdateCache(mc.MappingEngine, New ICachedEntity() {Me}, mc, AddressOf ClearCacheFlags, Nothing, Nothing)
+                If c IsNot Nothing Then
+                    c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(Me, CType(oldObj, _ICachedEntity))}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, _upd.UpdatedFields IsNot Nothing)
                 End If
+                UpdateCacheAfterUpdate(c)
                 For Each el As EditableListBase In New List(Of EditableListBase)(_upd.Relations)
                     If c IsNot Nothing Then
                         c.RemoveM2MQueries(el)
@@ -1445,24 +1448,21 @@ l1:
             End Get
         End Property
 
-        Protected Friend Sub UpdateCacheAfterUpdate()
-            Dim l As List(Of String) = Nothing
+        Protected Friend Sub UpdateCacheAfterUpdate(ByVal c As OrmCache)
             If _upd.UpdatedFields IsNot Nothing Then
-                l = New List(Of String)
-                For Each f As Criteria.Core.EntityFilterBase In _upd.UpdatedFields
-                    '    Assert(f.Type Is t, "")
-
-                    '    Cache.AddUpdatedFields(obj, f.FieldName)
-                    l.Add(f.Template.FieldName)
-                Next
-            End If
-            Using mc As IGetManager = GetMgr()
-                Dim c As OrmCache = TryCast(mc.Manager.Cache, OrmCache)
                 If c IsNot Nothing Then
+                    Dim l As List(Of String) = New List(Of String)
+                    For Each f As Criteria.Core.EntityFilterBase In _upd.UpdatedFields
+                        '    Assert(f.Type Is t, "")
+
+                        '    Cache.AddUpdatedFields(obj, f.FieldName)
+                        l.Add(f.Template.FieldName)
+                    Next
+
                     c.AddUpdatedFields(Me, l)
                 End If
                 _upd.UpdatedFields = Nothing
-            End Using
+            End If
         End Sub
 
         Protected Overridable Function ForseUpdate(ByVal c As ColumnAttribute) As Boolean Implements _ICachedEntity.ForseUpdate

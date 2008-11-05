@@ -107,7 +107,7 @@ Namespace Query
                         If _f IsNot Nothing AndAlso _f.Length > i Then
                             Dim added As Boolean = False
                             If rightType AndAlso Not notPreciseDependsAD Then
-                                added = cache.validate_AddCalculatedType(q.SelectedType, _key, _id, _f(i))
+                                added = cache.validate_AddCalculatedType(q.SelectedType, _key, _id, _f(i), MappingEngine.GetObjectSchema(q.SelectedType), Mgr.GetFilterInfo)
                             End If
 
                             If Not added Then
@@ -133,6 +133,8 @@ Namespace Query
                                     End If
                                 Next
                             End If
+                        ElseIf rightType AndAlso Not notPreciseDependsAD Then
+                            cache.validate_AddDeleteType(q.SelectedType, _key, _id)
                         End If
                     Else
                         If rightType Then
@@ -183,6 +185,18 @@ Namespace Query
                             notPreciseDependsU = True
                         End If
                     Next
+
+                    If q.Group IsNot Nothing Then
+                        For Each g As Grouping In q.Group
+                            If Not String.IsNullOrEmpty(g.Field) Then
+                                Dim p As New Pair(Of String, Type)(g.Field, g.Type)
+                                cache.validate_AddDependentGroupField(p, _key, _id)
+                            ElseIf rightType AndAlso Not notPreciseDependsU Then
+                                cache.validate_UpdateType(q.SelectedType, _key, _id)
+                                notPreciseDependsU = True
+                            End If
+                        Next
+                    End If
 
                     If q.Obj IsNot Nothing Then
                         cache.AddM2MSimpleQuery(q.Obj.GetRelation(q.SelectedType, q.M2MKey), _key, _id)

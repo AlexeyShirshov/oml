@@ -61,6 +61,7 @@ Namespace Orm
         Function Save(ByVal mc As OrmManager) As Boolean
         Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
         Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine)
+        Sub UpdateCache(ByVal oldObj As ICachedEntity)
     End Interface
 
     Public Interface ICachedEntity
@@ -70,7 +71,6 @@ Namespace Orm
         Sub CreateCopyForSaveNewEntry(ByVal pk() As PKDesc)
         Sub Load()
         Sub RemoveFromCache(ByVal cache As CacheBase)
-        Sub UpdateCache()
         Function GetPKValues() As PKDesc()
         Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean
         Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity

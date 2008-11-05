@@ -25,13 +25,13 @@ Namespace Database
                 MyBase.New(table, column, table2, column2, operation)
             End Sub
 
-            Public Sub New(ByVal t1 As Type, ByVal t2 As Type)
-                MyBase.New(t1, t2, Nothing)
-            End Sub
+            'Public Sub New(ByVal t1 As Type, ByVal t2 As Type)
+            '    MyBase.New(t1, t2, Nothing)
+            'End Sub
 
-            Public Sub New(ByVal t1 As Type, ByVal t2 As Type, ByVal key As String)
-                MyBase.New(t1, t2, key)
-            End Sub
+            'Public Sub New(ByVal t1 As Type, ByVal t2 As Type, ByVal key As String)
+            '    MyBase.New(t1, t2, key)
+            'End Sub
 
             Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
                 Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
@@ -164,6 +164,10 @@ Namespace Database
                 MyBase.New(t, joinType, condition)
             End Sub
 
+            Public Sub New(ByVal t As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal joinEntityType As Type)
+                MyBase.New(t, joinType, joinEntityType)
+            End Sub
+
             Public Sub New(ByVal entityName As String, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As IFilter)
                 MyBase.New(entityName, joinType, condition)
             End Sub
@@ -227,7 +231,7 @@ Namespace Database
             Friend _j As New List(Of OrmJoin)
 
             Public Shared Function Join(ByVal t As Type) As JoinCondition
-                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, Nothing)
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
                 Dim jc As New JCtor
                 jc._j.Add(j)
                 Return New JoinCondition(jc)
@@ -241,7 +245,7 @@ Namespace Database
             End Function
 
             Public Shared Function LeftJoin(ByVal t As Type) As JoinCondition
-                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, CType(Nothing, IFilter))
                 Dim jc As New JCtor
                 jc._j.Add(j)
                 Return New JoinCondition(jc)
@@ -255,7 +259,7 @@ Namespace Database
             End Function
 
             Public Shared Function RightJoin(ByVal t As Type) As JoinCondition
-                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, CType(Nothing, IFilter))
                 Dim jc As New JCtor
                 jc._j.Add(j)
                 Return New JoinCondition(jc)
@@ -391,7 +395,7 @@ Namespace Database
 
             Public Function Join(ByVal t As Type) As JoinCondition
                 JC.AddFilter(_c.Condition)
-                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, Nothing)
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.Join, CType(Nothing, IFilter))
                 JC._j.Add(j)
                 Return New JoinCondition(JC)
             End Function
@@ -405,7 +409,7 @@ Namespace Database
 
             Public Function LeftJoin(ByVal t As Type) As JoinCondition
                 JC.AddFilter(_c.Condition)
-                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, Nothing)
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.LeftOuterJoin, CType(Nothing, IFilter))
                 JC._j.Add(j)
                 Return New JoinCondition(JC)
             End Function
@@ -419,7 +423,7 @@ Namespace Database
 
             Public Function RightJoin(ByVal t As Type) As JoinCondition
                 JC.AddFilter(_c.Condition)
-                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, Nothing)
+                Dim j As New OrmJoin(t, Worm.Criteria.Joins.JoinType.RightOuterJoin, CType(Nothing, IFilter))
                 JC._j.Add(j)
                 Return New JoinCondition(JC)
             End Function
