@@ -4,12 +4,17 @@ using System.IO;
 
 namespace TestsCodeGenLib
 {
-    class Resources
+    public class Resources
     {
         public static Stream GetXmlDocumentStream(string documentName)
         {
+            return GetXmlDocumentStream(documentName, Assembly.GetExecutingAssembly());
+        }
+
+        public static Stream GetXmlDocumentStream(string documentName, Assembly assembly)
+        {
             string extension = "xml";
-            Assembly assembly = Assembly.GetExecutingAssembly();
+            
             string resourceName;
             resourceName = string.Format("{0}.{1}.{2}", assembly.GetName().Name, documentName, extension);
 
@@ -19,7 +24,11 @@ namespace TestsCodeGenLib
         public static XmlDocument GetXmlDocument(string documentName)
         {
             XmlDocument doc = new XmlDocument();
-            doc.Load(GetXmlDocumentStream(documentName));
+            using(Stream stream = GetXmlDocumentStream(documentName))
+            {
+                doc.Load(stream);    
+            }
+            
             return doc;
         }
     }
