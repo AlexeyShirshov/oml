@@ -183,6 +183,11 @@ namespace Worm.CodeGen.Core.Descriptors
 			set { _namespace = value; }
 		}
 
+	    public string RawNamespace
+	    {
+            get { return _namespace; }
+	    }
+
 		public EntityDescription BaseEntity
 		{
 			get { return _baseEntity; }

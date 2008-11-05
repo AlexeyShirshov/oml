@@ -567,10 +567,10 @@ Namespace Orm
                             RaiseEvent Added(Me, EventArgs.Empty)
                         Else
                             If updateCache Then
-                                UpdateCacheAfterUpdate(c)
                                 If c IsNot Nothing Then
                                     c.UpdateCache(mc.MappingEngine, New Pair(Of _ICachedEntity)() {New Pair(Of _ICachedEntity)(Me, mo)}, mc, AddressOf ClearCacheFlags, Nothing, Nothing, False, True)
                                 End If
+                                UpdateCacheAfterUpdate(c)
                             End If
                             RaiseEvent Updated(Me, EventArgs.Empty)
                         End If

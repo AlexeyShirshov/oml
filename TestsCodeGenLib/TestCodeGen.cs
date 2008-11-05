@@ -90,8 +90,8 @@ namespace TestsCodeGenLib
             {
                 odef = OrmObjectsDef.LoadFromXml(reader);
             }
-            OrmCodeDomGenerator gen = new OrmCodeDomGenerator(odef);
-            Dictionary<string,CodeCompileUnit> dic = gen.GetFullDom(settings);
+            OrmCodeDomGenerator gen = new OrmCodeDomGenerator(odef, settings);
+            Dictionary<string,CodeCompileUnit> dic = gen.GetFullDom();
 
             
             CompilerParameters prms = new CompilerParameters();

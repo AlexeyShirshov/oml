@@ -1,3 +1,4 @@
+using System;
 using System.Text.RegularExpressions;
 using Worm.CodeGen.Core.Descriptors;
 
@@ -5,12 +6,26 @@ namespace Worm.CodeGen.Core
 {
     internal static class OrmCodeGenNameHelper
     {
+
+        public static event OrmCodeDomGenerator.GetSettingsDelegate OrmCodeDomGeneratorSettingsRequied;
+
         public static string GetPrivateMemberName(string name)
         {
-            OrmCodeDomGeneratorSettings settings = SettingsManager.CurrentManager.OrmCodeDomGeneratorSettings;
+            OrmCodeDomGeneratorSettings settings = GetSettings();
+
             if (string.IsNullOrEmpty(name))
                 return string.Empty;
             return settings.PrivateMembersPrefix + name.Substring(0, 1).ToLower() + name.Substring(1);
+        }
+
+        private static OrmCodeDomGeneratorSettings GetSettings()
+        {
+            OrmCodeDomGeneratorSettings settings = null;
+            var h = OrmCodeDomGeneratorSettingsRequied;
+            if(h != null)
+                settings = h();
+            if (settings == null) throw new Exception("OrmCodeDomGeneratorSettings requied.");
+            return settings;
         }
 
         public static string GetSafeName(string p)
@@ -23,7 +38,7 @@ namespace Worm.CodeGen.Core
 
         public static string GetEntityFileName(EntityDescription entity)
         {
-            OrmCodeDomGeneratorSettings settings = SettingsManager.CurrentManager.OrmCodeDomGeneratorSettings;
+            OrmCodeDomGeneratorSettings settings = GetSettings();
             string baseName = 
                 // prefix for file name
                 settings.FileNamePrefix + 
@@ -36,7 +51,7 @@ namespace Worm.CodeGen.Core
 
         public static string GetEntitySchemaDefFileName(EntityDescription entity)
         {
-            OrmCodeDomGeneratorSettings settings = SettingsManager.CurrentManager.OrmCodeDomGeneratorSettings;
+            OrmCodeDomGeneratorSettings settings = GetSettings();
             string baseName = 
                 settings.FileNamePrefix + 
                 GetEntitySchemaDefClassName(entity) +
@@ -62,7 +77,7 @@ namespace Worm.CodeGen.Core
 		/// <returns></returns>
         public static string GetEntityClassName(EntityDescription entity, bool qualified)
         {
-			OrmCodeDomGeneratorSettings settings = SettingsManager.CurrentManager.OrmCodeDomGeneratorSettings;
+            OrmCodeDomGeneratorSettings settings = GetSettings();
 
 			string className =
 				// prefix from settings for class name
@@ -88,7 +103,7 @@ namespace Worm.CodeGen.Core
         /// <returns></returns>
         public static string GetEntitySchemaDefClassName(EntityDescription entity)
         {
-            OrmCodeDomGeneratorSettings settings = SettingsManager.CurrentManager.OrmCodeDomGeneratorSettings;
+            OrmCodeDomGeneratorSettings settings = GetSettings();
             return 
                 // name of the entity class name
                 GetEntityClassName(entity) + 

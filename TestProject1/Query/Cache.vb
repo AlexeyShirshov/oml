@@ -10,6 +10,7 @@ Imports Worm.Orm.Meta
 Imports Worm.Database.Criteria.Core
 Imports Worm.Criteria.Values
 Imports Worm.Database.Criteria.Joins
+Imports Worm.Orm
 
 <TestClass()> Public Class DeferredCacheQueryTest
 
@@ -443,6 +444,37 @@ Imports Worm.Database.Criteria.Joins
                 Assert.AreEqual(f, q.ToOrmList(Of Table1)(mgr)(0))
                 Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestGroupUpdate()
+        Dim m As New TestManagerRS
+        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
+            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
+
+            Dim q As QueryCmd = New QueryCmd(GetType(Table1)). _
+                Select(FCtor.Field(GetType(Table1), "EnumStr")). _
+                SelectAgg(AggCtor.Count("cnt")). _
+                GroupBy(FCtor.Field(GetType(Table1), "EnumStr"))
+
+            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
+
+            Assert.AreEqual(2, l.Count)
+
+            mgr.BeginTransaction()
+            Try
+                Using s As New ModificationsTracker(mgr)
+                    Dim f As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
+                    f.EnumStr = Enum1.sec
+
+                    s.AcceptModifications()
+                End Using
+
+                Assert.AreEqual(1, q.ToObjectList(Of AnonymousEntity)(mgr).Count)
+                Assert.IsFalse(q.LastExecitionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try
