@@ -43,6 +43,8 @@ namespace Worm.CodeGen.Core
 
             FillFileDescriptions();
 
+            FillLinqSettings();
+
             FillImports();           
 
             FillTables();
@@ -52,6 +54,27 @@ namespace Worm.CodeGen.Core
             FillEntities();
 
             FillRelations();
+        }
+
+        private void FillLinqSettings()
+        {
+            if (_ormObjectsDef.LinqSettings == null)
+                return;
+
+            var linqSettings = CreateElement("Linq");
+            _ormXmlDocumentMain.DocumentElement.AppendChild(linqSettings);
+
+            linqSettings.SetAttribute("enable", XmlConvert.ToString(_ormObjectsDef.LinqSettings.Enable));
+
+            if (!string.IsNullOrEmpty(_ormObjectsDef.LinqSettings.ContextName))
+                linqSettings.SetAttribute("contextName", _ormObjectsDef.LinqSettings.ContextName);
+
+            if (!string.IsNullOrEmpty(_ormObjectsDef.LinqSettings.FileName))
+                linqSettings.SetAttribute("filename", _ormObjectsDef.LinqSettings.FileName);
+
+            if (_ormObjectsDef.LinqSettings.ContextClassBehaviour.HasValue)
+                linqSettings.SetAttribute("contextClassBehaviour",
+                                          _ormObjectsDef.LinqSettings.ContextClassBehaviour.ToString());
         }
 
         private void FillImports()

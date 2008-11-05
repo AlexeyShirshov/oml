@@ -61,8 +61,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CodeDomExtensions\CodeCompileFileUnit.cs" />
     <Compile Include="CodeDomExtensions\CodeEntityInterfaceDeclaration.cs" />
     <Compile Include="CodeDomExtensions\CodeEntityTypeDeclaration.cs" />
+    <Compile Include="CodeDomExtensions\CodeLinqContextDeclaration.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeAsExpressionBase.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeCsAsExpression.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\AsExpression\CodeVbAsExpression.cs" />
@@ -82,6 +84,7 @@
     <Compile Include="CodeDomPatterns\LanguageDependent\XorExpression\CodeCsXorExpression.cs" />
     <Compile Include="CodeDomPatterns\LanguageDependent\XorExpression\CodeVbXorExpression.cs" />
     <Compile Include="CodeGenHelper.cs" />
+    <Compile Include="Descriptors\LinqSettingsDescriptor.cs" />
     <Compile Include="Descriptors\SelfRelationDescription.cs" />
     <Compile Include="Descriptors\SelfRelationTarget.cs" />
     <Compile Include="Enums.cs" />

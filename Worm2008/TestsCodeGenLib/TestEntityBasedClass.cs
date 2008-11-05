@@ -42,8 +42,8 @@ namespace TestsCodeGenLib
 
 		private void CompileCode(OrmObjectsDef odef, CodeDomProvider prov, OrmCodeDomGeneratorSettings settings)
 		{
-			OrmCodeDomGenerator gen = new OrmCodeDomGenerator(odef);
-			Dictionary<string, CodeCompileUnit> dic = gen.GetFullDom(settings);
+			OrmCodeDomGenerator gen = new OrmCodeDomGenerator(odef, settings);
+			Dictionary<string, CodeCompileUnit> dic = gen.GetFullDom();
 
 			CompilerParameters prms = new CompilerParameters();
 			prms.GenerateExecutable = false;

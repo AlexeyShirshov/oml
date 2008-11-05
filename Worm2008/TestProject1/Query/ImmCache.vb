@@ -373,6 +373,7 @@ Imports Worm
             Try
                 Using s As New ModificationsTracker(mgr)
                     f.Title = "djkg"
+
                     s.AcceptModifications()
                 End Using
 
@@ -380,7 +381,7 @@ Imports Worm
                 Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
                 Assert.AreEqual(1, q2.ToOrmList(Of Entity4)(mgr).Count)
-                Assert.IsFalse(q2.LastExecitionResult.CacheHit)
+                Assert.IsTrue(q2.LastExecitionResult.CacheHit)
 
             Finally
                 mgr.Rollback()

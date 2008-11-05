@@ -21,25 +21,16 @@ namespace Worm.CodeGen.Core
     	//private readonly List<SelfRelationDescription> _selfRelations;
         private readonly List<TypeDescription> _types;
         private readonly IncludesCollection _includes;
-        private OrmObjectsDef _base;
-		private bool _enableReadOnlyPropertiesSetter;
 
-        private string _namespace;
-        private string _schemaVersion;
-        private string _uri;
-        private readonly List<string> _userComments;
+	    private readonly List<string> _userComments;
         private readonly List<string> _systemComments;
         private readonly string _appName;
         private readonly string _appVersion;
 
-        private string _fileName;
-
-		private string _entityBaseTypeName;
+	    private string _entityBaseTypeName;
 		private TypeDescription _entityBaseType;
 
-		private bool _enableCommonPropertyChangedFire;
-
-        #endregion Private Fields
+	    #endregion Private Fields
 
         public OrmObjectsDef()
         {
@@ -59,7 +50,7 @@ namespace Worm.CodeGen.Core
             }
             _appName = ass.GetName().Name;
             _appVersion = ass.GetName().Version.ToString(4);
-        	_enableReadOnlyPropertiesSetter = false;
+        	EnableReadOnlyPropertiesSetter = false;
         }
 
         #region Properties
@@ -71,6 +62,25 @@ namespace Worm.CodeGen.Core
                 return _entities;
             }
         }
+
+	    public IList<EntityDescription> FlatEntities
+	    {
+	        get
+	        {
+	            IList<EntityDescription> baseFlatEntities = ((BaseSchema == null) ? new List<EntityDescription>() : BaseSchema.FlatEntities);
+	            int count = Entities.Count + ((BaseSchema == null) ? 0 : baseFlatEntities.Count);
+	            var list = new List<EntityDescription>(count);
+	            list.AddRange(Entities);
+
+	            foreach (EntityDescription baseEntityDescription in baseFlatEntities)
+	            {
+	                string name = baseEntityDescription.Name;
+                    if (!list.Exists(entityDescription => entityDescription.Name == name))
+                        list.Add(baseEntityDescription);
+	            }
+	            return list;
+	        }
+	    }
 
 		
         public List<TableDescription> Tables
@@ -96,20 +106,12 @@ namespace Worm.CodeGen.Core
                 return _types;
             }
         }
-        
-        public string Namespace
-        {
-            get { return _namespace; }
-            set { _namespace = value; }
-        }
-                
-        public string SchemaVersion
-        {
-            get { return _schemaVersion; }
-            set { _schemaVersion = value; }
-        }
 
-        public List<string> UserComments
+	    public string Namespace { get; set; }
+
+	    public string SchemaVersion { get; set; }
+
+	    public List<string> UserComments
         {
             get { return _userComments; }
         }
@@ -124,26 +126,14 @@ namespace Worm.CodeGen.Core
             get { return _includes; }
         }
 
-        public string FileUri
-        {
-            get { return _uri; }
-            set { _uri = value; }
-        }
+	    public string FileUri { get; set; }
 
-        public string FileName
-        {
-            get { return _fileName; }
-            set { _fileName = value; }
-        }
+	    public string FileName { get; set; }
 
 
-        public OrmObjectsDef BaseSchema
-        {
-            get { return _base; }
-            internal protected set { _base = value; }
-        }
+	    public OrmObjectsDef BaseSchema { get; protected internal set; }
 
-		public TypeDescription EntityBaseType
+	    public TypeDescription EntityBaseType
 		{
 			get
 			{
@@ -174,19 +164,13 @@ namespace Worm.CodeGen.Core
 			}
 		}
 
-		public bool EnableCommonPropertyChangedFire
-		{
-			get { return _enableCommonPropertyChangedFire; }
-			set { _enableCommonPropertyChangedFire = value; }
-		}
+	    public bool EnableCommonPropertyChangedFire { get; set; }
 
-		public bool EnableReadOnlyPropertiesSetter
-		{
-			get { return _enableReadOnlyPropertiesSetter; }
-			set { _enableReadOnlyPropertiesSetter = value; }
-		}
+	    public bool EnableReadOnlyPropertiesSetter { get; set; }
 
-		//[XmlIgnore]
+	    public LinqSettingsDescriptor LinqSettings { get; set; }
+
+	    //[XmlIgnore]
         //public List<SelfRelationDescription> SelfRelations
         //{
         //    get { return _selfRelations; }
@@ -346,8 +330,8 @@ namespace Worm.CodeGen.Core
 
         public class IncludesCollection : IEnumerable<OrmObjectsDef>
         {
-            private List<OrmObjectsDef> m_list;
-            private OrmObjectsDef _baseObjectsDef;
+            private readonly List<OrmObjectsDef> m_list;
+            private readonly OrmObjectsDef _baseObjectsDef;
 
             public IncludesCollection(OrmObjectsDef baseObjectsDef)
             {

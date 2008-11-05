@@ -87,6 +87,8 @@ namespace Worm.CodeGen.Core
         {
             FillFileDescriptions();
 
+            FillLinqSettings();
+
             FillImports();
 
             FillTables();
@@ -98,6 +100,30 @@ namespace Worm.CodeGen.Core
             FillEntities();
 
             FillRelations();
+        }
+
+        private void FillLinqSettings()
+        {
+            var settingsNode =
+                (XmlElement)_ormXmlDocument.DocumentElement.SelectSingleNode(string.Format("{0}:Linq", OrmObjectsDef.NS_PREFIX),_nsMgr);
+
+            if (settingsNode == null)
+                return;
+
+            _ormObjectsDef.LinqSettings = new LinqSettingsDescriptor();
+
+            _ormObjectsDef.LinqSettings.Enable = XmlConvert.ToBoolean(settingsNode.GetAttribute("enable"));
+
+            _ormObjectsDef.LinqSettings.ContextName = settingsNode.GetAttribute("contextName");
+            _ormObjectsDef.LinqSettings.FileName = settingsNode.GetAttribute("filename");
+
+            string behaviourValue = settingsNode.GetAttribute("contextClassBehaviour");
+            if(!string.IsNullOrEmpty(behaviourValue))
+            {
+                var type =
+                    (ContextClassBehaviourType) Enum.Parse(typeof (ContextClassBehaviourType), behaviourValue);
+                _ormObjectsDef.LinqSettings.ContextClassBehaviour = type;
+            }
         }
 
         private void FillImports()

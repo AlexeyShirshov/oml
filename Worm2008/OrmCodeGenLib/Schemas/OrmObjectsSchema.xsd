@@ -575,7 +575,7 @@
   </xs:simpleType>
   <xs:element name="OrmObjects" type="OrmObjects_t">
     <xs:annotation>
-      <xs:documentation>Схема объектов</xs:documentation>
+      <xs:documentation>Entities schema</xs:documentation>
     </xs:annotation>
     <xs:key name="EntityId">
       <xs:selector xpath="NS:Entities/NS:Entity | ./NS:Includes/NS:OrmObjects/NS:Entities/NS:Entity" />
@@ -594,9 +594,56 @@
       <xs:field xpath="@id" />
     </xs:key>
   </xs:element>
-  <xs:complexType name="OrmObjects_t">
+  <xs:simpleType name="LinqClassContextBehaviour_t">
     <xs:annotation>
-      <xs:documentation>Схема объектов</xs:documentation>
+      <xs:documentation>Context generation behaviour</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="BaseClass">
+        <xs:annotation>
+          <xs:documentation>Generates as base class for future inheritance</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="PartialClass">
+        <xs:annotation>
+          <xs:documentation>Generates partial class.</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+      <xs:enumeration value="BasePartialClass">
+        <xs:annotation>
+          <xs:documentation>Generates as base partial class for future inheritance</xs:documentation>
+        </xs:annotation>
+      </xs:enumeration>
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:complexType name="LinqSettings_t">
+    <xs:annotation>
+      <xs:documentation>Linq settings</xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="enable" type="xs:boolean" use="required">
+      <xs:annotation>
+        <xs:documentation>Enables linq support(generate linq context class)</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="contextName" type="xs:Name" use="optional" default="LinqContext">
+      <xs:annotation>
+        <xs:documentation>Context class name</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="filename" type="xs:Name" use="optional">
+      <xs:annotation>
+        <xs:documentation>Context class file name</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="contextClassBehaviour" type="LinqClassContextBehaviour_t" use="optional" default="BaseClass">
+      <xs:annotation>
+        <xs:documentation>Context class generation behaviour</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+  </xs:complexType>
+    <xs:complexType name="OrmObjects_t">
+    <xs:annotation>
+      <xs:documentation>Entites schmema</xs:documentation>
     </xs:annotation>
     <xs:all>
       <xs:element name="Entities" type="EntitiesCollection_t" minOccurs="0" maxOccurs="1" />
@@ -604,6 +651,7 @@
 	  <xs:element name="EntityRelations" type="EntityRelationsCollection_t" minOccurs="0" maxOccurs="1" />
       <xs:element name="Types" type="TypesCollection_t" maxOccurs="1" minOccurs="0" />
       <xs:element name="Includes" type="IncludesCollection_t" maxOccurs="1" minOccurs="0" />
+      <xs:element name="Linq" type="LinqSettings_t" maxOccurs="1" minOccurs="0" />
     </xs:all>
     <xs:attribute name="defaultNamespace" type="xs:Name" use="optional">
       <xs:annotation>
