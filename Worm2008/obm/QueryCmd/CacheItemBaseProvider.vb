@@ -24,19 +24,18 @@ Namespace Query
         Protected _id As String
         Protected _sync As String
         Protected _dic As IDictionary
+        Private _dp() As Cache.IDependentTypes
 
         Public Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
             ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
-            _q = q
 
-            Reset(mgr, j, f, q.SelectedType, sl)
+            Reset(mgr, j, f, q.SelectedType, sl, q)
         End Sub
 
         Protected Sub New(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
             ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
-            _q = q
 
-            Reset(mgr, j, f, t, sl)
+            Reset(mgr, j, f, t, sl, q)
         End Sub
 
         Public Overridable Property Created() As Boolean Implements ICacheItemProvoderBase.Created
@@ -51,7 +50,7 @@ Namespace Query
         Public Sub CreateDepends() Implements OrmManager.ICacheItemProvoderBase.CreateDepends
             Dim cache As Cache.OrmCache = TryCast(Me.Cache, Cache.OrmCache)
 
-            If cache IsNot Nothing Then
+            If cache IsNot Nothing AndAlso Not String.IsNullOrEmpty(_key) Then
                 Dim notPreciseDependsAD As Boolean
                 Dim notPreciseDependsU As Boolean
                 If _j IsNot Nothing Then
@@ -79,11 +78,14 @@ Namespace Query
                 '    CreateDepends(q, i)
                 '    i += 1
                 'Next
-                Dim rightType As Boolean = _q.SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(_q.SelectedType)
-
+                Dim rightType As Boolean = SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(SelectedType)
+                Dim ldp As New List(Of Cache.IDependentTypes)
                 Dim i As Integer = 0
                 For Each q As QueryCmd In New QueryIterator(_q)
                     Dim dp As Cache.IDependentTypes = q.Get(MappingEngine)
+
+                    ldp.Add(dp)
+
                     Worm.Cache.Add2Cache(cache, dp, _key, _id)
 
                     If _f IsNot Nothing AndAlso _f.Length > i Then
@@ -124,11 +126,16 @@ Namespace Query
                                     Else
                                         Dim tmpl As OrmFilterTemplateBase = CType(ef.Template, OrmFilterTemplateBase)
 
-                                        If tmpl.Type Is Nothing Then
-                                            Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
+                                        If tmpl.Type Is Nothing AndAlso String.IsNullOrEmpty(tmpl.EntityName) Then
+                                            Throw New NullReferenceException("Type or entity name for OrmFilterTemplate must be specified")
                                         End If
 
-                                        Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                        Dim t As Type = tmpl.Type
+                                        If t Is Nothing Then
+                                            t = MappingEngine.GetTypeByEntityName(tmpl.EntityName)
+                                        End If
+
+                                        Dim p As New Pair(Of String, Type)(tmpl.FieldName, t)
                                         cache.validate_AddDependentFilterField(p, _key, _id)
                                     End If
                                 Next
@@ -169,7 +176,7 @@ Namespace Query
                         If Not String.IsNullOrEmpty(s.FieldName) Then
                             Dim t As Type = s.Type
                             If t Is Nothing AndAlso s.Table Is Nothing AndAlso String.IsNullOrEmpty(s.CustomSortExpression) Then
-                                t = _q.SelectedType
+                                t = SelectedType
                             End If
                             If t Is Nothing Then
                                 If rightType AndAlso Not notPreciseDependsU Then
@@ -208,6 +215,8 @@ Namespace Query
                     'End If
                     i += 1
                 Next
+
+                _dp = ldp.ToArray
             End If
         End Sub
 
@@ -218,15 +227,32 @@ Namespace Query
         End Property
 
         Public MustOverride Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem Implements OrmManager.ICacheItemProvoderBase.GetCacheItem
-        Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
+        Public MustOverride Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
 
-        Public Property Mgr() As OrmManager
+        Protected Function GetExternalDic(ByVal key As String) As IDictionary
+            Dim args As New QueryCmd.ExternalDictionaryEventArgs(key)
+            _q.RaiseExternalDictionary(args)
+            Return args.Dictionary
+        End Function
+
+        Public Sub Clear()
+            _mgr = Nothing
+            _renew = False
+            _q = Nothing
+        End Sub
+
+        Public Sub Init(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+            _mgr = mgr
+            _q = query
+        End Sub
+
+        Public ReadOnly Property Mgr() As OrmManager
             Get
                 Return _mgr
             End Get
-            Protected Friend Set(ByVal value As OrmManager)
-                _mgr = value
-            End Set
+            'Protected Friend Set(ByVal value As OrmManager)
+            '    _mgr = value
+            'End Set
         End Property
 
 
@@ -263,6 +289,18 @@ Namespace Query
             End Get
         End Property
 
+        Public ReadOnly Property Group() As ObjectModel.ReadOnlyCollection(Of Grouping)
+            Get
+                Return _q.Group
+            End Get
+        End Property
+
+        Public ReadOnly Property SelectedType() As Type
+            Get
+                Return _q.SelectedType
+            End Get
+        End Property
+
         Protected Function ValidateFromCache() As Boolean
             Dim cache As Cache.OrmCache = TryCast(Mgr.Cache, Cache.OrmCache)
             If cache IsNot Nothing AndAlso cache.ValidateBehavior = Worm.Cache.ValidateBehavior.Deferred Then
@@ -280,16 +318,17 @@ Namespace Query
                     Next
                 End If
 
-                For Each q As QueryCmd In New QueryIterator(_q)
-                    Dim dp As Cache.IDependentTypes = q.Get(MappingEngine)
+                'For Each q As QueryCmd In New QueryIterator(_q)
+                '    Dim dp As Cache.IDependentTypes = q.Get(MappingEngine)
+                For Each dp As Cache.IDependentTypes In _dp
                     If Not Worm.Cache.IsEmpty(dp) Then
                         l.AddRange(dp.GetAddDelete)
                         l.AddRange(dp.GetUpdate)
                     End If
                 Next
 
-                If _q.SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(_q.SelectedType) Then
-                    l.Add(_q.SelectedType)
+                If SelectedType IsNot Nothing AndAlso GetType(_ICachedEntity).IsAssignableFrom(SelectedType) Then
+                    l.Add(SelectedType)
                 End If
 
                 Dim f As IEntityFilter = Nothing
@@ -297,7 +336,7 @@ Namespace Query
                     f = TryCast(_f(0), IEntityFilter)
                 End If
 
-                Return cache.UpdateCacheDeferred(_q.SelectedType, l, f, _q.propSort, _q.Group)
+                Return cache.UpdateCacheDeferred(SelectedType, l, f, Sort, Group)
             End If
             Return True
         End Function

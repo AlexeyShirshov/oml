@@ -129,6 +129,16 @@ Public MustInherit Class ObjectMappingEngine
             Dim column As ColumnAttribute = Nothing
             Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(ColumnAttribute)), Attribute())
             If columns.Length > 0 Then column = CType(columns(0), ColumnAttribute)
+            If column Is Nothing AndAlso idx IsNot Nothing Then
+                Dim fieldName As String = pi.Name
+                If idx.ContainsKey(fieldName) Then
+                    Dim mc As MapField2Column = idx(fieldName)
+                    column = New ColumnAttribute(mc._newattributes)
+                    column.Column = mc._columnName
+                    column.FieldName = mc._fieldName
+                End If
+            End If
+
             If column IsNot Nothing Then
                 If String.IsNullOrEmpty(column.FieldName) Then
                     column.FieldName = pi.Name
@@ -144,6 +154,18 @@ Public MustInherit Class ObjectMappingEngine
             Dim column As ColumnAttribute = Nothing
             Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(ColumnAttribute)), Attribute())
             If columns.Length > 0 Then column = CType(columns(0), ColumnAttribute)
+
+            If column Is Nothing AndAlso idx IsNot Nothing AndAlso _
+                (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
+                Dim fieldName As String = pi.Name
+                If idx.ContainsKey(fieldName) Then
+                    Dim mc As MapField2Column = idx(fieldName)
+                    column = New ColumnAttribute(mc._newattributes)
+                    column.Column = mc._columnName
+                    column.FieldName = mc._fieldName
+                End If
+            End If
+
             If column IsNot Nothing Then
                 If String.IsNullOrEmpty(column.FieldName) Then
                     column.FieldName = pi.Name
@@ -153,6 +175,7 @@ Public MustInherit Class ObjectMappingEngine
                 End If
             End If
         Next
+
         Return result
     End Function
 
@@ -595,8 +618,9 @@ Public MustInherit Class ObjectMappingEngine
     '    End Get
     'End Property
 
-    Public Function ExternalSort(Of T As {_IEntity})(ByVal mgr As OrmManager, ByVal sort As Sort, ByVal objs As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
-        Return Sort.ExternalSort(Of T)(mgr, Me, objs)
+    Public Function ExternalSort(Of T As {_IEntity})(ByVal mgr As OrmManager, _
+        ByVal sort As Sort, ByVal objs As IList(Of T)) As ReadOnlyObjectList(Of T)
+        Return sort.ExternalSort(Of T)(mgr, Me, objs)
         'Dim schema As IOrmObjectSchemaBase = GetObjectSchema(GetType(T))
         'Dim s As IOrmSorting = TryCast(schema, IOrmSorting)
         'If s Is Nothing Then
@@ -778,7 +802,7 @@ Public MustInherit Class ObjectMappingEngine
         Return arr.ToArray
     End Function
 
-    Public Function GetPrimaryKeys(ByVal original_type As Type, Optional ByVal schema As IContextObjectSchema = Nothing) As List(Of ColumnAttribute)
+    Public Function GetPrimaryKeys(ByVal original_type As Type, Optional ByVal schema As IObjectSchemaBase = Nothing) As List(Of ColumnAttribute)
         Dim cl_type As String = "clm_pklist" & original_type.ToString
 
         Dim arr As Generic.List(Of ColumnAttribute) = CType(map(cl_type), Generic.List(Of ColumnAttribute))
@@ -976,7 +1000,11 @@ Public MustInherit Class ObjectMappingEngine
         For Each pr As SelectExpression In props
             If pr.Type Is Nothing Then
                 If pr.Table Is Nothing Then
-                    sb.Append(String.Format(pr.Computed, ExtractValues(Me, Nothing, pr.Values).ToArray)).Append(", ")
+                    sb.Append(String.Format(pr.Computed, ExtractValues(Me, Nothing, pr.Values).ToArray))
+                    If Not String.IsNullOrEmpty(pr.Column) Then
+                        sb.Append(" ").Append(pr.Column)
+                    End If
+                    sb.Append(", ")
                 Else
                     sb.Append(GetTableName(pr.Table)).Append(Selector).Append(pr.Column).Append(", ")
                 End If

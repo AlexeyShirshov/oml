@@ -10,7 +10,6 @@ Imports Worm.Orm.Meta
 Imports Worm.Database.Criteria.Core
 Imports Worm.Criteria.Values
 Imports Worm.Database.Criteria.Joins
-Imports Worm.Orm
 
 <TestClass()> Public Class DeferredCacheQueryTest
 
@@ -59,7 +58,7 @@ Imports Worm.Orm
             q.Filter = Ctor.AutoTypeField("ID").GreaterThan(2)
             Assert.IsNotNull(q)
 
-            Assert.AreEqual(1, q.ToEntityList(Of Table1)(mgr).Count)
+            Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
 
             mgr.BeginTransaction()
             Try
@@ -69,7 +68,7 @@ Imports Worm.Orm
                     s.AcceptModifications()
                 End Using
 
-                Assert.AreEqual(2, q.ToEntityList(Of Table1)(mgr).Count)
+                Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
                 Assert.IsFalse(q.LastExecitionResult.CacheHit)
             Finally
                 mgr.Rollback()
@@ -85,7 +84,7 @@ Imports Worm.Orm
             q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
             Assert.IsNotNull(q)
 
-            Assert.AreEqual(2, q.ToEntityList(Of Table1)(mgr).Count)
+            Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
 
             mgr.BeginTransaction()
             Try
@@ -96,7 +95,7 @@ Imports Worm.Orm
                     s.AcceptModifications()
                 End Using
 
-                Assert.AreEqual(3, q.ToEntityList(Of Table1)(mgr).Count)
+                Assert.AreEqual(3, q.ToList(Of Table1)(mgr).Count)
             Finally
                 mgr.Rollback()
             End Try
@@ -111,7 +110,7 @@ Imports Worm.Orm
             q.Filter = Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)
             Assert.IsNotNull(q)
 
-            Assert.AreEqual(2, q.ToEntityList(Of Table1)(mgr).Count)
+            Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
 
             mgr.BeginTransaction()
             Try
@@ -123,7 +122,7 @@ Imports Worm.Orm
                     s.AcceptModifications()
                 End Using
 
-                Assert.AreEqual(3, q.ToEntityList(Of Table1)(mgr).Count)
+                Assert.AreEqual(3, q.ToList(Of Table1)(mgr).Count)
             Finally
                 mgr.Rollback()
             End Try
@@ -141,7 +140,7 @@ Imports Worm.Orm
             Dim q As New QueryCmd(GetType(Table2))
             q.Filter = Ctor.AutoTypeField("Money").Eq(t1)
 
-            Assert.AreEqual(0, q.ToEntityList(Of Table2)(mgr).Count)
+            Assert.AreEqual(0, q.ToList(Of Table2)(mgr).Count)
 
             mgr.BeginTransaction()
             Try
@@ -151,7 +150,7 @@ Imports Worm.Orm
                     s.AcceptModifications()
                 End Using
 
-                Assert.AreEqual(0, q.ToEntityList(Of Table2)(mgr).Count)
+                Assert.AreEqual(0, q.ToList(Of Table2)(mgr).Count)
                 Assert.IsFalse(q.LastExecitionResult.CacheHit)
             Finally
                 mgr.Rollback()
@@ -167,7 +166,7 @@ Imports Worm.Orm
             q.Filter = Ctor.Column(mgr.MappingEngine.GetTables(GetType(Table1))(0), "enum_str").Eq(Enum1.sec.ToString)
             Assert.IsNotNull(q)
 
-            Assert.AreEqual(2, q.ToEntityList(Of Table1)(mgr).Count)
+            Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
 
             mgr.BeginTransaction()
             Try
@@ -178,7 +177,7 @@ Imports Worm.Orm
                     s.AcceptModifications()
                 End Using
 
-                Assert.AreEqual(3, q.ToEntityList(Of Table1)(mgr).Count)
+                Assert.AreEqual(3, q.ToList(Of Table1)(mgr).Count)
             Finally
                 mgr.Rollback()
             End Try
@@ -194,7 +193,7 @@ Imports Worm.Orm
             q.AutoJoins = True
             Assert.IsNotNull(q)
 
-            Assert.AreEqual(1, q.ToEntityList(Of Table1)(mgr).Count)
+            Assert.AreEqual(1, q.ToList(Of Table1)(mgr).Count)
 
             mgr.BeginTransaction()
             Try
@@ -205,7 +204,7 @@ Imports Worm.Orm
                     s.AcceptModifications()
                 End Using
 
-                Assert.AreEqual(2, q.ToEntityList(Of Table1)(mgr).Count)
+                Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
             Finally
                 mgr.Rollback()
             End Try
@@ -218,7 +217,7 @@ Imports Worm.Orm
             CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
             Dim q As New QueryCmd(GetType(Table2))
             q.Filter = Ctor.AutoTypeField("Money").GreaterThan(1)
-            Dim l As ReadOnlyEntityList(Of Table2) = q.ToEntityList(Of Table2)(mgr)
+            Dim l As ReadOnlyEntityList(Of Table2) = q.ToList(Of Table2)(mgr)
             Assert.AreEqual(1, l.Count)
 
             mgr.BeginTransaction()
@@ -229,7 +228,7 @@ Imports Worm.Orm
                     s.AcceptModifications()
                 End Using
 
-                Assert.AreEqual(0, q.ToEntityList(Of Table2)(mgr).Count)
+                Assert.AreEqual(0, q.ToList(Of Table2)(mgr).Count)
             Finally
                 mgr.Rollback()
             End Try
@@ -280,14 +279,14 @@ Imports Worm.Orm
 
         q.Top(2).Sort(Orm.Sorting.Field("DT"))
 
-        Dim r As ReadOnlyEntityList(Of Table1) = q.ToEntityList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
         Assert.AreEqual(1, r(0).ID)
         Assert.AreEqual(2, r(1).ID)
 
         q.Sort(Orm.Sorting.Field("Title"))
 
-        r = q.ToEntityList(Of Table1)()
+        r = q.ToList(Of Table1)()
 
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
         Assert.AreEqual(1, r(0).ID)
@@ -303,34 +302,34 @@ Imports Worm.Orm
         Dim q As QueryCmd = New QueryCmd(t, New CreateManager(Function() _
             TestManager.CreateManager(c, New SQLGenerator("1")))).Sort(Orm.Sorting.Field("ID"))
 
-        q.ToEntityList(Of Entity4)()
+        q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-        q.ToEntityList(Of Entity4)()
+        q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
         q.Sort(Orm.Sorting.Field("Title"))
-        q.ToEntityList(Of Entity4)()
+        q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
         q.Sort(Orm.Sorting.Field("ID"))
-        q.ToEntityList(Of Entity4)()
+        q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
         q.CacheSort = True
 
-        q.ToEntityList(Of Entity4)()
+        q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-        q.ToEntityList(Of Entity4)()
+        q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
         q.Sort(Orm.Sorting.Field("Title"))
-        q.ToEntityList(Of Entity4)()
+        q.ToList(Of Entity4)()
         Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
         q.Sort(Orm.Sorting.Field("ID"))
-        q.ToEntityList(Of Entity4)()
+        q.ToList(Of Entity4)()
         Assert.IsTrue(q.LastExecitionResult.CacheHit)
     End Sub
 
@@ -347,8 +346,8 @@ Imports Worm.Orm
             Dim q2 As QueryCmd = New QueryCmd(e). _
                 Where(Ctor.Field(GetType(Entity4), "Title").Eq("first"))
 
-            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
-            Dim r2 As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
+            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
+            Dim r2 As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(4, r.Count)
             Assert.AreEqual(1, r2.Count)
@@ -364,19 +363,19 @@ Imports Worm.Orm
                     en4.Title = "xxx"
                     e.M2MNew.Add(en4)
 
-                    Assert.AreEqual(4, q.ToEntityList(Of Entity4)(mgr).Count)
+                    Assert.AreEqual(4, q.ToList(Of Entity4)(mgr).Count)
                     Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
-                    Assert.AreEqual(1, q2.ToEntityList(Of Entity4)(mgr).Count)
+                    Assert.AreEqual(1, q2.ToList(Of Entity4)(mgr).Count)
                     Assert.IsTrue(q2.LastExecitionResult.CacheHit)
 
                     s.AcceptModifications()
                 End Using
 
-                Assert.AreEqual(5, q.ToEntityList(Of Entity4)(mgr).Count)
+                Assert.AreEqual(5, q.ToList(Of Entity4)(mgr).Count)
                 Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-                Assert.AreEqual(1, q2.ToEntityList(Of Entity4)(mgr).Count)
+                Assert.AreEqual(1, q2.ToList(Of Entity4)(mgr).Count)
                 Assert.IsFalse(q2.LastExecitionResult.CacheHit)
             Finally
                 mgr.Rollback()
@@ -396,11 +395,11 @@ Imports Worm.Orm
             Dim q2 As QueryCmd = New QueryCmd(GetType(Entity4)).Where( _
                 Ctor.AutoTypeField("Title").Eq("djkg"))
 
-            Dim l As IList(Of Entity4) = q.ToOrmList(Of Entity4)(mgr)
+            Dim l As IList(Of Entity4) = q.ToList(Of Entity4)(mgr)
             Assert.AreEqual(7, l.Count)
             Dim f As Entity4 = l(0)
 
-            Assert.AreEqual(0, q2.ToOrmList(Of Entity4)(mgr).Count)
+            Assert.AreEqual(0, q2.ToList(Of Entity4)(mgr).Count)
 
             mgr.BeginTransaction()
             Try
@@ -409,10 +408,10 @@ Imports Worm.Orm
                     s.AcceptModifications()
                 End Using
 
-                Assert.AreNotEqual(f, q.ToOrmList(Of Entity4)(mgr)(0))
+                Assert.AreNotEqual(f, q.ToList(Of Entity4)(mgr)(0))
                 Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-                Assert.AreEqual(1, q2.ToOrmList(Of Entity4)(mgr).Count)
+                Assert.AreEqual(1, q2.ToList(Of Entity4)(mgr).Count)
                 Assert.IsFalse(q2.LastExecitionResult.CacheHit)
 
             Finally
@@ -430,7 +429,7 @@ Imports Worm.Orm
             Dim q As QueryCmd = New QueryCmd(GetType(Table1)).Where( _
                 Ctor.AutoTypeField("EnumStr").Eq(Enum1.sec)).Sort(Orm.Sorting.Custom("name"))
 
-            Dim l As IList(Of Table1) = q.ToOrmList(Of Table1)(mgr)
+            Dim l As IList(Of Table1) = q.ToList(Of Table1)(mgr)
             Assert.AreEqual(2, l.Count)
             Dim f As Table1 = l(0)
 
@@ -441,40 +440,9 @@ Imports Worm.Orm
                     s.AcceptModifications()
                 End Using
 
-                Assert.AreEqual(f, q.ToOrmList(Of Table1)(mgr)(0))
+                Assert.AreEqual(f, q.ToList(Of Table1)(mgr)(0))
                 Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-            Finally
-                mgr.Rollback()
-            End Try
-        End Using
-    End Sub
-
-    <TestMethod()> Public Sub TestGroupUpdate()
-        Dim m As New TestManagerRS
-        Using mgr As OrmReadOnlyDBManager = m.CreateWriteManager(New SQLGenerator("1"))
-            CType(mgr.Cache, Cache.OrmCache).ValidateBehavior = Cache.ValidateBehavior.Deferred
-
-            Dim q As QueryCmd = New QueryCmd(GetType(Table1)). _
-                Select(FCtor.Field(GetType(Table1), "EnumStr")). _
-                SelectAgg(AggCtor.Count("cnt")). _
-                GroupBy(FCtor.Field(GetType(Table1), "EnumStr"))
-
-            Dim l As ReadOnlyObjectList(Of AnonymousEntity) = q.ToObjectList(Of AnonymousEntity)(mgr)
-
-            Assert.AreEqual(2, l.Count)
-
-            mgr.BeginTransaction()
-            Try
-                Using s As New ModificationsTracker(mgr)
-                    Dim f As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
-                    f.EnumStr = Enum1.sec
-
-                    s.AcceptModifications()
-                End Using
-
-                Assert.AreEqual(1, q.ToObjectList(Of AnonymousEntity)(mgr).Count)
-                Assert.IsFalse(q.LastExecitionResult.CacheHit)
             Finally
                 mgr.Rollback()
             End Try

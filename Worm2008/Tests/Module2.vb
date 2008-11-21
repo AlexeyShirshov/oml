@@ -269,7 +269,7 @@ Module Module2
     End Sub
 
     Private _saved As ArrayList = ArrayList.Synchronized(New ArrayList)
-    Sub ObjectSaved(ByVal o As Orm.ICachedEntity)
+    Sub ObjectSaved(ByVal sebder As ObjectListSaver, ByVal o As Orm.ICachedEntity)
         _saved.Add(o)
     End Sub
 
@@ -437,7 +437,7 @@ Module Module2
         Next
     End Sub
 
-    Sub throwEx(ByVal o As Orm.ICachedEntity)
+    Sub throwEx(ByVal sender As ObjectListSaver, ByVal o As Orm.ICachedEntity)
         Throw New Exception("xxx")
     End Sub
 

@@ -58,11 +58,11 @@ Imports Worm.Database.Criteria.Joins
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
             Assert.IsNotNull(q)
 
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
             Assert.IsNotNull(e)
             Assert.AreEqual(1, e.Identifier)
 
-            Dim r As ReadOnlyEntityList(Of Entity) = q.ToEntityList(Of Entity)(mgr)
+            Dim r As ReadOnlyEntityList(Of Entity) = q.ToList(Of Entity)(mgr)
 
             Assert.AreEqual(1, r.Count)
             Assert.AreEqual(e, r(0))
@@ -83,7 +83,7 @@ Imports Worm.Database.Criteria.Joins
 
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
 
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
         End Using
     End Sub
@@ -104,11 +104,11 @@ Imports Worm.Database.Criteria.Joins
 
             q.Filter = c.Condition
 
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
             Assert.IsNotNull(e)
             Assert.AreEqual(1, e.Identifier)
 
-            Dim r As ReadOnlyEntityList(Of Entity) = q.ToEntityList(Of Entity)(mgr)
+            Dim r As ReadOnlyEntityList(Of Entity) = q.ToList(Of Entity)(mgr)
 
             Assert.AreEqual(1, r.Count)
             Assert.AreEqual(e, r(0))
@@ -123,11 +123,11 @@ Imports Worm.Database.Criteria.Joins
 
             Assert.IsNotNull(q)
 
-            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
+            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
             Assert.AreEqual(3, r(0).ID)
 
             q.propSort = Orm.Sorting.Field("ID").Desc
-            r = q.ToEntityList(Of Entity4)(mgr)
+            r = q.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(12, r(0).ID)
         End Using
@@ -140,7 +140,7 @@ Imports Worm.Database.Criteria.Joins
             q.propSort = Worm.Orm.Sorting.Field("ID")
             Assert.IsNotNull(q)
 
-            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
+            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
             Assert.AreEqual(3, r(0).ID)
 
             'q.propSort.Order = Orm.SortType.Desc
@@ -230,15 +230,37 @@ Imports Worm.Database.Criteria.Joins
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestM2MExists()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
+            Dim t1 As Type = GetType(Table1)
+            Dim t3 As Type = GetType(Table3)
+
+            Dim q As New QueryCmd(t1)
+            q = q.Where(Ctor.Exists( _
+                        New QueryCmd(t3). _
+                            AddJoins(JCtor.Join(t1).On(t3)). _
+                            Where(Ctor.Field(t3, "Code").Eq(2))))
+
+            Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
+
+            q.Distinct(True)
+
+            Dim l As ReadOnlyList(Of Table1) = q.ToOrmList(Of Table1)(mgr)
+            Assert.AreEqual(1, l.Count)
+
+            Assert.AreEqual(1, l(0).ID)
+        End Using
+    End Sub
+
     <TestMethod()> Public Sub TestDistinct()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As Table1 = mgr.GetOrmBaseFromCacheOrDB(Of Table1)(1)
 
             Dim q As QueryCmd = t1.M2MNew.Find(GetType(Table33))
 
-            Assert.AreEqual(3, q.ToOrmList(Of Table3)(mgr).Count)
+            Assert.AreEqual(3, q.ToList(Of Table3)(mgr).Count)
 
-            Assert.AreEqual(2, q.Distinct(True).ToOrmList(Of Table3)(mgr).Count)
+            Assert.AreEqual(2, q.Distinct(True).ToList(Of Table3)(mgr).Count)
         End Using
     End Sub
 
@@ -257,7 +279,7 @@ Imports Worm.Database.Criteria.Joins
             q.Filter = Ctor.AutoTypeField("Title").Like("b%")
             Assert.IsNotNull(q)
 
-            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
+            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(3, r.Count)
             Dim m As Guid = q.Mark
@@ -265,7 +287,7 @@ Imports Worm.Database.Criteria.Joins
             q.propTop = New Top(2)
             Assert.AreNotEqual(m, q.Mark)
 
-            r = q.ToEntityList(Of Entity4)(mgr)
+            r = q.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(2, r.Count)
         End Using
@@ -280,7 +302,7 @@ Imports Worm.Database.Criteria.Joins
 
             Dim s As String = "<ShowPlanXML xmlns='http://schemas.microsoft.com/sqlserver/2004/07/showplan' Version='1.0' Build='9.00.3042.00'><BatchSequence><Batch><Statements><StmtSimple StatementText='declare @p1 Int;set @p1 = 1&#xd;' StatementId='1' StatementCompId='1' StatementType='ASSIGN'/><StmtSimple StatementText='&#xa;select t1.id from dbo.ent1 t1 where t1.id = @p1&#xd;&#xa;' StatementId='2' StatementCompId='2' StatementType='SELECT' StatementSubTreeCost='0.0032831' StatementEstRows='1' StatementOptmLevel='TRIVIAL'><StatementSetOptions QUOTED_IDENTIFIER='false' ARITHABORT='true' CONCAT_NULL_YIELDS_NULL='false' ANSI_NULLS='false' ANSI_PADDING='false' ANSI_WARNINGS='false' NUMERIC_ROUNDABORT='false'/><QueryPlan CachedPlanSize='8' CompileTime='0' CompileCPU='0' CompileMemory='72'><RelOp NodeId='0' PhysicalOp='Clustered Index Seek' LogicalOp='Clustered Index Seek' EstimateRows='1' EstimateIO='0.003125' EstimateCPU='0.0001581' AvgRowSize='11' EstimatedTotalSubtreeCost='0.0032831' Parallel='0' EstimateRebinds='0' EstimateRewinds='0'><OutputList><ColumnReference Schema='[dbo]' Table='[ent1]' Alias='[t1]' Column='id'/></OutputList><IndexScan Ordered='1' ScanDirection='FORWARD' ForcedIndex='0' NoExpandHint='0'><DefinedValues><DefinedValue><ColumnReference Schema='[dbo]' Table='[ent1]' Alias='[t1]' Column='id'/></DefinedValue></DefinedValues><Object Schema='[dbo]' Table='[ent1]' Index='[PK_ent1]' Alias='[t1]'/><SeekPredicates><SeekPredicate><Prefix ScanType='EQ'><RangeColumns><ColumnReference Schema='[dbo]' Table='[ent1]' Alias='[t1]' Column='id'/></RangeColumns><RangeExpressions><ScalarOperator ScalarString='[@p1]'><Identifier><ColumnReference Column='@p1'/></Identifier></ScalarOperator></RangeExpressions></Prefix></SeekPredicate></SeekPredicates></IndexScan></RelOp></QueryPlan></StmtSimple></Statements></Batch></BatchSequence></ShowPlanXML>"
             q.Hint = "option(use plan N'" & s.Replace("'", """") & "')"
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
             Assert.IsNotNull(e)
             Assert.AreEqual(1, e.Identifier)
@@ -294,13 +316,13 @@ Imports Worm.Database.Criteria.Joins
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
             Assert.IsNotNull(q)
 
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
             Assert.IsNotNull(e)
 
             Dim q2 As New QueryCmd(e)
 
-            Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
+            Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(4, r.Count)
             For Each o As Entity4 In r
@@ -308,7 +330,7 @@ Imports Worm.Database.Criteria.Joins
             Next
 
             q2.propWithLoad = True
-            r = q2.ToEntityList(Of Entity4)(mgr)
+            r = q2.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(4, r.Count)
             For Each o As Entity4 In r
@@ -329,8 +351,8 @@ Imports Worm.Database.Criteria.Joins
             Dim q2 As QueryCmd = New QueryCmd(e). _
                 Where(Ctor.Field(GetType(Entity4), "Title").Eq("first"))
 
-            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
-            Dim r2 As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
+            Dim r As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
+            Dim r2 As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(4, r.Count)
             Assert.AreEqual(1, r2.Count)
@@ -349,14 +371,14 @@ Imports Worm.Database.Criteria.Joins
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
             Assert.IsNotNull(q)
 
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
             Assert.IsNotNull(e)
 
             Dim q2 As New QueryCmd(e)
             q2.Filter = Ctor.AutoTypeField("Title").Like("b%")
 
-            Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
+            Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(1, r.Count)
         End Using
@@ -369,14 +391,14 @@ Imports Worm.Database.Criteria.Joins
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
             Assert.IsNotNull(q)
 
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
             Assert.IsNotNull(e)
 
             Dim q2 As New QueryCmd(e)
             q2.propSort = Orm.Sorting.Field("Title")
 
-            Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToEntityList(Of Entity4)(mgr)
+            Dim r As ReadOnlyEntityList(Of Entity4) = q2.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(4, r.Count)
         End Using
@@ -398,7 +420,13 @@ Imports Worm.Database.Criteria.Joins
                 GroupBy(FCtor.Column(t, "code")). _
                 Sort(Sorting.Custom("cnt desc"))
 
+            Assert.IsNull(q.SelectedType)
+            Assert.IsNull(q.CreateType)
+
             Dim l As IList(Of Worm.Orm.AnonymousEntity) = q.ToObjectList(Of Worm.Orm.AnonymousEntity)(mgr)
+
+            Assert.IsNull(q.SelectedType)
+            Assert.IsNull(q.CreateType)
 
             Assert.AreEqual(5, l.Count)
 
@@ -412,7 +440,7 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New MSSQL2005Generator("1"))
             Dim q As New QueryCmd(GetType(Entity))
             q.RowNumberFilter = New TableFilter(QueryCmd.RowNumerColumn, New ScalarValue(2), Worm.Criteria.FilterOperation.LessEqualThan)
-            Dim l As ReadOnlyEntityList(Of Entity) = q.ToEntityList(Of Entity)(mgr)
+            Dim l As ReadOnlyEntityList(Of Entity) = q.ToList(Of Entity)(mgr)
             Assert.AreEqual(2, l.Count)
         End Using
     End Sub
@@ -420,7 +448,7 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestInterface()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim q As QueryCmd = New QueryCmd(GetType(Entity))
-            Dim r As IList(Of IEnt) = q.ToList(Of IEnt)(mgr)
+            Dim r As IList(Of IEnt) = q.ToEntityList(Of IEnt)(mgr)
 
             Assert.IsNotNull(r)
             Assert.AreEqual(13, r.Count)
@@ -435,7 +463,7 @@ Imports Worm.Database.Criteria.Joins
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
             q = New QueryCmd(GetType(Entity))
-            Dim r2 As IList(Of Entity) = q.ToList(Of Entity)(mgr)
+            Dim r2 As IList(Of Entity) = q.ToEntityList(Of Entity)(mgr)
             Assert.IsNotNull(r2)
             Assert.AreEqual(13, r2.Count)
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
@@ -462,14 +490,14 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestRenew()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim q As QueryCmd = New QueryCmd(GetType(Entity4))
-            q.ToEntityList(Of Entity4)(mgr)
+            q.ToList(Of Entity4)(mgr)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-            q.ToEntityList(Of Entity4)(mgr)
+            q.ToList(Of Entity4)(mgr)
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
             q.Renew(Of Entity4)(mgr)
-            q.ToEntityList(Of Entity4)(mgr)
+            q.ToList(Of Entity4)(mgr)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
         End Using
     End Sub
@@ -534,42 +562,42 @@ Imports Worm.Database.Criteria.Joins
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
             Dim q As New QueryCmd(GetType(Entity))
 
-            Assert.AreEqual(13, q.ToEntityList(Of Entity)(mgr).Count)
+            Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
             Dim q2 As New QueryCmd(GetType(Entity4))
 
-            Assert.AreEqual(12, q2.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
             Assert.IsFalse(q2.LastExecitionResult.CacheHit)
 
-            Assert.AreEqual(13, q.ToEntityList(Of Entity)(mgr).Count)
+            Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
-            Assert.AreEqual(12, q2.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
             Assert.IsTrue(q2.LastExecitionResult.CacheHit)
 
             q.DontCache = True
-            Assert.AreEqual(13, q.ToEntityList(Of Entity)(mgr).Count)
+            Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
             q.DontCache = False
 
             q2.DontCache = True
-            Assert.AreEqual(12, q2.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
             Assert.IsFalse(q2.LastExecitionResult.CacheHit)
             q2.DontCache = False
 
             q.LiveTime = TimeSpan.FromSeconds(5)
-            Assert.AreEqual(13, q.ToEntityList(Of Entity)(mgr).Count)
+            Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
             Threading.Thread.Sleep(5100)
-            Assert.AreEqual(13, q.ToEntityList(Of Entity)(mgr).Count)
+            Assert.AreEqual(13, q.ToList(Of Entity)(mgr).Count)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
             q2.LiveTime = TimeSpan.FromSeconds(5)
-            Assert.AreEqual(12, q2.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
             Assert.IsTrue(q2.LastExecitionResult.CacheHit)
             Threading.Thread.Sleep(5100)
-            Assert.AreEqual(12, q2.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.AreEqual(12, q2.ToList(Of Entity4)(mgr).Count)
             Assert.IsFalse(q2.LastExecitionResult.CacheHit)
 
         End Using
@@ -590,11 +618,11 @@ Imports Worm.Database.Criteria.Joins
             Dim q As New QueryCmd(GetType(Entity))
             q.ExternalCacheMark = "ldgn"
 
-            q.ToEntityList(Of Entity)(mgr)
+            q.ToList(Of Entity)(mgr)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
             Assert.AreEqual(1, dic.Count)
 
-            q.ToEntityList(Of Entity)(mgr)
+            q.ToList(Of Entity)(mgr)
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
 
             'q.ToEntityList(Of Entity)(mgr)
@@ -612,11 +640,11 @@ Imports Worm.Database.Criteria.Joins
             Dim q As QueryCmd = New QueryCmd(tt2). _
                 Where(New Ctor(tt2).Field("Table1").Exists(GetType(Table1)))
 
-            Assert.AreEqual(2, q.ToEntityList(Of Table2)(mgr).Count)
+            Assert.AreEqual(2, q.ToList(Of Table2)(mgr).Count)
 
             q.Where(New Ctor(tt2).Field("Table1").NotExists(GetType(Table1)))
 
-            Assert.AreEqual(0, q.ToEntityList(Of Table2)(mgr).Count)
+            Assert.AreEqual(0, q.ToList(Of Table2)(mgr).Count)
 
             q.Where(Ctor.Field(tt2, "Table1").NotExists(GetType(Table1), _
                 Ctor.Field(GetType(Table1), "Code").Eq(45). _
@@ -624,7 +652,7 @@ Imports Worm.Database.Criteria.Joins
                     JoinCondition.Create(tt2, "Table1").Eq(GetType(Table1), "Enum") _
                 )))
 
-            Assert.AreEqual(2, q.ToEntityList(Of Table2)(mgr).Count)
+            Assert.AreEqual(2, q.ToList(Of Table2)(mgr).Count)
         End Using
     End Sub
 
@@ -642,10 +670,10 @@ Imports Worm.Database.Criteria.Joins
 
             q.Where(New NonTemplateUnaryFilter(New Values.SubQueryCmd(cq), Worm.Criteria.FilterOperation.NotExists))
 
-            Assert.AreEqual(2, q.ToEntityList(Of Table2)(mgr).Count)
+            Assert.AreEqual(2, q.ToList(Of Table2)(mgr).Count)
             Assert.IsFalse(q.LastExecitionResult.CacheHit)
 
-            q.ToEntityList(Of Table2)(mgr)
+            q.ToList(Of Table2)(mgr)
 
             Assert.IsTrue(q.LastExecitionResult.CacheHit)
         End Using
@@ -684,7 +712,7 @@ Imports Worm.Database.Criteria.Joins
         q.AutoFields = True
         q.Select(FCtor.Field(t, "Code").Add(t, "Title"))
 
-        Dim l As ReadOnlyEntityList(Of Table1) = q.ToEntityList(Of Table1)()
+        Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
 
         Assert.IsFalse(l(0).InternalProperties.IsLoaded)
         Assert.IsTrue(l(0).InternalProperties.IsFieldLoaded("Code"))
@@ -738,6 +766,25 @@ Imports Worm.Database.Criteria.Joins
 
     End Class
 
+    Public Class cls2
+        Public Code As Integer
+        Public Name As String
+        Public Id As Integer
+    End Class
+
+    Public Class cls3
+        Public Code As Integer
+        <Column("name")> Public Property Title() As String
+            Get
+
+            End Get
+            Set(ByVal value As String)
+
+            End Set
+        End Property
+        Public Id As Integer
+    End Class
+
     <TestMethod()> Public Sub TestCustomObject()
 
         Dim t As New SourceFragment("dbo", "table1")
@@ -754,9 +801,49 @@ Imports Worm.Database.Criteria.Joins
 
         Assert.AreEqual(2, l(0).Code)
 
-        Using mgr As OrmManager = q.GetMgr.CreateManager
-            Assert.IsFalse(mgr.CustomObject(l(0)).IsLoaded)
-        End Using
+        'Using mgr As OrmManager = q.GetMgr.CreateManager
+        '    Assert.IsFalse(mgr.CustomObject(l(0)).IsLoaded)
+        'End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestCustomObject2()
+
+        Dim t As New SourceFragment("dbo", "table1")
+
+        Dim q As New QueryCmd(t, New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(New SQLGenerator("1"))))
+
+        q.Sort(Sorting.Field("Code"))
+
+        Dim l As IList(Of cls2) = q.ToCustomList(Of cls2)()
+
+        Assert.AreEqual(3, l.Count)
+
+        Assert.AreEqual(2, l(0).Code)
+
+        'Using mgr As OrmManager = q.GetMgr.CreateManager
+        '    Assert.IsFalse(mgr.CustomObject(l(0)).IsLoaded)
+        'End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestCustomObject3()
+
+        Dim t As New SourceFragment("dbo", "table1")
+
+        Dim q As New QueryCmd(t, New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(New SQLGenerator("1"))))
+
+        q.Sort(Sorting.Field("Code"))
+
+        Dim l As IList(Of cls3) = q.ToCustomList(Of cls3)()
+
+        Assert.AreEqual(3, l.Count)
+
+        Assert.AreEqual(2, l(0).Code)
+
+        'Using mgr As OrmManager = q.GetMgr.CreateManager
+        '    Assert.IsFalse(mgr.CustomObject(l(0)).IsLoaded)
+        'End Using
     End Sub
 
     <TestMethod()> Public Sub TestCachedCustomObject()
@@ -779,4 +866,30 @@ Imports Worm.Database.Criteria.Joins
             Assert.IsTrue(mgr.CustomObject(l(0)).IsLoaded)
         End Using
     End Sub
+
+    <TestMethod()> Public Sub TestExternalCache()
+        Dim dic As New Hashtable
+
+        Dim q As New QueryCmd(New CreateManager(Function() _
+            TestManagerRS.CreateManagerShared(New SQLGenerator("1"))))
+
+        AddHandler q.ExternalDictionary, AddressOf New c(dic).Ext
+
+        Assert.AreEqual(0, dic.Count)
+
+        Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
+
+        Assert.AreEqual(1, dic.Count)
+    End Sub
+
+    Private Class c
+        Private _dic As IDictionary
+        Public Sub New(ByVal dic As IDictionary)
+            _dic = dic
+        End Sub
+
+        Public Sub Ext(ByVal sender As QueryCmd, ByVal args As QueryCmd.ExternalDictionaryEventArgs)
+            args.Dictionary = _dic
+        End Sub
+    End Class
 End Class

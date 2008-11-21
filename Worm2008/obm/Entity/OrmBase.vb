@@ -12,32 +12,6 @@ Imports Worm.Criteria.Core
 Namespace Orm
 
     <Serializable()> _
-    Public Class OrmObjectException
-        Inherits Exception
-
-        Public Sub New()
-            ' Add other code for custom properties here.
-        End Sub
-
-        Public Sub New(ByVal message As String)
-            MyBase.New(message)
-            ' Add other code for custom properties here.
-        End Sub
-
-        Public Sub New(ByVal message As String, ByVal inner As Exception)
-            MyBase.New(message, inner)
-            ' Add other code for custom properties here.
-        End Sub
-
-        Protected Sub New( _
-            ByVal info As System.Runtime.Serialization.SerializationInfo, _
-            ByVal context As System.Runtime.Serialization.StreamingContext)
-            MyBase.New(info, context)
-            ' Insert code here for custom properties here.
-        End Sub
-    End Class
-
-    <Serializable()> _
     Public Class ObjectStateException
         Inherits System.Exception
 
@@ -2035,16 +2009,37 @@ Namespace Orm
             MyBase.PKLoaded(pkCount)
         End Sub
 
+#Region " M2M "
+        Public Function CreateM2MCmd(ByVal t As Type) As Worm.Query.QueryCmd
+            If CreateManager IsNot Nothing Then
+                Dim q As New Worm.Query.QueryCmd(Me, CreateManager)
+                q.SelectedType = t
+                Return q
+            Else
+                Dim q As Worm.Query.QueryCmd = Worm.Query.QueryCmd.Create(Me)
+                q.SelectedType = t
+                Return q
+            End If
+        End Function
+
+        Public Function CreateM2MCmd(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
+            If CreateManager IsNot Nothing Then
+                Dim q As New Worm.Query.QueryCmd(Me, key, CreateManager)
+                q.SelectedType = t
+                Return q
+            Else
+                Dim q As Worm.Query.QueryCmd = Worm.Query.QueryCmd.Create(Me, key)
+                q.SelectedType = t
+                Return q
+            End If
+        End Function
+
         Protected Function _Find(ByVal t As System.Type) As Worm.Query.QueryCmd Implements IM2M.Find
-            Dim q As New Worm.Query.QueryCmd(Me)
-            q.SelectedType = t
-            Return q
+            Return CreateM2MCmd(t)
         End Function
 
         Protected Function _Find(ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Find
-            Dim q As New Worm.Query.QueryCmd(Me, key)
-            q.SelectedType = t
-            Return q
+            Return CreateM2MCmd(t, key)
         End Function
 
         Protected Function GetM2M(ByVal t As Type, ByVal key As String) As EditableListBase 'Implements _IOrmBase.GetM2M
@@ -2193,6 +2188,65 @@ Namespace Orm
         Public Function GetAllRelation() As System.Collections.Generic.IList(Of Cache.EditableListBase) Implements IM2M.GetAllRelation
             Return _GetAll()
         End Function
+
+        Private Function Search(ByVal text As String, ByVal t As System.Type) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Private Function Search(ByVal text As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+        Public Function Search(ByVal text As String, ByVal type As Meta.SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
+            Throw New NotImplementedException
+        End Function
+
+#End Region
+
     End Class
 
     Public Enum ObjectState

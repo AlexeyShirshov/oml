@@ -190,7 +190,7 @@ Namespace Xml
                 Dim r As ReadOnlyList(Of T) = CType(_mgr.LoadMultipleObjects(Of T)(sb.ToString, withLoad, Nothing), Global.Worm.ReadOnlyList(Of T))
 
                 If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-                    r = CType(Schema.ExternalSort(Of T)(_mgr, _sort, r), Global.Worm.ReadOnlyList(Of T))
+                    r = CType(Schema.ExternalSort(Of T)(_mgr, _sort, r.List), Global.Worm.ReadOnlyList(Of T))
                 End If
                 Return r
             End Function

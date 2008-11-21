@@ -866,7 +866,7 @@ Partial Public MustInherit Class OrmManager
         If joins IsNot Nothing Then
             For Each join As OrmJoin In joins
                 If Not OrmJoin.IsEmpty(join) Then
-                    key &= join.ToString
+                    key &= join._ToString
                 End If
             Next
         End If
@@ -890,7 +890,7 @@ Partial Public MustInherit Class OrmManager
         If joins IsNot Nothing Then
             For Each join As OrmJoin In joins
                 If Not OrmJoin.IsEmpty(join) Then
-                    id &= join.ToString
+                    id &= join._ToString
                 End If
             Next
         End If
@@ -945,7 +945,7 @@ l1:
                     End If
                     If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
                         'Dim objs As ICollection(Of T) = r
-                        ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, r), ReadOnlyEntityList(Of T)))
+                        ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, r.List), ReadOnlyEntityList(Of T)))
                         dic(id) = ce
                     End If
                 Else
@@ -958,7 +958,7 @@ l1:
                         If objs IsNot Nothing AndAlso objs.Count > 0 Then
                             Dim srt As IOrmSorting = Nothing
                             If psort.IsExternal Then
-                                ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
+                                ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
                                 dic(id) = ce
                             ElseIf CanSortOnClient(GetType(T), CType(objs, System.Collections.ICollection), psort, srt) Then
                                 Using SyncHelper.AcquireDynamicLock(sync)
@@ -1401,7 +1401,7 @@ l1:
             If ce.SortEquals(psort) OrElse psort Is Nothing Then
                 If psort IsNot Nothing AndAlso psort.IsExternal AndAlso ce.SortExpires Then
                     Dim objs As ReadOnlyEntityList(Of T) = ce.GetObjectList(Of T)(Me)
-                    ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
+                    ce = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
                     If ce.CanRenewAfterSort Then
                         dic(id) = ce
                     End If
@@ -1412,7 +1412,7 @@ l1:
                 If objs IsNot Nothing AndAlso objs.Count > 0 Then
                     Dim srt As IOrmSorting = Nothing
                     If psort.IsExternal Then
-                        Dim ce2 As CachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs), ReadOnlyEntityList(Of T)))
+                        Dim ce2 As CachedItem = del.GetCacheItem(CType(_schema.ExternalSort(Of T)(Me, psort, objs.List), ReadOnlyEntityList(Of T)))
                         If ce.CanRenewAfterSort Then
                             dic(id) = ce2
                         End If
@@ -3271,16 +3271,12 @@ l1:
             If v IsNot Nothing Then
                 Select Case obj.ObjectState
                     Case ObjectState.Created, ObjectState.NotFoundInSource
-                        b = v.ValidateNewObject(Me)
+                        v.ValidateNewObject(Me)
                     Case ObjectState.Modified
-                        b = v.ValidateUpdate(Me)
+                        v.ValidateUpdate(Me)
                     Case ObjectState.Deleted
-                        b = v.ValidateDelete(Me)
+                        v.ValidateDelete(Me)
                 End Select
-            End If
-
-            If Not b Then
-                Return True
             End If
 
             Dim t As Type = obj.GetType

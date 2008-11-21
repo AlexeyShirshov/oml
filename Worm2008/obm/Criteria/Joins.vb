@@ -288,21 +288,51 @@ Namespace Criteria.Joins
             If _table IsNot Nothing Then
                 Return _table.RawName & JoinTypeString() & _condition.GetStaticString(mpe)
             ElseIf _type IsNot Nothing Then
-                Return _type.ToString & JoinTypeString() & _condition.GetStaticString(mpe)
+                If _condition IsNot Nothing Then
+                    Return _type.ToString & JoinTypeString() & _condition.GetStaticString(mpe)
+                Else
+                    Return _type.ToString & JoinTypeString() & _jt.ToString & _key
+                End If
             Else
                 Return _en & JoinTypeString() & _condition.GetStaticString(mpe)
             End If
         End Function
 
-        Public Overrides Function ToString() As String Implements IQueryElement._ToString
+        Public Overrides Function ToString() As String
+            Throw New NotImplementedException
+        End Function
+
+        Public Function _ToString() As String Implements IQueryElement._ToString
             If _table IsNot Nothing Then
                 Return _table.RawName & JoinTypeString() & _condition._ToString
             ElseIf _type IsNot Nothing Then
-                Return _type.ToString & JoinTypeString() & _condition._ToString
+                If _condition IsNot Nothing Then
+                    Return _type.ToString & JoinTypeString() & _condition._ToString
+                Else
+                    Return _type.ToString & JoinTypeString() & _jt.ToString & _key
+                End If
             Else
                 Return _en & JoinTypeString() & _condition._ToString
             End If
         End Function
+
+        Public Property M2MKey() As String
+            Get
+                Return _key
+            End Get
+            Set(ByVal value As String)
+                _key = value
+            End Set
+        End Property
+
+        Public Property M2MJoinType() As Type
+            Get
+                Return _jt
+            End Get
+            Set(ByVal value As Type)
+                _jt = value
+            End Set
+        End Property
 
         Public Property Type() As Type
             Get

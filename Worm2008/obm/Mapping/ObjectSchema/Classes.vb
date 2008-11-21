@@ -1,10 +1,41 @@
 ﻿Namespace Orm.Meta
 
+    Public Structure DBType
+        Public Size As Integer
+        Public Type As String
+        Public Nullable As Boolean
+
+        Public Sub New(ByVal type As String)
+            Me.Type = type
+        End Sub
+
+        Public Sub New(ByVal type As String, ByVal size As Integer)
+            Me.Type = type
+            Me.Size = size
+        End Sub
+
+        Public Sub New(ByVal type As String, ByVal size As Integer, ByVal nullable As Boolean)
+            Me.Type = type
+            Me.Size = size
+            Me.Nullable = nullable
+        End Sub
+
+        Public Sub New(ByVal type As String, ByVal nullable As Boolean)
+            Me.Type = type
+            Me.Nullable = nullable
+        End Sub
+
+        Public Function IsEmpty() As Boolean
+            Return String.IsNullOrEmpty(Type)
+        End Function
+    End Structure
+
     Public Class MapField2Column
         Public ReadOnly _fieldName As String
         Public ReadOnly _columnName As String
         Public ReadOnly _tableName As SourceFragment
-        Private ReadOnly _newattributes As Field2DbRelations
+        Public ReadOnly DBType As DBType
+        Public ReadOnly _newattributes As Field2DbRelations
 
         Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment)
             _fieldName = fieldName
@@ -19,6 +50,36 @@
             _columnName = columnName
             _tableName = tableName
             _newattributes = newAttributes
+        End Sub
+
+        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+            ByVal newAttributes As Field2DbRelations, ByVal dbType As DBType)
+            MyClass.New(fieldName, columnName, tableName, newAttributes)
+            Me.DBType = dbType
+        End Sub
+
+        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+            ByVal newAttributes As Field2DbRelations, ByVal dbType As String)
+            MyClass.New(fieldName, columnName, tableName, newAttributes)
+            Me.DBType = New DBType(dbType)
+        End Sub
+
+        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+            ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer)
+            MyClass.New(fieldName, columnName, tableName, newAttributes)
+            Me.DBType = New DBType(dbType, size)
+        End Sub
+
+        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+            ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer, ByVal nullable As Boolean)
+            MyClass.New(fieldName, columnName, tableName, newAttributes)
+            Me.DBType = New DBType(dbType, size, nullable)
+        End Sub
+
+        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+            ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal nullable As Boolean)
+            MyClass.New(fieldName, columnName, tableName, newAttributes)
+            Me.DBType = New DBType(dbType, nullable)
         End Sub
 
         Public Function GetAttributes(ByVal c As ColumnAttribute) As Field2DbRelations

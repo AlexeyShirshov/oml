@@ -7,6 +7,10 @@ Namespace Orm.Meta
         ReadOnly Property GetRealTable() As String
     End Interface
 
+    Public Interface ISearchTable
+
+    End Interface
+
     Public Interface ICreateParam
         Function CreateParam(ByVal value As Object) As String
         Function AddParam(ByVal pname As String, ByVal value As Object) As String

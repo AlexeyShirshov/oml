@@ -845,7 +845,7 @@ Namespace Database
                     r &= "$"
                     For Each join As Worm.Criteria.Joins.OrmJoin In _joins
                         If Not Worm.Criteria.Joins.OrmJoin.IsEmpty(join) Then
-                            r &= join.ToString
+                            r &= join._ToString
                         End If
                     Next
                 End If
@@ -860,18 +860,20 @@ Namespace Database
 
             Protected Overridable Sub FormStmt(ByVal dbschema As SQLGenerator, ByVal filterInfo As Object, ByVal paramMgr As ICreateParam, ByVal almgr As IPrepareTable, ByVal sb As StringBuilder)
                 If _t Is Nothing Then
-                    sb.Append(dbschema.SelectWithJoin(Nothing, New SourceFragment() {_tbl}, almgr, paramMgr, _joins, _
-                        False, Nothing, Nothing, Nothing, Nothing, Nothing))
+                    sb.Append(dbschema.SelectWithJoin(Nothing, New SourceFragment() {_tbl}, _
+                        almgr, paramMgr, _joins, _
+                        False, Nothing, Nothing, Nothing, Nothing, filterInfo))
                 Else
                     Dim arr As Generic.IList(Of ColumnAttribute) = Nothing
                     If Not String.IsNullOrEmpty(_field) Then
                         arr = New Generic.List(Of ColumnAttribute)
                         arr.Add(New ColumnAttribute(_field))
                     End If
-                    sb.Append(dbschema.SelectWithJoin(_t, almgr, paramMgr, Nothing, arr IsNot Nothing, Nothing, Nothing, Nothing, arr))
+                    sb.Append(dbschema.SelectWithJoin(_t, almgr, paramMgr, _joins, _
+                        arr IsNot Nothing, Nothing, Nothing, filterInfo, arr))
                 End If
 
-                dbschema.AppendWhere(_t, _f, almgr, sb, Nothing, paramMgr)
+                dbschema.AppendWhere(_t, _f, almgr, sb, filterInfo, paramMgr)
             End Sub
 
             Public Function GetParam(ByVal schema As ObjectMappingEngine, ByVal paramMgr As ICreateParam, _
@@ -903,7 +905,7 @@ Namespace Database
                     r &= "$"
                     For Each join As Worm.Criteria.Joins.OrmJoin In _joins
                         If Not Worm.Criteria.Joins.OrmJoin.IsEmpty(join) Then
-                            r &= join.ToString
+                            r &= join.GetStaticString(mpe)
                         End If
                     Next
                 End If

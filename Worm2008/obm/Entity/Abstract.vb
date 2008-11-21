@@ -89,9 +89,9 @@ Namespace Orm
     Public Interface ICachedEntityEx
         Inherits ICachedEntity, IComparable, System.Xml.Serialization.IXmlSerializable
 
-        Function ValidateNewObject(ByVal mgr As OrmManager) As Boolean
-        Function ValidateUpdate(ByVal mgr As OrmManager) As Boolean
-        Function ValidateDelete(ByVal mgr As OrmManager) As Boolean
+        Sub ValidateNewObject(ByVal mgr As OrmManager)
+        Sub ValidateUpdate(ByVal mgr As OrmManager)
+        Sub ValidateDelete(ByVal mgr As OrmManager)
     End Interface
 
     Public Interface IFactory
@@ -105,6 +105,20 @@ Namespace Orm
     Public Interface IM2M
         Function Find(ByVal t As Type) As Worm.Query.QueryCmd
         Function Find(ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal t As Type) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal top As Integer, ByVal t As Type, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
+        Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
         Sub Add(ByVal o As _IOrmBase)
         Sub Add(ByVal o As _IOrmBase, ByVal key As String)
         Sub Delete(ByVal o As _IOrmBase)

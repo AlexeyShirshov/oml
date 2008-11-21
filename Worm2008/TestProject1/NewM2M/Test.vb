@@ -52,20 +52,20 @@ Imports Worm.Database.Criteria
 
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
 
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToList(Of Entity)(mgr)(0)
 
-            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToEntityList(Of Entity4)(mgr)
+            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Assert.IsNotNull(l)
             Assert.AreEqual(4, l.Count)
 
             Dim q2 As New QueryCmd(GetType(Entity4))
             q2.Filter = Ctor.AutoTypeField("ID").Eq(2)
 
-            Dim e2 As Entity4 = q2.ToEntityList(Of Entity4)(mgr)(0)
+            Dim e2 As Entity4 = q2.Single(Of Entity4)(mgr) 'q2.ToList(Of Entity4)(mgr)(0)
 
             Assert.IsFalse(l.Contains(e2))
 
-            Dim l2 As Worm.ReadOnlyEntityList(Of Entity) = CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToEntityList(Of Entity)(mgr)
+            Dim l2 As Worm.ReadOnlyEntityList(Of Entity) = CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr)
             Assert.IsFalse(l2.Contains(e))
 
             mgr.BeginTransaction()
@@ -82,13 +82,13 @@ Imports Worm.Database.Criteria
                 Assert.IsFalse(e.InternalProperties.HasChanges)
                 Assert.IsFalse(e2.InternalProperties.HasChanges)
 
-                l = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToEntityList(Of Entity4)(mgr)
+                l = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
                 Assert.IsNotNull(l)
                 Assert.AreEqual(5, l.Count)
 
                 Assert.IsTrue(l.Contains(e2))
 
-                l2 = CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToEntityList(Of Entity)(mgr)
+                l2 = CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr)
                 Assert.IsTrue(l2.Contains(e))
             Finally
                 mgr.Rollback()
@@ -103,16 +103,16 @@ Imports Worm.Database.Criteria
 
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
 
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
-            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToEntityList(Of Entity4)(mgr)
+            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Assert.IsNotNull(l)
             Assert.AreEqual(4, l.Count)
 
             Dim q2 As New QueryCmd(GetType(Entity4))
             q2.Filter = Ctor.AutoTypeField("ID").Eq(2)
 
-            Dim e2 As Entity4 = q2.ToEntityList(Of Entity4)(mgr)(0)
+            Dim e2 As Entity4 = q2.Single(Of Entity4)(mgr) 'q2.ToEntityList(Of Entity4)(mgr)(0)
 
             mgr.BeginTransaction()
             Try
@@ -132,7 +132,7 @@ Imports Worm.Database.Criteria
                 Assert.IsFalse(e.InternalProperties.HasM2MChanges)
                 Assert.IsFalse(e2.InternalProperties.HasM2MChanges)
 
-                l = e.M2MNew.Find(GetType(Entity4)).ToEntityList(Of Entity4)(mgr)
+                l = e.M2MNew.Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
                 Assert.AreEqual(5, l.Count)
             Finally
                 mgr.Rollback()
@@ -149,9 +149,9 @@ Imports Worm.Database.Criteria
 
             q.Filter = Ctor.AutoTypeField("ID").Eq(1)
 
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
-            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToEntityList(Of Entity4)(mgr)
+            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Assert.IsNotNull(l)
             Assert.AreEqual(4, l.Count)
 
@@ -166,18 +166,18 @@ Imports Worm.Database.Criteria
 
                     CType(e, Worm.Orm.IM2M).Add(e2)
 
-                    Assert.IsFalse(CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToEntityList(Of Entity)(mgr).Contains(e))
+                    Assert.IsFalse(CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr).Contains(e))
 
                     s.AcceptModifications()
                 End Using
 
-                l = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToEntityList(Of Entity4)(mgr)
+                l = CType(e, Worm.Orm.IM2M).Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
                 Assert.IsNotNull(l)
                 Assert.AreEqual(5, l.Count)
 
                 Assert.IsTrue(l.Contains(e2))
 
-                Dim l2 As Worm.ReadOnlyEntityList(Of Entity) = CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToEntityList(Of Entity)(mgr)
+                Dim l2 As Worm.ReadOnlyEntityList(Of Entity) = CType(e2, Worm.Orm.IM2M).Find(GetType(Entity)).ToList(Of Entity)(mgr)
                 Assert.IsTrue(l2.Contains(e))
             Finally
                 mgr.Rollback()
@@ -190,9 +190,9 @@ Imports Worm.Database.Criteria
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
             Dim q As QueryCmd = New QueryCmd(GetType(Entity)).Where(Ctor.AutoTypeField("ID").Eq(1))
 
-            Dim e As Entity = q.ToEntityList(Of Entity)(mgr)(0)
+            Dim e As Entity = q.Single(Of Entity)(mgr) 'q.ToEntityList(Of Entity)(mgr)(0)
 
-            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = e.M2MNew.Find(GetType(Entity4)).ToEntityList(Of Entity4)(mgr)
+            Dim l As Worm.ReadOnlyEntityList(Of Entity4) = e.M2MNew.Find(GetType(Entity4)).ToList(Of Entity4)(mgr)
             Dim c As Integer = l.Count
 
             mgr.BeginTransaction()
@@ -203,7 +203,7 @@ Imports Worm.Database.Criteria
                 End Using
 
                 Dim q2 As QueryCmd = e.M2MNew.Find(GetType(Entity4))
-                l = q2.ToEntityList(Of Entity4)(mgr)
+                l = q2.ToList(Of Entity4)(mgr)
                 Assert.AreEqual(c - 1, l.Count)
                 Assert.IsFalse(q2.LastExecitionResult.CacheHit)
 

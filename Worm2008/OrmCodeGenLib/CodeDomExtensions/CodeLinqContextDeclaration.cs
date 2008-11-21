@@ -47,6 +47,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
             if(ContextClassBehaviour == ContextClassBehaviourType.BaseClass || ContextClassBehaviour == ContextClassBehaviourType.BasePartialClass)
             {
                 var ctor = new CodeConstructor();
+                ctor.Attributes = MemberAttributes.Public;
                 ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(Cache.OrmCache)),"cache"));
                 ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(ObjectMappingEngine)), "schema"));
                 ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(string)), "conn"));
@@ -55,6 +56,7 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
                 ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("conn"));
                 Members.Add(ctor);
                 ctor = new CodeConstructor();
+                ctor.Attributes = MemberAttributes.Public;
                 ctor.Parameters.Add(new CodeParameterDeclarationExpression(new CodeTypeReference(typeof(string)), "conn"));
                 ctor.BaseConstructorArgs.Add(new CodeArgumentReferenceExpression("conn"));
                 Members.Add(ctor);
@@ -84,8 +86,15 @@ namespace Worm.CodeGen.Core.CodeDomExtensions
         public CodeContextEntityWraperMember(EntityDescription entity)
         {
             m_entity = entity;
+            string entityName = entity.Name;
+            if (entityName.EndsWith("s"))
+                entityName += "es";
+            else if(entityName.EndsWith("y"))
+                entityName += "ies";
+            else
+                entityName += "s";
             Attributes = MemberAttributes.Public | MemberAttributes.Final;
-            Name = (entity.RawNamespace ?? string.Empty) + entity.Name;
+            Name = (entity.RawNamespace ?? string.Empty) + entityName;
             var entityTypeReference = new CodeTypeReference(OrmCodeGenNameHelper.GetEntityClassName(Entity, true));
             Type = new CodeTypeReference("Worm.Linq.QueryWrapperT", entityTypeReference);
             SetStatements.Clear();

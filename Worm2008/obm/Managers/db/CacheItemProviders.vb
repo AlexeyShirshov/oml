@@ -200,7 +200,7 @@ Namespace Database
                     _mgr.LoadMultipleObjects(Of T)(cmd, withLoad, r, arr)
 
                     If _sort IsNot Nothing AndAlso _sort.IsExternal Then
-                        r = CType(_mgr.SQLGenerator.ExternalSort(Of T)(_mgr, _sort, r), ReadOnlyList(Of T))
+                        r = CType(_mgr.SQLGenerator.ExternalSort(Of T)(_mgr, _sort, r.List), ReadOnlyList(Of T))
                     End If
                     Return r
                 End Using
@@ -235,8 +235,6 @@ Namespace Database
             Inherits FilterCustDelegate(Of T)
 
             Private _join() As Worm.Criteria.Joins.OrmJoin
-            Private _distinct As Boolean
-            Private _top As Integer = -1
             Private _asc() As QueryAspect
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal join() As Worm.Criteria.Joins.OrmJoin, ByVal f As IFilter, _
@@ -497,7 +495,7 @@ Namespace Database
 
                     If _sort IsNot Nothing AndAlso Sort.IsExternal Then
                         Dim l2 As New List(Of Object)
-                        For Each o As T In _mgr.SQLGenerator.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False))
+                        For Each o As T In _mgr.SQLGenerator.ExternalSort(Of T)(_mgr, _sort, _mgr.ConvertIds2Objects(Of T)(l, False).List)
                             l2.Add(o.Identifier)
                         Next
                         l = l2

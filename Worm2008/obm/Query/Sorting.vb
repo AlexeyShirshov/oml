@@ -71,7 +71,8 @@ End Namespace
 
 Namespace Sorting
 
-    Public Delegate Function ExternalSortDelegate(ByVal mgr As OrmManager, ByVal generator As ObjectMappingEngine, ByVal sort As Sort, ByVal objs As ICollection) As ICollection
+    Public Delegate Function ExternalSortDelegate(ByVal mgr As OrmManager, _
+        ByVal generator As ObjectMappingEngine, ByVal sort As Sort, ByVal objs As IList) As ICollection
 
     Public Class SortOrder
         Private _f As String
@@ -639,7 +640,8 @@ Namespace Sorting
             End Get
         End Property
 
-        Public Overridable Function ExternalSort(Of T As {_IEntity})(ByVal mgr As OrmManager, ByVal schema As ObjectMappingEngine, ByVal objs As ReadOnlyObjectList(Of T)) As ReadOnlyObjectList(Of T)
+        Public Overridable Function ExternalSort(Of T As {_IEntity})(ByVal mgr As OrmManager, _
+            ByVal schema As ObjectMappingEngine, ByVal objs As IList(Of T)) As ReadOnlyObjectList(Of T)
             If Not IsExternal Then
                 Throw New InvalidOperationException("Sort is not external")
             End If
@@ -649,7 +651,7 @@ Namespace Sorting
             End If
 
             If _del IsNot Nothing Then
-                Return CType(_del(mgr, schema, Me, objs), Global.Worm.ReadOnlyObjectList(Of T))
+                Return CType(_del(mgr, schema, Me, CType(objs, IList)), Global.Worm.ReadOnlyObjectList(Of T))
             Else
                 Throw New InvalidOperationException("Delegate is not set")
             End If

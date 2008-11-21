@@ -10,8 +10,16 @@ Namespace Xml
                 MyBase.New(t, fieldName, oper)
             End Sub
 
+            Public Sub New(ByVal entityName As String, ByVal fieldName As String, ByVal oper As Worm.Criteria.FilterOperation)
+                MyBase.New(entityName, fieldName, oper)
+            End Sub
+
             Protected Overrides Function CreateEntityFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilterBase
                 Return New XmlEntityFilter(t, fieldName, value, operation)
+            End Function
+
+            Protected Overrides Function CreateEntityFilter(ByVal entityName As String, ByVal fieldName As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilterBase
+                Return New XmlEntityFilter(entityName, fieldName, value, operation)
             End Function
 
             Public Overrides ReadOnly Property OperToStmt() As String
@@ -45,6 +53,10 @@ Namespace Xml
 
             Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
                 MyBase.New(value, New XmlEntityTemplate(t, fieldName, operation))
+            End Sub
+
+            Public Sub New(ByVal entityName As String, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+                MyBase.New(value, New XmlEntityTemplate(entityName, fieldName, operation))
             End Sub
 
             Protected Sub New(ByVal value As IFilterValue, ByVal tmp As XmlEntityTemplate)

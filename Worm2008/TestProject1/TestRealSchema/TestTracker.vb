@@ -52,7 +52,7 @@ Public Class TestTracker
         Debug.WriteLine("removed: " & CType(obj, OrmBase).Identifier.ToString)
     End Sub
 
-    Protected Sub Objr(ByVal o As ICachedEntity, ByVal inloaq As Boolean)
+    Protected Sub Objr(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal inloaq As Boolean)
         Debug.WriteLine(o.ObjName)
     End Sub
 

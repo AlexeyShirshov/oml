@@ -338,6 +338,17 @@ Namespace Database
                 Return Me
             End Function
 
+            Protected Friend Function AddType(ByVal t As Type) As JCtor
+                _j(_j.Count - 1).M2MJoinType = t
+                Return Me
+            End Function
+
+            Protected Friend Function AddType(ByVal t As Type, ByVal key As String) As JCtor
+                _j(_j.Count - 1).M2MJoinType = t
+                _j(_j.Count - 1).M2MKey = key
+                Return Me
+            End Function
+
             Public Function Joins() As IEnumerable(Of OrmJoin)
                 Return _j
             End Function
@@ -357,6 +368,16 @@ Namespace Database
                 _c = New Conditions.Condition.ConditionConstructor
                 _c.AddFilter(f)
                 _jc = jc
+            End Sub
+
+            Protected Friend Sub New(ByVal t As Type, ByVal jc As JCtor)
+                _jc = jc
+                jc.AddType(t)
+            End Sub
+
+            Protected Friend Sub New(ByVal t As Type, ByVal key As String, ByVal jc As JCtor)
+                _jc = jc
+                jc.AddType(t, key)
             End Sub
 
             Protected Friend Sub New(ByVal c As Conditions.Condition.ConditionConstructor, ByVal jc As JCtor)
@@ -457,7 +478,11 @@ Namespace Database
             End Function
 
             Public Shared Widening Operator CType(ByVal jl As JoinLink) As OrmJoin()
-                Return jl.JC.AddFilter(jl._c.Condition).ToJoinArray
+                If jl._c Is Nothing Then
+                    Return jl.JC.ToJoinArray
+                Else
+                    Return jl.JC.AddFilter(jl._c.Condition).ToJoinArray
+                End If
             End Operator
 
             Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter
@@ -519,6 +544,14 @@ Namespace Database
 
             Public Function [On](ByVal f As IFilter) As JoinLink
                 Return New JoinLink(f, _j)
+            End Function
+
+            Public Function [On](ByVal m2mType As Type) As JoinLink
+                Return New JoinLink(m2mType, _j)
+            End Function
+
+            Public Function [On](ByVal m2mKey As String, ByVal m2mType As Type) As JoinLink
+                Return New JoinLink(m2mType, m2mKey, _j)
             End Function
 
             Public Function [On](ByVal t As Type, ByVal field As String) As CriteriaJoin

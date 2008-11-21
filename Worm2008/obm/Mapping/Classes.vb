@@ -11,6 +11,7 @@
     End Class
 
     Public Class SourceFragment
+        Implements ICloneable
 
         Private _table As String
         Private _schema As String
@@ -65,6 +66,122 @@
                 Return _table
             End Get
         End Property
+
+        Private Function _Clone() As Object Implements System.ICloneable.Clone
+            Return Clone()
+        End Function
+
+        Public Overridable Function Clone() As Object
+            Return New SourceFragment(_schema, _table)
+        End Function
     End Class
 
+    Public Enum SearchType
+        Contains
+        Freetext
+    End Enum
+
+    Public Class SearchFragment
+        Inherits SourceFragment
+        Implements ISearchTable
+
+        Private _type As Type
+        Private _searchString As String
+        Private _st As SearchType
+        Private _queryFields() As String
+        Private _top As Integer = Integer.MinValue
+
+#Region " Ctors "
+
+        Public Sub New()
+
+        End Sub
+
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String)
+            _type = searchType
+            _searchString = searchString
+        End Sub
+
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String, _
+                       ByVal search As SearchType)
+            _type = searchType
+            _searchString = searchString
+            _st = search
+        End Sub
+
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String, _
+                       ByVal search As SearchType, ByVal queryFields() As String)
+            _type = searchType
+            _searchString = searchString
+            _st = search
+            _queryFields = queryFields
+        End Sub
+
+        Public Sub New(ByVal searchType As Type, ByVal searchString As String, _
+                       ByVal search As SearchType, ByVal queryFields() As String, _
+                       ByVal top As Integer)
+            _type = searchType
+            _searchString = searchString
+            _st = search
+            _queryFields = queryFields
+            _top = top
+        End Sub
+
+        Public Sub New(ByVal searchString As String, _
+                       ByVal queryFields() As String)
+            _searchString = searchString
+            _queryFields = queryFields
+        End Sub
+
+        Public Sub New(ByVal searchString As String, _
+                       ByVal queryField As String)
+            _searchString = searchString
+            _queryFields = New String() {queryField}
+        End Sub
+
+        Public Sub New(ByVal searchString As String)
+            _searchString = searchString
+        End Sub
+#End Region
+
+        Public ReadOnly Property Type() As Type
+            Get
+                Return _type
+            End Get
+        End Property
+
+        Public ReadOnly Property SearchText() As String
+            Get
+                Return _searchString
+            End Get
+        End Property
+
+        Public ReadOnly Property SearchType() As SearchType
+            Get
+                Return _st
+            End Get
+        End Property
+
+        Public ReadOnly Property QueryFields() As String()
+            Get
+                Return _queryFields
+            End Get
+        End Property
+
+        Public ReadOnly Property Top() As Integer
+            Get
+                Return _top
+            End Get
+        End Property
+
+        Public Function GetSearchTableName() As String
+            If _st = Meta.SearchType.Contains Then
+                Return "containstable"
+            ElseIf _st = Meta.SearchType.Freetext Then
+                Return "freetexttable"
+            Else
+                Throw New NotSupportedException(_st.ToString)
+            End If
+        End Function
+    End Class
 End Namespace

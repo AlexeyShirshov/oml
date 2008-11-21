@@ -26,7 +26,7 @@ Namespace Database
         End Sub
 
         Public Sub Format(ByVal se As Orm.SelectExpression, ByVal sb As System.Text.StringBuilder, _
-                          ByVal schema As ObjectMappingEngine, ByVal t As System.Type, ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
+                          ByVal schema As ObjectMappingEngine, ByVal selectType As System.Type, ByVal almgr As IPrepareTable, ByVal pmgr As ICreateParam, _
                           ByVal columnAliases As System.Collections.Generic.List(Of String), _
                           ByVal context As Object, ByVal selList As System.Collections.ObjectModel.ReadOnlyCollection(Of Orm.SelectExpression), ByVal defaultTable As Orm.Meta.SourceFragment) Implements Orm.ISelectExpressionFormater.Format
             Dim s As Sorting.Sort = TryCast(se, Sorting.Sort)
@@ -44,15 +44,15 @@ Namespace Database
                     Case Orm.PropType.Subquery
                         Dim j As New List(Of OrmJoin)
                         Dim sl As List(Of Orm.SelectExpression) = Nothing
-                        Dim f As IFilter = se.Query.Prepare(j, schema, context, t, sl)
+                        Dim f As IFilter = se.Query.Prepare(j, schema, context, selectType, sl)
                         sb.Append(" order by (")
-                        sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(context, _s, se.Query, pmgr, t, j, f, almgr, sl))
+                        sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(context, _s, se.Query, pmgr, selectType, j, f, almgr, sl))
                         sb.Append(")")
                         If s.Order = Orm.SortType.Desc Then
                             sb.Append(" desc")
                         End If
                     Case Else
-                        _s.AppendOrder(t, s, almgr, sb, True, selList, defaultTable)
+                        _s.AppendOrder(selectType, s, almgr, sb, True, selList, defaultTable)
                         'Throw New NotSupportedException(se.PropType.ToString)
                 End Select
             Else

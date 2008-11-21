@@ -54,12 +54,12 @@ Imports Worm.Database.Criteria.Core
 
     <TestMethod()> Public Sub TestMax()
         Using mgr As OrmReadOnlyDBManager = TestManager.CreateManager(New SQLGenerator("1"))
-            Dim q As New QueryCmd(GetType(Entity4))
+            Dim q As New QueryCmd()
             q.Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(New AggregateBase() { _
                 New Aggregate(AggregateFunction.Max, GetType(Entity4), "ID") _
             })
 
-            Dim i As Integer = q.ToSimpleList(Of Integer)(mgr)(0)
+            Dim i As Integer = q.ToSimpleList(Of Entity4, Integer)(mgr)(0)
 
             Assert.AreEqual(12, i)
 
@@ -73,7 +73,7 @@ Imports Worm.Database.Criteria.Core
                 New Aggregate(AggregateFunction.Count) _
             })
 
-            Dim i As Integer = q.Single(Of Integer)(mgr) 'q.ToSimpleList(Of Integer)(mgr)(0)
+            Dim i As Integer = q.SingleSimpleDyn(Of Integer)(mgr) 'q.ToSimpleList(Of Integer)(mgr)(0)
 
             Assert.AreEqual(12, i)
 
@@ -98,7 +98,7 @@ Imports Worm.Database.Criteria.Core
             Dim q As New QueryCmd(GetType(Entity4))
             q.propSort = New Worm.Sorting.Sort(inner, SortType.Desc)
 
-            Dim l As ReadOnlyEntityList(Of Entity4) = q.ToEntityList(Of Entity4)(mgr)
+            Dim l As ReadOnlyEntityList(Of Entity4) = q.ToList(Of Entity4)(mgr)
 
             Assert.AreEqual(12, l.Count)
             Assert.AreEqual(10, l(0).Identifier)
@@ -130,25 +130,25 @@ Imports Worm.Database.Criteria.Core
             Dim jf As New JoinFilter(table, r2.Column, t, "ID", Worm.Criteria.FilterOperation.Equal)
             q.Joins = New OrmJoin() {New OrmJoin(table, Worm.Criteria.Joins.JoinType.Join, jf)}
 
-            Assert.AreEqual(39, q.ToSimpleList(Of Integer)(mgr)(0))
+            Assert.AreEqual(39, q.ToSimpleListDyn(Of Integer)(mgr)(0))
 
             q.Group = New ObjectModel.ReadOnlyCollection(Of Grouping)( _
                 New Grouping() {New Grouping(table, r.Column)} _
             )
 
-            Dim l As IList(Of Integer) = q.ToSimpleList(Of Integer)(mgr)
+            Dim l As IList(Of Integer) = q.ToSimpleList(Of Entity4, Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
 
             q.propSort = Sorting.Custom("cnt desc")
-            l = q.ToSimpleList(Of Integer)(mgr)
+            l = q.ToSimpleList(Of Entity4, Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
             Assert.AreEqual(11, l(0))
             Assert.AreEqual(4, l(1))
 
             q.propSort = New Worm.Sorting.Sort(q.Aggregates(0), SortType.Desc)
-            l = q.ToSimpleList(Of Integer)(mgr)
+            l = q.ToSimpleList(Of Entity4, Integer)(mgr)
 
             Assert.AreEqual(11, l.Count)
             Assert.AreEqual(11, l(0))
@@ -198,7 +198,7 @@ Imports Worm.Database.Criteria.Core
                     SelectAgg(AggCtor.Count). _
                     Where(JoinCondition.Create(table, r2.Column).Eq(typeE4, "ID")), SortType.Desc)
 
-            Assert.AreEqual(12, q.ToEntityList(Of Entity4)(mgr).Count)
+            Assert.AreEqual(12, q.ToList(Of Entity4)(mgr).Count)
         End Using
     End Sub
 End Class

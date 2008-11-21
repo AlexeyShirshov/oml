@@ -13,6 +13,7 @@ Namespace Database
         Public Class Ctor
             Implements ICtor
 
+            Private _en As String
             Private _t As Type
             Private _tbl As Worm.Orm.Meta.SourceFragment
             Private _stmtGen As SQLGenerator
@@ -23,6 +24,10 @@ Namespace Database
 
             Public Sub New(ByVal tbl As Orm.Meta.SourceFragment)
                 MyClass.New(Nothing, tbl)
+            End Sub
+
+            Public Sub New(ByVal entityName As String)
+                MyClass.New(Nothing, entityName)
             End Sub
 
             Public Sub New(ByVal stmtGen As SQLGenerator, ByVal t As Type)
@@ -43,12 +48,21 @@ Namespace Database
                 _stmtGen = stmtGen
             End Sub
 
+            Public Sub New(ByVal stmtGen As SQLGenerator, ByVal entityName As String)
+                _stmtGen = stmtGen
+                _en = entityName
+            End Sub
+
             Protected Function _Field(ByVal fieldName As String) As Worm.Criteria.CriteriaField Implements ICtor.Field
                 If String.IsNullOrEmpty(fieldName) Then
                     Throw New ArgumentNullException("fieldName")
                 End If
 
-                Return New CriteriaField(_stmtGen, _t, fieldName)
+                If _t Is Nothing AndAlso Not String.IsNullOrEmpty(_en) Then
+                    Return New CriteriaField(_stmtGen, _en, fieldName)
+                Else
+                    Return New CriteriaField(_stmtGen, _t, fieldName)
+                End If
             End Function
 
             Public Function Field(ByVal fieldName As String) As Criteria.CriteriaField
@@ -57,6 +71,14 @@ Namespace Database
 
             Public Shared Function Field(ByVal t As Type, ByVal fieldName As String) As CriteriaField
                 Return Field(Nothing, t, fieldName)
+            End Function
+
+            Public Shared Function Field(ByVal entityName As String, ByVal fieldName As String) As CriteriaField
+                Return Field(Nothing, entityName, fieldName)
+            End Function
+
+            Public Shared Function Field(ByVal objectField As ObjectField) As CriteriaField
+                Return Field(Nothing, objectField.EntityName, objectField.Field)
             End Function
 
             Public Shared Function Field(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal fieldName As String) As CriteriaField
@@ -69,6 +91,22 @@ Namespace Database
                 End If
 
                 Return New CriteriaField(stmtGen, t, fieldName)
+            End Function
+
+            Public Shared Function Field(ByVal stmtGen As SQLGenerator, ByVal objField As ObjectField) As CriteriaField
+                Return Field(stmtGen, objField.EntityName, objField.Field)
+            End Function
+
+            Public Shared Function Field(ByVal stmtGen As SQLGenerator, ByVal entityName As String, ByVal fieldName As String) As CriteriaField
+                If String.IsNullOrEmpty(entityName) Then
+                    Throw New ArgumentNullException("entityName")
+                End If
+
+                If String.IsNullOrEmpty(fieldName) Then
+                    Throw New ArgumentNullException("fieldName")
+                End If
+
+                Return New CriteriaField(stmtGen, entityName, fieldName)
             End Function
 
             Public Shared Function ColumnOnInlineTable(ByVal columnName As String) As CriteriaColumn
@@ -96,15 +134,23 @@ Namespace Database
                     Throw New ArgumentNullException("fieldName")
                 End If
 
-                Return New CriteriaField(Nothing, Nothing, fieldName)
+                Return New CriteriaField(Nothing, CType(Nothing, Type), fieldName)
             End Function
 
-            Public Shared Function Exists(ByVal t As Type, ByVal filter As cc.IFilter) As CriteriaLink
-                Return New CriteriaLink(Nothing, New Condition.ConditionConstructor).AndExists(t, filter)
+            Public Shared Function Exists(ByVal t As Type, ByVal gf As cc.IGetFilter) As CriteriaLink
+                Return New CriteriaLink(Nothing, New Condition.ConditionConstructor).AndExists(t, gf.Filter)
             End Function
 
-            Public Shared Function NotExists(ByVal t As Type, ByVal filter As cc.IFilter) As CriteriaLink
-                Return New CriteriaLink(Nothing, New Conditions.Condition.ConditionConstructor).AndNotExists(t, filter)
+            Public Shared Function NotExists(ByVal t As Type, ByVal gf As cc.IGetFilter) As CriteriaLink
+                Return New CriteriaLink(Nothing, New Conditions.Condition.ConditionConstructor).AndNotExists(t, gf.Filter)
+            End Function
+
+            Public Shared Function Exists(ByVal t As Type, ByVal gf As cc.IGetFilter, ByVal joins() As OrmJoin) As CriteriaLink
+                Return New CriteriaLink(Nothing, New Condition.ConditionConstructor).AndExists(t, gf.Filter, joins)
+            End Function
+
+            Public Shared Function NotExists(ByVal t As Type, ByVal gf As cc.IGetFilter, ByVal joins() As OrmJoin) As CriteriaLink
+                Return New CriteriaLink(Nothing, New Conditions.Condition.ConditionConstructor).AndNotExists(t, gf.Filter, joins)
             End Function
 
             Public Shared Function Exists(ByVal cmd As Query.QueryCmd) As CriteriaLink
@@ -135,6 +181,99 @@ Namespace Database
                 Return New CriteriaColumn(_stmtGen, _tbl, columnName)
             End Function
         End Class
+
+        'Public Class SchemaCtor
+        '    Implements IFullCtor
+        '    Private _stmt As SQLGenerator
+
+        '    Public Function Field(ByVal t As Type, ByVal fieldName As String) As CriteriaField Implements IFullCtor.Field
+        '        Return Field(_stmt, t, fieldName)
+        '    End Function
+
+        '    Public Function Field(ByVal entityName As String, ByVal fieldName As String) As CriteriaField Implements IFullCtor.Field
+        '        Return Field(_stmt, entityName, fieldName)
+        '    End Function
+
+        '    Public Function Field(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal fieldName As String) As CriteriaField
+        '        If t Is Nothing Then
+        '            Throw New ArgumentNullException("t")
+        '        End If
+
+        '        If String.IsNullOrEmpty(fieldName) Then
+        '            Throw New ArgumentNullException("fieldName")
+        '        End If
+
+        '        Return New CriteriaField(stmtGen, t, fieldName)
+        '    End Function
+
+        '    Public Function Field(ByVal stmtGen As SQLGenerator, ByVal entityName As String, ByVal fieldName As String) As CriteriaField
+        '        If String.IsNullOrEmpty(entityName) Then
+        '            Throw New ArgumentNullException("entityName")
+        '        End If
+
+        '        If String.IsNullOrEmpty(fieldName) Then
+        '            Throw New ArgumentNullException("fieldName")
+        '        End If
+
+        '        Return New CriteriaField(stmtGen, entityName, fieldName)
+        '    End Function
+
+        '    Public Function ColumnOnInlineTable(ByVal columnName As String) As CriteriaColumn
+        '        Return Column(_stmt, Nothing, columnName)
+        '    End Function
+
+        '    Public Function Column(ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String) As CriteriaColumn
+        '        Return Column(_stmt, table, columnName)
+        '    End Function
+
+        '    Public Function Column(ByVal stmtGen As SQLGenerator, ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String) As CriteriaColumn
+        '        'If table Is Nothing Then
+        '        '    Throw New ArgumentNullException("table")
+        '        'End If
+
+        '        If String.IsNullOrEmpty(columnName) Then
+        '            Throw New ArgumentNullException("columnName")
+        '        End If
+
+        '        Return New CriteriaColumn(stmtGen, table, columnName)
+        '    End Function
+
+        '    Public Function AutoTypeField(ByVal fieldName As String) As CriteriaField
+        '        If String.IsNullOrEmpty(fieldName) Then
+        '            Throw New ArgumentNullException("fieldName")
+        '        End If
+
+        '        Return New CriteriaField(_stmt, CType(Nothing, Type), fieldName)
+        '    End Function
+
+        '    Public Function Exists(ByVal t As Type, ByVal gf As cc.IGetFilter) As CriteriaLink
+        '        Return New CriteriaLink(_stmt, New Condition.ConditionConstructor).AndExists(t, gf.Filter)
+        '    End Function
+
+        '    Public Function NotExists(ByVal t As Type, ByVal gf As cc.IGetFilter) As CriteriaLink
+        '        Return New CriteriaLink(_stmt, New Conditions.Condition.ConditionConstructor).AndNotExists(t, gf.Filter)
+        '    End Function
+
+        '    Public Function Exists(ByVal t As Type, ByVal gf As cc.IGetFilter, ByVal joins() As OrmJoin) As CriteriaLink
+        '        Return New CriteriaLink(_stmt, New Condition.ConditionConstructor).AndExists(t, gf.Filter, joins)
+        '    End Function
+
+        '    Public Function NotExists(ByVal t As Type, ByVal gf As cc.IGetFilter, ByVal joins() As OrmJoin) As CriteriaLink
+        '        Return New CriteriaLink(_stmt, New Conditions.Condition.ConditionConstructor).AndNotExists(t, gf.Filter, joins)
+        '    End Function
+
+        '    Public Function Exists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+        '        Return New CriteriaLink(_stmt, New Condition.ConditionConstructor).AndExists(cmd)
+        '    End Function
+
+        '    Public Function NotExists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+        '        Return New CriteriaLink(_stmt, New Conditions.Condition.ConditionConstructor).AndNotExists(cmd)
+        '    End Function
+
+        '    Public Function Custom(ByVal format As String, ByVal ParamArray values() As Pair(Of Object, String)) As CriteriaBase
+        '        Return New CustomCF(_stmt, format, values)
+        '    End Function
+        'End Class
 
         Public Class CriteriaColumn
             Inherits Worm.Criteria.CriteriaColumn
@@ -177,9 +316,20 @@ Namespace Database
                 _stmtGen = stmtGen
             End Sub
 
+            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal en As String, ByVal fieldName As String)
+                MyBase.New(en, fieldName)
+                _stmtGen = stmtGen
+            End Sub
+
             Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal t As Type, ByVal fieldName As String, _
                 ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
                 MyBase.New(t, fieldName, con, ct)
+                _stmtGen = stmtGen
+            End Sub
+
+            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal entityName As String, ByVal fieldName As String, _
+                ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
+                MyBase.New(entityName, fieldName, con, ct)
                 _stmtGen = stmtGen
             End Sub
 
@@ -188,7 +338,11 @@ Namespace Database
                     ConditionCtor = New Condition.ConditionConstructor
                 End If
                 ConditionCtor.AddFilter(fl, ConditionOper)
-                Return New CriteriaLink(_stmtGen, Type, CType(ConditionCtor, Condition.ConditionConstructor))
+                If Type Is Nothing AndAlso Not String.IsNullOrEmpty(EntityName) Then
+                    Return New CriteriaLink(_stmtGen, EntityName, CType(ConditionCtor, Condition.ConditionConstructor))
+                Else
+                    Return New CriteriaLink(_stmtGen, Type, CType(ConditionCtor, Condition.ConditionConstructor))
+                End If
             End Function
 
             Protected Function GetLink2(ByVal fl As Worm.Criteria.Core.IFilter) As CriteriaLink
@@ -196,7 +350,11 @@ Namespace Database
             End Function
 
             Protected Overrides Function CreateFilter(ByVal v As IParamFilterValue, ByVal oper As FilterOperation) As Worm.Criteria.Core.IFilter
-                Return New EntityFilter(Type, Field, v, oper)
+                If Type Is Nothing AndAlso Not String.IsNullOrEmpty(EntityName) Then
+                    Return New EntityFilter(EntityName, Field, v, oper)
+                Else
+                    Return New EntityFilter(Type, Field, v, oper)
+                End If
             End Function
 
             Public Overloads Function [In](ByVal t As Type) As CriteriaLink
@@ -328,11 +486,23 @@ Namespace Database
             'End Function
 
             Public Function Exists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
-                Return CType(GetLink(New NonTemplateUnaryFilter(New SubQuery(_stmtGen, t, joinFilter), FilterOperation.Exists)), CriteriaLink)
+                Return Exists(t, joinFilter, Nothing)
             End Function
 
             Public Function NotExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
-                Return CType(GetLink(New NonTemplateUnaryFilter(New SubQuery(_stmtGen, t, joinFilter), FilterOperation.NotExists)), CriteriaLink)
+                Return NotExists(t, joinFilter, Nothing)
+            End Function
+
+            Public Function Exists(ByVal t As Type, ByVal joinFilter As cc.IFilter, ByVal joins() As OrmJoin) As CriteriaLink
+                Dim sq As New SubQuery(_stmtGen, t, joinFilter)
+                sq.Joins = joins
+                Return CType(GetLink(New NonTemplateUnaryFilter(sq, FilterOperation.Exists)), CriteriaLink)
+            End Function
+
+            Public Function NotExists(ByVal t As Type, ByVal joinFilter As cc.IFilter, ByVal joins() As OrmJoin) As CriteriaLink
+                Dim sq As New SubQuery(_stmtGen, t, joinFilter)
+                sq.Joins = joins
+                Return CType(GetLink(New NonTemplateUnaryFilter(sq, FilterOperation.NotExists)), CriteriaLink)
             End Function
 
             Public Function Exists(ByVal cmd As Query.QueryCmd) As CriteriaLink
@@ -387,6 +557,11 @@ Namespace Database
                 _stmtGen = stmtGen
             End Sub
 
+            Protected Friend Sub New(ByVal stmtGen As SQLGenerator, ByVal entityName As String, ByVal con As Condition.ConditionConstructor)
+                MyBase.New(entityName, con)
+                _stmtGen = stmtGen
+            End Sub
+
             Public Sub New(ByVal stmtGen As SQLGenerator, ByVal table As Orm.Meta.SourceFragment)
                 MyBase.New(table)
                 _stmtGen = stmtGen
@@ -396,6 +571,10 @@ Namespace Database
                 MyBase.New(table, con)
                 _stmtGen = stmtGen
             End Sub
+
+            Protected Overrides Function CreateField(ByVal entityName As String, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaField
+                Return New CriteriaField(_stmtGen, entityName, fieldName, CType(con, Condition.ConditionConstructor), oper)
+            End Function
 
             Protected Overrides Function CreateField(ByVal t As System.Type, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaField
                 Return New CriteriaField(_stmtGen, t, fieldName, CType(con, Condition.ConditionConstructor), oper)
@@ -417,12 +596,30 @@ Namespace Database
             '    Return New CustomCF(t, field, format, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.Or)
             'End Function
 
-            Public Function AndExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
-                Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).Exists(t, joinFilter)
+            Public Function AndExists(ByVal t As Type, ByVal joinFilter As cc.IGetFilter) As CriteriaLink
+                Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).Exists(t, joinFilter.Filter)
             End Function
 
-            Public Function AndNotExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink
-                Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).NotExists(t, joinFilter)
+            Public Function AndNotExists(ByVal t As Type, ByVal joinFilter As cc.IGetFilter) As CriteriaLink
+                Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).NotExists(t, joinFilter.Filter)
+            End Function
+
+            Public Function AndExists(ByVal t As Type, ByVal joinFilter As cc.IGetFilter, ByVal joins() As OrmJoin) As CriteriaLink
+                Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).Exists(t, joinFilter.Filter, joins)
+            End Function
+
+            Public Function AndNotExists(ByVal t As Type, ByVal joinFilter As cc.IGetFilter, ByVal joins() As OrmJoin) As CriteriaLink
+                Return New CriteriaNonField(_stmtGen, CType(ConditionCtor, Condition.ConditionConstructor), Worm.Criteria.Conditions.ConditionOperator.And).NotExists(t, joinFilter.Filter, joins)
+            End Function
+
+            Public Function AndExistsM2M(ByVal t As Type, ByVal t2 As Type, ByVal filter As cc.IGetFilter, ByVal mpe As ObjectMappingEngine) As CriteriaLink
+                Dim t12t2 As Orm.Meta.M2MRelation = mpe.GetM2MRelation(t, t2, True)
+                Dim t22t1 As Orm.Meta.M2MRelation = mpe.GetM2MRelation(t2, t, True)
+                Dim t2_pk As String = mpe.GetPrimaryKeys(t2)(0).FieldName
+                Dim t1_pk As String = mpe.GetPrimaryKeys(t)(0).FieldName
+
+                Return AndExists(t, JoinCondition.Create(t12t2.Table, t12t2.Column).Eq(t2, t2_pk), _
+                                 JCtor.Join(t22t1.Table).On(t22t1.Table, t22t1.Column).Eq(t, t1_pk))
             End Function
 
             Public Function OrExists(ByVal t As Type, ByVal joinFilter As cc.IFilter) As CriteriaLink

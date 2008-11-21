@@ -191,7 +191,7 @@ namespace Worm.CodeGen.CodeGenerator
                 }
             }
 
-            OrmCodeDomGenerator gen = new OrmCodeDomGenerator(ormObjectsDef);
+            var gen = new OrmCodeDomGenerator(ormObjectsDef, settings);
 
             
             settings.Split = split;
@@ -241,20 +241,18 @@ namespace Worm.CodeGen.CodeGenerator
                 else
                     privateFolder = outputFolder + System.IO.Path.DirectorySeparatorChar.ToString();
                 
-                Dictionary<string, CodeCompileUnit> unitsDic;
-
-                unitsDic = gen.GetEntityDom(entity.Identifier, settings);
+                var units = gen.GetEntityCompileUnits(entity.Identifier);
 
                 Console.Write(".");
 
                 if (!System.IO.Directory.Exists(privateFolder))
                     System.IO.Directory.CreateDirectory(privateFolder);
-                foreach (string name in unitsDic.Keys)
+                foreach (var unit in units)
                 {
                     Console.Write(".");
                     try
                     {
-                        GenerateCode(codeDomProvider, unitsDic[name], System.IO.Path.GetFullPath(privateFolder + System.IO.Path.DirectorySeparatorChar.ToString() + name), testRun);
+                        GenerateCode(codeDomProvider, unit, System.IO.Path.GetFullPath(privateFolder + System.IO.Path.DirectorySeparatorChar.ToString() + unit.Filename), testRun);
                         Console.Write(".");
                         totalFiles++;
                     }
@@ -262,10 +260,30 @@ namespace Worm.CodeGen.CodeGenerator
                     {
                         Console.Write(".");
                         errorList.Add(
-                            string.Format("Entity: {0}; file: {1}; message: {2}", entity.Identifier, name, exc.Message));
+                            string.Format("Entity: {0}; file: {1}; message: {2}", entity.Identifier, unit.Filename, exc.Message));
                     }
                 }
                 totalEntities++;
+            }
+
+            try
+            {
+                var ctx = gen.GetLinqContext(settings);
+                if (ctx != null)
+                {
+                    GenerateCode(codeDomProvider, ctx,
+                                 System.IO.Path.GetFullPath(outputFolder +
+                                                            System.IO.Path.DirectorySeparatorChar.ToString() +
+                                                            ctx.Filename), testRun);
+                    Console.Write(".");
+                    totalFiles++;
+                }
+            }
+            catch (Exception exc)
+            {
+                Console.Write(".");
+                errorList.Add(
+                    string.Format("Linq context file failed to generate: {0}", exc.Message));
             }
 
             Console.WriteLine();
@@ -319,7 +337,7 @@ namespace Worm.CodeGen.CodeGenerator
                         opts.ElseOnClosing = false;
                         opts.IndentString = "\t";
                         opts.VerbatimOrder = false;
-                        
+
                         provider.GenerateCodeFromCompileUnit(compileUnit, tw, opts);
                         tw.Close();
                     }
