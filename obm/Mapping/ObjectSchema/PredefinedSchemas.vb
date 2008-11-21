@@ -9,7 +9,11 @@ Namespace Orm.Meta
 
         'Private _tables(-1) As SourceFragment
         Private _table As SourceFragment
-        Private _cols As New OrmObjectIndex
+        Private _cols As Collections.IndexedCollection(Of String, MapField2Column) = New OrmObjectIndex
+
+        Friend Sub New(ByVal cols As Collections.IndexedCollection(Of String, MapField2Column))
+            _cols = cols
+        End Sub
 
         Friend Sub New(ByVal t As Type, ByVal table As String, ByVal cols As ICollection(Of ColumnAttribute), ByVal pk As String)
             'If String.IsNullOrEmpty(pk) Then

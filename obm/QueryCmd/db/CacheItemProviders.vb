@@ -36,16 +36,14 @@ Namespace Query.Database
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
-                _q = q
 
-                Reset(mgr, j, f, q.SelectedType, sl)
+                Reset(mgr, j, f, q.SelectedType, sl, q)
             End Sub
 
             Protected Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
-                _q = q
 
-                Reset(mgr, j, f, t, sl)
+                Reset(mgr, j, f, t, sl, q)
             End Sub
 
             Public Sub ResetStmt()
@@ -53,11 +51,13 @@ Namespace Query.Database
             End Sub
 
             Public Overrides Sub Reset(ByVal mgr As OrmManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-                             ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)))
+                             ByVal f() As IFilter, ByVal t As Type, ByVal sl As List(Of List(Of SelectExpression)), ByVal q As QueryCmd)
                 _j = j
                 _f = f
                 _sl = sl
                 _mgr = mgr
+                _q = q
+                _dic = Nothing
 
                 Dim str As String
                 If t Is Nothing Then
@@ -66,19 +66,27 @@ Namespace Query.Database
                     str = mgr.MappingEngine.GetEntityKey(mgr.GetFilterInfo, t)
                 End If
 
-                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl, str, _mgr.MappingEngine)
-                _id = _q.GetDynamicKey(_j, _f)
-                _sync = _id & _mgr.GetStaticKey()
+                _key = _q.GetStaticKey(_mgr.GetStaticKey(), _j, _f, t, _mgr.Cache.CacheListBehavior, sl, str, _mgr.MappingEngine, _dic)
+
+                If _dic Is Nothing Then
+                    _dic = GetExternalDic(_key)
+                    If _dic IsNot Nothing Then
+                        _key = Nothing
+                    End If
+                End If
+
+                If Not String.IsNullOrEmpty(_key) OrElse _dic IsNot Nothing Then
+                    _id = _q.GetDynamicKey(_j, _f)
+                    _sync = _id & _mgr.GetStaticKey()
+                End If
 
                 ResetStmt()
                 ResetDic()
             End Sub
 
             Public Sub ResetDic()
-                If Not String.IsNullOrEmpty(_key) Then
+                If Not String.IsNullOrEmpty(_key) AndAlso _dic Is Nothing Then
                     _dic = _mgr.GetDic(_mgr.Cache, _key)
-                Else
-                    _dic = Nothing
                 End If
             End Sub
 
@@ -93,8 +101,8 @@ Namespace Query.Database
                     r = ExecStmt(cmd)
                 End Using
 
-                If _q.propSort IsNot Nothing AndAlso _q.propSort.IsExternal Then
-                    r = CType(dbm.SQLGenerator.ExternalSort(Of ReturnType)(dbm, _q.propSort, r), ReadOnlyObjectList(Of ReturnType))
+                If Sort IsNot Nothing AndAlso Sort.IsExternal Then
+                    r = CType(dbm.SQLGenerator.ExternalSort(Of ReturnType)(dbm, Sort, r.List), ReadOnlyObjectList(Of ReturnType))
                 End If
 
                 Return r
@@ -119,7 +127,7 @@ Namespace Query.Database
             End Sub
 
             Protected Overridable Function _MakeStatement() As String
-                Return _MakeStatement(_q.SelectedType)
+                Return _MakeStatement(SelectedType)
             End Function
 
             Protected Function _MakeStatement(ByVal t As Type) As String
@@ -157,7 +165,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IObjectSchemaBase = dbm.SQLGenerator.GetObjectSchema(_q.SelectedType, False)
+                Dim oschema As IObjectSchemaBase = dbm.SQLGenerator.GetObjectSchema(SelectedType, False)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -167,12 +175,11 @@ Namespace Query.Database
 
                 Dim t As Type = _q.CreateType
                 If t Is Nothing Then
-                    t = _q.SelectedType
-                Else
-                    oschema = dbm.SQLGenerator.GetObjectSchema(t, False)
+                    t = SelectedType
                 End If
+                oschema = dbm.SQLGenerator.GetObjectSchema(t, False)
 
-                dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, True, _sl(0)), oschema, fields)
+                dbm.LoadMultipleObjects(t, cmd, True, rr, GetFields(dbm.SQLGenerator, SelectedType, _q, True, _sl(0)), oschema, fields)
                 _q.ExecCount += 1
                 Return New ReadOnlyObjectList(Of ReturnType)(rr)
             End Function
@@ -197,9 +204,11 @@ Namespace Query.Database
             Protected Function GetFieldsIdx(ByVal q As QueryCmd) As Collections.IndexedCollection(Of String, MapField2Column)
                 Dim c As New OrmObjectIndex
 
-                For Each p As SelectExpression In q.SelectList
-                    c.Add(New MapField2Column(p.Field, p.Column, p.Table, p.Attributes))
-                Next
+                'For Each p As SelectExpression In q.SelectList
+                '    c.Add(New MapField2Column(p.Field, p.Column, p.Table, p.Attributes))
+                'Next
+
+                SelectExpression.GetMapping(c, q.SelectList)
 
                 If q.Aggregates IsNot Nothing Then
                     For Each p As AggregateBase In q.Aggregates
@@ -276,6 +285,38 @@ Namespace Query.Database
 
             Public Overrides Function GetCacheItem(ByVal withLoad As Boolean) As OrmManager.CachedItem
                 Return New CachedItem(GetEntities(), _mgr.Cache)
+            End Function
+        End Class
+
+        Class ProviderAnonym(Of CreateType As {New, _IEntity}, ReturnType As {_IEntity})
+            Inherits ProviderAnonym(Of ReturnType)
+
+            Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
+                ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
+                MyBase.New(mgr, j, f, q, q.SelectedType, sl)
+            End Sub
+
+            Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
+                Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
+                Dim rr As New List(Of ReturnType)
+
+                Dim oschema As IObjectSchemaBase = dbm.SQLGenerator.GetObjectSchema(SelectedType, False)
+                Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
+                If oschema IsNot Nothing Then
+                    fields = oschema.GetFieldColumnMap
+                Else
+                    fields = GetFieldsIdx(_q)
+                End If
+
+                Dim t As Type = _q.CreateType
+                If t Is Nothing Then
+                    t = SelectedType
+                End If
+                oschema = dbm.SQLGenerator.GetObjectSchema(t, False)
+
+                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)), oschema, fields)
+                _q.ExecCount += 1
+                Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function
         End Class
 
@@ -360,14 +401,14 @@ Namespace Query.Database
             End Function
 
             Public Overridable Overloads Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem Implements ICacheItemProvoder(Of ReturnType).GetCacheItem
-                Return _GetCacheItem(col, _q.SelectedType)
+                Return _GetCacheItem(col, SelectedType)
             End Function
 
             Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType), ByVal t As Type) As OrmManager.CachedItem
                 Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(t), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
-                    Dim ts As TimeSpan = sortex.SortExpiration(_q.propSort)
+                    Dim ts As TimeSpan = sortex.SortExpiration(Sort)
                     If ts <> TimeSpan.MaxValue AndAlso ts <> TimeSpan.MinValue Then
                         s = Now.Add(ts)
                     End If
@@ -376,7 +417,7 @@ Namespace Query.Database
                 If _f.Length > 0 Then
                     f = _f(0)
                 End If
-                Return New OrmManager.CachedItem(_q.propSort, s, f, col, _mgr)
+                Return New OrmManager.CachedItem(Sort, s, f, col, _mgr)
             End Function
 
             'Public Overrides Function GetEntities(ByVal withLoad As Boolean) As ReadOnlyEntityList(Of ReturnType)
@@ -467,7 +508,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
                 'If GetType(ReturnType) IsNot Query.SelectedType Then
-                dbm.LoadMultipleObjects(_q.SelectedType, cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)))
+                dbm.LoadMultipleObjects(_q.CreateType, cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)))
                 _q.ExecCount += 1
                 'Else
                 'dbm.LoadMultipleObjects(Of ReturnType)(cmd, Query.WithLoad, rr, GetFields(dbm.DbSchema, GetType(ReturnType), Query))
@@ -565,29 +606,29 @@ Namespace Query.Database
             End Function
         End Class
 
-        Class ProviderT(Of SelectType As {ICachedEntity, New}, ReturnType As {ICachedEntity})
+        Class ProviderT(Of CreateType As {ICachedEntity, New}, ReturnType As {ICachedEntity})
             Inherits Provider(Of ReturnType)
 
             Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal j As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
                 ByVal f() As IFilter, ByVal q As QueryCmd, ByVal sl As List(Of List(Of SelectExpression)))
-                MyBase.New(mgr, j, f, q, GetType(SelectType), sl)
+                MyBase.New(mgr, j, f, q, q.SelectedType, sl)
             End Sub
 
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
-                dbm.LoadMultipleObjects(Of SelectType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, GetType(SelectType), _q, _q.propWithLoad, _sl(0)))
+                dbm.LoadMultipleObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)))
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function
 
-            Protected Overrides Function _MakeStatement() As String
-                Return _MakeStatement(GetType(SelectType))
-            End Function
+            'Protected Overrides Function _MakeStatement() As String
+            '    Return _MakeStatement(SelectedType)
+            'End Function
 
-            Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem
-                Return _GetCacheItem(col, GetType(SelectType))
-            End Function
+            'Public Overrides Function GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType)) As OrmManager.CachedItem
+            '    Return _GetCacheItem(col, SelectedType)
+            'End Function
         End Class
 
         'Class M2MPublicProcessor(Of ReturnType As {New, Orm.OrmBase})

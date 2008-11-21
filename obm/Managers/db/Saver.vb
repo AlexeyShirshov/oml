@@ -21,6 +21,7 @@ Namespace Database
         Private _dontTrackRemoved As Boolean
         Private _startSave As Boolean
         Private _error As Boolean = True
+        Private _graphDepth As Integer = 4
 
 #If DEBUG Then
         Friend _deleted As New List(Of ICachedEntity)
@@ -115,24 +116,24 @@ Namespace Database
             End Sub
         End Class
 
-        Public Event PreSave()
-        Public Event BeginSave(ByVal count As Integer)
+        Public Event PreSave(ByVal sender As ObjectListSaver)
+        Public Event BeginSave(ByVal sender As ObjectListSaver, ByVal count As Integer)
         Public Event CannotSave(ByVal sender As ObjectListSaver, ByVal args As CannotSaveEventArgs)
-        Public Event EndSave()
+        Public Event EndSave(ByVal sender As ObjectListSaver)
         Public Event ObjectSaving(ByVal sender As ObjectListSaver, ByVal args As CancelEventArgs)
         Public Event ObjectSavingError(ByVal sender As ObjectListSaver, ByVal args As SaveErrorEventArgs)
-        Public Event ObjectPostponed(ByVal o As ICachedEntity)
-        Public Event ObjectSaved(ByVal o As ICachedEntity)
-        Public Event ObjectAccepting(ByVal o As ICachedEntity)
-        Public Event ObjectAccepted(ByVal o As ICachedEntity)
-        Public Event ObjectRejecting(ByVal o As ICachedEntity)
-        Public Event ObjectRejected(ByVal o As ICachedEntity, ByVal inLockList As Boolean)
-        Public Event ObjectRestored(ByVal o As ICachedEntity)
-        Public Event SaveSuccessed()
-        Public Event SaveFailed()
-        Public Event BeginRejecting()
-        Public Event BeginAccepting()
-        Public Event OnAdded(ByVal o As ICachedEntity, ByVal added As Boolean)
+        Public Event ObjectPostponed(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event ObjectSaved(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event ObjectAccepting(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event ObjectAccepted(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event ObjectRejecting(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event ObjectRejected(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal inLockList As Boolean)
+        Public Event ObjectRestored(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity)
+        Public Event SaveSuccessed(ByVal sender As ObjectListSaver)
+        Public Event SaveFailed(ByVal sender As ObjectListSaver)
+        Public Event BeginRejecting(ByVal sender As ObjectListSaver)
+        Public Event BeginAccepting(ByVal sender As ObjectListSaver)
+        Public Event OnAdded(ByVal sender As ObjectListSaver, ByVal o As ICachedEntity, ByVal added As Boolean)
 
         'Public Sub New(ByVal mgr As OrmReadOnlyDBManager, ByVal dispose As Boolean)
         '    _mgr = mgr
@@ -184,6 +185,15 @@ Namespace Database
             End Get
             Friend Set(ByVal value As Boolean)
                 _save = value
+            End Set
+        End Property
+
+        Public Property GraphDepth() As Integer
+            Get
+                Return _graphDepth
+            End Get
+            Set(ByVal value As Integer)
+                _graphDepth = value
             End Set
         End Property
 
@@ -246,7 +256,7 @@ Namespace Database
                 End If
 #End If
             End If
-            RaiseEvent OnAdded(o, added)
+            RaiseEvent OnAdded(Me, o, added)
             Return added
         End Function
 
@@ -273,13 +283,13 @@ Namespace Database
             Throw New InvalidOperationException("Cannot find object")
         End Function
 
-        Protected Sub ObjectAcceptedHandler(ByVal obj As ICachedEntity) Handles Me.ObjectAccepted
+        Protected Sub ObjectAcceptedHandler(ByVal sender As ObjectListSaver, ByVal obj As ICachedEntity) Handles Me.ObjectAccepted
             Dim o As ObjectWrap(Of ICachedEntity) = GetObjWrap(obj)
             _lockList(o).Dispose()
             _lockList.Remove(o)
         End Sub
 
-        Protected Sub ObjectRejectedHandler(ByVal obj As ICachedEntity, ByVal inLockList As Boolean) Handles Me.ObjectRejected
+        Protected Sub ObjectRejectedHandler(ByVal sender As ObjectListSaver, ByVal obj As ICachedEntity, ByVal inLockList As Boolean) Handles Me.ObjectRejected
             If inLockList Then
                 Dim o As ObjectWrap(Of ICachedEntity) = GetObjWrap(obj)
                 _lockList(o).Dispose()
@@ -301,10 +311,10 @@ l1:
                         _lockList(owr).Dispose()
                         _lockList.Remove(owr)
                         need2save.Add(o)
-                        RaiseEvent ObjectPostponed(o)
+                        RaiseEvent ObjectPostponed(Me, o)
                     Else
                         saved.Add(New Pair(Of ObjectState, _ICachedEntity)(os, o))
-                        RaiseEvent ObjectSaved(o)
+                        RaiseEvent ObjectSaved(Me, o)
                     End If
                 End If
                 Return args.Cancel
@@ -328,7 +338,7 @@ l1:
                 Throw New InvalidOperationException("Cache is readonly")
             End If
 
-            RaiseEvent PreSave()
+            RaiseEvent PreSave(Me)
             Dim hasTransaction As Boolean = _mgr.Transaction IsNot Nothing
             Dim saved As New List(Of Pair(Of ObjectState, _ICachedEntity)), copies As New List(Of Pair(Of ICachedEntity))
             Dim rejectList As New List(Of ICachedEntity), need2save As New List(Of ICachedEntity)
@@ -340,8 +350,10 @@ l1:
 #End If
                 _mgr.BeginTransaction()
                 Try
-                    RaiseEvent BeginSave(_objects.Count)
+                    RaiseEvent BeginSave(Me, _objects.Count)
                     For Each o As _ICachedEntity In _objects
+                        RemoveHandler o.OriginalCopyRemoved, AddressOf ObjRejected
+
                         Dim pp As Pair(Of ICachedEntity) = Nothing
                         If o.ObjectState = ObjectState.Created Then
                             rejectList.Add(o)
@@ -374,7 +386,7 @@ l1:
                         'End Try
                     Next
 
-                    For i As Integer = 0 To 4
+                    For i As Integer = 0 To _graphDepth
                         Dim ns As New List(Of ICachedEntity)(need2save)
                         need2save.Clear()
                         For Each o As _ICachedEntity In ns
@@ -392,36 +404,37 @@ l1:
                         End If
                     End If
 
-                    RaiseEvent EndSave()
+                    RaiseEvent EndSave(Me)
                     _error = False
                 Finally
+                    _startSave = False
                     Try
                         If _error Then
                             If Not hasTransaction Then
                                 _mgr.Rollback()
                             End If
 
-                            RaiseEvent BeginRejecting()
+                            RaiseEvent BeginRejecting(Me)
                             Rollback(saved, rejectList, copies, need2save)
-                            RaiseEvent SaveFailed()
+                            RaiseEvent SaveFailed(Me)
                         Else
                             If Not hasTransaction Then
                                 _mgr.Commit()
                                 _commited = True
                             End If
 
-                            RaiseEvent BeginAccepting()
+                            RaiseEvent BeginAccepting(Me)
                             If _acceptInBatch Then
                                 'Dim l As New Dictionary(Of OrmBase, OrmBase)
                                 Dim l2 As New Dictionary(Of Type, List(Of Pair(Of _ICachedEntity)))
                                 Dim val As New List(Of ICachedEntity)
                                 For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                     Dim o As _ICachedEntity = p.Second
-                                    RaiseEvent ObjectAccepting(o)
+                                    RaiseEvent ObjectAccepting(Me, o)
                                     Dim mo As ICachedEntity = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
                                     Debug.Assert(_mgr.Cache.ShadowCopy(o) Is Nothing)
                                     'l.Add(o, mo)
-                                    RaiseEvent ObjectAccepted(o)
+                                    RaiseEvent ObjectAccepted(Me, o)
                                     If o.UpdateCtx.UpdatedFields IsNot Nothing Then
                                         val.Add(o)
                                     End If
@@ -446,10 +459,10 @@ l1:
                                 Dim svd As New List(Of Pair(Of _ICachedEntity))
                                 For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                                     Dim o As _ICachedEntity = p.Second
-                                    RaiseEvent ObjectAccepting(o)
+                                    RaiseEvent ObjectAccepting(Me, o)
                                     Dim mo As ICachedEntity = o.AcceptChanges(False, OrmBase.IsGoodState(p.First))
                                     Debug.Assert(_mgr.Cache.ShadowCopy(o) Is Nothing)
-                                    RaiseEvent ObjectAccepted(o)
+                                    RaiseEvent ObjectAccepted(Me, o)
                                     svd.Add(New Pair(Of _ICachedEntity)(o, CType(mo, _ICachedEntity)))
                                 Next
                                 For Each p As Pair(Of _ICachedEntity) In svd
@@ -458,7 +471,7 @@ l1:
                                 Next
                             End If
 
-                            RaiseEvent SaveSuccessed()
+                            RaiseEvent SaveSuccessed(Me)
                         End If
                     Finally
                         Do While _lockList.Count > 0
@@ -477,11 +490,11 @@ l1:
         Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)), _
             ByVal rejectList As List(Of ICachedEntity), ByVal copies As List(Of Pair(Of ICachedEntity)), ByVal need2save As List(Of ICachedEntity))
             For Each o As ICachedEntity In rejectList
-                RaiseEvent ObjectRejecting(o)
+                RaiseEvent ObjectRejecting(Me, o)
                 _dontTrackRemoved = True
                 o.RejectChanges()
                 _dontTrackRemoved = False
-                RaiseEvent ObjectRejected(o, Not need2save.Contains(o))
+                RaiseEvent ObjectRejected(Me, o, Not need2save.Contains(o))
             Next
             For Each o As Pair(Of ICachedEntity) In copies
                 o.First.CopyBody(o.Second, o.First)
@@ -490,17 +503,17 @@ l1:
                 If orm IsNot Nothing Then
                     orm.RejectM2MIntermidiate()
                 End If
-                RaiseEvent ObjectRestored(o.First)
+                RaiseEvent ObjectRestored(Me, o.First)
             Next
             For Each p As Pair(Of ObjectState, _ICachedEntity) In saved
                 Dim o As ICachedEntity = p.Second
                 If Not rejectList.Contains(o) Then
-                    RaiseEvent ObjectRejecting(o)
+                    RaiseEvent ObjectRejecting(Me, o)
                     Dim orm As _IOrmBase = TryCast(o, _IOrmBase)
                     If orm IsNot Nothing Then
                         orm.RejectM2MIntermidiate()
                     End If
-                    RaiseEvent ObjectRejected(o, True)
+                    RaiseEvent ObjectRejected(Me, o, True)
                 End If
             Next
         End Sub

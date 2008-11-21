@@ -1253,6 +1253,30 @@ Public Class TestManagerRS
         End Using
     End Sub
 
+    <TestMethod()> Public Sub TestRawCommand()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Dim l As New List(Of Table1)
+            Using cmd As New System.Data.SqlClient.SqlCommand("select id,code from table1 where id = 1")
+                mgr.QueryObjects(Of Table1)(cmd, True, l, _
+                    New List(Of ColumnAttribute)(New ColumnAttribute() { _
+                        New ColumnAttribute("ID"), New ColumnAttribute("Code")}), _
+                    Nothing, SelectExpression.GetMapping(FCtor.Column(Nothing, "id", "ID").Add(Nothing, "code", "Code").GetAllProperties))
+
+                Assert.AreEqual(1, l.Count)
+                Assert.AreEqual(1, l(0).ID)
+            End Using
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestExecuteScalar()
+        Using mgr As OrmReadOnlyDBManager = CreateManager(GetSchema("1"))
+            Using cmd As New System.Data.SqlClient.SqlCommand("select max(id) from table1")
+                Dim obj As Object = mgr.ExecuteScalar(cmd)
+                Assert.AreEqual(3, obj)
+            End Using
+        End Using
+    End Sub
+
     '<TestMethod()> _
     'Public Sub TestSortAny()
     '    Using mgr As Orm.OrmReadOnlyDBManager = CreateManager(GetSchema("1"))

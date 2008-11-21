@@ -108,7 +108,7 @@ Namespace Linq
 
                     'Else
                     If rt.IsValueType OrElse rt Is GetType(String) Then
-                        l = q.ToSimpleList(Of TResult)(mgr)
+                        l = q.ToSimpleListDyn(Of TResult)(mgr)
                     Else
                         If GetType(OrmBase).IsAssignableFrom(rt) Then
                             l = CType(q.ToList(mgr), IList(Of TResult))

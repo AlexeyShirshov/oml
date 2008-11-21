@@ -903,18 +903,18 @@ Namespace Database
             ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
             'Dim ltg As Type = GetType(IList(Of ))
             'Dim lt As Type = ltg.MakeGenericType(New Type() {t})
-            Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance
+            Dim flags As Reflection.BindingFlags = Reflection.BindingFlags.Public Or Reflection.BindingFlags.Instance
 
             If _LoadMultipleObjectsMI Is Nothing Then
                 For Each mi2 As Reflection.MethodInfo In Me.GetType.GetMethods(flags)
-                    If mi2.Name = "LoadMultipleObjects" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 6 Then
+                    If mi2.Name = "QueryObjects" AndAlso mi2.IsGenericMethod AndAlso mi2.GetParameters.Length = 6 Then
                         _LoadMultipleObjectsMI = mi2
                         Exit For
                     End If
                 Next
 
                 If _LoadMultipleObjectsMI Is Nothing Then
-                    Throw New OrmManagerException("Cannot find method LoadMultipleObjects")
+                    Throw New OrmManagerException("Cannot find method QueryObjects")
                 End If
             End If
 
@@ -1277,6 +1277,33 @@ Namespace Database
             Return String.Empty
         End Function
 
+        Public Function ExecuteReader(ByVal cmd As System.Data.Common.DbCommand) As System.Data.Common.DbDataReader
+            Dim b As ConnAction = TestConn(cmd)
+            Try
+                Return cmd.ExecuteReader
+            Finally
+                CloseConn(b)
+            End Try
+        End Function
+
+        Public Function ExecuteScalar(ByVal cmd As System.Data.Common.DbCommand) As Object
+            Dim b As ConnAction = TestConn(cmd)
+            Try
+                Return cmd.ExecuteScalar
+            Finally
+                CloseConn(b)
+            End Try
+        End Function
+
+        Public Function ExecuteNonQuery(ByVal cmd As System.Data.Common.DbCommand) As Integer
+            Dim b As ConnAction = TestConn(cmd)
+            Try
+                Return cmd.ExecuteNonQuery
+            Finally
+                CloseConn(b)
+            End Try
+        End Function
+
         'Protected Overridable Function GetNewObject(ByVal type As Type, ByVal id As Integer) As OrmBase
         '    Dim o As OrmBase = Nothing
         '    If  IsNot Nothing Then
@@ -1485,25 +1512,30 @@ Namespace Database
             Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(GetType(T))
             Dim fields_idx As Collections.IndexedCollection(Of String, MapField2Column) = oschema.GetFieldColumnMap
 
-            LoadMultipleObjects(Of T)(cmd, withLoad, values, selectList, oschema, fields_idx)
+            QueryObjects(Of T)(cmd, withLoad, values, selectList, oschema, fields_idx)
         End Sub
 
-        Protected Friend Sub LoadMultipleObjects(Of T As {_IEntity, New})( _
+        Public Sub QueryObjects(Of T As {_IEntity, New})( _
             ByVal cmd As System.Data.Common.DbCommand, _
             ByVal withLoad As Boolean, ByVal values As IList, _
-            ByVal selectList As Generic.List(Of ColumnAttribute), ByVal oschema As IObjectSchemaBase, ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
+            ByVal selectList As Generic.List(Of ColumnAttribute), ByVal oschema As IObjectSchemaBase, _
+            ByVal fields_idx As Collections.IndexedCollection(Of String, MapField2Column))
 
             If values Is Nothing Then
                 'values = New Generic.List(Of T)
                 Throw New ArgumentNullException("values")
             End If
 
+            If cmd Is Nothing Then
+                Throw New ArgumentNullException("cmd")
+            End If
+
             Invariant()
 
             'Dim idx As Integer = -1
-            Dim b As ConnAction = TestConn(cmd)
             Dim original_type As Type = GetType(T)
             Dim c As OrmCache = TryCast(_cache, OrmCache)
+            Dim b As ConnAction = TestConn(cmd)
             Try
                 _loadedInLastFetch = 0
                 If withLoad AndAlso c IsNot Nothing Then
@@ -3175,7 +3207,7 @@ l2:
 
                 If sort IsNot Nothing AndAlso sort.IsExternal Then
                     Dim l2 As New List(Of Object)
-                    For Each o As T In SQLGenerator.ExternalSort(Of T)(Me, sort, ConvertIds2Objects(Of T)(l, False))
+                    For Each o As T In SQLGenerator.ExternalSort(Of T)(Me, sort, ConvertIds2Objects(Of T)(l, False).List)
                         l2.Add(o.Identifier)
                     Next
                     l = l2

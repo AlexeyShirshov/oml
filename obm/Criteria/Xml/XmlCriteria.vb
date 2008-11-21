@@ -48,6 +48,15 @@ Namespace Xml
                 MyBase.New(t, fieldName, con, ct)
             End Sub
 
+            Protected Friend Sub New(ByVal entityName As String, ByVal fieldName As String)
+                MyBase.New(entityName, fieldName)
+            End Sub
+
+            Protected Friend Sub New(ByVal entityName As String, ByVal fieldName As String, _
+                ByVal con As Condition.ConditionConstructor, ByVal ct As Worm.Criteria.Conditions.ConditionOperator)
+                MyBase.New(entityName, fieldName, con, ct)
+            End Sub
+
             Protected Overrides Function CreateFilter(ByVal v As IParamFilterValue, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.IFilter
                 Return New XmlEntityFilter(Type, Field, v, oper)
             End Function
@@ -78,6 +87,10 @@ Namespace Xml
             Protected Friend Sub New(ByVal t As Type, ByVal con As Condition.ConditionConstructor)
                 MyBase.New(t, con)
             End Sub
+
+            Protected Overrides Function CreateField(ByVal entityName As String, ByVal fieldName As String, ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaField
+                Return New XmlCriteriaField(entityName, fieldName, CType(con, Condition.ConditionConstructor), oper)
+            End Function
 
             Protected Overrides Function CreateField(ByVal t As System.Type, ByVal fieldName As String, ByVal con As Criteria.Conditions.Condition.ConditionConstructorBase, ByVal oper As Worm.Criteria.Conditions.ConditionOperator) As Worm.Criteria.CriteriaField
                 Return New XmlCriteriaField(t, fieldName, CType(con, Condition.ConditionConstructor), oper)

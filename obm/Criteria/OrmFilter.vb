@@ -443,6 +443,7 @@ Namespace Criteria.Core
 
         Private _t As Type
         Private _fieldname As String
+        Private _en As String
 
         'Private _appl As Boolean
 
@@ -453,23 +454,47 @@ Namespace Criteria.Core
             '_appl = appl
         End Sub
 
+        Public Sub New(ByVal entityName As String, ByVal fieldName As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
+            MyBase.New(oper)
+            _en = entityName
+            _fieldname = fieldName
+        End Sub
+
         Public Overridable Function MakeFilter(ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
             If obj Is Nothing Then
                 Throw New ArgumentNullException("obj")
             End If
 
-            If obj.GetType IsNot _t Then
-                Dim o As IOrmBase = schema.GetJoinObj(oschema, obj, _t)
-                If o Is Nothing Then
-                    Throw New ArgumentException(String.Format("Template type {0} is not match {1}", _t.ToString, obj.GetType))
+            Dim lt As Type = _t
+            If lt Is Nothing Then
+                If Not String.IsNullOrEmpty(_en) Then
+                    lt = schema.GetTypeByEntityName(_en)
+                Else
+                    Throw New InvalidOperationException(String.Format("Type is not specified in filter: {0} {1}", _fieldname, OperToString))
                 End If
-                Return MakeFilter(schema, schema.GetObjectSchema(_t), o)
+            End If
+
+            If obj.GetType IsNot lt Then
+                Dim o As IOrmBase = schema.GetJoinObj(oschema, obj, lt)
+                If o Is Nothing Then
+                    Throw New ArgumentException(String.Format("Template type {0} is not match {1}", lt.ToString, obj.GetType))
+                End If
+                Return MakeFilter(schema, schema.GetObjectSchema(lt), o)
             Else
                 Dim v As Object = obj.GetValueOptimized(Nothing, New ColumnAttribute(_fieldname), oschema)
-
-                Return CreateEntityFilter(_t, _fieldname, New ScalarValue(v), Operation)
+                If lt Is Nothing AndAlso Not String.IsNullOrEmpty(_en) Then
+                    Return CreateEntityFilter(_en, _fieldname, New ScalarValue(v), Operation)
+                Else
+                    Return CreateEntityFilter(lt, _fieldname, New ScalarValue(v), Operation)
+                End If
             End If
         End Function
+
+        Public ReadOnly Property EntityName() As String
+            Get
+                Return _en
+            End Get
+        End Property
 
         Public ReadOnly Property Type() As Type
             Get
@@ -484,7 +509,7 @@ Namespace Criteria.Core
         End Property
 
         Public Sub SetType(ByVal t As System.Type) Implements IOrmFilterTemplate.SetType
-            If _t Is Nothing Then
+            If _t Is Nothing AndAlso String.IsNullOrEmpty(_en) Then
                 _t = t
             End If
         End Sub
@@ -497,7 +522,7 @@ Namespace Criteria.Core
             If obj Is Nothing Then
                 Return False
             End If
-            Return _t Is obj._t AndAlso _fieldname Is obj._fieldname AndAlso Operation = obj.Operation
+            Return _t Is obj._t AndAlso _fieldname Is obj._fieldname AndAlso Operation = obj.Operation AndAlso String.Equals(_en, obj._en)
         End Function
 
         Public Overrides Function GetHashCode() As Integer
@@ -505,7 +530,11 @@ Namespace Criteria.Core
         End Function
 
         Public Overrides Function GetStaticString() As String
-            Return _t.ToString & _fieldname & OperToString()
+            If _t Is Nothing Then
+                Return _en & _fieldname & OperToString()
+            Else
+                Return _t.ToString & _fieldname & OperToString()
+            End If
         End Function
 
         Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
@@ -517,6 +546,7 @@ Namespace Criteria.Core
         End Function
 
         Protected MustOverride Function CreateEntityFilter(ByVal t As Type, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilterBase
+        Protected MustOverride Function CreateEntityFilter(ByVal entityName As String, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilterBase
 
         'Public MustOverride ReadOnly Property Operation() As FilterOperation Implements IOrmFilterTemplate.Operation
         'Public MustOverride ReadOnly Property OperToString() As String Implements ITemplate.OperToString
@@ -688,7 +718,7 @@ Namespace Criteria.Core
             If f Is Nothing Then
                 Return False
             Else
-                Return _ToString.Equals(f.ToString)
+                Return _ToString.Equals(f._ToString)
             End If
         End Function
 
@@ -718,7 +748,7 @@ Namespace Criteria.Core
         End Function
 
         Public Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IFilter.GetStaticString
-            Return _left.ToStaticString & _fo.ToString & _right.ToStaticString
+            Return _left.ToStaticString(mpe) & _fo.ToString & _right.ToStaticString(mpe)
         End Function
 
         Protected Function _ToString() As String Implements IFilter._ToString

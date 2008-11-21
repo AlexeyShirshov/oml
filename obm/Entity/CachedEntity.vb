@@ -3,8 +3,42 @@ Imports Worm.Cache
 Imports System.ComponentModel
 Imports System.Collections.Generic
 Imports System.Xml
+Imports Worm.Query
 
 Namespace Orm
+    <Serializable()> _
+    Public Class OrmObjectException
+        Inherits Exception
+
+        Private _obj As ICachedEntity
+
+        Public Sub New()
+            ' Add other code for custom properties here.
+        End Sub
+
+        Public Sub New(ByVal message As String)
+            MyBase.New(message)
+            ' Add other code for custom properties here.
+        End Sub
+
+        Public Sub New(ByVal message As String, ByVal obj As ICachedEntity)
+            MyBase.New(message)
+            _obj = obj
+        End Sub
+
+        Public Sub New(ByVal message As String, ByVal inner As Exception)
+            MyBase.New(message, inner)
+            ' Add other code for custom properties here.
+        End Sub
+
+        Protected Sub New( _
+            ByVal info As System.Runtime.Serialization.SerializationInfo, _
+            ByVal context As System.Runtime.Serialization.StreamingContext)
+            MyBase.New(info, context)
+            ' Insert code here for custom properties here.
+        End Sub
+    End Class
+
     <Serializable()> _
     Public MustInherit Class CachedEntity
         Inherits Entity
@@ -1308,17 +1342,17 @@ l1:
             End If
         End Sub
 
-        Protected Overridable Function ValidateNewObject(ByVal mgr As OrmManager) As Boolean Implements _ICachedEntityEx.ValidateNewObject
-            Return True
-        End Function
+        Protected Overridable Sub ValidateNewObject(ByVal mgr As OrmManager) Implements _ICachedEntityEx.ValidateNewObject
+            'Return True
+        End Sub
 
-        Protected Overridable Function ValidateUpdate(ByVal mgr As OrmManager) As Boolean Implements _ICachedEntityEx.ValidateUpdate
-            Return True
-        End Function
+        Protected Overridable Sub ValidateUpdate(ByVal mgr As OrmManager) Implements _ICachedEntityEx.ValidateUpdate
+            'Return True
+        End Sub
 
-        Protected Overridable Function ValidateDelete(ByVal mgr As OrmManager) As Boolean Implements _ICachedEntityEx.ValidateDelete
-            Return True
-        End Function
+        Protected Overridable Sub ValidateDelete(ByVal mgr As OrmManager) Implements _ICachedEntityEx.ValidateDelete
+            'Return True
+        End Sub
 
         Protected Sub RaiseSaved(ByVal sa As OrmManager.SaveAction) Implements _ICachedEntity.RaiseSaved
             RaiseEvent Saved(Me, New ObjectSavedArgs(sa))

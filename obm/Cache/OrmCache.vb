@@ -1097,6 +1097,8 @@ l1:
                     h = p.Value.Second.MakeHash(schema, oschema, obj)
                 Catch ex As ArgumentException When ex.Message.StartsWith("Template type")
                     Return
+                Catch ex As InvalidOperationException When ex.Message.StartsWith("Type is not specified in filter")
+                    Throw New InvalidOperationException(String.Format("Key {0}", p.Key), ex)
                 End Try
             End If
             Dim hid As HashIds = p.Value.First

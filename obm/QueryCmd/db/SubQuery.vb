@@ -33,18 +33,18 @@ Namespace Database.Criteria.Values
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
 
-            Dim t As Type = If(_q.CreateType Is Nothing, _q.SelectedType, _q.CreateType)
+            Dim selectType As Type = If(_q.SelectedType IsNot Nothing, _q.SelectedType, _q.CreateType)
 
             Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
             Dim sl As List(Of Orm.SelectExpression) = Nothing
-            Dim f As IFilter = _q.Prepare(j, schema, filterInfo, t, sl)
+            Dim f As IFilter = _q.Prepare(j, schema, filterInfo, selectType, sl)
 
             If _stmtGen Is Nothing Then
                 _stmtGen = TryCast(schema, SQLGenerator)
             End If
 
             sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(filterInfo, _stmtGen, _q, paramMgr, _
-                 t, j, f, almgr, sl))
+                 selectType, j, f, almgr, sl))
 
             sb.Append(")")
 

@@ -13,21 +13,26 @@ Namespace Query
         Function ExecEntity(Of ReturnType As {_IEntity})( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)
 
+        Function ExecEntity(Of CreateType As {_IEntity, New}, ReturnType As {_IEntity})( _
+            ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)
+
         Function Exec(Of ReturnType As _ICachedEntity)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
 
-        Function Exec(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)( _
+        Function Exec(Of CreateType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
 
-        Function ExecSimple(Of SelectType As {_ICachedEntity, New}, ReturnType)( _
+        Function ExecSimple(Of CreateType As {_ICachedEntity, New}, ReturnType)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
 
         Function ExecSimple(Of ReturnType)( _
             ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
 
-        Sub Reset(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+        Sub Reset(Of CreateType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
         Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+
         Sub ResetEntity(Of ReturnType As _IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
+        Sub ResetEntity(Of CreateType As {_IEntity, New}, ReturnType As _IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
 
     End Interface
 
@@ -180,8 +185,131 @@ Namespace Query
         End Function
     End Class
 
+    <Serializable()> _
+    Public Class QueryCmdException
+        Inherits System.Exception
+
+        Private _cmd As QueryCmd
+
+        Public ReadOnly Property QueryCommand() As QueryCmd
+            Get
+                Return _cmd
+            End Get
+        End Property
+
+        Public Sub New(ByVal message As String, ByVal cmd As QueryCmd)
+            MyBase.New(message)
+            _cmd = cmd
+        End Sub
+
+        Public Sub New(ByVal message As String, ByVal inner As Exception)
+            MyBase.New(message, inner)
+        End Sub
+
+        Private Sub New( _
+            ByVal info As System.Runtime.Serialization.SerializationInfo, _
+            ByVal context As System.Runtime.Serialization.StreamingContext)
+            MyBase.New(info, context)
+        End Sub
+    End Class
+
     Public Class QueryCmd
         Implements ICloneable, Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
+
+#Region " Classes "
+        Public Class CacheDictionaryRequiredEventArgs
+            Inherits EventArgs
+
+            Private _del As GetDictionaryDelegate
+            Public Property GetDictionary() As GetDictionaryDelegate
+                Get
+                    Return _del
+                End Get
+                Set(ByVal value As GetDictionaryDelegate)
+                    _del = value
+                End Set
+            End Property
+        End Class
+
+        Public Class ExternalDictionaryEventArgs
+            Inherits EventArgs
+
+            Private _dic As IDictionary
+            Private _key As String
+
+            Public Sub New(ByVal key As String)
+                _key = key
+            End Sub
+
+            Public ReadOnly Property Key() As String
+                Get
+                    Return _key
+                End Get
+            End Property
+
+            Public Property Dictionary() As IDictionary
+                Get
+                    Return _dic
+                End Get
+                Set(ByVal value As IDictionary)
+                    _dic = value
+                End Set
+            End Property
+        End Class
+
+        Class svct
+            Private _oldct As Type
+            Private _oldst As Type
+            Private _cmd As QueryCmd
+
+            Sub New(ByVal cmd As QueryCmd)
+                _oldct = cmd._createType
+                _oldst = cmd._realType
+                _cmd = cmd
+            End Sub
+
+            Public Sub SetCT2Nothing()
+                _cmd._createType = _oldct
+                _cmd._realType = _oldst
+            End Sub
+        End Class
+
+        Private Class cls
+            Private _m As CreateManagerDelegate
+            Private _gm As ICreateManager
+
+            Public Sub New(ByVal getMgr As CreateManagerDelegate)
+                _m = getMgr
+            End Sub
+
+            Public Sub New(ByVal getMgr As ICreateManager)
+                _gm = getMgr
+            End Sub
+
+            'Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
+            '    If _m Is Nothing Then
+            '        args.Manager = _gm.CreateManager
+            '    Else
+            '        args.Manager = _m()
+            '    End If
+            'End Sub
+
+            Public Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManager)
+                'AddHandler o.ManagerRequired, AddressOf GetManager
+                If _m Is Nothing Then
+                    o.SetCreateManager(_gm)
+                Else
+                    o.SetCreateManager(New CreateManager(_m))
+                End If
+            End Sub
+        End Class
+
+#End Region
+
+        Public Delegate Function GetDictionaryDelegate(ByVal key As String) As IDictionary
+
+        Public Event CacheDictionaryRequired(ByVal sender As QueryCmd, ByVal args As CacheDictionaryRequiredEventArgs)
+        Public Event ExternalDictionary(ByVal sender As QueryCmd, ByVal args As ExternalDictionaryEventArgs)
 
         Protected _fields As ObjectModel.ReadOnlyCollection(Of SelectExpression)
         Protected _filter As IGetFilter
@@ -226,6 +354,9 @@ Namespace Query
                 Return _createType
             End Get
             Set(ByVal value As Type)
+                If _createType IsNot Nothing AndAlso _execCnt > 0 Then
+                    Throw New QueryCmdException("Cannot change CreateType", Me)
+                End If
                 _createType = value
             End Set
         End Property
@@ -303,6 +434,10 @@ Namespace Query
             End Get
         End Property
 
+        Protected Friend Sub RaiseExternalDictionary(ByVal args As ExternalDictionaryEventArgs)
+            RaiseEvent ExternalDictionary(Me, args)
+        End Sub
+
         'Protected Friend Sub SetSelectList(ByVal l As ObjectModel.ReadOnlyCollection(Of OrmProperty))
         '    _fields = l
         'End Sub
@@ -332,6 +467,10 @@ Namespace Query
 
 #Region " Ctors "
         Public Sub New()
+        End Sub
+
+        Public Sub New(ByVal getMgr As ICreateManager)
+            _getMgr = getMgr
         End Sub
 
         Public Sub New(ByVal table As SourceFragment)
@@ -392,14 +531,14 @@ Namespace Query
         End Sub
 
         Public Function Prepare(ByVal js As List(Of List(Of Worm.Criteria.Joins.OrmJoin)), _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, _
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal selectType As Type, _
             ByVal cs As List(Of List(Of SelectExpression))) As IFilter()
 
             Dim fs As New List(Of IFilter)
             For Each q As QueryCmd In New QueryIterator(Me)
                 Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
                 Dim c As List(Of SelectExpression) = Nothing
-                Dim f As IFilter = q.Prepare(j, schema, filterInfo, t, c)
+                Dim f As IFilter = q.Prepare(j, schema, filterInfo, selectType, c)
                 If f IsNot Nothing Then
                     fs.Add(f)
                 End If
@@ -412,7 +551,7 @@ Namespace Query
         End Function
 
         Public Function Prepare(ByVal j As List(Of Worm.Criteria.Joins.OrmJoin), _
-            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal t As Type, _
+            ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal selectType As Type, _
             ByRef cl As List(Of SelectExpression)) As IFilter
 
             If Joins IsNot Nothing Then
@@ -421,12 +560,12 @@ Namespace Query
 
             Dim f As IFilter = Nothing
             If Filter IsNot Nothing Then
-                f = Filter.Filter(t)
+                f = Filter.Filter(selectType)
             End If
 
             For Each s As Sort In New Sort.Iterator(_order)
                 If s.Type Is Nothing AndAlso s.Table Is Nothing Then
-                    s.Type = t
+                    s.Type = selectType
                 End If
 
                 If s.Type IsNot Nothing AndAlso s.Field Is Nothing AndAlso s.Column IsNot Nothing Then
@@ -438,13 +577,13 @@ Namespace Query
 
             If AutoJoins OrElse _o IsNot Nothing Then
                 Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                If OrmManager.HasJoins(schema, t, f, propSort, filterInfo, joins, _appendMain) Then
+                If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, _appendMain) Then
                     j.AddRange(joins)
                 End If
             End If
 
             If _o IsNot Nothing Then
-                Dim selectedType As Type = t
+                Dim selectedType As Type = selectType
                 Dim filteredType As Type = _o.GetType
 
                 'Dim schema2 As IOrmObjectSchema = GetObjectSchema(filteredType)
@@ -475,7 +614,7 @@ Namespace Query
                 'Dim table As OrmTable = _o.M2M.GetTable(t, _key)
 
                 If _appendMain OrElse propWithLoad Then
-                    Dim jf As New Worm.Database.Criteria.Joins.JoinFilter(table, selected_r.Column, t, OrmBaseT.PKName, Criteria.FilterOperation.Equal)
+                    Dim jf As New Worm.Database.Criteria.Joins.JoinFilter(table, selected_r.Column, selectType, OrmBaseT.PKName, Criteria.FilterOperation.Equal)
                     Dim jn As New Worm.Database.Criteria.Joins.OrmJoin(table, JoinType.Join, jf)
                     j.Add(jn)
                     If table.Equals(_table) Then
@@ -489,7 +628,7 @@ Namespace Query
                     Dim r As New List(Of SelectExpression)
                     'Dim os As IOrmObjectSchemaBase = schema.GetObjectSchema(selectedType)
                     'os.GetFieldColumnMap()("ID")._columnName
-                    r.Add(New SelectExpression(table, selected_r.Column & " " & schema.GetColumnNameByFieldNameInternal(t, OrmBaseT.PKName, False), OrmBaseT.PKName))
+                    r.Add(New SelectExpression(table, selected_r.Column & " " & schema.GetColumnNameByFieldNameInternal(selectType, OrmBaseT.PKName, False), OrmBaseT.PKName))
                     r(0).Attributes = Field2DbRelations.PK
                     '_fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(r)
                     cl = r
@@ -504,9 +643,9 @@ Namespace Query
             End If
 
             If _fields IsNot Nothing Then
-                If t IsNot Nothing Then
+                If selectType IsNot Nothing Then
                     If _autoFields Then
-                        For Each pk As ColumnAttribute In schema.GetPrimaryKeys(t)
+                        For Each pk As ColumnAttribute In schema.GetPrimaryKeys(selectType)
                             Dim find As Boolean
                             For Each fld As SelectExpression In _fields
                                 If (fld.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK _
@@ -519,7 +658,7 @@ Namespace Query
                                 If cl Is Nothing Then
                                     cl = New List(Of SelectExpression)
                                 End If
-                                cl.Add(New SelectExpression(t, pk.FieldName))
+                                cl.Add(New SelectExpression(selectType, pk.FieldName))
                                 cl(0).Attributes = pk._behavior
                             End If
                         Next
@@ -552,8 +691,11 @@ Namespace Query
         Public Function GetStaticKey(ByVal mgrKey As String, ByVal js As List(Of List(Of OrmJoin)), _
             ByVal fs() As IFilter, ByVal realType As Type, ByVal cb As Cache.CacheListBehavior, _
             ByVal sl As List(Of List(Of SelectExpression)), ByVal realTypeKey As String, _
-            ByVal mpe As ObjectMappingEngine) As String
+            ByVal mpe As ObjectMappingEngine, ByRef dic As IDictionary) As String
             Dim key As New StringBuilder
+
+            Dim ca As CacheDictionaryRequiredEventArgs = Nothing
+            Dim cb_ As Cache.CacheListBehavior = cb
 
             Dim i As Integer = 0
             For Each q As QueryCmd In New QueryIterator(Me)
@@ -566,8 +708,20 @@ Namespace Query
                     f = fs(i)
                 End If
 
-                If Not q.GetStaticKey(key, js(i), f, If(q._realType Is Nothing, realType, q._realType), cb, sl(i), mpe) Then
-                    Return Nothing
+                If Not q.GetStaticKey(key, js(i), f, If(q._realType Is Nothing, realType, q._realType), cb_, sl(i), mpe) Then
+                    If ca Is Nothing Then
+                        ca = New CacheDictionaryRequiredEventArgs
+                        RaiseEvent CacheDictionaryRequired(Me, ca)
+                        If ca.GetDictionary Is Nothing Then
+                            If cb = Cache.CacheListBehavior.CacheOrThrowException Then
+                                Throw New QueryCmdException("Cannot cache query", Me)
+                            Else
+                                Return Nothing
+                            End If
+                        End If
+                    End If
+                    q.GetStaticKey(key, js(i), f, If(q._realType Is Nothing, realType, q._realType), Cache.CacheListBehavior.CacheAll, sl(i), mpe)
+                    cb_ = Cache.CacheListBehavior.CacheAll
                 End If
                 i += 1
             Next
@@ -575,7 +729,13 @@ Namespace Query
             key.Append(realTypeKey).Append("$")
 
             key.Append("$").Append(mgrKey)
-            Return key.ToString
+
+            If ca IsNot Nothing Then
+                dic = ca.GetDictionary(key.ToString)
+                Return Nothing
+            Else
+                Return key.ToString
+            End If
         End Function
 
         Protected Friend Function GetStaticKey(ByVal sb As StringBuilder, ByVal j As IEnumerable(Of OrmJoin), _
@@ -587,18 +747,18 @@ Namespace Query
                 Select Case cb
                     Case Cache.CacheListBehavior.CacheAll
                         sb2.Append(f.GetStaticString(mpe)).Append("$")
-                    Case Cache.CacheListBehavior.CacheOrThrowException
-                        If TryCast(f, IEntityFilter) IsNot Nothing Then
-                            sb2.Append(f.GetStaticString(mpe)).Append("$")
-                        Else
-                            For Each fl As IFilter In f.GetAllFilters
-                                Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, fl)
-                                If Not Cache.IsCalculated(dp) Then
-                                    Throw New ApplicationException
-                                End If
-                            Next
-                        End If
-                    Case Cache.CacheListBehavior.CacheWhatCan
+                        'Case Cache.CacheListBehavior.CacheOrThrowException
+                        '    If TryCast(f, IEntityFilter) IsNot Nothing Then
+                        '        sb2.Append(f.GetStaticString(mpe)).Append("$")
+                        '    Else
+                        '        For Each fl As IFilter In f.GetAllFilters
+                        '            Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, fl)
+                        '            If Not Cache.IsCalculated(dp) Then
+                        '                Throw New ApplicationException
+                        '            End If
+                        '        Next
+                        '    End If
+                    Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
                         If TryCast(f, IEntityFilter) IsNot Nothing Then
                             sb2.Append(f.GetStaticString(mpe)).Append("$")
                         Else
@@ -621,8 +781,8 @@ Namespace Query
                             Select Case cb
                                 Case Cache.CacheListBehavior.CacheAll
                                     'do nothing
-                                Case Cache.CacheListBehavior.CacheOrThrowException
-                                Case Cache.CacheListBehavior.CacheWhatCan
+                                    'Case Cache.CacheListBehavior.CacheOrThrowException
+                                Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
                                     Return False
                                 Case Else
                                     Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
@@ -637,11 +797,29 @@ Namespace Query
                 If realType IsNot Nothing Then
                     sb2.Append(realType.ToString)
                 ElseIf _table IsNot Nothing Then
-                    sb2.Append(_table.RawName)
+                    Select Case cb
+                        Case Cache.CacheListBehavior.CacheAll
+                            sb2.Append(_table.RawName)
+                            'Case Cache.CacheListBehavior.CacheOrThrowException
+                        Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
+                            Return False
+                        Case Else
+                            Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
+                    End Select
                 Else
                     Throw New NotSupportedException
                 End If
                 sb2.Append("$")
+            ElseIf cb <> Cache.CacheListBehavior.CacheAll Then
+                If _table IsNot Nothing Then
+                    Select Case cb
+                        'Case Cache.CacheListBehavior.CacheOrThrowException
+                        Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
+                            Return False
+                        Case Else
+                            Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
+                    End Select
+                End If
             End If
 
             sb.Append(sb2.ToString)
@@ -666,7 +844,7 @@ Namespace Query
             End If
 
             If _order IsNot Nothing Then
-                If CacheSort OrElse _top IsNot Nothing Then
+                If CacheSort OrElse _top IsNot Nothing OrElse cb <> Cache.CacheListBehavior.CacheAll Then
                     For Each n As Sort In New Sort.Iterator(_order)
                         If Not GetStaticKeyFromProp(sb, cb, n, mpe) Then
                             Return False
@@ -681,14 +859,14 @@ Namespace Query
         End Function
 
         Private Shared Function GetStaticKeyFromProp(ByVal sb As StringBuilder, ByVal cb As Cache.CacheListBehavior, ByVal c As SelectExpression, ByVal mpe As ObjectMappingEngine) As Boolean
-            If c.Type Is Nothing Then
+            If c.IsCustom OrElse c.Query IsNot Nothing Then
                 Dim dp As Cache.IDependentTypes = Cache.QueryDependentTypes(mpe, c)
                 If Not Cache.IsCalculated(dp) Then
                     Select Case cb
                         Case Cache.CacheListBehavior.CacheAll
                             'do nothing
-                        Case Cache.CacheListBehavior.CacheOrThrowException
-                        Case Cache.CacheListBehavior.CacheWhatCan
+                            'Case Cache.CacheListBehavior.CacheOrThrowException
+                        Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
                             Return False
                         Case Else
                             Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
@@ -720,13 +898,13 @@ Namespace Query
 
         Protected Friend Sub GetDynamicKey(ByVal sb As StringBuilder, ByVal j As IEnumerable(Of OrmJoin), ByVal f As IFilter)
             If f IsNot Nothing Then
-                sb.Append(f.ToString).Append("$")
+                sb.Append(f._ToString).Append("$")
             End If
 
             If j IsNot Nothing Then
                 For Each join As OrmJoin In j
                     If Not OrmJoin.IsEmpty(join) Then
-                        sb.Append(join.ToString)
+                        sb.Append(join._ToString)
                     End If
                 Next
             End If
@@ -812,15 +990,18 @@ Namespace Query
                 Return _realType
             End Get
             Set(ByVal value As Type)
+                If _realType IsNot Nothing AndAlso _execCnt > 0 Then
+                    Throw New QueryCmdException("Cannot change SelectedType", Me)
+                End If
                 _realType = value
             End Set
         End Property
 
-        Public Overridable ReadOnly Property ReturnType() As Type
-            Get
-                Return _realType
-            End Get
-        End Property
+        'Public Overridable ReadOnly Property ReturnType() As Type
+        '    Get
+        '        Return _realType
+        '    End Get
+        'End Property
 
         Public ReadOnly Property Mark() As Guid
             Get
@@ -996,6 +1177,11 @@ Namespace Query
         End Property
 #End Region
 
+        Public Function AddJoins(ByVal joins() As OrmJoin) As QueryCmd
+            Me.Joins = joins
+            Return Me
+        End Function
+
         Public Function Distinct(ByVal value As Boolean) As QueryCmd
             propDistinct = value
             Return Me
@@ -1061,41 +1247,114 @@ Namespace Query
         '    Return e
         'End Function
 
-        Private Class cls
-            Private _m As CreateManagerDelegate
-            Private _gm As ICreateManager
+#Region " ToLists "
 
-            Public Sub New(ByVal getMgr As CreateManagerDelegate)
-                _m = getMgr
-            End Sub
+#Region " ToList "
 
-            Public Sub New(ByVal getMgr As ICreateManager)
-                _gm = getMgr
-            End Sub
+        'Public Function ToList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As IList(Of T)
+        '    Return ToEntityList(Of T)(mgr)
+        'End Function
 
-            'Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
-            '    If _m Is Nothing Then
-            '        args.Manager = _gm.CreateManager
-            '    Else
-            '        args.Manager = _m()
-            '    End If
-            'End Sub
-
-            Public Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManager)
-                'AddHandler o.ManagerRequired, AddressOf GetManager
-                If _m Is Nothing Then
-                    o.SetCreateManager(_gm)
-                Else
-                    o.SetCreateManager(New CreateManager(_m))
-                End If
-            End Sub
-        End Class
+        'Public Function ToList(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManager) As IList(Of ReturnType)
+        '    Return GetExecutor(mgr).Exec(Of SelectType, ReturnType)(mgr, Me)
+        'End Function
 
         Public Function ToList(ByVal mgr As OrmManager) As IList
             Dim t As MethodInfo = Me.GetType.GetMethod("ToEntityList", New Type() {GetType(OrmManager)})
-            t = t.MakeGenericMethod(New Type() {SelectedType})
+            Dim st As Type = SelectedType
+            If st Is Nothing AndAlso Not String.IsNullOrEmpty(EntityName) Then
+                st = mgr.MappingEngine.GetTypeByEntityName(EntityName)
+            End If
+            t = t.MakeGenericMethod(New Type() {st})
             Return CType(t.Invoke(Me, New Object() {mgr}), System.Collections.IList)
         End Function
+
+        Public Function ToList(ByVal getMgr As ICreateManager) As IList
+            Using mgr As OrmManager = getMgr.CreateManager
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                Return ToList(mgr)
+            End Using
+        End Function
+
+        Public Function ToList() As IList
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return ToList(_getMgr)
+        End Function
+
+        Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of ReturnType)
+            Return GetExecutor(mgr).Exec(Of CreateType, ReturnType)(mgr, Me)
+        End Function
+
+        Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of ReturnType)
+            Using mgr As OrmManager = getMgr.CreateManager
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                Return ToList(Of CreateType, ReturnType)(mgr)
+            End Using
+        End Function
+
+        Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)() As ReadOnlyEntityList(Of ReturnType)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return ToList(Of CreateType, ReturnType)(_getMgr)
+        End Function
+
+        Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of CreateReturnType)
+            Return GetExecutor(mgr).Exec(Of CreateReturnType, CreateReturnType)(mgr, Me)
+        End Function
+
+        Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of CreateReturnType)
+            Using mgr As OrmManager = getMgr.CreateManager
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                Return ToList(Of CreateReturnType)(mgr)
+            End Using
+        End Function
+
+        Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})() As ReadOnlyEntityList(Of CreateReturnType)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return ToList(Of CreateReturnType)(_getMgr)
+        End Function
+#End Region
+
+#Region " ToAnonymList "
+
+        Public Function ToAnonymList(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of AnonymousEntity)
+            'Dim c As New svct(Me)
+            '_createType = GetType(AnonymousEntity)
+            'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+            Return GetExecutor(mgr).ExecEntity(Of AnonymousEntity, AnonymousEntity)(mgr, Me)
+            'End Using
+        End Function
+
+        Public Function ToAnonymList(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of AnonymousEntity)
+            Using mgr As OrmManager = getMgr.CreateManager
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                Return ToAnonymList(mgr)
+            End Using
+        End Function
+
+        Public Function ToAnonymList() As ReadOnlyObjectList(Of AnonymousEntity)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return ToAnonymList(_getMgr)
+        End Function
+
+#End Region
+
+#Region " ToEntityList "
 
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyEntityList(Of T)
             Dim mgr As OrmManager = getMgr()
@@ -1132,106 +1391,68 @@ Namespace Query
             Return ToEntityList(Of T)(_getMgr)
         End Function
 
-        Private Sub SetCT2Nothing()
-            _createType = Nothing
-        End Sub
+#End Region
 
-        Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
-            If GetType(AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso _createType Is Nothing Then
-                _createType = GetType(T)
-                Using New OnExitScopeAction(AddressOf SetCT2Nothing)
-                    Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
-                End Using
-            Else
-                Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
-            End If
-        End Function
+#Region " ToOrmList "
 
-        Public Function ToOrmList(Of T As {_IOrmBase})(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
+        Public Function ToOrmListDyn(Of T As {_IOrmBase})(ByVal mgr As OrmManager) As ReadOnlyList(Of T)
             Return CType(ToEntityList(Of T)(mgr), ReadOnlyList(Of T))
         End Function
 
-        Public Function ToOrmList(Of T As {_IOrmBase})(ByVal getMgr As ICreateManager) As ReadOnlyList(Of T)
-            Using mgr As OrmManager = getMgr.CreateManager
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
-                Return ToOrmList(Of T)(mgr)
-            End Using
+        Public Function ToOrmListDyn(Of T As {_IOrmBase})(ByVal getMgr As ICreateManager) As ReadOnlyList(Of T)
+            'Using mgr As OrmManager = getMgr.CreateManager
+            '    mgr.RaiseObjectCreation = True
+            '    AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+            '    Return ToOrmList(Of T)(mgr)
+            'End Using
+            Return CType(ToEntityList(Of T)(getMgr), ReadOnlyList(Of T))
         End Function
 
-        Public Function ToOrmList(Of T As {_IOrmBase})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
+        Public Function ToOrmListDyn(Of T As {_IOrmBase})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
             Using mgr As OrmManager = getMgr()
                 mgr.RaiseObjectCreation = True
                 AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
-                Return ToOrmList(Of T)(mgr)
+                Return ToOrmListDyn(Of T)(mgr)
             End Using
         End Function
 
-        Public Function ToOrmList(Of T As _IOrmBase)() As ReadOnlyList(Of T)
+        Public Function ToOrmListDyn(Of T As _IOrmBase)() As ReadOnlyList(Of T)
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
 
-            Return ToOrmList(Of T)(_getMgr)
+            Return ToOrmListDyn(Of T)(_getMgr)
         End Function
 
-        Public Function ToList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As IList(Of T)
-            Return ToEntityList(Of T)(mgr)
+        Public Function ToOrmList(Of CreateType As {New, _IOrmBase}, ReturnType As _IOrmBase)(ByVal mgr As OrmManager) As ReadOnlyList(Of ReturnType)
+            Return CType(ToList(Of CreateType, ReturnType)(mgr), ReadOnlyList(Of ReturnType))
         End Function
 
-        Public Function ToList(Of SelectType As {_ICachedEntity, New}, ReturnType As {_ICachedEntity})(ByVal mgr As OrmManager) As IList(Of ReturnType)
-            Return GetExecutor(mgr).Exec(Of SelectType, ReturnType)(mgr, Me)
+        Public Function ToOrmList(Of CreateType As {New, _IOrmBase}, ReturnType As _IOrmBase)(ByVal getMgr As ICreateManager) As ReadOnlyList(Of ReturnType)
+            'Using mgr As OrmManager = getMgr.CreateManager
+            '    mgr.RaiseObjectCreation = True
+            '    AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+            '    Return ToOrmList(Of CreateType, ReturnType)(mgr)
+            'End Using
+            Return CType(ToList(Of CreateType, ReturnType)(getMgr), ReadOnlyList(Of ReturnType))
         End Function
 
-        'Public Function ExecTypeless(ByVal mgr As OrmManager) As IEnumerator
-        '    Return ToListTypeless(mgr).GetEnumerator
-        'End Function
-
-        Public Function [Single](Of T)(ByVal mgr As OrmManager) As T
-            Dim l As IList(Of T) = ToSimpleList(Of T)(mgr)
-            If l.Count <> 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            End If
-            Return l(0)
+        Public Function ToOrmList(Of CreateReturnType As {New, _IOrmBase})(ByVal mgr As OrmManager) As ReadOnlyList(Of CreateReturnType)
+            Return CType(ToList(Of CreateReturnType)(mgr), ReadOnlyList(Of CreateReturnType))
         End Function
 
-        Public Function [SingleOrDefault](Of T)(ByVal mgr As OrmManager) As T
-            Dim l As IList(Of T) = ToSimpleList(Of T)(mgr)
-            If l.Count <> 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            ElseIf l.Count = 1 Then
-                Return l(0)
-            End If
-            Return Nothing
+        Public Function ToOrmList(Of CreateReturnType As {New, _IOrmBase})(ByVal getMgr As ICreateManager) As ReadOnlyList(Of CreateReturnType)
+            Return CType(ToList(Of CreateReturnType)(getMgr), ReadOnlyList(Of CreateReturnType))
         End Function
 
-        Public Function SingleEntity(Of T As _ICachedEntity)(ByVal mgr As OrmManager) As T
-            Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)(mgr)
-            If l.Count <> 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            End If
-            Return l(0)
+        Public Function ToOrmList(Of CreateReturnType As {New, _IOrmBase})() As ReadOnlyList(Of CreateReturnType)
+            Return CType(ToList(Of CreateReturnType)(), ReadOnlyList(Of CreateReturnType))
         End Function
+#End Region
 
-        Public Function SingleOrm(Of T As _IOrmBase)(ByVal mgr As OrmManager) As T
-            Dim l As ReadOnlyList(Of T) = ToOrmList(Of T)(mgr)
-            If l.Count <> 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            End If
-            Return l(0)
-        End Function
+#Region " ToSimpleList "
 
-        Public Function SingleOrDefaultOrm(Of T As _IOrmBase)(ByVal mgr As OrmManager) As T
-            Dim l As ReadOnlyList(Of T) = ToOrmList(Of T)(mgr)
-            If l.Count > 1 Then
-                Throw New InvalidOperationException("Number of items is " & l.Count)
-            ElseIf l.Count = 1 Then
-                Return l(0)
-            End If
-            Return Nothing
-        End Function
-
-        Public Function ToSimpleList(Of T)(ByVal mgr As OrmManager) As IList(Of T)
+        Public Function ToSimpleListDyn(Of T)(ByVal mgr As OrmManager) As IList(Of T)
             Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
             'Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
             'Dim qt As Type = q.GetType
@@ -1241,6 +1462,64 @@ Namespace Query
             'End If
             'Dim rmi As MethodInfo = mi.MakeGenericMethod(New Type() {GetType(T)})
             'Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
+        End Function
+
+        Public Function ToSimpleListDyn(Of T)(ByVal getMgr As ICreateManager) As IList(Of T)
+            Using mgr As OrmManager = getMgr.CreateManager
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
+            End Using
+        End Function
+
+        Public Function ToSimpleListDyn(Of T)() As IList(Of T)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return ToSimpleListDyn(Of T)(_getMgr)
+        End Function
+
+        Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)(ByVal mgr As OrmManager) As IList(Of T)
+            Return GetExecutor(mgr).ExecSimple(Of CreateType, T)(mgr, Me)
+            'Dim q As QueryCmdBase = CreateTypedCopy(SelectedType)
+            'Dim qt As Type = q.GetType
+            'Dim mi As MethodInfo = qt.GetMethod("ToSimpleList")
+            'If mi Is Nothing Then
+            '    Throw New InvalidOperationException
+            'End If
+            'Dim rmi As MethodInfo = mi.MakeGenericMethod(New Type() {GetType(T)})
+            'Return CType(rmi.Invoke(q, New Object() {mgr}), Global.System.Collections.Generic.IList(Of T))
+        End Function
+
+        Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As IList(Of T)
+            Using mgr As OrmManager = getMgr.CreateManager
+                mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                Return GetExecutor(mgr).ExecSimple(Of CreateType, T)(mgr, Me)
+            End Using
+        End Function
+
+        Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)() As IList(Of T)
+            If _getMgr Is Nothing Then
+                Throw New InvalidOperationException("OrmManager required")
+            End If
+
+            Return ToSimpleList(Of CreateType, T)(_getMgr)
+        End Function
+#End Region
+
+        Public Function ToObjectList(Of T As _IEntity)(ByVal mgr As OrmManager) As ReadOnlyObjectList(Of T)
+            If GetType(AnonymousEntity).IsAssignableFrom(GetType(T)) AndAlso _createType Is Nothing Then
+                'Dim c As New svct(Me)
+                '_createType = GetType(T)
+                'Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                '    Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
+                'End Using
+                Return GetExecutor(mgr).ExecEntity(Of AnonymousEntity, T)(mgr, Me)
+            Else
+                Return GetExecutor(mgr).ExecEntity(Of T)(mgr, Me)
+            End If
         End Function
 
         Public Function ToCustomList(Of T As {New, Class})() As IList(Of T)
@@ -1271,34 +1550,380 @@ Namespace Query
                 l = ToObjectList(Of AnonymousEntity)(mgr)
             End If
 
-            For Each kv As KeyValuePair(Of ColumnAttribute, Reflection.PropertyInfo) In mpe.GetProperties(rt, schema)
-                Dim col As ColumnAttribute = kv.Key
-                Dim pi As Reflection.PropertyInfo = kv.Value
-                For Each e As IEntity In l
-                    Dim ro As New T
+            Dim props As IDictionary = mpe.GetProperties(rt, schema)
+            For Each e As IEntity In l
+                Dim ro As New T
+                For Each kv As DictionaryEntry In props
+                    Dim col As ColumnAttribute = CType(kv.Key, ColumnAttribute)
+                    Dim pi As Reflection.PropertyInfo = CType(kv.Value, PropertyInfo)
                     Dim v As Object = e.GetValueOptimized(Nothing, col, Nothing)
                     pi.SetValue(ro, v, Nothing)
-                    r.Add(ro)
                 Next
+                r.Add(ro)
             Next
 
             Return r
         End Function
+#End Region
 
-        Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, ByRef pk As Boolean) As IObjectSchemaBase
+#Region " Singles "
 
+#Region " Single "
+        Public Function [Single](Of T As {New, _ICachedEntity})(ByVal mgr As OrmManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = ToList(Of T)(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [Single](Of T As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = ToList(Of T)(getMgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [Single](Of T As {New, _ICachedEntity})() As T
+            Dim l As ReadOnlyEntityList(Of T) = ToList(Of T)()
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [SingleOrDefault](Of T As {New, _ICachedEntity})(ByVal mgr As OrmManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = ToList(Of T)(mgr)
+            If l.Count > 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function SingleOrDefault(Of T As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = ToList(Of T)(getMgr)
+            If l.Count > 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function SingleOrDefault(Of T As {New, _ICachedEntity})() As T
+            Dim l As ReadOnlyEntityList(Of T) = ToList(Of T)()
+            If l.Count > 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function [SingleDyn](Of T As _ICachedEntity)(ByVal mgr As OrmManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [SingleDyn](Of T As _ICachedEntity)(ByVal getMgr As ICreateManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)(getMgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [SingleDyn](Of T As _ICachedEntity)() As T
+            Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)()
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [SingleOrDefaultDyn](Of T As _ICachedEntity)(ByVal mgr As OrmManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)(mgr)
+            If l.Count > 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function SingleOrDefaultSyn(Of T As _ICachedEntity)(ByVal getMgr As ICreateManager) As T
+            Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)(getMgr)
+            If l.Count > 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function SingleOrDefaultDyn(Of T As _ICachedEntity)() As T
+            Dim l As ReadOnlyEntityList(Of T) = ToEntityList(Of T)()
+            If l.Count > 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+#End Region
+
+        '#Region " SingleOrm "
+
+        '        Public Function SingleOrm(Of T As {New, _IOrmBase})(ByVal mgr As OrmManager) As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmList(Of T)(mgr)
+        '            If l.Count <> 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            End If
+        '            Return l(0)
+        '        End Function
+
+        '        Public Function SingleOrm(Of T As {New, _IOrmBase})(ByVal getMgr As ICreateManager) As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmList(Of T)(getMgr)
+        '            If l.Count <> 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            End If
+        '            Return l(0)
+        '        End Function
+
+        '        Public Function SingleOrm(Of T As {New, _IOrmBase})() As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmList(Of T)()
+        '            If l.Count <> 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            End If
+        '            Return l(0)
+        '        End Function
+
+        '        Public Function SingleOrDefaultOrm(Of T As {New, _IOrmBase})(ByVal mgr As OrmManager) As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmList(Of T)(mgr)
+        '            If l.Count > 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            ElseIf l.Count = 1 Then
+        '                Return l(0)
+        '            End If
+        '            Return Nothing
+        '        End Function
+
+        '        Public Function SingleOrDefaultOrm(Of T As {New, _IOrmBase})(ByVal getMgr As ICreateManager) As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmList(Of T)(getMgr)
+        '            If l.Count > 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            ElseIf l.Count = 1 Then
+        '                Return l(0)
+        '            End If
+        '            Return Nothing
+        '        End Function
+
+        '        Public Function SingleOrDefaultOrm(Of T As {New, _IOrmBase})() As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmList(Of T)()
+        '            If l.Count > 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            ElseIf l.Count = 1 Then
+        '                Return l(0)
+        '            End If
+        '            Return Nothing
+        '        End Function
+
+        '        Public Function SingleOrmDyn(Of T As _IOrmBase)(ByVal mgr As OrmManager) As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmListDyn(Of T)(mgr)
+        '            If l.Count <> 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            End If
+        '            Return l(0)
+        '        End Function
+
+        '        Public Function SingleOrmDyn(Of T As _IOrmBase)(ByVal getMgr As ICreateManager) As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmListDyn(Of T)(getMgr)
+        '            If l.Count <> 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            End If
+        '            Return l(0)
+        '        End Function
+
+        '        Public Function SingleOrmDyn(Of T As _IOrmBase)() As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmListDyn(Of T)()
+        '            If l.Count <> 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            End If
+        '            Return l(0)
+        '        End Function
+
+        '        Public Function SingleOrDefaultOrmDyn(Of T As _IOrmBase)(ByVal mgr As OrmManager) As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmListDyn(Of T)(mgr)
+        '            If l.Count > 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            ElseIf l.Count = 1 Then
+        '                Return l(0)
+        '            End If
+        '            Return Nothing
+        '        End Function
+
+        '        Public Function SingleOrDefaultOrmDyn(Of T As _IOrmBase)(ByVal getMgr As ICreateManager) As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmListDyn(Of T)(getMgr)
+        '            If l.Count > 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            ElseIf l.Count = 1 Then
+        '                Return l(0)
+        '            End If
+        '            Return Nothing
+        '        End Function
+
+        '        Public Function SingleOrDefaultOrmDyn(Of T As _IOrmBase)() As T
+        '            Dim l As ReadOnlyList(Of T) = ToOrmListDyn(Of T)()
+        '            If l.Count > 1 Then
+        '                Throw New InvalidOperationException("Number of items is " & l.Count)
+        '            ElseIf l.Count = 1 Then
+        '                Return l(0)
+        '            End If
+        '            Return Nothing
+        '        End Function
+
+        '#End Region
+
+#Region " SingleSimple "
+
+        Public Function SingleSimple(Of CreateType As {New, _ICachedEntity}, T)(ByVal mgr As OrmManager) As T
+            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function SingleSimple(Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As T
+            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(getMgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function SingleSimple(Of CreateType As {New, _ICachedEntity}, T)() As T
+            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)()
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [SingleOrDefaultSimple](Of CreateType As {New, _ICachedEntity}, T)(ByVal mgr As OrmManager) As T
+            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function [SingleOrDefaultSimple](Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As T
+            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)(getMgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function [SingleOrDefaultSimple](Of CreateType As {New, _ICachedEntity}, T)() As T
+            Dim l As IList(Of T) = ToSimpleList(Of CreateType, T)()
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function SingleSimpleDyn(Of T)(ByVal mgr As OrmManager) As T
+            Dim l As IList(Of T) = ToSimpleListDyn(Of T)(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function SingleSimpleDyn(Of T)(ByVal getMgr As ICreateManager) As T
+            Dim l As IList(Of T) = ToSimpleListDyn(Of T)(getMgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function SingleSimpleDyn(Of T)() As T
+            Dim l As IList(Of T) = ToSimpleListDyn(Of T)()
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            End If
+            Return l(0)
+        End Function
+
+        Public Function [SingleOrDefaultSimpleDyn](Of T)(ByVal mgr As OrmManager) As T
+            Dim l As IList(Of T) = ToSimpleListDyn(Of T)(mgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function [SingleOrDefaultSimpleDyn](Of T)(ByVal getMgr As ICreateManager) As T
+            Dim l As IList(Of T) = ToSimpleListDyn(Of T)(getMgr)
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+
+        Public Function [SingleOrDefaultSimpleDyn](Of T)() As T
+            Dim l As IList(Of T) = ToSimpleListDyn(Of T)()
+            If l.Count <> 1 Then
+                Throw New InvalidOperationException("Number of items is " & l.Count)
+            ElseIf l.Count = 1 Then
+                Return l(0)
+            End If
+            Return Nothing
+        End Function
+#End Region
+
+#End Region
+
+        Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
+                                   ByRef pk As Boolean) As IObjectSchemaBase
+            Dim s As New SimpleObjectSchema(SelectExpression.GetMapping(SelectList))
+            Return s
         End Function
 
         Public Sub Reset(Of ReturnType As _IEntity)(ByVal mgr As OrmManager)
             GetExecutor(mgr).ResetEntity(Of ReturnType)(mgr, Me)
         End Sub
 
-        Public Sub Renew(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManager)
+        Public Sub RenewDyn(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManager)
             GetExecutor(mgr).Reset(Of ReturnType)(mgr, Me)
         End Sub
 
-        Public Sub Renew(Of SelectType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager)
-            GetExecutor(mgr).Reset(Of SelectType, ReturnType)(mgr, Me)
+        Public Sub Renew(Of CreateType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager)
+            GetExecutor(mgr).Reset(Of CreateType, ReturnType)(mgr, Me)
+        End Sub
+
+        Public Sub Renew(Of CreateReturnType As {_ICachedEntity, New})(ByVal mgr As OrmManager)
+            GetExecutor(mgr).Reset(Of CreateReturnType, CreateReturnType)(mgr, Me)
         End Sub
 
         Public Sub CopyTo(ByVal o As QueryCmd)
@@ -1514,7 +2139,7 @@ Namespace Query
             Return dp.Get
         End Function
 
-        Public Function GetOrmCommand(Of T As _IOrmBase)(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
+        Public Function GetOrmCommand(Of T As {New, _IOrmBase})(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             'Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As New OrmQueryCmd(Of T)()
             CopyTo(q)
@@ -1524,7 +2149,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Function GetOrmCommand(Of T As _IOrmBase)() As OrmQueryCmd(Of T)
+        Public Function GetOrmCommand(Of T As {New, _IOrmBase})() As OrmQueryCmd(Of T)
             Dim mgr As OrmManager = OrmManager.CurrentManager
             Return GetOrmCommand(Of T)(mgr)
         End Function
@@ -1546,7 +2171,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function CreateAndGetOrmCommand(Of T As _IOrmBase)(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
+        Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IOrmBase})(ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim selectType As Type = GetType(T)
             Return Create(selectType, mgr).GetOrmCommand(Of T)(mgr)
         End Function
@@ -1627,7 +2252,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function CreateAndGetOrmCommand(Of T As _IOrmBase)(ByVal name As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
+        Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IOrmBase})(ByVal name As String, ByVal mgr As OrmManager) As OrmQueryCmd(Of T)
             Dim selectType As Type = GetType(T)
             Return Create(name, selectType, mgr).GetOrmCommand(Of T)(mgr)
         End Function
@@ -1700,7 +2325,7 @@ Namespace Query
             Return Create(table, OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function CreateAndGetOrmCommand(Of T As _IOrmBase)() As OrmQueryCmd(Of T)
+        Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IOrmBase})() As OrmQueryCmd(Of T)
             Return CreateAndGetOrmCommand(Of T)(OrmManager.CurrentManager)
         End Function
 
@@ -1724,7 +2349,7 @@ Namespace Query
             Return Create(name, table, OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function CreateAndGetOrmCommand(Of T As _IOrmBase)(ByVal name As String) As OrmQueryCmd(Of T)
+        Public Shared Function CreateAndGetOrmCommand(Of T As {New, _IOrmBase})(ByVal name As String) As OrmQueryCmd(Of T)
             Return CreateAndGetOrmCommand(Of T)(name, OrmManager.CurrentManager)
         End Function
 
@@ -1757,7 +2382,7 @@ Namespace Query
         End Function
     End Class
 
-    Public Class OrmQueryCmd(Of T As _IOrmBase)
+    Public Class OrmQueryCmd(Of T As {New, _IOrmBase})
         Inherits QueryCmd
         Implements Generic.IEnumerable(Of T)
 
@@ -1765,13 +2390,13 @@ Namespace Query
         Private _oldMark As Guid
 
         Public Sub Exec(ByVal mgr As OrmManager)
-            _preCmp = ToOrmList(Of T)(mgr)
+            _preCmp = ToOrmListDyn(Of T)(mgr)
             _oldMark = _mark
         End Sub
 
         Public Shared Widening Operator CType(ByVal cmd As OrmQueryCmd(Of T)) As ReadOnlyList(Of T)
             If cmd._getMgr IsNot Nothing Then
-                Return cmd.ToOrmList(Of T)(cmd._getMgr)
+                Return cmd.ToOrmList(Of T, T)(cmd._getMgr)
             ElseIf cmd._preCmp IsNot Nothing AndAlso cmd._oldMark = cmd._mark Then
                 Return cmd._preCmp
             Else
@@ -1912,4 +2537,20 @@ Namespace Query
 
     'End Class
 
+    Public Class SearchQueryCmd
+        Inherits QueryCmd
+
+        Public Sub New(ByVal t As Type, ByVal searchString As String, ByVal getMgr As ICreateManager)
+            MyBase.New(New SearchFragment(t, searchString), getMgr)
+        End Sub
+
+        Public Sub New(ByVal searchString As String, ByVal getMgr As ICreateManager)
+            MyBase.New(New SearchFragment(searchString), getMgr)
+        End Sub
+
+        Public Sub New(ByVal obj As _IOrmBase, ByVal searchString As String)
+            MyBase.New(obj)
+            _table = New SearchFragment(obj.GetType, searchString)
+        End Sub
+    End Class
 End Namespace

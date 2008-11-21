@@ -18,6 +18,8 @@ Public Class Expressions
     End Enum
 
     Public Class UnaryExp
+        Implements IQueryElement
+
         Private _o As ExpOperation
         Private _v As IFilterValue
         Private _alias As String
@@ -61,11 +63,11 @@ Public Class Expressions
             End Get
         End Property
 
-        Public Overridable Function ToStaticString() As String
+        Public Overridable Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             Return FormatOper() & "$" & _v.GetType.ToString
         End Function
 
-        Public Overrides Function ToString() As String
+        Public Overridable Function _ToString() As String Implements IQueryElement._ToString
             Return FormatOper() & "$" & _v._ToString
         End Function
 
@@ -228,12 +230,12 @@ l1:
             Return "(" & _left.MakeStmt(s, pmgr, almgr, columns, filterInfo) & FormatOper() & _right.MakeStmt(s, pmgr, almgr, columns, filterInfo) & ")"
         End Function
 
-        Public Overrides Function ToStaticString() As String
-            Return _left.ToStaticString & "$" & Operation.ToString & "$" & _right.ToStaticString
+        Public Overrides Function ToStaticString(ByVal mpe As ObjectMappingEngine) As String
+            Return _left.ToStaticString(mpe) & "$" & Operation.ToString & "$" & _right.ToStaticString(mpe)
         End Function
 
-        Public Overrides Function ToString() As String
-            Return _left.ToString & "$" & Operation.ToString & "$" & _right.ToString
+        Public Overrides Function _ToString() As String
+            Return _left._ToString & "$" & Operation.ToString & "$" & _right._ToString
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean

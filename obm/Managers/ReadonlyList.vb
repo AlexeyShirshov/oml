@@ -92,7 +92,7 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase})
         If _l.Count > 0 Then
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
-                Dim fs As ICollection(Of String) = mc.Manager.MappingEngine.GetFieldNameByType(GetType(T), GetType(ChildType))
+                Dim fs As ICollection(Of String) = mc.Manager.MappingEngine.GetFieldNameByType(GetType(ChildType), GetType(T))
                 If fs.Count <> 1 Then
                     Throw New OrmManagerException("You must specify field")
                 End If
@@ -104,11 +104,11 @@ Public Class ReadOnlyList(Of T As {Orm.IOrmBase})
         Return New ReadOnlyList(Of ChildType)
     End Function
 
-    Public Function LoadChilds(Of ChildType As {New, Orm.IOrmBase})(ByVal field As String) As ReadOnlyList(Of ChildType)
+    Public Function LoadChilds(Of ChildType As {New, Orm.IOrmBase})(ByVal childField As String) As ReadOnlyList(Of ChildType)
         If _l.Count > 0 Then
             Dim o As T = _l(0)
             Using mc As IGetManager = o.GetMgr()
-                Return mc.Manager.LoadObjects(Of ChildType)(field, Nothing, Me)
+                Return mc.Manager.LoadObjects(Of ChildType)(childField, Nothing, Me)
             End Using
         End If
         Return New ReadOnlyList(Of ChildType)

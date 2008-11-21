@@ -1,5 +1,6 @@
 ﻿Imports Worm.Orm.Meta
 Imports Worm.Cache
+Imports Worm.Query
 
 Namespace Orm
 
@@ -417,6 +418,62 @@ Namespace Orm
                 Return _cm
             End Get
         End Property
+
+#Region " CreateCmd "
+        Public Function CreateCmd(ByVal table As SourceFragment) As QueryCmd
+            If _cm IsNot Nothing Then
+                Return New QueryCmd(table, _cm)
+            Else
+                Return QueryCmd.Create(table)
+            End If
+        End Function
+
+        Public Function CreateCmd(ByVal selectType As Type) As QueryCmd
+            If _cm IsNot Nothing Then
+                Return New QueryCmd(selectType, _cm)
+            Else
+                Return QueryCmd.Create(selectType)
+            End If
+        End Function
+
+        Public Function CreateCmdByEntityName(ByVal entityName As String) As QueryCmd
+            If _cm IsNot Nothing Then
+                Return New QueryCmd(entityName, _cm)
+            Else
+                Return QueryCmd.CreateByEntityName(entityName)
+            End If
+        End Function
+
+        Public Function CreateCmd(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
+            If _cm IsNot Nothing Then
+                Dim q As New QueryCmd(table, _cm)
+                q.Name = name
+                Return q
+            Else
+                Return QueryCmd.Create(name, table)
+            End If
+        End Function
+
+        Public Function CreateCmd(ByVal name As String, ByVal selectType As Type) As QueryCmd
+            If _cm IsNot Nothing Then
+                Dim q As New QueryCmd(selectType, _cm)
+                q.Name = name
+                Return q
+            Else
+                Return QueryCmd.Create(name, selectType)
+            End If
+        End Function
+
+        Public Function CreateCmdByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
+            If _cm IsNot Nothing Then
+                Dim q As New QueryCmd(entityName, _cm)
+                q.Name = name
+                Return q
+            Else
+                Return QueryCmd.CreateByEntityName(name, entityName)
+            End If
+        End Function
+#End Region
     End Class
 
 End Namespace

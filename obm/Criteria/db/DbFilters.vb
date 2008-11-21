@@ -302,8 +302,16 @@ Namespace Database
                 MyBase.New(t, fieldName, oper)
             End Sub
 
+            Public Sub New(ByVal entityName As String, ByVal fieldName As String, ByVal oper As Worm.Criteria.FilterOperation)
+                MyBase.New(entityName, fieldName, oper)
+            End Sub
+
             Protected Overrides Function CreateEntityFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilterBase
                 Return New EntityFilter(t, fieldName, value, operation)
+            End Function
+
+            Protected Overrides Function CreateEntityFilter(ByVal entityName As String, ByVal fieldName As String, ByVal value As Worm.Criteria.Values.IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As Worm.Criteria.Core.EntityFilterBase
+                Return New EntityFilter(entityName, fieldName, value, operation)
             End Function
 
             Public Overrides ReadOnly Property OperToStmt() As String
@@ -321,6 +329,10 @@ Namespace Database
 
             Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
                 MyBase.New(value, New OrmFilterTemplate(t, fieldName, operation))
+            End Sub
+
+            Public Sub New(ByVal entityName As String, ByVal fieldName As String, ByVal value As IFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
+                MyBase.New(value, New OrmFilterTemplate(entityName, fieldName, operation))
             End Sub
 
             'Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal value As Values.IDatabaseFilterValue, ByVal operation As Worm.Criteria.FilterOperation)
@@ -418,7 +430,11 @@ Namespace Database
                 End If
 
                 If _oschema Is Nothing Then
-                    _oschema = schema.GetObjectSchema(Template.Type)
+                    If Template.Type Is Nothing AndAlso Not String.IsNullOrEmpty(Template.EntityName) Then
+                        _oschema = schema.GetObjectSchema(schema.GetTypeByEntityName(Template.EntityName))
+                    Else
+                        _oschema = schema.GetObjectSchema(Template.Type)
+                    End If
                 End If
 
                 Return MakeQueryStmt(_oschema, filterInfo, schema, almgr, pname, columns)

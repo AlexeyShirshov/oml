@@ -60,7 +60,7 @@ Imports System.Collections
     End Sub
 
     Protected Function ExternalSort(ByVal mgr As OrmManager, ByVal generator As ObjectMappingEngine, ByVal sort As Worm.Sorting.Sort, ByVal objs As ICollection) As ICollection
-        Dim col As ReadOnlyList(Of Entity) = CType(objs, Global.Worm.ReadOnlyList(Of Global.TestProject1.Entity))
+        Dim col As IList(Of Entity) = CType(objs, IList(Of Entity))
         Dim r As New List(Of Entity)
         Select Case sort.FieldName
             Case "xxx"

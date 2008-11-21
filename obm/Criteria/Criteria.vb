@@ -30,6 +30,31 @@ Namespace Criteria
         Function Column(ByVal columnName As String) As CriteriaColumn
     End Interface
 
+    Public Structure ObjectField
+        Public ReadOnly EntityName As String
+        Public ReadOnly Field As String
+
+        Public Sub New(ByVal entityName As String, ByVal field As String)
+            Me.EntityName = entityName
+            Me.Field = field
+        End Sub
+    End Structure
+
+    'Public Interface IFullCtor
+    '    Function Field(ByVal t As Type, ByVal fieldName As String) As CriteriaField
+    '    Function Field(ByVal entityName As String, ByVal fieldName As String) As CriteriaField
+    '    Function ColumnOnInlineTable(ByVal columnName As String) As CriteriaColumn
+    '    Function Column(ByVal table As Orm.Meta.SourceFragment, ByVal columnName As String) As CriteriaColumn
+    '    Function AutoTypeField(ByVal fieldName As String) As CriteriaField
+    '    Function Exists(ByVal t As Type, ByVal gf As IGetFilter) As CriteriaLink
+    '    Function NotExists(ByVal t As Type, ByVal gf As IGetFilter) As CriteriaLink
+    '    Function Exists(ByVal t As Type, ByVal gf As IGetFilter, ByVal joins() As OrmJoin) As CriteriaLink
+    '    Function NotExists(ByVal t As Type, ByVal gf As IGetFilter, ByVal joins() As OrmJoin) As CriteriaLink
+    '    Function Exists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+    '    Function NotExists(ByVal cmd As Query.QueryCmd) As CriteriaLink
+    '    Function Custom(ByVal format As String, ByVal ParamArray values() As Pair(Of Object, String)) As CriteriaBase
+    'End Interface
+
     Public MustInherit Class CriteriaBase
         Private _con As Condition.ConditionConstructorBase
         Private _ct As ConditionOperator
@@ -144,6 +169,7 @@ Namespace Criteria
     Public MustInherit Class CriteriaField
         Inherits CriteriaBase
 
+        Private _en As String
         Private _t As Type
         Private _f As String
 
@@ -166,6 +192,24 @@ Namespace Criteria
             _t = t
             _f = fieldName
         End Sub
+
+        Protected Friend Sub New(ByVal en As String, ByVal fieldName As String)
+            _en = en
+            _f = fieldName
+        End Sub
+
+        Protected Friend Sub New(ByVal en As String, ByVal fieldName As String, _
+            ByVal con As Condition.ConditionConstructorBase, ByVal ct As ConditionOperator)
+            MyBase.New(con, ct)
+            _en = en
+            _f = fieldName
+        End Sub
+
+        Protected ReadOnly Property EntityName() As String
+            Get
+                Return _en
+            End Get
+        End Property
 
         Protected ReadOnly Property Type() As Type
             Get
@@ -225,6 +269,7 @@ Namespace Criteria
         Private _con As Condition.ConditionConstructorBase
         Private _t As Type
         Private _tbl As Meta.SourceFragment
+        Private _en As String
 
         Protected Friend Sub New(ByVal con As Condition.ConditionConstructorBase)
             _con = con
@@ -252,7 +297,17 @@ Namespace Criteria
             _tbl = table
         End Sub
 
+        Public Sub New(ByVal entityName As String)
+            _en = entityName
+        End Sub
+
+        Protected Friend Sub New(ByVal entityName As String, ByVal con As Condition.ConditionConstructorBase)
+            _con = con
+            _en = entityName
+        End Sub
+
         Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
+        Protected MustOverride Function CreateField(ByVal entityName As String, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
         Protected MustOverride Function CreateField(ByVal t As Type, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
         Protected MustOverride Function CreateColumn(ByVal table As Meta.SourceFragment, ByVal columnName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaColumn
 
@@ -268,6 +323,22 @@ Namespace Criteria
             Return CreateField(t, fieldName, _con, ConditionOperator.And)
         End Function
 
+        Public Function [And](ByVal objField As ObjectField) As CriteriaField
+            Return [And](objField.EntityName, objField.Field)
+        End Function
+
+        Public Function [And](ByVal entityName As String, ByVal fieldName As String) As CriteriaField
+            If String.IsNullOrEmpty(entityName) Then
+                Throw New ArgumentNullException("entityName")
+            End If
+
+            If String.IsNullOrEmpty(fieldName) Then
+                Throw New ArgumentNullException("fieldName")
+            End If
+
+            Return CreateField(entityName, fieldName, _con, ConditionOperator.And)
+        End Function
+
         Public Function [Or](ByVal t As Type, ByVal fieldName As String) As CriteriaField
             If String.IsNullOrEmpty(fieldName) Then
                 Throw New ArgumentNullException("fieldName")
@@ -278,6 +349,22 @@ Namespace Criteria
             End If
 
             Return CreateField(t, fieldName, _con, ConditionOperator.Or)
+        End Function
+
+        Public Function [Or](ByVal objField As ObjectField) As CriteriaField
+            Return [Or](objField.EntityName, objField.Field)
+        End Function
+
+        Public Function [Or](ByVal entityName As String, ByVal fieldName As String) As CriteriaField
+            If String.IsNullOrEmpty(entityName) Then
+                Throw New ArgumentNullException("entityName")
+            End If
+
+            If String.IsNullOrEmpty(fieldName) Then
+                Throw New ArgumentNullException("fieldName")
+            End If
+
+            Return CreateField(entityName, fieldName, _con, ConditionOperator.Or)
         End Function
 
         Public Function [And](ByVal table As Meta.SourceFragment, ByVal columnName As String) As CriteriaColumn

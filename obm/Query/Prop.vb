@@ -138,6 +138,18 @@ Namespace Orm
             RaiseEvent OnChange()
         End Sub
 
+        Public Shared Function GetMapping(Of T As SelectExpression)(ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
+            Dim c As New OrmObjectIndex
+            Return GetMapping(c, selectList)
+        End Function
+
+        Public Shared Function GetMapping(Of T As SelectExpression)(ByVal c As OrmObjectIndex, ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
+            For Each s As T In selectList
+                c.Add(New MapField2Column(s.Field, s.Column, s.Table, s.Attributes))
+            Next
+            Return c
+        End Function
+
         Public ReadOnly Property PropType() As PropType
             Get
                 If _type IsNot Nothing AndAlso Not String.IsNullOrEmpty(_field) Then

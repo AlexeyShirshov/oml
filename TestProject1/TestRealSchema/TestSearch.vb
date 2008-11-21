@@ -139,7 +139,7 @@ Public Class TestSearch
         End Using
     End Sub
 
-    <TestMethod()> _
+    <TestMethod(), ExpectedException(GetType(NotImplementedException))> _
     Public Sub TestM2MSearch()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("Search"))
             Dim t3 As Table3 = mgr.Find(Of Table3)(1)
