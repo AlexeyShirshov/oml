@@ -109,8 +109,8 @@ Namespace Orm
                     '    End If
                     'Else
                     Dim dc As ColumnAttribute = schema.GetColumnByFieldName(dt, p.Second, oschema)
-                    Dim sc As New ColumnAttribute(p.First)
-                    Dim o As Object = source.GetValueOptimized(Nothing, sc, oschema)
+                    'Dim sc As New ColumnAttribute(p.First)
+                    Dim o As Object = source.GetValueOptimized(Nothing, p.First, oschema)
                     'Dim pi As Reflection.PropertyInfo = mgr.MappingEngine.GetProperty(dt, oschema, c)
                     '_dst.SetValue(pi, c, oschema, o)
                     schema.SetFieldValue(_dst, p.Second, o, oschema)
@@ -178,8 +178,8 @@ Namespace Orm
                 'End Set
             End Property
 
-            Public Function IsFieldLoaded(ByVal fieldName As String) As Boolean
-                Return _o.IsFieldLoaded(fieldName)
+            Public Function IsFieldLoaded(ByVal propertyAlias As String) As Boolean
+                Return _o.IsFieldLoaded(propertyAlias)
             End Function
             'Public ReadOnly Property OrmCache() As OrmBase
             '    Get
@@ -435,7 +435,14 @@ Namespace Orm
             End Set
         End Property
 
-        Private Function SetLoaded(ByVal c As Meta.ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+        Private Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+
+            Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, propertyAlias)
+
+            Return SetLoaded(c, loaded, check, schema)
+        End Function
+
+        Private Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
 
             Dim idx As Integer = c.Index
             If idx = -1 Then
@@ -444,7 +451,7 @@ Namespace Orm
                 c.Index = idx
             End If
 
-            If idx < 0 AndAlso check Then Throw New OrmObjectException("There is no such field " & c.FieldName)
+            If idx < 0 AndAlso check Then Throw New OrmObjectException("There is no such field " & c.PropertyAlias)
 
             If idx >= 0 Then
                 'Using SyncHelper(False)
@@ -725,9 +732,9 @@ Namespace Orm
                 Dim tt As Type = Me.GetType
                 Dim oschema As IObjectSchemaBase = m.Manager.MappingEngine.GetObjectSchema(tt)
                 For Each p As PKDesc In pk
-                    Dim c As New ColumnAttribute(p.PropertyAlias)
-                    SetValue(Nothing, c, oschema, p.Value)
-                    SetLoaded(c, True, True, m.Manager.MappingEngine)
+                    'Dim c As New ColumnAttribute(p.PropertyAlias)
+                    SetValue(Nothing, p.PropertyAlias, oschema, p.Value)
+                    SetLoaded(p.PropertyAlias, True, True, m.Manager.MappingEngine)
                 Next
             End Using
         End Sub
@@ -806,23 +813,23 @@ l1:
                             If GetType(ICachedEntity).IsAssignableFrom(tt) Then
                                 '.WriteAttributeString(c.FieldName, CType(v, ICachedEntity).Identifier.ToString)
                                 If v IsNot Nothing Then
-                                    objs.Add(New Pair(Of String, PKDesc())(c.FieldName, CType(v, ICachedEntity).GetPKValues))
+                                    objs.Add(New Pair(Of String, PKDesc())(c.PropertyAlias, CType(v, ICachedEntity).GetPKValues))
                                 Else
-                                    objs.Add(New Pair(Of String, PKDesc())(c.FieldName, Nothing))
+                                    objs.Add(New Pair(Of String, PKDesc())(c.PropertyAlias, Nothing))
                                 End If
                             ElseIf tt.IsArray Then
-                                elems.Add(New Pair(Of String, Object)(c.FieldName, pi.GetValue(Me, Nothing)))
+                                elems.Add(New Pair(Of String, Object)(c.PropertyAlias, pi.GetValue(Me, Nothing)))
                             ElseIf tt Is GetType(XmlDocument) Then
-                                xmls.Add(New Pair(Of String, String)(c.FieldName, CType(pi.GetValue(Me, Nothing), XmlDocument).OuterXml))
+                                xmls.Add(New Pair(Of String, String)(c.PropertyAlias, CType(pi.GetValue(Me, Nothing), XmlDocument).OuterXml))
                             Else
                                 If v IsNot Nothing Then
-                                    .WriteAttributeString(c.FieldName, Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture))
+                                    .WriteAttributeString(c.PropertyAlias, Convert.ToString(v, System.Globalization.CultureInfo.InvariantCulture))
                                 Else
-                                    .WriteAttributeString(c.FieldName, "xxx:nil")
+                                    .WriteAttributeString(c.PropertyAlias, "xxx:nil")
                                 End If
                             End If
                         ElseIf (OrmSchema.GetAttributes(t, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            .WriteAttributeString(c.FieldName, pi.GetValue(Me, Nothing).ToString)
+                            .WriteAttributeString(c.PropertyAlias, pi.GetValue(Me, Nothing).ToString)
                         End If
                     End If
                 Next
@@ -858,36 +865,36 @@ l1:
             End With
         End Sub
 
-        Protected Sub ReadValue(ByVal fieldName As String, ByVal reader As XmlReader, ByVal schema As ObjectMappingEngine)
+        Protected Sub ReadValue(ByVal propertyAlias As String, ByVal reader As XmlReader, ByVal schema As ObjectMappingEngine)
             reader.Read()
             'Dim c As ColumnAttribute = OrmSchema.GetColumnByFieldName(Me.GetType, fieldName)
             Select Case reader.NodeType
                 Case XmlNodeType.CDATA
-                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, fieldName)
-                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
+                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, propertyAlias)
+                    'Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
                     Dim x As New XmlDocument
                     x.LoadXml(reader.Value)
                     pi.SetValue(Me, x, Nothing)
-                    SetLoaded(c, True, True, schema)
+                    SetLoaded(propertyAlias, True, True, schema)
                 Case XmlNodeType.Text
-                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, fieldName)
-                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
+                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, propertyAlias)
+                    'Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
                     Dim v As String = reader.Value
                     pi.SetValue(Me, Convert.FromBase64String(CStr(v)), Nothing)
-                    SetLoaded(c, True, True, schema)
+                    SetLoaded(propertyAlias, True, True, schema)
                     'Using ms As New IO.MemoryStream(Convert.FromBase64String(CStr(v)))
                     '    Dim f As New Runtime.Serialization.Formatters.Binary.BinaryFormatter()
                     '    pi.SetValue(Me, f.Deserialize(ms), Nothing)
                     '    SetLoaded(c, True)
                     'End Using
                 Case XmlNodeType.EndElement
-                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, fieldName)
-                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
+                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, propertyAlias)
+                    'Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
                     pi.SetValue(Me, Nothing, Nothing)
-                    SetLoaded(c, True, True, schema)
+                    SetLoaded(propertyAlias, True, True, schema)
                 Case XmlNodeType.Element
-                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, fieldName)
-                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, fieldName)
+                    Dim pi As Reflection.PropertyInfo = schema.GetProperty(Me.GetType, propertyAlias)
+                    Dim c As ColumnAttribute = schema.GetColumnByFieldName(Me.GetType, propertyAlias)
                     Dim o As ICachedEntity = Nothing
                     Dim pk() As PKDesc = GetPKs(reader)
                     Using mc As IGetManager = GetMgr()
@@ -896,14 +903,14 @@ l1:
                             If f IsNot Nothing Then
                                 f.CreateObject(pk(0).PropertyAlias, pk(0).Value)
                             Else
-                                Throw New OrmObjectException(String.Format("Preperty {0} is factory property. Implementation of IFactory is required.", fieldName))
+                                Throw New OrmObjectException(String.Format("Preperty {0} is factory property. Implementation of IFactory is required.", propertyAlias))
                             End If
                         Else
                             o = mc.Manager.CreateObject(pk, pi.PropertyType)
                             pi.SetValue(Me, o, Nothing)
                         End If
                     End Using
-                    SetLoaded(c, True, True, schema)
+                    SetLoaded(propertyAlias, True, True, schema)
             End Select
         End Sub
 
@@ -952,7 +959,7 @@ l1:
                         Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                         If pi IsNot Nothing Then
                             pi.SetValue(Me, v, Nothing)
-                            SetLoaded(c, True, True, schema)
+                            SetLoaded(.Name, True, True, schema)
                             pk_count += 1
                         End If
                     End If
@@ -1019,7 +1026,7 @@ l1:
                                 Dim v As IOrmBase = mc.Manager.GetOrmBaseFromCacheOrCreate(value, type_created)
                                 If pi IsNot Nothing Then
                                     pi.SetValue(obj, v, Nothing)
-                                    SetLoaded(c, True, True, schema)
+                                    SetLoaded(.Name, True, True, schema)
                                 End If
                             End Using
                             'End If
@@ -1027,7 +1034,7 @@ l1:
                             Dim v As Object = Convert.ChangeType(value, pi.PropertyType)
                             If pi IsNot Nothing Then
                                 pi.SetValue(obj, v, Nothing)
-                                SetLoaded(c, True, True, schema)
+                                SetLoaded(.Name, True, True, schema)
                             End If
                         End If
 
@@ -1073,7 +1080,7 @@ l1:
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
                     If (schema.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                        l.Add(New PKDesc(c.FieldName, GetValue(pi, c, oschema)))
+                        l.Add(New PKDesc(c.PropertyAlias, GetValue(pi, c.PropertyAlias, oschema)))
                     End If
                 Next
             End Using
@@ -1095,7 +1102,7 @@ l1:
                 sb.Append("Attributes:").Append(vbCrLf)
                 If ObjectState = Orm.ObjectState.Modified Then
                     For Each c As ColumnAttribute In Changes(OriginalCopy)
-                        sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
+                        sb.Append(vbTab).Append(c.PropertyAlias).Append(vbCrLf)
                     Next
                 Else
                     Dim t As Type = Me.GetType
@@ -1104,7 +1111,7 @@ l1:
                     'Dim o As OrmBase = GetNew()
                     Dim o As ICachedEntity = CType(CreateObject(), ICachedEntity)
                     For Each c As ColumnAttribute In Changes(o)
-                        sb.Append(vbTab).Append(c.FieldName).Append(vbCrLf)
+                        sb.Append(vbTab).Append(c.PropertyAlias).Append(vbCrLf)
                     Next
                 End If
                 Return sb.ToString
@@ -1120,9 +1127,9 @@ l1:
                     For Each de As DictionaryEntry In mc.Manager.MappingEngine.GetProperties(t, oschema)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-                        Dim original As Object = obj.GetValueOptimized(pi, c, oschema)
+                        Dim original As Object = obj.GetValueOptimized(pi, c.PropertyAlias, oschema)
                         If (mc.Manager.MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
-                            Dim current As Object = GetValue(pi, c, oschema)
+                            Dim current As Object = GetValue(pi, c.PropertyAlias, oschema)
                             If (original IsNot Nothing AndAlso Not original.Equals(current)) OrElse _
                                 (current IsNot Nothing AndAlso Not current.Equals(original)) Then
                                 columns.Add(c)
@@ -1490,7 +1497,7 @@ l1:
                         '    Assert(f.Type Is t, "")
 
                         '    Cache.AddUpdatedFields(obj, f.FieldName)
-                        l.Add(f.Template.FieldName)
+                        l.Add(f.Template.PropertyAlias)
                     Next
 
                     c.AddUpdatedFields(Me, l)
@@ -1503,20 +1510,20 @@ l1:
             Return False
         End Function
 
-        Protected Overrides Function IsFieldLoaded(ByVal fieldName As String) As Boolean
-            Dim c As New ColumnAttribute(fieldName)
+        Protected Overrides Function IsFieldLoaded(ByVal propertyAlias As String) As Boolean
+            Dim c As New ColumnAttribute(propertyAlias)
             Using mc As IGetManager = GetMgr()
                 Dim arr As Generic.List(Of ColumnAttribute) = mc.Manager.MappingEngine.GetSortedFieldList(Me.GetType)
                 Dim idx As Integer = arr.BinarySearch(c)
-                If idx < 0 Then Throw New OrmObjectException("There is no such field " & fieldName)
+                If idx < 0 Then Throw New OrmObjectException("There is no such field " & propertyAlias)
                 Return _members_load_state(idx)
             End Using
         End Function
 
-        Protected Overrides Sub PrepareRead(ByVal fieldName As String, ByRef d As System.IDisposable)
+        Protected Overrides Sub PrepareRead(ByVal propertyAlias As String, ByRef d As System.IDisposable)
             If Not _readRaw AndAlso (Not IsLoaded AndAlso (ObjectState = Orm.ObjectState.NotLoaded OrElse ObjectState = Orm.ObjectState.None)) Then
                 d = SyncHelper(True)
-                If Not IsLoaded AndAlso (ObjectState = Orm.ObjectState.NotLoaded OrElse ObjectState = Orm.ObjectState.None) AndAlso Not IsFieldLoaded(fieldName) Then
+                If Not IsLoaded AndAlso (ObjectState = Orm.ObjectState.NotLoaded OrElse ObjectState = Orm.ObjectState.None) AndAlso Not IsFieldLoaded(propertyAlias) Then
                     Load()
                 End If
             End If
@@ -1566,7 +1573,7 @@ l1:
                 For Each kv As DictionaryEntry In mc.Manager.MappingEngine.GetProperties(Me.GetType)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                     If GetType(ICachedEntity).IsAssignableFrom(pi.PropertyType) Then
-                        Dim o As CachedEntity = CType(GetValue(CType(kv.Key, ColumnAttribute).FieldName), CachedEntity)
+                        Dim o As CachedEntity = CType(GetValue(CType(kv.Key, ColumnAttribute).PropertyAlias), CachedEntity)
                         If o IsNot Nothing AndAlso o.HasChanges Then
                             l.Add(o)
                         End If

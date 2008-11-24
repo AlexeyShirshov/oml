@@ -165,7 +165,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IObjectSchemaBase = dbm.SQLGenerator.GetObjectSchema(SelectedType, False)
+                Dim oschema As IObjectSchemaBase = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -300,7 +300,7 @@ Namespace Query.Database
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
 
-                Dim oschema As IObjectSchemaBase = dbm.SQLGenerator.GetObjectSchema(SelectedType, False)
+                Dim oschema As IObjectSchemaBase = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
                 Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
                 If oschema IsNot Nothing Then
                     fields = oschema.GetFieldColumnMap
@@ -312,7 +312,9 @@ Namespace Query.Database
                 If t Is Nothing Then
                     t = SelectedType
                 End If
-                oschema = dbm.SQLGenerator.GetObjectSchema(t, False)
+                If t IsNot SelectedType AndAlso t IsNot Nothing Then
+                    oschema = dbm.SQLGenerator.GetObjectSchema(t, False)
+                End If
 
                 dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)), oschema, fields)
                 _q.ExecCount += 1
@@ -405,7 +407,7 @@ Namespace Query.Database
             End Function
 
             Protected Function _GetCacheItem(ByVal col As ReadOnlyEntityList(Of ReturnType), ByVal t As Type) As OrmManager.CachedItem
-                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(t), IOrmSorting2)
+                Dim sortex As IOrmSorting2 = TryCast(_mgr.MappingEngine.GetObjectSchema(t, False), IOrmSorting2)
                 Dim s As Date = Nothing
                 If sortex IsNot Nothing Then
                     Dim ts As TimeSpan = sortex.SortExpiration(Sort)
@@ -617,7 +619,24 @@ Namespace Query.Database
             Protected Overrides Function ExecStmt(ByVal cmd As System.Data.Common.DbCommand) As ReadOnlyObjectList(Of ReturnType)
                 Dim dbm As OrmReadOnlyDBManager = CType(_mgr, OrmReadOnlyDBManager)
                 Dim rr As New List(Of ReturnType)
-                dbm.LoadMultipleObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)))
+
+                Dim oschema As IObjectSchemaBase = _q.GetSchemaForSelectedType(_mgr.MappingEngine)
+                Dim fields As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
+                If oschema IsNot Nothing Then
+                    fields = oschema.GetFieldColumnMap
+                Else
+                    fields = GetFieldsIdx(_q)
+                End If
+
+                Dim t As Type = _q.CreateType
+                If t Is Nothing Then
+                    t = SelectedType
+                End If
+                If t IsNot SelectedType AndAlso t IsNot Nothing Then
+                    oschema = dbm.SQLGenerator.GetObjectSchema(t, False)
+                End If
+
+                dbm.QueryObjects(Of CreateType)(cmd, _q.propWithLoad, rr, GetFields(dbm.SQLGenerator, _q.SelectedType, _q, _q.propWithLoad, _sl(0)), oschema, fields)
                 _q.ExecCount += 1
                 Return CType(OrmManager.CreateReadonlyList(GetType(ReturnType), rr), ReadOnlyObjectList(Of ReturnType))
             End Function

@@ -23,8 +23,8 @@ Partial Public Class OrmManager
             'o1 = CType(schema.GetFieldValue(obj, p1.First), OrmBase)
             'o2 = CType(schema.GetFieldValue(obj, p2.First), OrmBase)
             Dim oschema As IObjectSchemaBase = schema.GetObjectSchema(obj.GetType)
-            o1 = CType(obj.GetValueOptimized(Nothing, New ColumnAttribute(p1.PropertyName), oschema), IOrmBase)
-            o2 = CType(obj.GetValueOptimized(Nothing, New ColumnAttribute(p2.PropertyName), oschema), IOrmBase)
+            o1 = CType(obj.GetValueOptimized(Nothing, p1.PropertyName, oschema), IOrmBase)
+            o2 = CType(obj.GetValueOptimized(Nothing, p2.PropertyName, oschema), IOrmBase)
         End Sub
 
         Public Function Add(ByVal mgr As OrmManager, ByVal e As M2MCache) As Boolean

@@ -10,12 +10,14 @@ Namespace Orm
 
         Private _props As New Dictionary(Of String, Object)
 
-        Public Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal oschema As Meta.IObjectSchemaBase) As Object
-            Return _props(c.FieldName)
+        Public Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, _
+            ByVal propertyAlias As String, ByVal oschema As Meta.IObjectSchemaBase) As Object
+            Return _props(propertyAlias)
         End Function
 
-        Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As Meta.IObjectSchemaBase, ByVal value As Object)
-            _props(c.FieldName) = value
+        Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
+            ByVal propertyAlias As String, ByVal schema As Meta.IObjectSchemaBase, ByVal value As Object)
+            _props(propertyAlias) = value
         End Sub
 
         Default Public ReadOnly Property Item(ByVal field As String) As Object
@@ -75,7 +77,11 @@ Namespace Orm
 
         End Sub
 
-        Public Function SetLoaded(ByVal c As Meta.ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+        Public Function SetLoaded(ByVal fieldName As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
+
+        End Function
+
+        Public Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean Implements _ICachedEntity.SetLoaded
 
         End Function
 

@@ -27,23 +27,23 @@ Namespace Criteria.Joins
 
         Friend _oper As FilterOperation
 
-        Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal t2 As Type, ByVal fieldName2 As String, ByVal operation As FilterOperation)
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
             Dim p As Pair(Of Type, String) = Nothing
             If t IsNot Nothing Then
-                p = New Pair(Of Type, String)(t, fieldName)
+                p = New Pair(Of Type, String)(t, propertyAlias)
             End If
             _e1 = p
 
             p = Nothing
             If t2 IsNot Nothing Then
-                p = New Pair(Of Type, String)(t2, fieldName2)
+                p = New Pair(Of Type, String)(t2, propertyAlias2)
             End If
             _e2 = p
 
             _oper = operation
         End Sub
 
-        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal t2 As Type, ByVal fieldName2 As String, ByVal operation As FilterOperation)
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
             Dim t As Pair(Of SourceFragment, String) = Nothing
             If table IsNot Nothing Then
                 t = New Pair(Of SourceFragment, String)(table, column)
@@ -52,7 +52,7 @@ Namespace Criteria.Joins
 
             Dim p As Pair(Of Type, String) = Nothing
             If t2 IsNot Nothing Then
-                p = New Pair(Of Type, String)(t2, fieldName2)
+                p = New Pair(Of Type, String)(t2, propertyAlias2)
             End If
             _e2 = p
 
@@ -217,6 +217,7 @@ Namespace Criteria.Joins
         Protected _type As Type
         Protected _en As String
         Private _jt As Type
+        Private _jen As String
         Private _key As String
 
         Public Sub New(ByVal table As SourceFragment, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
@@ -242,6 +243,13 @@ Namespace Criteria.Joins
             _joinType = joinType
             _condition = Condition
             _jt = joinEntityType
+        End Sub
+
+        Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal joinEntityName As String)
+            _type = type
+            _joinType = joinType
+            _condition = Condition
+            _jen = joinEntityName
         End Sub
 
         Public Shared Function IsEmpty(ByVal j As OrmJoin) As Boolean
@@ -288,13 +296,21 @@ Namespace Criteria.Joins
             If _table IsNot Nothing Then
                 Return _table.RawName & JoinTypeString() & _condition.GetStaticString(mpe)
             ElseIf _type IsNot Nothing Then
-                If _condition IsNot Nothing Then
-                    Return _type.ToString & JoinTypeString() & _condition.GetStaticString(mpe)
-                Else
-                    Return _type.ToString & JoinTypeString() & _jt.ToString & _key
-                End If
+                Return gs(_type.ToString, mpe)
             Else
-                Return _en & JoinTypeString() & _condition.GetStaticString(mpe)
+                Return gs(_en, mpe)
+            End If
+        End Function
+
+        Private Function gs(ByVal s As String, ByVal mpe As ObjectMappingEngine) As String
+            If _condition IsNot Nothing Then
+                Return s & JoinTypeString() & _condition.GetStaticString(mpe)
+            Else
+                If _jt IsNot Nothing Then
+                    Return s & JoinTypeString() & _jt.ToString & _key
+                Else
+                    Return s & JoinTypeString() & _jen & _key
+                End If
             End If
         End Function
 
@@ -306,13 +322,21 @@ Namespace Criteria.Joins
             If _table IsNot Nothing Then
                 Return _table.RawName & JoinTypeString() & _condition._ToString
             ElseIf _type IsNot Nothing Then
-                If _condition IsNot Nothing Then
-                    Return _type.ToString & JoinTypeString() & _condition._ToString
-                Else
-                    Return _type.ToString & JoinTypeString() & _jt.ToString & _key
-                End If
+                Return gd(_type.ToString)
             Else
-                Return _en & JoinTypeString() & _condition._ToString
+                Return gd(_en)
+            End If
+        End Function
+
+        Private Function gd(ByVal s As String) As String
+            If _condition IsNot Nothing Then
+                Return s & JoinTypeString() & _condition._ToString
+            Else
+                If _jt IsNot Nothing Then
+                    Return s & JoinTypeString() & _jt.ToString & _key
+                Else
+                    Return s & JoinTypeString() & _jen & _key
+                End If
             End If
         End Function
 
@@ -331,6 +355,15 @@ Namespace Criteria.Joins
             End Get
             Set(ByVal value As Type)
                 _jt = value
+            End Set
+        End Property
+
+        Public Property M2MJoinEntityName() As String
+            Get
+                Return _jen
+            End Get
+            Set(ByVal value As String)
+                _jen = value
             End Set
         End Property
 
@@ -367,12 +400,12 @@ Namespace Criteria.Joins
             End Get
         End Property
 
-        Public Function InjectJoinFilter(ByVal t As Type, ByVal field As String, ByVal table As SourceFragment, ByVal column As String) As Core.TemplateBase
+        Public Function InjectJoinFilter(ByVal t As Type, ByVal propertyAlias As String, ByVal table As SourceFragment, ByVal column As String) As Core.TemplateBase
             For Each _fl As Core.IFilter In _condition.GetAllFilters()
                 Dim f As JoinFilter = Nothing
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
                 Dim tm As Core.TemplateBase = Nothing
-                If fl._e1 IsNot Nothing AndAlso fl._e1.First Is t AndAlso fl._e1.Second = field Then
+                If fl._e1 IsNot Nothing AndAlso fl._e1.First Is t AndAlso fl._e1.Second = propertyAlias Then
                     If fl._e2 IsNot Nothing Then
                         f = CreateJoin(table, column, fl._e2.First, fl._e2.Second, fl._oper)
                         tm = CreateOrmFilter(fl._e2.First, fl._e2.Second, fl._oper)
@@ -382,7 +415,7 @@ Namespace Criteria.Joins
                     End If
                 End If
                 If f Is Nothing Then
-                    If fl._e2 IsNot Nothing AndAlso fl._e2.First Is t AndAlso fl._e2.Second = field Then
+                    If fl._e2 IsNot Nothing AndAlso fl._e2.First Is t AndAlso fl._e2.Second = propertyAlias Then
                         If fl._e1 IsNot Nothing Then
                             f = CreateJoin(table, column, fl._e1.First, fl._e1.Second, fl._oper)
                             tm = CreateOrmFilter(fl._e1.First, fl._e1.Second, fl._oper)

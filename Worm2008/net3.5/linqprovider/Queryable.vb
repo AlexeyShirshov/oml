@@ -51,10 +51,10 @@ Namespace Linq
         Private _conn As String
 
         Public Sub New(ByVal conn As String)
-            MyClass.New(New Cache.OrmCache, New SQLGenerator("1"), conn)
+            MyClass.New(New Cache.ReadonlyCache, New SQLGenerator("1"), conn)
         End Sub
 
-        Public Sub New(ByVal cache As Cache.OrmCache, ByVal schema As ObjectMappingEngine, ByVal conn As String)
+        Public Sub New(ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal conn As String)
             _conn = conn
             Me.Cache = cache
             Me.Schema = schema

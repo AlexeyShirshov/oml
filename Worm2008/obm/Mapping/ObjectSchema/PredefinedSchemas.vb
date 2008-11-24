@@ -34,15 +34,15 @@ Namespace Orm.Meta
             End If
 
             For Each c As ColumnAttribute In cols
-                If String.IsNullOrEmpty(c.FieldName) Then
+                If String.IsNullOrEmpty(c.PropertyAlias) Then
                     Throw New ObjectMappingException(String.Format("Cann't create schema for entity {0}", t))
                 End If
 
                 If String.IsNullOrEmpty(c.Column) Then
-                    If c.FieldName = OrmBaseT.PKName Then
+                    If c.PropertyAlias = OrmBaseT.PKName Then
                         c.Column = pk
                     Else
-                        Throw New ObjectMappingException(String.Format("Column for property {0} entity {1} is undefined", c.FieldName, t))
+                        Throw New ObjectMappingException(String.Format("Column for property {0} entity {1} is undefined", c.PropertyAlias, t))
                     End If
                 End If
 
@@ -57,7 +57,7 @@ Namespace Orm.Meta
                 '    tbl = _tables(0)
                 'End If
 
-                _cols.Add(New MapField2Column(c.FieldName, c.Column, _table))
+                _cols.Add(New MapField2Column(c.PropertyAlias, c.Column, _table))
             Next
 
             '_cols.Add(New MapField2Column("ID", pk, _tables(0)))
@@ -101,7 +101,7 @@ Namespace Orm.Meta
         '    Return New M2MRelation() {}
         'End Function
 
-        Public Function GetSuppressedColumns() As ColumnAttribute() Implements IObjectSchemaBase.GetSuppressedColumns
+        Public Function GetSuppressedFields() As String() Implements IObjectSchemaBase.GetSuppressedFields
             'Throw New NotSupportedException("GetSuppressedColumns relations is not supported in simple mode")
             Return Nothing
         End Function

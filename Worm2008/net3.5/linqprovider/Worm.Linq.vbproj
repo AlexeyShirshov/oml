@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{C479F776-A580-4451-813F-2D151635996D}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -59,6 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <Import Include="CoreFramework.Structures" />
+    <Import Include="CoreFramework.Threading" />
     <Import Include="Microsoft.VisualBasic" />
     <Import Include="System" />
     <Import Include="System.Collections" />

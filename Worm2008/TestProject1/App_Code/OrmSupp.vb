@@ -18,8 +18,8 @@ Public MustInherit Class ObjectSchemaBaseImplementationWeb
         Return Nothing
     End Function
 
-    Public Overridable Function GetSuppressedColumns() As ColumnAttribute() Implements IOrmObjectSchema.GetSuppressedColumns
-        Return New ColumnAttribute() {}
+    Public Overridable Function GetSuppressedFields() As String() Implements IOrmObjectSchema.GetSuppressedFields
+        Return New String() {}
     End Function
 
     'Public Overridable Function MapSort2FieldName(ByVal sort As String) As String Implements Worm.Orm.IOrmObjectSchema.MapSort2FieldName

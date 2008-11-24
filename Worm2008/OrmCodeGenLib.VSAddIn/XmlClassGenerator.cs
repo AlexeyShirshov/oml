@@ -67,7 +67,6 @@ namespace Worm.CodeGen.VSTool
                     //Report that we are 1/2 done
                     this.CodeGeneratorProgress.Progress(33, 100);
                 }
-                OrmCodeDomGenerator generator = new OrmCodeDomGenerator(ormObjectsDef);
 
                 //Create the CodeCompileUnit from the passed-in XML file
                 OrmCodeDomGeneratorSettings settings = new OrmCodeDomGeneratorSettings();
@@ -87,7 +86,8 @@ namespace Worm.CodeGen.VSTool
                 settings.PrivateMembersPrefix = "m_";
                 settings.Split = false;
 
-                CodeCompileUnit compileUnit = generator.GetFullSingleUnit(settings);
+                OrmCodeDomGenerator generator = new OrmCodeDomGenerator(ormObjectsDef, settings);
+                CodeCompileUnit compileUnit = generator.GetFullSingleUnit();
 
                 if (this.CodeGeneratorProgress != null)
                 {

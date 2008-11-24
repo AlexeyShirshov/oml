@@ -73,8 +73,9 @@ Public Class Table1
     '    Return New Table1(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IObjectSchemaBase, ByVal value As Object)
-        Select Case c.FieldName
+    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
+        ByVal fieldName As String, ByVal oschema As IObjectSchemaBase, ByVal value As Object)
+        Select Case fieldName
             Case "Title"
                 Name = CStr(value)
             Case "Enum"
@@ -90,15 +91,16 @@ Public Class Table1
             Case "ddd"
                 Name = CStr(value)
             Case Else
-                MyBase.SetValue(pi, c, oschema, value)
+                MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
 
-    Public Overrides Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IObjectSchemaBase) As Object
-        If c.FieldName = "ddd" Then
+    Public Overrides Function GetValue(ByVal pi As Reflection.PropertyInfo, _
+        ByVal fieldName As String, ByVal oschema As IObjectSchemaBase) As Object
+        If fieldName = "ddd" Then
             Return Name
         Else
-            Return MyBase.GetValue(pi, c, oschema)
+            Return MyBase.GetValue(pi, fieldName, oschema)
         End If
     End Function
 
@@ -193,7 +195,7 @@ Public Class Table1Implementation
     End Enum
 
     Public Overrides Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
-        If c.FieldName = "EnumStr" Then
+        If c.PropertyAlias = "EnumStr" Then
             If TypeOf value Is Enum1 Then
                 newvalue = value.ToString
                 Return True
@@ -240,7 +242,7 @@ Public Class Table1Implementation
         End If
 
         If _rels Is Nothing Then
-            Dim t1to3 As SourceFragment = Nothing 'TablesImplementation._tables(0)
+            Dim t1to3 As SourceFragment = TablesImplementation._tables(0)
             _rels = New M2MRelation() { _
                 New M2MRelation(t, t1to3, "table3", True, New System.Data.Common.DataTableMapping, GetType(Tables1to3)), _
                 New M2MRelation(_objectType, Tables1to1.TablesImplementation._tables(0), "table1", False, New System.Data.Common.DataTableMapping, GetType(Tables1to1), False), _
@@ -264,18 +266,18 @@ Public Class Table1Implementation
     'End Sub
 
     Public Function CreateSortComparer(ByVal s As Sort) As System.Collections.IComparer Implements IOrmSorting.CreateSortComparer
-        If s.FieldName = "DT" Then
+        If s.SortBy = "DT" Then
             Return New Comparer(Table1Sort.DateTime, s.Order)
-        ElseIf s.FieldName = "Enum" Then
+        ElseIf s.SortBy = "Enum" Then
             Return New Comparer(Table1Sort.Enum, s.Order)
         End If
         Return Nothing
     End Function
 
     Public Function CreateSortComparer1(Of T As {_IEntity})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
-        If s.FieldName = "DT" Then
+        If s.SortBy = "DT" Then
             Return CType(New Comparer(Table1Sort.DateTime, s.Order), Global.System.Collections.Generic.IComparer(Of T))
-        ElseIf s.FieldName = "Enum" Then
+        ElseIf s.SortBy = "Enum" Then
             Return CType(New Comparer(Table1Sort.Enum, s.Order), Global.System.Collections.Generic.IComparer(Of T))
         End If
         Return Nothing

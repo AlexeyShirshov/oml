@@ -733,15 +733,15 @@ namespace Worm.CodeGen.Core
 
 			        #endregion // метод IComparer CreateSortComparer(string sort, SortType sortType)
 
-			        #region void SetValue(System.Reflection.PropertyInfo pi, ColumnAttribute c, object value)
+			        #region void SetValue(System.Reflection.PropertyInfo pi, string propertyAlias, object value)
 
 			        CodeMemberMethod setvalueMethod = CreateSetValueMethod(entityClass);
 
-			        #endregion void SetValue(System.Reflection.PropertyInfo pi, ColumnAttribute c, object value)
+                    #endregion void SetValue(System.Reflection.PropertyInfo pi, string propertyAlias, object value)
 
-			        #region public override object GetValue(string propAlias, Worm.Orm.IOrmObjectSchemaBase schema)
+                    #region public override object GetValue(string propAlias, Worm.Orm.IOrmObjectSchemaBase schema)
 
-			        CodeMemberMethod getvalueMethod = CreateGetValueMethod(entityClass);
+                    CodeMemberMethod getvalueMethod = CreateGetValueMethod(entityClass);
 
 			        #endregion public override object GetValue(string propAlias, Worm.Orm.IOrmObjectSchemaBase schema)
 
@@ -818,7 +818,7 @@ namespace Worm.CodeGen.Core
 			                    "SetValue"
 			                    ),
 			                new CodeArgumentReferenceExpression("pi"),
-			                new CodeArgumentReferenceExpression("c"),
+			                new CodeArgumentReferenceExpression("propertyAlias"),
 			                new CodeArgumentReferenceExpression("schema"),
 			                new CodeArgumentReferenceExpression("value")
 			                )
@@ -947,16 +947,16 @@ namespace Worm.CodeGen.Core
 
 			        #endregion OrmJoin GetJoins(string left, string right)
 
-			        #region ColumnAttribute[] GetSuppressedColumns()
+			        #region string[] GetSuppressedColumns()
 
 			        if (entity.Behaviour != EntityBehaviuor.PartialObjects)
 			        {
 
 			            method = new CodeMemberMethod();
 			            entitySchemaDefClass.Members.Add(method);
-			            method.Name = "GetSuppressedColumns";
+			            method.Name = "GetSuppressedFields";
 			            // тип возвращаемого значения
-			            method.ReturnType = new CodeTypeReference(typeof (ColumnAttribute[]));
+			            method.ReturnType = new CodeTypeReference(typeof (string[]));
 			            // модификаторы доступа
 			            method.Attributes = MemberAttributes.Public;
 
@@ -966,16 +966,19 @@ namespace Worm.CodeGen.Core
 			                // реализует метод базового класса
 			                method.ImplementationTypes.Add(typeof (IOrmObjectSchema));
 			            CodeArrayCreateExpression arrayExpression = new CodeArrayCreateExpression(
-			                new CodeTypeReference(typeof (ColumnAttribute[]))
+			                new CodeTypeReference(typeof (string[]))
 			                );
 
 
 			            foreach (PropertyDescription suppressedProperty in entity.SuppressedProperties)
 			            {
 			                arrayExpression.Initializers.Add(
-			                    new CodeObjectCreateExpression(typeof (ColumnAttribute),
-			                                                   new CodePrimitiveExpression(
-			                                                       suppressedProperty.PropertyAlias)));
+                                //new CodeObjectCreateExpression(typeof (string),
+                                //                               new CodePrimitiveExpression(
+                                //                                   suppressedProperty.PropertyAlias)
+                                //                               )
+                                new CodePrimitiveExpression(suppressedProperty.PropertyAlias)
+                            );
 			            }
 
 
@@ -2211,8 +2214,8 @@ namespace Worm.CodeGen.Core
             method.Parameters.Add(prm);
 
     		prm = new CodeParameterDeclarationExpression(
-				new CodeTypeReference(typeof(ColumnAttribute)),
-                "c"
+				new CodeTypeReference(typeof(string)),
+                "propertyAlias"
 				);
 			method.Parameters.Add(prm);
 
@@ -2228,7 +2231,7 @@ namespace Worm.CodeGen.Core
                         new CodeBaseReferenceExpression(),
                         method.Name,
                         new CodeArgumentReferenceExpression("pi"),
-						new CodeArgumentReferenceExpression("c"),
+						new CodeArgumentReferenceExpression("propertyAlias"),
                         new CodeArgumentReferenceExpression("schema")
                     )
                 )
@@ -2707,7 +2710,8 @@ namespace Worm.CodeGen.Core
                     new CodeMethodInvokeExpression(
                         OrmCodeGenHelper.GetFieldNameReferenceExpression(propertyDesc),
                         "Equals",
-                        new CodePropertyReferenceExpression(new CodeArgumentReferenceExpression("c"), "FieldName")
+                        //new CodePropertyReferenceExpression(new CodeArgumentReferenceExpression("c"), "FieldName")
+                        new CodeArgumentReferenceExpression("propertyAlias")
                     ),
                     new CodeMethodReturnStatement(
                         //new CodePropertyReferenceExpression(new CodeThisReferenceExpression(), property.Name)
@@ -2797,17 +2801,18 @@ namespace Worm.CodeGen.Core
             // модификаторы доступа
             setvalueMethod.Attributes = MemberAttributes.Public | MemberAttributes.Override;
             setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(PropertyInfo), "pi"));
-            setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(ColumnAttribute), "c"));
+            setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string), "propertyAlias"));
             setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(IObjectSchemaBase), "schema"));
             setvalueMethod.Parameters.Add(new CodeParameterDeclarationExpression(typeof(object), "value"));
             setvalueMethod.Statements.Add(
                 new CodeVariableDeclarationStatement(
                     new CodeTypeReference(typeof (string)), 
                     "fieldName",
-                    new CodePropertyReferenceExpression(
-                        new CodeArgumentReferenceExpression("c"), 
-                        "FieldName"
-                    )
+                    //new CodePropertyReferenceExpression(
+                    //    new CodeArgumentReferenceExpression("c"), 
+                    //    "FieldName"
+                    //)
+                    new CodeArgumentReferenceExpression("propertyAlias")
                 )
             );
             return setvalueMethod;

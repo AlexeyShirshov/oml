@@ -281,7 +281,7 @@ Namespace Xml
             Dim cnt As Integer
             For Each c As ColumnAttribute In MappingEngine.GetSortedFieldList(original_type)
                 If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    Dim attr As String = MappingEngine.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
+                    Dim attr As String = MappingEngine.GetColumnNameByFieldNameInternal(original_type, c.PropertyAlias, False)
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -289,7 +289,7 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        obj.SetValueOptimized(Nothing, c, oschema, nodes.Current.Value)
+                        obj.SetValueOptimized(Nothing, c.PropertyAlias, oschema, nodes.Current.Value)
                         sn = True
                         cnt += 1
                     Loop
@@ -306,7 +306,7 @@ Namespace Xml
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                    Dim attr As String = MappingEngine.GetColumnNameByFieldNameInternal(original_type, c.FieldName, False)
+                    Dim attr As String = MappingEngine.GetColumnNameByFieldNameInternal(original_type, c.PropertyAlias, False)
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -314,7 +314,7 @@ Namespace Xml
                         If sn Then
                             Throw New OrmManagerException(String.Format("Field {0} selects more than one node", attr))
                         End If
-                        obj.SetValueOptimized(pi, c, oschema, nodes.Current.Value)
+                        obj.SetValueOptimized(pi, c.PropertyAlias, oschema, nodes.Current.Value)
                         obj.SetLoaded(c, True, True, MappingEngine)
                         sn = True
                     Loop

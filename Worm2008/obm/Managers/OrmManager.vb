@@ -467,7 +467,7 @@ Partial Public MustInherit Class OrmManager
             Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(tt)
             For Each o As T In c
                 'Dim v As OrmBase = CType(_schema.GetFieldValue(o, fieldName), OrmBase)
-                Dim v As IOrmBase = CType(o.GetValueOptimized(Nothing, New ColumnAttribute(fieldName), oschema), IOrmBase)
+                Dim v As IOrmBase = CType(o.GetValueOptimized(Nothing, fieldName, oschema), IOrmBase)
                 Dim ll As ReadOnlyList(Of T) = Nothing
                 If Not lookups.TryGetValue(v, ll) Then
                     ll = New ReadOnlyList(Of T)
@@ -2449,7 +2449,7 @@ l1:
     Protected Sub M2MSubUpdate(ByVal obj As _IOrmBase, ByVal id As Object, ByVal oldId As Object, ByVal t As Type)
         For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
             Dim m As M2MCache = o.First
-            If m.Entry.SubType Is t Then
+            If m.Entry.SubType Is t AndAlso m.Entry.HasAdded Then
                 If m.Filter Is Nothing Then
                     m.Entry.Update(id, oldId)
                 Else
@@ -2576,7 +2576,7 @@ l1:
         Return CType(Activator.CreateInstance(rt.MakeGenericType(New Type() {t})), IListEdit)
     End Function
 
-    Friend Shared Function CreateReadonlyList(ByVal t As Type, ByVal l As IList) As IListEdit
+    Friend Shared Function CreateReadonlyList(ByVal t As Type, ByVal l As IEnumerable) As IListEdit
         Dim rt As Type = Nothing
         If GetType(IOrmBase).IsAssignableFrom(t) Then
             rt = GetType(ReadOnlyList(Of ))
@@ -3031,7 +3031,7 @@ l1:
         For Each o As T In col
             For i As Integer = 0 To fields.Length - 1
                 'Dim obj As OrmBase = CType(ObjectSchema.GetFieldValue(o, fields(i)), OrmBase)
-                Dim obj As IEntity = CType(o.GetValueOptimized(Nothing, New ColumnAttribute(fields(i)), oschema), IEntity)
+                Dim obj As IEntity = CType(o.GetValueOptimized(Nothing, fields(i), oschema), IEntity)
                 If obj IsNot Nothing Then
                     If prop_objs(i) Is Nothing Then
                         'prop_objs(i) = CType(Activator.CreateInstance(lt.MakeGenericType(obj.GetType)), IListEdit)
@@ -3851,10 +3851,6 @@ l1:
         End If
         joins = l.ToArray
         Return joins.Length > 0
-    End Function
-
-    Public Function CustomObject(Of T As {New, Class})(ByVal o As T) As IEntity
-
     End Function
 End Class
 

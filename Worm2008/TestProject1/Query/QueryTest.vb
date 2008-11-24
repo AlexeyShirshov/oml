@@ -233,19 +233,16 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestM2MExists()
         Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateManagerShared(New SQLGenerator("1"))
             Dim t1 As Type = GetType(Table1)
-            Dim t3 As Type = GetType(Table3)
+            'Dim t3 As Type = GetType(Table3)
 
             Dim q As New QueryCmd(t1)
             q = q.Where(Ctor.Exists( _
-                        New QueryCmd(t3). _
-                            AddJoins(JCtor.Join(t1).On(t3)). _
-                            Where(Ctor.Field(t3, "Code").Eq(2))))
-
-            Assert.AreEqual(2, q.ToList(Of Table1)(mgr).Count)
-
-            q.Distinct(True)
+                        New QueryCmd("Table3"). _
+                            AddJoins(JCtor.Join(t1).On("Table3")). _
+                            Where(Ctor.Field("Table3", "Code").Eq(2))))
 
             Dim l As ReadOnlyList(Of Table1) = q.ToOrmList(Of Table1)(mgr)
+
             Assert.AreEqual(1, l.Count)
 
             Assert.AreEqual(1, l(0).ID)
@@ -723,11 +720,17 @@ Imports Worm.Database.Criteria.Joins
     <TestMethod()> Public Sub TestCachedAnonym()
 
         Dim t As New SourceFragment("dbo", "table1")
+        Dim cache As New Worm.Cache.ReadonlyCache
 
         Dim q As New QueryCmd(t, New CreateManager(Function() _
-            TestManagerRS.CreateManagerShared(New SQLGenerator("1"))))
+            TestManagerRS.CreateManagerShared(New SQLGenerator("1"), cache)))
 
         q.Select(FCtor.Column(t, "code", "Code").Add(t, "name", "Title"))
+
+        Dim r As ReadOnlyEntityList(Of AnonymousCachedEntity) = q.ToEntityList(Of AnonymousCachedEntity)()
+
+        Assert.IsTrue(r.Count > 0)
+
 
         Assert.Inconclusive()
     End Sub
@@ -767,22 +770,71 @@ Imports Worm.Database.Criteria.Joins
     End Class
 
     Public Class cls2
-        Public Code As Integer
-        Public Name As String
-        Public Id As Integer
+
+        Private _code As Integer
+        Public Property Code() As Integer
+            Get
+                Return _code
+            End Get
+            Set(ByVal value As Integer)
+                _code = value
+            End Set
+        End Property
+
+        Private _name As String
+        Public Property Name() As String
+            Get
+                Return _name
+            End Get
+            Set(ByVal value As String)
+                _name = value
+            End Set
+        End Property
+
+        Private _id As Integer
+        Public Property Id() As Integer
+            Get
+                Return _id
+            End Get
+            Set(ByVal value As Integer)
+                _id = value
+            End Set
+        End Property
+
     End Class
 
     Public Class cls3
-        Public Code As Integer
-        <Column("name")> Public Property Title() As String
+
+        Private _code As Integer
+        Public Property Code() As Integer
             Get
-
+                Return _code
             End Get
-            Set(ByVal value As String)
-
+            Set(ByVal value As Integer)
+                _code = value
             End Set
         End Property
-        Public Id As Integer
+
+        Private _title As String
+        <Column("name")> Public Property Title() As String
+            Get
+                Return _title
+            End Get
+            Set(ByVal value As String)
+                _title = value
+            End Set
+        End Property
+
+        Private _id As Integer
+        Public Property Id() As Integer
+            Get
+                Return _id
+            End Get
+            Set(ByVal value As Integer)
+                _id = value
+            End Set
+        End Property
+
     End Class
 
     <TestMethod()> Public Sub TestCustomObject()
@@ -795,7 +847,7 @@ Imports Worm.Database.Criteria.Joins
         q.Select(FCtor.Column(t, "code", "Code").Add(t, "name", "Title").Add(t, "id", "ID")). _
             Sort(Sorting.Field("Code"))
 
-        Dim l As IList(Of cls) = q.ToCustomList(Of cls)()
+        Dim l As IList(Of cls) = q.ToPODList(Of cls)()
 
         Assert.AreEqual(3, l.Count)
 
@@ -815,7 +867,7 @@ Imports Worm.Database.Criteria.Joins
 
         q.Sort(Sorting.Field("Code"))
 
-        Dim l As IList(Of cls2) = q.ToCustomList(Of cls2)()
+        Dim l As IList(Of cls2) = q.ToPODList(Of cls2)()
 
         Assert.AreEqual(3, l.Count)
 
@@ -835,7 +887,7 @@ Imports Worm.Database.Criteria.Joins
 
         q.Sort(Sorting.Field("Code"))
 
-        Dim l As IList(Of cls3) = q.ToCustomList(Of cls3)()
+        Dim l As IList(Of cls3) = q.ToPODList(Of cls3)()
 
         Assert.AreEqual(3, l.Count)
 
@@ -856,15 +908,15 @@ Imports Worm.Database.Criteria.Joins
         q.Select(FCtor.Column(t, "code", "Code").Add(t, "name", "Title").Add(t, "id", "ID", Field2DbRelations.PK)). _
             Sort(Sorting.Field("Code"))
 
-        Dim l As IList(Of cls) = q.ToCustomList(Of cls)()
+        Dim l As IList(Of cls) = q.ToPODList(Of cls)()
 
         Assert.AreEqual(3, l.Count)
 
         Assert.AreEqual(2, l(0).Code)
 
-        Using mgr As OrmManager = q.GetMgr.CreateManager
-            Assert.IsTrue(mgr.CustomObject(l(0)).IsLoaded)
-        End Using
+        'Using mgr As OrmManager = q.GetMgr.CreateManager
+        '    Assert.IsTrue(mgr.CustomObject(l(0)).IsLoaded)
+        'End Using
     End Sub
 
     <TestMethod()> Public Sub TestExternalCache()
@@ -880,6 +932,31 @@ Imports Worm.Database.Criteria.Joins
         Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
 
         Assert.AreEqual(1, dic.Count)
+    End Sub
+
+    <TestMethod()> Public Sub TestClientPaging()
+        Dim q As New QueryCmd(Function() _
+            TestManagerRS.CreateManagerShared(New SQLGenerator("1")))
+
+        q.WithLoad(True)
+        q.ClientPaging = New Worm.Query.Paging(0, 1)
+
+        Dim l As ReadOnlyEntityList(Of Table1) = q.ToList(Of Table1)()
+
+        Assert.AreEqual(1, l.Count)
+        Assert.IsTrue(l(0).InternalProperties.IsLoaded)
+
+    End Sub
+
+    <TestMethod()> Public Sub TestSelectEntity()
+
+        Dim q As New QueryCmd("Table3", Function() _
+            TestManagerRS.CreateManagerShared(New SQLGenerator("1")))
+
+        Dim t As Type = GetType(Table3)
+        q.Select(FCtor.Field(t, "Code"))
+
+        Assert.IsTrue(q.ToList(Of Table33).Count > 0)
     End Sub
 
     Private Class c

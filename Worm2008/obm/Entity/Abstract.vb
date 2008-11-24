@@ -27,7 +27,7 @@ Namespace Orm
         Function GetMgr() As IGetManager
         ReadOnly Property ObjName() As String
         Function GetOldState() As ObjectState
-        Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable
+        Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable
         Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean)
         Sub SetObjectState(ByVal o As ObjectState)
         Sub SetCreateManager(ByVal createManager As ICreateManager)
@@ -35,13 +35,13 @@ Namespace Orm
 
     Public Interface IEntity
         Inherits ICloneable
-        Sub SetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IObjectSchemaBase, ByVal value As Object)
-        Function GetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal schema As IObjectSchemaBase) As Object
+        Sub SetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal propertyAlias As String, ByVal schema As IObjectSchemaBase, ByVal value As Object)
+        Function GetValueOptimized(ByVal pi As Reflection.PropertyInfo, ByVal propertyAlias As String, ByVal schema As IObjectSchemaBase) As Object
         Function GetSyncRoot() As IDisposable
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity
         Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
-        Function IsFieldLoaded(ByVal fieldName As String) As Boolean
+        Function IsFieldLoaded(ByVal propertyAlias As String) As Boolean
         ReadOnly Property IsLoaded() As Boolean
         Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
         ReadOnly Property CreateManager() As ICreateManager
@@ -52,7 +52,8 @@ Namespace Orm
         Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
         Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
-        Function SetLoaded(ByVal c As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
+        Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
+        Function SetLoaded(ByVal propertyMap As ColumnAttribute, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
         Function CheckIsAllLoaded(ByVal schema As ObjectMappingEngine, ByVal loadedColumns As Integer) As Boolean
         ReadOnly Property IsPKLoaded() As Boolean
         ReadOnly Property UpdateCtx() As UpdateCtx

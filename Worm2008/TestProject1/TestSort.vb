@@ -62,14 +62,14 @@ Imports System.Collections
     Protected Function ExternalSort(ByVal mgr As OrmManager, ByVal generator As ObjectMappingEngine, ByVal sort As Worm.Sorting.Sort, ByVal objs As ICollection) As ICollection
         Dim col As IList(Of Entity) = CType(objs, IList(Of Entity))
         Dim r As New List(Of Entity)
-        Select Case sort.FieldName
+        Select Case sort.SortBy
             Case "xxx"
                 r.Add(col(0))
             Case "yyy"
                 r.Add(col(0))
                 r.Add(col(1))
             Case Else
-                Throw New NotSupportedException(sort.FieldName)
+                Throw New NotSupportedException(sort.SortBy)
         End Select
         Return New ReadOnlyList(Of Entity)(r)
     End Function

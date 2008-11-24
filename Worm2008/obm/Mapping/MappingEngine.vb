@@ -114,37 +114,51 @@ Public MustInherit Class ObjectMappingEngine
     '    Return GetProperties(t, schema)
     'End Function
 
-    Public Shared Function GetColumnProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase) As IDictionary
+    Public Shared Function GetMappedProperties(ByVal t As Type) As IDictionary
+        Return GetMappedProperties(t, Nothing, Nothing, True)
+    End Function
+
+    Public Shared Function GetMappedProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase) As IDictionary
+        Dim propertyMap As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
+        If schema IsNot Nothing Then propertyMap = schema.GetFieldColumnMap()
+
+        Return GetMappedProperties(t, schema, propertyMap, False)
+    End Function
+
+    Public Shared Function GetMappedProperties(ByVal t As Type, ByVal schema As IObjectSchemaBase, _
+        ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), ByVal raw As Boolean) As IDictionary
         Dim result As New Hashtable
 
-        Dim sup As Array = Nothing
+        Dim sup() As String = Nothing
         If schema IsNot Nothing Then
-            sup = schema.GetSuppressedColumns()
+            sup = schema.GetSuppressedFields()
         End If
-
-        Dim idx As Collections.IndexedCollection(Of String, MapField2Column) = Nothing
-        If schema IsNot Nothing Then idx = schema.GetFieldColumnMap()
 
         For Each pi As Reflection.PropertyInfo In t.GetProperties(Reflection.BindingFlags.Instance Or Reflection.BindingFlags.Public Or Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.DeclaredOnly)
             Dim column As ColumnAttribute = Nothing
             Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(ColumnAttribute)), Attribute())
             If columns.Length > 0 Then column = CType(columns(0), ColumnAttribute)
-            If column Is Nothing AndAlso idx IsNot Nothing Then
-                Dim fieldName As String = pi.Name
-                If idx.ContainsKey(fieldName) Then
-                    Dim mc As MapField2Column = idx(fieldName)
-                    column = New ColumnAttribute(mc._newattributes)
-                    column.Column = mc._columnName
-                    column.FieldName = mc._fieldName
+            If column Is Nothing Then
+                Dim propertyAlias As String = pi.Name
+                If propertyMap IsNot Nothing Then
+                    If propertyMap.ContainsKey(propertyAlias) Then
+                        Dim mc As MapField2Column = propertyMap(propertyAlias)
+                        column = New ColumnAttribute(mc._newattributes)
+                        column.Column = mc._columnName
+                        column.PropertyAlias = mc._propertyAlias
+                    End If
+                ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
+                    column = New ColumnAttribute(propertyAlias)
+                    column.Column = propertyAlias
                 End If
             End If
 
             If column IsNot Nothing Then
-                If String.IsNullOrEmpty(column.FieldName) Then
-                    column.FieldName = pi.Name
+                If String.IsNullOrEmpty(column.PropertyAlias) Then
+                    column.PropertyAlias = pi.Name
                 End If
 
-                If (sup Is Nothing OrElse Array.IndexOf(sup, column) < 0) AndAlso (idx Is Nothing OrElse idx.ContainsKey(column.FieldName)) Then
+                If (sup Is Nothing OrElse Array.IndexOf(sup, column.PropertyAlias) < 0) AndAlso (propertyMap Is Nothing OrElse propertyMap.ContainsKey(column.PropertyAlias)) Then
                     result.Add(column, pi)
                 End If
             End If
@@ -155,22 +169,27 @@ Public MustInherit Class ObjectMappingEngine
             Dim columns() As Attribute = CType(Attribute.GetCustomAttributes(pi, GetType(ColumnAttribute)), Attribute())
             If columns.Length > 0 Then column = CType(columns(0), ColumnAttribute)
 
-            If column Is Nothing AndAlso idx IsNot Nothing AndAlso _
-                (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
-                Dim fieldName As String = pi.Name
-                If idx.ContainsKey(fieldName) Then
-                    Dim mc As MapField2Column = idx(fieldName)
-                    column = New ColumnAttribute(mc._newattributes)
-                    column.Column = mc._columnName
-                    column.FieldName = mc._fieldName
+            If column Is Nothing Then
+                Dim propertyAlias As String = pi.Name
+                If propertyMap IsNot Nothing Then
+                    If propertyMap.ContainsKey(propertyAlias) AndAlso (pi.Name <> OrmBaseT.PKName OrElse pi.DeclaringType.Name <> GetType(OrmBaseT(Of )).Name) Then
+                        Dim mc As MapField2Column = propertyMap(propertyAlias)
+                        column = New ColumnAttribute(mc._newattributes)
+                        column.Column = mc._columnName
+                        column.PropertyAlias = mc._propertyAlias
+                    End If
+                ElseIf raw AndAlso pi.CanWrite AndAlso pi.CanRead Then
+                    column = New ColumnAttribute(propertyAlias)
+                    column.Column = propertyAlias
                 End If
             End If
 
             If column IsNot Nothing Then
-                If String.IsNullOrEmpty(column.FieldName) Then
-                    column.FieldName = pi.Name
+                If String.IsNullOrEmpty(column.PropertyAlias) Then
+                    column.PropertyAlias = pi.Name
                 End If
-                If Not result.Contains(column) AndAlso (sup Is Nothing OrElse Array.IndexOf(sup, column) < 0) AndAlso (idx Is Nothing OrElse idx.ContainsKey(column.FieldName)) Then
+                If Not result.Contains(column) AndAlso (sup Is Nothing OrElse Array.IndexOf(sup, column.PropertyAlias) < 0) _
+                    AndAlso (propertyMap Is Nothing OrElse propertyMap.ContainsKey(column.PropertyAlias)) Then
                     result.Add(column, pi)
                 End If
             End If
@@ -193,7 +212,7 @@ Public MustInherit Class ObjectMappingEngine
             SyncLock String.Intern(key)
                 h = CType(map(key), IDictionary)
                 If h Is Nothing Then
-                    h = GetColumnProperties(t, schema)
+                    h = GetMappedProperties(t, schema)
 
                     map(key) = h
                 End If
@@ -218,6 +237,20 @@ Public MustInherit Class ObjectMappingEngine
     '    Next
     '    Return js.ToArray
     'End Function
+
+    Public Function GetMappedFields(ByVal schema As IObjectSchemaBase) As ICollection(Of MapField2Column)
+        Dim sup() As String = schema.GetSuppressedFields()
+        If sup Is Nothing OrElse sup.Length = 0 Then
+            Return schema.GetFieldColumnMap.Values
+        End If
+        Dim l As New List(Of MapField2Column)
+        For Each m As MapField2Column In schema.GetFieldColumnMap
+            If Array.IndexOf(sup, m._propertyAlias) < 0 Then
+                l.Add(m)
+            End If
+        Next
+        Return l
+    End Function
 
     Public Function GetEntityKey(ByVal filterInfo As Object, ByVal t As Type) As String
         Dim schema As IObjectSchemaBase = GetObjectSchema(t)
@@ -256,7 +289,7 @@ Public MustInherit Class ObjectMappingEngine
 
         For Each p As MapField2Column In coll
             If p._columnName = columnName Then
-                Return p._fieldName
+                Return p._propertyAlias
             End If
         Next
 
@@ -315,17 +348,21 @@ Public MustInherit Class ObjectMappingEngine
     '    Return schema.GetM2MRelationColumn(subtype)
     'End Function
 
-    Public Function GetM2MRelations(ByVal maintype As Type) As M2MRelation()
-        If maintype Is Nothing Then
-            Throw New ArgumentNullException("maintype")
-        End If
-
-        Dim schema As IMultiTableWithM2MSchema = TryCast(GetObjectSchema(maintype), IMultiTableWithM2MSchema)
+    Public Function GetM2MRelations(ByVal s As IObjectSchemaBase) As M2MRelation()
+        Dim schema As IMultiTableWithM2MSchema = TryCast(s, IMultiTableWithM2MSchema)
         If schema IsNot Nothing Then
             Return schema.GetM2MRelations
         Else
             Return New M2MRelation() {}
         End If
+    End Function
+
+    Public Function GetM2MRelations(ByVal maintype As Type) As M2MRelation()
+        If maintype Is Nothing Then
+            Throw New ArgumentNullException("maintype")
+        End If
+
+        Return GetM2MRelations(GetObjectSchema(maintype))
     End Function
 
     Public Function GetM2MRelationsForEdit(ByVal maintype As Type) As M2MRelation()
@@ -365,12 +402,36 @@ Public MustInherit Class ObjectMappingEngine
         Next
 
         Dim en As String = GetEntityNameByType(maintype)
+        If Not String.IsNullOrEmpty(en) Then
+            For Each r As M2MRelation In mr
+                Dim n As String = GetEntityNameByType(r.Type)
+                If String.Equals(en, n) AndAlso String.Equals(r.Key, key) Then
+                    Return r
+                End If
+            Next
+        End If
+
+        Return Nothing
+    End Function
+
+    Public Function GetM2MRelation(ByVal maintype As Type, ByVal mainSchema As IObjectSchemaBase, ByVal subtype As Type, ByVal key As String) As M2MRelation
+        If String.IsNullOrEmpty(key) Then key = M2MRelation.DirKey
+        Dim mr() As M2MRelation = GetM2MRelations(mainSchema)
         For Each r As M2MRelation In mr
-            Dim n As String = GetEntityNameByType(r.Type)
-            If String.Equals(en, n) AndAlso String.Equals(r.Key, key) Then
+            If r.Type Is subtype AndAlso String.Equals(r.Key, key) Then
                 Return r
             End If
         Next
+
+        Dim en As String = GetEntityNameByType(maintype)
+        If Not String.IsNullOrEmpty(en) Then
+            For Each r As M2MRelation In mr
+                Dim n As String = GetEntityNameByType(r.Type)
+                If String.Equals(en, n) AndAlso String.Equals(r.Key, key) Then
+                    Return r
+                End If
+            Next
+        End If
 
         Return Nothing
     End Function
@@ -384,12 +445,14 @@ Public MustInherit Class ObjectMappingEngine
         Next
 
         Dim en As String = GetEntityNameByType(maintype)
-        For Each r As M2MRelation In mr
-            Dim n As String = GetEntityNameByType(r.Type)
-            If String.Equals(en, n) AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
-                Return r
-            End If
-        Next
+        If Not String.IsNullOrEmpty(en) Then
+            For Each r As M2MRelation In mr
+                Dim n As String = GetEntityNameByType(r.Type)
+                If String.Equals(en, n) AndAlso (maintype IsNot subtype OrElse r.non_direct <> direct) Then
+                    Return r
+                End If
+            Next
+        End If
 
         Return Nothing
     End Function
@@ -654,7 +717,7 @@ Public MustInherit Class ObjectMappingEngine
             Throw New ArgumentNullException("schema")
         End If
 
-        Return schema.GetFieldColumnMap()(c.FieldName).GetAttributes(c)
+        Return schema.GetFieldColumnMap()(c.PropertyAlias).GetAttributes(c)
     End Function
 #End Region
 
@@ -708,36 +771,36 @@ Public MustInherit Class ObjectMappingEngine
         Return CType(GetProperties(t, schema)(c), Reflection.PropertyInfo)
     End Function
 
-    Protected Friend Function GetProperty(ByVal original_type As Type, ByVal field As String) As Reflection.PropertyInfo
-        If String.IsNullOrEmpty(field) Then
-            Throw New ArgumentNullException("field")
+    Protected Friend Function GetProperty(ByVal original_type As Type, ByVal propertyAlias As String) As Reflection.PropertyInfo
+        If String.IsNullOrEmpty(propertyAlias) Then
+            Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return GetProperty(original_type, New ColumnAttribute(field))
+        Return GetProperty(original_type, New ColumnAttribute(propertyAlias))
     End Function
 
-    Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IObjectSchemaBase, ByVal field As String) As Reflection.PropertyInfo
-        If String.IsNullOrEmpty(field) Then
-            Throw New ArgumentNullException("field")
+    Protected Friend Function GetProperty(ByVal t As Type, ByVal schema As IObjectSchemaBase, ByVal propertyAlias As String) As Reflection.PropertyInfo
+        If String.IsNullOrEmpty(propertyAlias) Then
+            Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return GetProperty(t, schema, New ColumnAttribute(field))
+        Return GetProperty(t, schema, New ColumnAttribute(propertyAlias))
     End Function
 
-    Protected Friend Shared Function GetPropertyInt(ByVal original_type As Type, ByVal field As String) As Reflection.PropertyInfo
-        If String.IsNullOrEmpty(field) Then
-            Throw New ArgumentNullException("field")
+    Protected Friend Shared Function GetPropertyInt(ByVal original_type As Type, ByVal propertyAlias As String) As Reflection.PropertyInfo
+        If String.IsNullOrEmpty(propertyAlias) Then
+            Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return CType(GetColumnProperties(original_type, Nothing)(New ColumnAttribute(field)), Reflection.PropertyInfo)
+        Return CType(GetMappedProperties(original_type, Nothing)(New ColumnAttribute(propertyAlias)), Reflection.PropertyInfo)
     End Function
 
-    Protected Friend Shared Function GetPropertyInt(ByVal t As Type, ByVal oschema As IObjectSchemaBase, ByVal field As String) As Reflection.PropertyInfo
-        If String.IsNullOrEmpty(field) Then
-            Throw New ArgumentNullException("field")
+    Protected Friend Shared Function GetPropertyInt(ByVal t As Type, ByVal oschema As IObjectSchemaBase, ByVal propertyAlias As String) As Reflection.PropertyInfo
+        If String.IsNullOrEmpty(propertyAlias) Then
+            Throw New ArgumentNullException("propertyAlias")
         End If
 
-        Return CType(GetColumnProperties(t, oschema)(New ColumnAttribute(field)), Reflection.PropertyInfo)
+        Return CType(GetMappedProperties(t, oschema)(New ColumnAttribute(propertyAlias)), Reflection.PropertyInfo)
     End Function
 
 
@@ -790,7 +853,7 @@ Public MustInherit Class ObjectMappingEngine
 
                     For Each c As ColumnAttribute In GetSortedFieldList(original_type, schema)
                         If (GetAttributes(schema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                            arr.Add(GetColumnNameByFieldNameInternal(schema, c.FieldName, add_alias, columnAliases))
+                            arr.Add(GetColumnNameByFieldNameInternal(schema, c.PropertyAlias, add_alias, columnAliases))
                         End If
                     Next
 
@@ -855,27 +918,27 @@ Public MustInherit Class ObjectMappingEngine
     '    Return arr.ToArray
     'End Function
 
-    Public Shared Function GetFieldValueSchemaless(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IObjectSchemaBase, ByVal pi As Reflection.PropertyInfo) As Object
+    Public Shared Function GetFieldValueSchemaless(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal schema As IObjectSchemaBase, ByVal pi As Reflection.PropertyInfo) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
         If pi Is Nothing Then
             If schema Is Nothing Then
-                pi = GetPropertyInt(obj.GetType, fieldName)
+                pi = GetPropertyInt(obj.GetType, propertyAlias)
             Else
-                pi = GetPropertyInt(obj.GetType, schema, fieldName)
+                pi = GetPropertyInt(obj.GetType, schema, propertyAlias)
             End If
         End If
 
         If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, fieldName))
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, propertyAlias))
         End If
 
-        Return GetFieldValue(obj, fieldName, pi, schema)
+        Return GetFieldValue(obj, propertyAlias, pi, schema)
     End Function
 
-    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String) As Object
+    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal propertyAlias As String) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -885,19 +948,19 @@ Public MustInherit Class ObjectMappingEngine
         Dim pi As Reflection.PropertyInfo = Nothing
 
         If schema IsNot Nothing Then
-            pi = GetProperty(obj.GetType, schema, fieldName)
+            pi = GetProperty(obj.GetType, schema, propertyAlias)
         Else
-            pi = GetProperty(obj.GetType, fieldName)
+            pi = GetProperty(obj.GetType, propertyAlias)
         End If
 
         If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, fieldName))
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, propertyAlias))
         End If
 
-        Return GetFieldValue(obj, fieldName, pi, schema)
+        Return GetFieldValue(obj, propertyAlias, pi, schema)
     End Function
 
-    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IObjectSchemaBase) As Object
+    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal schema As IObjectSchemaBase) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
@@ -905,46 +968,46 @@ Public MustInherit Class ObjectMappingEngine
         Dim pi As Reflection.PropertyInfo = Nothing
 
         If schema IsNot Nothing Then
-            pi = GetProperty(obj.GetType, schema, fieldName)
+            pi = GetProperty(obj.GetType, schema, propertyAlias)
         Else
-            pi = GetProperty(obj.GetType, fieldName)
+            pi = GetProperty(obj.GetType, propertyAlias)
         End If
 
         If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, fieldName))
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, propertyAlias))
         End If
 
-        Return GetFieldValue(obj, fieldName, pi, schema)
+        Return GetFieldValue(obj, propertyAlias, pi, schema)
     End Function
 
-    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal schema As IObjectSchemaBase, ByVal pi As Reflection.PropertyInfo) As Object
+    Public Function GetFieldValue(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal schema As IObjectSchemaBase, ByVal pi As Reflection.PropertyInfo) As Object
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
         If pi Is Nothing Then
             If schema IsNot Nothing Then
-                pi = GetProperty(obj.GetType, schema, fieldName)
+                pi = GetProperty(obj.GetType, schema, propertyAlias)
             Else
-                pi = GetProperty(obj.GetType, fieldName)
+                pi = GetProperty(obj.GetType, propertyAlias)
             End If
         End If
 
         If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, fieldName))
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, propertyAlias))
         End If
 
-        Return GetFieldValue(obj, fieldName, pi, schema)
+        Return GetFieldValue(obj, propertyAlias, pi, schema)
     End Function
 
-    Public Shared Function GetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal pi As Reflection.PropertyInfo, ByVal oschema As IObjectSchemaBase) As Object
+    Public Shared Function GetFieldValue(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal pi As Reflection.PropertyInfo, ByVal oschema As IObjectSchemaBase) As Object
         If pi Is Nothing Then
             Throw New ArgumentNullException("pi")
         End If
 
-        Using obj.SyncHelper(True, fieldName)
+        Using obj.SyncHelper(True, propertyAlias)
             'Return pi.GetValue(obj, Nothing)
-            Return obj.GetValueOptimized(pi, New ColumnAttribute(fieldName), oschema)
+            Return obj.GetValueOptimized(pi, propertyAlias, oschema)
         End Using
     End Function
 
@@ -959,19 +1022,19 @@ Public MustInherit Class ObjectMappingEngine
     '    End Using
     'End Function
 
-    Public Sub SetFieldValue(ByVal obj As _IEntity, ByVal fieldName As String, ByVal value As Object, ByVal oschema As IObjectSchemaBase)
+    Public Sub SetFieldValue(ByVal obj As _IEntity, ByVal propertyAlias As String, ByVal value As Object, ByVal oschema As IObjectSchemaBase)
         If obj Is Nothing Then
             Throw New ArgumentNullException("obj")
         End If
 
-        Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, fieldName)
+        Dim pi As Reflection.PropertyInfo = GetProperty(obj.GetType, propertyAlias)
 
         If pi Is Nothing Then
-            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, fieldName))
+            Throw New ArgumentException(String.Format("{0} doesnot contain field {1}", CType(obj, _IEntity).ObjName, propertyAlias))
         End If
 
-        Using obj.SyncHelper(False, fieldName)
-            obj.SetValueOptimized(pi, GetColumnByFieldName(obj.GetType, fieldName), oschema, value)
+        Using obj.SyncHelper(False, propertyAlias)
+            obj.SetValueOptimized(pi, propertyAlias, oschema, value)
             'pi.SetValue(obj, value, Nothing)
         End Using
     End Sub
@@ -1009,7 +1072,7 @@ Public MustInherit Class ObjectMappingEngine
                     sb.Append(GetTableName(pr.Table)).Append(Selector).Append(pr.Column).Append(", ")
                 End If
             Else
-                sb.Append(GetColumnNameByFieldNameInternal(GetObjectSchema(pr.Type), pr.Field, True, columnAliases)).Append(", ")
+                sb.Append(GetColumnNameByFieldNameInternal(GetObjectSchema(pr.Type), pr.PropertyAlias, True, columnAliases)).Append(", ")
             End If
         Next
 
@@ -1030,7 +1093,7 @@ Public MustInherit Class ObjectMappingEngine
         Dim sb As New StringBuilder
         If arr Is Nothing Then arr = GetSortedFieldList(original_type, schema)
         For Each c As ColumnAttribute In arr
-            sb.Append(GetColumnNameByFieldNameInternal(schema, c.FieldName, True, columnAliases)).Append(", ")
+            sb.Append(GetColumnNameByFieldNameInternal(schema, c.PropertyAlias, True, columnAliases)).Append(", ")
         Next
 
         sb.Length -= 2
@@ -1085,7 +1148,7 @@ Public MustInherit Class ObjectMappingEngine
         If Not String.IsNullOrEmpty(c) Then
             Dim id As Object = Nothing
             If obj.IsFieldLoaded(c) Then
-                id = obj.GetValueOptimized(Nothing, New ColumnAttribute(c), oschema)
+                id = obj.GetValueOptimized(Nothing, c, oschema)
             Else
                 id = GetFieldValue(obj, c, oschema)
             End If
@@ -1113,7 +1176,7 @@ Public MustInherit Class ObjectMappingEngine
         'Dim t As Type = map(
         For Each de As DictionaryEntry In GetProperties(type)
             Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-            If field = c.FieldName Then
+            If field = c.PropertyAlias Then
                 Return CType(de.Value, Reflection.PropertyInfo).PropertyType
             End If
         Next
@@ -1140,7 +1203,7 @@ Public MustInherit Class ObjectMappingEngine
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         If pi.PropertyType Is fieldType Then
                             Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-                            l.Add(c.FieldName)
+                            l.Add(c.PropertyAlias)
                         End If
                     Next
                 End If
@@ -1188,7 +1251,7 @@ Public MustInherit Class ObjectMappingEngine
 
         For Each de As DictionaryEntry In GetProperties(main, oschema)
             Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
-            If c.FieldName = fieldName Then
+            If c.PropertyAlias = fieldName Then
                 Return c
             End If
         Next

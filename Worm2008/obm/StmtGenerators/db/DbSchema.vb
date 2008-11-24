@@ -403,7 +403,7 @@ Namespace Database
                             Dim att As Field2DbRelations = GetAttributes(es, c)
                             If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly OrElse _
                              (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault Then
-                                Dim tb As SourceFragment = GetFieldTable(es, c.FieldName)
+                                Dim tb As SourceFragment = GetFieldTable(es, c.PropertyAlias)
                                 If unions IsNot Nothing Then
                                     Throw New NotImplementedException
                                     'tb = MapUnionType2Table(real_t, uniontype)
@@ -413,7 +413,7 @@ Namespace Database
                                 Dim v As Object = ChangeValueType(es, c, current)
                                 If (att And Field2DbRelations.InsertDefault) = Field2DbRelations.InsertDefault AndAlso v Is DBNull.Value Then
                                     If Not String.IsNullOrEmpty(DefaultValue) Then
-                                        f = New dc.EntityFilter(real_t, c.FieldName, New LiteralValue(DefaultValue), FilterOperation.Equal)
+                                        f = New dc.EntityFilter(real_t, c.PropertyAlias, New LiteralValue(DefaultValue), FilterOperation.Equal)
                                     Else
                                         Throw New ObjectMappingException("DefaultValue required for operation")
                                     End If
@@ -429,7 +429,7 @@ l1:
                                             Throw New ObjectMappingException(obj.ObjName & "Cannot save object while it has reference to new object " & CType(current, _IEntity).ObjName)
                                         End If
                                     End If
-                                    f = New dc.EntityFilter(real_t, c.FieldName, New ScalarValue(v), FilterOperation.Equal)
+                                    f = New dc.EntityFilter(real_t, c.PropertyAlias, New ScalarValue(v), FilterOperation.Equal)
                                 End If
 
                                 If f IsNot Nothing Then
@@ -464,7 +464,7 @@ l1:
                             jn = CType(GetJoins(js, pkt, join_table, filterInfo), OrmJoin)
                         End If
                         If Not OrmJoin.IsEmpty(jn) Then
-                            Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(jn.Condition, real_t, prim_key.FieldName, "@id")
+                            Dim f As IFilter = JoinFilter.ChangeEntityJoinToLiteral(jn.Condition, real_t, prim_key.PropertyAlias, "@id")
 
                             If f Is Nothing Then
                                 Throw New ObjectMappingException("Cannot change join")
@@ -535,8 +535,8 @@ l1:
                             Dim p As Pair(Of String) = f.MakeSingleQueryStmt(Me, Nothing, params)
                             If ef IsNot Nothing Then
                                 p = ef.MakeSingleQueryStmt(os, Me, Nothing, params)
-                                If ef.Template.FieldName = OrmBaseT.PKName Then
-                                    Dim att As Field2DbRelations = os.GetFieldColumnMap(ef.Template.FieldName).GetAttributes(GetColumnByFieldName(type, ef.Template.FieldName))
+                                If ef.Template.PropertyAlias = OrmBaseT.PKName Then
+                                    Dim att As Field2DbRelations = os.GetFieldColumnMap(ef.Template.PropertyAlias).GetAttributes(GetColumnByFieldName(type, ef.Template.PropertyAlias))
                                     If (att And Field2DbRelations.SyncInsert) = 0 AndAlso _
                                         (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
                                         pk_id = p.Second
@@ -601,7 +601,7 @@ l1:
                                 '    ins_cmd.Append("+").Append(GetUnionScope(type, pk_table).First)
                                 'End If
                             Else
-                                ins_cmd.Append(GetColumnNameByFieldName(os, c.FieldName))
+                                ins_cmd.Append(GetColumnNameByFieldName(os, c.PropertyAlias))
                             End If
                         Next
 
@@ -648,7 +648,7 @@ l1:
                     'If (c.SyncBehavior And Field2DbRelations.PrimaryKey) <> Field2DbRelations.PrimaryKey AndAlso _
                     '    (c.SyncBehavior And Field2DbRelations.RowVersion) <> Field2DbRelations.RowVersion Then
                     Dim map As MapField2Column = Nothing
-                    If col.TryGetValue(c.FieldName, map) Then
+                    If col.TryGetValue(c.PropertyAlias, map) Then
                         Dim att As Field2DbRelations = map.GetAttributes(c)
                         If (att And Field2DbRelations.ReadOnly) <> Field2DbRelations.ReadOnly Then
 
@@ -662,7 +662,7 @@ l1:
                                     End If
                                 End If
 
-                                Dim fieldTable As SourceFragment = GetFieldTable(oschema, c.FieldName)
+                                Dim fieldTable As SourceFragment = GetFieldTable(oschema, c.PropertyAlias)
 
                                 If unions IsNot Nothing Then
                                     Throw New NotImplementedException
@@ -676,7 +676,7 @@ l1:
 
                                 Dim updates As IList(Of EntityFilterBase) = tables(fieldTable)._updates
 
-                                updates.Add(New dc.EntityFilter(rt, c.FieldName, New ScalarValue(current), FilterOperation.Equal))
+                                updates.Add(New dc.EntityFilter(rt, c.PropertyAlias, New ScalarValue(current), FilterOperation.Equal))
 
                                 'Dim tb_sb As StringBuilder = CType(tables(fieldTable), StringBuilder)
                                 'Dim _params As ArrayList = CType(param_vals(fieldTable), ArrayList)
@@ -750,7 +750,7 @@ l1:
                         'original = pi.GetValue(obj, Nothing)
                         'End If
 
-                        Dim tb As SourceFragment = GetFieldTable(oschema, c.FieldName)
+                        Dim tb As SourceFragment = GetFieldTable(oschema, c.PropertyAlias)
                         If unions IsNot Nothing Then
                             Throw New NotImplementedException
                             'tb = MapUnionType2Table(rt, uniontype)
@@ -771,13 +771,13 @@ l1:
                             'Dim de_table As TableUpdate = updated_tables(tb)
                             If de_table.Key.Equals(tb) Then
                                 'updated_tables(de_table.Key) = New TableUpdate(de_table.Value._table, de_table.Value._updates, de_table.Value._where4update.AddFilter(New OrmFilter(rt, c.FieldName, ChangeValueType(rt, c, original), FilterOperation.Equal)))
-                                de_table.Value._where4update.AddFilter(New dc.EntityFilter(rt, c.FieldName, New ScalarValue(original), FilterOperation.Equal))
+                                de_table.Value._where4update.AddFilter(New dc.EntityFilter(rt, c.PropertyAlias, New ScalarValue(original), FilterOperation.Equal))
                             Else
                                 Dim joinableSchema As IOrmObjectSchema = TryCast(oschema, IOrmObjectSchema)
                                 If joinableSchema IsNot Nothing Then
                                     Dim join As OrmJoin = CType(GetJoins(joinableSchema, tb, de_table.Key, filterInfo), OrmJoin)
                                     If Not OrmJoin.IsEmpty(join) Then
-                                        Dim f As IFilter = JoinFilter.ChangeEntityJoinToParam(join.Condition, rt, c.FieldName, New TypeWrap(Of Object)(original))
+                                        Dim f As IFilter = JoinFilter.ChangeEntityJoinToParam(join.Condition, rt, c.PropertyAlias, New TypeWrap(Of Object)(original))
 
                                         If f Is Nothing Then
                                             Throw New ObjectMappingException("Cannot replace join")
@@ -903,7 +903,7 @@ l1:
                                     '    upd_cmd.Append("+").Append(GetUnionScope(Type, pk_table).First)
                                     'End If
                                 Else
-                                    sel_sb.Append(GetColumnNameByFieldName(esch, c.FieldName))
+                                    sel_sb.Append(GetColumnNameByFieldName(esch, c.PropertyAlias))
                                 End If
                             Next
 
@@ -937,7 +937,7 @@ l1:
 
             If sel_columns.Count > 0 Then
                 For Each c As ColumnAttribute In sel_columns
-                    If Not tables.ContainsKey(esch.GetFieldColumnMap()(c.FieldName)._tableName) Then
+                    If Not tables.ContainsKey(esch.GetFieldColumnMap()(c.PropertyAlias)._tableName) Then
                         Return False
                     End If
                 Next
@@ -979,12 +979,12 @@ l1:
                         Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                         Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                         If c IsNot Nothing Then
-                            Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.FieldName).GetAttributes(c) 'GetAttributes(type, c)
+                            Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.PropertyAlias).GetAttributes(c) 'GetAttributes(type, c)
                             If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                o.AddFilter(New dc.EntityFilter(type, c.FieldName, New LiteralValue("@id_" & c.FieldName), FilterOperation.Equal))
+                                o.AddFilter(New dc.EntityFilter(type, c.PropertyAlias, New LiteralValue("@id_" & c.PropertyAlias), FilterOperation.Equal))
                             ElseIf (att And Field2DbRelations.RV) = Field2DbRelations.RV Then
                                 Dim v As Object = pi.GetValue(obj, Nothing)
-                                o.AddFilter((New dc.EntityFilter(type, c.FieldName, New ScalarValue(v), FilterOperation.Equal)))
+                                o.AddFilter((New dc.EntityFilter(type, c.PropertyAlias, New ScalarValue(v), FilterOperation.Equal)))
                             End If
                         End If
                     Next
@@ -998,9 +998,9 @@ l1:
                             Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                             Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                             If c IsNot Nothing Then
-                                Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.FieldName).GetAttributes(c) 'GetAttributes(type, c)
+                                Dim att As Field2DbRelations = oschema.GetFieldColumnMap()(c.PropertyAlias).GetAttributes(c) 'GetAttributes(type, c)
                                 If (att And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                                    f = JoinFilter.ChangeEntityJoinToLiteral(f, type, c.FieldName, "@id_" & c.FieldName)
+                                    f = JoinFilter.ChangeEntityJoinToLiteral(f, type, c.PropertyAlias, "@id_" & c.PropertyAlias)
                                 End If
                             End If
                         Next
@@ -1648,6 +1648,9 @@ l1:
                         Else
                             sb2.Append(ns.CustomSortExpression)
                         End If
+                        If ns.Order = Orm.SortType.Desc Then
+                            sb2.Append(" desc")
+                        End If
                     Else
                         Dim st As Type = ns.Type
                         If st Is Nothing Then
@@ -1662,21 +1665,21 @@ l1:
                             Dim map As MapField2Column = Nothing
                             Dim cm As Collections.IndexedCollection(Of String, MapField2Column) = schema.GetFieldColumnMap()
 
-                            If cm.TryGetValue(ns.FieldName, map) Then
+                            If cm.TryGetValue(ns.SortBy, map) Then
                                 sb2.Append(almgr.Aliases(map._tableName)).Append(".").Append(map._columnName)
                                 If ns.Order = Orm.SortType.Desc Then
                                     sb2.Append(" desc")
                                 End If
                             Else
-                                Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", ns.FieldName, st))
+                                Throw New ArgumentException(String.Format("Field {0} of type {1} is not defined", ns.SortBy, st))
                             End If
                         Else
 l1:
-                            Dim clm As String = ns.FieldName
+                            Dim clm As String = ns.SortBy
                             Dim tbl As SourceFragment = ns.Table
                             If selList IsNot Nothing Then
                                 For Each p As SelectExpression In selList
-                                    If p.Field = clm AndAlso Not String.IsNullOrEmpty(p.Column) Then
+                                    If p.PropertyAlias = clm AndAlso Not String.IsNullOrEmpty(p.Column) Then
                                         If p.Table Is Nothing AndAlso tbl Is Nothing Then
                                             clm = p.Column
                                             tbl = defaultTable
@@ -1691,6 +1694,8 @@ l1:
                                         End If
                                     End If
                                 Next
+                            ElseIf tbl Is Nothing Then
+                                tbl = defaultTable
                             End If
 
                             sb2.Append(almgr.Aliases(tbl)).Append(".").Append(clm)
@@ -2297,7 +2302,7 @@ l1:
                     ((GetAttributes(t, c) And Field2DbRelations.PK) = Field2DbRelations.PK OrElse _
                     (GetAttributes(t, c) And Field2DbRelations.RV) = Field2DbRelations.RV) Then
 
-                    Dim s As String = GetColumnNameByFieldName(t, c.FieldName)
+                    Dim s As String = GetColumnNameByFieldName(t, c.PropertyAlias)
                     If cm Then
                         sb.Append(", ")
                     Else

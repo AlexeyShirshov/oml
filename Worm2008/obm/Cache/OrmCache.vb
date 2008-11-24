@@ -802,13 +802,13 @@ Namespace Cache
                         Dim tmpl As OrmFilterTemplateBase = CType(fl.Template, OrmFilterTemplateBase)
                         Dim fields As List(Of String) = Nothing
                         If GetUpdatedFields(tmpl.Type, fields) Then
-                            If fields.Contains(tmpl.FieldName) Then
-                                Dim b As Boolean = _filteredFields.Remove(tmpl.Type, tmpl.FieldName, Me)
-                                b = b Or ResetFieldDepends(New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type))
+                            If fields.Contains(tmpl.PropertyAlias) Then
+                                Dim b As Boolean = _filteredFields.Remove(tmpl.Type, tmpl.PropertyAlias, Me)
+                                b = b Or ResetFieldDepends(New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type))
 
                                 If b Then
-                                    _sortedFields.Remove(tmpl.Type, tmpl.FieldName, Me)
-                                    RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                                    _sortedFields.Remove(tmpl.Type, tmpl.PropertyAlias, Me)
+                                    RemoveUpdatedFields(tmpl.Type, tmpl.PropertyAlias)
                                     Return False
                                 End If
                             End If
@@ -817,18 +817,18 @@ Namespace Cache
                 End If
 
                 For Each sort As Sorting.Sort In New Sorting.Sort.Iterator(s)
-                    If Not String.IsNullOrEmpty(sort.FieldName) Then
+                    If Not String.IsNullOrEmpty(sort.SortBy) Then
                         Dim t As Type = s.Type
                         If t Is Nothing Then
                             t = selType
                         End If
                         Dim fields As List(Of String) = Nothing
                         If GetUpdatedFields(t, fields) Then
-                            If fields.Contains(sort.FieldName) Then
-                                If _sortedFields.Remove(t, sort.FieldName, Me) Then
-                                    _filteredFields.Remove(t, sort.FieldName, Me)
-                                    ResetFieldDepends(New Pair(Of String, Type)(sort.FieldName, t))
-                                    RemoveUpdatedFields(t, sort.FieldName)
+                            If fields.Contains(sort.SortBy) Then
+                                If _sortedFields.Remove(t, sort.SortBy, Me) Then
+                                    _filteredFields.Remove(t, sort.SortBy, Me)
+                                    ResetFieldDepends(New Pair(Of String, Type)(sort.SortBy, t))
+                                    RemoveUpdatedFields(t, sort.SortBy)
                                     Return False
                                 End If
                             End If
@@ -904,9 +904,9 @@ Namespace Cache
 
                                 If Not removed Then
                                     For Each f As EntityFilterBase In obj.UpdateCtx.UpdatedFields
-                                        _filteredFields.Remove(f.Template.Type, f.Template.FieldName, Me)
-                                        _groupedFields.Remove(f.Template.Type, f.Template.FieldName, Me)
-                                        _sortedFields.Remove(f.Template.Type, f.Template.FieldName, Me)
+                                        _filteredFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
+                                        _groupedFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
+                                        _sortedFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
                                     Next
                                 End If
                             End If
@@ -947,9 +947,9 @@ Namespace Cache
 
                         If Not removed Then
                             For Each f As EntityFilterBase In obj.UpdateCtx.UpdatedFields
-                                _filteredFields.Remove(f.Template.Type, f.Template.FieldName, Me)
-                                _groupedFields.Remove(f.Template.Type, f.Template.FieldName, Me)
-                                _sortedFields.Remove(f.Template.Type, f.Template.FieldName, Me)
+                                _filteredFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
+                                _groupedFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
+                                _sortedFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
                             Next
                         End If
                     End If

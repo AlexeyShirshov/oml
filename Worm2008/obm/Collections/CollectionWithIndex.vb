@@ -290,7 +290,7 @@ Namespace Collections
             End Using
         End Function
 
-        Protected ReadOnly Property Values() As System.Collections.Generic.ICollection(Of TItem) Implements System.Collections.Generic.IDictionary(Of TItemKey, TItem).Values
+        Public ReadOnly Property Values() As System.Collections.Generic.ICollection(Of TItem) Implements System.Collections.Generic.IDictionary(Of TItemKey, TItem).Values
             Get
                 Using SyncHelper(True)
                     Invariant()

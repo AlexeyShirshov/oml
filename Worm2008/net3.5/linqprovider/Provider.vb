@@ -459,7 +459,7 @@ Namespace Linq
                                         pr = ev.OrmProp
                                     End If
                                     If pr.Table Is Nothing Then
-                                        p = New Pair(Of Object, String)(pr.Type, pr.Field)
+                                        p = New Pair(Of Object, String)(pr.Type, pr.PropertyAlias)
                                     Else
                                         p = New Pair(Of Object, String)(pr.Table, pr.Column)
                                     End If
@@ -534,7 +534,12 @@ Namespace Linq
 
         Protected Overrides Function VisitConstant(ByVal c As System.Linq.Expressions.ConstantExpression) As System.Linq.Expressions.Expression
             If _mem Is Nothing Then
-                _exp = New UnaryExp(New ScalarValue(Eval(c)))
+                Dim o As Object = Eval(c)
+                If o Is Nothing Then
+                    _exp = New UnaryExp(New DBNullValue())
+                Else
+                    _exp = New UnaryExp(New ScalarValue(o))
+                End If
             End If
             'If c.Type.IsPrimitive OrElse GetType(String) Is c.Type Then
             '    _exp = New UnaryExp(New ScalarValue(c.Value))
@@ -565,12 +570,12 @@ Namespace Linq
         Protected Function GetSO(ByVal exp As UnaryExp) As SortOrder
             Dim e As EntityPropValue = TryCast(exp.Value, EntityPropValue)
             If e IsNot Nothing Then
-                Return Orm.Sorting.Field(e.OrmProp.Type, e.OrmProp.Field)
+                Return Orm.Sorting.Field(e.OrmProp.Type, e.OrmProp.PropertyAlias)
             Else
                 Dim ce As ComputedValue = TryCast(exp.Value, ComputedValue)
                 If ce IsNot Nothing Then
                     Dim p As SelectExpression = _q.GetProperty(ce.Alias)
-                    Return Orm.Sorting.Field(p.Type, p.Field)
+                    Return Orm.Sorting.Field(p.Type, p.PropertyAlias)
                 Else
                     Throw New NotSupportedException
                 End If
@@ -670,6 +675,18 @@ Namespace Linq
                 lf.Visit(b.Left)
                 rf.Visit(b.Right)
             End If
+
+            If (lf.Exp.Value IsNot Nothing AndAlso GetType(DBNullValue) Is lf.Exp.Value.GetType) OrElse _
+                (rf.Exp.Value IsNot Nothing AndAlso GetType(DBNullValue) Is rf.Exp.Value.GetType) Then
+                If fo = Criteria.FilterOperation.Equal Then
+                    fo = Criteria.FilterOperation.Is
+                ElseIf fo = Criteria.FilterOperation.NotEqual Then
+                    fo = Criteria.FilterOperation.IsNot
+                Else
+                    Throw New NotSupportedException
+                End If
+            End If
+
             Filter = UnaryExp.CreateFilter(_schema, _q.Translate(lf.Exp), _q.Translate(rf.Exp), fo)
             'If lf.Prop IsNot Nothing Then
             '    Filter = New EntityFilter(lf.Prop.Type, lf.Prop.Field, rf.Value, fo)
@@ -1189,7 +1206,7 @@ Namespace Linq
         Public Function GetNew(ByVal o As OrmBase) As Object
             If _new Is Nothing Then
                 If _sel IsNot Nothing Then
-                    Return o.GetValue(CType(_sel(0).Value, EntityPropValue).OrmProp.Field)
+                    Return o.GetValue(CType(_sel(0).Value, EntityPropValue).OrmProp.PropertyAlias)
                     'Return Eval(Expression.MakeMemberAccess(Expression.Constant(o), ))
                 Else
                     Throw New InvalidOperationException

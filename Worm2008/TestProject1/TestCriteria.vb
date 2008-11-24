@@ -120,23 +120,23 @@ Imports Worm.Criteria.Core
     <TestMethod()> _
     Public Sub TestSort()
         Dim s As Sort = Sorting.Field("sdgfn").Asc
-        Assert.AreEqual("sdgfn", s.FieldName)
+        Assert.AreEqual("sdgfn", s.SortBy)
         Assert.AreEqual(SortType.Asc, s.Order)
 
         Dim s2 As Sort = Sorting.Field("sdgfn").Desc
-        Assert.AreEqual("sdgfn", s2.FieldName)
+        Assert.AreEqual("sdgfn", s2.SortBy)
         Assert.AreEqual(SortType.Desc, s2.Order)
 
         Dim s3 As Sort = Sorting.Field("sdgfn").Order(False)
-        Assert.AreEqual("sdgfn", s3.FieldName)
+        Assert.AreEqual("sdgfn", s3.SortBy)
         Assert.AreEqual(SortType.Desc, s3.Order)
 
         Dim s4 As Sort = Sorting.Field("sdgfn").Order(True)
-        Assert.AreEqual("sdgfn", s4.FieldName)
+        Assert.AreEqual("sdgfn", s4.SortBy)
         Assert.AreEqual(SortType.Asc, s4.Order)
 
         Dim s5 As Sort = Sorting.Field("sdgfn").Order("desc")
-        Assert.AreEqual("sdgfn", s5.FieldName)
+        Assert.AreEqual("sdgfn", s5.SortBy)
         Assert.AreEqual(SortType.Desc, s5.Order)
     End Sub
 End Class

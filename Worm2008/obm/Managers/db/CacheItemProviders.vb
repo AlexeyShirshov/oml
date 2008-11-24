@@ -50,11 +50,11 @@ Namespace Database
 
                                 Dim fields As List(Of String) = Nothing
                                 If c.GetUpdatedFields(tmpl.Type, fields) Then
-                                    Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
+                                    Dim idx As Integer = fields.IndexOf(tmpl.PropertyAlias)
                                     If idx >= 0 Then
-                                        Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                        Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
                                         c.ResetFieldDepends(p)
-                                        c.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
+                                        c.RemoveUpdatedFields(tmpl.Type, tmpl.PropertyAlias)
                                         Return False
                                     End If
                                 End If
@@ -90,7 +90,7 @@ Namespace Database
                                     cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
                                     'End If
                                 Else
-                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
                                     cache.AddFieldDepend(p, _key, _id)
                                 End If
                                 If tt IsNot tmpl.Type Then
@@ -483,8 +483,8 @@ Namespace Database
                     For Each o As IOrmBase In _mgr.FindConnected(ct, t, mt, fl, Filter, withLoad, _sort, _qa)
                         'Dim id1 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f1), OrmBase).Identifier
                         'Dim id2 As Integer = CType(_mgr.DbSchema.GetFieldValue(o, f2), OrmBase).Identifier
-                        Dim id1 As Object = CType(o.GetValueOptimized(Nothing, New ColumnAttribute(f1), oschema), IOrmBase).Identifier
-                        Dim id2 As Object = CType(o.GetValueOptimized(Nothing, New ColumnAttribute(f2), oschema), IOrmBase).Identifier
+                        Dim id1 As Object = CType(o.GetValueOptimized(Nothing, f1, oschema), IOrmBase).Identifier
+                        Dim id2 As Object = CType(o.GetValueOptimized(Nothing, f2, oschema), IOrmBase).Identifier
 
                         If Not id1.Equals(_obj.Identifier) Then
                             Throw New OrmManagerException("Wrong relation statement")
@@ -541,7 +541,7 @@ Namespace Database
                                     cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
                                     'End If
                                 Else
-                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
                                     cache.AddFieldDepend(p, _key, _id)
                                 End If
                                 'If tt IsNot f.Template.Type Then
