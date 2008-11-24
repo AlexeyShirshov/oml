@@ -477,6 +477,10 @@ Namespace Cache
             End Using
         End Sub
 
+        Public Function CustomObject(Of T As {New, Class})(ByVal o As T) As ICachedEntity
+
+        End Function
+
     End Class
 
     Public Class ReadonlyCache

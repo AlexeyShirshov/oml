@@ -17,7 +17,7 @@ Namespace Orm
             MyBase.New(p.Computed, p.Values, p.Column)
             Type = p.Type
             Table = p.Table
-            Field = p.Field
+            PropertyAlias = p.PropertyAlias
         End Sub
 
         Public Sub New(ByVal t As Type, ByVal field As String)

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProductVersion>9.0.21022</ProductVersion>
+    <ProductVersion>9.0.30729</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{0D88361E-442C-409C-AAC7-4878E72199CB}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -68,9 +68,9 @@
       <Project>{9D39DD33-0A52-460D-A5E2-8576E46B334F}</Project>
       <Name>UnitTesting</Name>
     </ProjectReference>
-    <ProjectReference Include="..\linqprovider\linqprovider.vbproj">
+    <ProjectReference Include="..\linqprovider\Worm.Linq.vbproj">
       <Project>{C479F776-A580-4451-813F-2D151635996D}</Project>
-      <Name>linqprovider</Name>
+      <Name>Worm.Linq</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.VisualBasic.targets" />

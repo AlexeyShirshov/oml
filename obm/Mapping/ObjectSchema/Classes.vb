@@ -31,54 +31,54 @@
     End Structure
 
     Public Class MapField2Column
-        Public ReadOnly _fieldName As String
+        Public ReadOnly _propertyAlias As String
         Public ReadOnly _columnName As String
         Public ReadOnly _tableName As SourceFragment
         Public ReadOnly DBType As DBType
         Public ReadOnly _newattributes As Field2DbRelations
 
-        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment)
-            _fieldName = fieldName
+        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment)
+            _propertyAlias = propertyAlias
             _columnName = columnName
             _tableName = tableName
             _newattributes = Field2DbRelations.None
         End Sub
 
-        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations)
-            _fieldName = fieldName
+            _propertyAlias = propertyAlias
             _columnName = columnName
             _tableName = tableName
             _newattributes = newAttributes
         End Sub
 
-        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As DBType)
-            MyClass.New(fieldName, columnName, tableName, newAttributes)
+            MyClass.New(propertyAlias, columnName, tableName, newAttributes)
             Me.DBType = dbType
         End Sub
 
-        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String)
-            MyClass.New(fieldName, columnName, tableName, newAttributes)
+            MyClass.New(propertyAlias, columnName, tableName, newAttributes)
             Me.DBType = New DBType(dbType)
         End Sub
 
-        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer)
-            MyClass.New(fieldName, columnName, tableName, newAttributes)
+            MyClass.New(propertyAlias, columnName, tableName, newAttributes)
             Me.DBType = New DBType(dbType, size)
         End Sub
 
-        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal size As Integer, ByVal nullable As Boolean)
-            MyClass.New(fieldName, columnName, tableName, newAttributes)
+            MyClass.New(propertyAlias, columnName, tableName, newAttributes)
             Me.DBType = New DBType(dbType, size, nullable)
         End Sub
 
-        Public Sub New(ByVal fieldName As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
+        Public Sub New(ByVal propertyAlias As String, ByVal columnName As String, ByVal tableName As SourceFragment, _
             ByVal newAttributes As Field2DbRelations, ByVal dbType As String, ByVal nullable As Boolean)
-            MyClass.New(fieldName, columnName, tableName, newAttributes)
+            MyClass.New(propertyAlias, columnName, tableName, newAttributes)
             Me.DBType = New DBType(dbType, nullable)
         End Sub
 
@@ -230,7 +230,7 @@
         ''' <returns>Возвращает <see cref="MapField2Column._fieldName"/></returns>
         ''' <remarks>Используется при индексации коллекции</remarks>
         Protected Overrides Function GetKeyForItem(ByVal item As MapField2Column) As String
-            Return item._fieldName
+            Return item._propertyAlias
         End Function
     End Class
 End Namespace

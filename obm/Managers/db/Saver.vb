@@ -8,8 +8,15 @@ Namespace Database
     Public Class ObjectListSaver
         Implements IDisposable
 
+        Public Enum FurtherActionEnum
+            [Default]
+            Retry
+            RetryLater
+            Skip
+        End Enum
+
         Private _disposedValue As Boolean
-        Private _objects As New List(Of ICachedEntity)
+        Private _objects As New List(Of _ICachedEntity)
         Private _mgr As OrmReadOnlyDBManager
         Private _acceptInBatch As Boolean
         Private _callbacks As IUpdateCacheCallbacks
@@ -22,6 +29,7 @@ Namespace Database
         Private _startSave As Boolean
         Private _error As Boolean = True
         Private _graphDepth As Integer = 4
+        Private _dontResolve As Boolean
 
 #If DEBUG Then
         Friend _deleted As New List(Of ICachedEntity)
@@ -93,13 +101,13 @@ Namespace Database
                 End Get
             End Property
 
-            Private _retry As Boolean
-            Public Property Retry() As Boolean
+            Private _action As FurtherActionEnum
+            Public Property FurtherAction() As FurtherActionEnum
                 Get
-                    Return _retry
+                    Return _action
                 End Get
-                Set(ByVal value As Boolean)
-                    _retry = value
+                Set(ByVal value As FurtherActionEnum)
+                    _action = value
                 End Set
             End Property
 
@@ -157,10 +165,10 @@ Namespace Database
             End Get
         End Property
 
-        Public ReadOnly Property AffectedObjects() As ICollection(Of ICachedEntity)
+        Public ReadOnly Property AffectedObjects() As ICollection(Of _ICachedEntity)
             Get
-                Dim l As New List(Of ICachedEntity)(_objects)
-                For Each o As ICachedEntity In _removed
+                Dim l As New List(Of _ICachedEntity)(_objects)
+                For Each o As _ICachedEntity In _removed
                     l.Remove(o)
                 Next
                 Return l
@@ -194,6 +202,15 @@ Namespace Database
             End Get
             Set(ByVal value As Integer)
                 _graphDepth = value
+            End Set
+        End Property
+
+        Public Property ResolveDepends() As Boolean
+            Get
+                Return Not _dontResolve
+            End Get
+            Set(ByVal value As Boolean)
+                _dontResolve = Not value
             End Set
         End Property
 
@@ -297,24 +314,55 @@ Namespace Database
             End If
         End Sub
 
-        Protected Function SaveObj(ByVal o As _ICachedEntity, ByVal need2save As List(Of ICachedEntity), ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity))) As Boolean
+        Protected Overridable Function CheckObj(ByVal main As _ICachedEntity, ByVal o As ICachedEntity) As Boolean
+            If o.ObjectState <> ObjectState.Deleted Then Return False
+            Dim oSchema As IObjectSchemaBase = _mgr.MappingEngine.GetObjectSchema(o.GetType)
+            For Each m As MapField2Column In _mgr.MappingEngine.GetMappedFields(oSchema)
+                If main.Equals(o.GetValueOptimized(Nothing, m._propertyAlias, oSchema)) Then
+                    Return True
+                End If
+            Next
+        End Function
+
+        Protected Overridable Function CanSaveObj(ByVal o As _ICachedEntity, ByVal col2save As IList) As Boolean
+            If _dontResolve Then Return True
+            If o.ObjectState <> ObjectState.Deleted Then Return True
+            If col2save Is Nothing Then col2save = _objects
+            Dim pos As Integer = col2save.IndexOf(o)
+            For i As Integer = pos + 1 To col2save.Count - 1
+                If CheckObj(o, _objects(i)) Then
+                    Return False
+                End If
+            Next
+            Return True
+        End Function
+
+        Protected Function SaveObj(ByVal o As _ICachedEntity, ByVal need2save As List(Of ICachedEntity), _
+            ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)), _
+            Optional ByVal col2save As IList = Nothing) As Boolean
             Dim owr As ObjectWrap(Of ICachedEntity) = Nothing
             Try
 l1:
                 Dim args As New CancelEventArgs(o)
                 RaiseEvent ObjectSaving(Me, args)
                 If Not args.Cancel Then
-                    owr = New ObjectWrap(Of ICachedEntity)(o)
-                    _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
-                    Dim os As ObjectState = o.ObjectState
-                    If o.SaveChanges(False) Then
-                        _lockList(owr).Dispose()
-                        _lockList.Remove(owr)
-                        need2save.Add(o)
-                        RaiseEvent ObjectPostponed(Me, o)
+                    If CanSaveObj(o, col2save) Then
+                        owr = New ObjectWrap(Of ICachedEntity)(o)
+                        _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
+                        Dim os As ObjectState = o.ObjectState
+                        If o.SaveChanges(False) Then
+                            _lockList(owr).Dispose()
+                            _lockList.Remove(owr)
+                            RaiseEvent ObjectPostponed(Me, o)
+                            need2save.Add(o)
+                        Else
+                            saved.Add(New Pair(Of ObjectState, _ICachedEntity)(os, o))
+                            RaiseEvent ObjectSaved(Me, o)
+                        End If
                     Else
-                        saved.Add(New Pair(Of ObjectState, _ICachedEntity)(os, o))
-                        RaiseEvent ObjectSaved(Me, o)
+                        RaiseEvent ObjectPostponed(Me, o)
+                        need2save.Add(o)
+                        Return False
                     End If
                 End If
                 Return args.Cancel
@@ -322,11 +370,22 @@ l1:
                 If owr IsNot Nothing Then
                     Dim args As New SaveErrorEventArgs(o, ex)
                     RaiseEvent ObjectSavingError(Me, args)
-                    If args.Retry Then
-                        _lockList(owr).Dispose()
-                        _lockList.Remove(owr)
-                        GoTo l1
-                    End If
+                    Select Case args.FurtherAction
+                        Case FurtherActionEnum.Retry
+                            _lockList(owr).Dispose()
+                            _lockList.Remove(owr)
+                            GoTo l1
+                        Case FurtherActionEnum.Skip
+                            _lockList(owr).Dispose()
+                            _lockList.Remove(owr)
+                            Return True
+                        Case FurtherActionEnum.RetryLater
+                            _lockList(owr).Dispose()
+                            _lockList.Remove(owr)
+                            RaiseEvent ObjectPostponed(Me, o)
+                            need2save.Add(o)
+                            Return False
+                    End Select
                 End If
 
                 Throw New OrmManagerException("Error during save " & o.ObjName, ex)
@@ -390,7 +449,20 @@ l1:
                         Dim ns As New List(Of ICachedEntity)(need2save)
                         need2save.Clear()
                         For Each o As _ICachedEntity In ns
-                            SaveObj(o, need2save, saved)
+                            If SaveObj(o, need2save, saved, ns) Then
+                                rejectList.Remove(o)
+                                Dim idx As Integer = -1
+                                For j As Integer = 0 To copies.Count - 1
+                                    Dim p As Pair(Of ICachedEntity) = copies(j)
+                                    If p.First.Equals(o) Then
+                                        idx = j
+                                        Exit For
+                                    End If
+                                Next
+                                If idx >= 0 Then
+                                    copies.RemoveAt(idx)
+                                End If
+                            End If
                         Next
                         If need2save.Count = 0 Then
                             Exit For

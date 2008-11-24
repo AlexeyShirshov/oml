@@ -26,7 +26,7 @@ Namespace Criteria
     End Enum
 
     Public Interface ICtor
-        Function Field(ByVal fieldName As String) As CriteriaField
+        Function Field(ByVal propertyAlias As String) As CriteriaField
         Function Column(ByVal columnName As String) As CriteriaColumn
     End Interface
 
@@ -173,7 +173,7 @@ Namespace Criteria
         Private _t As Type
         Private _f As String
 
-        Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String)
+        Protected Friend Sub New(ByVal t As Type, ByVal propertyAlias As String)
             'If t Is Nothing Then
             '    Throw New ArgumentNullException("t")
             'End If
@@ -183,7 +183,7 @@ Namespace Criteria
             'End If
 
             _t = t
-            _f = fieldName
+            _f = propertyAlias
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal fieldName As String, _
@@ -311,8 +311,8 @@ Namespace Criteria
         Protected MustOverride Function CreateField(ByVal t As Type, ByVal fieldName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaField
         Protected MustOverride Function CreateColumn(ByVal table As Meta.SourceFragment, ByVal columnName As String, ByVal con As Condition.ConditionConstructorBase, ByVal oper As ConditionOperator) As CriteriaColumn
 
-        Public Function [And](ByVal t As Type, ByVal fieldName As String) As CriteriaField
-            If String.IsNullOrEmpty(fieldName) Then
+        Public Function [And](ByVal t As Type, ByVal propertyAlias As String) As CriteriaField
+            If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("fieldName")
             End If
 
@@ -320,23 +320,23 @@ Namespace Criteria
                 Throw New ArgumentNullException("t")
             End If
 
-            Return CreateField(t, fieldName, _con, ConditionOperator.And)
+            Return CreateField(t, propertyAlias, _con, ConditionOperator.And)
         End Function
 
         Public Function [And](ByVal objField As ObjectField) As CriteriaField
             Return [And](objField.EntityName, objField.Field)
         End Function
 
-        Public Function [And](ByVal entityName As String, ByVal fieldName As String) As CriteriaField
+        Public Function [And](ByVal entityName As String, ByVal propertyAlias As String) As CriteriaField
             If String.IsNullOrEmpty(entityName) Then
                 Throw New ArgumentNullException("entityName")
             End If
 
-            If String.IsNullOrEmpty(fieldName) Then
+            If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("fieldName")
             End If
 
-            Return CreateField(entityName, fieldName, _con, ConditionOperator.And)
+            Return CreateField(entityName, propertyAlias, _con, ConditionOperator.And)
         End Function
 
         Public Function [Or](ByVal t As Type, ByVal fieldName As String) As CriteriaField
@@ -355,16 +355,16 @@ Namespace Criteria
             Return [Or](objField.EntityName, objField.Field)
         End Function
 
-        Public Function [Or](ByVal entityName As String, ByVal fieldName As String) As CriteriaField
+        Public Function [Or](ByVal entityName As String, ByVal propertyAlias As String) As CriteriaField
             If String.IsNullOrEmpty(entityName) Then
                 Throw New ArgumentNullException("entityName")
             End If
 
-            If String.IsNullOrEmpty(fieldName) Then
+            If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("fieldName")
             End If
 
-            Return CreateField(entityName, fieldName, _con, ConditionOperator.Or)
+            Return CreateField(entityName, propertyAlias, _con, ConditionOperator.Or)
         End Function
 
         Public Function [And](ByVal table As Meta.SourceFragment, ByVal columnName As String) As CriteriaColumn
@@ -391,27 +391,27 @@ Namespace Criteria
             Return CreateColumn(table, columnName, _con, ConditionOperator.Or)
         End Function
 
-        Public Function [And](ByVal fieldName As String) As CriteriaBase
-            If String.IsNullOrEmpty(fieldName) Then
+        Public Function [And](ByVal propertyAlias As String) As CriteriaBase
+            If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("fieldName")
             End If
 
             If _tbl IsNot Nothing Then
-                Return CreateColumn(_tbl, fieldName, _con, ConditionOperator.And)
+                Return CreateColumn(_tbl, propertyAlias, _con, ConditionOperator.And)
             Else
-                Return CreateField(_t, fieldName, _con, ConditionOperator.And)
+                Return CreateField(_t, propertyAlias, _con, ConditionOperator.And)
             End If
         End Function
 
-        Public Function [Or](ByVal fieldName As String) As CriteriaBase
-            If String.IsNullOrEmpty(fieldName) Then
+        Public Function [Or](ByVal propertyAlias As String) As CriteriaBase
+            If String.IsNullOrEmpty(propertyAlias) Then
                 Throw New ArgumentNullException("fieldName")
             End If
 
             If _tbl IsNot Nothing Then
-                Return CreateColumn(_tbl, fieldName, _con, ConditionOperator.Or)
+                Return CreateColumn(_tbl, propertyAlias, _con, ConditionOperator.Or)
             Else
-                Return CreateField(_t, fieldName, _con, ConditionOperator.Or)
+                Return CreateField(_t, propertyAlias, _con, ConditionOperator.Or)
             End If
         End Function
 

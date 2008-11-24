@@ -245,6 +245,6 @@ Public Class TestTracker
     Private Sub er(ByVal sender As ObjectListSaver, ByVal args As ObjectListSaver.SaveErrorEventArgs)
         Dim t As Table2 = CType(args.Entity, Table2)
         t.Money = 20
-        args.Retry = True
+        args.FurtherAction = ObjectListSaver.FurtherActionEnum.Retry
     End Sub
 End Class

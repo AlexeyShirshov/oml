@@ -96,12 +96,12 @@ Namespace Orm
         Protected Sub New()
         End Sub
 
-        Protected Sub New(ByVal field As String)
-            _field = field
+        Protected Sub New(ByVal propertyAlias As String)
+            _field = propertyAlias
         End Sub
 
-        Public Sub New(ByVal t As Type, ByVal field As String)
-            _field = field
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
+            _field = propertyAlias
             _type = t
         End Sub
 
@@ -145,7 +145,7 @@ Namespace Orm
 
         Public Shared Function GetMapping(Of T As SelectExpression)(ByVal c As OrmObjectIndex, ByVal selectList As IEnumerable(Of T)) As Collections.IndexedCollection(Of String, MapField2Column)
             For Each s As T In selectList
-                c.Add(New MapField2Column(s.Field, s.Column, s.Table, s.Attributes))
+                c.Add(New MapField2Column(s.PropertyAlias, s.Column, s.Table, s.Attributes))
             Next
             Return c
         End Function
@@ -195,7 +195,7 @@ Namespace Orm
             End Set
         End Property
 
-        Public Property Field() As String
+        Public Property PropertyAlias() As String
             Get
                 Return _field
             End Get
@@ -315,7 +315,7 @@ Namespace Orm
 
         Public Overridable Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
             If _q IsNot Nothing Then
-                Return _q.Get(mpe)
+                Return CType(_q, Cache.IQueryDependentTypes).Get(mpe)
             End If
             Return New Cache.EmptyDependentTypes
         End Function

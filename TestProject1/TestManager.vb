@@ -1305,7 +1305,7 @@ Imports Worm.Orm.Meta
         Public Sub changed(ByVal sender As IEntity, ByVal args As Worm.Orm.Entity.PropertyChangedEventArgs)
             Assert.AreEqual("34f0asdofmasdf", args.CurrentValue)
             Assert.AreEqual(_prev, args.PreviousValue)
-            Assert.AreEqual("Str", args.FieldName)
+            Assert.AreEqual("Str", args.PropertyAlias)
             _inv = True
         End Sub
 

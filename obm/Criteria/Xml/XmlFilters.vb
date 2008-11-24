@@ -80,7 +80,7 @@ Namespace Xml
                     Throw New ArgumentNullException("schema")
                 End If
 
-                Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.FieldName)
+                Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.PropertyAlias)
 
                 Return map._columnName & Template.OperToStmt & "'" & val._ToString & "'"
             End Function

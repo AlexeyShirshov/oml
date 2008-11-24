@@ -69,8 +69,8 @@ Public MustInherit Class ObjectSchemaBaseImplementation
         Return Nothing
     End Function
 
-    Public Overridable Function GetSuppressedColumns() As ColumnAttribute() Implements IOrmObjectSchema.GetSuppressedColumns
-        Return New ColumnAttribute() {}
+    Public Overridable Function GetSuppressedFields() As String() Implements IOrmObjectSchema.GetSuppressedFields
+        Return New String() {}
     End Function
 
     'Public Overridable Function MapSort2FieldName(ByVal sort As String) As String Implements Worm.Orm.IOrmObjectSchema.MapSort2FieldName
@@ -396,14 +396,14 @@ Public Class EntitySchema4v1Implementation
     End Function
 
     Public Function CreateSortComparer(ByVal s As Sort) As System.Collections.IComparer Implements IOrmSorting.CreateSortComparer
-        If s.FieldName = "Title" Then
+        If s.SortBy = "Title" Then
             Return New Comparer(Entity4Sort.Name, s.Order)
         End If
         Return Nothing
     End Function
 
     Public Function CreateSortComparer1(Of T As {_IEntity})(ByVal s As Sort) As System.Collections.Generic.IComparer(Of T) Implements IOrmSorting.CreateSortComparer
-        If s.FieldName = "Title" Then
+        If s.SortBy = "Title" Then
             Return CType(New Comparer(Entity4Sort.Name, s.Order), Global.System.Collections.Generic.IComparer(Of T))
         End If
         Return Nothing

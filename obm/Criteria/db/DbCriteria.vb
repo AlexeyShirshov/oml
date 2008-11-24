@@ -615,8 +615,8 @@ Namespace Database
             Public Function AndExistsM2M(ByVal t As Type, ByVal t2 As Type, ByVal filter As cc.IGetFilter, ByVal mpe As ObjectMappingEngine) As CriteriaLink
                 Dim t12t2 As Orm.Meta.M2MRelation = mpe.GetM2MRelation(t, t2, True)
                 Dim t22t1 As Orm.Meta.M2MRelation = mpe.GetM2MRelation(t2, t, True)
-                Dim t2_pk As String = mpe.GetPrimaryKeys(t2)(0).FieldName
-                Dim t1_pk As String = mpe.GetPrimaryKeys(t)(0).FieldName
+                Dim t2_pk As String = mpe.GetPrimaryKeys(t2)(0).PropertyAlias
+                Dim t1_pk As String = mpe.GetPrimaryKeys(t)(0).PropertyAlias
 
                 Return AndExists(t, JoinCondition.Create(t12t2.Table, t12t2.Column).Eq(t2, t2_pk), _
                                  JCtor.Join(t22t1.Table).On(t22t1.Table, t22t1.Column).Eq(t, t1_pk))

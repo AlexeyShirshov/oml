@@ -8,211 +8,6 @@ Imports System.Reflection
 
 Namespace Query
 
-    Public Interface IExecutor
-
-        Function ExecEntity(Of ReturnType As {_IEntity})( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)
-
-        Function ExecEntity(Of CreateType As {_IEntity, New}, ReturnType As {_IEntity})( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyObjectList(Of ReturnType)
-
-        Function Exec(Of ReturnType As _ICachedEntity)( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
-
-        Function Exec(Of CreateType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd) As ReadOnlyEntityList(Of ReturnType)
-
-        Function ExecSimple(Of CreateType As {_ICachedEntity, New}, ReturnType)( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
-
-        Function ExecSimple(Of ReturnType)( _
-            ByVal mgr As OrmManager, ByVal query As QueryCmd) As IList(Of ReturnType)
-
-        Sub Reset(Of CreateType As {_ICachedEntity, New}, ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
-        Sub Reset(Of ReturnType As _ICachedEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
-
-        Sub ResetEntity(Of ReturnType As _IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
-        Sub ResetEntity(Of CreateType As {_IEntity, New}, ReturnType As _IEntity)(ByVal mgr As OrmManager, ByVal query As QueryCmd)
-
-    End Interface
-
-    Public Interface ICreateQueryCmd
-        Function Create(ByVal table As SourceFragment) As QueryCmd
-
-        Function Create(ByVal selectType As Type) As QueryCmd
-
-        Function CreateByEntityName(ByVal entityName As String) As QueryCmd
-
-        Function Create(ByVal obj As _IOrmBase) As QueryCmd
-
-        Function Create(ByVal obj As _IOrmBase, ByVal key As String) As QueryCmd
-
-        Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
-
-        Function Create(ByVal name As String, ByVal selectType As Type) As QueryCmd
-
-        Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
-
-        Function Create(ByVal name As String, ByVal obj As _IOrmBase) As QueryCmd
-
-        Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String) As QueryCmd
-    End Interface
-
-    Public Class Top
-        Private _perc As Boolean
-        Private _ties As Boolean
-        Private _n As Integer
-
-        Public Sub New(ByVal n As Integer)
-            _n = n
-        End Sub
-
-        Public Sub New(ByVal n As Integer, ByVal percent As Boolean)
-            MyClass.New(n)
-            _perc = percent
-        End Sub
-
-        Public Sub New(ByVal n As Integer, ByVal percent As Boolean, ByVal ties As Boolean)
-            MyClass.New(n, percent)
-            _ties = ties
-        End Sub
-
-        Public ReadOnly Property Percent() As Boolean
-            Get
-                Return _perc
-            End Get
-        End Property
-
-        Public ReadOnly Property Ties() As Boolean
-            Get
-                Return _ties
-            End Get
-        End Property
-
-        Public ReadOnly Property Count() As Integer
-            Get
-                Return _n
-            End Get
-        End Property
-
-        Public Function GetDynamicKey() As String
-            Return "-top-" & _n.ToString & "-"
-        End Function
-
-        Public Function GetStaticKey() As String
-            Return "-top-"
-        End Function
-    End Class
-
-    Public Class Paging
-        Public Start As Integer
-        Public Length As Integer
-
-        Public Sub New()
-        End Sub
-
-        Public Sub New(ByVal start As Integer, ByVal length As Integer)
-            Me.Start = start
-            Me.Length = length
-        End Sub
-    End Class
-
-    Public Class QueryIterator
-        Implements IEnumerator(Of QueryCmd), IEnumerable(Of QueryCmd)
-
-        Private _q As QueryCmd
-        Private _c As QueryCmd
-
-        Public Sub New(ByVal query As QueryCmd)
-            _q = query
-        End Sub
-
-        Public ReadOnly Property Current() As QueryCmd Implements System.Collections.Generic.IEnumerator(Of QueryCmd).Current
-            Get
-                Return _c
-            End Get
-        End Property
-
-        Private ReadOnly Property _Current() As Object Implements System.Collections.IEnumerator.Current
-            Get
-                Return Current
-            End Get
-        End Property
-
-        Public Function MoveNext() As Boolean Implements System.Collections.IEnumerator.MoveNext
-            If _c Is Nothing Then
-                _c = _q
-            Else
-                _c = _c.OuterQuery
-            End If
-            Return _c IsNot Nothing
-        End Function
-
-        Public Sub Reset() Implements System.Collections.IEnumerator.Reset
-            _c = Nothing
-        End Sub
-
-#Region " IDisposable Support "
-        Private disposedValue As Boolean = False        ' To detect redundant calls
-
-        ' IDisposable
-        Protected Overridable Sub Dispose(ByVal disposing As Boolean)
-            If Not Me.disposedValue Then
-                If disposing Then
-                    ' TODO: free other state (managed objects).
-                End If
-
-                ' TODO: free your own state (unmanaged objects).
-                ' TODO: set large fields to null.
-            End If
-            Me.disposedValue = True
-        End Sub
-
-        ' This code added by Visual Basic to correctly implement the disposable pattern.
-        Public Sub Dispose() Implements IDisposable.Dispose
-            ' Do not change this code.  Put cleanup code in Dispose(ByVal disposing As Boolean) above.
-            Dispose(True)
-            GC.SuppressFinalize(Me)
-        End Sub
-#End Region
-
-        Public Function GetEnumerator() As System.Collections.Generic.IEnumerator(Of QueryCmd) Implements System.Collections.Generic.IEnumerable(Of QueryCmd).GetEnumerator
-            Return Me
-        End Function
-
-        Private Function _GetEnumerator() As System.Collections.IEnumerator Implements System.Collections.IEnumerable.GetEnumerator
-            Return GetEnumerator()
-        End Function
-    End Class
-
-    <Serializable()> _
-    Public Class QueryCmdException
-        Inherits System.Exception
-
-        Private _cmd As QueryCmd
-
-        Public ReadOnly Property QueryCommand() As QueryCmd
-            Get
-                Return _cmd
-            End Get
-        End Property
-
-        Public Sub New(ByVal message As String, ByVal cmd As QueryCmd)
-            MyBase.New(message)
-            _cmd = cmd
-        End Sub
-
-        Public Sub New(ByVal message As String, ByVal inner As Exception)
-            MyBase.New(message, inner)
-        End Sub
-
-        Private Sub New( _
-            ByVal info As System.Runtime.Serialization.SerializationInfo, _
-            ByVal context As System.Runtime.Serialization.StreamingContext)
-            MyBase.New(info, context)
-        End Sub
-    End Class
-
     Public Class QueryCmd
         Implements ICloneable, Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
 
@@ -316,7 +111,7 @@ Namespace Query
         Protected _group As ObjectModel.ReadOnlyCollection(Of Grouping)
         Protected _order As Sort
         Protected _aggregates As ObjectModel.ReadOnlyCollection(Of AggregateBase)
-        Protected _load As Boolean
+        Protected Friend _load As Boolean
         Protected _top As Top
         Protected _page As Nullable(Of Integer)
         Protected _distinct As Boolean
@@ -339,7 +134,7 @@ Namespace Query
         Private _er As OrmManager.ExecutionResult
         Private _en As String
         Friend _resDic As Boolean
-        Private _appendMain As Boolean
+        Private _appendMain As Boolean?
         Protected _getMgr As ICreateManager
         Private _name As String
         Private _execCnt As Integer
@@ -347,6 +142,7 @@ Namespace Query
         Private _cacheSort As Boolean
         Private _autoFields As Boolean
         Private _timeout As Nullable(Of Integer)
+        Private _oschema As IObjectSchemaBase
 
         Private _createType As Type
         Public Property CreateType() As Type
@@ -455,7 +251,7 @@ Namespace Query
             'End If
         End Function
 
-        Protected ReadOnly Property AppendMain() As Boolean
+        Protected Friend ReadOnly Property AppendMain() As Boolean?
             Get
                 Return _appendMain
             End Get
@@ -467,6 +263,10 @@ Namespace Query
 
 #Region " Ctors "
         Public Sub New()
+        End Sub
+
+        Public Sub New(ByVal getMgr As CreateManagerDelegate)
+            _getMgr = New CreateManager(getMgr)
         End Sub
 
         Public Sub New(ByVal getMgr As ICreateManager)
@@ -499,6 +299,11 @@ Namespace Query
             _getMgr = getMgr
         End Sub
 
+        Public Sub New(ByVal table As SourceFragment, ByVal getMgr As CreateManagerDelegate)
+            _table = table
+            _getMgr = New CreateManager(getMgr)
+        End Sub
+
         Public Sub New(ByVal selectType As Type, ByVal getMgr As ICreateManager)
             _realType = selectType
             _getMgr = getMgr
@@ -507,6 +312,11 @@ Namespace Query
         Public Sub New(ByVal entityName As String, ByVal getMgr As ICreateManager)
             _en = entityName
             _getMgr = getMgr
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal getMgr As CreateManagerDelegate)
+            _en = entityName
+            _getMgr = New CreateManager(getMgr)
         End Sub
 
         Public Sub New(ByVal obj As _IOrmBase, ByVal getMgr As ICreateManager)
@@ -568,8 +378,8 @@ Namespace Query
                     s.Type = selectType
                 End If
 
-                If s.Type IsNot Nothing AndAlso s.Field Is Nothing AndAlso s.Column IsNot Nothing Then
-                    s.Field = s.Column
+                If s.Type IsNot Nothing AndAlso s.PropertyAlias Is Nothing AndAlso s.Column IsNot Nothing Then
+                    s.PropertyAlias = s.Column
                     s.Column = Nothing
                 End If
 
@@ -577,9 +387,11 @@ Namespace Query
 
             If AutoJoins OrElse _o IsNot Nothing Then
                 Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
-                If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, _appendMain) Then
+                Dim appendMain As Boolean
+                If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, appendMain) Then
                     j.AddRange(joins)
                 End If
+                _appendMain = appendMain
             End If
 
             If _o IsNot Nothing Then
@@ -601,7 +413,16 @@ Namespace Query
                 End If
 
                 If filtered_r Is Nothing Then
-                    Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
+                    Dim en As String = schema.GetEntityNameByType(filteredType)
+                    If String.IsNullOrEmpty(en) Then
+                        Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
+                    End If
+
+                    filtered_r = schema.GetM2MRelation(selectedType, schema.GetTypeByEntityName(en), _m2mKey)
+
+                    If filtered_r Is Nothing Then
+                        Throw New ObjectMappingException(String.Format("Type {0} has no relation to {1}", filteredType.Name, selectedType.Name))
+                    End If
                 End If
 
                 'Dim table As SourceFragment = selected_r.Table
@@ -613,8 +434,9 @@ Namespace Query
 
                 'Dim table As OrmTable = _o.M2M.GetTable(t, _key)
 
-                If _appendMain OrElse propWithLoad Then
-                    Dim jf As New Worm.Database.Criteria.Joins.JoinFilter(table, selected_r.Column, selectType, OrmBaseT.PKName, Criteria.FilterOperation.Equal)
+                If _appendMain OrElse propWithLoad OrElse IsFTS Then
+                    Dim jf As New Worm.Database.Criteria.Joins.JoinFilter(table, selected_r.Column, _
+                        selectType, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, Criteria.FilterOperation.Equal)
                     Dim jn As New Worm.Database.Criteria.Joins.OrmJoin(table, JoinType.Join, jf)
                     j.Add(jn)
                     If table.Equals(_table) Then
@@ -649,7 +471,7 @@ Namespace Query
                             Dim find As Boolean
                             For Each fld As SelectExpression In _fields
                                 If (fld.Attributes And Field2DbRelations.PK) = Field2DbRelations.PK _
-                                    AndAlso fld.Field = pk.FieldName Then
+                                    AndAlso fld.PropertyAlias = pk.PropertyAlias Then
                                     find = True
                                     Exit For
                                 End If
@@ -658,7 +480,7 @@ Namespace Query
                                 If cl Is Nothing Then
                                     cl = New List(Of SelectExpression)
                                 End If
-                                cl.Add(New SelectExpression(selectType, pk.FieldName))
+                                cl.Add(New SelectExpression(selectType, pk.PropertyAlias))
                                 cl(0).Attributes = pk._behavior
                             End If
                         Next
@@ -944,6 +766,16 @@ Namespace Query
 
 
 #Region " Properties "
+        Public ReadOnly Property IsFTS() As Boolean
+            Get
+                If _table Is Nothing Then
+                    Return False
+                End If
+
+                Return GetType(SearchFragment).IsAssignableFrom(_table.GetType)
+            End Get
+        End Property
+
         Public Property EntityName() As String
             Get
                 Return _en
@@ -1025,10 +857,13 @@ Namespace Query
             End Set
         End Property
 
-        Public ReadOnly Property Table() As SourceFragment
+        Public Property Table() As SourceFragment
             Get
                 Return _table
             End Get
+            Protected Friend Set(ByVal value As SourceFragment)
+                _table = value
+            End Set
         End Property
 
         Public Property ClientPaging() As Paging
@@ -1380,7 +1215,11 @@ Namespace Query
         End Function
 
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As ReadOnlyEntityList(Of T)
-            Return GetExecutor(mgr).Exec(Of T)(mgr, Me)
+            If GetType(AnonymousCachedEntity).IsAssignableFrom(GetType(T)) AndAlso _createType Is Nothing Then
+                Return GetExecutor(mgr).Exec(Of AnonymousCachedEntity, T)(mgr, Me)
+            Else
+                Return GetExecutor(mgr).Exec(Of T)(mgr, Me)
+            End If
         End Function
 
         Public Function ToEntityList(Of T As _ICachedEntity)() As ReadOnlyEntityList(Of T)
@@ -1522,7 +1361,7 @@ Namespace Query
             End If
         End Function
 
-        Public Function ToCustomList(Of T As {New, Class})() As IList(Of T)
+        Public Function ToPODList(Of T As {New, Class})() As IList(Of T)
             If _getMgr Is Nothing Then
                 Throw New InvalidOperationException("OrmManager required")
             End If
@@ -1530,16 +1369,16 @@ Namespace Query
             Using mgr As OrmManager = _getMgr.CreateManager
                 mgr.RaiseObjectCreation = True
                 AddHandler mgr.ObjectCreated, AddressOf New cls(_getMgr).ObjectCreated
-                Return ToCustomList(Of T)(mgr)
+                Return ToPODList(Of T)(mgr)
             End Using
         End Function
 
-        Public Function ToCustomList(Of T As {New, Class})(ByVal mgr As OrmManager) As IList(Of T)
+        Public Function ToPODList(Of T As {New, Class})(ByVal mgr As OrmManager) As IList(Of T)
             Dim rt As Type = GetType(T)
             Dim mpe As ObjectMappingEngine = mgr.MappingEngine
 
             Dim hasPK As Boolean
-            Dim schema As IObjectSchemaBase = GetSchema(mpe, rt, hasPK)
+            _oschema = GetSchema(mpe, rt, hasPK)
 
             Dim l As IEnumerable = Nothing
             Dim r As New List(Of T)
@@ -1550,13 +1389,16 @@ Namespace Query
                 l = ToObjectList(Of AnonymousEntity)(mgr)
             End If
 
-            Dim props As IDictionary = mpe.GetProperties(rt, schema)
+            Dim props As IDictionary = mpe.GetProperties(rt, _oschema)
             For Each e As IEntity In l
                 Dim ro As New T
                 For Each kv As DictionaryEntry In props
                     Dim col As ColumnAttribute = CType(kv.Key, ColumnAttribute)
                     Dim pi As Reflection.PropertyInfo = CType(kv.Value, PropertyInfo)
-                    Dim v As Object = e.GetValueOptimized(Nothing, col, Nothing)
+                    Dim v As Object = e.GetValueOptimized(Nothing, col.PropertyAlias, Nothing)
+                    If v Is DBNull.Value Then
+                        v = Nothing
+                    End If
                     pi.SetValue(ro, v, Nothing)
                 Next
                 r.Add(ro)
@@ -1906,8 +1748,24 @@ Namespace Query
 
         Private Function GetSchema(ByVal mpe As ObjectMappingEngine, ByVal t As Type, _
                                    ByRef pk As Boolean) As IObjectSchemaBase
-            Dim s As New SimpleObjectSchema(SelectExpression.GetMapping(SelectList))
-            Return s
+            If SelectList Is Nothing Then
+                Dim selList As New OrmObjectIndex
+                For Each de As DictionaryEntry In ObjectMappingEngine.GetMappedProperties(t)
+                    Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
+                    selList.Add(New MapField2Column(c.PropertyAlias, c.Column, Nothing))
+                Next
+                Return New SimpleObjectSchema(selList)
+            Else
+                Return New SimpleObjectSchema(SelectExpression.GetMapping(SelectList))
+            End If
+        End Function
+
+        Protected Friend Function GetSchemaForSelectedType(ByVal mpe As ObjectMappingEngine) As IObjectSchemaBase
+            If SelectedType IsNot Nothing Then
+                Return mpe.GetObjectSchema(SelectedType, False)
+            Else
+                Return _oschema
+            End If
         End Function
 
         Public Sub Reset(Of ReturnType As _IEntity)(ByVal mgr As OrmManager)
@@ -1964,6 +1822,9 @@ Namespace Query
                 ._execCnt = _execCnt
                 ._schema = _schema
                 ._cacheSort = _cacheSort
+                ._timeout = _timeout
+                ._oschema = _oschema
+                ._autoFields = _autoFields
             End With
         End Sub
 
@@ -2073,7 +1934,7 @@ Namespace Query
 
         '#End Region
 
-        Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
+        Private Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
             'If SelectedType Is Nothing Then
             '    Return New Cache.EmptyDependentTypes
             'End If
@@ -2369,6 +2230,23 @@ Namespace Query
             Return Create(name, obj, key, OrmManager.CurrentManager)
         End Function
 
+        Public Shared Function Search(ByVal t As Type, ByVal searchText As String, ByVal getMgr As CreateManagerDelegate) As QueryCmd
+            Dim q As New QueryCmd(New CreateManager(getMgr))
+            q._table = New SearchFragment(t, searchText)
+            Return q
+        End Function
+
+        Public Shared Function Search(ByVal t As Type, ByVal searchText As String, ByVal getMgr As ICreateManager) As QueryCmd
+            Dim q As New QueryCmd(getMgr)
+            q._table = New SearchFragment(t, searchText)
+            Return q
+        End Function
+
+        Public Shared Function Search(ByVal searchText As String, ByVal getMgr As ICreateManager) As QueryCmd
+            Dim q As New QueryCmd(getMgr)
+            q._table = New SearchFragment(searchText)
+            Return q
+        End Function
 #End Region
 
         Public Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
@@ -2537,20 +2415,20 @@ Namespace Query
 
     'End Class
 
-    Public Class SearchQueryCmd
-        Inherits QueryCmd
+    'Public Class SearchQueryCmd
+    '    Inherits QueryCmd
 
-        Public Sub New(ByVal t As Type, ByVal searchString As String, ByVal getMgr As ICreateManager)
-            MyBase.New(New SearchFragment(t, searchString), getMgr)
-        End Sub
+    '    Public Sub New(ByVal t As Type, ByVal searchString As String, ByVal getMgr As ICreateManager)
+    '        MyBase.New(New SearchFragment(t, searchString), getMgr)
+    '    End Sub
 
-        Public Sub New(ByVal searchString As String, ByVal getMgr As ICreateManager)
-            MyBase.New(New SearchFragment(searchString), getMgr)
-        End Sub
+    '    Public Sub New(ByVal searchString As String, ByVal getMgr As ICreateManager)
+    '        MyBase.New(New SearchFragment(searchString), getMgr)
+    '    End Sub
 
-        Public Sub New(ByVal obj As _IOrmBase, ByVal searchString As String)
-            MyBase.New(obj)
-            _table = New SearchFragment(obj.GetType, searchString)
-        End Sub
-    End Class
+    '    Public Sub New(ByVal obj As _IOrmBase, ByVal searchString As String)
+    '        MyBase.New(obj)
+    '        _table = New SearchFragment(obj.GetType, searchString)
+    '    End Sub
+    'End Class
 End Namespace

@@ -41,14 +41,15 @@ Public Class Table4
     '    Return New Table4(Identifier, OrmCache, OrmSchema)
     'End Function
 
-    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IObjectSchemaBase, ByVal value As Object)
-        Select Case c.FieldName
+    Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
+        ByVal fieldName As String, ByVal oschema As IObjectSchemaBase, ByVal value As Object)
+        Select Case fieldName
             Case "Col"
                 Col = CType(value, Global.System.Nullable(Of Boolean))
             Case "GUID"
                 GUID = CType(value, System.Guid)
             Case Else
-                MyBase.SetValue(pi, c, oschema, value)
+                MyBase.SetValue(pi, fieldName, oschema, value)
         End Select
     End Sub
 

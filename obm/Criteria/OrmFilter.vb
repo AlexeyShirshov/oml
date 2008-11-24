@@ -251,7 +251,7 @@ Namespace Criteria.Core
                 Dim t As Type = obj.GetType
                 If Template.Type Is t Then
                     Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
-                    Dim v As Object = obj.GetValueOptimized(Nothing, New ColumnAttribute(Template.FieldName), oschema) 'schema.GetFieldValue(obj, _fieldname)
+                    Dim v As Object = obj.GetValueOptimized(Nothing, Template.PropertyAlias, oschema) 'schema.GetFieldValue(obj, _fieldname)
                     r = evval.Eval(v, Template)
                     'If v IsNot Nothing Then
                     '    r = evval.Eval(v, Template)
@@ -285,7 +285,7 @@ Namespace Criteria.Core
         End Function
 
         Public Function PrepareValue(ByVal schema As ObjectMappingEngine, ByVal v As Object) As Object 'Implements IEntityFilter.PrepareValue
-            Return schema.ChangeValueType(_oschema, New ColumnAttribute(Template.FieldName), v)
+            Return schema.ChangeValueType(_oschema, New ColumnAttribute(Template.PropertyAlias), v)
         End Function
 
         'Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -329,13 +329,13 @@ Namespace Criteria.Core
 
             Dim prname As String = Value.GetParam(schema, pname, almgr, pd, Nothing, Nothing)
 
-            Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.FieldName)
+            Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.PropertyAlias)
 
             Dim v As IEvaluableValue = TryCast(val, IEvaluableValue)
             If v IsNot Nothing AndAlso v.Value Is DBNull.Value Then
-                If schema.GetFieldTypeByName(Template.Type, Template.FieldName) Is GetType(Byte()) Then
+                If schema.GetFieldTypeByName(Template.Type, Template.PropertyAlias) Is GetType(Byte()) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Binary
-                ElseIf schema.GetFieldTypeByName(Template.Type, Template.FieldName) Is GetType(Decimal) Then
+                ElseIf schema.GetFieldTypeByName(Template.Type, Template.PropertyAlias) Is GetType(Decimal) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Decimal
                 End If
             End If
@@ -447,17 +447,17 @@ Namespace Criteria.Core
 
         'Private _appl As Boolean
 
-        Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
             _t = t
-            _fieldname = fieldName
+            _fieldname = propertyAlias
             '_appl = appl
         End Sub
 
-        Public Sub New(ByVal entityName As String, ByVal fieldName As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
             _en = entityName
-            _fieldname = fieldName
+            _fieldname = propertyAlias
         End Sub
 
         Public Overridable Function MakeFilter(ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, ByVal obj As ICachedEntity) As IEntityFilter 'Implements IOrmFilterTemplate.MakeFilter
@@ -481,7 +481,7 @@ Namespace Criteria.Core
                 End If
                 Return MakeFilter(schema, schema.GetObjectSchema(lt), o)
             Else
-                Dim v As Object = obj.GetValueOptimized(Nothing, New ColumnAttribute(_fieldname), oschema)
+                Dim v As Object = obj.GetValueOptimized(Nothing, _fieldname, oschema)
                 If lt Is Nothing AndAlso Not String.IsNullOrEmpty(_en) Then
                     Return CreateEntityFilter(_en, _fieldname, New ScalarValue(v), Operation)
                 Else
@@ -502,7 +502,7 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public ReadOnly Property FieldName() As String
+        Public ReadOnly Property PropertyAlias() As String
             Get
                 Return _fieldname
             End Get

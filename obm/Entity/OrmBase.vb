@@ -372,10 +372,10 @@ Namespace Orm
             Private _obj As OrmBase
             Private _d As IDisposable
 
-            Public Sub New(ByVal obj As OrmBase, ByVal fieldName As String, ByVal d As IDisposable)
-                _fieldName = fieldName
+            Public Sub New(ByVal obj As OrmBase, ByVal propertyAlias As String, ByVal d As IDisposable)
+                _fieldName = propertyAlias
                 _obj = obj
-                _value = obj.GetValue(fieldName)
+                _value = obj.GetValue(propertyAlias)
                 _d = d
             End Sub
 
@@ -657,7 +657,7 @@ Namespace Orm
             MyBase._Init(cache, schema, mgrIdentityString)
             Identifier = id
             PKLoaded(1)
-            CType(Me, _ICachedEntity).SetLoaded(New ColumnAttribute(GetPKValues(0).PropertyAlias), True, True, schema)
+            CType(Me, _ICachedEntity).SetLoaded(GetPKValues(0).PropertyAlias, True, True, schema)
         End Sub
 
         Protected Overridable Overloads Sub Init()
@@ -2190,7 +2190,9 @@ Namespace Orm
         End Function
 
         Private Function Search(ByVal text As String, ByVal t As System.Type) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing)
+            q.Table = New SearchFragment(t, text)
+            Return q
         End Function
 
         Private Function Search(ByVal text As String, ByVal t As System.Type, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
@@ -2218,7 +2220,9 @@ Namespace Orm
         End Function
 
         Public Function Search(ByVal text As String) As Worm.Query.QueryCmd Implements IM2M.Search
-            Throw New NotImplementedException
+            Dim q As Worm.Query.QueryCmd = CreateM2MCmd(Nothing)
+            q.Table = New SearchFragment(text)
+            Return q
         End Function
 
         Public Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd Implements IM2M.Search
@@ -2418,7 +2422,7 @@ Namespace Orm
                     PKLoaded(1)
                     Dim schema As ObjectMappingEngine = OrmSchema
                     If schema IsNot Nothing Then
-                        CType(Me, _ICachedEntity).SetLoaded(New ColumnAttribute(GetPKValues()(0).PropertyAlias), True, True, schema)
+                        CType(Me, _ICachedEntity).SetLoaded(GetPKValues()(0).PropertyAlias, True, True, schema)
                     End If
                 End If
                 'Debug.Assert(_id.Equals(value))
@@ -2448,31 +2452,33 @@ Namespace Orm
         '    MyBase.SetValue(pi, c, Nothing, value)
         'End Sub
 
-        Public Overridable Overloads Sub CreateObject(ByVal field As String, ByVal value As Object) Implements IFactory.CreateObject
+        Public Overridable Overloads Sub CreateObject(ByVal propertyAlias As String, ByVal value As Object) Implements IFactory.CreateObject
 
         End Sub
 
-        Protected Overrides Function IsFieldLoaded(ByVal fieldName As String) As Boolean
-            If fieldName = OrmBaseT.PKName Then
+        Protected Overrides Function IsFieldLoaded(ByVal propertyAlias As String) As Boolean
+            If propertyAlias = OrmBaseT.PKName Then
                 Return True
             Else
-                Return MyBase.IsFieldLoaded(fieldName)
+                Return MyBase.IsFieldLoaded(propertyAlias)
             End If
         End Function
 
-        Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As Meta.IObjectSchemaBase, ByVal value As Object)
-            If c.FieldName = OrmBaseT.PKName Then
+        Public Overrides Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
+            ByVal propertyAlias As String, ByVal schema As Meta.IObjectSchemaBase, ByVal value As Object)
+            If propertyAlias = OrmBaseT.PKName Then
                 _id = value
             Else
-                MyBase.SetValue(pi, c, schema, value)
+                MyBase.SetValue(pi, propertyAlias, schema, value)
             End If
         End Sub
 
-        Public Overloads Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal oschema As Meta.IObjectSchemaBase) As Object
-            If c.FieldName = OrmBaseT.PKName Then
+        Public Overloads Overrides Function GetValue(ByVal pi As System.Reflection.PropertyInfo, _
+            ByVal propertyAlias As String, ByVal oschema As Meta.IObjectSchemaBase) As Object
+            If propertyAlias = OrmBaseT.PKName Then
                 Return _id
             Else
-                Return MyBase.GetValue(pi, c, oschema)
+                Return MyBase.GetValue(pi, propertyAlias, oschema)
             End If
         End Function
     End Class

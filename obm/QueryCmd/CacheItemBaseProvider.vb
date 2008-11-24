@@ -82,7 +82,7 @@ Namespace Query
                 Dim ldp As New List(Of Cache.IDependentTypes)
                 Dim i As Integer = 0
                 For Each q As QueryCmd In New QueryIterator(_q)
-                    Dim dp As Cache.IDependentTypes = q.Get(MappingEngine)
+                    Dim dp As Cache.IDependentTypes = CType(q, Cache.IQueryDependentTypes).Get(MappingEngine)
 
                     ldp.Add(dp)
 
@@ -135,7 +135,7 @@ Namespace Query
                                             t = MappingEngine.GetTypeByEntityName(tmpl.EntityName)
                                         End If
 
-                                        Dim p As New Pair(Of String, Type)(tmpl.FieldName, t)
+                                        Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, t)
                                         cache.validate_AddDependentFilterField(p, _key, _id)
                                     End If
                                 Next
@@ -165,7 +165,7 @@ Namespace Query
                                         Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                                     End If
 
-                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
                                     cache.validate_AddDependentFilterField(p, _key, _id)
                                 End If
                             Next
@@ -173,7 +173,7 @@ Namespace Query
                     End If
 
                     For Each s As Sorting.Sort In New Sorting.Sort.Iterator(q.propSort)
-                        If Not String.IsNullOrEmpty(s.FieldName) Then
+                        If Not String.IsNullOrEmpty(s.SortBy) Then
                             Dim t As Type = s.Type
                             If t Is Nothing AndAlso s.Table Is Nothing AndAlso String.IsNullOrEmpty(s.CustomSortExpression) Then
                                 t = SelectedType
@@ -184,7 +184,7 @@ Namespace Query
                                     notPreciseDependsU = True
                                 End If
                             Else
-                                Dim p As New Pair(Of String, Type)(s.FieldName, t)
+                                Dim p As New Pair(Of String, Type)(s.SortBy, t)
                                 cache.validate_AddDependentSortField(p, _key, _id)
                             End If
                         ElseIf rightType AndAlso Not notPreciseDependsU Then
@@ -195,8 +195,8 @@ Namespace Query
 
                     If q.Group IsNot Nothing Then
                         For Each g As Grouping In q.Group
-                            If Not String.IsNullOrEmpty(g.Field) Then
-                                Dim p As New Pair(Of String, Type)(g.Field, g.Type)
+                            If Not String.IsNullOrEmpty(g.PropertyAlias) Then
+                                Dim p As New Pair(Of String, Type)(g.PropertyAlias, g.Type)
                                 cache.validate_AddDependentGroupField(p, _key, _id)
                             ElseIf rightType AndAlso Not notPreciseDependsU Then
                                 cache.validate_UpdateType(q.SelectedType, _key, _id)

@@ -126,7 +126,7 @@ Public Class CompositeEditableSchema
         Return Nothing
     End Function
 
-    Public Function GetSuppressedColumns() As Worm.Orm.Meta.ColumnAttribute() Implements Worm.Orm.Meta.IObjectSchemaBase.GetSuppressedColumns
+    Public Function GetSuppressedFields() As String() Implements Worm.Orm.Meta.IObjectSchemaBase.GetSuppressedFields
         Return Nothing
     End Function
 

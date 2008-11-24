@@ -51,7 +51,7 @@ Imports Worm.Database.Criteria.Joins
 
         Dim t As Type = GetType(Table1)
 
-        Dim q As New SearchQueryCmd(t, "second", New CreateManager(Function() _
+        Dim q As QueryCmd = QueryCmd.Search(t, "second", New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))))
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
@@ -69,7 +69,7 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestSearch3()
 
-        Dim q As New SearchQueryCmd("first", New CreateManager(Function() _
+        Dim q As QueryCmd = QueryCmd.Search("first", New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))))
 
         Assert.AreEqual(1, q.ToList(Of Table1)().Count)
@@ -85,13 +85,26 @@ Imports Worm.Database.Criteria.Joins
 
     <TestMethod()> Public Sub TestSearch4()
 
+        Dim tbl As New Orm.Meta.SearchFragment(GetType(Table1), "first")
+
+        Dim q As New QueryCmd(tbl, New CreateManager(Function() _
+            TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))))
+        q.AddJoins(JCtor.Join("Table3").On(GetType(Table1)))
+        q.Where(Ctor.Field("Table3", "Code").Eq(2))
+
+        Assert.AreEqual(1, q.ToList(Of Table1)().Count)
+    End Sub
+
+    <TestMethod()> Public Sub TestSearch5()
+
         Dim tbl As New Orm.Meta.SearchFragment(GetType(Table1), "second")
 
         Dim q As New QueryCmd(tbl, New CreateManager(Function() _
             TestManagerRS.CreateManagerSharedFullText(New SQLGenerator("1"))))
-        q.Where(Ctor.AutoTypeField("Code").Eq(2))
 
-        Assert.AreEqual(1, q.ToList(Of Table1)().Count)
+        q.Where(Ctor.Field(GetType(Table1), "Code").Eq(2))
+
+        Assert.AreEqual(0, q.ToList(Of Table1)().Count)
     End Sub
 
     <TestMethod()> Public Sub TestSearchM2M()
@@ -102,9 +115,11 @@ Imports Worm.Database.Criteria.Joins
         q.Where(Ctor.AutoTypeField("ID").Eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
-        t.M2MNew.Search("second", GetType(Table1)).ToList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = t.M2MNew.Search("second", GetType(Table1)).ToList(Of Table1)()
+        Assert.AreEqual(0, r.Count)
 
-        t.M2MNew.Search("second").ToList(Of Table1)()
+        r = t.M2MNew.Search("second").ToList(Of Table1)()
+        Assert.AreEqual(0, r.Count)
     End Sub
 
     <TestMethod()> Public Sub TestSearchM2MDyn()
@@ -115,7 +130,9 @@ Imports Worm.Database.Criteria.Joins
         q.Where(Ctor.AutoTypeField("ID").Eq(1))
         Dim t As Table3 = q.Single(Of Table3)()
 
-        t.M2MNew.Search("second").ToEntityList(Of Table1)()
+        Dim r As ReadOnlyEntityList(Of Table1) = t.M2MNew.Search("first").ToEntityList(Of Table1)()
+
+        Assert.AreEqual(1, r.Count)
     End Sub
 
 End Class

@@ -33,18 +33,35 @@ Namespace Database.Criteria.Values
             'Dim dbschema As DbSchema = CType(schema, DbSchema)
             sb.Append("(")
 
-            Dim selectType As Type = If(_q.SelectedType IsNot Nothing, _q.SelectedType, _q.CreateType)
+            Dim c As New Query.QueryCmd.svct(_q)
+            Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                If _q.SelectedType Is Nothing Then
+                    If String.IsNullOrEmpty(_q.EntityName) Then
+                        _q.SelectedType = _q.CreateType
+                    Else
+                        _q.SelectedType = schema.GetTypeByEntityName(_q.EntityName)
+                    End If
+                End If
 
-            Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
-            Dim sl As List(Of Orm.SelectExpression) = Nothing
-            Dim f As IFilter = _q.Prepare(j, schema, filterInfo, selectType, sl)
+                If GetType(Orm.AnonymousEntity).IsAssignableFrom(_q.SelectedType) Then
+                    _q.SelectedType = Nothing
+                End If
 
-            If _stmtGen Is Nothing Then
-                _stmtGen = TryCast(schema, SQLGenerator)
-            End If
+                If _q.CreateType Is Nothing Then
+                    _q.CreateType = _q.SelectedType
+                End If
 
-            sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(filterInfo, _stmtGen, _q, paramMgr, _
-                 selectType, j, f, almgr, sl))
+                Dim j As New List(Of Worm.Criteria.Joins.OrmJoin)
+                Dim sl As List(Of Orm.SelectExpression) = Nothing
+                Dim f As IFilter = _q.Prepare(j, schema, filterInfo, _q.SelectedType, sl)
+
+                If _stmtGen Is Nothing Then
+                    _stmtGen = TryCast(schema, SQLGenerator)
+                End If
+
+                sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(filterInfo, _stmtGen, _q, paramMgr, _
+                     _q.SelectedType, j, f, almgr, sl))
+            End Using
 
             sb.Append(")")
 
@@ -56,7 +73,7 @@ Namespace Database.Criteria.Values
         End Function
 
         Public Function [Get](ByVal mpe As ObjectMappingEngine) As Cache.IDependentTypes Implements Cache.IQueryDependentTypes.Get
-            Dim qp As Cache.IDependentTypes = _q.Get(mpe)
+            Dim qp As Cache.IDependentTypes = CType(_q, Cache.IQueryDependentTypes).Get(mpe)
             If Cache.IsEmpty(qp) Then
                 Dim dt As New Cache.DependentTypes
                 dt.AddBoth(_q.SelectedType)

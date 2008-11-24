@@ -44,7 +44,7 @@ Namespace Orm.Meta
     Public Interface IObjectSchemaBase
         Inherits IOrmPropertyMap
         ReadOnly Property Table() As SourceFragment
-        Function GetSuppressedColumns() As ColumnAttribute()
+        Function GetSuppressedFields() As String()
         Function ChangeValueType(ByVal c As ColumnAttribute, ByVal value As Object, ByRef newvalue As Object) As Boolean
     End Interface
 

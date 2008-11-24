@@ -20,20 +20,20 @@ Namespace Orm.Meta
             Me._behavior = behavior
         End Sub
 
-        Public Sub New(ByVal fieldName As String)
-            _fieldName = fieldName
+        Public Sub New(ByVal propertyAlias As String)
+            _fieldName = propertyAlias
             Me._behavior = Field2DbRelations.None
         End Sub
 
-        Public Sub New(ByVal fieldName As String, ByVal behavior As Field2DbRelations)
-            _fieldName = fieldName
+        Public Sub New(ByVal propertyAlias As String, ByVal behavior As Field2DbRelations)
+            _fieldName = propertyAlias
             Me._behavior = behavior
         End Sub
 
         ''' <summary>
         ''' Имя поля класса, которое мапится на колонку в БД
         ''' </summary>
-        Public Property FieldName() As String
+        Public Property PropertyAlias() As String
             Get
                 Return _fieldName
             End Get
@@ -90,7 +90,7 @@ Namespace Orm.Meta
             If obj Is Nothing Then
                 Return False
             End If
-            Return FieldName.Equals(obj._fieldName)
+            Return PropertyAlias.Equals(obj._fieldName)
         End Function
 
         Public Overrides Function GetHashCode() As Integer

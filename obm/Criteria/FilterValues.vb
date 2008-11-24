@@ -187,9 +187,9 @@ Namespace Criteria.Values
 
                 Dim map As MapField2Column = Nothing
                 Try
-                    map = oschema.GetFieldColumnMap()(_p.Field)
+                    map = oschema.GetFieldColumnMap()(_p.PropertyAlias)
                 Catch ex As KeyNotFoundException
-                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.Type.ToString & schema.Selector & _p.Field, ex))
+                    Throw New ObjectMappingException(String.Format("There is not column for property {0} ", _p.Type.ToString & schema.Selector & _p.PropertyAlias, ex))
                 End Try
 
                 Dim [alias] As String = String.Empty
@@ -439,7 +439,7 @@ Namespace Criteria.Values
                         r = IEvaluableValue.EvalResult.Unknown
                 End Select
             Catch ex As InvalidCastException
-                Throw New InvalidOperationException(String.Format("Cannot eval field {4}.{0} of type {1} through value {2} of type {3}", template.FieldName, filterValue.GetType, evaluatedValue, evaluatedValue.GetType, template.Type), ex)
+                Throw New InvalidOperationException(String.Format("Cannot eval field {4}.{0} of type {1} through value {2} of type {3}", template.PropertyAlias, filterValue.GetType, evaluatedValue, evaluatedValue.GetType, template.Type), ex)
             End Try
             Return r
         End Function
@@ -554,7 +554,7 @@ Namespace Criteria.Values
             If orm IsNot Nothing Then
                 Dim ov As EntityValue = TryCast(Me, EntityValue)
                 If ov Is Nothing Then
-                    Throw New InvalidOperationException(String.Format("Field {0} is Entity but param is not", template.FieldName))
+                    Throw New InvalidOperationException(String.Format("Field {0} is Entity but param is not", template.PropertyAlias))
                 End If
                 Dim tt As Type = v.GetType
                 If Not tt.IsAssignableFrom(ov.OrmType) Then
@@ -562,7 +562,7 @@ Namespace Criteria.Values
                         r = IEvaluableValue.EvalResult.NotFound
                         Return Nothing
                     Else
-                        Throw New InvalidOperationException(String.Format("Field {0} is type of {1} but param is type of {2}", template.FieldName, tt.ToString, ov.OrmType.ToString))
+                        Throw New InvalidOperationException(String.Format("Field {0} is type of {1} but param is type of {2}", template.PropertyAlias, tt.ToString, ov.OrmType.ToString))
                     End If
                 End If
                 Return ov.GetOrmValue(OrmManager.CurrentManager)

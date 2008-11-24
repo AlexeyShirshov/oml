@@ -13,12 +13,12 @@ Namespace Database
             Protected Sub New()
             End Sub
 
-            Public Sub New(ByVal t As Type, ByVal fieldName As String, ByVal t2 As Type, ByVal fieldName2 As String, ByVal operation As FilterOperation)
-                MyBase.New(t, fieldName, t2, fieldName2, operation)
+            Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+                MyBase.New(t, propertyAlias, t2, propertyAlias2, operation)
             End Sub
 
-            Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal t As Type, ByVal fieldName As String, ByVal operation As FilterOperation)
-                MyBase.New(table, column, t, fieldName, operation)
+            Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal t As Type, ByVal propertyAlias As String, ByVal operation As FilterOperation)
+                MyBase.New(table, column, t, propertyAlias, operation)
             End Sub
 
             Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal table2 As SourceFragment, ByVal column2 As String, ByVal operation As FilterOperation)
@@ -349,6 +349,17 @@ Namespace Database
                 Return Me
             End Function
 
+            Protected Friend Function AddType(ByVal entityName As String) As JCtor
+                _j(_j.Count - 1).M2MJoinEntityName = entityName
+                Return Me
+            End Function
+
+            Protected Friend Function AddType(ByVal entityName As String, ByVal key As String) As JCtor
+                _j(_j.Count - 1).M2MJoinEntityName = entityName
+                _j(_j.Count - 1).M2MKey = key
+                Return Me
+            End Function
+
             Public Function Joins() As IEnumerable(Of OrmJoin)
                 Return _j
             End Function
@@ -375,9 +386,19 @@ Namespace Database
                 jc.AddType(t)
             End Sub
 
+            Protected Friend Sub New(ByVal entityName As String, ByVal jc As JCtor)
+                _jc = jc
+                jc.AddType(entityName)
+            End Sub
+
             Protected Friend Sub New(ByVal t As Type, ByVal key As String, ByVal jc As JCtor)
                 _jc = jc
                 jc.AddType(t, key)
+            End Sub
+
+            Protected Friend Sub New(ByVal entityName As String, ByVal key As String, ByVal jc As JCtor)
+                _jc = jc
+                jc.AddType(entityName, key)
             End Sub
 
             Protected Friend Sub New(ByVal c As Conditions.Condition.ConditionConstructor, ByVal jc As JCtor)
@@ -402,11 +423,11 @@ Namespace Database
                 Return c
             End Function
 
-            Public ReadOnly Property Condition() As IFilter
-                Get
-                    Return _c.Condition
-                End Get
-            End Property
+            'Public ReadOnly Property Condition() As IFilter
+            '    Get
+            '        Return _c.Condition
+            '    End Get
+            'End Property
 
             Protected ReadOnly Property JC() As JCtor
                 Get
@@ -487,13 +508,13 @@ Namespace Database
 
             Public ReadOnly Property Filter() As IFilter Implements IGetFilter.Filter
                 Get
-                    Return Condition
+                    Return _c.Condition
                 End Get
             End Property
 
             Public ReadOnly Property Filter(ByVal t As System.Type) As IFilter Implements IGetFilter.Filter
                 Get
-                    Return Condition
+                    Return _c.Condition
                 End Get
             End Property
         End Class
@@ -550,8 +571,16 @@ Namespace Database
                 Return New JoinLink(m2mType, _j)
             End Function
 
+            Public Function [On](ByVal m2mEntityName As String) As JoinLink
+                Return New JoinLink(m2mEntityName, _j)
+            End Function
+
             Public Function [On](ByVal m2mKey As String, ByVal m2mType As Type) As JoinLink
                 Return New JoinLink(m2mType, m2mKey, _j)
+            End Function
+
+            Public Function [On](ByVal m2mKey As String, ByVal m2mEntityName As String) As JoinLink
+                Return New JoinLink(m2mEntityName, m2mKey, _j)
             End Function
 
             Public Function [On](ByVal t As Type, ByVal field As String) As CriteriaJoin

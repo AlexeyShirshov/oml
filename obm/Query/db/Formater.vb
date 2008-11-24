@@ -44,9 +44,31 @@ Namespace Database
                     Case Orm.PropType.Subquery
                         Dim j As New List(Of OrmJoin)
                         Dim sl As List(Of Orm.SelectExpression) = Nothing
-                        Dim f As IFilter = se.Query.Prepare(j, schema, context, selectType, sl)
-                        sb.Append(" order by (")
-                        sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(context, _s, se.Query, pmgr, selectType, j, f, almgr, sl))
+
+                        Dim _q As Query.QueryCmd = se.Query
+
+                        Dim c As New Query.QueryCmd.svct(_q)
+                        Using New OnExitScopeAction(AddressOf c.SetCT2Nothing)
+                            If _q.SelectedType Is Nothing Then
+                                If String.IsNullOrEmpty(_q.EntityName) Then
+                                    _q.SelectedType = _q.CreateType
+                                Else
+                                    _q.SelectedType = schema.GetTypeByEntityName(_q.EntityName)
+                                End If
+                            End If
+
+                            If GetType(Orm.AnonymousEntity).IsAssignableFrom(_q.SelectedType) Then
+                                _q.SelectedType = Nothing
+                            End If
+
+                            If _q.CreateType Is Nothing Then
+                                _q.CreateType = _q.SelectedType
+                            End If
+
+                            Dim f As IFilter = se.Query.Prepare(j, schema, context, _q.SelectedType, sl)
+                            sb.Append(" order by (")
+                            sb.Append(Query.Database.DbQueryExecutor.MakeQueryStatement(context, _s, _q, pmgr, _q.SelectedType, j, f, almgr, sl))
+                        End Using
                         sb.Append(")")
                         If s.Order = Orm.SortType.Desc Then
                             sb.Append(" desc")

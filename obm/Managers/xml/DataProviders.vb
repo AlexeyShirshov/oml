@@ -45,12 +45,12 @@ Namespace Xml
 
                             Dim fields As List(Of String) = Nothing
                                 If c.GetUpdatedFields(tmpl.Type, fields) Then
-                                Dim idx As Integer = fields.IndexOf(tmpl.FieldName)
-                                If idx >= 0 Then
-                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                    Dim idx As Integer = fields.IndexOf(tmpl.PropertyAlias)
+                                    If idx >= 0 Then
+                                        Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
                                         c.ResetFieldDepends(p)
-                                        c.RemoveUpdatedFields(tmpl.Type, tmpl.FieldName)
-                                    Return False
+                                        c.RemoveUpdatedFields(tmpl.Type, tmpl.PropertyAlias)
+                                        Return False
                                     End If
                                 End If
                             End If
@@ -85,7 +85,7 @@ Namespace Xml
                                     cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
                                     'End If
                                 Else
-                                    Dim p As New Pair(Of String, Type)(tmpl.FieldName, tmpl.Type)
+                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
                                     cache.AddFieldDepend(p, _key, _id)
                                 End If
                                 If tt IsNot tmpl.Type Then

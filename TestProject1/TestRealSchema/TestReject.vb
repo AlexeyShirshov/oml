@@ -5,6 +5,7 @@ Imports Microsoft.VisualStudio.TestTools.UnitTesting
 Imports System.Diagnostics
 Imports Worm.Database
 Imports Worm.Orm
+Imports Worm.Database.Criteria
 
 <TestClass()> _
 Public Class TestReject
@@ -225,4 +226,53 @@ Public Class TestReject
         End Using
     End Sub
 
+    <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> Public Sub TestDeleteOrderWrong()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+            Dim t2 As Table2 = mgr.Find(Of Table2)(1)
+            Dim t3 As Table3 = mgr.Find(Of Table3)(2)
+
+            Assert.AreEqual(t3.RefObject, t2)
+
+            mgr.BeginTransaction()
+            Try
+                Using mt As New ModificationsTracker(mgr)
+                    t2.Delete()
+                    t3.Delete()
+                    mt.Saver.ResolveDepends = False
+
+                    mt.AcceptModifications()
+                End Using
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
+
+    <TestMethod()> Public Sub TestDeleteOrder()
+        Using mgr As OrmReadOnlyDBManager = TestManagerRS.CreateWriteManagerShared(New SQLGenerator("1"))
+            Dim t2 As Table2 = mgr.Find(Of Table2)(1)
+            Dim t3 As Table3 = mgr.Find(Of Table3)(2)
+
+            Assert.AreEqual(t3.RefObject, t2)
+
+            mgr.BeginTransaction()
+            Try
+                Using mt As New ModificationsTracker(mgr)
+                    t2.Delete()
+                    t3.Delete()
+
+                    For Each tt As Tables1to3 In New Worm.Query.QueryCmd(). _
+                        Where(Ctor.Field(GetType(Tables1to3), "Table3").Eq(t3)).ToList(Of Tables1to3)(mgr)
+                        tt.Delete()
+                    Next
+
+                    mgr.Find(Of Table4)(t2.Identifier).Delete()
+
+                    mt.AcceptModifications()
+                End Using
+            Finally
+                mgr.Rollback()
+            End Try
+        End Using
+    End Sub
 End Class

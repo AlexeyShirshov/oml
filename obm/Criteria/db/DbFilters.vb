@@ -393,9 +393,9 @@ Namespace Database
 
                     Dim map As MapField2Column = Nothing
                     Try
-                        map = oschema.GetFieldColumnMap()(Template.FieldName)
+                        map = oschema.GetFieldColumnMap()(Template.PropertyAlias)
                     Catch ex As KeyNotFoundException
-                        Throw New ObjectMappingException(String.Format("There is not column for property {0} ", Template.Type.ToString & "." & Template.FieldName, ex))
+                        Throw New ObjectMappingException(String.Format("There is not column for property {0} ", Template.Type.ToString & "." & Template.PropertyAlias, ex))
                     End Try
 
                     Dim [alias] As String = String.Empty

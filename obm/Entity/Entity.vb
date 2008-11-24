@@ -16,10 +16,10 @@ Namespace Orm
             Private _obj As Entity
             Private _d As IDisposable
 
-            Public Sub New(ByVal obj As Entity, ByVal fieldName As String, ByVal d As IDisposable)
-                _fieldName = fieldName
+            Public Sub New(ByVal obj As Entity, ByVal propertyAlias As String, ByVal d As IDisposable)
+                _fieldName = propertyAlias
                 _obj = obj
-                _value = obj.GetValue(fieldName)
+                _value = obj.GetValue(propertyAlias)
                 _d = d
             End Sub
 
@@ -47,7 +47,7 @@ Namespace Orm
             End Property
 
             Private _fieldName As String
-            Public ReadOnly Property FieldName() As String
+            Public ReadOnly Property PropertyAlias() As String
                 Get
                     Return _fieldName
                 End Get
@@ -102,14 +102,14 @@ Namespace Orm
 #End If
         End Function
 
-        Protected Sub RaisePropertyChanged(ByVal fieldName As String, ByVal oldValue As Object)
-            Dim value As Object = GetValue(fieldName)
+        Protected Sub RaisePropertyChanged(ByVal propertyAlias As String, ByVal oldValue As Object)
+            Dim value As Object = GetValue(propertyAlias)
             If Not Object.Equals(value, oldValue) Then
-                RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(fieldName, oldValue, value))
+                RaiseEvent PropertyChanged(Me, New PropertyChangedEventArgs(propertyAlias, oldValue, value))
             End If
         End Sub
 
-        Protected Overridable Sub PrepareRead(ByVal fieldName As String, ByRef d As IDisposable)
+        Protected Overridable Sub PrepareRead(ByVal propertyAlias As String, ByRef d As IDisposable)
         End Sub
 
         Protected Sub PrepareUpdate()
@@ -140,17 +140,17 @@ Namespace Orm
 
         End Sub
 
-        Protected Function SyncHelper(ByVal reader As Boolean, ByVal fieldName As String) As IDisposable Implements _IEntity.SyncHelper
+        Protected Function SyncHelper(ByVal reader As Boolean, ByVal propertyAlias As String) As IDisposable Implements _IEntity.SyncHelper
             Dim err As Boolean = True
             Dim d As IDisposable = New BlankSyncHelper(Nothing)
             Try
                 If reader Then
-                    PrepareRead(fieldName, d)
+                    PrepareRead(propertyAlias, d)
                 Else
                     d = SyncHelper(True)
                     PrepareUpdate()
                     If Not _dontRaisePropertyChange AndAlso Not _loading Then
-                        d = New ChangedEventHelper(Me, fieldName, d)
+                        d = New ChangedEventHelper(Me, propertyAlias, d)
                     End If
                 End If
                 err = False
@@ -163,12 +163,12 @@ Namespace Orm
             Return d
         End Function
 
-        Protected Function Read(ByVal fieldName As String) As IDisposable
-            Return SyncHelper(True, fieldName)
+        Protected Function Read(ByVal propertyAlias As String) As IDisposable
+            Return SyncHelper(True, propertyAlias)
         End Function
 
-        Protected Function Write(ByVal fieldName As String) As IDisposable
-            Return SyncHelper(False, fieldName)
+        Protected Function Write(ByVal propertyAlias As String) As IDisposable
+            Return SyncHelper(False, propertyAlias)
         End Function
 
         Protected Function GetMgr() As IGetManager Implements _IEntity.GetMgr
@@ -248,7 +248,7 @@ Namespace Orm
                         For Each kv As DictionaryEntry In mc.Manager.MappingEngine.GetProperties(Me.GetType)
                             Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                             Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                            sb.Append(c.FieldName).Append("=").Append(ObjectMappingEngine.GetFieldValue(Me, c.FieldName, pi, oschema)).Append(";")
+                            sb.Append(c.PropertyAlias).Append("=").Append(ObjectMappingEngine.GetFieldValue(Me, c.PropertyAlias, pi, oschema)).Append(";")
                         Next
                     Finally
                         _readRaw = olr
@@ -262,17 +262,18 @@ Namespace Orm
             Return SyncHelper(False)
         End Function
 
-        Public Function GetValue(ByVal fieldName As String) As Object
-            Return GetValue(Nothing, New ColumnAttribute(fieldName), Nothing)
+        Public Function GetValue(ByVal propertyAlias As String) As Object
+            Return GetValue(Nothing, propertyAlias, Nothing)
         End Function
 
-        Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, ByVal c As ColumnAttribute, ByVal oschema As IObjectSchemaBase) As Object Implements IEntity.GetValueOptimized
+        Public Overridable Function GetValue(ByVal pi As Reflection.PropertyInfo, _
+            ByVal propertyAlias As String, ByVal oschema As IObjectSchemaBase) As Object Implements IEntity.GetValueOptimized
             If pi Is Nothing Then
                 Dim s As ObjectMappingEngine = OrmSchema
                 If s Is Nothing Then
-                    Return ObjectMappingEngine.GetFieldValueSchemaless(Me, c.FieldName, oschema, pi)
+                    Return ObjectMappingEngine.GetFieldValueSchemaless(Me, propertyAlias, oschema, pi)
                 Else
-                    Return s.GetFieldValue(Me, c.FieldName, oschema, pi)
+                    Return s.GetFieldValue(Me, propertyAlias, oschema, pi)
                 End If
             End If
             Return pi.GetValue(Me, Nothing)
@@ -305,11 +306,12 @@ Namespace Orm
             End Using
         End Sub
 
-        Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, ByVal c As Meta.ColumnAttribute, ByVal schema As IObjectSchemaBase, ByVal value As Object) Implements IEntity.SetValueOptimized
+        Public Overridable Sub SetValue(ByVal pi As System.Reflection.PropertyInfo, _
+            ByVal propertyAlias As String, ByVal schema As IObjectSchemaBase, ByVal value As Object) Implements IEntity.SetValueOptimized
 
             If pi Is Nothing Then
                 Using m As IGetManager = GetMgr()
-                    pi = m.Manager.MappingEngine.GetProperty(Me.GetType, schema, c)
+                    pi = m.Manager.MappingEngine.GetProperty(Me.GetType, schema, propertyAlias)
                 End Using
             End If
 
@@ -347,7 +349,7 @@ Namespace Orm
             For Each kv As DictionaryEntry In mgr.MappingEngine.GetProperties(Me.GetType)
                 Dim pi As Reflection.PropertyInfo = CType(kv.Value, Reflection.PropertyInfo)
                 Dim c As ColumnAttribute = CType(kv.Key, ColumnAttribute)
-                [to].SetValueOptimized(pi, c, oschema, [from].GetValueOptimized(pi, c, oschema))
+                [to].SetValueOptimized(pi, c.PropertyAlias, oschema, [from].GetValueOptimized(pi, c.PropertyAlias, oschema))
             Next
         End Sub
 
@@ -373,7 +375,7 @@ Namespace Orm
             Return _old_state
         End Function
 
-        Protected Overridable Function IsFieldLoaded(ByVal fieldName As String) As Boolean Implements IEntity.IsFieldLoaded
+        Protected Overridable Function IsFieldLoaded(ByVal propertyAlias As String) As Boolean Implements IEntity.IsFieldLoaded
             Return True
         End Function
 

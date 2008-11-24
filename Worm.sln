@@ -32,7 +32,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "net3.5", "net3.5", "{1284C3
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "test", "net3.5\linq\test.vbproj", "{7A3C88E6-950E-4D7B-B0C9-1573328F44D0}"
 EndProject
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "linqprovider", "net3.5\linqprovider\linqprovider.vbproj", "{C479F776-A580-4451-813F-2D151635996D}"
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "Worm.Linq", "net3.5\linqprovider\Worm.Linq.vbproj", "{C479F776-A580-4451-813F-2D151635996D}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "TestLinq", "net3.5\TestLinq\TestLinq.vbproj", "{0D88361E-442C-409C-AAC7-4878E72199CB}"
 EndProject
@@ -77,7 +77,7 @@ Global
 		SccProjectTopLevelParentUniqueName10 = Worm.sln
 		SccProjectName10 = net3.5/linq
 		SccLocalPath10 = net3.5\\linq
-		SccProjectUniqueName11 = net3.5\\linqprovider\\linqprovider.vbproj
+		SccProjectUniqueName11 = net3.5\\linqprovider\\worm.link.vbproj
 		SccProjectTopLevelParentUniqueName11 = Worm.sln
 		SccProjectName11 = net3.5/linqprovider
 		SccLocalPath11 = net3.5\\linqprovider
