@@ -12,6 +12,20 @@ Namespace Query
         Implements ICloneable, Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
 
 #Region " Classes "
+        Class FromClause
+            Public Table As SourceFragment
+            Public Query As QueryCmd
+
+            Public Sub New(ByVal table As SourceFragment)
+                Me.Table = table
+            End Sub
+
+            Public Sub New(ByVal query As QueryCmd)
+                Me.Query = query
+            End Sub
+
+        End Class
+
         Public Class CacheDictionaryRequiredEventArgs
             Inherits EventArgs
 
@@ -54,18 +68,18 @@ Namespace Query
 
         Class svct
             Private _oldct As Type
-            Private _oldst As Type
+            Private _oldst As ObjectSource
             Private _cmd As QueryCmd
 
             Sub New(ByVal cmd As QueryCmd)
                 _oldct = cmd._createType
-                _oldst = cmd._realType
+                _oldst = cmd._selectSrc
                 _cmd = cmd
             End Sub
 
             Public Sub SetCT2Nothing()
                 _cmd._createType = _oldct
-                _cmd._realType = _oldst
+                _cmd._selectSrc = _oldst
             End Sub
         End Class
 
@@ -89,7 +103,7 @@ Namespace Query
             '    End If
             'End Sub
 
-            Public Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManager)
+            Public Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As ICachedEntity)
                 'AddHandler o.ManagerRequired, AddressOf GetManager
                 If _m Is Nothing Then
                     o.SetCreateManager(_gm)
@@ -121,18 +135,18 @@ Namespace Query
         Protected _clientPage As Paging
         Protected _joins() As OrmJoin
         Protected _autoJoins As Boolean
-        Protected _table As SourceFragment
+        Protected _from As FromClause
         Protected _hint As String
         Protected _mark As Guid = Guid.NewGuid 'Environment.TickCount
         Protected _statementMark As Guid = Guid.NewGuid 'Environment.TickCount
         'Protected _returnType As Type
-        Protected _realType As Type
-        Protected _o As _IOrmBase
+        'Protected _realType As Type
+        Private _m2mObject As IOrmBase
         Protected _m2mKey As String
         Protected _rn As Worm.Database.Criteria.Core.TableFilter
         Protected _outer As QueryCmd
         Private _er As OrmManager.ExecutionResult
-        Private _en As String
+        Private _selectSrc As ObjectSource
         Friend _resDic As Boolean
         Private _appendMain As Boolean?
         Protected _getMgr As ICreateManager
@@ -212,10 +226,14 @@ Namespace Query
             End Set
         End Property
 
-        Protected Friend ReadOnly Property Obj() As _IOrmBase
+        Protected Friend Property Obj() As IOrmBase
             Get
-                Return _o
+                Return _m2mObject
             End Get
+            Set(ByVal value As IOrmBase)
+                _m2mObject = value
+                RenewMark()
+            End Set
         End Property
 
         Protected Friend ReadOnly Property M2MKey() As String
@@ -274,62 +292,87 @@ Namespace Query
         End Sub
 
         Public Sub New(ByVal table As SourceFragment)
-            _table = table
+            _from = New FromClause(table)
         End Sub
 
         Public Sub New(ByVal selectType As Type)
-            _realType = selectType
+            _selectSrc = New ObjectSource(selectType)
         End Sub
 
         Public Sub New(ByVal entityName As String)
-            _en = entityName
+            _selectSrc = New ObjectSource(entityName)
         End Sub
 
-        Public Sub New(ByVal obj As _IOrmBase)
-            _o = obj
+        Public Sub New(ByVal obj As IOrmBase)
+            _m2mObject = obj
         End Sub
 
-        Public Sub New(ByVal obj As _IOrmBase, ByVal key As String)
-            _o = obj
+        Public Sub New(ByVal obj As IOrmBase, ByVal key As String)
+            _m2mObject = obj
             _m2mKey = key
         End Sub
 
         Public Sub New(ByVal table As SourceFragment, ByVal getMgr As ICreateManager)
-            _table = table
+            _from = New FromClause(table)
             _getMgr = getMgr
         End Sub
 
         Public Sub New(ByVal table As SourceFragment, ByVal getMgr As CreateManagerDelegate)
-            _table = table
+            _from = New FromClause(table)
             _getMgr = New CreateManager(getMgr)
         End Sub
 
         Public Sub New(ByVal selectType As Type, ByVal getMgr As ICreateManager)
-            _realType = selectType
+            _selectSrc = New ObjectSource(selectType)
             _getMgr = getMgr
         End Sub
 
+        Public Sub New(ByVal selectType As Type, ByVal getMgr As CreateManagerDelegate)
+            _selectSrc = New ObjectSource(selectType)
+            _getMgr = New CreateManager(getMgr)
+        End Sub
+
         Public Sub New(ByVal entityName As String, ByVal getMgr As ICreateManager)
-            _en = entityName
+            _selectSrc = New ObjectSource(entityName)
             _getMgr = getMgr
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal getMgr As CreateManagerDelegate)
-            _en = entityName
+            _selectSrc = New ObjectSource(entityName)
             _getMgr = New CreateManager(getMgr)
         End Sub
 
-        Public Sub New(ByVal obj As _IOrmBase, ByVal getMgr As ICreateManager)
-            _o = obj
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal getMgr As CreateManagerDelegate)
+            _selectSrc = New ObjectSource([alias])
+            _getMgr = New CreateManager(getMgr)
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal getMgr As ICreateManager)
+            _selectSrc = New ObjectSource([alias])
             _getMgr = getMgr
         End Sub
 
-        Public Sub New(ByVal obj As _IOrmBase, ByVal key As String, ByVal getMgr As ICreateManager)
-            _o = obj
+        Public Sub New(ByVal obj As IOrmBase, ByVal getMgr As ICreateManager)
+            _m2mObject = obj
+            _getMgr = getMgr
+        End Sub
+
+        Public Sub New(ByVal obj As IOrmBase, ByVal getMgr As CreateManagerDelegate)
+            _m2mObject = obj
+            _getMgr = New CreateManager(getMgr)
+        End Sub
+
+        Public Sub New(ByVal obj As IOrmBase, ByVal key As String, ByVal getMgr As ICreateManager)
+            _m2mObject = obj
             _m2mKey = key
             _getMgr = getMgr
         End Sub
 
+        Public Sub New(ByVal obj As IOrmBase, ByVal key As String, ByVal getMgr As CreateManagerDelegate)
+            _m2mObject = obj
+            _m2mKey = key
+            _getMgr = New CreateManager(getMgr)
+        End Sub
 #End Region
 
         Protected Sub RenewMark()
@@ -370,22 +413,27 @@ Namespace Query
 
             Dim f As IFilter = Nothing
             If Filter IsNot Nothing Then
-                f = Filter.Filter(selectType)
+                'f = Filter.Filter(selectType)
+                f = Filter.Filter()
             End If
 
             For Each s As Sort In New Sort.Iterator(_order)
-                If s.Type Is Nothing AndAlso s.Table Is Nothing Then
-                    s.Type = selectType
-                End If
+                'If s.Type Is Nothing AndAlso s.Table Is Nothing Then
+                '    s.Type = selectType
+                'End If
+                If s.ObjectSource IsNot Nothing Then
+                    If s.ObjectSource.GetRealType(schema, Nothing) Is Nothing AndAlso s.Table Is Nothing Then
+                        s.ObjectSource = New ObjectSource(selectType)
+                    End If
 
-                If s.Type IsNot Nothing AndAlso s.PropertyAlias Is Nothing AndAlso s.Column IsNot Nothing Then
-                    s.PropertyAlias = s.Column
-                    s.Column = Nothing
+                    If s.ObjectSource.GetRealType(schema, Nothing) IsNot Nothing AndAlso s.PropertyAlias Is Nothing AndAlso s.Column IsNot Nothing Then
+                        s.PropertyAlias = s.Column
+                        s.Column = Nothing
+                    End If
                 End If
-
             Next
 
-            If AutoJoins OrElse _o IsNot Nothing Then
+            If AutoJoins OrElse _m2mObject IsNot Nothing Then
                 Dim joins() As Worm.Criteria.Joins.OrmJoin = Nothing
                 Dim appendMain As Boolean
                 If OrmManager.HasJoins(schema, selectType, f, propSort, filterInfo, joins, appendMain) Then
@@ -394,9 +442,9 @@ Namespace Query
                 _appendMain = appendMain
             End If
 
-            If _o IsNot Nothing Then
+            If _m2mObject IsNot Nothing Then
                 Dim selectedType As Type = selectType
-                Dim filteredType As Type = _o.GetType
+                Dim filteredType As Type = _m2mObject.GetType
 
                 'Dim schema2 As IOrmObjectSchema = GetObjectSchema(filteredType)
 
@@ -439,25 +487,26 @@ Namespace Query
                         selectType, schema.GetPrimaryKeys(selectedType)(0).PropertyAlias, Criteria.FilterOperation.Equal)
                     Dim jn As New Worm.Database.Criteria.Joins.OrmJoin(table, JoinType.Join, jf)
                     j.Add(jn)
-                    If table.Equals(_table) Then
-                        _table = Nothing
+                    If _from IsNot Nothing AndAlso table.Equals(_from.Table) Then
+                        _from = Nothing
                     End If
                     If propWithLoad AndAlso _fields IsNot Nothing AndAlso _fields.Count = 1 Then
                         _fields = Nothing
                     End If
                 Else
-                    _table = table
+                    _from = New FromClause(table)
                     Dim r As New List(Of SelectExpression)
                     'Dim os As IOrmObjectSchemaBase = schema.GetObjectSchema(selectedType)
                     'os.GetFieldColumnMap()("ID")._columnName
-                    r.Add(New SelectExpression(table, selected_r.Column & " " & schema.GetColumnNameByFieldNameInternal(selectType, OrmBaseT.PKName, False), OrmBaseT.PKName))
+                    Dim pk As ColumnAttribute = schema.GetPrimaryKeys(selectType)(0)
+                    r.Add(New SelectExpression(table, selected_r.Column & " " & schema.GetColumnNameByPropertyAlias(selectedType, pk.PropertyAlias, False, Nothing), pk.PropertyAlias))
                     r(0).Attributes = Field2DbRelations.PK
                     '_fields = New ObjectModel.ReadOnlyCollection(Of OrmProperty)(r)
                     cl = r
                 End If
 
                 Dim tf As New Worm.Database.Criteria.Core.TableFilter(table, filtered_r.Column, _
-                    New Worm.Criteria.Values.ScalarValue(_o.Identifier), Criteria.FilterOperation.Equal)
+                    New Worm.Criteria.Values.ScalarValue(_m2mObject.Identifier), Criteria.FilterOperation.Equal)
                 Dim con As Criteria.Conditions.Condition.ConditionConstructorBase = schema.CreateConditionCtor
                 con.AddFilter(f)
                 con.AddFilter(tf)
@@ -530,7 +579,12 @@ Namespace Query
                     f = fs(i)
                 End If
 
-                If Not q.GetStaticKey(key, js(i), f, If(q._realType Is Nothing, realType, q._realType), cb_, sl(i), mpe) Then
+                Dim rt As Type = q.SelectedType
+                If rt Is Nothing AndAlso Not String.IsNullOrEmpty(q.SelectedEntityName) Then
+                    rt = mpe.GetTypeByEntityName(q.SelectedEntityName)
+                End If
+
+                If Not q.GetStaticKey(key, js(i), f, If(rt Is Nothing, realType, rt), cb_, sl(i), mpe) Then
                     If ca Is Nothing Then
                         ca = New CacheDictionaryRequiredEventArgs
                         RaiseEvent CacheDictionaryRequired(Me, ca)
@@ -542,7 +596,7 @@ Namespace Query
                             End If
                         End If
                     End If
-                    q.GetStaticKey(key, js(i), f, If(q._realType Is Nothing, realType, q._realType), Cache.CacheListBehavior.CacheAll, sl(i), mpe)
+                    q.GetStaticKey(key, js(i), f, If(rt Is Nothing, realType, rt), Cache.CacheListBehavior.CacheAll, sl(i), mpe)
                     cb_ = Cache.CacheListBehavior.CacheAll
                 End If
                 i += 1
@@ -618,22 +672,26 @@ Namespace Query
             If sb2.Length = 0 Then
                 If realType IsNot Nothing Then
                     sb2.Append(realType.ToString)
-                ElseIf _table IsNot Nothing Then
-                    Select Case cb
-                        Case Cache.CacheListBehavior.CacheAll
-                            sb2.Append(_table.RawName)
-                            'Case Cache.CacheListBehavior.CacheOrThrowException
-                        Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
-                            Return False
-                        Case Else
-                            Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
-                    End Select
+                ElseIf _from IsNot Nothing Then
+                    If _from.Table IsNot Nothing Then
+                        Select Case cb
+                            Case Cache.CacheListBehavior.CacheAll
+                                sb2.Append(_from.Table.RawName)
+                                'Case Cache.CacheListBehavior.CacheOrThrowException
+                            Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
+                                Return False
+                            Case Else
+                                Throw New NotSupportedException(String.Format("Cache behavior {0} is not supported", cb.ToString))
+                        End Select
+                    Else
+                    End If
                 Else
                     Throw New NotSupportedException
                 End If
+
                 sb2.Append("$")
             ElseIf cb <> Cache.CacheListBehavior.CacheAll Then
-                If _table IsNot Nothing Then
+                If _from IsNot Nothing Then
                     Select Case cb
                         'Case Cache.CacheListBehavior.CacheOrThrowException
                         Case Cache.CacheListBehavior.CacheWhatCan, Cache.CacheListBehavior.CacheOrThrowException
@@ -760,7 +818,11 @@ Namespace Query
             If _fields IsNot Nothing Then
                 l = New List(Of SelectExpression)(_fields)
             End If
-            GetStaticKey(sb, _joins, _filter.Filter, _realType, Cache.CacheListBehavior.CacheAll, l, mpe)
+            Dim rt As Type = SelectedType
+            If rt Is Nothing AndAlso Not String.IsNullOrEmpty(SelectedEntityName) Then
+                rt = mpe.GetTypeByEntityName(SelectedEntityName)
+            End If
+            GetStaticKey(sb, _joins, _filter.Filter, rt, Cache.CacheListBehavior.CacheAll, l, mpe)
             Return sb.ToString
         End Function
 
@@ -768,20 +830,26 @@ Namespace Query
 #Region " Properties "
         Public ReadOnly Property IsFTS() As Boolean
             Get
-                If _table Is Nothing Then
+                If _from Is Nothing OrElse _from.Table Is Nothing Then
                     Return False
                 End If
 
-                Return GetType(SearchFragment).IsAssignableFrom(_table.GetType)
+                Return GetType(SearchFragment).IsAssignableFrom(_from.Table.GetType)
             End Get
         End Property
 
-        Public Property EntityName() As String
+        Public Property SelectedEntityName() As String
             Get
-                Return _en
+                If _selectSrc Is Nothing Then
+                    Return Nothing
+                End If
+                Return _selectSrc.AnyEntityName
             End Get
             Set(ByVal value As String)
-                _en = value
+                If _selectSrc IsNot Nothing AndAlso _execCnt > 0 Then
+                    Throw New QueryCmdException("Cannot change SelectedType", Me)
+                End If
+                _selectSrc = New ObjectSource(value)
             End Set
         End Property
 
@@ -819,21 +887,37 @@ Namespace Query
 
         Public Overridable Property SelectedType() As Type
             Get
-                Return _realType
+                If _selectSrc Is Nothing Then
+                    Return Nothing
+                End If
+                Return _selectSrc.AnyType
             End Get
             Set(ByVal value As Type)
-                If _realType IsNot Nothing AndAlso _execCnt > 0 Then
+                If _selectSrc IsNot Nothing AndAlso _execCnt > 0 Then
                     Throw New QueryCmdException("Cannot change SelectedType", Me)
                 End If
-                _realType = value
+                If value Is Nothing Then
+                    _selectSrc = Nothing
+                Else
+                    _selectSrc = New ObjectSource(value)
+                End If
             End Set
         End Property
 
-        'Public Overridable ReadOnly Property ReturnType() As Type
-        '    Get
-        '        Return _realType
-        '    End Get
-        'End Property
+        Public ReadOnly Property [Alias]() As ObjectAlias
+            Get
+                If _selectSrc Is Nothing Then
+                    Return Nothing
+                End If
+                Return _selectSrc.ObjectAlias
+            End Get
+        End Property
+
+        Protected Friend ReadOnly Property Src() As ObjectSource
+            Get
+                Return _selectSrc
+            End Get
+        End Property
 
         Public ReadOnly Property Mark() As Guid
             Get
@@ -859,10 +943,14 @@ Namespace Query
 
         Public Property Table() As SourceFragment
             Get
-                Return _table
+                If _from Is Nothing Then
+                    Return Nothing
+                End If
+                Return _from.Table
             End Get
             Protected Friend Set(ByVal value As SourceFragment)
-                _table = value
+                _from = New FromClause(value)
+                RenewMark()
             End Set
         End Property
 
@@ -1003,7 +1091,7 @@ Namespace Query
             End Get
             Set(ByVal value As Boolean)
                 _load = value
-                If _o Is Nothing Then
+                If _m2mObject Is Nothing Then
                     RenewStatementMark()
                 Else
                     RenewMark()
@@ -1013,6 +1101,18 @@ Namespace Query
 #End Region
 
         Public Function AddJoins(ByVal joins() As OrmJoin) As QueryCmd
+            Dim l As New List(Of OrmJoin)
+            If Me.Joins IsNot Nothing Then
+                l.AddRange(Me.Joins)
+            End If
+            If joins IsNot Nothing Then
+                l.AddRange(joins)
+            End If
+            Me.Joins = l.ToArray
+            Return Me
+        End Function
+
+        Public Function SetJoins(ByVal joins() As OrmJoin) As QueryCmd
             Me.Joins = joins
             Return Me
         End Function
@@ -1043,7 +1143,7 @@ Namespace Query
         End Function
 
         Public Function From(ByVal t As SourceFragment) As QueryCmd
-            _table = t
+            _from = New FromClause(t)
             RenewMark()
             Return Me
         End Function
@@ -1060,6 +1160,11 @@ Namespace Query
 
         Public Function [SelectAgg](ByVal aggrs() As AggregateBase) As QueryCmd
             Aggregates = New ObjectModel.ReadOnlyCollection(Of AggregateBase)(aggrs)
+            Return Me
+        End Function
+
+        Public Function SelectEntityName(ByVal entityName As String) As QueryCmd
+            SelectedEntityName = entityName
             Return Me
         End Function
 
@@ -1097,8 +1202,8 @@ Namespace Query
         Public Function ToList(ByVal mgr As OrmManager) As IList
             Dim t As MethodInfo = Me.GetType.GetMethod("ToEntityList", New Type() {GetType(OrmManager)})
             Dim st As Type = SelectedType
-            If st Is Nothing AndAlso Not String.IsNullOrEmpty(EntityName) Then
-                st = mgr.MappingEngine.GetTypeByEntityName(EntityName)
+            If st Is Nothing AndAlso Not String.IsNullOrEmpty(SelectedEntityName) Then
+                st = mgr.MappingEngine.GetTypeByEntityName(SelectedEntityName)
             End If
             t = t.MakeGenericMethod(New Type() {st})
             Return CType(t.Invoke(Me, New Object() {mgr}), System.Collections.IList)
@@ -1106,8 +1211,8 @@ Namespace Query
 
         Public Function ToList(ByVal getMgr As ICreateManager) As IList
             Using mgr As OrmManager = getMgr.CreateManager
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
                 Return ToList(mgr)
             End Using
         End Function
@@ -1126,8 +1231,8 @@ Namespace Query
 
         Public Function ToList(Of CreateType As {New, _ICachedEntity}, ReturnType As _ICachedEntity)(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of ReturnType)
             Using mgr As OrmManager = getMgr.CreateManager
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
                 Return ToList(Of CreateType, ReturnType)(mgr)
             End Using
         End Function
@@ -1146,8 +1251,8 @@ Namespace Query
 
         Public Function ToList(Of CreateReturnType As {New, _ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of CreateReturnType)
             Using mgr As OrmManager = getMgr.CreateManager
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
                 Return ToList(Of CreateReturnType)(mgr)
             End Using
         End Function
@@ -1173,8 +1278,8 @@ Namespace Query
 
         Public Function ToAnonymList(ByVal getMgr As ICreateManager) As ReadOnlyObjectList(Of AnonymousEntity)
             Using mgr As OrmManager = getMgr.CreateManager
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
                 Return ToAnonymList(mgr)
             End Using
         End Function
@@ -1194,8 +1299,8 @@ Namespace Query
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyEntityList(Of T)
             Dim mgr As OrmManager = getMgr()
             Try
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
                 'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManager) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
                 Return ToEntityList(Of T)(mgr)
             Finally
@@ -1207,8 +1312,8 @@ Namespace Query
 
         Public Function ToEntityList(Of T As {_ICachedEntity})(ByVal getMgr As ICreateManager) As ReadOnlyEntityList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
                 'AddHandler mgr.ObjectCreated, Function(o As ICachedEntity, m As OrmManager) AddHandler o.ManagerRequired,function(ByVal o As IEntity, ByVal args As ManagerRequiredArgs) args.Manager = getmgr)
                 Return ToEntityList(Of T)(mgr)
             End Using
@@ -1249,8 +1354,8 @@ Namespace Query
 
         Public Function ToOrmListDyn(Of T As {_IOrmBase})(ByVal getMgr As CreateManagerDelegate) As ReadOnlyList(Of T)
             Using mgr As OrmManager = getMgr()
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
                 Return ToOrmListDyn(Of T)(mgr)
             End Using
         End Function
@@ -1305,8 +1410,8 @@ Namespace Query
 
         Public Function ToSimpleListDyn(Of T)(ByVal getMgr As ICreateManager) As IList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
                 Return GetExecutor(mgr).ExecSimple(Of T)(mgr, Me)
             End Using
         End Function
@@ -1333,8 +1438,8 @@ Namespace Query
 
         Public Function ToSimpleList(Of CreateType As {New, _ICachedEntity}, T)(ByVal getMgr As ICreateManager) As IList(Of T)
             Using mgr As OrmManager = getMgr.CreateManager
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(getMgr).ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(getMgr).ObjectCreated
                 Return GetExecutor(mgr).ExecSimple(Of CreateType, T)(mgr, Me)
             End Using
         End Function
@@ -1367,8 +1472,8 @@ Namespace Query
             End If
 
             Using mgr As OrmManager = _getMgr.CreateManager
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf New cls(_getMgr).ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf New cls(_getMgr).ObjectCreated
                 Return ToPODList(Of T)(mgr)
             End Using
         End Function
@@ -1801,17 +1906,17 @@ Namespace Query
                 ._m2mKey = _m2mKey
                 ._load = _load
                 ._mark = ._mark
-                ._o = _o
+                ._m2mObject = _m2mObject
                 ._order = _order
                 ._page = _page
                 ._statementMark = _statementMark
-                ._realType = _realType
-                ._table = _table
+                ._selectSrc = _selectSrc
+                ._from = _from
                 ._top = _top
                 ._rn = _rn
                 ._outer = _outer
                 ._er = _er
-                ._en = _en
+                '._en = _en
                 ._resDic = _resDic
                 ._appendMain = _appendMain
                 ._getMgr = _getMgr
@@ -1942,15 +2047,17 @@ Namespace Query
             Dim dp As New Cache.DependentTypes
             If _joins IsNot Nothing Then
                 For Each j As OrmJoin In _joins
-                    Dim t As Type = j.Type
-                    If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
-                        t = mpe.GetTypeByEntityName(j.EntityName)
-                    End If
-                    'If t Is Nothing Then
-                    '    Return New Cache.EmptyDependentTypes
-                    'End If
-                    If t IsNot Nothing Then
-                        dp.AddBoth(t)
+                    If j.ObjectSource IsNot Nothing Then
+                        Dim t As Type = j.ObjectSource.GetRealType(mpe)
+                        'If t Is Nothing AndAlso Not String.IsNullOrEmpty(j.EntityName) Then
+                        '    t = mpe.GetTypeByEntityName(j.EntityName)
+                        'End If
+                        'If t Is Nothing Then
+                        '    Return New Cache.EmptyDependentTypes
+                        'End If
+                        If t IsNot Nothing Then
+                            dp.AddBoth(t)
+                        End If
                     End If
                 Next
             End If
@@ -2067,7 +2174,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal mgr As OrmManager) As QueryCmd
+        Public Shared Function Create(ByVal obj As IOrmBase, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As QueryCmd = Nothing
             If f Is Nothing Then
@@ -2082,7 +2189,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As QueryCmd
+        Public Shared Function Create(ByVal obj As IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As QueryCmd = Nothing
             If f Is Nothing Then
@@ -2150,7 +2257,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal mgr As OrmManager) As QueryCmd
+        Public Shared Function Create(ByVal name As String, ByVal obj As IOrmBase, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As QueryCmd = Nothing
             If f Is Nothing Then
@@ -2166,7 +2273,7 @@ Namespace Query
             Return q
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As QueryCmd
+        Public Shared Function Create(ByVal name As String, ByVal obj As IOrmBase, ByVal key As String, ByVal mgr As OrmManager) As QueryCmd
             Dim f As ICreateQueryCmd = TryCast(mgr, ICreateQueryCmd)
             Dim q As QueryCmd = Nothing
             If f Is Nothing Then
@@ -2198,11 +2305,11 @@ Namespace Query
             Return CreateByEntityName(entityName, OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function Create(ByVal obj As _IOrmBase) As QueryCmd
+        Public Shared Function Create(ByVal obj As IOrmBase) As QueryCmd
             Return Create(obj, OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function Create(ByVal obj As _IOrmBase, ByVal key As String) As QueryCmd
+        Public Shared Function Create(ByVal obj As IOrmBase, ByVal key As String) As QueryCmd
             Return Create(obj, key, OrmManager.CurrentManager)
         End Function
 
@@ -2222,29 +2329,29 @@ Namespace Query
             Return CreateByEntityName(name, entityName, OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase) As QueryCmd
+        Public Shared Function Create(ByVal name As String, ByVal obj As IOrmBase) As QueryCmd
             Return Create(name, obj, OrmManager.CurrentManager)
         End Function
 
-        Public Shared Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String) As QueryCmd
+        Public Shared Function Create(ByVal name As String, ByVal obj As IOrmBase, ByVal key As String) As QueryCmd
             Return Create(name, obj, key, OrmManager.CurrentManager)
         End Function
 
         Public Shared Function Search(ByVal t As Type, ByVal searchText As String, ByVal getMgr As CreateManagerDelegate) As QueryCmd
             Dim q As New QueryCmd(New CreateManager(getMgr))
-            q._table = New SearchFragment(t, searchText)
+            q.Table = New SearchFragment(t, searchText)
             Return q
         End Function
 
         Public Shared Function Search(ByVal t As Type, ByVal searchText As String, ByVal getMgr As ICreateManager) As QueryCmd
             Dim q As New QueryCmd(getMgr)
-            q._table = New SearchFragment(t, searchText)
+            q.Table = New SearchFragment(t, searchText)
             Return q
         End Function
 
         Public Shared Function Search(ByVal searchText As String, ByVal getMgr As ICreateManager) As QueryCmd
             Dim q As New QueryCmd(getMgr)
-            q._table = New SearchFragment(searchText)
+            q.Table = New SearchFragment(searchText)
             Return q
         End Function
 #End Region
@@ -2298,11 +2405,11 @@ Namespace Query
             MyBase.New(entityName)
         End Sub
 
-        Public Sub New(ByVal obj As _IOrmBase)
+        Public Sub New(ByVal obj As IOrmBase)
             MyBase.New(obj)
         End Sub
 
-        Public Sub New(ByVal obj As _IOrmBase, ByVal key As String)
+        Public Sub New(ByVal obj As IOrmBase, ByVal key As String)
             MyBase.New(obj, key)
         End Sub
 

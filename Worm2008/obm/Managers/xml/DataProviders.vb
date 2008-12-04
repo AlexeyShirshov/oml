@@ -43,13 +43,14 @@ Namespace Xml
                         If f IsNot Nothing Then
                             Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
 
-                            Dim fields As List(Of String) = Nothing
-                                If c.GetUpdatedFields(tmpl.Type, fields) Then
+                                Dim fields As List(Of String) = Nothing
+                                Dim rt As Type = tmpl.ObjectSource.GetRealType(_mgr.MappingEngine)
+                                If c.GetUpdatedFields(rt, fields) Then
                                     Dim idx As Integer = fields.IndexOf(tmpl.PropertyAlias)
                                     If idx >= 0 Then
-                                        Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
+                                        Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, rt)
                                         c.ResetFieldDepends(p)
-                                        c.RemoveUpdatedFields(tmpl.Type, tmpl.PropertyAlias)
+                                        c.RemoveUpdatedFields(rt, tmpl.PropertyAlias)
                                         Return False
                                     End If
                                 End If
@@ -75,7 +76,8 @@ Namespace Xml
                             Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                             If f IsNot Nothing Then
                                 Dim tmpl As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
-                                If tmpl.Type Is Nothing Then
+                                Dim rt As Type = tmpl.ObjectSource.GetRealType(_mgr.MappingEngine)
+                                If rt Is Nothing Then
                                     Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                                 End If
                                 Dim v As EntityValue = TryCast(CType(f, EntityFilterBase).Value, EntityValue)
@@ -85,11 +87,11 @@ Namespace Xml
                                     cache.AddDepend(v.GetOrmValue(_mgr), _key, _id)
                                     'End If
                                 Else
-                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type)
+                                    Dim p As New Pair(Of String, Type)(tmpl.PropertyAlias, rt)
                                     cache.AddFieldDepend(p, _key, _id)
                                 End If
-                                If tt IsNot tmpl.Type Then
-                                    cache.AddJoinDepend(tmpl.Type, tt)
+                                If tt IsNot rt Then
+                                    cache.AddJoinDepend(rt, tt)
                                 End If
                             End If
                         Next

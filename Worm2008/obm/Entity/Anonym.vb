@@ -47,7 +47,7 @@ Namespace Orm
 
         End Function
 
-        Public Overloads Sub Init(ByVal pk() As Meta.PKDesc, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String) Implements _ICachedEntity.Init
+        Public Overloads Sub Init(ByVal pk() As Meta.PKDesc, ByVal cache As Cache.CacheBase, ByVal schema As ObjectMappingEngine) Implements _ICachedEntity.Init
 
         End Sub
 
@@ -101,7 +101,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public Sub CreateCopyForSaveNewEntry(ByVal pk() As Meta.PKDesc) Implements ICachedEntity.CreateCopyForSaveNewEntry
+        Public Sub CreateCopyForSaveNewEntry(ByVal mgr As OrmManager, ByVal pk() As Meta.PKDesc) Implements _ICachedEntity.CreateCopyForSaveNewEntry
 
         End Sub
 
@@ -129,7 +129,7 @@ Namespace Orm
             End Get
         End Property
 
-        Public Sub Load() Implements ICachedEntity.Load
+        Public Overloads Sub Load() Implements ICachedEntity.Load
 
         End Sub
 
@@ -143,7 +143,7 @@ Namespace Orm
 
         End Sub
 
-        Public Sub RejectRelationChanges() Implements ICachedEntity.RejectRelationChanges
+        Public Sub RejectRelationChanges(ByVal mgr As OrmManager) Implements ICachedEntity.RejectRelationChanges
 
         End Sub
 
@@ -155,11 +155,41 @@ Namespace Orm
 
         End Function
 
-        Public Sub UpdateCache(ByVal oldObj As ICachedEntity) Implements _ICachedEntity.UpdateCache
+        Public Sub UpdateCache(ByVal mgr As OrmManager, ByVal oldObj As ICachedEntity) Implements _ICachedEntity.UpdateCache
 
         End Sub
 
         Public Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine) Implements _ICachedEntity.SetSpecificSchema
+
+        End Sub
+
+        Public Function BeginAlter() As System.IDisposable Implements ICachedEntity.BeginAlter
+
+        End Function
+
+        Public Function BeginEdit() As System.IDisposable Implements ICachedEntity.BeginEdit
+
+        End Function
+
+        Public Sub CheckEditOrThrow() Implements ICachedEntity.CheckEditOrThrow
+
+        End Sub
+
+        Public Function Delete() As Boolean Implements ICachedEntity.Delete
+
+        End Function
+
+        Public Overloads Sub RejectChanges1(ByVal mgr As OrmManager) Implements _ICachedEntity.RejectChanges
+
+        End Sub
+
+        'Public Overloads ReadOnly Property OriginalCopy1(ByVal cache As Cache.CacheBase) As ICachedEntity Implements _ICachedEntity.OriginalCopy
+        '    Get
+
+        '    End Get
+        'End Property
+
+        Public Overloads Sub Load(ByVal mgr As OrmManager) Implements _ICachedEntity.Load
 
         End Sub
     End Class

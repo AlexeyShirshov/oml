@@ -97,7 +97,7 @@ Public Class TestDic
 
             Assert.AreEqual(3, idx.TotalCount)
 
-            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr, Sorting.Field("Code"))
+            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr, Sorting.Field(GetType(Table1), "Code"))
 
             Assert.AreEqual(2, col.Count)
         End Using
@@ -114,7 +114,7 @@ Public Class TestDic
 
             Assert.AreEqual(6, idx.TotalCount)
 
-            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr, Sorting.Field("Code"))
+            Dim col As ICollection(Of Table1) = idx.ChildIndexes(0).FindElements(mgr, Sorting.Field(GetType(Table1), "Code"))
 
             Assert.AreEqual(2, col.Count)
         End Using

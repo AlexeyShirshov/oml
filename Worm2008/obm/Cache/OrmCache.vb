@@ -745,7 +745,7 @@ Namespace Cache
             End Using
         End Sub
 
-        Protected Friend Function UpdateCacheDeferred(ByVal selType As Type, ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
+        Protected Friend Function UpdateCacheDeferred(ByVal schema As ObjectMappingEngine, ByVal selType As Type, ByVal ts As IList(Of Type), ByVal f As IEntityFilter, ByVal s As Sorting.Sort, ByVal g As IEnumerable(Of Grouping)) As Boolean
 
             For Each t As Type In ts
                 Dim wasAdded, wasDeleted As Boolean
@@ -801,14 +801,15 @@ Namespace Cache
                     For Each fl As IEntityFilter In f.GetAllFilters
                         Dim tmpl As OrmFilterTemplateBase = CType(fl.Template, OrmFilterTemplateBase)
                         Dim fields As List(Of String) = Nothing
-                        If GetUpdatedFields(tmpl.Type, fields) Then
+                        Dim rt As Type = tmpl.ObjectSource.GetRealType(schema)
+                        If GetUpdatedFields(rt, fields) Then
                             If fields.Contains(tmpl.PropertyAlias) Then
-                                Dim b As Boolean = _filteredFields.Remove(tmpl.Type, tmpl.PropertyAlias, Me)
-                                b = b Or ResetFieldDepends(New Pair(Of String, Type)(tmpl.PropertyAlias, tmpl.Type))
+                                Dim b As Boolean = _filteredFields.Remove(rt, tmpl.PropertyAlias, Me)
+                                b = b Or ResetFieldDepends(New Pair(Of String, Type)(tmpl.PropertyAlias, rt))
 
                                 If b Then
-                                    _sortedFields.Remove(tmpl.Type, tmpl.PropertyAlias, Me)
-                                    RemoveUpdatedFields(tmpl.Type, tmpl.PropertyAlias)
+                                    _sortedFields.Remove(rt, tmpl.PropertyAlias, Me)
+                                    RemoveUpdatedFields(rt, tmpl.PropertyAlias)
                                     Return False
                                 End If
                             End If
@@ -818,10 +819,7 @@ Namespace Cache
 
                 For Each sort As Sorting.Sort In New Sorting.Sort.Iterator(s)
                     If Not String.IsNullOrEmpty(sort.SortBy) Then
-                        Dim t As Type = s.Type
-                        If t Is Nothing Then
-                            t = selType
-                        End If
+                        Dim t As Type = s.ObjectSource.GetRealType(schema, selType)
                         Dim fields As List(Of String) = Nothing
                         If GetUpdatedFields(t, fields) Then
                             If fields.Contains(sort.SortBy) Then
@@ -904,9 +902,10 @@ Namespace Cache
 
                                 If Not removed Then
                                     For Each f As EntityFilterBase In obj.UpdateCtx.UpdatedFields
-                                        _filteredFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
-                                        _groupedFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
-                                        _sortedFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
+                                        Dim rt As Type = f.Template.ObjectSource.GetRealType(schema)
+                                        _filteredFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                        _groupedFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                        _sortedFields.Remove(rt, f.Template.PropertyAlias, Me)
                                     Next
                                 End If
                             End If
@@ -947,9 +946,10 @@ Namespace Cache
 
                         If Not removed Then
                             For Each f As EntityFilterBase In obj.UpdateCtx.UpdatedFields
-                                _filteredFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
-                                _groupedFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
-                                _sortedFields.Remove(f.Template.Type, f.Template.PropertyAlias, Me)
+                                Dim rt As Type = f.Template.ObjectSource.GetRealType(schema)
+                                _filteredFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                _groupedFields.Remove(rt, f.Template.PropertyAlias, Me)
+                                _sortedFields.Remove(rt, f.Template.PropertyAlias, Me)
                             Next
                         End If
                     End If

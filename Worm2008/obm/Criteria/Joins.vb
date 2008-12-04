@@ -4,6 +4,7 @@ Imports Worm.Orm.Meta
 Imports Worm.Criteria
 Imports Worm.Criteria.Values
 Imports Worm.Criteria.Core
+Imports Worm.Orm
 
 'Imports Worm.Database.Criteria.Core
 
@@ -19,24 +20,58 @@ Namespace Criteria.Joins
     Public MustInherit Class JoinFilter
         Implements Core.IFilter
 
-        Friend _e1 As Pair(Of Type, String)
+        'Friend _d1 As Pair(Of String)
+        Friend _e1 As Pair(Of ObjectSource, String)
         Friend _t1 As Pair(Of SourceFragment, String)
 
-        Friend _e2 As Pair(Of Type, String)
+        'Friend _d2 As Pair(Of String)
+        Friend _e2 As Pair(Of ObjectSource, String)
         Friend _t2 As Pair(Of SourceFragment, String)
 
         Friend _oper As FilterOperation
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
-            Dim p As Pair(Of Type, String) = Nothing
+            Dim p As Pair(Of ObjectSource, String) = Nothing
             If t IsNot Nothing Then
-                p = New Pair(Of Type, String)(t, propertyAlias)
+                p = New Pair(Of ObjectSource, String)(New ObjectSource(t), propertyAlias)
             End If
             _e1 = p
 
             p = Nothing
             If t2 IsNot Nothing Then
-                p = New Pair(Of Type, String)(t2, propertyAlias2)
+                p = New Pair(Of ObjectSource, String)(New ObjectSource(t2), propertyAlias2)
+            End If
+            _e2 = p
+
+            _oper = operation
+        End Sub
+
+        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+            Dim p As Pair(Of ObjectSource, String) = Nothing
+            If os IsNot Nothing Then
+                p = New Pair(Of ObjectSource, String)(os, propertyAlias)
+            End If
+            _e1 = p
+
+            p = Nothing
+            If t2 IsNot Nothing Then
+                p = New Pair(Of ObjectSource, String)(New ObjectSource(t2), propertyAlias2)
+            End If
+            _e2 = p
+
+            _oper = operation
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal entityName2 As String, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+            Dim p As Pair(Of ObjectSource, String) = Nothing
+            If Not String.IsNullOrEmpty(entityName) Then
+                p = New Pair(Of ObjectSource, String)(New ObjectSource(entityName), propertyAlias)
+            End If
+            _e1 = p
+
+            p = Nothing
+            If Not String.IsNullOrEmpty(entityName2) Then
+                p = New Pair(Of ObjectSource, String)(New ObjectSource(entityName2), propertyAlias2)
             End If
             _e2 = p
 
@@ -50,9 +85,41 @@ Namespace Criteria.Joins
             End If
             _t1 = t
 
-            Dim p As Pair(Of Type, String) = Nothing
+            Dim p As Pair(Of ObjectSource, String) = Nothing
             If t2 IsNot Nothing Then
-                p = New Pair(Of Type, String)(t2, propertyAlias2)
+                p = New Pair(Of ObjectSource, String)(New ObjectSource(t2), propertyAlias2)
+            End If
+            _e2 = p
+
+            _oper = operation
+        End Sub
+
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal os As ObjectSource, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+            Dim t As Pair(Of SourceFragment, String) = Nothing
+            If table IsNot Nothing Then
+                t = New Pair(Of SourceFragment, String)(table, column)
+            End If
+            _t1 = t
+
+            Dim p As Pair(Of ObjectSource, String) = Nothing
+            If os IsNot Nothing Then
+                p = New Pair(Of ObjectSource, String)(os, propertyAlias2)
+            End If
+            _e2 = p
+
+            _oper = operation
+        End Sub
+
+        Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal entityName2 As String, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+            Dim t As Pair(Of SourceFragment, String) = Nothing
+            If table IsNot Nothing Then
+                t = New Pair(Of SourceFragment, String)(table, column)
+            End If
+            _t1 = t
+
+            Dim p As Pair(Of ObjectSource, String) = Nothing
+            If Not String.IsNullOrEmpty(entityName2) Then
+                p = New Pair(Of ObjectSource, String)(New ObjectSource(entityName2), propertyAlias2)
             End If
             _e2 = p
 
@@ -114,15 +181,25 @@ Namespace Criteria.Joins
             Dim v1 As Object = _e1
             Dim ve1 As Object = obj._e1
             If _e1 Is Nothing Then
-                v1 = _t1
-                ve1 = obj._t1
+                If _t1 Is Nothing Then
+                    'v1 = _d1
+                    've1 = obj._d1
+                Else
+                    v1 = _t1
+                    ve1 = obj._t1
+                End If
             End If
 
             Dim v2 As Object = _e2
             Dim ve2 As Object = obj._e2
             If v2 Is Nothing Then
-                v2 = _t2
-                ve2 = obj._e2
+                If _t2 Is Nothing Then
+                    'v2 = _d2
+                    've2 = obj._d2
+                Else
+                    v2 = _t2
+                    ve2 = obj._e2
+                End If
             End If
 
             Dim b As Boolean = (Equals(v1, ve1) AndAlso Equals(v2, ve2)) _
@@ -143,17 +220,21 @@ Namespace Criteria.Joins
             Dim sb As New StringBuilder
 
             If _e1 IsNot Nothing Then
-                sb.Append(_e1.First.ToString).Append(_e1.Second).Append(" - ")
+                sb.Append(_e1.First.ToStaticString).Append(_e1.Second).Append(" - ")
             ElseIf _t1 IsNot Nothing Then
                 sb.Append(_t1.First.RawName).Append(_t1.Second).Append(" - ")
+                'ElseIf _d1 IsNot Nothing Then
+                '    sb.Append(_d1.First).Append(_d1.Second).Append(" - ")
                 'Else
                 '    sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
             End If
 
             If _e2 IsNot Nothing Then
-                sb.Append(_e2.First.ToString).Append(_e2.Second).Append(" - ")
+                sb.Append(_e2.First.ToStaticString).Append(_e2.Second).Append(" - ")
             ElseIf _t2 IsNot Nothing Then
                 sb.Append(_t2.First.RawName).Append(_t2.Second).Append(" - ")
+                'ElseIf _d2 IsNot Nothing Then
+                '    sb.Append(_d2.First).Append(_d2.Second).Append(" - ")
                 'Else
                 '    sb.Append(_types.First.ToString).Append(_types.Second.ToString).Append(_key).Append(" - ")
             End If
@@ -182,11 +263,11 @@ Namespace Criteria.Joins
             End Get
         End Property
 
-        Public ReadOnly Property Filter(ByVal t As System.Type) As Core.IFilter Implements Core.IGetFilter.Filter
-            Get
-                Return Me
-            End Get
-        End Property
+        'Public ReadOnly Property Filter(ByVal t As System.Type) As Core.IFilter Implements Core.IGetFilter.Filter
+        '    Get
+        '        Return Me
+        '    End Get
+        'End Property
 
         Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
 
@@ -201,6 +282,8 @@ Namespace Criteria.Joins
                 ._oper = _oper
                 ._t1 = _t1
                 ._t2 = _t2
+                '._d1 = _d1
+                '._d2 = _d2
             End With
         End Sub
 
@@ -210,12 +293,14 @@ Namespace Criteria.Joins
     End Class
 
     Public MustInherit Class OrmJoin
-        Implements IQueryElement
+        Implements IQueryElement, ICloneable
+
         Protected _table As SourceFragment
         Protected _joinType As Worm.Criteria.Joins.JoinType
         Protected _condition As Core.IFilter
-        Protected _type As Type
-        Protected _en As String
+        'Protected _type As Type
+        'Protected _en As String
+        Protected _src As ObjectSource
         Private _jt As Type
         Private _jen As String
         Private _key As String
@@ -227,26 +312,32 @@ Namespace Criteria.Joins
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
-            _type = type
+            _src = New ObjectSource(type)
+            _joinType = joinType
+            _condition = condition
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
+            _src = New ObjectSource([alias])
             _joinType = joinType
             _condition = condition
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As Core.IFilter)
-            _en = entityName
+            _src = New ObjectSource(entityName)
             _joinType = joinType
             _condition = condition
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal joinEntityType As Type)
-            _type = type
+            _src = New ObjectSource(type)
             _joinType = joinType
             _condition = Condition
             _jt = joinEntityType
         End Sub
 
         Public Sub New(ByVal type As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal joinEntityName As String)
-            _type = type
+            _src = New ObjectSource(type)
             _joinType = joinType
             _condition = Condition
             _jen = joinEntityName
@@ -295,10 +386,12 @@ Namespace Criteria.Joins
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements IQueryElement.GetStaticString
             If _table IsNot Nothing Then
                 Return _table.RawName & JoinTypeString() & _condition.GetStaticString(mpe)
-            ElseIf _type IsNot Nothing Then
-                Return gs(_type.ToString, mpe)
+                'ElseIf _type IsNot Nothing Then
+                '    Return gs(_type.ToString, mpe)
+                'Else
+                '    Return gs(_en, mpe)
             Else
-                Return gs(_en, mpe)
+                Return gs(_src.ToStaticString, mpe)
             End If
         End Function
 
@@ -321,10 +414,12 @@ Namespace Criteria.Joins
         Public Function _ToString() As String Implements IQueryElement._ToString
             If _table IsNot Nothing Then
                 Return _table.RawName & JoinTypeString() & _condition._ToString
-            ElseIf _type IsNot Nothing Then
-                Return gd(_type.ToString)
+                'ElseIf _type IsNot Nothing Then
+                '    Return gd(_type.ToString)
+                'Else
+                '    Return gd(_en)
             Else
-                Return gd(_en)
+                Return gd(_src.ToStaticString)
             End If
         End Function
 
@@ -367,23 +462,32 @@ Namespace Criteria.Joins
             End Set
         End Property
 
-        Public Property Type() As Type
+        Public Property ObjectSource() As ObjectSource
             Get
-                Return _type
+                Return _src
             End Get
-            Friend Set(ByVal value As Type)
-                _type = value
+            Friend Set(ByVal value As ObjectSource)
+                _src = value
             End Set
         End Property
 
-        Public Property EntityName() As String
-            Get
-                Return _en
-            End Get
-            Friend Set(ByVal value As String)
-                _en = value
-            End Set
-        End Property
+        'Public Property Type() As Type
+        '    Get
+        '        Return _type
+        '    End Get
+        '    Friend Set(ByVal value As Type)
+        '        _type = value
+        '    End Set
+        'End Property
+
+        'Public Property EntityName() As String
+        '    Get
+        '        Return _en
+        '    End Get
+        '    Friend Set(ByVal value As String)
+        '        _en = value
+        '    End Set
+        'End Property
 
         Public Property Table() As SourceFragment
             Get
@@ -400,12 +504,12 @@ Namespace Criteria.Joins
             End Get
         End Property
 
-        Public Function InjectJoinFilter(ByVal t As Type, ByVal propertyAlias As String, ByVal table As SourceFragment, ByVal column As String) As Core.TemplateBase
+        Public Function InjectJoinFilter(ByVal schema As ObjectMappingEngine, ByVal t As Type, ByVal propertyAlias As String, ByVal table As SourceFragment, ByVal column As String) As Core.TemplateBase
             For Each _fl As Core.IFilter In _condition.GetAllFilters()
                 Dim f As JoinFilter = Nothing
                 Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
                 Dim tm As Core.TemplateBase = Nothing
-                If fl._e1 IsNot Nothing AndAlso fl._e1.First Is t AndAlso fl._e1.Second = propertyAlias Then
+                If fl._e1 IsNot Nothing AndAlso fl._e1.First.GetRealType(schema) Is t AndAlso fl._e1.Second = propertyAlias Then
                     If fl._e2 IsNot Nothing Then
                         f = CreateJoin(table, column, fl._e2.First, fl._e2.Second, fl._oper)
                         tm = CreateOrmFilter(fl._e2.First, fl._e2.Second, fl._oper)
@@ -415,7 +519,7 @@ Namespace Criteria.Joins
                     End If
                 End If
                 If f Is Nothing Then
-                    If fl._e2 IsNot Nothing AndAlso fl._e2.First Is t AndAlso fl._e2.Second = propertyAlias Then
+                    If fl._e2 IsNot Nothing AndAlso fl._e2.First.GetRealType(schema) Is t AndAlso fl._e2.Second = propertyAlias Then
                         If fl._e1 IsNot Nothing Then
                             f = CreateJoin(table, column, fl._e1.First, fl._e1.Second, fl._oper)
                             tm = CreateOrmFilter(fl._e1.First, fl._e1.Second, fl._oper)
@@ -434,9 +538,14 @@ Namespace Criteria.Joins
             Return Nothing
         End Function
 
-        Protected MustOverride Function CreateTableFilter(ByVal table As SourceFragment, ByVal fieldName As String, ByVal oper As FilterOperation) As Core.TemplateBase
-        Protected MustOverride Function CreateOrmFilter(ByVal t As Type, ByVal fieldName As String, ByVal oper As FilterOperation) As Core.TemplateBase
-        Protected MustOverride Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, ByVal t As Type, ByVal fieldName As String, ByVal oper As FilterOperation) As JoinFilter
+        Protected MustOverride Function CreateTableFilter(ByVal table As SourceFragment, ByVal column As String, ByVal oper As FilterOperation) As Core.TemplateBase
+        Protected MustOverride Function CreateOrmFilter(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal oper As FilterOperation) As Core.TemplateBase
+        Protected MustOverride Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal oper As FilterOperation) As JoinFilter
         Protected MustOverride Function CreateJoin(ByVal table As SourceFragment, ByVal column As String, ByVal table2 As SourceFragment, ByVal column2 As String, ByVal oper As FilterOperation) As JoinFilter
+        Protected MustOverride Function _Clone() As Object Implements System.ICloneable.Clone
+
+        Public Function Clone() As OrmJoin
+            Return CType(_Clone(), OrmJoin)
+        End Function
     End Class
 End Namespace

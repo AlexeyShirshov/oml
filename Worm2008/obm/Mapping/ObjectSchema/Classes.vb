@@ -215,7 +215,7 @@
     End Class
 
     ''' <summary>
-    ''' Индексированая по полю <see cref="MapField2Column._fieldName"/> колекция объектов типа <see cref="MapField2Column"/>
+    ''' Индексированая по полю <see cref="MapField2Column._propertyAlias"/> колекция объектов типа <see cref="MapField2Column"/>
     ''' </summary>
     ''' <remarks>
     ''' Наследник абстрактного класс <see cref="Collections.IndexedCollection(Of string, MapField2Column)"/>, реализующий метод <see cref="Collections.IndexedCollection(Of string, MapField2Column).GetKeyForItem" />
@@ -227,7 +227,7 @@
         ''' Возвращает ключ коллекции MapField2Column
         ''' </summary>
         ''' <param name="item">Элемент коллекции</param>
-        ''' <returns>Возвращает <see cref="MapField2Column._fieldName"/></returns>
+        ''' <returns>Возвращает <see cref="MapField2Column._propertyAlias"/></returns>
         ''' <remarks>Используется при индексации коллекции</remarks>
         Protected Overrides Function GetKeyForItem(ByVal item As MapField2Column) As String
             Return item._propertyAlias

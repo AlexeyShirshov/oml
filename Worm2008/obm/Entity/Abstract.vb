@@ -23,7 +23,7 @@ Namespace Orm
         Inherits IEntity
         Sub BeginLoading()
         Sub EndLoading()
-        Sub Init(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Sub Init(ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Function GetMgr() As IGetManager
         ReadOnly Property ObjName() As String
         Function GetOldState() As ObjectState
@@ -31,6 +31,8 @@ Namespace Orm
         Sub CorrectStateAfterLoading(ByVal objectWasCreated As Boolean)
         Sub SetObjectState(ByVal o As ObjectState)
         Sub SetCreateManager(ByVal createManager As ICreateManager)
+        ReadOnly Property IsLoading() As Boolean
+        Sub SetMgrString(ByVal str As String)
     End Interface
 
     Public Interface IEntity
@@ -41,7 +43,7 @@ Namespace Orm
         ReadOnly Property ObjectState() As ObjectState
         Function CreateClone() As Entity
         Sub CopyBody(ByVal [from] As _IEntity, ByVal [to] As _IEntity)
-        Function IsFieldLoaded(ByVal propertyAlias As String) As Boolean
+        Function IsPropertyLoaded(ByVal propertyAlias As String) As Boolean
         ReadOnly Property IsLoaded() As Boolean
         Event ManagerRequired(ByVal sender As IEntity, ByVal args As ManagerRequiredArgs)
         ReadOnly Property CreateManager() As ICreateManager
@@ -49,7 +51,7 @@ Namespace Orm
 
     Public Interface _ICachedEntity
         Inherits ICachedEntity
-        Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Overloads Sub Init(ByVal pk() As PKDesc, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Sub PKLoaded(ByVal pkCount As Integer)
         Sub SetLoaded(ByVal value As Boolean)
         Function SetLoaded(ByVal propertyAlias As String, ByVal loaded As Boolean, ByVal check As Boolean, ByVal schema As ObjectMappingEngine) As Boolean
@@ -62,21 +64,23 @@ Namespace Orm
         Function Save(ByVal mc As OrmManager) As Boolean
         Sub RaiseSaved(ByVal sa As OrmManager.SaveAction)
         Sub SetSpecificSchema(ByVal mpe As ObjectMappingEngine)
-        Sub UpdateCache(ByVal oldObj As ICachedEntity)
+        Sub UpdateCache(ByVal mgr As OrmManager, ByVal oldObj As ICachedEntity)
+        Sub CreateCopyForSaveNewEntry(ByVal mgr As OrmManager, ByVal pk() As PKDesc)
+        Overloads Sub RejectChanges(ByVal mgr As OrmManager)
+        Overloads Sub Load(ByVal mgr As OrmManager)
     End Interface
 
     Public Interface ICachedEntity
         Inherits _IEntity
         ReadOnly Property Key() As Integer
         ReadOnly Property OriginalCopy() As ICachedEntity
-        Sub CreateCopyForSaveNewEntry(ByVal pk() As PKDesc)
         Sub Load()
         Sub RemoveFromCache(ByVal cache As CacheBase)
         Function GetPKValues() As PKDesc()
         Function SaveChanges(ByVal AcceptChanges As Boolean) As Boolean
         Function AcceptChanges(ByVal updateCache As Boolean, ByVal setState As Boolean) As ICachedEntity
         Sub RejectChanges()
-        Sub RejectRelationChanges()
+        Sub RejectRelationChanges(ByVal mc As OrmManager)
         ReadOnly Property HasChanges() As Boolean
         ReadOnly Property ChangeDescription() As String
         Event Saved(ByVal sender As ICachedEntity, ByVal args As ObjectSavedArgs)
@@ -84,7 +88,10 @@ Namespace Orm
         Event Deleted(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event Updated(ByVal sender As ICachedEntity, ByVal args As EventArgs)
         Event OriginalCopyRemoved(ByVal sender As ICachedEntity)
-
+        Function BeginEdit() As IDisposable
+        Function BeginAlter() As IDisposable
+        Sub CheckEditOrThrow()
+        Function Delete() As Boolean
     End Interface
 
     Public Interface ICachedEntityEx
@@ -120,10 +127,10 @@ Namespace Orm
         Function Search(ByVal text As String, ByVal type As SearchType, ByVal queryFields() As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
         Function Search(ByVal text As String, ByVal type As SearchType, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
         Function Search(ByVal text As String, ByVal top As Integer, ByVal key As String) As Worm.Query.QueryCmd
-        Sub Add(ByVal o As _IOrmBase)
-        Sub Add(ByVal o As _IOrmBase, ByVal key As String)
-        Sub Delete(ByVal o As _IOrmBase)
-        Sub Delete(ByVal o As _IOrmBase, ByVal key As String)
+        Sub Add(ByVal o As IOrmBase)
+        Sub Add(ByVal o As IOrmBase, ByVal key As String)
+        Sub Delete(ByVal o As IOrmBase)
+        Sub Delete(ByVal o As IOrmBase, ByVal key As String)
         'Sub Delete(ByVal t As Type)
         'Sub Delete(ByVal t As Type, ByVal key As String)
         Sub Cancel(ByVal t As Type)
@@ -137,7 +144,7 @@ Namespace Orm
 
     Public Interface IOrmBase
         Inherits _ICachedEntity, IM2M
-        Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine, ByVal mgrIdentityString As String)
+        Overloads Sub Init(ByVal id As Object, ByVal cache As CacheBase, ByVal schema As ObjectMappingEngine)
         Property Identifier() As Object
         Function GetOldName(ByVal id As Object) As String
         Function GetName() As String
@@ -246,6 +253,7 @@ Namespace Orm
 
     Public Class PKWrapper
         Private _id As PKDesc()
+        Private _str As String
 
         Public Sub New(ByVal pk() As PKDesc)
             _id = pk
@@ -271,7 +279,7 @@ Namespace Orm
                 Dim find As Boolean
                 For j As Integer = 0 To ids.Length - 1
                     Dim p2 As PKDesc = ids(j)
-                    If p.PropertyAlias = p2.PropertyAlias AndAlso p.Value.Equals(p.Value) Then
+                    If p.PropertyAlias = p2.PropertyAlias AndAlso p.Value.Equals(p2.Value) Then
                         find = True
                         Exit For
                     End If
@@ -284,11 +292,14 @@ Namespace Orm
         End Function
 
         Public Overrides Function ToString() As String
-            Dim sb As New StringBuilder
-            For Each pk As PKDesc In _id
-                sb.Append(pk.PropertyAlias).Append(" = ").Append(pk.Value)
-            Next
-            Return sb.ToString
+            If String.IsNullOrEmpty(_str) Then
+                Dim sb As New StringBuilder
+                For Each pk As PKDesc In _id
+                    sb.Append(pk.PropertyAlias).Append(" = ").Append(pk.Value)
+                Next
+                _str = sb.ToString
+            End If
+            Return _str
         End Function
     End Class
 End Namespace

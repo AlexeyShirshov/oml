@@ -34,21 +34,23 @@ Partial Public Class OrmManager
 
             Dim el As EditableList = e.Entry
             Dim obj As IOrmBase = Nothing, subobj As IOrmBase = Nothing
-            If el.Main.Equals(o1) Then
+            Dim main As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            If Main.Equals(o1) Then
                 obj = o1
                 subobj = o2
-            ElseIf el.Main.Equals(o2) Then
+            ElseIf Main.Equals(o2) Then
                 obj = o2
                 subobj = o1
             End If
 
             If obj IsNot Nothing Then
                 If e.Sort Is Nothing Then
-                    el.Add(subobj.Identifier)
+                    el.Add(subobj)
                 Else
                     Dim s As IOrmSorting = Nothing
-                    Dim col As New ArrayList(mgr.ConvertIds2Objects(el.SubType, el.Added, False))
-                    If Not mgr.CanSortOnClient(el.SubType, col, e.Sort, s) Then
+                    'Dim col As New ArrayList(mgr.ConvertIds2Objects(el.SubType, el.Added, False))
+                    Dim col As New ArrayList(CType(el.Added, ICollection))
+                    If Not OrmManager.CanSortOnClient(el.SubType, col, e.Sort, s) Then
                         Return False
                     End If
                     Dim c As IComparer = Nothing
@@ -62,7 +64,7 @@ Partial Public Class OrmManager
                     End If
                     Dim pos As Integer = col.BinarySearch(subobj, c)
                     If pos < 0 Then
-                        el.Add(subobj.Identifier, Not pos)
+                        el.Add(subobj, Not pos)
                     End If
                 End If
             End If
@@ -75,10 +77,11 @@ Partial Public Class OrmManager
             End If
 
             Dim el As EditableList = e.Entry
-            If el.Main.Equals(o1) Then
-                el.Delete(o2.Identifier)
-            ElseIf el.Main.Equals(o2) Then
-                el.Delete(o1.Identifier)
+            Dim main As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            If main.Equals(o1) Then
+                el.Delete(o2)
+            ElseIf main.Equals(o2) Then
+                el.Delete(o1)
             End If
             Return True
         End Function
@@ -89,7 +92,8 @@ Partial Public Class OrmManager
             End If
 
             Dim el As EditableList = e.Entry
-            If el.Main.Equals(o1) OrElse el.Main.Equals(o2) Then
+            Dim main As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            If main.Equals(o1) OrElse main.Equals(o2) Then
                 Return el.Accept(mgr)
             End If
             Return True
@@ -101,7 +105,8 @@ Partial Public Class OrmManager
             End If
 
             Dim el As EditableList = e.Entry
-            If el.Main.Equals(o1) OrElse el.Main.Equals(o2) Then
+            Dim main As IOrmBase = mgr.GetOrmBaseFromCacheOrCreate(el.MainId, el.MainType)
+            If main.Equals(o1) OrElse main.Equals(o2) Then
                 el.Reject(mgr, False)
             End If
             Return True
@@ -120,13 +125,13 @@ Partial Public Class OrmManager
         Private _disposedValue As Boolean = False        ' To detect redundant calls
         Private _oldSchema As ObjectMappingEngine
         Private _mgr As OrmManager
-        Private _r As Boolean
+        'Private _r As Boolean
 
         Public Sub New(ByVal schema As ObjectMappingEngine)
             MyClass.New(schema, OrmManager.CurrentManager)
         End Sub
 
-        Private Sub ObjectCreated(ByVal obj As ICachedEntity, ByVal mgr As OrmManager)
+        Private Sub ObjectCreated(ByVal mgr As OrmManager, ByVal obj As ICachedEntity)
             CType(obj, _ICachedEntity).SetSpecificSchema(mgr.MappingEngine)
         End Sub
 
@@ -134,10 +139,10 @@ Partial Public Class OrmManager
             _mgr = mgr
             _oldSchema = mgr.MappingEngine
             mgr.SetSchema(schema)
-            _r = mgr.RaiseObjectCreation
+            '_r = mgr.RaiseObjectCreation
             If Not _oldSchema.Equals(schema) Then
-                mgr.RaiseObjectCreation = True
-                AddHandler mgr.ObjectCreated, AddressOf ObjectCreated
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf ObjectCreated
             End If
         End Sub
 
@@ -145,8 +150,8 @@ Partial Public Class OrmManager
         Protected Overridable Sub Dispose(ByVal disposing As Boolean)
             If Not Me._disposedValue Then
                 _mgr.SetSchema(_oldSchema)
-                _mgr.RaiseObjectCreation = _r
-                RemoveHandler _mgr.ObjectCreated, AddressOf ObjectCreated
+                '_mgr.RaiseObjectCreation = _r
+                RemoveHandler _mgr.ObjectLoaded, AddressOf ObjectCreated
             End If
             Me._disposedValue = True
         End Sub
@@ -553,7 +558,8 @@ Partial Public Class OrmManager
                         r = mgr.LoadObjectsIds(Of T)(tt, Entry.Current, mgr.GetStart, mgr.GetLength)
                     End If
                 Else
-                    r = mgr.LoadObjectsIds(Of T)(tt, Entry.Current, mgr.GetStart, mgr.GetLength)
+                    'r = mgr.LoadObjectsIds(Of T)(tt, Entry.Current, mgr.GetStart, mgr.GetLength)
+                    r = CType(mgr.ConvertIds2Objects(tt, Entry.Current, mgr.GetStart, mgr.GetLength, False), Global.Worm.ReadOnlyEntityList(Of T))
                 End If
                 Dim s As Boolean = True
                 r = CType(mgr.ApplyFilter(r, mgr._externalFilter, s), Global.Worm.ReadOnlyEntityList(Of T))
@@ -771,20 +777,6 @@ Partial Public Class OrmManager
     Public Interface ICacheValidator
         Function ValidateItemFromCache(ByVal ce As CachedItem) As Boolean
         Function ValidateBeforCacheProbe() As Boolean
-    End Interface
-
-    Public Interface INewObjects
-        Function GetPKForNewObject(ByVal t As Type) As PKDesc()
-        Function GetNew(ByVal t As Type, ByVal pk() As PKDesc) As _ICachedEntity
-        Sub AddNew(ByVal obj As _ICachedEntity)
-        Sub RemoveNew(ByVal obj As _ICachedEntity)
-        Sub RemoveNew(ByVal t As Type, ByVal pk() As PKDesc)
-    End Interface
-
-    Public Interface INewObjectsEx
-        Inherits INewObjects
-        Overloads Function GetNew(ByVal t As Type) As ICollection(Of _ICachedEntity)
-        Overloads Function GetNew(Of T As _ICachedEntity)() As ICollection(Of T)
     End Interface
 
     Public MustInherit Class CustDelegateBase(Of T As {ICachedEntity})

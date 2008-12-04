@@ -8,7 +8,7 @@ Namespace Criteria.Core
 
     Public Interface IGetFilter
         ReadOnly Property Filter() As IFilter
-        ReadOnly Property Filter(ByVal t As Type) As IFilter
+        'ReadOnly Property Filter(ByVal t As Type) As IFilter
     End Interface
 
     Public Interface IFilter
@@ -61,7 +61,7 @@ Namespace Criteria.Core
         Inherits ITemplate
         Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, ByVal obj As ICachedEntity) As String
         'Function MakeFilter(ByVal schema As OrmSchemaBase, ByVal oschema As IOrmObjectSchemaBase, ByVal obj As OrmBase) As IEntityFilter
-        Sub SetType(ByVal t As Type)
+        Sub SetType(ByVal [alias] As ObjectAlias)
     End Interface
 
     Public MustInherit Class FilterBase
@@ -157,11 +157,11 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public ReadOnly Property Filter(ByVal t As System.Type) As IFilter Implements IGetFilter.Filter
-            Get
-                Return Me
-            End Get
-        End Property
+        'Public ReadOnly Property Filter(ByVal t As System.Type) As IFilter Implements IGetFilter.Filter
+        '    Get
+        '        Return Me
+        '    End Get
+        'End Property
 
         'Protected Function _MakeQueryStmt(ByVal schema As QueryGenerator, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String Implements IFilter.MakeQueryStmt
         '    Throw New NotSupportedException
@@ -249,7 +249,8 @@ Namespace Criteria.Core
                 End If
 
                 Dim t As Type = obj.GetType
-                If Template.Type Is t Then
+                Dim rt As Type = Template.ObjectSource.GetRealType(schema)
+                If rt Is t Then
                     Dim r As IEvaluableValue.EvalResult = IEvaluableValue.EvalResult.NotFound
                     Dim v As Object = obj.GetValueOptimized(Nothing, Template.PropertyAlias, oschema) 'schema.GetFieldValue(obj, _fieldname)
                     r = evval.Eval(v, Template)
@@ -263,9 +264,9 @@ Namespace Criteria.Core
 
                     Return r
                 Else
-                    Dim o As IOrmBase = schema.GetJoinObj(oschema, obj, Template.Type)
+                    Dim o As IOrmBase = schema.GetJoinObj(oschema, obj, rt)
                     If o IsNot Nothing Then
-                        Return Eval(schema, o, schema.GetObjectSchema(Template.Type))
+                        Return Eval(schema, o, schema.GetObjectSchema(rt))
                     End If
                 End If
             End If
@@ -330,12 +331,13 @@ Namespace Criteria.Core
             Dim prname As String = Value.GetParam(schema, pname, almgr, pd, Nothing, Nothing)
 
             Dim map As MapField2Column = oschema.GetFieldColumnMap()(Template.PropertyAlias)
+            Dim rt As Type = Template.ObjectSource.GetRealType(schema)
 
             Dim v As IEvaluableValue = TryCast(val, IEvaluableValue)
             If v IsNot Nothing AndAlso v.Value Is DBNull.Value Then
-                If schema.GetFieldTypeByName(Template.Type, Template.PropertyAlias) Is GetType(Byte()) Then
+                If schema.GetPropertyTypeByName(rt, _oschema, Template.PropertyAlias) Is GetType(Byte()) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Binary
-                ElseIf schema.GetFieldTypeByName(Template.Type, Template.PropertyAlias) Is GetType(Decimal) Then
+                ElseIf schema.GetPropertyTypeByName(rt, _oschema, Template.PropertyAlias) Is GetType(Decimal) Then
                     pname.GetParameter(prname).DbType = System.Data.DbType.Decimal
                 End If
             End If
@@ -349,7 +351,11 @@ Namespace Criteria.Core
             End If
 
             If _oschema Is Nothing Then
-                _oschema = schema.GetObjectSchema(Template.Type)
+                If Template.ObjectSource.AnyType IsNot Nothing Then
+                    _oschema = schema.GetObjectSchema(Template.ObjectSource.AnyType)
+                Else
+                    _oschema = schema.GetObjectSchema(schema.GetTypeByEntityName(Template.ObjectSource.AnyEntityName))
+                End If
             End If
 
             Return MakeSingleQueryStmt(_oschema, schema, almgr, pname)
@@ -441,22 +447,33 @@ Namespace Criteria.Core
         Inherits TemplateBase
         Implements IOrmFilterTemplate
 
-        Private _t As Type
+        Private _os As ObjectSource
         Private _fieldname As String
-        Private _en As String
 
         'Private _appl As Boolean
 
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
-            _t = t
+            _os = New ObjectSource(t)
             _fieldname = propertyAlias
             '_appl = appl
         End Sub
 
         Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
             MyBase.New(oper)
-            _en = entityName
+            _os = New ObjectSource(entityName)
+            _fieldname = propertyAlias
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
+            MyBase.New(oper)
+            _os = New ObjectSource([alias])
+            _fieldname = propertyAlias
+        End Sub
+
+        Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal oper As FilterOperation) ', ByVal appl As Boolean)
+            MyBase.New(oper)
+            _os = os
             _fieldname = propertyAlias
         End Sub
 
@@ -465,10 +482,10 @@ Namespace Criteria.Core
                 Throw New ArgumentNullException("obj")
             End If
 
-            Dim lt As Type = _t
+            Dim lt As Type = _os.AnyType
             If lt Is Nothing Then
-                If Not String.IsNullOrEmpty(_en) Then
-                    lt = schema.GetTypeByEntityName(_en)
+                If Not String.IsNullOrEmpty(_os.AnyEntityName) Then
+                    lt = schema.GetTypeByEntityName(_os.AnyEntityName)
                 Else
                     Throw New InvalidOperationException(String.Format("Type is not specified in filter: {0} {1}", _fieldname, OperToString))
                 End If
@@ -482,25 +499,33 @@ Namespace Criteria.Core
                 Return MakeFilter(schema, schema.GetObjectSchema(lt), o)
             Else
                 Dim v As Object = obj.GetValueOptimized(Nothing, _fieldname, oschema)
-                If lt Is Nothing AndAlso Not String.IsNullOrEmpty(_en) Then
-                    Return CreateEntityFilter(_en, _fieldname, New ScalarValue(v), Operation)
+                If _os.Type IsNot Nothing Then
+                    Return CreateEntityFilter(_os.Type, _fieldname, New ScalarValue(v), Operation)
+                ElseIf Not String.IsNullOrEmpty(_os.EntityName) Then
+                    Return CreateEntityFilter(_os.EntityName, _fieldname, New ScalarValue(v), Operation)
                 Else
-                    Return CreateEntityFilter(lt, _fieldname, New ScalarValue(v), Operation)
+                    Return CreateEntityFilter(_os.ObjectAlias, _fieldname, New ScalarValue(v), Operation)
                 End If
             End If
         End Function
 
-        Public ReadOnly Property EntityName() As String
+        Public ReadOnly Property ObjectSource() As ObjectSource
             Get
-                Return _en
+                Return _os
             End Get
         End Property
 
-        Public ReadOnly Property Type() As Type
-            Get
-                Return _t
-            End Get
-        End Property
+        'Public ReadOnly Property EntityName() As String
+        '    Get
+        '        Return _en
+        '    End Get
+        'End Property
+
+        'Public ReadOnly Property Type() As Type
+        '    Get
+        '        Return _t
+        '    End Get
+        'End Property
 
         Public ReadOnly Property PropertyAlias() As String
             Get
@@ -508,9 +533,13 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public Sub SetType(ByVal t As System.Type) Implements IOrmFilterTemplate.SetType
-            If _t Is Nothing AndAlso String.IsNullOrEmpty(_en) Then
-                _t = t
+        Public Sub SetType(ByVal oa As ObjectAlias) Implements IOrmFilterTemplate.SetType
+            If _os Is Nothing Then
+                If oa.Type IsNot Nothing Then
+                    _os = New ObjectSource(oa.Type)
+                Else
+                    _os = New ObjectSource(oa.EntityName)
+                End If
             End If
         End Sub
 
@@ -522,7 +551,7 @@ Namespace Criteria.Core
             If obj Is Nothing Then
                 Return False
             End If
-            Return _t Is obj._t AndAlso _fieldname Is obj._fieldname AndAlso Operation = obj.Operation AndAlso String.Equals(_en, obj._en)
+            Return _os.Equals(obj._os) AndAlso _fieldname Is obj._fieldname AndAlso Operation = obj.Operation
         End Function
 
         Public Overrides Function GetHashCode() As Integer
@@ -530,11 +559,7 @@ Namespace Criteria.Core
         End Function
 
         Public Overrides Function GetStaticString() As String
-            If _t Is Nothing Then
-                Return _en & _fieldname & OperToString()
-            Else
-                Return _t.ToString & _fieldname & OperToString()
-            End If
+            Return _os.ToStaticString & _fieldname & OperToString()
         End Function
 
         Public Function MakeHash(ByVal schema As ObjectMappingEngine, ByVal oschema As IObjectSchemaBase, ByVal obj As ICachedEntity) As String Implements IOrmFilterTemplate.MakeHash
@@ -547,6 +572,7 @@ Namespace Criteria.Core
 
         Protected MustOverride Function CreateEntityFilter(ByVal t As Type, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilterBase
         Protected MustOverride Function CreateEntityFilter(ByVal entityName As String, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilterBase
+        Protected MustOverride Function CreateEntityFilter(ByVal oa As ObjectAlias, ByVal fieldName As String, ByVal value As IParamFilterValue, ByVal operation As Worm.Criteria.FilterOperation) As EntityFilterBase
 
         'Public MustOverride ReadOnly Property Operation() As FilterOperation Implements IOrmFilterTemplate.Operation
         'Public MustOverride ReadOnly Property OperToString() As String Implements ITemplate.OperToString
@@ -613,7 +639,7 @@ Namespace Criteria.Core
         End Function
 
         Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As ICreateParam, ByVal columns As System.Collections.Generic.List(Of String)) As String
-            Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
+            'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
             If schema Is Nothing Then
                 Throw New ArgumentNullException("schema")
@@ -622,7 +648,7 @@ Namespace Criteria.Core
             Dim pf As IParamFilterValue = TryCast(Value, IParamFilterValue)
 
             If pf Is Nothing OrElse pf.ShouldUse Then
-                Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, tableAliases, _values)
+                Dim values As List(Of String) = ObjectMappingEngine.ExtractValues(schema, almgr, _values)
 
                 Return String.Format(_format, values.ToArray) & OperationString & GetParam(schema, pname)
             Else
@@ -765,10 +791,10 @@ Namespace Criteria.Core
             End Get
         End Property
 
-        Public ReadOnly Property Filter(ByVal t As System.Type) As IFilter Implements IGetFilter.Filter
-            Get
-                Return Me
-            End Get
-        End Property
+        'Public ReadOnly Property Filter(ByVal t As System.Type) As IFilter Implements IGetFilter.Filter
+        '    Get
+        '        Return Me
+        '    End Get
+        'End Property
     End Class
 End Namespace

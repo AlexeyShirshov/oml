@@ -98,17 +98,18 @@ Namespace Xml
             Dim l As New List(Of ColumnAttribute)
             Dim has_id As Boolean = False
             For Each c As String In cols
-                Dim col As ColumnAttribute = MappingEngine.GetColumnByFieldName(GetType(T), c)
+                Dim col As ColumnAttribute = MappingEngine.GetColumnByPropertyAlias(GetType(T), c)
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
-                If c = OrmBaseT.PKName Then
+                If (MappingEngine.GetAttributes(GetType(T), col) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     has_id = True
                 End If
                 l.Add(col)
             Next
             If Not has_id Then
-                l.Add(MappingEngine.GetColumnByFieldName(GetType(T), OrmBaseT.PKName))
+                'l.Add(SQLGenerator.GetColumnByFieldName(GetType(T), OrmBaseT.PKName))
+                l.Add(MappingEngine.GetPrimaryKeys(GetType(T))(0))
             End If
             Return New FilterCustDelegate(Of T)(Me, filter, l, sort, key, id)
         End Function
@@ -220,7 +221,7 @@ Namespace Xml
             End If
 
             Dim dic As Generic.IDictionary(Of Object, T) = GetDictionary(Of T)()
-            Dim oschema As IOrmObjectSchema = CType(MappingEngine.GetObjectSchema(original_type), IOrmObjectSchema)
+            Dim oschema As IObjectSchemaBase = MappingEngine.GetObjectSchema(original_type)
             Dim ft As New PerfCounter
             Do While nodes.MoveNext
                 LoadFromNodeIterator(Of T)(nodes.Current.Clone, dic, values, _loadedInLastFetch, oschema, withLoad)
@@ -241,7 +242,7 @@ Namespace Xml
         End Function
 
         Protected Sub LoadFromNodeIterator(Of T As {New, _ICachedEntity})(ByVal node As XPathNavigator, ByVal dic As Generic.IDictionary(Of Object, T), _
-            ByVal values As IList(Of T), ByRef loaded As Integer, ByVal oschema As IOrmObjectSchema, ByVal withLoad As Boolean)
+            ByVal values As IList(Of T), ByRef loaded As Integer, ByVal oschema As IObjectSchemaBase, ByVal withLoad As Boolean)
             'Dim id As Integer = CInt(dr.GetValue(idx))
             Dim obj As T = New T '= CType(CreateDBObject(Of T)(id, dic, False), T)
             Dim oo As T = obj
@@ -251,7 +252,7 @@ Namespace Xml
                 If LoadPK(oschema, node, obj) Then
                     obj = CType(NormalizeObject(obj, CType(dic, System.Collections.IDictionary)), T)
                     If obj.ObjectState = ObjectState.Created Then
-                        obj.CreateCopyForSaveNewEntry(pk)
+                        obj.CreateCopyForSaveNewEntry(Me, pk)
                         'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
                     End If
 
@@ -276,12 +277,12 @@ Namespace Xml
             End Using
         End Sub
 
-        Protected Function LoadPK(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
+        Protected Function LoadPK(ByVal oschema As IObjectSchemaBase, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim cnt As Integer
             For Each c As ColumnAttribute In MappingEngine.GetSortedFieldList(original_type)
                 If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) = Field2DbRelations.PK Then
-                    Dim attr As String = MappingEngine.GetColumnNameByFieldNameInternal(original_type, c.PropertyAlias, False)
+                    Dim attr As String = MappingEngine.GetColumnNameByPropertyAlias(oschema, c.PropertyAlias, False, Nothing, Nothing)
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -299,14 +300,14 @@ Namespace Xml
             Return cnt > 0
         End Function
 
-        Protected Function LoadData(ByVal oschema As IOrmObjectSchema, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
+        Protected Function LoadData(ByVal oschema As IObjectSchemaBase, ByVal node As XPathNavigator, ByVal obj As _ICachedEntity) As Boolean
             Dim original_type As Type = obj.GetType
             Dim columns As List(Of ColumnAttribute) = MappingEngine.GetSortedFieldList(original_type)
             For Each de As DictionaryEntry In MappingEngine.GetProperties(original_type)
                 Dim c As ColumnAttribute = CType(de.Key, ColumnAttribute)
                 Dim pi As Reflection.PropertyInfo = CType(de.Value, Reflection.PropertyInfo)
                 If (MappingEngine.GetAttributes(oschema, c) And Field2DbRelations.PK) <> Field2DbRelations.PK Then
-                    Dim attr As String = MappingEngine.GetColumnNameByFieldNameInternal(original_type, c.PropertyAlias, False)
+                    Dim attr As String = MappingEngine.GetColumnNameByPropertyAlias(oschema, c.PropertyAlias, False, Nothing, Nothing)
                     Dim n As XPathNavigator = node.Clone
                     Dim nodes As XPathNodeIterator = n.Select(attr)
                     Dim sn As Boolean
@@ -323,6 +324,10 @@ Namespace Xml
                 End If
             Next
             obj.CheckIsAllLoaded(MappingEngine, columns.Count)
+        End Function
+
+        Public Overrides Function GetObjectFromStorage(ByVal obj As Orm._ICachedEntity) As Orm.ICachedEntity
+            Throw New NotImplementedException
         End Function
     End Class
 End Namespace

@@ -71,7 +71,7 @@ Namespace Orm
     End Class
 
     Public Enum PropType
-        ObjectField
+        ObjectProperty
         TableColumn
         CustomValue
         Subquery
@@ -82,7 +82,7 @@ Namespace Orm
         Implements Cache.IQueryDependentTypes, Criteria.Values.IQueryElement
 
         Private _field As String
-        Private _type As Type
+        Private _osrc As ObjectSource
         Private _table As SourceFragment
         Private _column As String
         Private _custom As String
@@ -100,9 +100,24 @@ Namespace Orm
             _field = propertyAlias
         End Sub
 
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+            _field = propertyAlias
+            _osrc = os
+        End Sub
+
         Public Sub New(ByVal t As Type, ByVal propertyAlias As String)
             _field = propertyAlias
-            _type = t
+            _osrc = New ObjectSource(t)
+        End Sub
+
+        Public Sub New(ByVal entityName As String, ByVal propertyAlias As String)
+            _field = propertyAlias
+            _osrc = New ObjectSource(entityName)
+        End Sub
+
+        Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String)
+            _field = propertyAlias
+            _osrc = New ObjectSource([alias])
         End Sub
 
         Public Sub New(ByVal t As SourceFragment, ByVal column As String)
@@ -152,8 +167,8 @@ Namespace Orm
 
         Public ReadOnly Property PropType() As PropType
             Get
-                If _type IsNot Nothing AndAlso Not String.IsNullOrEmpty(_field) Then
-                    Return Orm.PropType.ObjectField
+                If _osrc IsNot Nothing AndAlso Not String.IsNullOrEmpty(_field) Then
+                    Return Orm.PropType.ObjectProperty
                 ElseIf _table IsNot Nothing AndAlso Not String.IsNullOrEmpty(_column) Then
                     Return Orm.PropType.TableColumn
                 Else
@@ -215,15 +230,33 @@ Namespace Orm
             End Set
         End Property
 
-        Public Property Type() As Type
+        'Public ReadOnly Property ObjectAlias() As ObjectAlias
+        '    Get
+        '        If _osrc Is Nothing Then
+        '            Return Nothing
+        '        End If
+        '        Return _osrc.ObjectAlias
+        '    End Get
+        'End Property
+
+        Public Property ObjectSource() As ObjectSource
             Get
-                Return _type
+                Return _osrc
             End Get
-            Protected Friend Set(ByVal value As Type)
-                _type = value
-                RaiseOnChange()
+            Friend Set(ByVal value As ObjectSource)
+                _osrc = value
             End Set
         End Property
+
+        'Public Property Type() As Type
+        '    Get
+        '        Return _type
+        '    End Get
+        '    Protected Friend Set(ByVal value As Type)
+        '        _type = value
+        '        RaiseOnChange()
+        '    End Set
+        'End Property
 
         Public Property Table() As SourceFragment
             Get
@@ -260,8 +293,8 @@ Namespace Orm
         End Property
 
         Public Overridable Function _ToString() As String Implements Criteria.Values.IQueryElement._ToString
-            If _type IsNot Nothing Then
-                Return _type.ToString & "$" & _field
+            If _osrc IsNot Nothing Then
+                Return _osrc.ToStaticString & "$" & _field
             Else
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column
@@ -281,8 +314,8 @@ Namespace Orm
             End If
         End Function
 
-        Public Function GetCustomExpressionValues(ByVal schema As ObjectMappingEngine, ByVal aliases As IDictionary(Of SourceFragment, String)) As String()
-            Return ObjectMappingEngine.ExtractValues(schema, aliases, _values).ToArray
+        Public Function GetCustomExpressionValues(ByVal schema As ObjectMappingEngine, ByVal almgr As IPrepareTable) As String()
+            Return ObjectMappingEngine.ExtractValues(schema, almgr, _values).ToArray
         End Function
 
         Public Overrides Function Equals(ByVal obj As Object) As Boolean
@@ -297,7 +330,7 @@ Namespace Orm
                 If Not String.IsNullOrEmpty(_custom) Then
                     b = _custom = s._custom
                 ElseIf Not String.IsNullOrEmpty(_field) Then
-                    b = _field = s._field AndAlso _type Is s._type
+                    b = _field = s._field AndAlso _osrc.Equals(s._osrc)
                 ElseIf Not String.IsNullOrEmpty(_column) Then
                     b = _column = s._column AndAlso _table Is s._table
                 ElseIf _q IsNot Nothing Then
@@ -321,8 +354,8 @@ Namespace Orm
         End Function
 
         Public Function GetStaticString(ByVal mpe As ObjectMappingEngine) As String Implements Criteria.Values.IQueryElement.GetStaticString
-            If _type IsNot Nothing Then
-                Return _type.ToString & "$" & _field
+            If _osrc IsNot Nothing Then
+                Return _osrc.ToStaticString & "$" & _field
             Else
                 If _table IsNot Nothing Then
                     Return _table.RawName & "$" & _column

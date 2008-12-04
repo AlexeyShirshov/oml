@@ -28,7 +28,7 @@ Namespace Database
                     Throw New ArgumentNullException("obj parameter cannot be nothing")
                 End If
 
-                Assert(obj.ObjectState = ObjectState.Modified, "Object " & obj.ObjName & " should be in Modified state")
+                'Assert(obj.ObjectState = ObjectState.Modified , "Object " & obj.ObjName & " should be in Modified state")
                 'Dim t As Type = obj.GetType
 
                 Dim params As IEnumerable(Of System.Data.Common.DbParameter) = Nothing
@@ -354,9 +354,10 @@ Namespace Database
                 Dim t As Type = Nothing
 #If DEBUG Then
                 For Each fl As Worm.Database.Criteria.Core.EntityFilter In f.GetAllFilters
+                    Dim rt As Type = fl.Template.ObjectSource.GetRealType(mgr.MappingEngine)
                     If t Is Nothing Then
-                        t = fl.Template.Type
-                    ElseIf t IsNot fl.Template.Type Then
+                        t = fl.Template.ObjectSource.GetRealType(mgr.MappingEngine)
+                    ElseIf t IsNot fl.Template.ObjectSource.GetRealType(mgr.MappingEngine) Then
                         Throw New InvalidOperationException("All filters must have the same type")
                     End If
                 Next
@@ -577,17 +578,18 @@ l1:
             Dim l As New List(Of ColumnAttribute)
             Dim has_id As Boolean = False
             For Each c As String In cols
-                Dim col As ColumnAttribute = SQLGenerator.GetColumnByFieldName(GetType(T), c)
+                Dim col As ColumnAttribute = SQLGenerator.GetColumnByPropertyAlias(GetType(T), c)
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
-                If c = OrmBaseT.PKName Then
+                If (MappingEngine.GetAttributes(GetType(T), col) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     has_id = True
                 End If
                 l.Add(col)
             Next
             If Not has_id Then
-                l.Add(SQLGenerator.GetColumnByFieldName(GetType(T), OrmBaseT.PKName))
+                'l.Add(SQLGenerator.GetColumnByFieldName(GetType(T), OrmBaseT.PKName))
+                l.Add(MappingEngine.GetPrimaryKeys(GetType(T))(0))
             End If
             Return New FilterCustDelegate(Of T)(Me, CType(filter, IFilter), l, sort, key, id)
         End Function
@@ -657,7 +659,7 @@ l1:
                         'Dim js As New List(Of OrmJoin)
                         'js.Add(j)
                         'js.AddRange(Schema.GetAllJoins(selectedType))
-                        Dim columns As String = SQLGenerator.GetSelectColumnList(selectedType, Nothing, Nothing, schema2)
+                        Dim columns As String = SQLGenerator.GetSelectColumnList(selectedType, Nothing, Nothing, schema2, Nothing)
                         sb.Append(SQLGenerator.Select(ct, almgr, params, q, arr, columns, cfi))
                     Else
                         sb.Append(SQLGenerator.Select(ct, almgr, params, q, arr, Nothing, cfi))
@@ -677,10 +679,10 @@ l1:
                     SQLGenerator.AppendNativeTypeJoins(selectedType, almgr, If(mt_schema2 IsNot Nothing, mt_schema2.GetTables, Nothing), sb, params, cs.Table, id_clm, appendMainTable, GetFilterInfo, schema2)
                     If withLoad AndAlso mt_schema2 IsNot Nothing Then
                         For Each tbl As SourceFragment In mt_schema2.GetTables
-                            If almgr.Aliases.ContainsKey(tbl) Then
+                            If almgr.ContainsKey(tbl, Nothing) Then
                                 'Dim [alias] As String = almgr.Aliases(tbl)
                                 'sb = sb.Replace(tbl.TableName & ".", [alias] & ".")
-                                almgr.Replace(SQLGenerator, tbl, sb)
+                                almgr.Replace(SQLGenerator, tbl, Nothing, sb)
                             End If
                         Next
                     End If
@@ -778,7 +780,7 @@ l1:
                 Using dr As System.Data.IDataReader = cmd.ExecuteReader
                     _exec = et.GetTime
                     Dim firstidx As Integer = 0
-                    Dim ss() As String = MappingEngine.GetPrimaryKeysName(firstType, False)
+                    Dim ss() As String = MappingEngine.GetPrimaryKeysName(firstType, False, Nothing, Nothing, Nothing)
                     If ss.Length > 1 Then
                         Throw New OrmManagerException("Connected type must use single primary key")
                     End If
@@ -794,7 +796,7 @@ l1:
                     End Try
 
                     Dim secidx As Integer = 0
-                    ss = MappingEngine.GetPrimaryKeysName(secondType, False)
+                    ss = MappingEngine.GetPrimaryKeysName(secondType, False, Nothing, Nothing, Nothing)
                     If ss.Length > 1 Then
                         Throw New OrmManagerException("Connected type must use single primary key")
                     End If
@@ -1044,14 +1046,16 @@ l1:
                     Dim id2 As Object = o2.Identifier
                     'Dim k As Integer = o1.Identifier
                     'Dim v As Integer = o2.Identifier
+                    Dim toAdd As IOrmBase = o1
                     If o2.GetType Is type Then
                         id1 = o2.Identifier
                         id2 = o1.Identifier
+                        toAdd = o2
                     End If
 
                     Dim el As EditableList = Nothing
                     If edic.TryGetValue(id1, el) Then
-                        el.Add(id2)
+                        el.Add(toAdd)
                     Else
                         Dim l As New List(Of Object)
                         l.Add(id2)
@@ -1114,16 +1118,16 @@ l1:
                                 Do While dr.Read
                                     Dim id1 As Object = dr.GetValue(0)
                                     Dim id2 As Object = dr.GetValue(1)
+                                    Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id2)
                                     Dim el As EditableList = Nothing
                                     If edic.TryGetValue(id1, el) Then
-                                        el.Add(id2)
+                                        el.Add(obj)
                                     Else
                                         Dim l As New List(Of Object)
                                         l.Add(id2)
                                         el = New EditableList(id1, l, type, type2load, Nothing)
                                         edic.Add(id1, el)
                                     End If
-                                    Dim obj As T = GetOrmBaseFromCacheOrCreate(Of T)(id2)
                                     If withLoad AndAlso (ec Is Nothing OrElse Not ec.IsDeleted(type2load, obj.Key)) Then
                                         If obj.ObjectState <> ObjectState.Modified Then
                                             Using obj.GetSyncRoot()
@@ -1177,7 +1181,8 @@ l1:
                 sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of ColumnAttribute)
-                arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
+                'arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
+                arr.Add(MappingEngine.GetPrimaryKeys(original_type)(0))
                 sb.Append(SQLGenerator.SelectID(original_type, almgr, params, GetFilterInfo))
             End If
 
@@ -1238,7 +1243,8 @@ l1:
                 sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
             Else
                 arr = New Generic.List(Of ColumnAttribute)
-                arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
+                'arr.Add(New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
+                arr.Add(MappingEngine.GetPrimaryKeys(original_type)(0))
                 sb.Append(SQLGenerator.SelectID(original_type, almgr, params, GetFilterInfo))
             End If
 
@@ -1379,11 +1385,21 @@ l1:
         End Sub
 
         Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
-            ByVal arr As Generic.IList(Of ColumnAttribute), ByVal obj As _ICachedEntity, _
-            ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
+           ByVal arr As Generic.IList(Of ColumnAttribute), ByVal obj As _ICachedEntity, _
+           ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean)
             Invariant()
 
             Dim dic As IDictionary = GetDictionary(obj.GetType)
+
+            LoadSingleObject(cmd, arr, obj, check_pk, load, modifiedloaded, dic)
+        End Sub
+
+        Protected Sub LoadSingleObject(ByVal cmd As System.Data.Common.DbCommand, _
+            ByVal arr As Generic.IList(Of ColumnAttribute), ByVal obj As _ICachedEntity, _
+            ByVal check_pk As Boolean, ByVal load As Boolean, ByVal modifiedloaded As Boolean, _
+            ByVal dic As IDictionary)
+            Invariant()
+
             Dim ec As OrmCache = TryCast(_cache, OrmCache)
             Try
                 If load AndAlso ec IsNot Nothing Then
@@ -1450,7 +1466,7 @@ l1:
                             End If
                         ElseIf Not obj.IsLoaded AndAlso Not loaded AndAlso dr.RecordsAffected > 0 Then
                             'insert without select
-                            obj.CreateCopyForSaveNewEntry(Nothing)
+                            obj.CreateCopyForSaveNewEntry(Me, Nothing)
                         Else
                             If dr.RecordsAffected <> -1 Then
                                 'obj.CreateCopyForSaveNewEntry(Nothing)
@@ -1606,18 +1622,19 @@ l1:
         End Sub
 
         Protected Function GetPrimaryKeyIdx(ByVal cmdtext As String, ByVal original_type As Type, ByVal dr As System.Data.IDataReader) As Integer
-            Dim idx As Integer = -1
-            Dim pk_name As String = MappingEngine.GetPrimaryKeysName(original_type, False)(0)
-            Try
-                idx = dr.GetOrdinal(pk_name)
-            Catch ex As IndexOutOfRangeException
-                If _mcSwitch.TraceError Then
-                    Trace.WriteLine("Invalid column name " & pk_name & " in " & cmdtext)
-                    Trace.WriteLine(Environment.StackTrace)
-                End If
-                Throw New OrmManagerException("Cannot get primary key ordinal", ex)
-            End Try
-            Return idx
+            Throw New NotSupportedException
+            'Dim idx As Integer = -1
+            'Dim pk_name As String = MappingEngine.GetPrimaryKeysName(original_type, False, Nothing, Nothing, Nothing)(0)
+            'Try
+            '    idx = dr.GetOrdinal(pk_name)
+            'Catch ex As IndexOutOfRangeException
+            '    If _mcSwitch.TraceError Then
+            '        Trace.WriteLine("Invalid column name " & pk_name & " in " & cmdtext)
+            '        Trace.WriteLine(Environment.StackTrace)
+            '    End If
+            '    Throw New OrmManagerException("Cannot get primary key ordinal", ex)
+            'End Try
+            'Return idx
         End Function
 
         Private Sub AfterLoadingProcess(ByVal dic As IDictionary, ByVal obj As _IEntity, ByRef lock As IDisposable, ByRef ro As _IEntity)
@@ -1714,6 +1731,8 @@ l1:
             ByVal propertyMap As Collections.IndexedCollection(Of String, MapField2Column), ByVal props As IDictionary) As _IEntity
 
             Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
+
+            obj.SetMgrString(IdentityString)
 
             Dim original_type As Type = obj.GetType
             Dim fv As IDBValueFilter = TryCast(oschema, IDBValueFilter)
@@ -1827,39 +1846,37 @@ l1:
                         'Threading.Monitor.Enter(dic)
                         'lock = True
 
-                        Dim robj As ICachedEntity = NormalizeObject(ce, dic, fromRS)
-                        Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
+                        If dic IsNot Nothing Then
+                            Dim robj As ICachedEntity = NormalizeObject(ce, dic, fromRS)
+                            Dim fromCache As Boolean = Not Object.ReferenceEquals(robj, ce)
 
-                        obj = robj
-                        ce = CType(obj, _ICachedEntity)
-                        SyncLock dic
-                            If fromCache Then
-                                If obj.ObjectState = ObjectState.Created Then
-                                    Using obj.GetSyncRoot
-                                        Return obj
-                                    End Using
-                                ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
-                                    Return obj
-                                Else
-                                    obj.BeginLoading()
-                                End If
-                            Else
-                                If _raiseCreated Then
-                                    RaiseObjectCreated(ce)
-                                End If
-
-                                If fromRS Then
-                                Else
+                            obj = robj
+                            ce = CType(obj, _ICachedEntity)
+                            SyncLock dic
+                                If fromCache Then
                                     If obj.ObjectState = ObjectState.Created Then
-                                        ce.CreateCopyForSaveNewEntry(oldpk)
-                                        'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                                        Using obj.GetSyncRoot
+                                            Return obj
+                                        End Using
+                                    ElseIf obj.ObjectState = ObjectState.Modified OrElse obj.ObjectState = ObjectState.Deleted Then
+                                        Return obj
+                                    Else
+                                        obj.BeginLoading()
+                                    End If
+                                Else
+                                    If fromRS Then
+                                    Else
+                                        If obj.ObjectState = ObjectState.Created Then
+                                            ce.CreateCopyForSaveNewEntry(Me, oldpk)
+                                            'Cache.Modified(obj).Reason = ModifiedObject.ReasonEnum.SaveNew
+                                        End If
                                     End If
                                 End If
-                            End If
-                        End SyncLock
+                            End SyncLock
+                        End If
                     End If
                 ElseIf ce IsNot Nothing AndAlso Not fromRS AndAlso obj.ObjectState = ObjectState.Created Then
-                    ce.CreateCopyForSaveNewEntry(Nothing)
+                    ce.CreateCopyForSaveNewEntry(Me, Nothing)
                 End If
 
                 If pk_count < selectList.Count Then
@@ -1887,7 +1904,11 @@ l1:
                         End If
 
                         If pi Is Nothing Then
-                            obj.SetValueOptimized(pi, propertyAlias, oschema, value)
+                            If dr.IsDBNull(idx + displacement) Then
+                                obj.SetValueOptimized(pi, propertyAlias, oschema, Nothing)
+                            Else
+                                obj.SetValueOptimized(pi, propertyAlias, oschema, value)
+                            End If
                             If ce IsNot Nothing Then ce.SetLoaded(c, True, False, MappingEngine)
                         Else
                             Dim att As Field2DbRelations = attrs(idx)
@@ -1928,6 +1949,9 @@ l1:
                                     End If
                                     Dim o As IOrmBase = GetOrmBaseFromCacheOrCreate(value, type_created)
                                     obj.SetValueOptimized(pi, propertyAlias, oschema, o)
+                                    If o IsNot Nothing Then
+                                        o.SetCreateManager(obj.CreateManager)
+                                    End If
                                     If ce IsNot Nothing Then ce.SetLoaded(c, True, True, MappingEngine)
                                 ElseIf GetType(System.Xml.XmlDocument) Is propType AndAlso TypeOf (value) Is String Then
                                     Dim o As New System.Xml.XmlDocument
@@ -2038,8 +2062,11 @@ l1:
                 If Not loading Then obj.EndLoading()
             End Try
 
-            If ce IsNot Nothing Then ce.CheckIsAllLoaded(MappingEngine, selectList.Count)
-            'End Using
+            If ce IsNot Nothing Then
+                ce.CheckIsAllLoaded(MappingEngine, selectList.Count)
+                RaiseObjectLoaded(ce)
+            End If
+
 
             Return obj
         End Function
@@ -2325,7 +2352,7 @@ l1:
 
             length = Math.Min(length, objs.Count - start)
 
-            Dim ids As Generic.List(Of Object) = FormPKValues(Of T2)(Me, objs, start, length)
+            Dim ids As Generic.List(Of Object) = FormPKValues(Of T2)(_cache, objs, start, length)
             If ids.Count < 1 Then
                 'Dim l As New List(Of T)
                 'For Each o As T In objs
@@ -2346,7 +2373,8 @@ l1:
             Dim values As New Generic.List(Of T2)
             Dim pcnt As Integer = params.Params.Count
             Dim nextp As Integer = pcnt
-            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, OrmBaseT.PKName, almgr, params, original_type, True)
+            Dim pkname As String = MappingEngine.GetPrimaryKeys(original_type)(0).PropertyAlias
+            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, pkname, almgr, params, original_type, True)
                 Dim sb_cmd As New StringBuilder
                 sb_cmd.Append(sb.ToString).Append(cmd_str.First)
 
@@ -2474,7 +2502,7 @@ l1:
 
             length = Math.Min(length, objs.Count - start)
 
-            Dim ids As Generic.List(Of Object) = FormPKValues(Of T2)(Me, objs, start, length)
+            Dim ids As Generic.List(Of Object) = FormPKValues(Of T2)(_cache, objs, start, length)
             If ids.Count < 1 Then
                 'Dim l As New List(Of T)
                 'For Each o As T In objs
@@ -2495,7 +2523,8 @@ l1:
             Dim values As New Generic.List(Of T2)
             Dim pcnt As Integer = params.Params.Count
             Dim nextp As Integer = pcnt
-            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, OrmBaseT.PKName, almgr, params, realType, True)
+            Dim pkname As String = MappingEngine.GetPrimaryKeys(realType)(0).PropertyAlias
+            For Each cmd_str As Pair(Of String, Integer) In GetFilters(ids, pkname, almgr, params, realType, True)
                 Dim sb_cmd As New StringBuilder
                 sb_cmd.Append(sb.ToString).Append(cmd_str.First)
 
@@ -2994,8 +3023,9 @@ l2:
             '    End If
             'End If
             'If selectType IsNot type2search Then
-            selCols.Insert(0, New ColumnAttribute(OrmBaseT.PKName, Field2DbRelations.PK))
-            fields.Insert(0, New Pair(Of String, Type)(OrmBaseT.PKName, selectType))
+            Dim pkname As String = MappingEngine.GetPrimaryKeys(selectType)(0).PropertyAlias
+            selCols.Insert(0, New ColumnAttribute(pkname, Field2DbRelations.PK))
+            fields.Insert(0, New Pair(Of String, Type)(pkname, selectType))
             'End If
 
             Dim types As New List(Of Type)
@@ -3021,10 +3051,7 @@ l2:
             Dim appendMain As Boolean = False
             If sort IsNot Nothing Then
                 For Each ns As Sort In New Sort.Iterator(sort)
-                    Dim sortType As System.Type = ns.Type
-                    If sortType Is Nothing Then
-                        sortType = selectType
-                    End If
+                    Dim sortType As System.Type = ns.ObjectSource.GetRealType(MappingEngine, selectType)
                     appendMain = type2search Is sortType OrElse appendMain
                     If Not types.Contains(sortType) Then
                         If type2search IsNot sortType Then
@@ -3069,10 +3096,17 @@ l2:
                 For Each f As IFilter In filter.GetAllFilters
                     Dim ef As IEntityFilter = TryCast(f, IEntityFilter)
                     If ef IsNot Nothing Then
-                        Dim type2join As System.Type = CType(ef.GetFilterTemplate, OrmFilterTemplateBase).Type
+                        Dim ot As OrmFilterTemplateBase = CType(ef.GetFilterTemplate, OrmFilterTemplateBase)
+                        Dim type2join As System.Type = ot.ObjectSource.GetRealType(MappingEngine)
+
+                        'If type2join Is Nothing AndAlso Not String.IsNullOrEmpty(ot.EntityName) Then
+                        '    type2join = MappingEngine.GetTypeByEntityName(ot.EntityName)
+                        'End If
+
                         If type2join Is Nothing Then
                             Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                         End If
+
                         appendMain = type2search Is type2join OrElse appendMain
                         If type2search IsNot type2join Then
                             If Not types.Contains(type2join) Then
@@ -3142,8 +3176,8 @@ l2:
             ByVal selCols As List(Of ColumnAttribute), ByVal searchCols As List(Of ColumnAttribute), _
             ByVal ftsText As String, ByVal limit As Integer, ByVal fts As IFtsStringFormater, ByVal contextkey As Object) As ReadOnlyList(Of T)
 
-            Dim selSchema As IOrmObjectSchema = CType(MappingEngine.GetObjectSchema(selectType), IOrmObjectSchema)
-            Dim searchSchema As IOrmObjectSchema = CType(MappingEngine.GetObjectSchema(type2search), IOrmObjectSchema)
+            Dim selSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(selectType)
+            Dim searchSchema As IObjectSchemaBase = MappingEngine.GetObjectSchema(type2search)
 
             Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
 
@@ -3329,9 +3363,10 @@ l2:
                         Dim o_ As T = CreateOrmBase(Of T)(id2)
                         o_.SetObjectState(ObjectState.NotLoaded)
                         Dim o As T = CType(NormalizeObject(o_, CType(dic, System.Collections.IDictionary)), T)
-                        If _raiseCreated AndAlso ReferenceEquals(o, o_) Then
-                            RaiseObjectCreated(o)
-                        End If
+                        'If _raiseCreated AndAlso ReferenceEquals(o, o_) Then
+                        '    RaiseObjectLoaded(o)
+                        'End If
+                        RaiseObjectLoaded(o)
 
                         If withLoad AndAlso (c Is Nothing OrElse Not c.IsDeleted(tt, o.Key)) Then
                             If o.ObjectState <> ObjectState.Modified Then
@@ -3370,6 +3405,52 @@ l2:
                 End If
                 CloseConn(b)
             End Try
+        End Function
+
+        Public Overrides Function GetObjectFromStorage(ByVal obj As Orm._ICachedEntity) As Orm.ICachedEntity
+            Invariant()
+
+            If obj Is Nothing Then
+                Throw New ArgumentNullException("obj")
+            End If
+
+            Dim original_type As Type = obj.GetType
+
+            'Dim filter As New Database.Criteria.Core.EntityFilter(original_type, "ID", _
+            '    New EntityValue(obj), Worm.Criteria.FilterOperation.Equal)
+            Dim c As New Worm.Database.Criteria.Conditions.Condition.ConditionConstructor '= Database.Criteria.Conditions.Condition.ConditionConstructor
+            For Each p As PKDesc In obj.GetPKValues
+                c.AddFilter(New Database.Criteria.Core.EntityFilter(original_type, p.PropertyAlias, New ScalarValue(p.Value), Worm.Criteria.FilterOperation.Equal))
+            Next
+            Dim filter As IFilter = c.Condition
+
+            Using cmd As System.Data.Common.DbCommand = CreateDBCommand()
+                Dim arr As Generic.List(Of ColumnAttribute) = MappingEngine.GetSortedFieldList(original_type)
+
+                With cmd
+                    .CommandType = System.Data.CommandType.Text
+
+                    Dim almgr As AliasMgr = AliasMgr.Create
+                    Dim params As New ParamMgr(SQLGenerator, "p")
+                    Dim sb As New StringBuilder
+                    sb.Append(SQLGenerator.Select(original_type, almgr, params, arr, Nothing, GetFilterInfo))
+                    SQLGenerator.AppendWhere(original_type, filter, almgr, sb, GetFilterInfo, params)
+
+                    params.AppendParams(.Parameters)
+                    .CommandText = sb.ToString
+                End With
+
+                Dim newObj As _ICachedEntity = CreateObject(obj.GetPKValues, original_type)
+                newObj.SetObjectState(ObjectState.NotLoaded)
+                Dim b As ConnAction = TestConn(cmd)
+                Try
+                    LoadSingleObject(cmd, arr, newObj, False, True, False, Nothing)
+                    newObj.SetObjectState(ObjectState.Clone)
+                    Return newObj
+                Finally
+                    CloseConn(b)
+                End Try
+            End Using
         End Function
     End Class
 End Namespace

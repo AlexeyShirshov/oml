@@ -35,7 +35,7 @@ Partial Public MustInherit Class OrmManager
     'Private _remnew As RemoveNew
     Protected Friend _disposed As Boolean = False
     'Protected _sites() As Partner
-    Protected Shared _mcSwitch As New TraceSwitch("mcSwitch", "Switch for OrmManager", "3") 'info
+    Protected Friend Shared _mcSwitch As New TraceSwitch("mcSwitch", "Switch for OrmManager", "3") 'info
     Protected Shared _LoadObjectsMI As Reflection.MethodInfo = Nothing
     Private Shared _realCreateDbObjectDic As Hashtable = Hashtable.Synchronized(New Hashtable())
     Private Shared _realLoadTypeDic As Hashtable = Hashtable.Synchronized(New Hashtable())
@@ -63,7 +63,6 @@ Partial Public MustInherit Class OrmManager
     'End Function
     'Private _list_converter As IListObjectConverter
     Protected Friend _dont_cache_lists As Boolean
-    Private _newMgr As INewObjects
     Friend _expiresPattern As Date
     Protected Friend _start As Integer
     Protected Friend _length As Integer = Integer.MaxValue
@@ -96,11 +95,10 @@ Partial Public MustInherit Class OrmManager
         End Get
     End Property
 
-    Protected _raiseCreated As Boolean
-    Public Event ObjectCreated(ByVal sender As ICachedEntity, ByVal mgr As OrmManager)
+    Public Event ObjectLoaded(ByVal sender As OrmManager, ByVal o As ICachedEntity)
+    Public Event BeginUpdate(ByVal sender As OrmManager, ByVal o As ICachedEntity)
+    Public Event BeginDelete(ByVal sender As OrmManager, ByVal o As ICachedEntity)
 
-    Public Event BeginUpdate(ByVal o As ICachedEntity)
-    Public Event BeginDelete(ByVal o As ICachedEntity)
     'Public Event ObjectRejected(ByVal o As OrmBase)
     Public Event DataAvailable(ByVal mgr As OrmManager, ByVal r As ExecutionResult)
 
@@ -195,14 +193,14 @@ Partial Public MustInherit Class OrmManager
         'End Set
     End Property
 
-    Public Property RaiseObjectCreation() As Boolean
-        Get
-            Return _raiseCreated
-        End Get
-        Set(ByVal value As Boolean)
-            _raiseCreated = value
-        End Set
-    End Property
+    'Public Property RaiseObjectCreation() As Boolean
+    '    Get
+    '        Return _raiseCreated
+    '    End Get
+    '    Set(ByVal value As Boolean)
+    '        _raiseCreated = value
+    '    End Set
+    'End Property
 
     Public Sub ResetLocalStorage()
         If _prev IsNot Nothing Then
@@ -280,16 +278,16 @@ Partial Public MustInherit Class OrmManager
         End Get
     End Property
 
-    Friend Sub RaiseBeginUpdate(ByVal o As ICachedEntity)
-        RaiseEvent BeginUpdate(o)
+    Protected Sub RaiseObjectLoaded(ByVal obj As ICachedEntity)
+        RaiseEvent ObjectLoaded(Me, obj)
     End Sub
 
-    Friend Sub RaiseBeginDelete(ByVal o As ICachedEntity)
-        RaiseEvent BeginDelete(o)
+    Protected Friend Sub RaiseBeginUpdate(ByVal o As ICachedEntity)
+        RaiseEvent BeginUpdate(Me, o)
     End Sub
 
-    Protected Sub RaiseObjectCreated(ByVal obj As ICachedEntity)
-        RaiseEvent ObjectCreated(obj, Me)
+    Protected Friend Sub RaiseBeginDelete(ByVal o As ICachedEntity)
+        RaiseEvent BeginDelete(Me, o)
     End Sub
 
     'Public Property FindNewDelegate() As FindNew
@@ -311,19 +309,6 @@ Partial Public MustInherit Class OrmManager
     '        _remnew = value
     '    End Set
     'End Property
-
-    Public Property NewObjectManager() As INewObjects
-        Get
-            Return _newMgr
-        End Get
-        Set(ByVal value As INewObjects)
-            _newMgr = value
-        End Set
-    End Property
-
-    Public Function IsNewObject(ByVal t As Type, ByVal id() As PKDesc) As Boolean
-        Return _newMgr IsNot Nothing AndAlso _newMgr.GetNew(t, id) IsNot Nothing
-    End Function
 
     ' IDisposable
     Protected Overridable Overloads Sub Dispose(ByVal disposing As Boolean)
@@ -366,23 +351,25 @@ Partial Public MustInherit Class OrmManager
 
 #Region " Lookup object "
 
-    Public Function LoadObjects(Of T As {IOrmBase, New})(ByVal fieldName As String, ByVal criteria As CriteriaLink, _
+    Public Function LoadObjects(Of T As {IOrmBase, New})(ByVal propertyAlias As String, ByVal criteria As CriteriaLink, _
         ByVal col As ICollection) As ReadOnlyList(Of T)
-        Return LoadObjects(Of T)(fieldName, criteria, col, 0, col.Count)
+        Return LoadObjects(Of T)(propertyAlias, criteria, col, 0, col.Count)
     End Function
 
     ''' <summary>
     ''' Load child collections from parents
     ''' </summary>
     ''' <typeparam name="T">Type to load. This is child type.</typeparam>
-    ''' <param name="fieldName">Field name of property in child type what references to parent type</param>
+    ''' <param name="propertyAlias">Field name of property in child type what references to parent type</param>
     ''' <param name="criteria">Additional criteria</param>
     ''' <param name="ecol">Collection of parent objects.</param>
     ''' <param name="start">Point in parent collection from where start to load</param>
     ''' <param name="length">Length of loaded window</param>
     ''' <returns>Collection of child objects arranged in order of parent in parent collection</returns>
     ''' <remarks></remarks>
-    Public Function LoadObjects(Of T As {IOrmBase, New})(ByVal fieldName As String, ByVal criteria As CriteriaLink, _
+    ''' 
+
+    Public Function LoadObjects(Of T As {IOrmBase, New})(ByVal propertyAlias As String, ByVal criteria As CriteriaLink, _
         ByVal ecol As IEnumerable, ByVal start As Integer, ByVal length As Integer) As ReadOnlyList(Of T)
         Dim tt As Type = GetType(T)
 
@@ -390,8 +377,8 @@ Partial Public MustInherit Class OrmManager
             Throw New ArgumentNullException("col")
         End If
 
-        If String.IsNullOrEmpty(fieldName) Then
-            Throw New ArgumentNullException(fieldName)
+        If String.IsNullOrEmpty(propertyAlias) Then
+            Throw New ArgumentNullException(propertyAlias)
         End If
 
         Dim cc As ICollection = TryCast(ecol, ICollection)
@@ -403,8 +390,9 @@ Partial Public MustInherit Class OrmManager
             '    col = New ArrayList(ecol)
         End If
 
+        Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(tt)
 #If DEBUG Then
-        Dim ft As Type = _schema.GetFieldTypeByName(tt, fieldName)
+        Dim ft As Type = _schema.GetPropertyTypeByName(tt, oschema, propertyAlias)
         For Each o As IOrmBase In ecol
             If Not ft.IsAssignableFrom(o.GetType) Then
                 Throw New ArgumentNullException(String.Format("Cannot load {0} with such collection. There is not relation", tt.Name))
@@ -429,11 +417,11 @@ Partial Public MustInherit Class OrmManager
                     'Dim con As New OrmCondition.OrmConditionConstructor
                     'con.AddFilter(New OrmFilter(tt, fieldName, o, FilterOperation.Equal))
                     'con.AddFilter(criteria.Filter)
-                    Dim cl As CriteriaLink = MappingEngine.CreateCriteria(tt, fieldName).Eq(o).And(criteria)
+                    Dim cl As CriteriaLink = MappingEngine.CreateCriteria(New ObjectSource(tt), propertyAlias).Eq(o).And(criteria)
                     Dim f As IFilter = cl.Filter
                     Dim key As String = FindGetKey(f, tt) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                     Dim dic As IDictionary = GetDic(_cache, key)
-                    Dim id As String = f.ToString
+                    Dim id As String = f._ToString
                     Dim ce As CachedItem = CType(dic(id), CachedItem)
                     If ce IsNot Nothing Then
                         'Dim fs As List(Of String) = Nothing
@@ -462,12 +450,11 @@ Partial Public MustInherit Class OrmManager
             Dim c As New List(Of T)
 
             'If ids.Ints.Count > 0 Then
-            GetObjects(Of T)(ids, GetFilter(criteria, tt), c, True, fieldName, False)
+            GetObjects(Of T)(ids, GetFilter(criteria, tt), c, True, propertyAlias, False)
 
-            Dim oschema As IObjectSchemaBase = _schema.GetObjectSchema(tt)
             For Each o As T In c
                 'Dim v As OrmBase = CType(_schema.GetFieldValue(o, fieldName), OrmBase)
-                Dim v As IOrmBase = CType(o.GetValueOptimized(Nothing, fieldName, oschema), IOrmBase)
+                Dim v As IOrmBase = CType(o.GetValueOptimized(Nothing, propertyAlias, oschema), IOrmBase)
                 Dim ll As ReadOnlyList(Of T) = Nothing
                 If Not lookups.TryGetValue(v, ll) Then
                     ll = New ReadOnlyList(Of T)
@@ -478,7 +465,7 @@ Partial Public MustInherit Class OrmManager
 
             Dim l As New ReadOnlyList(Of T)
             Dim j As Integer
-            For Each obj As OrmBase In ecol
+            For Each obj As IOrmBase In ecol
                 If j < start Then
                     j += 1
                     Continue For
@@ -498,11 +485,11 @@ Partial Public MustInherit Class OrmManager
                     'con.AddFilter(New OrmFilter(tt, fieldName, k, FilterOperation.Equal))
                     'con.AddFilter(filter)
                     'Dim f As IOrmFilter = con.Condition
-                    Dim cl As CriteriaLink = MappingEngine.CreateCriteria(tt, fieldName).Eq(obj).And(criteria)
+                    Dim cl As CriteriaLink = MappingEngine.CreateCriteria(New ObjectSource(tt), propertyAlias).Eq(obj).And(criteria)
                     Dim f As IFilter = cl.Filter
                     Dim key As String = FindGetKey(f, tt) '_schema.GetEntityKey(tt) & f.GetStaticString & GetStaticKey()
                     Dim dic As IDictionary = GetDic(_cache, key)
-                    Dim id As String = f.ToString
+                    Dim id As String = f._ToString
                     dic(id) = New CachedItem(f, v, Me)
                 End If
                 If j - start = length Then
@@ -560,14 +547,16 @@ Partial Public MustInherit Class OrmManager
                     Dim tt1 As Type = o.GetType
                     Dim key As String = GetM2MKey(tt1, type2load, direct)
                     If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                        key &= criteria.Filter(type2load).GetStaticString(_schema)
+                        'key &= criteria.Filter(type2load).GetStaticString(_schema)
+                        key &= criteria.Filter().GetStaticString(_schema)
                     End If
 
                     Dim dic As IDictionary = GetDic(_cache, key)
 
                     Dim id As String = o.Identifier.ToString
                     If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                        id &= criteria.Filter(type2load).ToString
+                        'id &= criteria.Filter(type2load)._ToString
+                        id &= criteria.Filter()._ToString
                     End If
 
                     Dim ce As CachedItem = CType(dic(id), CachedItem)
@@ -623,14 +612,16 @@ Partial Public MustInherit Class OrmManager
                         Dim tt1 As Type = o.GetType
                         Dim key As String = GetM2MKey(tt1, type2load, direct)
                         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                            key &= criteria.Filter(type2load).GetStaticString(_schema)
+                            'key &= criteria.Filter(type2load).GetStaticString(_schema)
+                            key &= criteria.Filter().GetStaticString(_schema)
                         End If
 
                         Dim dic As IDictionary = GetDic(_cache, key)
 
                         Dim id As String = o.Identifier.ToString
                         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-                            id &= criteria.Filter(type2load).ToString
+                            'id &= criteria.Filter(type2load)._ToString
+                            id &= criteria.Filter()._ToString
                         End If
 
                         'Dim sync As String = GetSync(key, id)
@@ -707,6 +698,12 @@ Partial Public MustInherit Class OrmManager
         Dim o As _ICachedEntity = CreateObject(pk, type)
         o.SetObjectState(ObjectState.NotLoaded)
         Return NormalizeObject(o, GetDictionary(type))
+    End Function
+
+    Public Function GetEntityOrOrmFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk() As PKDesc) As T
+        Dim o As T = CreateObject(Of T)(pk)
+        o.SetObjectState(ObjectState.NotLoaded)
+        Return CType(NormalizeObject(o, CType(GetDictionary(Of T)(), System.Collections.IDictionary)), T)
     End Function
 
     Public Function GetEntityFromCacheOrCreate(Of T As {New, _ICachedEntity})(ByVal pk() As PKDesc) As T
@@ -860,7 +857,8 @@ Partial Public MustInherit Class OrmManager
         Dim key As String = String.Empty
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(GetType(T)).GetStaticString(_schema)
+            'key &= criteria.Filter(GetType(T)).GetStaticString(_schema)
+            key &= criteria.Filter().GetStaticString(_schema)
         End If
 
         If joins IsNot Nothing Then
@@ -884,7 +882,8 @@ Partial Public MustInherit Class OrmManager
         Dim id As String = String.Empty
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            id &= criteria.Filter(GetType(T)).ToString
+            'id &= criteria.Filter(GetType(T))._ToString
+            id &= criteria.Filter()._ToString
         End If
 
         If joins IsNot Nothing Then
@@ -1017,17 +1016,18 @@ l1:
             Dim has_id As Boolean = False
             l = New List(Of ColumnAttribute)
             For Each c As String In cols
-                Dim col As ColumnAttribute = _schema.GetColumnByFieldName(GetType(T), c)
+                Dim col As ColumnAttribute = _schema.GetColumnByPropertyAlias(GetType(T), c)
                 If col Is Nothing Then
                     Throw New ArgumentException("Invalid column name " & c)
                 End If
-                If c = OrmBaseT.PKName Then
+                If (_schema.GetAttributes(GetType(T), col) And Field2DbRelations.PK) = Field2DbRelations.PK Then
                     has_id = True
                 End If
                 l.Add(col)
             Next
             If Not has_id Then
-                l.Add(_schema.GetColumnByFieldName(GetType(T), OrmBaseT.PKName))
+                'l.Add(SQLGenerator.GetColumnByFieldName(GetType(T), OrmBaseT.PKName))
+                l.Add(MappingEngine.GetPrimaryKeys(GetType(T))(0))
             End If
         End If
 
@@ -1128,7 +1128,8 @@ l1:
         ByVal sort As Sort, ByVal withLoad As Boolean) As ReadOnlyList(Of T)
         Dim filter As IFilter = Nothing
         If criteria IsNot Nothing Then
-            filter = criteria.Filter(GetType(T))
+            'filter = criteria.Filter(GetType(T))
+            filter = criteria.Filter()
         End If
         Dim joins() As OrmJoin = Nothing
         Dim appendMain As Boolean
@@ -1143,7 +1144,8 @@ l1:
             Throw New ArgumentNullException("filter")
         End If
 
-        Dim filter As IFilter = criteria.Filter(GetType(T))
+        'Dim filter As IFilter = criteria.Filter(GetType(T))
+        Dim filter As IFilter = criteria.Filter()
 
         Dim joins() As OrmJoin = Nothing
         Dim appendMain As Boolean
@@ -1156,7 +1158,7 @@ l1:
 
             Dim dic As IDictionary = GetDic(_cache, key)
 
-            Dim id As String = filter.ToString
+            Dim id As String = filter._ToString
             Dim sync As String = id & GetStaticKey()
 
             'CreateDepends(filter, key, id)
@@ -1184,13 +1186,14 @@ l1:
             Throw New ArgumentNullException("criteria")
         End If
 
-        Dim filter As IFilter = criteria.Filter(GetType(T))
+        'Dim filter As IFilter = criteria.Filter(GetType(T))
+        Dim filter As IFilter = criteria.Filter()
 
         Dim key As String = FindGetKey(filter, GetType(T)) '_schema.GetEntityKey(GetType(T)) & criteria.Filter.GetStaticString & GetStaticKey()
 
         Dim dic As IDictionary = GetDic(_cache, key)
 
-        Dim id As String = filter.ToString
+        Dim id As String = filter._ToString
         Dim sync As String = id & GetStaticKey()
 
         'CreateDepends(filter, key, id)
@@ -1224,7 +1227,8 @@ l1:
 
         Dim filter As IFilter = Nothing
         If criteria IsNot Nothing Then
-            filter = criteria.Filter(GetType(T))
+            'filter = criteria.Filter(GetType(T))
+            filter = criteria.Filter()
         End If
         Dim joins() As OrmJoin = Nothing
         Dim appendMain As Boolean
@@ -1453,7 +1457,7 @@ l1:
         Return True
     End Function
 
-    Public Function CanSortOnClient(ByVal t As Type, ByVal col As ICollection, ByVal sort As Sort, ByRef sorting As IOrmSorting) As Boolean
+    Public Shared Function CanSortOnClient(ByVal t As Type, ByVal col As ICollection, ByVal sort As Sort, ByRef sorting As IOrmSorting) As Boolean
         'If sort.Previous IsNot Nothing Then
         '    Return False
         'End If
@@ -1462,8 +1466,8 @@ l1:
             Return False
         End If
 
-        Dim schema As IObjectSchemaBase = _schema.GetObjectSchema(t)
-        sorting = TryCast(schema, IOrmSorting)
+        'Dim schema As IObjectSchemaBase = _schema.GetObjectSchema(t)
+        'sorting = TryCast(schema, IOrmSorting)
         'If sorting Is Nothing Then
         '    Return False
         'End If
@@ -1578,55 +1582,35 @@ l1:
     End Function
 
     Public Function CreateOrmBase(ByVal id As Object, ByVal t As Type) As IOrmBase
-        Dim o As IOrmBase = CType(Activator.CreateInstance(t), IOrmBase)
-        o.Init(id, _cache, _schema, IdentityString)
-        Return o
+        Return OrmBase.CreateOrmBase(id, t, _cache, _schema)
     End Function
 
     Public Function CreateOrmBase(Of T As {IOrmBase, New})(ByVal id As Object) As T
-        Dim o As New T
-        o.Init(id, _cache, _schema, IdentityString)
-        Return o
+        Return OrmBase.CreateOrmBase(Of T)(id, _cache, _schema)
     End Function
 
     Public Function CreateObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
-        If GetType(IOrmBase).IsAssignableFrom(GetType(T)) Then
-            Return CType(CreateOrmBase(pk(0).Value, GetType(T)), T)
-        Else
-            Return CreateEntity(Of T)(pk)
-        End If
+        Return CachedEntity.CreateObject(Of T)(pk, _cache, _schema)
     End Function
 
     Public Function CreateObject(ByVal pk() As PKDesc, ByVal type As Type) As _ICachedEntity
-        If GetType(IOrmBase).IsAssignableFrom(type) Then
-            Return CreateOrmBase(pk(0).Value, type)
-        Else
-            Return CreateEntity(pk, type)
-        End If
+        Return CachedEntity.CreateObject(pk, type, _cache, _schema)
     End Function
 
     Public Function CreateEntity(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
-        Dim o As New T
-        o.Init(pk, _cache, _schema, IdentityString)
-        Return o
+        Return CachedEntity.CreateEntity(Of T)(pk, _cache, _schema)
     End Function
 
     Public Function CreateEntity(ByVal pk() As PKDesc, ByVal t As Type) As _ICachedEntity
-        Dim o As _ICachedEntity = CType(Activator.CreateInstance(t), _ICachedEntity)
-        o.Init(pk, _cache, _schema, IdentityString)
-        Return o
+        Return CachedEntity.CreateEntity(pk, t, _cache, _schema)
     End Function
 
     Protected Friend Function CreateEntity(ByVal t As Type) As IEntity
-        Dim o As _IEntity = CType(Activator.CreateInstance(t), _IEntity)
-        o.Init(_cache, _schema, IdentityString)
-        Return o
+        Return Entity.CreateEntity(t, _cache, _schema)
     End Function
 
     Protected Friend Function CreateEntity(Of T As {_IEntity, New})() As T
-        Dim o As New T
-        o.Init(_cache, _schema, IdentityString)
-        Return o
+        Return Entity.CreateEntity(Of T)(_cache, _schema)
     End Function
 
     Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
@@ -1634,170 +1618,94 @@ l1:
     End Function
 
     Public Function NormalizeObject(ByVal obj As _ICachedEntity, ByVal dic As IDictionary, ByVal add2Cache As Boolean) As _ICachedEntity
-        Return _LoadTypeInternal(obj, False, False, dic, add2Cache)
+        Return _cache.NormalizeObject(obj, False, False, dic, add2Cache, Me)
     End Function
 
     Public Function GetFromCacheOrLoadFromDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _LoadTypeInternal(obj, False, True, dic, True)
+        Return _cache.NormalizeObject(obj, False, True, dic, True, Me)
     End Function
 
     Public Function GetLoadedObjectFromCacheOrDB(ByVal obj As _ICachedEntity, ByVal dic As IDictionary) As _ICachedEntity
-        Return _LoadTypeInternal(obj, True, True, dic, True)
-    End Function
-
-    Protected Function _LoadTypeInternal(ByVal obj As _ICachedEntity, _
-        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary, ByVal addOnCreate As Boolean) As _ICachedEntity
-
-        Assert(obj.IsPKLoaded, "Primary key is not loaded")
-
-        Dim type As Type = obj.GetType
-
-#If DEBUG Then
-        If dic Is Nothing Then
-            Dim name As String = type.Name
-            Throw New OrmManagerException("Collection for " & name & " not exists")
-        End If
-#End If
-        Dim id As CacheKey = New CacheKey(obj)
-        Dim created As Boolean = False ', checked As Boolean = False
-        Dim a As _ICachedEntity = CType(dic(id), _ICachedEntity)
-        If a Is Nothing AndAlso _newMgr IsNot Nothing Then
-            a = _newMgr.GetNew(type, obj.GetPKValues)
-            If a IsNot Nothing Then Return a
-            Dim oc As ICachedEntity = obj.OriginalCopy
-            If oc IsNot Nothing Then
-                a = _newMgr.GetNew(type, oc.GetPKValues)
-                If a IsNot Nothing Then Return a
-            End If
-        End If
-        Dim sync_key As String = "LoadType" & id.ToString & type.ToString
-        If a Is Nothing Then
-            Using SyncHelper.AcquireDynamicLock(sync_key)
-                a = CType(dic(id), _ICachedEntity)
-                If a Is Nothing Then
-                    If ObjectMappingEngine.GetUnions(type) IsNot Nothing Then
-                        Throw New NotSupportedException
-                    Else
-                        a = obj
-                        If a.ObjectState = ObjectState.Created AndAlso Not a.IsLoaded Then
-                            If GetType(IOrmBase).IsAssignableFrom(type) Then
-                                Dim orm As IOrmBase = CType(a, IOrmBase)
-                                orm.Init(orm.Identifier, _cache, _schema, IdentityString)
-                            Else
-                                a.Init(a.GetPKValues, _cache, _schema, IdentityString)
-                            End If
-                        End If
-                    End If
-
-                    If load Then
-                        a.Load()
-                        If Not a.IsLoaded Then
-                            a = Nothing
-                        End If
-                    End If
-                    If a IsNot Nothing AndAlso checkOnCreate Then
-                        'checked = True
-                        If Not a.IsLoaded Then
-                            a.Load()
-                            If a.ObjectState = ObjectState.NotFoundInSource Then
-                                a = Nothing
-                            End If
-                        End If
-                    End If
-                    created = True
-                    If a IsNot Nothing AndAlso addOnCreate Then
-                        AddObjectInternal(a, dic)
-                    End If
-                End If
-            End Using
-        End If
-
-        If a IsNot Nothing Then
-            If Not created AndAlso load AndAlso Not a.IsLoaded Then
-                a.Load()
-            End If
-        End If
-
-        Return a
+        Return _cache.NormalizeObject(obj, True, True, dic, True, Me)
     End Function
 
     Protected Function LoadTypeInternal(Of T As {IOrmBase, New})(ByVal id As Object, _
         ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal dic As IDictionary(Of Object, T), ByVal addOnCreate As Boolean) As T
 
         Dim o As T = CreateOrmBase(Of T)(id)
-        Return CType(_LoadTypeInternal(o, load, checkOnCreate, CType(dic, System.Collections.IDictionary), addOnCreate), T)
+        Return CType(_cache.NormalizeObject(o, load, checkOnCreate, CType(dic, System.Collections.IDictionary), addOnCreate, Me), T)
     End Function
 
-    Protected Function GetObjectFromCache(Of T As {IOrmBase, New})(ByVal obj As T, ByVal dic As IDictionary(Of Object, T), _
-        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal addOnCreate As Boolean) As T
+    '    Protected Function GetObjectFromCache(Of T As {IOrmBase, New})(ByVal obj As T, ByVal dic As IDictionary(Of Object, T), _
+    '        ByVal load As Boolean, ByVal checkOnCreate As Boolean, ByVal addOnCreate As Boolean) As T
 
-        If obj Is Nothing Then
-            Throw New ArgumentNullException("obj")
-        End If
+    '        If obj Is Nothing Then
+    '            Throw New ArgumentNullException("obj")
+    '        End If
 
-        '    Return GetObjectFromCache(obj.Identifier, dic)
-        'End Function
+    '        '    Return GetObjectFromCache(obj.Identifier, dic)
+    '        'End Function
 
-        'Protected Function GetObjectFromCache(Of T As {OrmBase, New})(ByVal id As Integer, _
-        '    ByVal dic As IDictionary(Of Integer, T)) As T
+    '        'Protected Function GetObjectFromCache(Of T As {OrmBase, New})(ByVal id As Integer, _
+    '        '    ByVal dic As IDictionary(Of Integer, T)) As T
 
-        Dim type As Type = GetType(T)
+    '        Dim type As Type = GetType(T)
 
-#If DEBUG Then
-        If dic Is Nothing Then
-            Dim name As String = GetType(T).Name
-            Throw New OrmManagerException("Collection for " & name & " not exists")
-        End If
-#End If
-        Dim created As Boolean = False ', checked As Boolean = False
-        Dim a As T = Nothing
-        Dim id As Object = obj.Identifier
-        If Not dic.TryGetValue(id, a) AndAlso _newMgr IsNot Nothing Then
-            a = CType(_newMgr.GetNew(type, obj.GetPKValues), T)
-            If a IsNot Nothing Then Return a
-        End If
-        Dim sync_key As String = "LoadType" & id.ToString & type.ToString
-        If a Is Nothing Then
-            Using SyncHelper.AcquireDynamicLock(sync_key)
-                If Not dic.TryGetValue(id, a) Then
-                    If ObjectMappingEngine.GetUnions(type) IsNot Nothing Then
-                        Throw New NotSupportedException
-                    Else
-                        a = obj
-                        'a.Init(_cache, _schema)
-                    End If
+    '#If DEBUG Then
+    '        If dic Is Nothing Then
+    '            Dim name As String = GetType(T).Name
+    '            Throw New OrmManagerException("Collection for " & name & " not exists")
+    '        End If
+    '#End If
+    '        Dim created As Boolean = False ', checked As Boolean = False
+    '        Dim a As T = Nothing
+    '        Dim id As Object = obj.Identifier
+    '        If Not dic.TryGetValue(id, a) AndAlso _newMgr IsNot Nothing Then
+    '            a = CType(_newMgr.GetNew(type, obj.GetPKValues), T)
+    '            If a IsNot Nothing Then Return a
+    '        End If
+    '        Dim sync_key As String = "LoadType" & id.ToString & type.ToString
+    '        If a Is Nothing Then
+    '            Using SyncHelper.AcquireDynamicLock(sync_key)
+    '                If Not dic.TryGetValue(id, a) Then
+    '                    If ObjectMappingEngine.GetUnions(type) IsNot Nothing Then
+    '                        Throw New NotSupportedException
+    '                    Else
+    '                        a = obj
+    '                        'a.Init(_cache, _schema)
+    '                    End If
 
-                    If load Then
-                        a.Load()
-                        If Not a.IsLoaded Then
-                            a = Nothing
-                        End If
-                    End If
-                    If a IsNot Nothing AndAlso checkOnCreate Then
-                        'checked = True
-                        If Not a.IsLoaded Then
-                            a.Load()
-                            If a.ObjectState = ObjectState.NotFoundInSource Then
-                                a = Nothing
-                            End If
-                        End If
-                    End If
-                    created = True
-                End If
-            End Using
-        End If
+    '                    If load Then
+    '                        a.Load()
+    '                        If Not a.IsLoaded Then
+    '                            a = Nothing
+    '                        End If
+    '                    End If
+    '                    If a IsNot Nothing AndAlso checkOnCreate Then
+    '                        'checked = True
+    '                        If Not a.IsLoaded Then
+    '                            a.Load()
+    '                            If a.ObjectState = ObjectState.NotFoundInSource Then
+    '                                a = Nothing
+    '                            End If
+    '                        End If
+    '                    End If
+    '                    created = True
+    '                End If
+    '            End Using
+    '        End If
 
-        If a IsNot Nothing Then
-            If created AndAlso addOnCreate Then
-                AddObjectInternal(a, CType(dic, System.Collections.IDictionary))
-            End If
-            If Not created AndAlso load AndAlso Not a.IsLoaded Then
-                a.Load()
-            End If
-        End If
+    '        If a IsNot Nothing Then
+    '            If created AndAlso addOnCreate Then
+    '                AddObjectInternal(a, CType(dic, System.Collections.IDictionary))
+    '            End If
+    '            If Not created AndAlso load AndAlso Not a.IsLoaded Then
+    '                a.Load()
+    '            End If
+    '        End If
 
-        Return a
-    End Function
+    '        Return a
+    '    End Function
 
     Protected Friend Function LoadType(Of T As {IOrmBase, New})(ByVal id As Object, _
         ByVal load As Boolean, ByVal checkOnCreate As Boolean) As T
@@ -1837,28 +1745,7 @@ l1:
             Throw New OrmManagerException("Collection for " & name & " not exists")
         End If
 
-        AddObjectInternal(obj, dic)
-    End Sub
-
-    Protected Sub AddObjectInternal(ByVal obj As ICachedEntity, ByVal dic As IDictionary)
-        Debug.Assert(obj.ObjectState <> ObjectState.Deleted)
-        Dim trace As Boolean = False
-        Dim id As CacheKey = New CacheKey(obj)
-        SyncLock dic.SyncRoot
-            If Not dic.Contains(id) Then
-                dic.Add(id, obj)
-#If TraceCreation Then
-                Diagnostics.Debug.WriteLine(String.Format("{2} - dt: {0}, {1}", Now, Environment.StackTrace, obj.GetName))
-#End If
-            Else
-                trace = True
-            End If
-        End SyncLock
-
-        If trace AndAlso _mcSwitch.TraceVerbose Then
-            Dim name As String = obj.GetType.Name
-            WriteLine("Attempt to add existing object " & name & " (" & obj.Key & ") to cashe")
-        End If
+        CacheBase.AddObjectInternal(obj, dic)
     End Sub
 
     Protected Friend Function EnsureInCache(ByVal obj As ICachedEntity) As ICachedEntity
@@ -1921,7 +1808,7 @@ l1:
         Dim sync_key As String = "LoadType" & id.ToString & t.ToString
 
         Using SyncHelper.AcquireDynamicLock(sync_key)
-            If Cache.ShadowCopy(t, id) IsNot Nothing Then
+            If Cache.ShadowCopy(obj) IsNot Nothing Then
                 Return False
             End If
 
@@ -1945,39 +1832,9 @@ l1:
             _cache.RegisterRemoval(obj)
 
             Debug.Assert(Not IsInCachePrecise(obj))
-            Debug.Assert(Cache.ShadowCopy(t, id) Is Nothing)
+            Debug.Assert(Cache.ShadowCopy(obj) Is Nothing)
         End Using
         Return True
-    End Function
-
-    Public Function IsInCachePrecise(ByVal obj As ICachedEntity) As Boolean
-        If obj Is Nothing Then
-            Throw New ArgumentNullException("obj")
-        End If
-
-        Dim t As Type = obj.GetType
-
-        Dim dic As IDictionary = GetDictionary(t)
-
-        If dic Is Nothing Then
-            ''todo: throw an exception when all collections will be implemented
-            'Return
-            Throw New OrmManagerException("Collection for " & t.Name & " not exists")
-        End If
-
-        Return ReferenceEquals(dic(New CacheKey(obj)), obj)
-    End Function
-
-    Public Function IsInCache(ByVal id As Integer, ByVal t As Type) As Boolean
-        Dim dic As IDictionary = GetDictionary(t)
-
-        If dic Is Nothing Then
-            ''todo: throw an exception when all collections will be implemented
-            'Return
-            Throw New OrmManagerException("Collection for " & t.Name & " not exists")
-        End If
-
-        Return dic.Contains(id)
     End Function
 #End Region
 
@@ -2011,6 +1868,14 @@ l1:
         End If
     End Function
 
+    Public Function IsInCachePrecise(ByVal obj As ICachedEntity) As Boolean
+        Return _cache.IsInCachePrecise(obj, GetFilterInfo, _schema)
+    End Function
+
+    Public Function IsInCache(ByVal id As Object, ByVal t As Type) As Boolean
+        Return _cache.IsInCache(id, t, GetFilterInfo, _schema)
+    End Function
+
     <Conditional("DEBUG")> _
     Protected Overridable Sub Invariant()
         Debug.Assert(Not _disposed)
@@ -2033,10 +1898,10 @@ l1:
 
 #Region " shared helpers "
 
-    Private Shared Sub InsertObject(Of T As {IOrmBase})(ByVal mgr As OrmManager, ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IOrmBase)
+    Private Shared Sub InsertObject(Of T As {IOrmBase})(ByVal cache As CacheBase, ByVal check_loaded As Boolean, ByVal l As Generic.List(Of Object), ByVal o As IOrmBase)
         If o IsNot Nothing Then
             If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInSource Then
-                If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.GetPKValues)) Then
+                If Not (o.ObjectState = ObjectState.Created AndAlso cache.IsNewObject(GetType(T), o.GetPKValues)) Then
                     Dim idx As Integer = l.BinarySearch(o.Identifier)
                     If idx < 0 Then
                         l.Insert(Not idx, o.Identifier)
@@ -2053,7 +1918,7 @@ l1:
         Throw New NotImplementedException
     End Sub
 
-    Protected Shared Function FormPKValues(Of T As {IOrmBase})(ByVal mgr As OrmManager, ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
+    Protected Shared Function FormPKValues(Of T As {IOrmBase})(ByVal cache As CacheBase, ByVal objs As ReadOnlyList(Of T), ByVal start As Integer, ByVal length As Integer, _
         Optional ByVal check_loaded As Boolean = True) As List(Of Object)
 
         Dim l As New Generic.List(Of Object)
@@ -2061,7 +1926,7 @@ l1:
         If col IsNot Nothing Then
             For i As Integer = start To start + length - 1
                 Dim o As IOrmBase = col(i)
-                InsertObject(Of T)(mgr, check_loaded, l, o)
+                InsertObject(Of T)(cache, check_loaded, l, o)
             Next
         Else
             Dim i As Integer = 0
@@ -2070,7 +1935,7 @@ l1:
                     Exit For
                 End If
                 If i >= start Then
-                    InsertObject(Of T)(mgr, check_loaded, l, o)
+                    InsertObject(Of T)(cache, check_loaded, l, o)
                     'If o IsNot Nothing Then
                     '    If (Not o.IsLoaded OrElse Not check_loaded) AndAlso o.ObjectState <> ObjectState.NotFoundInDB Then
                     '        If Not (o.ObjectState = ObjectState.Created AndAlso mgr.IsNewObject(GetType(T), o.Identifier)) Then
@@ -2136,7 +2001,7 @@ l1:
         End If
     End Sub
 
-    Protected Shared Sub WriteLine(ByVal message As String)
+    Protected Friend Shared Sub WriteLine(ByVal message As String)
         Trace.WriteLine(message)
         Trace.WriteLine(Now & Environment.StackTrace)
     End Sub
@@ -2161,7 +2026,8 @@ l1:
         Dim key As String = "distinct" & _schema.GetEntityKey(GetFilterInfo, GetType(T))
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(GetType(T)).GetStaticString(_schema)
+            'key &= criteria.Filter(GetType(T)).GetStaticString(_schema)
+            key &= criteria.Filter().GetStaticString(_schema)
         End If
 
         If relation IsNot Nothing Then
@@ -2178,7 +2044,8 @@ l1:
 
         Dim id As String = GetType(T).ToString
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            id &= criteria.Filter(GetType(T)).ToString
+            'id &= criteria.Filter(GetType(T))._ToString
+            id &= criteria.Filter()._ToString
         End If
 
         'If relation IsNot Nothing Then
@@ -2218,14 +2085,16 @@ l1:
 
         Dim key As String = GetM2MKey(tt1, tt2, direct)
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(tt2).GetStaticString(_schema)
+            'key &= criteria.Filter(tt2).GetStaticString(_schema)
+            key &= criteria.Filter().GetStaticString(_schema)
         End If
 
         Dim dic As IDictionary = GetDic(_cache, key)
 
         Dim id As String = obj.Identifier.ToString
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            id &= criteria.Filter(tt2).ToString
+            'id &= criteria.Filter(tt2)._ToString
+            id &= criteria.Filter()._ToString
         End If
 
         'CreateM2MDepends(filter, key, id)
@@ -2258,14 +2127,16 @@ l1:
 
         Dim key As String = GetM2MKey(tt1, tt2, direct)
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key &= criteria.Filter(tt2).GetStaticString(_schema)
+            'key &= criteria.Filter(tt2).GetStaticString(_schema)
+            key &= criteria.Filter().GetStaticString(_schema)
         End If
 
         Dim dic As IDictionary = GetDic(_cache, key)
 
         Dim id As String = obj.Identifier.ToString
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            id &= criteria.Filter(tt2).ToString
+            'id &= criteria.Filter(tt2)._ToString
+            id &= criteria.Filter()._ToString
         End If
 
         Dim sync As String = GetSync(key, id)
@@ -2398,7 +2269,7 @@ l1:
 
                 id = obj.Identifier.ToString
                 If m.Filter IsNot Nothing Then
-                    id &= CObj(m.Filter).ToString
+                    id &= m.Filter._ToString
                 End If
                 dic.Add(id, m)
             Next
@@ -2417,8 +2288,8 @@ l1:
                     Dim m As M2MCache = CType(dic(id), M2MCache)
 
                     For Each oid As Integer In m.Entry.Current
-                        Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(oid, r.Type), _IOrmBase)
-                        M2MSubUpdate(o, obj.Identifier, oldId, obj.GetType)
+                        Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(oid, r.Type, False), _IOrmBase)
+                        M2MSubUpdate(o, obj, oldId, obj.GetType)
                     Next
                 End If
             Next
@@ -2428,14 +2299,15 @@ l1:
                 'Dim p As Pair(Of String) = _cache.RemoveM2MQuery(el)
                 If c IsNot Nothing Then c.RemoveM2MQueries(el)
 
-                For Each id As Object In el.Added
-                    Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
-                    Dim oel As EditableListBase = o.GetRelation(tt1, el.Key)
-                    oel.Added.Remove(oldId)
-                    oel.Added.Add(obj.Identifier)
-                Next
+                'For Each o As IOrmBase In el.Added
+                '    'Dim o As _IOrmBase = CType(GetOrmBaseFromCacheOrCreate(id, el.SubType), _IOrmBase)
+                '    Dim oel As EditableListBase = o.GetRelation(tt1, el.Key)
+                '    oel.Added.Remove(oldId)
+                '    oel.Added.Add(obj.Identifier)
+                'Next
 
-                el.MainId = obj.Identifier
+                'el.MainId = obj.Identifier
+
                 '_cache.AddM2MQuery(el, p.First, p.Second)
                 'Dim dic As IDictionary = CType(_cache.Filters(p.First), System.Collections.IDictionary)
                 'If dic IsNot Nothing Then
@@ -2446,12 +2318,12 @@ l1:
         End If
     End Sub
 
-    Protected Sub M2MSubUpdate(ByVal obj As _IOrmBase, ByVal id As Object, ByVal oldId As Object, ByVal t As Type)
+    Protected Sub M2MSubUpdate(ByVal obj As _IOrmBase, ByVal obj_ As IOrmBase, ByVal oldId As Object, ByVal t As Type)
         For Each o As Pair(Of M2MCache, Pair(Of String, String)) In Cache.GetM2MEntries(obj, Nothing)
             Dim m As M2MCache = o.First
             If m.Entry.SubType Is t AndAlso m.Entry.HasAdded Then
                 If m.Filter Is Nothing Then
-                    m.Entry.Update(id, oldId)
+                    m.Entry.Update(obj_, oldId)
                 Else
                     Dim dic As IDictionary = GetDic(Cache, o.Second.First)
                     dic.Remove(o.Second.Second)
@@ -2495,7 +2367,7 @@ l1:
     Protected Friend Function GetM2MNonGeneric(ByVal obj As IOrmBase, ByVal tt2 As Type, ByVal direct As String) As M2MCache
         Dim tt1 As Type = obj.GetType
 
-        Dim id As Object = obj.Identifier
+        Dim id As Object = obj.Identifier.ToString
 
         Return GetM2MNonGeneric(id, tt1, tt2, direct)
     End Function
@@ -2531,7 +2403,7 @@ l1:
         Dim cnt As Integer = m.Entry.Added.Count + m.Entry.Deleted.Count
         Dim check As Boolean = m.Entry.Original.Contains(subobj.Identifier)
 #End If
-        m.Entry.Add(subobj.Identifier)
+        m.Entry.Add(subobj)
 #If DEBUG Then
         Debug.Assert(Not check OrElse (m.Entry.Added.Count + m.Entry.Deleted.Count) <> cnt)
 #End If
@@ -2557,7 +2429,7 @@ l1:
         Dim p As Pair(Of M2MCache, Pair(Of String)) = FindM2MReturnKeysNonGeneric(mainobj, tt2, direct)
         Dim m As M2MCache = p.First
 
-        m.Entry.Delete(subobj.Identifier)
+        m.Entry.Delete(subobj)
 
         mainobj.AddAccept(New AcceptState2(m, p.Second.First, p.Second.Second))
     End Sub
@@ -2690,20 +2562,21 @@ l1:
 
     Public Function GetLoadedCount(ByVal t As Type, ByVal ids As IList(Of Object)) As Integer
         Dim r As Integer = 0
-        Dim dic As IDictionary = GetDictionary(t)
+        'Dim dic As IDictionary = GetDictionary(t)
         For Each id As Integer In ids
-            If dic.Contains(id) Then
+            Dim o As IOrmBase = GetOrmBaseFromCacheOrCreate(id, t, False)
+            If o.IsLoaded OrElse o.ObjectState = ObjectState.Created Then
                 r += 1
             End If
         Next
         Return r
     End Function
 
-    Public Function GetLoadedCount(Of T As {ICachedEntity})(ByVal col As ReadOnlyEntityList(Of T)) As Integer
+    Public Function GetLoadedCount(Of T As {ICachedEntity})(ByVal col As IEnumerable(Of T)) As Integer
         Dim r As Integer = 0
         'If GetType(IOrmBase).IsAssignableFrom(GetType(T)) Then
         For Each o As ICachedEntity In col
-            If o.IsLoaded Then
+            If o.IsLoaded OrElse o.ObjectState = ObjectState.Created Then
                 r += 1
             End If
         Next
@@ -2718,9 +2591,11 @@ l1:
 
     Public Function GetLoadedCount(Of T As {New, IOrmBase})(ByVal ids As IList(Of Object)) As Integer
         Dim r As Integer = 0
-        Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
+        'Dim dic As IDictionary(Of Object, T) = GetDictionary(Of T)()
         For Each id As Object In ids
-            If dic.ContainsKey(GetKeyFromPK(Of T)(id)) Then
+            Dim o As IOrmBase = GetOrmBaseFromCacheOrCreate(Of T)(id, False)
+            If o.IsLoaded OrElse o.ObjectState = ObjectState.Created Then
+                'If dic.ContainsKey(GetKeyFromPK(Of T)(id)) Then
                 r += 1
             End If
         Next
@@ -3145,14 +3020,16 @@ l1:
 
                 If obj IsNot Nothing Then
                     CType(arr, IListEdit).Add(obj)
-                ElseIf _newMgr IsNot Nothing Then
-                    obj = CType(_newMgr.GetNew(type, obj.GetPKValues), T)
+                ElseIf _cache.NewObjectManager IsNot Nothing Then
+                    obj = CType(_cache.NewObjectManager.GetNew(type, obj.GetPKValues), T)
                     If obj IsNot Nothing Then CType(arr, IListEdit).Add(obj)
                 End If
             Next
         Else
             Dim r As ReadOnlyList(Of T) = ConvertIds2Objects(Of T)(ids, False)
-            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() {New ColumnAttribute(OrmBaseT.PKName)}))
+            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() { _
+                _schema.GetPrimaryKeys(GetType(T))(0) _
+                }))
         End If
         Return arr
     End Function
@@ -3172,15 +3049,17 @@ l1:
 
                     If obj IsNot Nothing Then
                         CType(arr, IListEdit).Add(obj)
-                    ElseIf _newMgr IsNot Nothing Then
-                        obj = CType(_newMgr.GetNew(type, obj.GetPKValues), T)
+                    ElseIf _cache.NewObjectManager IsNot Nothing Then
+                        obj = CType(_cache.NewObjectManager.GetNew(type, obj.GetPKValues), T)
                         If obj IsNot Nothing Then CType(arr, IListEdit).Add(obj)
                     End If
                 Next
             End If
         Else
             Dim r As ReadOnlyList(Of T) = ConvertIds2Objects(Of T)(ids, start, length, False)
-            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() {New ColumnAttribute(OrmBaseT.PKName)}))
+            arr = LoadObjects(Of T)(r, 0, r.Count, New List(Of ColumnAttribute)(New ColumnAttribute() { _
+                _schema.GetPrimaryKeys(GetType(T))(0) _
+                }))
         End If
         Return arr
     End Function
@@ -3250,7 +3129,7 @@ l1:
 
     Private Shared Function GetFilter(ByVal criteria As IGetFilter, ByVal t As Type) As IFilter
         If criteria IsNot Nothing Then
-            Return criteria.Filter(t)
+            Return criteria.Filter()
         End If
         Return Nothing
     End Function
@@ -3296,7 +3175,7 @@ l1:
                 End If
                 Dim old_state As ObjectState = state
                 Dim hasNew As Boolean = False
-                Dim err As Boolean = True
+                Dim err As Boolean = True, ttt As Boolean
                 Try
                     Dim processedType As New List(Of Type)
 
@@ -3324,6 +3203,7 @@ l1:
 
                     Dim saved As Boolean = obj.Save(Me)
                     If Not saved Then
+                        ttt = True
                         Return True
                     End If
 
@@ -3413,8 +3293,8 @@ l1:
                     err = False
                 Finally
                     If err Then
-                        If sa = SaveAction.Insert Then
-                            obj.RejectChanges()
+                        If sa = SaveAction.Insert AndAlso Not ttt Then
+                            obj.RejectChanges(Me)
                         End If
 
                         state = old_state
@@ -3427,7 +3307,7 @@ l1:
         Finally
             '            If obj.ObjSaved AndAlso AcceptChanges Then
             If AcceptChanges Then
-                obj.UpdateCache(oldObj)
+                obj.UpdateCache(Me, oldObj)
             End If
         End Try
     End Function
@@ -3509,7 +3389,7 @@ l1:
        ByVal relation As M2MRelation, ByVal idsSorted As Boolean, ByVal withLoad As Boolean) As IDictionary(Of Object, EditableList)
 
     Protected Friend MustOverride Sub LoadObject(ByVal obj As _ICachedEntity)
-
+    Public MustOverride Function GetObjectFromStorage(ByVal obj As _ICachedEntity) As ICachedEntity
     Public MustOverride Function LoadObjectsInternal(Of T As {IOrmBase, New}, T2 As {IOrmBase})(ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
     Public MustOverride Function LoadObjectsInternal(Of T2 As {IOrmBase})(ByVal realType As Type, ByVal objs As ReadOnlyList(Of T2), ByVal start As Integer, ByVal length As Integer, ByVal remove_not_found As Boolean, ByVal columns As Generic.List(Of ColumnAttribute), ByVal withLoad As Boolean) As ReadOnlyList(Of T2)
 
@@ -3553,14 +3433,22 @@ l1:
         Return LoadObjectsInternal(Of T)(objs, start, length, remove_not_found, columns, True)
     End Function
 
-    Protected Friend Sub RegisterInCashe(ByVal obj As ICachedEntity)
+    Protected Friend Sub RegisterInCashe(ByVal obj As _ICachedEntity)
         If Not IsInCachePrecise(obj) Then
             Add2Cache(obj)
-            If obj.OriginalCopy IsNot Nothing Then
-                Dim c As OrmCache = TryCast(_cache, OrmCache)
-                If c IsNot Nothing Then
-                    c.RegisterExistingModification(obj, obj.Key)
-                End If
+            If obj.OriginalCopy() IsNot Nothing Then
+                'Dim c As OrmCache = TryCast(_cache, OrmCache)
+                'If c IsNot Nothing Then
+                '    c.RegisterExistingModification(obj)
+                'End If
+                Dim r As ObjectModification.ReasonEnum
+                Select Case obj.ObjectState
+                    Case ObjectState.Deleted
+                        r = ObjectModification.ReasonEnum.Delete
+                    Case ObjectState.Modified
+                        r = ObjectModification.ReasonEnum.Edit
+                End Select
+                _cache.RegisterModification(Me, obj, r)
             End If
         End If
     End Sub
@@ -3614,11 +3502,13 @@ l1:
 
         Dim f As String = String.Empty
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            f = criteria.Filter(tt).ToString
+            'f = criteria.Filter(tt)._ToString
+            f = criteria.Filter()._ToString
         End If
 
         If criteria IsNot Nothing AndAlso criteria.Filter IsNot Nothing Then
-            key = criteria.Filter(tt).GetStaticString(_schema) & _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
+            'key = criteria.Filter(tt).GetStaticString(_schema) & _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
+            key = criteria.Filter().GetStaticString(_schema) & _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
         Else
             key = _schema.GetEntityKey(GetFilterInfo, tt) & GetStaticKey() & "Dics"
         End If
@@ -3626,8 +3516,8 @@ l1:
         If joins IsNot Nothing Then
             For Each join As OrmJoin In joins
                 If Not OrmJoin.IsEmpty(join) Then
-                    key &= join.ToString
-                    f &= join.ToString
+                    key &= join._ToString
+                    f &= join._ToString
                 End If
             Next
         End If
@@ -3762,10 +3652,17 @@ l1:
             For Each fl As IFilter In filter.Filter.GetAllFilters
                 Dim f As IEntityFilter = TryCast(fl, IEntityFilter)
                 If f IsNot Nothing Then
-                    Dim type2join As System.Type = CType(f.Template, OrmFilterTemplateBase).Type
+                    Dim ot As OrmFilterTemplateBase = CType(f.Template, OrmFilterTemplateBase)
+                    Dim type2join As System.Type = ot.ObjectSource.GetRealType(schema)
+
+                    'If type2join Is Nothing AndAlso Not String.IsNullOrEmpty(ot.EntityName) Then
+                    '    type2join = schema.GetTypeByEntityName(ot.EntityName)
+                    'End If
+
                     If type2join Is Nothing Then
                         Throw New NullReferenceException("Type for OrmFilterTemplate must be specified")
                     End If
+
                     If type2join IsNot selectType AndAlso Not types.Contains(type2join) Then
                         Dim field As String = schema.GetJoinFieldNameByType(selectType, type2join, oschema)
 
@@ -3789,28 +3686,31 @@ l1:
 
                         types.Add(type2join)
 
-                        Dim ts As IOrmObjectSchema = CType(schema.GetObjectSchema(type2join), IOrmObjectSchema)
-                        Dim pk_table As SourceFragment = ts.GetTables(0)
-                        For i As Integer = 1 To ts.GetTables.Length - 1
-                            Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
-                            Dim join As OrmJoin = Nothing
-                            If joinableTs IsNot Nothing Then
-                                join = joinableTs.GetJoins(pk_table, ts.GetTables(i), filterInfo)
-                            Else
-                                join = ts.GetJoins(pk_table, ts.GetTables(i))
-                            End If
+                        Dim sh As IObjectSchemaBase = schema.GetObjectSchema(type2join)
+                        Dim ts As IOrmObjectSchema = TryCast(sh, IOrmObjectSchema)
+                        If ts IsNot Nothing Then
+                            Dim pk_table As SourceFragment = sh.Table
+                            For i As Integer = 1 To ts.GetTables.Length - 1
+                                Dim joinableTs As IGetJoinsWithContext = TryCast(ts, IGetJoinsWithContext)
+                                Dim join As OrmJoin = Nothing
+                                If joinableTs IsNot Nothing Then
+                                    join = joinableTs.GetJoins(pk_table, ts.GetTables(i), filterInfo)
+                                Else
+                                    join = ts.GetJoins(pk_table, ts.GetTables(i))
+                                End If
 
-                            If Not OrmJoin.IsEmpty(join) Then
-                                l.Add(join)
-                            End If
-                        Next
+                                If Not OrmJoin.IsEmpty(join) Then
+                                    l.Add(join)
+                                End If
+                            Next
 
-                        Dim newfl As IFilter = ts.GetContextFilter(filterInfo)
-                        If newfl IsNot Nothing Then
-                            Dim con As Conditions.Condition.ConditionConstructorBase = schema.CreateConditionCtor
-                            con.AddFilter(filter)
-                            con.AddFilter(newfl)
-                            filter = con.Condition
+                            Dim newfl As IFilter = ts.GetContextFilter(filterInfo)
+                            If newfl IsNot Nothing Then
+                                Dim con As Conditions.Condition.ConditionConstructorBase = schema.CreateConditionCtor
+                                con.AddFilter(filter)
+                                con.AddFilter(newfl)
+                                filter = con.Condition
+                            End If
                         End If
                     ElseIf type2join Is selectType Then
                         appendMain = True
@@ -3821,31 +3721,33 @@ l1:
 
         If s IsNot Nothing Then
             For Each ns As Sort In New Sort.Iterator(s)
-                Dim sortType As System.Type = ns.Type
-                If sortType IsNot selectType AndAlso sortType IsNot Nothing AndAlso Not types.Contains(sortType) Then
-                    Dim field As String = schema.GetJoinFieldNameByType(selectType, sortType, oschema)
+                If ns.ObjectSource IsNot Nothing Then
+                    Dim sortType As System.Type = ns.ObjectSource.GetRealType(schema, Nothing)
+                    If sortType IsNot selectType AndAlso sortType IsNot Nothing AndAlso Not types.Contains(sortType) Then
+                        Dim field As String = schema.GetJoinFieldNameByType(selectType, sortType, oschema)
 
-                    If Not String.IsNullOrEmpty(field) Then
-                        types.Add(sortType)
-                        l.Add(schema.MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
-                        Continue For
-                    End If
-
-                    'Dim sschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
-                    'field = _schema.GetJoinFieldNameByType(sortType, selectType, sschema)
-                    If String.IsNullOrEmpty(field) Then
-                        Dim m2m As M2MRelation = schema.GetM2MRelation(sortType, selectType, True)
-                        If m2m IsNot Nothing Then
-                            l.AddRange(schema.MakeM2MJoin(m2m, sortType))
-                        Else
-                            Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, sortType))
+                        If Not String.IsNullOrEmpty(field) Then
+                            types.Add(sortType)
+                            l.Add(schema.MakeJoin(sortType, selectType, field, FilterOperation.Equal, JoinType.Join))
+                            Continue For
                         End If
-                    End If
 
-                    'types.Add(sortType)
-                    'l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
-                ElseIf sortType Is selectType OrElse sortType Is Nothing Then
-                    appendMain = True
+                        'Dim sschema As IOrmObjectSchemaBase = _schema.GetObjectSchema(sortType)
+                        'field = _schema.GetJoinFieldNameByType(sortType, selectType, sschema)
+                        If String.IsNullOrEmpty(field) Then
+                            Dim m2m As M2MRelation = schema.GetM2MRelation(sortType, selectType, True)
+                            If m2m IsNot Nothing Then
+                                l.AddRange(schema.MakeM2MJoin(m2m, sortType))
+                            Else
+                                Throw New OrmManagerException(String.Format("Relation {0} to {1} is ambiguous or not exist. Use FindJoin method", selectType, sortType))
+                            End If
+                        End If
+
+                        'types.Add(sortType)
+                        'l.Add(MakeJoin(selectType, sortType, field, FilterOperation.Equal, JoinType.Join, True))
+                    ElseIf sortType Is selectType OrElse sortType Is Nothing Then
+                        appendMain = True
+                    End If
                 End If
             Next
         End If

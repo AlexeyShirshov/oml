@@ -116,7 +116,7 @@ Namespace Cache
             If sort Is Nothing Then
                 l.Add(obj)
                 Return True
-            ElseIf mc.CanSortOnClient(obj.GetType, l, sort, st) Then
+            ElseIf OrmManager.CanSortOnClient(obj.GetType, l, sort, st) Then
                 Dim c As IComparer = Nothing
                 If st IsNot Nothing Then
                     c = st.CreateSortComparer(sort)
@@ -171,23 +171,33 @@ Namespace Cache
                 ref = New WeakReference(o)
             End Sub
 
-            Public Function GetObject(Of T As {_ICachedEntity})(ByVal mc As OrmManager) As T
+            Public Function GetObject(Of T As {_ICachedEntity})(ByVal mgr As OrmManager) As T
+                Return GetObject(Of T)(mgr.Cache, mgr.GetFilterInfo, mgr.MappingEngine)
+            End Function
+
+            Public Function GetObject(Of T As {_ICachedEntity})(ByVal cache As CacheBase, _
+                ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As T
                 Dim o As T = CType(ref.Target, T)
                 If o Is Nothing Then
-                    o = CType(mc.GetEntityFromCacheOrCreate(_e.PK, GetType(T)), T) 'mc.FindObject(id, t)
-                    If o Is Nothing AndAlso mc.NewObjectManager IsNot Nothing Then
-                        o = CType(mc.NewObjectManager.GetNew(GetType(T), _e.PK), T)
+                    o = CType(cache.GetEntityFromCacheOrCreate(_e.PK, GetType(T), True, filterInfo, schema), T) 'mc.FindObject(id, t)
+                    If o Is Nothing AndAlso cache.NewObjectManager IsNot Nothing Then
+                        o = CType(cache.NewObjectManager.GetNew(GetType(T), _e.PK), T)
                     End If
                 End If
                 Return o
             End Function
 
-            Public Function GetObject(ByVal mc As OrmManager) As ICachedEntity
+            Public Function GetObject(ByVal mgr As OrmManager) As ICachedEntity
+                Return GetObject(mgr.Cache, mgr.GetFilterInfo, mgr.MappingEngine)
+            End Function
+
+            Public Function GetObject(ByVal cache As CacheBase, _
+                ByVal filterInfo As Object, ByVal schema As ObjectMappingEngine) As ICachedEntity
                 Dim o As ICachedEntity = CType(ref.Target, ICachedEntity)
                 If o Is Nothing Then
-                    o = mc.GetEntityFromCacheOrCreate(_e.PK, _e.EntityType) 'mc.FindObject(id, t)
-                    If o Is Nothing AndAlso mc.NewObjectManager IsNot Nothing Then
-                        o = mc.NewObjectManager.GetNew(_e.EntityType, _e.PK)
+                    o = cache.GetEntityFromCacheOrCreate(_e.PK, _e.EntityType, True, filterInfo, schema) 'mc.FindObject(id, t)
+                    If o Is Nothing AndAlso cache.NewObjectManager IsNot Nothing Then
+                        o = cache.NewObjectManager.GetNew(_e.EntityType, _e.PK)
                     End If
                 End If
                 Return o

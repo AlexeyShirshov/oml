@@ -121,7 +121,7 @@ Public Class TestJoinsRS
         Dim tm As New TestManagerRS
         Using mgr As Worm.OrmManager = tm.CreateManager(tm.GetSchema("1"))
             Dim t As Type = GetType(Table2)
-            Dim c As IEntityFilter = CType(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first").Filter(t), IEntityFilter)
+            Dim c As IEntityFilter = CType(New Criteria.Ctor(GetType(Table1)).Field("Title").Eq("first").Filter(), IEntityFilter)
             Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
             Assert.AreEqual(IEvaluableValue.EvalResult.Unknown, c.Eval(mgr.MappingEngine, t2, mgr.MappingEngine.GetObjectSchema(t)))
 
@@ -166,8 +166,8 @@ Public Class TestJoinsRS
 
             Dim t2 As New Table2(1, mgr.Cache, mgr.MappingEngine)
             Dim t1 As New Table1(110, mgr.Cache, mgr.MappingEngine)
-            mgr.NewObjectManager.AddNew(t2)
-            mgr.NewObjectManager.AddNew(t1)
+            mgr.Cache.NewObjectManager.AddNew(t2)
+            mgr.Cache.NewObjectManager.AddNew(t1)
             t1.Name = "bjkb"
             t1.CreatedAt = CDate("2006-01-01")
             Dim r As New OrmBase.RelatedObject(t1, t2, New String() {"ID"})

@@ -156,7 +156,7 @@ Public Class Expressions
                             If lv.OrmProp.Table IsNot Nothing Then
                                 Return schema.CreateCriteria(lv.OrmProp.Table, lv.OrmProp.Column).Op(fo, CType(rightValue, IParamFilterValue)).Filter
                             Else
-                                Return schema.CreateCriteria(lv.OrmProp.Type, lv.OrmProp.PropertyAlias).Op(fo, CType(rightValue, IParamFilterValue)).Filter
+                                Return schema.CreateCriteria(lv.OrmProp.ObjectSource, lv.OrmProp.PropertyAlias).Op(fo, CType(rightValue, IParamFilterValue)).Filter
                             End If
                         Else
                             GoTo l1
@@ -174,7 +174,7 @@ Public Class Expressions
                             If rv.OrmProp.Table IsNot Nothing Then
                                 Return schema.CreateCriteria(rv.OrmProp.Table, rv.OrmProp.Column).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
                             Else
-                                Return schema.CreateCriteria(rv.OrmProp.Type, rv.OrmProp.PropertyAlias).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
+                                Return schema.CreateCriteria(rv.OrmProp.ObjectSource, rv.OrmProp.PropertyAlias).Op(Invert(fo), CType(leftValue, IParamFilterValue)).Filter
                             End If
                         ElseIf rightValue.GetType Is GetType(CustomValue) Then
                             Dim rv As CustomValue = CType(rightValue, CustomValue)

@@ -3,6 +3,7 @@ Imports System.Collections.Generic
 Imports Worm.Criteria
 Imports Worm.Criteria.Core
 Imports Worm.Criteria.Values
+Imports Worm.Orm
 
 Namespace Database
     Namespace Criteria.Joins
@@ -17,12 +18,32 @@ Namespace Database
                 MyBase.New(t, propertyAlias, t2, propertyAlias2, operation)
             End Sub
 
+            Public Sub New(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String, ByVal t2 As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+                MyBase.New(New ObjectSource([alias]), propertyAlias, t2, propertyAlias2, operation)
+            End Sub
+
             Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal t As Type, ByVal propertyAlias As String, ByVal operation As FilterOperation)
                 MyBase.New(table, column, t, propertyAlias, operation)
             End Sub
 
+            Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal operation As FilterOperation)
+                MyBase.New(table, column, os, propertyAlias, operation)
+            End Sub
+
             Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal table2 As SourceFragment, ByVal column2 As String, ByVal operation As FilterOperation)
                 MyBase.New(table, column, table2, column2, operation)
+            End Sub
+
+            Public Sub New(ByVal entityName As String, ByVal propertyAlias As String, ByVal entityName2 As String, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+                MyBase.New(entityName, propertyAlias, entityName2, propertyAlias2, operation)
+            End Sub
+
+            Public Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal t As Type, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+                MyBase.New(os, propertyAlias, t, propertyAlias2, operation)
+            End Sub
+
+            Public Sub New(ByVal table As SourceFragment, ByVal column As String, ByVal entityName2 As String, ByVal propertyAlias2 As String, ByVal operation As FilterOperation)
+                MyBase.New(table, column, entityName2, propertyAlias2, operation)
             End Sub
 
             'Public Sub New(ByVal t1 As Type, ByVal t2 As Type)
@@ -34,7 +55,7 @@ Namespace Database
             'End Sub
 
             Public Overrides Function MakeQueryStmt(ByVal schema As ObjectMappingEngine, ByVal filterInfo As Object, ByVal almgr As IPrepareTable, ByVal pname As Orm.Meta.ICreateParam) As String
-                Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
+                'Dim tableAliases As System.Collections.Generic.IDictionary(Of SourceFragment, String) = almgr.Aliases
 
                 'If _types IsNot Nothing Then
                 '    Dim oschema1 As IObjectSchemaBase = schema.GetObjectSchema(_types.First)
@@ -42,35 +63,48 @@ Namespace Database
 
                 'Else
                 Dim map As MapField2Column = Nothing
+                Dim os As ObjectSource = Nothing
                 If _e1 IsNot Nothing Then
-                    map = schema.GetObjectSchema(_e1.First).GetFieldColumnMap(_e1.Second)
-                Else
+                    map = schema.GetObjectSchema(_e1.First.GetRealType(schema)).GetFieldColumnMap(_e1.Second)
+                    os = _e1.First
+                    'ElseIf _d1 IsNot Nothing Then
+                    '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d1.First)).GetFieldColumnMap(_d1.Second)
+                ElseIf _t1 IsNot Nothing Then
                     map = New MapField2Column(Nothing, _t1.Second, _t1.First)
+                Else
+                    Throw New InvalidOperationException
                 End If
 
                 Dim map2 As MapField2Column = Nothing
+                Dim os2 As ObjectSource = Nothing
                 If _e2 IsNot Nothing Then
-                    map2 = schema.GetObjectSchema(_e2.First).GetFieldColumnMap(_e2.Second)
-                Else
+                    map2 = schema.GetObjectSchema(_e2.First.GetRealType(schema)).GetFieldColumnMap(_e2.Second)
+                    os2 = _e2.First
+                    'ElseIf _d2 IsNot Nothing Then
+                    '    map = schema.GetObjectSchema(schema.GetTypeByEntityName(_d2.First)).GetFieldColumnMap(_d2.Second)
+                ElseIf _t2 IsNot Nothing Then
                     map2 = New MapField2Column(Nothing, _t2.Second, _t2.First)
+                Else
+                    Throw New InvalidOperationException
                 End If
 
                 Dim [alias] As String = String.Empty
 
-                If tableAliases IsNot Nothing Then
-                    Debug.Assert(tableAliases.ContainsKey(map._tableName), "There is not alias for table " & map._tableName.RawName)
+                If almgr IsNot Nothing Then
+                    Debug.Assert(almgr.ContainsKey(map._tableName, os), "There is not alias for table " & map._tableName.RawName)
                     Try
-                        [alias] = tableAliases(map._tableName) & schema.Selector
+                        [alias] = almgr.GetAlias(map._tableName, os) & schema.Selector
                     Catch ex As KeyNotFoundException
                         Throw New ObjectMappingException("There is not alias for table " & map._tableName.RawName, ex)
                     End Try
                 End If
 
                 Dim alias2 As String = String.Empty
-                If map2._tableName IsNot Nothing AndAlso tableAliases IsNot Nothing AndAlso tableAliases.ContainsKey(map2._tableName) Then
-                    Debug.Assert(tableAliases.ContainsKey(map2._tableName), "There is not alias for table " & map2._tableName.RawName)
+                'If map2._tableName IsNot Nothing AndAlso tableAliases IsNot Nothing AndAlso tableAliases.ContainsKey(map2._tableName) Then
+                If almgr IsNot Nothing Then
+                    Debug.Assert(almgr.ContainsKey(map2._tableName, os2), "There is not alias for table " & map2._tableName.RawName)
                     Try
-                        alias2 = tableAliases(map2._tableName) & schema.Selector
+                        alias2 = almgr.GetAlias(map2._tableName, os2) & schema.Selector
                     Catch ex As KeyNotFoundException
                         Throw New ObjectMappingException("There is not alias for table " & map2._tableName.RawName, ex)
                     End Try
@@ -111,23 +145,25 @@ Namespace Database
             '    Return [alias] & map._columnName & Criteria.Core.TemplateBase.Oper2String(_oper) & alias2 & map2._columnName
             'End Function
 
-            Protected Shared Function ChangeEntityJoinToValue(ByVal source As IFilter, ByVal t As Type, ByVal field As String, ByVal value As IParamFilterValue) As IFilter
+            Protected Shared Function ChangeEntityJoinToValue(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal value As IParamFilterValue) As IFilter
                 For Each _fl As IFilter In source.GetAllFilters()
                     Dim fl As JoinFilter = TryCast(_fl, JoinFilter)
                     If fl IsNot Nothing Then
                         Dim f As IFilter = Nothing
-                        If fl._e1 IsNot Nothing AndAlso fl._e1.First Is t AndAlso fl._e1.Second = field Then
-                            If fl._e2 IsNot Nothing Then
-                                f = New Criteria.Core.EntityFilter(fl._e2.First, fl._e2.Second, value, fl._oper)
-                            Else
-                                f = New Criteria.Core.TableFilter(fl._t2.First, fl._t2.Second, value, fl._oper)
-                            End If
-                        ElseIf fl._e2 IsNot Nothing AndAlso fl._e2.First Is t AndAlso fl._e2.Second = field Then
-                            If fl._e1 IsNot Nothing Then
-                                f = New Criteria.Core.EntityFilter(fl._e1.First, fl._e1.Second, value, fl._oper)
-                            Else
-                                f = New Criteria.Core.TableFilter(fl._t1.First, fl._t1.Second, value, fl._oper)
-                            End If
+                        If fl._e1 IsNot Nothing AndAlso fl._e1.First.GetRealType(schema) Is t AndAlso fl._e1.Second = propertyAlias Then
+                            f = SetJF(fl._e2, fl._t2, Nothing, value, fl._oper)
+                        ElseIf fl._e2 IsNot Nothing AndAlso fl._e2.First.GetRealType(schema) Is t AndAlso fl._e2.Second = propertyAlias Then
+                            f = SetJF(fl._e1, fl._t1, Nothing, value, fl._oper)
+                            'ElseIf fl._d1 IsNot Nothing Then
+                            '    Dim tt As Type = schema.GetTypeByEntityName(fl._d1.First)
+                            '    If tt Is t AndAlso fl._d1.Second = propertyAlias Then
+                            '        f = SetJF(fl._e2, fl._t2, fl._d2, value, fl._oper)
+                            '    End If
+                            'ElseIf fl._d2 IsNot Nothing Then
+                            '    Dim tt As Type = schema.GetTypeByEntityName(fl._d2.First)
+                            '    If tt Is t AndAlso fl._d2.Second = propertyAlias Then
+                            '        f = SetJF(fl._e1, fl._t1, fl._d1, value, fl._oper)
+                            '    End If
                         End If
 
                         If f IsNot Nothing Then
@@ -138,12 +174,25 @@ Namespace Database
                 Return Nothing
             End Function
 
-            Public Shared Function ChangeEntityJoinToLiteral(ByVal source As IFilter, ByVal t As Type, ByVal field As String, ByVal literal As String) As IFilter
-                Return ChangeEntityJoinToValue(source, t, field, New LiteralValue(literal))
+            Private Shared Function SetJF(ByVal e As Pair(Of ObjectSource, String), ByVal t As Pair(Of SourceFragment, String), _
+                                   ByVal d As Pair(Of String), ByVal value As IParamFilterValue, ByVal oper As FilterOperation) As IFilter
+                If e IsNot Nothing Then
+                    Return New Criteria.Core.EntityFilter(e.First, e.Second, value, oper)
+                ElseIf t IsNot Nothing Then
+                    Return New Criteria.Core.TableFilter(t.First, t.Second, value, oper)
+                    'ElseIf d IsNot Nothing Then
+                    '    Return New Criteria.Core.EntityFilter(d.First, d.Second, value, oper)
+                Else
+                    Throw New InvalidOperationException
+                End If
             End Function
 
-            Public Shared Function ChangeEntityJoinToParam(ByVal source As IFilter, ByVal t As Type, ByVal field As String, ByVal value As TypeWrap(Of Object)) As IFilter
-                Return ChangeEntityJoinToValue(source, t, field, New ScalarValue(value.Value))
+            Public Shared Function ChangeEntityJoinToLiteral(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal literal As String) As IFilter
+                Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, New LiteralValue(literal))
+            End Function
+
+            Public Shared Function ChangeEntityJoinToParam(ByVal schema As ObjectMappingEngine, ByVal source As IFilter, ByVal t As Type, ByVal propertyAlias As String, ByVal value As TypeWrap(Of Object)) As IFilter
+                Return ChangeEntityJoinToValue(schema, source, t, propertyAlias, New ScalarValue(value.Value))
             End Function
 
             Protected Overrides Function _Clone() As Object
@@ -162,6 +211,10 @@ Namespace Database
 
             Public Sub New(ByVal t As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As IFilter)
                 MyBase.New(t, joinType, condition)
+            End Sub
+
+            Public Sub New(ByVal [alias] As ObjectAlias, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal condition As IFilter)
+                MyBase.New([alias], joinType, condition)
             End Sub
 
             Public Sub New(ByVal t As Type, ByVal joinType As Worm.Criteria.Joins.JoinType, ByVal joinEntityType As Type)
@@ -187,25 +240,26 @@ Namespace Database
 
                 Dim tbl As SourceFragment = _table
                 If tbl Is Nothing Then
-                    If _type IsNot Nothing Then
-                        tbl = schema.GetTables(_type)(0)
-                    Else
-                        tbl = schema.GetTables(schema.GetTypeByEntityName(_en))(0)
-                    End If
+                    'If _type IsNot Nothing Then
+                    '    tbl = schema.GetTables(_type)(0)
+                    'Else
+                    '    tbl = schema.GetTables(schema.GetTypeByEntityName(_en))(0)
+                    'End If
+                    tbl = schema.GetTables(ObjectSource.GetRealType(schema))(0)
                 End If
 
                 Dim alTable As SourceFragment = tbl
-                Dim tableAliases As IDictionary(Of SourceFragment, String) = almgr.Aliases
-                If Not tableAliases.ContainsKey(tbl) Then
-                    almgr.AddTable(tbl, pname)
+                'Dim tableAliases As IDictionary(Of SourceFragment, String) = almgr.Aliases
+                If Not almgr.ContainsKey(tbl, ObjectSource) Then
+                    almgr.AddTable(tbl, ObjectSource, pname)
                 End If
                 'Dim table As String = _table
                 'Dim sch as IOrmObjectSchema = schema.GetObjectSchema(
-                Return JoinTypeString() & schema.GetTableName(tbl) & " " & tableAliases(alTable) & " on " & Condition.MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
+                Return JoinTypeString() & schema.GetTableName(tbl) & " " & almgr.GetAlias(alTable, ObjectSource) & " on " & Condition.MakeQueryStmt(schema, filterInfo, almgr, pname, Nothing)
             End Function
 
-            Protected Overrides Function CreateOrmFilter(ByVal t As System.Type, ByVal fieldName As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase
-                Return New Core.OrmFilterTemplate(t, fieldName, oper)
+            Protected Overrides Function CreateOrmFilter(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase
+                Return New Core.OrmFilterTemplate(os, propertyAlias, oper)
             End Function
 
             Protected Overrides Function CreateTableFilter(ByVal table As Orm.Meta.SourceFragment, ByVal fieldName As String, ByVal oper As FilterOperation) As Worm.Criteria.Core.TemplateBase
@@ -218,12 +272,21 @@ Namespace Database
             '    End Get
             'End Property
 
-            Protected Overloads Overrides Function CreateJoin(ByVal table As Orm.Meta.SourceFragment, ByVal column As String, ByVal t As System.Type, ByVal fieldName As String, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Joins.JoinFilter
-                Return New JoinFilter(table, column, t, fieldName, oper)
+            Protected Overloads Overrides Function CreateJoin(ByVal table As Orm.Meta.SourceFragment, ByVal column As String, ByVal os As ObjectSource, ByVal fieldName As String, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Joins.JoinFilter
+                Return New JoinFilter(table, column, os, fieldName, oper)
             End Function
 
             Protected Overloads Overrides Function CreateJoin(ByVal table As Orm.Meta.SourceFragment, ByVal column As String, ByVal table2 As Orm.Meta.SourceFragment, ByVal column2 As String, ByVal oper As Worm.Criteria.FilterOperation) As Worm.Criteria.Joins.JoinFilter
                 Return New JoinFilter(table, column, table2, column2, oper)
+            End Function
+
+            Protected Overrides Function _Clone() As Object
+                Dim j As New OrmJoin(_table, _joinType, _condition)
+                j._src = _src
+                j.M2MKey = M2MKey
+                j.M2MJoinType = M2MJoinType
+                j.M2MJoinEntityName = M2MJoinEntityName
+                Return j
             End Function
         End Class
 
@@ -239,6 +302,13 @@ Namespace Database
 
             Public Shared Function Join(ByVal entityName As String) As JoinCondition
                 Dim j As New OrmJoin(entityName, Worm.Criteria.Joins.JoinType.Join, Nothing)
+                Dim jc As New JCtor
+                jc._j.Add(j)
+                Return New JoinCondition(jc)
+            End Function
+
+            Public Shared Function Join(ByVal [alias] As ObjectAlias) As JoinCondition
+                Dim j As New OrmJoin([alias], Worm.Criteria.Joins.JoinType.Join, Nothing)
                 Dim jc As New JCtor
                 jc._j.Add(j)
                 Return New JoinCondition(jc)
@@ -512,11 +582,11 @@ Namespace Database
                 End Get
             End Property
 
-            Public ReadOnly Property Filter(ByVal t As System.Type) As IFilter Implements IGetFilter.Filter
-                Get
-                    Return _c.Condition
-                End Get
-            End Property
+            'Public ReadOnly Property Filter(ByVal t As System.Type) As IFilter Implements IGetFilter.Filter
+            '    Get
+            '        Return _c.Condition
+            '    End Get
+            'End Property
         End Class
 
         Public Class CriteriaJoin
@@ -535,8 +605,20 @@ Namespace Database
                 _jc = jc
             End Sub
 
-            Public Function Eq(ByVal t As Type, ByVal field As String) As JoinLink
-                _jf._e2 = New Pair(Of Type, String)(t, field)
+            Public Function Eq(ByVal t As Type, ByVal propertyAlias As String) As JoinLink
+                _jf._e2 = New Pair(Of ObjectSource, String)(New ObjectSource(t), propertyAlias)
+                _jf._oper = FilterOperation.Equal
+                Return GetLink()
+            End Function
+
+            Public Function Eq(ByVal entityName As String, ByVal propertyAlias As String) As JoinLink
+                _jf._e2 = New Pair(Of ObjectSource, String)(New ObjectSource(entityName), propertyAlias)
+                _jf._oper = FilterOperation.Equal
+                Return GetLink()
+            End Function
+
+            Public Function Eq(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As JoinLink
+                _jf._e2 = New Pair(Of ObjectSource, String)(New ObjectSource([alias]), propertyAlias)
                 _jf._oper = FilterOperation.Equal
                 Return GetLink()
             End Function
@@ -567,24 +649,36 @@ Namespace Database
                 Return New JoinLink(f, _j)
             End Function
 
-            Public Function [On](ByVal m2mType As Type) As JoinLink
+            Public Function OnM2M(ByVal m2mType As Type) As JoinLink
                 Return New JoinLink(m2mType, _j)
             End Function
 
-            Public Function [On](ByVal m2mEntityName As String) As JoinLink
+            Public Function OnM2M(ByVal m2mEntityName As String) As JoinLink
                 Return New JoinLink(m2mEntityName, _j)
             End Function
 
-            Public Function [On](ByVal m2mKey As String, ByVal m2mType As Type) As JoinLink
+            Public Function OnM2M(ByVal m2mKey As String, ByVal m2mType As Type) As JoinLink
                 Return New JoinLink(m2mType, m2mKey, _j)
             End Function
 
-            Public Function [On](ByVal m2mKey As String, ByVal m2mEntityName As String) As JoinLink
+            Public Function OnM2M(ByVal m2mKey As String, ByVal m2mEntityName As String) As JoinLink
                 Return New JoinLink(m2mEntityName, m2mKey, _j)
             End Function
 
-            Public Function [On](ByVal t As Type, ByVal field As String) As CriteriaJoin
-                Dim jf As New JoinFilter(t, field, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Public Function [On](ByVal t As Type, ByVal propertyAlias As String) As CriteriaJoin
+                Dim jf As New JoinFilter(t, propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+                Dim c As New CriteriaJoin(jf, _j)
+                Return c
+            End Function
+
+            Public Function [On](ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As CriteriaJoin
+                Dim jf As New JoinFilter([alias], propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+                Dim c As New CriteriaJoin(jf, _j)
+                Return c
+            End Function
+
+            Public Function [On](ByVal entityName As String, ByVal propertyAlias As String) As CriteriaJoin
+                Dim jf As New JoinFilter(entityName, propertyAlias, CType(Nothing, String), Nothing, FilterOperation.Equal)
                 Dim c As New CriteriaJoin(jf, _j)
                 Return c
             End Function
@@ -595,8 +689,14 @@ Namespace Database
                 Return c
             End Function
 
-            Public Shared Function Create(ByVal t As Type, ByVal field As String) As CriteriaJoin
-                Dim jf As New JoinFilter(t, field, CType(Nothing, Type), Nothing, FilterOperation.Equal)
+            Public Shared Function Create(ByVal entityName As String, ByVal propertyAlias As String) As CriteriaJoin
+                Dim jf As New JoinFilter(entityName, propertyAlias, CType(Nothing, String), Nothing, FilterOperation.Equal)
+                Dim c As New CriteriaJoin(jf, Nothing)
+                Return c
+            End Function
+
+            Public Shared Function Create(ByVal t As Type, ByVal propertyAlias As String) As CriteriaJoin
+                Dim jf As New JoinFilter(t, propertyAlias, CType(Nothing, Type), Nothing, FilterOperation.Equal)
                 Dim c As New CriteriaJoin(jf, Nothing)
                 Return c
             End Function

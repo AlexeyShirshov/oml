@@ -134,6 +134,7 @@
     <Compile Include="Cache\Abstract.vb" />
     <Compile Include="Cache\advcache.vb" />
     <Compile Include="Cache\classes.vb" />
+    <Compile Include="Cache\NewObjectsStore.vb" />
     <Compile Include="Cache\ReadonlyCache.vb" />
     <Compile Include="Collections\CollectionWithIndex.vb" />
     <Compile Include="Collections\CopyEnumerators.vb" />
@@ -152,6 +153,7 @@
     <Compile Include="QueryCmd\classes.vb" />
     <Compile Include="Query\db\Formater.vb" />
     <Compile Include="Query\Grouping.vb" />
+    <Compile Include="Query\ObjectAlias.vb" />
     <Compile Include="Query\Sorting.vb" />
     <Compile Include="Criteria\Xml\XmlConditions.vb" />
     <Compile Include="Criteria\Xml\XmlCriteria.vb" />

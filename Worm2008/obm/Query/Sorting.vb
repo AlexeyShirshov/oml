@@ -10,29 +10,33 @@ Namespace Orm
     End Enum
 
     Public Class Sorting
-        Private _t As Type
+        Private _os As ObjectSource
         Private _prev As SortOrder
 
-        Protected Friend Sub New(ByVal t As Type, ByVal prev As SortOrder)
-            _t = t
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal prev As SortOrder)
+            _os = os
             _prev = prev
         End Sub
 
         Public Function NextField(ByVal propertyAlias As String) As SortOrder
-            Return New SortOrder(_t, propertyAlias, _prev)
+            Return New SortOrder(_os, propertyAlias, _prev)
         End Function
 
         Public Function NextExternal(ByVal propertyAlias As String) As SortOrder
-            Return New SortOrder(_t, propertyAlias, True, _prev)
+            Return New SortOrder(_os, propertyAlias, True, _prev)
         End Function
 
-        Public Shared Function Field(ByVal propertyAlias As String) As SortOrder
-            Return New SortOrder(CType(Nothing, Type), propertyAlias)
+        Public Shared Function Field(ByVal en As String, ByVal propertyAlias As String) As SortOrder
+            Return New SortOrder(New ObjectSource(en), propertyAlias)
         End Function
 
-        'Public Shared Function Column(ByVal clm As String) As SortOrder
-        '    Return New SortOrder(CType(Nothing, SourceFragment), clm)
-        'End Function
+        Public Shared Function Field(ByVal [alias] As ObjectAlias, ByVal propertyAlias As String) As SortOrder
+            Return New SortOrder(New ObjectSource([alias]), propertyAlias)
+        End Function
+
+        Public Shared Function Column(ByVal t As SourceFragment, ByVal clm As String) As SortOrder
+            Return New SortOrder(t, clm)
+        End Function
 
         'Public Shared Function Custom(ByVal sortExpression As String, ByVal values() As Pair(Of Object, String)) As SortOrder
         '    Return SortOrder.CreateCustom(sortExpression, Nothing, values)
@@ -52,6 +56,10 @@ Namespace Orm
 
         Public Shared Function Field(ByVal t As Type, ByVal propertyAlias As String) As SortOrder
             Return New SortOrder(t, propertyAlias)
+        End Function
+
+        Public Shared Function Field(ByVal os As ObjectSource, ByVal propertyAlias As String) As SortOrder
+            Return New SortOrder(os, propertyAlias)
         End Function
 
         Public Shared Function External(ByVal tag As String, ByVal externalSort As ExternalSortDelegate) As SortOrder
@@ -80,7 +88,7 @@ Namespace Sorting
         Private _ext As Boolean
         Private _prev As SortOrder
         Private _order As SortType
-        Private _t As Type
+        Private _os As ObjectSource
         Private _custom As String
         Private _values() As Pair(Of Object, String)
         Private _del As ExternalSortDelegate
@@ -102,29 +110,50 @@ Namespace Sorting
 
         Protected Friend Sub New(ByVal t As Type, ByVal prev As SortOrder)
             _prev = prev
-            _t = t
+            _os = New ObjectSource(t)
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal propertyAlias As String, Optional ByVal prev As SortOrder = Nothing)
             _f = propertyAlias
             _prev = prev
-            _t = t
+            _os = New ObjectSource(t)
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal ext As Boolean, Optional ByVal prev As SortOrder = Nothing)
             _f = propertyAlias
             _ext = ext
             _prev = prev
-            _t = t
+            If t IsNot Nothing Then
+                _os = New ObjectSource(t)
+            End If
         End Sub
 
         Protected Friend Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal ext As Boolean, ByVal del As ExternalSortDelegate)
             _f = propertyAlias
             _ext = ext
-            _t = t
+            If t IsNot Nothing Then
+                _os = New ObjectSource(t)
+            End If
             _del = del
         End Sub
 
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String)
+            _os = os
+            _f = propertyAlias
+        End Sub
+
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal prev As SortOrder)
+            _prev = prev
+            _os = os
+            _f = propertyAlias
+        End Sub
+
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal ext As Boolean, Optional ByVal prev As SortOrder = Nothing)
+            _f = propertyAlias
+            _ext = ext
+            _prev = prev
+            _os = os
+        End Sub
 #End Region
 
 #Region " Table ctor "
@@ -177,16 +206,16 @@ Namespace Sorting
         End Function
 
         Public Function NextField(ByVal propertyAlias As String) As SortOrder
-            If _t IsNot Nothing Then
-                Return New SortOrder(_t, propertyAlias, Me)
+            If _os IsNot Nothing Then
+                Return New SortOrder(_os, propertyAlias, Me)
             Else
                 Return New SortOrder(_table, propertyAlias, Me)
             End If
         End Function
 
         Public Function NextExternal(ByVal propertyAlias As String) As SortOrder
-            If _t IsNot Nothing Then
-                Return New SortOrder(_t, propertyAlias, True, Me)
+            If _os IsNot Nothing Then
+                Return New SortOrder(_os, propertyAlias, True, Me)
             Else
                 Return New SortOrder(_table, propertyAlias, True, Me)
             End If
@@ -206,7 +235,7 @@ Namespace Sorting
                     Throw New InvalidOperationException("Sort is custom")
                 End If
                 _order = SortType.Asc
-                Return New Orm.Sorting(_t, Me)
+                Return New Orm.Sorting(_os, Me)
                 'Return New Sort(_f, SortType.Asc, _ext)
             End Get
         End Property
@@ -217,20 +246,20 @@ Namespace Sorting
                 '    Throw New InvalidOperationException("Sort is custom")
                 'End If
                 _order = SortType.Desc
-                Return New Orm.Sorting(_t, Me)
+                Return New Orm.Sorting(_os, Me)
                 'Return New Sort(_f, SortType.Desc, _ext)
             End Get
         End Property
 
-        Public Function Order(ByVal orderParam As Boolean) As Orm.Sorting
+        Public Function Order(ByVal asc As Boolean) As Orm.Sorting
             If IsCustom Then
                 Throw New InvalidOperationException("Sort is custom")
             End If
 
-            If orderParam Then
-                Return Asc 'New Sort(_f, SortType.Asc, _ext)
+            If asc Then
+                Return Me.Asc 'New Sort(_f, SortType.Asc, _ext)
             Else
-                Return Desc 'New Sort(_f, SortType.Desc, _ext)
+                Return Me.Desc 'New Sort(_f, SortType.Desc, _ext)
             End If
         End Function
 
@@ -240,10 +269,14 @@ Namespace Sorting
             End If
 
             _order = CType([Enum].Parse(GetType(SortType), orderParam, True), SortType)
-            Return New Orm.Sorting(_t, Me) 'New Sort(_f, _, _ext)
+            Return New Orm.Sorting(_os, Me) 'New Sort(_f, _, _ext)
         End Function
 
         Public Shared Widening Operator CType(ByVal so As SortOrder) As Sort
+            Return xxx(so)
+        End Operator
+
+        Private Shared Function xxx(ByVal so As SortOrder) As Sort
             If Not String.IsNullOrEmpty(so._f) OrElse Not String.IsNullOrEmpty(so._custom) Then
                 If so._prev Is Nothing Then
                     If so.IsCustom Then
@@ -251,8 +284,8 @@ Namespace Sorting
                         s._order = so._order
                         Return s
                     Else
-                        If so._t IsNot Nothing Then
-                            Return New Sort(so._t, so._f, so._order, so._ext, so._del)
+                        If so._os IsNot Nothing Then
+                            Return New Sort(so._os, so._f, so._order, so._ext, so._del)
                         Else
                             Return New Sort(so._table, so._f, so._order, so._ext, so._del)
                         End If
@@ -263,8 +296,8 @@ Namespace Sorting
                         s._order = so._order
                         Return s
                     Else
-                        If so._t IsNot Nothing Then
-                            Return New Sort(so._prev, so._t, so._f, so._order, so._ext, so._del)
+                        If so._os IsNot Nothing Then
+                            Return New Sort(so._prev, so._os, so._f, so._order, so._ext, so._del)
                         Else
                             Return New Sort(so._prev, so._table, so._f, so._order, so._ext, so._del)
                         End If
@@ -273,7 +306,7 @@ Namespace Sorting
             Else
                 Return so._prev
             End If
-        End Operator
+        End Function
 
         Public ReadOnly Property IsCustom() As Boolean
             Get
@@ -403,6 +436,16 @@ Namespace Sorting
 
 #Region " Type ctors "
 
+        Protected Friend Sub New(ByVal prev As Sort, ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
+            MyBase.New(os, propertyAlias)
+            '_f = fieldName
+            _order = order
+            _ext = external
+            '_t = t
+            _prev = prev
+            _del = del
+        End Sub
+
         Protected Friend Sub New(ByVal prev As Sort, ByVal t As Type, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
             MyBase.New(t, propertyAlias)
             '_f = fieldName
@@ -413,22 +456,31 @@ Namespace Sorting
             _del = del
         End Sub
 
-        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean)
-            MyBase.New(t, propertyAlias)
-            '_f = fieldName
-            _order = order
-            _ext = external
-            '_t = t
-        End Sub
+        'Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean)
+        '    MyBase.New(t, propertyAlias)
+        '    '_f = fieldName
+        '    _order = order
+        '    _ext = external
+        '    '_t = t
+        'End Sub
 
-        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
-            MyBase.New(t, propertyAlias)
+        Protected Friend Sub New(ByVal os As ObjectSource, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
+            MyBase.New(os, propertyAlias)
             '_f = fieldName
             _order = order
             _ext = external
             '_t = t
             _del = del
         End Sub
+
+        'Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
+        '    MyBase.New(t, propertyAlias)
+        '    '_f = fieldName
+        '    _order = order
+        '    _ext = external
+        '    '_t = t
+        '    _del = del
+        'End Sub
 
 #End Region
 
@@ -449,15 +501,15 @@ Namespace Sorting
             '_values = values
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean)
-            MyBase.New(propertyAlias)
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean)
+            MyBase.New(t, propertyAlias)
             '_f = fieldName
             _order = order
             _ext = external
         End Sub
 
-        Public Sub New(ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
-            MyBase.New(propertyAlias)
+        Public Sub New(ByVal t As Type, ByVal propertyAlias As String, ByVal order As SortType, ByVal external As Boolean, ByVal del As ExternalSortDelegate)
+            MyBase.New(t, propertyAlias)
             '_f = fieldName
             _order = order
             _ext = external
@@ -668,7 +720,7 @@ Namespace Sorting
         End Function
 
         Public Overridable Function Clone() As Object Implements System.ICloneable.Clone
-            Dim s As New Sort(_prev, Type, PropertyAlias, _order, _ext, _del)
+            Dim s As New Sort(_prev, ObjectSource, PropertyAlias, _order, _ext, _del)
             s.Computed = Computed
             s.Table = Table
             s.Values = Values
@@ -771,7 +823,7 @@ Namespace Sorting
                         Dim xc As IComparable = TryCast(xo, IComparable)
                         Dim yc As IComparable = TryCast(yo, IComparable)
                         If xc Is Nothing OrElse yc Is Nothing Then
-                            Throw New InvalidOperationException("Value " & s.SortBy & " of type " & s.Type.ToString & " is not supported IComparable")
+                            Throw New InvalidOperationException("Value " & s.SortBy & " of type " & s.ObjectSource.ToStaticString & " is not supported IComparable")
                         End If
                         p = xc.CompareTo(yc) * k
                         If p <> 0 Then
@@ -785,12 +837,13 @@ Namespace Sorting
 
         Private Function GetValue(ByVal x As T, ByVal s As Sort, ByRef oschema As IObjectSchemaBase) As Object
             Dim xo As _IEntity = x
-            If s.Type IsNot Nothing AndAlso _t IsNot s.Type Then
-                Dim schema As ObjectMappingEngine = _mgr.MappingEngine
+            Dim schema As ObjectMappingEngine = _mgr.MappingEngine
+            Dim st As Type = s.ObjectSource.GetRealType(schema, Nothing)
+            If st IsNot Nothing AndAlso _t IsNot st Then
                 If _getobj IsNot Nothing Then
-                    xo = _getobj(x, s.Type)
+                    xo = _getobj(x, st)
                 Else
-                    xo = schema.GetJoinObj(oschema, xo, s.Type)
+                    xo = schema.GetJoinObj(oschema, xo, st)
                 End If
                 If oschema Is Nothing Then
                     oschema = schema.GetObjectSchema(_t)

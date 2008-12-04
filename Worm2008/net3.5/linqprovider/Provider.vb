@@ -61,25 +61,27 @@ Namespace Linq
         End Function
 
         Public Function Execute(ByVal expression As System.Linq.Expressions.Expression) As Object Implements System.Linq.IQueryProvider.Execute
-            Using _ctx.CreateReadonlyManager
-                Throw New NotImplementedException
-            End Using
+            'Using _ctx.GetReadonlyManager
+            Throw New NotImplementedException
+            'End Using
         End Function
 
-        Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
-            args.Manager = _ctx.CreateReadonlyManager
-        End Sub
+        'Protected Sub GetManager(ByVal o As IEntity, ByVal args As ManagerRequiredArgs)
+        '    args.Manager = _ctx.CreateReadonlyManager
+        'End Sub
 
-        Protected Sub ObjectCreated(ByVal o As ICachedEntity, ByVal mgr As OrmManager)
-            AddHandler o.ManagerRequired, AddressOf GetManager
+        Protected Sub ObjectCreated(ByVal mgr As OrmManager, ByVal o As ICachedEntity)
+            'AddHandler o.ManagerRequired, AddressOf GetManager
+            o.SetCreateManager(_ctx.GetReadonlyManager)
         End Sub
 
         Public Function Execute(Of TResult)(ByVal expression As System.Linq.Expressions.Expression) As TResult Implements System.Linq.IQueryProvider.Execute
-            Dim mgr = _ctx.CreateReadonlyManager
-            mgr.RaiseObjectCreation = True
-            Try
-                AddHandler mgr.ObjectCreated, AddressOf ObjectCreated
-                Dim ev As New QueryVisitor(_ctx.Schema)
+            Using mgr As OrmManager = _ctx.GetReadonlyManager.CreateManager
+                'mgr.RaiseObjectCreation = True
+                AddHandler mgr.ObjectLoaded, AddressOf ObjectCreated
+
+                'Try
+                Dim ev As New QueryVisitor(_ctx.MappingEngine)
                 ev.Visit(expression)
                 'Dim q As New Worm.Query.QueryCmd(Of TResult)(ev.Query)
                 Dim q As Worm.Query.QueryCmd = ev.Query
@@ -167,11 +169,14 @@ Namespace Linq
                             Throw New NotImplementedException
                     End Select
                 End If
-            Finally
-                If mgr IsNot Nothing Then
-                    mgr.Dispose()
-                End If
-            End Try
+                'Finally
+                '    If mgr IsNot Nothing Then
+                '        RemoveHandler mgr.ObjectCreated, AddressOf ObjectCreated
+                '        mgr.Dispose()
+                '    End If
+                'End Try
+                RemoveHandler mgr.ObjectLoaded, AddressOf ObjectCreated
+            End Using
         End Function
     End Class
 
@@ -459,7 +464,7 @@ Namespace Linq
                                         pr = ev.OrmProp
                                     End If
                                     If pr.Table Is Nothing Then
-                                        p = New Pair(Of Object, String)(pr.Type, pr.PropertyAlias)
+                                        p = New Pair(Of Object, String)(pr.ObjectSource, pr.PropertyAlias)
                                     Else
                                         p = New Pair(Of Object, String)(pr.Table, pr.Column)
                                     End If
@@ -570,12 +575,12 @@ Namespace Linq
         Protected Function GetSO(ByVal exp As UnaryExp) As SortOrder
             Dim e As EntityPropValue = TryCast(exp.Value, EntityPropValue)
             If e IsNot Nothing Then
-                Return Orm.Sorting.Field(e.OrmProp.Type, e.OrmProp.PropertyAlias)
+                Return Orm.Sorting.Field(e.OrmProp.ObjectSource, e.OrmProp.PropertyAlias)
             Else
                 Dim ce As ComputedValue = TryCast(exp.Value, ComputedValue)
                 If ce IsNot Nothing Then
                     Dim p As SelectExpression = _q.GetProperty(ce.Alias)
-                    Return Orm.Sorting.Field(p.Type, p.PropertyAlias)
+                    Return Orm.Sorting.Field(p.ObjectSource, p.PropertyAlias)
                 Else
                     Throw New NotSupportedException
                 End If

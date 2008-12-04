@@ -38,9 +38,9 @@ Namespace Query
 
         Function CreateByEntityName(ByVal entityName As String) As QueryCmd
 
-        Function Create(ByVal obj As _IOrmBase) As QueryCmd
+        Function Create(ByVal obj As IOrmBase) As QueryCmd
 
-        Function Create(ByVal obj As _IOrmBase, ByVal key As String) As QueryCmd
+        Function Create(ByVal obj As IOrmBase, ByVal key As String) As QueryCmd
 
         Function Create(ByVal name As String, ByVal table As SourceFragment) As QueryCmd
 
@@ -48,9 +48,9 @@ Namespace Query
 
         Function CreateByEntityName(ByVal name As String, ByVal entityName As String) As QueryCmd
 
-        Function Create(ByVal name As String, ByVal obj As _IOrmBase) As QueryCmd
+        Function Create(ByVal name As String, ByVal obj As IOrmBase) As QueryCmd
 
-        Function Create(ByVal name As String, ByVal obj As _IOrmBase, ByVal key As String) As QueryCmd
+        Function Create(ByVal name As String, ByVal obj As IOrmBase, ByVal key As String) As QueryCmd
     End Interface
 
     Public Class Top

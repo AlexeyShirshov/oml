@@ -22,7 +22,7 @@ Public Class GuidPK
         End Set
     End Property
 
-    <Column("ID", Field2DbRelations.PrimaryKey, column:="pk")> _
+    <Column("ID", Field2DbRelations.PrimaryKey, column:="pk", DBType:="uniqueidentifier")> _
     Public Overrides Property Identifier() As Object
         Get
             Return _id

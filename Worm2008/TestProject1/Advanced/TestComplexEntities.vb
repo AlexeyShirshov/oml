@@ -25,13 +25,63 @@ Imports Worm.Database.Criteria
         End Using
     End Sub
 
+    <TestMethod(), ExpectedException(GetType(Worm.OrmManagerException))> _
+    Public Sub TestGuidCreateWrong()
+        Using mgr As OrmDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
+            Dim o As GuidPK = Nothing
+            Using mt As New ModificationsTracker(mgr)
+                o = New GuidPK
+                'o.Identifier = Guid.NewGuid
+                o.Code = 2
+                Assert.AreEqual(Guid.Empty, o.Guid)
+
+                mt.Add(o)
+
+                mt.AcceptModifications()
+            End Using
+
+            Assert.IsNotNull(o)
+            Assert.IsTrue(o.InternalProperties.IsLoaded)
+            Assert.AreEqual(ObjectState.None, o.InternalProperties.ObjectState)
+            Assert.AreNotEqual(Guid.Empty, o.Guid)
+        End Using
+    End Sub
+
+    <TestMethod()> _
+    Public Sub TestGuidCreate()
+        Using mgr As OrmDBManager = TestManager.CreateWriteManager(New MSSQL2005Generator("1"))
+            Dim o As GuidPK = Nothing
+
+            mgr.BeginTransaction()
+            Try
+                Using mt As New ModificationsTracker(mgr)
+                    o = New GuidPK
+                    'o.Identifier = Guid.NewGuid
+                    o.Code = 2
+                    Assert.AreEqual(Guid.Empty, o.Guid)
+
+                    mt.Add(o)
+
+                    mt.AcceptModifications()
+                End Using
+            Finally
+                mgr.Rollback()
+            End Try
+
+            Assert.IsNotNull(o)
+            Assert.IsTrue(o.InternalProperties.IsLoaded)
+            Assert.AreEqual(ObjectState.None, o.InternalProperties.ObjectState)
+            Assert.AreNotEqual(Guid.Empty, o.Guid)
+        End Using
+    End Sub
+
     <TestMethod()> _
     Public Sub TestCPK()
         Dim cache As New Worm.Cache.OrmCache
         Dim gen As New SQLGenerator("1")
 
         Dim q As QueryCmd = New QueryCmd(GetType(ComplexPK)).Where _
-            (Ctor.AutoTypeField("Int").Eq(345))
+            (Ctor.Field(GetType(ComplexPK), "Int").Eq(345))
 
         Dim l As ReadOnlyEntityList(Of ComplexPK) = q.ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
 
@@ -50,7 +100,7 @@ Imports Worm.Database.Criteria
         Assert.IsTrue(f.InternalProperties.IsLoaded)
 
         l = New QueryCmd(GetType(ComplexPK)).Where _
-            (Ctor.AutoTypeField("Int").Eq(345).And("Code").Eq("dglm")).ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
+            (Ctor.Field(GetType(ComplexPK), "Int").Eq(345).And("Code").Eq("dglm")).ToEntityList(Of ComplexPK)(Function() TestManager.CreateManager(cache, gen))
 
         Assert.AreEqual(1, l.Count)
         Assert.IsTrue(l(0).InternalProperties.IsLoaded)
@@ -61,7 +111,7 @@ Imports Worm.Database.Criteria
     Public Sub TestCPKUpdate()
         Using mgr As OrmDBManager = TestManager.CreateWriteManager(New SQLGenerator("1"))
             Dim l As ReadOnlyEntityList(Of ComplexPK) = New QueryCmd(GetType(ComplexPK)).Where _
-                            (Ctor.AutoTypeField("Int").Eq(345).And("Code").Eq("dglm")).ToEntityList(Of ComplexPK)(mgr)
+                            (Ctor.Field(GetType(ComplexPK), "Int").Eq(345).And("Code").Eq("dglm")).ToEntityList(Of ComplexPK)(mgr)
 
             Dim f As ComplexPK = l(0)
 
@@ -74,7 +124,7 @@ Imports Worm.Database.Criteria
                 End Using
 
                 Dim f2 As ComplexPK = New QueryCmd(GetType(ComplexPK)).Where _
-                             (Ctor.AutoTypeField("Name").Eq("xxx")).ToEntityList(Of ComplexPK)(mgr)(0)
+                             (Ctor.Field(GetType(ComplexPK), "Name").Eq("xxx")).ToEntityList(Of ComplexPK)(mgr)(0)
 
                 Assert.AreSame(f, f2)
             Finally

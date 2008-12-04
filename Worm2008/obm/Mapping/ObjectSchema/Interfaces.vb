@@ -91,6 +91,13 @@ Namespace Orm.Meta
         Function CreateValue(ByVal c As ColumnAttribute, ByVal obj As IEntity, ByVal value As Object) As Object
     End Interface
 
+    Public Interface IPKInsertValues
+        Function GetValue(ByVal propertyAlias As String) As String
+    End Interface
+
+    Public Interface IChangeOutputOnInsert
+        Function GetColumn(ByVal propertyAlias As String, ByVal column As String) As String
+    End Interface
     'Public Interface IFactory
     '    Sub CreateObject(ByVal field As String, ByVal value As Object)
     'End Interface

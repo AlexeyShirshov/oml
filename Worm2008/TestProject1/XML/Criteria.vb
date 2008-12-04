@@ -51,7 +51,7 @@ Imports Worm.Orm.Meta
     <TestMethod()> Public Sub TestQuery()
         Using mgr As OrmManager = CreateManager()
             Dim col As ICollection(Of Entity4) = mgr.Find(Of Entity4)( _
-                mgr.MappingEngine.CreateCriteria(GetType(Entity4), "Title").Eq("first"))
+                mgr.MappingEngine.CreateCriteria(New ObjectSource(GetType(Entity4)), "Title").Eq("first"))
 
             Assert.AreEqual(1, col.Count)
 

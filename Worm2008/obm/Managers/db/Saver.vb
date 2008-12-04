@@ -261,14 +261,19 @@ Namespace Database
 #If DEBUG Then
                 If o.HasChanges Then
                     Dim mo As ObjectModification = _mgr.Cache.ShadowCopy(o)
+                    Dim oc As ICachedEntity = o.OriginalCopy
                     If o.ObjectState = ObjectState.Deleted Then
                         _deleted.Add(o)
-                        Debug.Assert(mo IsNot Nothing)
-                        Debug.Assert(mo.Reason = ObjectModification.ReasonEnum.Delete OrElse mo.Reason = ObjectModification.ReasonEnum.Edit)
+                        Debug.Assert(o IsNot Nothing)
+                        If mo IsNot Nothing Then
+                            Debug.Assert(mo.Reason = ObjectModification.ReasonEnum.Delete OrElse mo.Reason = ObjectModification.ReasonEnum.Edit)
+                        End If
                     ElseIf o.ObjectState = ObjectState.Modified Then
                         _updated.Add(o)
-                        Debug.Assert(mo IsNot Nothing)
-                        Debug.Assert(mo.Reason = ObjectModification.ReasonEnum.Edit)
+                        Debug.Assert(o IsNot Nothing)
+                        If mo IsNot Nothing Then
+                            Debug.Assert(mo.Reason = ObjectModification.ReasonEnum.Edit)
+                        End If
                     End If
                 End If
 #End If
@@ -350,7 +355,7 @@ l1:
                         owr = New ObjectWrap(Of ICachedEntity)(o)
                         _lockList.Add(owr, _mgr.GetSyncForSave(o.GetType, o)) 'o.GetSyncRoot)
                         Dim os As ObjectState = o.ObjectState
-                        If o.SaveChanges(False) Then
+                        If _mgr.SaveChanges(o, False) Then
                             _lockList(owr).Dispose()
                             _lockList.Remove(owr)
                             RaiseEvent ObjectPostponed(Me, o)
@@ -539,7 +544,7 @@ l1:
                                 Next
                                 For Each p As Pair(Of _ICachedEntity) In svd
                                     Dim o As _ICachedEntity = p.First
-                                    o.UpdateCache(p.Second)
+                                    o.UpdateCache(_mgr, p.Second)
                                 Next
                             End If
 
@@ -561,10 +566,10 @@ l1:
 
         Private Sub Rollback(ByVal saved As List(Of Pair(Of ObjectState, _ICachedEntity)), _
             ByVal rejectList As List(Of ICachedEntity), ByVal copies As List(Of Pair(Of ICachedEntity)), ByVal need2save As List(Of ICachedEntity))
-            For Each o As ICachedEntity In rejectList
+            For Each o As _ICachedEntity In rejectList
                 RaiseEvent ObjectRejecting(Me, o)
                 _dontTrackRemoved = True
-                o.RejectChanges()
+                o.RejectChanges(_mgr)
                 _dontTrackRemoved = False
                 RaiseEvent ObjectRejected(Me, o, Not need2save.Contains(o))
             Next
@@ -654,6 +659,12 @@ l1:
             _saver = CreateSaver(mgr)
         End Sub
 
+        Protected ReadOnly Property NewObjectManager() As INewObjectsStore
+            Get
+                Return _mgr.Cache.NewObjectManager
+            End Get
+        End Property
+
         Public ReadOnly Property IsCommit() As Boolean
             Get
                 Return _saver.IsCommit
@@ -700,6 +711,10 @@ l1:
             _saver.AddRange(objs)
         End Sub
 
+        Private Sub Add(ByVal sender As OrmManager, ByVal obj As ICachedEntity)
+            Add(obj)
+        End Sub
+
         Public Overridable Sub Add(ByVal obj As ICachedEntity)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("object")
@@ -713,7 +728,7 @@ l1:
             _saver.Add(CType(obj, CachedEntity))
         End Sub
 
-        Protected Sub Delete(ByVal obj As ICachedEntity)
+        Private Sub Delete(ByVal sender As OrmManager, ByVal obj As ICachedEntity)
             If obj Is Nothing Then
                 Throw New ArgumentNullException("object")
             End If
@@ -729,30 +744,30 @@ l1:
         End Sub
 
         Public Function CreateNewObject(Of T As {IOrmBase, New})() As T
-            If _mgr.NewObjectManager Is Nothing Then
+            If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
 
-            Return CreateNewObject(Of T)(_mgr.NewObjectManager.GetPKForNewObject(GetType(T))(0).Value)
+            Return CreateNewObject(Of T)(NewObjectManager.GetPKForNewObject(GetType(T))(0).Value)
         End Function
 
         Public Function CreateNewEntity(Of T As {_ICachedEntity, New})() As T
-            If _mgr.NewObjectManager Is Nothing Then
+            If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
 
-            Dim pk() As PKDesc = _mgr.NewObjectManager.GetPKForNewObject(GetType(T))
+            Dim pk() As PKDesc = NewObjectManager.GetPKForNewObject(GetType(T))
             Return CreateNewObject(Of T)(pk)
         End Function
 
         Public Overridable Function CreateNewObject(Of T As {_ICachedEntity, New})(ByVal pk() As PKDesc) As T
-            If _mgr.NewObjectManager Is Nothing Then
+            If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
             Dim o As T = _mgr.CreateEntity(Of T)(pk)
             'Dim o As New T
             'o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
-            _mgr.NewObjectManager.AddNew(o)
+            NewObjectManager.AddNew(o)
             '_objs.Add(o)
             '_saver.Add(o)
             Add(o)
@@ -760,13 +775,13 @@ l1:
         End Function
 
         Public Overridable Function CreateNewObject(Of T As {IOrmBase, New})(ByVal id As Object) As T
-            If _mgr.NewObjectManager Is Nothing Then
+            If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
             Dim o As T = _mgr.CreateOrmBase(Of T)(id)
             'Dim o As New T
             'o.Init(id, _mgr.Cache, _mgr.ObjectSchema)
-            _mgr.NewObjectManager.AddNew(o)
+            NewObjectManager.AddNew(o)
             '_objs.Add(o)
             '_saver.Add(o)
             Add(o)
@@ -774,11 +789,11 @@ l1:
         End Function
 
         Public Function CreateNewObject(ByVal t As Type) As IOrmBase
-            If _mgr.NewObjectManager Is Nothing Then
+            If NewObjectManager Is Nothing Then
                 Throw New InvalidOperationException("NewObjectManager is not set")
             End If
 
-            Return CreateNewObject(t, _mgr.NewObjectManager.GetPKForNewObject(t))
+            Return CreateNewObject(t, NewObjectManager.GetPKForNewObject(t))
         End Function
 
         Public Function CreateNewObject(ByVal t As Type, ByVal id As Object) As IOrmBase
@@ -799,8 +814,8 @@ l1:
                 For Each o As _ICachedEntity In _saver.AffectedObjects
                     'Debug.WriteLine("_rollback: " & o.ObjName)
                     If o.ObjectState = ObjectState.Created Then
-                        If _restore = OnErrorEnum.RestoreObjectsStateAndRemoveNewObjects AndAlso _mgr.NewObjectManager IsNot Nothing Then
-                            _mgr.NewObjectManager.RemoveNew(o)
+                        If _restore = OnErrorEnum.RestoreObjectsStateAndRemoveNewObjects AndAlso NewObjectManager IsNot Nothing Then
+                            NewObjectManager.RemoveNew(o)
                         End If
                     Else
 #If DEBUG Then
@@ -819,7 +834,7 @@ l1:
                             End If
                         End If
 #End If
-                        o.RejectChanges()
+                        o.RejectChanges(_mgr)
                     End If
                 Next
             End If
@@ -836,12 +851,13 @@ l1:
                     'rlb = False
                 Finally
                     _disposing = False
-                    If _saver.Error Then
-                        _Rollback()
-                    End If
 
                     RemoveHandler _mgr.BeginDelete, AddressOf Delete
                     RemoveHandler _mgr.BeginUpdate, AddressOf Add
+
+                    If _saver.Error Then
+                        _Rollback()
+                    End If
 
                     Me.disposedValue = True
                 End Try

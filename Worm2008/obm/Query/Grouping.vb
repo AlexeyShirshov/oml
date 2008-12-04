@@ -15,7 +15,7 @@ Namespace Orm
 
         Public Sub New(ByVal p As SelectExpression)
             MyBase.New(p.Computed, p.Values, p.Column)
-            Type = p.Type
+            ObjectSource = p.ObjectSource
             Table = p.Table
             PropertyAlias = p.PropertyAlias
         End Sub

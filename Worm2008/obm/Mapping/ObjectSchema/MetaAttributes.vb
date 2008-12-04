@@ -5,13 +5,14 @@ Namespace Orm.Meta
     <AttributeUsage(AttributeTargets.Property, inherited:=True), CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1019")> _
     Public NotInheritable Class ColumnAttribute
         Inherits Attribute
-        Implements IComparable(Of ColumnAttribute)
+        Implements IComparable(Of ColumnAttribute), ICloneable
 
         Private _fieldName As String
         Public ReadOnly _behavior As Field2DbRelations
         'Private _table As String
         Private _column As String
         Private _idx As Integer = -1
+        Private _db As DBType
 
         Public Sub New()
         End Sub
@@ -97,6 +98,56 @@ Namespace Orm.Meta
             Return _fieldName.GetHashCode
         End Function
 
+        Public ReadOnly Property SourceType() As DBType
+            Get
+                Return New DBType(_type, _sz, _n)
+            End Get
+        End Property
+
+        Private _type As String
+        Public Property DBType() As String
+            Get
+                Return _type
+            End Get
+            Set(ByVal value As String)
+                _type = value
+            End Set
+        End Property
+
+        Private _sz As Integer
+        Public Property DBSize() As Integer
+            Get
+                Return _sz
+            End Get
+            Set(ByVal value As Integer)
+                _sz = value
+            End Set
+        End Property
+
+        Private _n As Boolean
+        Public Property Nullable() As Boolean
+            Get
+                Return _n
+            End Get
+            Set(ByVal value As Boolean)
+                _n = value
+            End Set
+        End Property
+
+        Public Function Clone() As ColumnAttribute
+            Return CType(_Clone(), ColumnAttribute)
+        End Function
+
+        Private Function _Clone() As Object Implements System.ICloneable.Clone
+            Dim c As New ColumnAttribute(_fieldName, _behavior)
+            c._column = _column
+            c._db = _db
+            c._idx = _idx
+            c._n = _n
+            c._sz = _sz
+            c._type = _type
+            Return c
+        End Function
     End Class
 
     <FlagsAttribute(), CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2217")> _

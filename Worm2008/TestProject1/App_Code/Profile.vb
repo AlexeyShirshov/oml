@@ -6,13 +6,14 @@ Imports System.Collections
 Imports Worm.Orm.Meta
 Imports Worm.Cache
 Imports Worm.Database
+Imports Worm
 
 #Const UseUserInstance = True
 
 Public Class GetMgr
-    Implements IGetDBMgr
+    Implements Worm.ICreateManager
 
-    Public Function GetMgr() As OrmDBManager Implements Worm.Web.IGetDBMgr.GetMgr
+    Public Function GetMgr() As Worm.OrmManager Implements Worm.ICreateManager.CreateManager
 #If UseUserInstance Then
         Dim path As String = IO.Path.GetFullPath(IO.Path.Combine(IO.Directory.GetCurrentDirectory, "..\..\..\TestProject1\Databases\test.mdf"))
         Return New OrmDBManager(OrmCache, New SQLGenerator("1"), "Server=.\sqlexpress;AttachDBFileName='" & path & "';User Instance=true;Integrated security=true;")
@@ -42,36 +43,38 @@ Public Class MyProfile
     '    MyBase.New(getMgr)
     'End Sub
 
-    Protected Overrides Sub DeleteUser(ByVal mgr As OrmDBManager, ByVal u As Worm.Orm.OrmBase, ByVal cascade As Boolean)
-        If cascade Then
-            Throw New NotSupportedException("Cascade delete is not supported")
-        End If
-        u.Delete()
-        u.SaveChanges(True)
-    End Sub
+    'Protected Overrides Sub DeleteUser(ByVal mgr As OrmDBManager, ByVal u As Worm.Orm.IOrmBase, ByVal cascade As Boolean)
+    '    If cascade Then
+    '        Throw New NotSupportedException("Cascade delete is not supported")
+    '    End If
+    '    Using mt As New ModificationsTracker(mgr)
+    '        CType(u, ICachedEntity).Delete()
+    '        mt.AcceptModifications()
+    '    End Using
+    'End Sub
 
-    Protected Overrides Sub DeleteProfile(ByVal mgr As OrmDBManager, ByVal u As Worm.Orm.OrmBase)
-        Throw New NotImplementedException
-    End Sub
+    'Protected Overrides Sub DeleteProfile(ByVal mgr As OrmDBManager, ByVal u As Worm.Orm.IOrmBase)
+    '    Throw New NotImplementedException
+    'End Sub
 
-    Protected Overrides Function FindUsers(ByVal mgr As OrmDBManager, ByVal f As Worm.Criteria.CriteriaLink) As System.Collections.IList
-        Return CType(mgr.Find(Of MyUser)(f, Nothing, False), System.Collections.IList)
-    End Function
+    'Protected Overrides Function FindUsers(ByVal mgr As OrmManager, ByVal f As Worm.Criteria.CriteriaLink) As System.Collections.IList
+    '    Return CType(mgr.Find(Of MyUser)(f, Nothing, False), System.Collections.IList)
+    'End Function
 
     'Protected Overrides Function FindTopUsers(ByVal mgr As OrmDBManager, ByVal top As Integer) As System.Collections.IList
     '    Return CType(mgr.FindTop(Of MyUser)(top, Nothing, Nothing, SortType.Asc, False), System.Collections.IList)
     'End Function
 
-    Protected Overrides Function GetNow() As Date
-        Return Now
-    End Function
+    'Protected Overrides Function GetNow() As Date
+    '    Return Now
+    'End Function
 
-    Protected Overrides Function GetUserByName(ByVal mgr As OrmDBManager, ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Orm.OrmBase
+    Protected Overrides Function GetUserByName(ByVal mgr As OrmManager, ByVal name As String, ByVal isAuthenticated As Boolean, ByVal createIfNotExist As Boolean) As Worm.Orm.IOrmBase
         Dim t As Type = GetUserType()
         'Dim c As New OrmCondition.OrmConditionConstructor
         'c.AddFilter(New OrmFilter(t, _userNameField, New Worm.TypeWrap(Of Object)(name), FilterOperation.Equal))
         'c.AddFilter(New OrmFilter(t, "IsAnonymous", New Worm.TypeWrap(Of Object)(Not isAuthenticated), FilterOperation.Equal))
-        Dim col As IList = FindUsers(mgr, New Worm.Database.Criteria.Ctor(t).Field(_userNameField).Eq(name).And("IsAnonymous").Eq(Not isAuthenticated))
+        Dim col As IList = FindUsers(mgr, New Worm.Database.Criteria.Ctor(t).Field(UserNameField).Eq(name).And("IsAnonymous").Eq(Not isAuthenticated))
         If col.Count > 1 Then
             Throw New ArgumentException("Duplicate user name " & name)
         ElseIf col.Count = 0 Then
@@ -91,22 +94,22 @@ Public Class MyProfile
                 End If
             End If
         End If
-        Return CType(col(0), OrmBase)
+        Return CType(col(0), IOrmBase)
     End Function
 
     Protected Overrides Function GetUserType() As System.Type
         Return GetType(MyUser)
     End Function
 
-    Protected Overrides Function CreateDBMgr(ByVal type As String) As IGetDBMgr
-        Return CType(Reflection.Assembly.GetExecutingAssembly.CreateInstance(type), IGetDBMgr)
+    Protected Overrides Function CreateDBMgr(ByVal type As String) As ICreateManager
+        Return CType(Reflection.Assembly.GetExecutingAssembly.CreateInstance(type), ICreateManager)
     End Function
 
     Protected Overrides Function GetAnonymousCookieName() As String
         Return ".TESTPROJECTANONYMCOOKIE"
     End Function
 
-    Protected Overrides Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String) As Worm.Orm.OrmBase
+    Protected Overrides Function CreateUser(ByVal mgr As OrmDBManager, ByVal name As String, ByVal AnonymousId As String, ByVal context As Object) As Worm.Orm.IOrmBase
         Dim u As MyUser = mgr.CreateOrmBase(Of MyUser)(-100)
         u.UserName = name
         Return u

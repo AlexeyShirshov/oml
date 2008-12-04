@@ -26,21 +26,21 @@ End Namespace
 ''' </summary>
 ''' <remarks>Используется для реализации функций в качестве таблиц, разрешения схем таблицы (schema resolve)</remarks>
 Public Interface IPrepareTable
-    ''' <summary>
-    ''' Словарь псевдонимов (aliases) таблиц
-    ''' </summary>
-    ''' <value></value>
-    ''' <returns>Словарь где каждой таблице соответствует псевдоним</returns>
-    ''' <remarks></remarks>
-    ReadOnly Property Aliases() As IDictionary(Of SourceFragment, String)
+    '''' <summary>
+    '''' Словарь псевдонимов (aliases) таблиц
+    '''' </summary>
+    '''' <value></value>
+    '''' <returns>Словарь где каждой таблице соответствует псевдоним</returns>
+    '''' <remarks></remarks>
+    'ReadOnly Property Aliases() As IDictionary(Of SourceFragment, String)
     ''' <summary>
     ''' Добавляет таблицу в словарь и создает текстовое представление таблицы (псевдоним)
     ''' </summary>
     ''' <param name="table">Таблица</param>
     ''' <returns>Возвращает псевдоним таблицы</returns>
     ''' <remarks>Если таблица уже добавлена реализация может кинуть исключение</remarks>
-    Function AddTable(ByRef table As SourceFragment) As String
-    Function AddTable(ByRef table As SourceFragment, ByVal pmgr As ICreateParam) As String
+    Function AddTable(ByRef table As SourceFragment, ByVal os As Orm.ObjectSource) As String
+    Function AddTable(ByRef table As SourceFragment, ByVal os As Orm.ObjectSource, ByVal pmgr As ICreateParam) As String
     ''' <summary>
     ''' Заменяет в <see cref="StringBuilder"/> названия таблиц на псевдонимы
     ''' </summary>
@@ -48,5 +48,7 @@ Public Interface IPrepareTable
     ''' <param name="table">Таблица</param>
     ''' <param name="sb">StringBuilder</param>
     ''' <remarks></remarks>
-    Sub Replace(ByVal schema As ObjectMappingEngine, ByVal table As SourceFragment, ByVal sb As StringBuilder)
+    Sub Replace(ByVal schema As ObjectMappingEngine, ByVal table As SourceFragment, ByVal os As Orm.ObjectSource, ByVal sb As StringBuilder)
+    Function GetAlias(ByVal table As SourceFragment, ByVal os As Orm.ObjectSource) As String
+    Function ContainsKey(ByVal table As SourceFragment, ByVal os As Orm.ObjectSource) As Boolean
 End Interface

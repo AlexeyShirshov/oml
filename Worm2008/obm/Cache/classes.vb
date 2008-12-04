@@ -150,11 +150,12 @@ Namespace Cache
         End Enum
 
         Public ReadOnly User As Object
-        <CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104")> _
-        Public ReadOnly Obj As _ICachedEntity
+        '<CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2104")> _
+        'Public ReadOnly Obj As _ICachedEntity
         Public ReadOnly DateTime As Date
-
         Public ReadOnly Reason As ReasonEnum
+        Private _obj As EntityProxy
+        Private _oldpk() As PKDesc
 
 #If DEBUG Then
         Protected _stack As String
@@ -164,16 +165,30 @@ Namespace Cache
             End Get
         End Property
 #End If
-        Sub New(ByVal obj As _ICachedEntity, ByVal user As Object, ByVal reason As ReasonEnum)
+        Sub New(ByVal obj As _ICachedEntity, ByVal user As Object, ByVal reason As ReasonEnum, ByVal pk() As PKDesc)
+            'Sub New(ByVal user As Object, ByVal reason As ReasonEnum)
             DateTime = Now
-            Me.Obj = obj
+            'Me.Obj = obj
             Me.User = user
             Me.Reason = reason
+            _obj = New EntityProxy(obj)
+            _oldpk = pk
 #If DEBUG Then
             _stack = Environment.StackTrace
 #End If
         End Sub
 
+        Public ReadOnly Property Proxy() As EntityProxy
+            Get
+                Return _obj
+            End Get
+        End Property
+
+        Public ReadOnly Property OlPK() As PKDesc()
+            Get
+                Return _oldpk
+            End Get
+        End Property
     End Class
 
     Public Class CacheKey

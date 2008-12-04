@@ -89,11 +89,11 @@ Imports Worm.Database.Criteria.Core
         Dim params As ICollection(Of Data.Common.DbParameter) = Nothing
         Dim sel As IList(Of ColumnAttribute) = Nothing
 
-        Dim expected As String = "declare @id int" & vbCrLf & _
+        Dim expected As String = "declare @pk_id int" & vbCrLf & _
             "declare @rcount int" & vbCrLf & _
             "insert into dbo.ent1 default values" & vbCrLf & _
-            "select @rcount = @@rowcount, @id = scope_identity()" & vbCrLf & _
-            "if @rcount > 0 select dbo.ent1.id from dbo.ent1 where dbo.ent1.id = @id"
+            "select @rcount = @@rowcount, @pk_id = scope_identity()" & vbCrLf & _
+            "if @rcount > 0 select t1.id from dbo.ent1 t1 where t1.id = @pk_id"
 
         Assert.AreEqual(expected, schemaV1.Insert(o, Nothing, params, sel))
 
@@ -113,13 +113,13 @@ Imports Worm.Database.Criteria.Core
         Dim params As ICollection(Of Data.Common.DbParameter) = Nothing
         Dim sel As IList(Of ColumnAttribute) = Nothing
 
-        Dim expected As String = "declare @id int" & vbCrLf & _
+        Dim expected As String = "declare @pk_id int" & vbCrLf & _
             "declare @rcount int" & vbCrLf & _
             "declare @err int" & vbCrLf & _
             "insert into dbo.ent1 default values" & vbCrLf & _
-            "select @rcount = @@rowcount, @id = scope_identity(), @err = @@error" & vbCrLf & _
-            "if @err = 0 insert into dbo.t1 (s,i) values(@p1,@id)" & vbCrLf & _
-            "if @rcount > 0 select dbo.ent1.id from dbo.ent1 where dbo.ent1.id = @id"
+            "select @rcount = @@rowcount, @pk_id = scope_identity(), @err = @@error" & vbCrLf & _
+            "if @err = 0 insert into dbo.t1 (s,i)  values(@p1,@pk_id)" & vbCrLf & _
+            "if @rcount > 0 select t1.id from dbo.ent1 t1 where t1.id = @pk_id"
 
         Assert.AreEqual(expected, schemaV1.Insert(o, Nothing, params, sel))
 
@@ -334,7 +334,7 @@ Imports Worm.Database.Criteria.Core
             Assert.AreEqual(ObjectState.Modified, o2.InternalProperties.ObjectState)
 
             Dim expected As String = "update t1 set t1.s = @p1 from dbo.t1 t1 where t1.i = @p2" & vbCrLf & _
-                "if @@rowcount = 0 insert into dbo.t1 (s,i) values(@p1,@p2)"
+                "if @@rowcount = 0 insert into dbo.t1 (s,i)  values(@p1,@p2)"
 
             Assert.AreEqual(expected, schemaV1.Update(o2, Nothing, params, sel, upd))
 
